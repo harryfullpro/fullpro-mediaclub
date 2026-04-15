@@ -400,8 +400,7 @@
   .benefit-media {
     aspect-ratio: 4/3;
     background:
-      radial-gradient(circle at 50% 35%, rgba(255,255,255,.05), transparent 65%),
-      linear-gradient(180deg, #15151c 0%, #0c0c10 100%);
+      radial-gradient(circle at 50% 40%, #ffffff 0%, #f4f4f6 55%, #e8e8ec 100%);
     position: relative;
     overflow: hidden;
     display: flex;
@@ -413,7 +412,7 @@
     height: 82%;
     object-fit: contain;
     transition: transform .4s;
-    filter: drop-shadow(0 20px 40px rgba(0,0,0,.5));
+    filter: drop-shadow(0 14px 28px rgba(0,0,0,.18));
   }
   .benefit-media.no-img::before {
     content: attr(data-fallback);
@@ -439,8 +438,8 @@
     content: '';
     position: absolute;
     bottom: 0; left: 0; right: 0;
-    height: 60px;
-    background: linear-gradient(to top, var(--bg-card), transparent);
+    height: 40px;
+    background: linear-gradient(to top, rgba(0,0,0,.08), transparent);
     pointer-events: none;
   }
   .benefit-body { padding: 24px 28px 28px; }
