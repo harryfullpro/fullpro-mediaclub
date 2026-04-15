@@ -831,24 +831,68 @@
   .gift-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    gap: 12px;
   }
   .gift-option {
-    padding: 16px 10px;
+    position: relative;
+    padding: 0;
     background: var(--bg-elev);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 14px;
     cursor: pointer;
     text-align: center;
     transition: all .2s;
+    overflow: hidden;
   }
-  .gift-option:hover { border-color: var(--border-hi); }
+  .gift-option:hover { border-color: var(--border-hi); transform: translateY(-2px); }
   .gift-option.active {
     border-color: var(--primary);
     background: rgba(255,45,45,.06);
+    box-shadow: 0 0 0 3px rgba(255,45,45,.12);
   }
-  .gift-option .g-ico { font-size: 28px; margin-bottom: 8px; display: block; }
-  .gift-option .g-title { font-size: 13px; font-weight: 600; }
+  .gift-option .g-img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    background: #f5f5f5;
+    overflow: hidden;
+    position: relative;
+  }
+  .gift-option .g-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 10px;
+    transition: transform .3s;
+  }
+  .gift-option:hover .g-img img { transform: scale(1.04); }
+  .gift-option .g-body { padding: 12px 8px 14px; }
+  .gift-option .g-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .2px;
+    margin-bottom: 2px;
+  }
+  .gift-option .g-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: .3px;
+  }
+  .gift-option .g-check {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(255,45,45,.4);
+    z-index: 2;
+  }
+  .gift-option .g-check svg { width: 14px; height: 14px; }
+  .gift-option.active .g-check { display: flex; }
 
   /* Terms button */
   .terms-trigger {
@@ -1576,16 +1620,28 @@
               <label class="form-label">Brinde desejado <span class="req">*</span></label>
               <div class="gift-grid">
                 <div class="gift-option active" data-brinde="pastilhas">
-                  <span class="g-ico">🛞</span>
-                  <div class="g-title">Pastilhas</div>
+                  <span class="g-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <div class="g-img"><img src="assets/gift-pastilhas.jpg" alt="Pastilhas FullPro HH Series" /></div>
+                  <div class="g-body">
+                    <div class="g-title">Pastilhas HH</div>
+                    <div class="g-sub">Sinterizadas · Liga de cobre</div>
+                  </div>
                 </div>
                 <div class="gift-option" data-brinde="mochila">
-                  <span class="g-ico">🎒</span>
-                  <div class="g-title">Mochila</div>
+                  <span class="g-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <div class="g-img"><img src="assets/gift-mochila.jpg" alt="Mochila FullPro" /></div>
+                  <div class="g-body">
+                    <div class="g-title">Mochila</div>
+                    <div class="g-sub">Impermeável · FullPro</div>
+                  </div>
                 </div>
                 <div class="gift-option" data-brinde="capa">
-                  <span class="g-ico">🧥</span>
-                  <div class="g-title">Capa de chuva</div>
+                  <span class="g-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  <div class="g-img"><img src="assets/gift-capa.jpg" alt="Capa de chuva FullPro" /></div>
+                  <div class="g-body">
+                    <div class="g-title">Capa de chuva</div>
+                    <div class="g-sub">Jaqueta + calça</div>
+                  </div>
                 </div>
               </div>
               <input type="hidden" name="brinde" value="pastilhas" />
