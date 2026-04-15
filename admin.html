@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin · FullPro Media Club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-soft: #111114;
+    --bg-card: #16161a;
+    --bg-elev: #1c1c22;
+    --border: #26262e;
+    --border-hi: #34343e;
+    --text: #f5f5f7;
+    --text-dim: #a1a1aa;
+    --text-muted: #6b6b76;
+    --primary: #ff2d2d;
+    --primary-hi: #ff5252;
+    --accent: #ffcf33;
+    --success: #1fd27a;
+    --warning: #ffaa33;
+    --danger: #ff4d4d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+  }
+  /* Sidebar */
+  .sidebar {
+    background: var(--bg-soft);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    margin-bottom: 24px;
+    text-decoration: none;
+    color: var(--text);
+  }
+  .brand-mark {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--primary), #cc1d1d);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: #fff;
+  }
+  .brand-txt { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1.5px; }
+  .brand-txt small { display:block; font-family:'Inter',sans-serif; font-size: 10px; color: var(--text-muted); letter-spacing: 2px; font-weight: 500; }
+  .nav-item {
+    padding: 12px 14px;
+    color: var(--text-dim);
+    text-decoration: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all .15s;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+  }
+  .nav-item:hover { background: var(--bg-card); color: var(--text); }
+  .nav-item.active { background: rgba(255,45,45,.1); color: var(--primary); }
+  .nav-item .count {
+    margin-left: auto;
+    background: var(--bg-elev);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .nav-item.active .count { background: var(--primary); color: #fff; }
+  .sidebar-foot { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); }
+
+  /* Main */
+  main { padding: 32px; overflow-x: hidden; }
+  .page-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .page-head h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+  .page-head p { color: var(--text-dim); font-size: 14px; margin-top: 6px; }
+
+  /* Stats */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .stat-card .label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .stat-card .value { font-family: 'Bebas Neue', sans-serif; font-size: 32px; line-height: 1; }
+  .stat-card.primary { border-color: rgba(255,45,45,.4); background: linear-gradient(135deg, rgba(255,45,45,.08), var(--bg-card)); }
+  .stat-card .value small { font-size: 14px; color: var(--text-dim); font-family: 'Inter'; margin-left: 4px; }
+
+  /* Filters */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    padding: 8px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 999px;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all .15s;
+    font-family: inherit;
+  }
+  .filter-btn:hover { border-color: var(--border-hi); color: var(--text); }
+  .filter-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+  /* Requests Table */
+  .table-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 14px 16px; font-size: 14px; border-bottom: 1px solid var(--border); }
+  th { background: var(--bg-soft); color: var(--text-dim); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg-elev); }
+  td .sub { font-size: 12px; color: var(--text-muted); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .badge.pending { background: rgba(255,170,51,.15); color: var(--warning); }
+  .badge.approved { background: rgba(31,210,122,.15); color: var(--success); }
+  .badge.rejected { background: rgba(255,77,77,.15); color: var(--danger); }
+  .badge.estudio { background: rgba(255,207,51,.15); color: var(--accent); }
+  .badge.retirada { background: rgba(51,153,255,.15); color: #3399ff; }
+
+  .actions { display: flex; gap: 6px; }
+  .action-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+    color: var(--text);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all .15s;
+    font-family: inherit;
+  }
+  .action-btn:hover { border-color: var(--border-hi); }
+  .action-btn.approve { background: var(--success); border-color: var(--success); color: #001e10; }
+  .action-btn.approve:hover { background: #36df89; }
+  .action-btn.reject { background: transparent; color: var(--danger); border-color: rgba(255,77,77,.3); }
+  .action-btn.reject:hover { background: rgba(255,77,77,.1); }
+  .action-btn.view { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .action-btn.whats {
+    background: #25D366; border-color: #25D366; color: #00180a;
+  }
+  .action-btn.whats:hover { background: #36e577; }
+
+  .empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+  .empty h3 { color: var(--text); margin-bottom: 8px; font-size: 16px; }
+  .empty p { font-size: 13px; }
+
+  /* Calendar management */
+  .cal-admin {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .cal-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+  }
+  .cal-card h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .cal-card .sub { color: var(--text-dim); font-size: 13px; margin-bottom: 20px; }
+
+  .cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .cal-month { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1px; }
+  .cal-nav { display: flex; gap: 6px; }
+  .cal-nav button {
+    width: 34px; height: 34px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .cal-nav button:hover { background: var(--primary); border-color: var(--primary); }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  .cal-dow { text-align: center; font-size: 10px; color: var(--text-muted); padding: 6px 0; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: var(--bg-elev);
+    border: 1px solid transparent;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all .15s;
+    position: relative;
+  }
+  .cal-day:hover:not(.empty):not(.past) { border-color: var(--primary); }
+  .cal-day.empty { background: transparent; cursor: default; }
+  .cal-day.past { opacity: .35; cursor: not-allowed; }
+  .cal-day.approved {
+    background: rgba(31,210,122,.2);
+    border-color: rgba(31,210,122,.5);
+  }
+  .cal-day.blocked {
+    background: rgba(255,45,45,.2);
+    border-color: rgba(255,45,45,.5);
+  }
+  .cal-day.today { font-weight: 700; border-color: var(--border-hi); }
+
+  .list-blocked {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 14px;
+  }
+  .chip {
+    background: rgba(255,45,45,.1);
+    border: 1px solid rgba(255,45,45,.3);
+    color: var(--primary-hi);
+    padding: 4px 10px 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chip button {
+    background: transparent;
+    border: none;
+    color: var(--primary-hi);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0;
+    line-height: 1;
+  }
+
+  .cal-legend { display: flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; font-size: 11px; color: var(--text-dim); }
+  .cal-legend span { display: flex; align-items: center; gap: 6px; }
+  .cal-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .cal-legend .i-approved { background: rgba(31,210,122,.5); }
+  .cal-legend .i-blocked { background: rgba(255,45,45,.5); }
+
+  /* Modal */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal.show { display: flex; }
+  .modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-head {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-head h3 { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 1px; }
+  .modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0 6px;
+  }
+  .modal-body { padding: 24px; }
+  .detail-row { display: grid; grid-template-columns: 120px 1fr; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row .k { color: var(--text-dim); font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+  .detail-row .v { color: var(--text); font-weight: 500; }
+  .modal-foot {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  /* Login */
+  .login {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: radial-gradient(circle at 50% 30%, rgba(255,45,45,.1), transparent 50%);
+  }
+  .login-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+  }
+  .login-card .brand { justify-content: center; margin-bottom: 24px; }
+  .login-card h2 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 1px; margin-bottom: 6px; }
+  .login-card p { color: var(--text-dim); font-size: 14px; margin-bottom: 24px; }
+  .login-input {
+    width: 100%;
+    padding: 14px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    font-size: 15px;
+    margin-bottom: 12px;
+    font-family: inherit;
+  }
+  .login-input:focus { outline: none; border-color: var(--primary); }
+  .login-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .login-btn:hover { background: var(--primary-hi); }
+  .login-err { color: var(--danger); font-size: 13px; margin-top: 12px; min-height: 18px; }
+  .login-hint { color: var(--text-muted); font-size: 11px; margin-top: 16px; }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .cal-admin { grid-template-columns: 1fr; }
+    main { padding: 20px; }
+    th:nth-child(4), td:nth-child(4),
+    th:nth-child(5), td:nth-child(5) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login" class="login">
+  <div class="login-card">
+    <div class="brand" style="margin:0 auto 24px; width:fit-content">
+      <span class="brand-mark">F</span>
+      <span class="brand-txt">FULLPRO<small>MEDIA CLUB ADMIN</small></span>
+    </div>
+    <h2>Painel administrativo</h2>
+    <p>Entre para gerenciar agendamentos.</p>
+    <input type="email" class="login-input" id="loginEmail" placeholder="E-mail" autocomplete="username" style="margin-bottom:10px" />
+    <input type="password" class="login-input" id="loginPw" placeholder="Senha" autocomplete="current-password" />
+    <button class="login-btn" id="loginBtn">Entrar</button>
+    <div class="login-err" id="loginErr"></div>
+    <p class="login-hint">Autenticação Supabase. Crie seu usuário em Supabase → Authentication → Users.</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="shell" style="display:none">
+  <aside class="sidebar">
+    <a href="admin.html" class="brand">
+      <span class="brand-mark">F</span>
+      <span class="brand-txt">FULLPRO<small>MEDIA CLUB</small></span>
+    </a>
+    <button class="nav-item active" data-view="requests">
+      📋 Solicitações <span class="count" id="cntReq">0</span>
+    </button>
+    <button class="nav-item" data-view="calendar">
+      🗓️ Calendário
+    </button>
+    <button class="nav-item" data-view="export">
+      📤 Exportar
+    </button>
+    <div class="sidebar-foot">
+      <a href="index.html" class="nav-item">← Ver landing page</a>
+      <button class="nav-item" id="logoutBtn">🚪 Sair</button>
+    </div>
+  </aside>
+
+  <main>
+    <!-- REQUESTS VIEW -->
+    <div id="view-requests">
+      <div class="page-head">
+        <div>
+          <h1>Solicitações</h1>
+          <p>Gerencie os pedidos recebidos através da landing page.</p>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card primary">
+          <div class="label">Pendentes</div>
+          <div class="value" id="sPending">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Aprovadas</div>
+          <div class="value" id="sApproved">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Este mês</div>
+          <div class="value" id="sMonth">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Total</div>
+          <div class="value" id="sTotal">0</div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all">Todas</button>
+        <button class="filter-btn" data-filter="pending">Pendentes</button>
+        <button class="filter-btn" data-filter="approved">Aprovadas</button>
+        <button class="filter-btn" data-filter="rejected">Rejeitadas</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Solicitante</th>
+              <th>Moto</th>
+              <th>Modalidade</th>
+              <th>Brinde</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="reqTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CALENDAR VIEW -->
+    <div id="view-calendar" style="display:none">
+      <div class="page-head">
+        <div>
+          <h1>Calendário</h1>
+          <p>Bloqueie manualmente dias em que há motos de outras fontes agendadas.</p>
+        </div>
+      </div>
+
+      <div class="cal-admin">
+        <div class="cal-card">
+          <h3>Agenda visual</h3>
+          <p class="sub">Clique em um dia para bloquear/desbloquear. Verde = aprovado via landing. Vermelho = bloqueio manual.</p>
+          <div class="cal-header">
+            <div class="cal-month" id="calMonth">—</div>
+            <div class="cal-nav">
+              <button id="calPrev">‹</button>
+              <button id="calNext">›</button>
+            </div>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div class="cal-legend">
+            <span><i class="i-approved"></i>Aprovado (landing)</span>
+            <span><i class="i-blocked"></i>Bloqueio manual</span>
+          </div>
+        </div>
+
+        <div class="cal-card">
+          <h3>Dias bloqueados manualmente</h3>
+          <p class="sub">Dias marcados como ocupados por outras fontes (não via landing).</p>
+          <div>
+            <input type="date" class="login-input" id="blockDateInput" style="margin-bottom:10px" />
+            <button class="action-btn approve" style="width:100%; padding: 12px" id="addBlockBtn">+ Bloquear data</button>
+          </div>
+          <div class="list-blocked" id="blockedList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPORT VIEW -->
+    <div id="view-export" style="display:none">
+      <div class="page-head">
+        <div>
+          <h1>Exportar dados</h1>
+          <p>Baixe todas as solicitações em CSV ou limpe a base de dados.</p>
+        </div>
+      </div>
+      <div class="cal-card" style="max-width:520px">
+        <h3>Exportar</h3>
+        <p class="sub">Gere um CSV com todas as solicitações recebidas.</p>
+        <button class="action-btn approve" style="width:100%; padding: 12px; margin-bottom: 10px" onclick="exportCSV()">📥 Baixar CSV</button>
+        <button class="action-btn reject" style="width:100%; padding: 12px" onclick="clearData()">🗑️ Limpar todos os dados</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <h3>Detalhes da solicitação</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const sb = supabase.createClient(
+  window.FULLPRO_CONFIG.SUPABASE_URL,
+  window.FULLPRO_CONFIG.SUPABASE_ANON_KEY
+);
+
+/* Estado em memória — alimentado pelo Supabase */
+let REQUESTS = [];
+let BLOCKED  = [];
+
+/* LOGIN (Supabase Auth) */
+async function checkAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('app').style.display = 'grid';
+    await initApp();
+  }
+}
+document.getElementById('loginBtn').onclick = async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw    = document.getElementById('loginPw').value;
+  const errEl = document.getElementById('loginErr');
+  errEl.textContent = '';
+  if (!email || !pw) { errEl.textContent = 'Preencha e-mail e senha.'; return; }
+
+  const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+  if (error) {
+    errEl.textContent = 'Credenciais inválidas.';
+    console.error(error);
+    return;
+  }
+  checkAuth();
+};
+['loginEmail','loginPw'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('loginBtn').click();
+  });
+});
+document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+  await sb.auth.signOut();
+  location.reload();
+});
+
+/* DATA — Supabase */
+async function loadRequests() {
+  const { data, error } = await sb.from('requests')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('loadRequests:', error); return; }
+  REQUESTS = (data || []).map(r => ({
+    id:           r.id,
+    date:         r.date,
+    nome:         r.nome,
+    whatsapp:     r.whatsapp,
+    email:        r.email || '',
+    moto:         r.moto,
+    placa:        r.placa,
+    modalidade:   r.modalidade,
+    endereco:     r.endereco || '',
+    brinde:       r.brinde,
+    obs:          r.obs || '',
+    aceiteTermo:  r.aceite_termo,
+    aceiteImagem: r.aceite_imagem,
+    status:       r.status,
+    createdAt:    r.created_at
+  }));
+}
+async function loadBlocked() {
+  const { data, error } = await sb.from('blocked_dates').select('date').order('date');
+  if (error) { console.error('loadBlocked:', error); return; }
+  BLOCKED = (data || []).map(r => r.date);
+}
+function getRequests() { return REQUESTS; }
+function getBlocked()  { return BLOCKED; }
+
+function fmtDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function prettyDate(iso) {
+  if (!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function prettyDT(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+}
+
+/* VIEW NAVIGATION */
+document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    ['requests','calendar','export'].forEach(v => {
+      document.getElementById('view-' + v).style.display = 'none';
+    });
+    document.getElementById('view-' + btn.dataset.view).style.display = 'block';
+  });
+});
+
+let currentFilter = 'all';
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderRequests();
+  });
+});
+
+/* REQUESTS */
+function renderStats() {
+  const all = getRequests();
+  const pending = all.filter(r => r.status === 'pending');
+  const approved = all.filter(r => r.status === 'approved');
+  const now = new Date();
+  const monthCount = all.filter(r => {
+    const d = new Date(r.createdAt);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  document.getElementById('sPending').textContent = pending.length;
+  document.getElementById('sApproved').textContent = approved.length;
+  document.getElementById('sMonth').textContent = monthCount.length;
+  document.getElementById('sTotal').textContent = all.length;
+  document.getElementById('cntReq').textContent = pending.length;
+}
+
+function renderRequests() {
+  renderStats();
+  const all = getRequests();
+  const filtered = currentFilter === 'all' ? all : all.filter(r => r.status === currentFilter);
+  filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const tbody = document.getElementById('reqTableBody');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">
+      <h3>Nenhuma solicitação encontrada</h3>
+      <p>As solicitações enviadas pela landing page aparecerão aqui.</p>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(r => `
+    <tr>
+      <td>
+        <strong>${prettyDate(r.date)}</strong>
+        <div class="sub">Recebida ${prettyDT(r.createdAt)}</div>
+      </td>
+      <td>
+        <strong>${r.nome}</strong>
+        <div class="sub">${r.whatsapp}</div>
+      </td>
+      <td>
+        ${r.moto}
+        <div class="sub">${r.placa}</div>
+      </td>
+      <td><span class="badge ${r.modalidade}">${r.modalidade === 'estudio' ? 'Estúdio' : 'Retirada'}</span></td>
+      <td>${r.brinde === 'pastilhas' ? '🛞 Pastilhas' : r.brinde === 'mochila' ? '🎒 Mochila' : '🧥 Capa'}</td>
+      <td><span class="badge ${r.status}">${r.status === 'pending' ? 'Pendente' : r.status === 'approved' ? 'Aprovada' : 'Rejeitada'}</span></td>
+      <td>
+        <div class="actions">
+          <button class="action-btn view" onclick="openDetails('${r.id}')">Ver</button>
+          ${r.status === 'pending' ? `
+            <button class="action-btn approve" onclick="updateStatus('${r.id}','approved')">✓</button>
+            <button class="action-btn reject" onclick="updateStatus('${r.id}','rejected')">✕</button>
+          ` : r.status === 'approved' ? `
+            <button class="action-btn reject" onclick="updateStatus('${r.id}','rejected')">Rejeitar</button>
+          ` : `
+            <button class="action-btn approve" onclick="updateStatus('${r.id}','approved')">Aprovar</button>
+          `}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function updateStatus(id, status) {
+  const { error } = await sb.from('requests').update({ status }).eq('id', id);
+  if (error) { alert('Erro ao atualizar: ' + error.message); return; }
+  const r = REQUESTS.find(x => x.id === id);
+  if (r) r.status = status;
+  renderRequests();
+  renderCalendar();
+  closeModal();
+}
+
+function openDetails(id) {
+  const r = getRequests().find(x => x.id === id);
+  if (!r) return;
+  const waLink = 'https://wa.me/55' + r.whatsapp.replace(/\D/g,'') +
+    '?text=' + encodeURIComponent(`Olá ${r.nome.split(' ')[0]}! Aqui é da FullPro Media Club. Vi sua solicitação para o dia ${prettyDate(r.date)} com a ${r.moto}. Podemos confirmar?`);
+
+  document.getElementById('modalBody').innerHTML = `
+    <div class="detail-row"><div class="k">Data</div><div class="v">${prettyDate(r.date)}</div></div>
+    <div class="detail-row"><div class="k">Status</div><div class="v"><span class="badge ${r.status}">${r.status === 'pending' ? 'Pendente' : r.status === 'approved' ? 'Aprovada' : 'Rejeitada'}</span></div></div>
+    <div class="detail-row"><div class="k">Nome</div><div class="v">${r.nome}</div></div>
+    <div class="detail-row"><div class="k">WhatsApp</div><div class="v">${r.whatsapp}</div></div>
+    <div class="detail-row"><div class="k">E-mail</div><div class="v">${r.email || '—'}</div></div>
+    <div class="detail-row"><div class="k">Moto</div><div class="v">${r.moto}</div></div>
+    <div class="detail-row"><div class="k">Placa</div><div class="v">${r.placa}</div></div>
+    <div class="detail-row"><div class="k">Modalidade</div><div class="v">${r.modalidade === 'estudio' ? 'Leva até FullPro' : 'Retirada no endereço'}</div></div>
+    ${r.modalidade === 'retirada' ? `<div class="detail-row"><div class="k">Endereço</div><div class="v">${r.endereco || '—'}</div></div>` : ''}
+    <div class="detail-row"><div class="k">Brinde</div><div class="v">${r.brinde === 'pastilhas' ? '🛞 Jogo de pastilhas' : r.brinde === 'mochila' ? '🎒 Mochila backpack' : '🧥 Capa de chuva'}</div></div>
+    <div class="detail-row"><div class="k">Observações</div><div class="v">${r.obs || '—'}</div></div>
+    <div class="detail-row"><div class="k">Aceite termo</div><div class="v">${r.aceiteTermo ? '✓ Sim' : '✕ Não'}</div></div>
+    <div class="detail-row"><div class="k">Uso imagem</div><div class="v">${r.aceiteImagem ? '✓ Sim' : '✕ Não'}</div></div>
+    <div class="detail-row"><div class="k">Criada em</div><div class="v">${prettyDT(r.createdAt)}</div></div>
+  `;
+
+  document.getElementById('modalFoot').innerHTML = `
+    <a href="${waLink}" target="_blank" class="action-btn whats">💬 Abrir WhatsApp</a>
+    ${r.status === 'pending' ? `
+      <button class="action-btn reject" onclick="updateStatus('${r.id}','rejected')">Rejeitar</button>
+      <button class="action-btn approve" onclick="updateStatus('${r.id}','approved')">Aprovar</button>
+    ` : r.status === 'approved' ? `
+      <button class="action-btn reject" onclick="updateStatus('${r.id}','rejected')">Rejeitar</button>
+    ` : `
+      <button class="action-btn approve" onclick="updateStatus('${r.id}','approved')">Aprovar</button>
+    `}
+  `;
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('show');
+}
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') closeModal();
+});
+
+/* CALENDAR ADMIN */
+let cMonth = new Date(); cMonth.setDate(1);
+function renderCalendar() {
+  const grid = document.getElementById('calGrid');
+  if (!grid) return;
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('calMonth').textContent = `${months[cMonth.getMonth()]} ${cMonth.getFullYear()}`;
+  grid.innerHTML = '';
+  ['D','S','T','Q','Q','S','S'].forEach(d => {
+    const el = document.createElement('div'); el.className = 'cal-dow'; el.textContent = d;
+    grid.appendChild(el);
+  });
+  const firstDay = new Date(cMonth.getFullYear(), cMonth.getMonth(), 1).getDay();
+  const daysInMonth = new Date(cMonth.getFullYear(), cMonth.getMonth()+1, 0).getDate();
+  for (let i = 0; i < firstDay; i++) {
+    const el = document.createElement('div'); el.className = 'cal-day empty';
+    grid.appendChild(el);
+  }
+  const today = new Date(); today.setHours(0,0,0,0);
+  const approved = new Set(getRequests().filter(r => r.status === 'approved').map(r => r.date));
+  const blocked = new Set(getBlocked());
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const el = document.createElement('div');
+    const date = new Date(cMonth.getFullYear(), cMonth.getMonth(), d);
+    const iso = fmtDate(date);
+    el.className = 'cal-day';
+    el.textContent = d;
+    if (date.getTime() === today.getTime()) el.classList.add('today');
+    if (date < today) el.classList.add('past');
+    if (approved.has(iso)) el.classList.add('approved');
+    if (blocked.has(iso)) el.classList.add('blocked');
+
+    if (!el.classList.contains('past') && !approved.has(iso)) {
+      el.addEventListener('click', () => toggleBlock(iso));
+    }
+    grid.appendChild(el);
+  }
+
+  // Blocked list
+  const bList = document.getElementById('blockedList');
+  const sorted = getBlocked().sort();
+  if (sorted.length === 0) {
+    bList.innerHTML = '<p style="font-size:13px;color:var(--text-muted);margin-top:10px">Nenhum dia bloqueado manualmente.</p>';
+  } else {
+    bList.innerHTML = sorted.map(d => `
+      <span class="chip">${prettyDate(d)} <button onclick="toggleBlock('${d}')">×</button></span>
+    `).join('');
+  }
+}
+
+async function toggleBlock(iso) {
+  const already = BLOCKED.includes(iso);
+  if (already) {
+    const { error } = await sb.from('blocked_dates').delete().eq('date', iso);
+    if (error) { alert('Erro ao desbloquear: ' + error.message); return; }
+    BLOCKED = BLOCKED.filter(d => d !== iso);
+  } else {
+    const { error } = await sb.from('blocked_dates').insert({ date: iso });
+    if (error) { alert('Erro ao bloquear: ' + error.message); return; }
+    BLOCKED.push(iso);
+  }
+  renderCalendar();
+}
+
+document.getElementById('calPrev').onclick = () => { cMonth.setMonth(cMonth.getMonth()-1); renderCalendar(); };
+document.getElementById('calNext').onclick = () => { cMonth.setMonth(cMonth.getMonth()+1); renderCalendar(); };
+document.getElementById('addBlockBtn').onclick = () => {
+  const val = document.getElementById('blockDateInput').value;
+  if (val) { toggleBlock(val); document.getElementById('blockDateInput').value = ''; }
+};
+
+/* EXPORT */
+function exportCSV() {
+  const all = getRequests();
+  if (all.length === 0) { alert('Nenhuma solicitação para exportar.'); return; }
+  const header = ['ID','Data agendada','Nome','WhatsApp','Email','Moto','Placa','Modalidade','Endereço','Brinde','Observações','Status','Aceite termo','Aceite imagem','Criado em'];
+  const rows = all.map(r => [r.id, r.date, r.nome, r.whatsapp, r.email, r.moto, r.placa, r.modalidade, r.endereco, r.brinde, r.obs, r.status, r.aceiteTermo, r.aceiteImagem, r.createdAt]);
+  const csv = [header, ...rows].map(row => row.map(c => `"${String(c ?? '').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff' + csv], {type: 'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `fullpro-mediaclub-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+async function clearData() {
+  const typed = prompt('Isso apagará TODAS as solicitações e bloqueios. Ação irreversível.\n\nDigite APAGAR para confirmar:');
+  if (typed !== 'APAGAR') return;
+  const r1 = await sb.from('requests').delete().not('id', 'is', null);
+  const r2 = await sb.from('blocked_dates').delete().not('date', 'is', null);
+  if (r1.error || r2.error) {
+    alert('Erro ao limpar: ' + (r1.error?.message || r2.error?.message));
+    return;
+  }
+  REQUESTS = []; BLOCKED = [];
+  renderRequests();
+  renderCalendar();
+  alert('Dados limpos.');
+}
+
+/* INIT */
+async function initApp() {
+  await Promise.all([loadRequests(), loadBlocked()]);
+  renderRequests();
+  renderCalendar();
+}
+
+checkAuth();
+</script>
+</body>
+</html>
