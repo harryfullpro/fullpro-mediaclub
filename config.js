@@ -1,12 +1,11 @@
 /* =========================================================
  * FullPro Media Club · Supabase config
- * Substitua pelos valores do SEU projeto em:
- *   Supabase → Project Settings → API
+ * Valores do Project Settings → API Keys (publishable key).
  *
- * A "anon key" é PÚBLICA por design (protegida por RLS).
- * Pode commitar esse arquivo sem medo.
+ * A publishable key é PÚBLICA por design (protegida por RLS
+ * no schema.sql). Pode commitar esse arquivo sem medo.
  * ========================================================= */
 window.FULLPRO_CONFIG = {
-  SUPABASE_URL:      'https://SEU-PROJETO.supabase.co',
-  SUPABASE_ANON_KEY: 'eyJ...COLE_AQUI_SUA_ANON_KEY'
+  SUPABASE_URL:      'https://xgaaocnuqgcwttrljqep.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_CvGDWe2yLTBDTBxdoGV7IQ_WUGCGa2o'
 };
