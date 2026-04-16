@@ -469,6 +469,48 @@
   .wa-opt .wa-title { font-weight: 600; }
   .wa-opt .wa-preview { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
 
+  /* Templates module */
+  .tpl-list { display: flex; flex-direction: column; gap: 12px; }
+  .tpl-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px; transition: border-color .15s;
+  }
+  .tpl-card:hover { border-color: var(--border-hi); }
+  .tpl-head {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+  }
+  .tpl-head h4 { font-size: 14px; font-weight: 700; }
+  .tpl-actions { display: flex; gap: 6px; }
+  .tpl-body {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 14px; font-size: 12px; color: var(--text-dim); line-height: 1.65;
+    white-space: pre-wrap; word-break: break-word; max-height: 160px; overflow-y: auto;
+  }
+  .tpl-vars {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;
+  }
+  .tpl-var {
+    background: rgba(255,45,45,.08); border: 1px solid rgba(255,45,45,.2); color: var(--primary-hi);
+    padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; cursor: pointer;
+    font-family: monospace;
+  }
+  .tpl-var:hover { background: rgba(255,45,45,.15); }
+  .tpl-edit-area {
+    width: 100%; min-height: 140px; padding: 12px; background: var(--bg-elev);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+    font-size: 13px; font-family: inherit; line-height: 1.6; resize: vertical;
+  }
+  .tpl-edit-area:focus { outline: none; border-color: var(--primary); }
+  .tpl-name-input {
+    width: 100%; padding: 10px 12px; background: var(--bg-elev); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit;
+    margin-bottom: 8px;
+  }
+  .tpl-name-input:focus { outline: none; border-color: var(--primary); }
+  .tpl-hint {
+    font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.5;
+  }
+
   @media (max-width: 900px) {
     .shell { grid-template-columns: 1fr; }
     .sidebar { display: none; }
@@ -512,6 +554,9 @@
     </button>
     <button class="nav-item" data-view="calendar">
       🗓️ Calendário
+    </button>
+    <button class="nav-item" data-view="templates">
+      💬 Templates WhatsApp
     </button>
     <button class="nav-item" data-view="export">
       📤 Exportar
@@ -636,6 +681,57 @@
               <div class="list-blocked" id="blockedList"></div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEMPLATES VIEW -->
+    <div id="view-templates" style="display:none">
+      <div class="page-head">
+        <div>
+          <h1>Templates WhatsApp</h1>
+          <p>Gerencie as mensagens pré-definidas. Use variáveis para personalizar automaticamente.</p>
+        </div>
+        <button class="action-btn approve" style="padding:12px 20px; font-size:14px" onclick="openTplEditor()">+ Novo template</button>
+      </div>
+      <div class="tpl-vars" style="margin-bottom:18px">
+        <span style="font-size:11px; color:var(--text-muted); margin-right:4px">Variáveis disponíveis:</span>
+        <span class="tpl-var" onclick="copyVar('{nome}')" title="Primeiro nome do cliente">{nome}</span>
+        <span class="tpl-var" onclick="copyVar('{data}')" title="Data do agendamento">{data}</span>
+        <span class="tpl-var" onclick="copyVar('{moto}')" title="Modelo da moto">{moto}</span>
+        <span class="tpl-var" onclick="copyVar('{brinde}')" title="Brinde escolhido">{brinde}</span>
+        <span class="tpl-var" onclick="copyVar('{operador}')" title="Nome do operador">{operador}</span>
+        <span class="tpl-var" onclick="copyVar('{placa}')" title="Placa da moto">{placa}</span>
+      </div>
+      <div class="tpl-list" id="tplList"></div>
+    </div>
+
+    <!-- TPL EDITOR MODAL -->
+    <div class="modal" id="tplEditorModal">
+      <div class="modal-content" style="max-width:620px">
+        <div class="modal-head">
+          <h3 id="tplEditorTitle">Novo template</h3>
+          <button class="modal-close" onclick="closeTplEditor()">×</button>
+        </div>
+        <div class="modal-body">
+          <label style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.6px; font-weight:600; display:block; margin-bottom:6px">Nome do template</label>
+          <input type="text" class="tpl-name-input" id="tplEditName" placeholder="Ex: Confirmação de agendamento" />
+          <label style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.6px; font-weight:600; display:block; margin-bottom:6px">Mensagem</label>
+          <textarea class="tpl-edit-area" id="tplEditBody" placeholder="Digite a mensagem aqui..."></textarea>
+          <div class="tpl-vars" style="margin-top:8px">
+            <span style="font-size:10px; color:var(--text-muted); margin-right:4px">Inserir:</span>
+            <span class="tpl-var" onclick="insertVar('{nome}')">{nome}</span>
+            <span class="tpl-var" onclick="insertVar('{data}')">{data}</span>
+            <span class="tpl-var" onclick="insertVar('{moto}')">{moto}</span>
+            <span class="tpl-var" onclick="insertVar('{brinde}')">{brinde}</span>
+            <span class="tpl-var" onclick="insertVar('{operador}')">{operador}</span>
+            <span class="tpl-var" onclick="insertVar('{placa}')">{placa}</span>
+          </div>
+          <p class="tpl-hint">As variáveis entre chaves são substituídas automaticamente pelos dados do cliente ao enviar.</p>
+        </div>
+        <div class="modal-foot">
+          <button class="action-btn" onclick="closeTplEditor()">Cancelar</button>
+          <button class="action-btn approve" onclick="saveTpl()">Salvar template</button>
         </div>
       </div>
     </div>
@@ -848,7 +944,7 @@ document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['requests','calendar','export'].forEach(v => {
+    ['requests','calendar','templates','export'].forEach(v => {
       document.getElementById('view-' + v).style.display = 'none';
     });
     document.getElementById('view-' + btn.dataset.view).style.display = 'block';
@@ -1172,31 +1268,184 @@ async function submitBooking() {
   alert('Agendamento criado com sucesso!');
 }
 
-/* WHATSAPP TEMPLATES */
-function getWaTemplates(r) {
+/* ==========================================
+   WHATSAPP TEMPLATES — MANAGED MODULE
+   ========================================== */
+
+const DEFAULT_TEMPLATES = [
+  {
+    name: 'Confirmar agendamento',
+    body: 'Olá, {nome}! Tudo bem? Aqui é {operador}, da FullPro Media Club. 🏍️\n\nRecebemos sua solicitação para participar do nosso programa de conteúdo no dia *{data}* com a *{moto}*.\n\nGostaria de confirmar sua participação! O brinde escolhido foi *{brinde}*.\n\nPodemos confirmar essa data? Qualquer dúvida estou à disposição.\n\nAbraço,\n{operador} — FullPro Media Club'
+  },
+  {
+    name: 'Lembrete (véspera)',
+    body: 'Olá, {nome}! Aqui é {operador}, da FullPro. 👋\n\nPassando para lembrar que amanhã é o dia da sua participação no Media Club com a *{moto}*!\n\n📍 Nosso endereço: Rua Florianópolis, 2486 — Itaum, Joinville/SC. Horário: a partir das *8h*.\n\nSeu brinde *{brinde}* já está separado!\n\nQualquer imprevisto, me avise com antecedência.\n\nAté amanhã! 🤝\n{operador} — FullPro'
+  },
+  {
+    name: 'Agradecimento pós-gravação',
+    body: 'Olá, {nome}! Aqui é {operador}, da FullPro. 😊\n\nMuito obrigado por participar do Media Club! Foi um prazer trabalhar com a sua *{moto}* no estúdio hoje.\n\nEm breve compartilharemos o conteúdo produzido em nossas redes (@fullprobr). Fique de olho!\n\nEsperamos que tenha curtido a experiência e o brinde. Se puder, nos avalie no Google — ajuda muito! ⭐\n\nhttps://g.page/r/fullpro/review\n\nGrande abraço,\n{operador} — FullPro Media Club'
+  },
+  {
+    name: 'Reagendar / data indisponível',
+    body: 'Olá, {nome}! Aqui é {operador}, da FullPro Media Club.\n\nInfelizmente a data *{data}* que você escolheu não está mais disponível para gravação.\n\nMas gostaríamos muito de manter sua participação! Temos disponibilidade nas próximas semanas. Podemos encontrar uma nova data juntos?\n\nAguardo seu retorno! 🙏\n{operador} — FullPro'
+  }
+];
+
+function loadTemplates() {
+  const stored = localStorage.getItem('fp_wa_templates');
+  if (stored) {
+    try { return JSON.parse(stored); } catch(e) { /* fall through */ }
+  }
+  // First run → seed with defaults
+  localStorage.setItem('fp_wa_templates', JSON.stringify(DEFAULT_TEMPLATES));
+  return DEFAULT_TEMPLATES.slice();
+}
+
+function saveTemplates(tpls) {
+  localStorage.setItem('fp_wa_templates', JSON.stringify(tpls));
+}
+
+function extractVars(body) {
+  const matches = body.match(/\{[^}]+\}/g);
+  return matches ? [...new Set(matches)] : [];
+}
+
+function renderTemplates() {
+  const tpls = loadTemplates();
+  const list = document.getElementById('tplList');
+
+  if (tpls.length === 0) {
+    list.innerHTML = `<div class="empty">
+      <h3>Nenhum template</h3>
+      <p>Crie seu primeiro template clicando no botão acima.</p>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = tpls.map((t, i) => {
+    const vars = extractVars(t.body);
+    const preview = t.body.replace(/\n/g, '<br>');
+    return `<div class="tpl-card">
+      <div class="tpl-head">
+        <h4>${escHtml(t.name)}</h4>
+        <div class="tpl-actions">
+          <button class="action-btn view" onclick="editTpl(${i})" title="Editar">✏️ Editar</button>
+          <button class="action-btn reject" onclick="deleteTpl(${i})" title="Excluir">🗑️</button>
+        </div>
+      </div>
+      <div class="tpl-body">${escHtml(t.body)}</div>
+      ${vars.length ? `<div class="tpl-vars">${vars.map(v => `<span class="tpl-var" onclick="copyVar('${v}')">${v}</span>`).join('')}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* Template Editor */
+let editingTplIndex = -1; // -1 = new
+
+function openTplEditor(index) {
+  editingTplIndex = typeof index === 'number' ? index : -1;
+  const modal = document.getElementById('tplEditorModal');
+  const titleEl = document.getElementById('tplEditorTitle');
+  const nameInput = document.getElementById('tplEditName');
+  const bodyInput = document.getElementById('tplEditBody');
+
+  if (editingTplIndex >= 0) {
+    const tpls = loadTemplates();
+    const t = tpls[editingTplIndex];
+    titleEl.textContent = 'Editar template';
+    nameInput.value = t.name;
+    bodyInput.value = t.body;
+  } else {
+    titleEl.textContent = 'Novo template';
+    nameInput.value = '';
+    bodyInput.value = '';
+  }
+  modal.classList.add('show');
+  nameInput.focus();
+}
+
+function closeTplEditor() {
+  document.getElementById('tplEditorModal').classList.remove('show');
+  editingTplIndex = -1;
+}
+document.getElementById('tplEditorModal').addEventListener('click', e => {
+  if (e.target.id === 'tplEditorModal') closeTplEditor();
+});
+
+function saveTpl() {
+  const name = document.getElementById('tplEditName').value.trim();
+  const body = document.getElementById('tplEditBody').value.trim();
+
+  if (!name) { alert('Informe o nome do template.'); return; }
+  if (!body) { alert('Informe a mensagem do template.'); return; }
+
+  const tpls = loadTemplates();
+  if (editingTplIndex >= 0) {
+    tpls[editingTplIndex] = { name, body };
+  } else {
+    tpls.push({ name, body });
+  }
+  saveTemplates(tpls);
+  closeTplEditor();
+  renderTemplates();
+}
+
+function editTpl(index) {
+  openTplEditor(index);
+}
+
+function deleteTpl(index) {
+  const tpls = loadTemplates();
+  const name = tpls[index]?.name || 'Template';
+  if (!confirm(`Excluir "${name}"?\nEssa ação não pode ser desfeita.`)) return;
+  tpls.splice(index, 1);
+  saveTemplates(tpls);
+  renderTemplates();
+}
+
+function insertVar(v) {
+  const ta = document.getElementById('tplEditBody');
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  const text = ta.value;
+  ta.value = text.substring(0, start) + v + text.substring(end);
+  ta.selectionStart = ta.selectionEnd = start + v.length;
+  ta.focus();
+}
+
+function copyVar(v) {
+  navigator.clipboard.writeText(v).then(() => {
+    // Brief visual feedback — not critical if it fails
+  }).catch(() => {});
+}
+
+/* Resolve template variables for a specific request */
+function resolveTemplate(body, r) {
   const op = getOperator();
   const first = r.nome.split(' ')[0];
   const dateStr = prettyDate(r.date);
   const brindeName = r.brinde === 'pastilhas' ? 'Jogo de Pastilhas HH' : r.brinde === 'mochila' ? 'Mochila FullPro' : 'Capa de Chuva FullPro';
 
-  return [
-    {
-      title: 'Confirmar agendamento',
-      msg: `Olá, ${first}! Tudo bem? Aqui é ${op}, da FullPro Media Club. 🏍️\n\nRecebemos sua solicitação para participar do nosso programa de conteúdo no dia *${dateStr}* com a *${r.moto}*.\n\nGostaria de confirmar sua participação! O brinde escolhido foi *${brindeName}*.\n\nPodemos confirmar essa data? Qualquer dúvida estou à disposição.\n\nAbraço,\n${op} — FullPro Media Club`
-    },
-    {
-      title: 'Lembrete (véspera)',
-      msg: `Olá, ${first}! Aqui é ${op}, da FullPro. 👋\n\nPassando para lembrar que amanhã é o dia da sua participação no Media Club com a *${r.moto}*!\n\n${r.modalidade === 'estudio' ? '📍 Nosso endereço: Rua Florianópolis, 2486 — Itaum, Joinville/SC. Horário: a partir das *8h*.' : '🚗 Nossa equipe fará a retirada no seu endereço amanhã às *8h*. Por favor, tenha a moto e o CRLV em mãos.'}\n\nSeu brinde *${brindeName}* já está separado!\n\nQualquer imprevisto, me avise com antecedência.\n\nAté amanhã! 🤝\n${op} — FullPro`
-    },
-    {
-      title: 'Agradecimento pós-gravação',
-      msg: `Olá, ${first}! Aqui é ${op}, da FullPro. 😊\n\nMuito obrigado por participar do Media Club! Foi um prazer trabalhar com a sua *${r.moto}* no estúdio hoje.\n\nEm breve compartilharemos o conteúdo produzido em nossas redes (@fullprobr). Fique de olho!\n\nEsperamos que tenha curtido a experiência e o brinde. Se puder, nos avalie no Google — ajuda muito! ⭐\n\nhttps://g.page/r/fullpro/review\n\nGrande abraço,\n${op} — FullPro Media Club`
-    },
-    {
-      title: 'Reagendar / data indisponível',
-      msg: `Olá, ${first}! Aqui é ${op}, da FullPro Media Club.\n\nInfelizmente a data *${dateStr}* que você escolheu não está mais disponível para gravação.\n\nMas gostaríamos muito de manter sua participação! Temos disponibilidade nas próximas semanas. Podemos encontrar uma nova data juntos?\n\nAguardo seu retorno! 🙏\n${op} — FullPro`
-    }
-  ];
+  return body
+    .replace(/\{nome\}/g, first)
+    .replace(/\{data\}/g, dateStr)
+    .replace(/\{moto\}/g, r.moto)
+    .replace(/\{brinde\}/g, brindeName)
+    .replace(/\{operador\}/g, op)
+    .replace(/\{placa\}/g, r.placa || '');
+}
+
+/* Generate WhatsApp templates for a request — reads from managed store */
+function getWaTemplates(r) {
+  const tpls = loadTemplates();
+  return tpls.map(t => ({
+    title: t.name,
+    msg: resolveTemplate(t.body, r)
+  }));
 }
 
 function openWhatsApp(id) {
@@ -1232,6 +1481,7 @@ async function initApp() {
   await Promise.all([loadRequests(), loadBlocked()]);
   renderRequests();
   renderCalendar();
+  renderTemplates();
 }
 
 checkAuth();
