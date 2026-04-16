@@ -2139,6 +2139,15 @@ async function saveCiForm(prefix, rid) {
   else store[rid] = { ...existing, ...payload };
   alert((prefix === 'ci' ? 'Check-in' : 'Check-out') + ' salvo com sucesso!');
   renderCiView();
+
+  // Auto-update linked project status
+  const newStatus = prefix === 'ci' ? 'producao' : 'edicao';
+  const linkedProject = PROJECTS.find(p => p.request_id === rid);
+  if (linkedProject && linkedProject.status !== 'concluido') {
+    await sb.from('projects').update({ status: newStatus }).eq('id', linkedProject.id);
+    linkedProject.status = newStatus;
+    renderProjects();
+  }
 }
 
 /* ==========================================
