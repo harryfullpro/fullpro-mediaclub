@@ -164,7 +164,8 @@
   }
   .shell.collapsed .nav-item { padding: 12px; justify-content: center; }
   /* Hover overlay mode: sidebar overlays content instead of pushing it */
-  .shell.hover-mode { grid-template-columns: 68px 1fr; }
+  .shell.hover-mode { display: block; }
+  .shell.hover-mode main { margin-left: 68px; min-height: 100vh; }
   .shell.hover-mode .sidebar {
     position: fixed; top: 0; left: 0; bottom: 0;
     width: 68px; z-index: 90; padding: 24px 10px;
