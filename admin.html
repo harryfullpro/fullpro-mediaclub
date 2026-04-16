@@ -2140,14 +2140,14 @@ async function saveCiForm(prefix, rid) {
   alert((prefix === 'ci' ? 'Check-in' : 'Check-out') + ' salvo com sucesso!');
   renderCiView();
 
-  // Auto-update linked project status
+  // Auto-update ALL linked project statuses
   const newStatus = prefix === 'ci' ? 'producao' : 'edicao';
-  const linkedProject = PROJECTS.find(p => p.request_id === rid);
-  if (linkedProject && linkedProject.status !== 'concluido') {
-    await sb.from('projects').update({ status: newStatus }).eq('id', linkedProject.id);
-    linkedProject.status = newStatus;
-    renderProjects();
+  const linkedProjects = PROJECTS.filter(p => p.request_id === rid && p.status !== 'concluido');
+  for (const lp of linkedProjects) {
+    await sb.from('projects').update({ status: newStatus }).eq('id', lp.id);
+    lp.status = newStatus;
   }
+  if (linkedProjects.length) renderProjects();
 }
 
 /* ==========================================
