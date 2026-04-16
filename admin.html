@@ -577,6 +577,43 @@
   .book-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .book-row > div { display: flex; flex-direction: column; gap: 6px; }
 
+  /* Project destination chips */
+  .proj-dest-chip {
+    display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px;
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px;
+    font-size: 12px; color: var(--text-dim); cursor: pointer; transition: all .15s;
+  }
+  .proj-dest-chip input { display: none; }
+  .proj-dest-chip:has(input:checked) { background: rgba(255,45,45,.15); border-color: var(--primary); color: var(--text); }
+  .proj-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px; margin-bottom: 12px; transition: border-color .15s;
+  }
+  .proj-card:hover { border-color: var(--border-hi); }
+  .proj-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .proj-card-head h4 { font-size: 15px; font-weight: 600; }
+  .proj-dest-tag {
+    display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: .5px; margin-right: 4px;
+    background: var(--bg-elev); color: var(--text-dim); border: 1px solid var(--border);
+  }
+  .proj-dest-tag.youtube { background: rgba(255,0,0,.15); color: #ff4444; border-color: rgba(255,0,0,.3); }
+  .proj-dest-tag.tiktok { background: rgba(0,242,234,.12); color: #00f2ea; border-color: rgba(0,242,234,.3); }
+  .proj-dest-tag.instagram { background: rgba(225,48,108,.15); color: #e1306c; border-color: rgba(225,48,108,.3); }
+  .proj-dest-tag.tutorial { background: rgba(31,210,122,.15); color: var(--success); border-color: rgba(31,210,122,.3); }
+  .proj-link-item {
+    display: flex; align-items: center; gap: 6px; padding: 6px 10px;
+    background: var(--bg-elev); border-radius: 8px; font-size: 12px; word-break: break-all;
+  }
+  .proj-link-item a { color: var(--primary); text-decoration: none; flex: 1; }
+  .proj-link-item a:hover { text-decoration: underline; }
+  .proj-link-rm { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 0 4px; }
+  .proj-link-rm:hover { color: var(--danger); }
+  .proj-meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin: 10px 0; }
+  .proj-meta-item { font-size: 12px; }
+  .proj-meta-item .k { color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: .5px; }
+  .proj-meta-item .v { color: var(--text); margin-top: 2px; }
+
   /* WhatsApp dropdown */
   .wa-options { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
   .wa-opt {
@@ -683,6 +720,11 @@
     <button class="nav-item" data-view="checkin">
       <svg viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/><path d="M16 3l1.5 1.5M8 3L6.5 4.5"/></svg>
       Check-in / Check-out
+    </button>
+
+    <button class="nav-item" data-view="projects">
+      <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+      Projetos
     </button>
 
     <div class="nav-section">Configurações</div>
@@ -929,6 +971,129 @@
         <button class="action-btn approve" style="width:100%; padding: 12px; margin-bottom: 10px" onclick="exportCSV()"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Baixar CSV</button>
         <button class="action-btn reject" style="width:100%; padding: 12px" onclick="clearData()"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg> Limpar todos os dados</button>
       </div>
+    </div>
+
+    <!-- PROJECTS VIEW -->
+    <div id="view-projects" style="display:none">
+      <div class="page-head">
+        <div>
+          <h1>Projetos</h1>
+          <p>Planeje roteiros, destinos e referências para cada produção.</p>
+        </div>
+        <button class="action-btn approve" style="padding:12px 20px; font-size:14px" onclick="openProjectForm()">+ Novo projeto</button>
+      </div>
+
+      <!-- Project form (hidden by default) -->
+      <div id="projectFormWrap" style="display:none">
+        <div class="cal-card" style="margin-bottom:16px">
+          <h3 id="projFormTitle">Novo projeto</h3>
+          <p class="sub">Preencha as informações do projeto de produção.</p>
+          <input type="hidden" id="projEditId" value=""/>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px">
+
+            <div class="block-field">
+              <label>Vincular agendamento</label>
+              <select class="login-input" id="projBooking" style="margin:0" onchange="onProjBookingChange()">
+                <option value="">Sem vínculo (projeto avulso)</option>
+              </select>
+            </div>
+
+            <div class="block-field">
+              <label>Nome do projeto</label>
+              <input type="text" class="login-input" id="projTitle" style="margin:0" placeholder="Ex: Review Harley 883"/>
+            </div>
+
+            <div class="block-field" id="projMotoFieldWrap" style="display:none">
+              <label>Moto / Produto (manual)</label>
+              <input type="text" class="login-input" id="projMoto" style="margin:0" placeholder="Ex: Ducati Panigale V4"/>
+            </div>
+
+            <div class="block-field" id="projDateFieldWrap" style="display:none">
+              <label>Data de produção</label>
+              <input type="date" class="login-input" id="projDate" style="margin:0"/>
+            </div>
+
+            <div class="block-field">
+              <label>Destino do conteúdo</label>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+                <label class="proj-dest-chip"><input type="checkbox" id="projDestYT" value="youtube"/> <span>YouTube</span></label>
+                <label class="proj-dest-chip"><input type="checkbox" id="projDestTK" value="tiktok"/> <span>TikTok</span></label>
+                <label class="proj-dest-chip"><input type="checkbox" id="projDestIG" value="instagram"/> <span>Instagram</span></label>
+                <label class="proj-dest-chip"><input type="checkbox" id="projDestTut" value="tutorial"/> <span>Tutorial interno</span></label>
+              </div>
+            </div>
+
+            <div class="block-field">
+              <label>Status</label>
+              <select class="login-input" id="projStatus" style="margin:0">
+                <option value="planejamento">Planejamento</option>
+                <option value="producao">Em produção</option>
+                <option value="edicao">Edição</option>
+                <option value="concluido">Concluído</option>
+              </select>
+            </div>
+
+            <div class="block-field" style="grid-column:1/-1">
+              <label>Roteiro do vídeo</label>
+              <div style="display:flex;gap:8px;align-items:flex-start">
+                <textarea class="checkin-textarea" id="projScript" style="min-height:100px;flex:1" placeholder="Cole o roteiro ou descreva as cenas/tópicos..."></textarea>
+                <div>
+                  <label class="action-btn view" style="padding:8px 12px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:4px" for="projScriptFile">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Upload
+                  </label>
+                  <input type="file" id="projScriptFile" accept=".txt,.pdf,.doc,.docx" hidden onchange="handleScriptUpload(this)"/>
+                  <div id="projScriptFileName" style="font-size:10px;color:var(--text-muted);margin-top:4px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="block-field" style="grid-column:1/-1">
+              <label>Links de referência</label>
+              <div id="projLinksWrap">
+                <div style="display:flex;gap:6px;margin-bottom:6px">
+                  <input type="text" class="login-input" style="margin:0;flex:1" placeholder="https://youtube.com/watch?v=..." onkeydown="if(event.key==='Enter'){addProjLink(this.value);this.value='';event.preventDefault();}"/>
+                  <button class="action-btn view" style="padding:8px 12px;white-space:nowrap" onclick="addProjLink(this.previousElementSibling.value);this.previousElementSibling.value='';">+ Adicionar</button>
+                </div>
+                <div id="projLinksList" style="display:flex;flex-direction:column;gap:4px"></div>
+              </div>
+            </div>
+
+            <div class="block-field" style="grid-column:1/-1">
+              <label>Observações do projeto</label>
+              <textarea class="checkin-textarea" id="projObs" style="min-height:80px" placeholder="Informações adicionais, anotações, detalhes técnicos..."></textarea>
+            </div>
+
+            <div class="block-field" style="grid-column:1/-1">
+              <label>Imagens / Fotos de referência</label>
+              <div class="photo-grid" id="projPhotoGrid"></div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <label class="action-btn view" style="padding:8px 14px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px" for="projPhotoFile">
+                  <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                  Galeria
+                </label>
+                <input type="file" id="projPhotoFile" accept="image/*" multiple hidden onchange="addProjPhotos(this, false)"/>
+                <label class="action-btn approve" style="padding:8px 14px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px" for="projCameraFile">
+                  <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  Tirar foto
+                </label>
+                <input type="file" id="projCameraFile" accept="image/*" capture="environment" hidden onchange="addProjPhotos(this, true)"/>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:16px">
+            <button class="action-btn approve" style="flex:1;padding:12px" onclick="saveProject()">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Salvar projeto
+            </button>
+            <button class="action-btn reject" style="padding:12px 20px" onclick="closeProjectForm()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Project list -->
+      <div id="projectsList"></div>
     </div>
 
     <!-- USERS VIEW -->
@@ -1381,7 +1546,7 @@ document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['requests','calendar','checkin','templates','export','users','profile'].forEach(v => {
+    ['requests','calendar','checkin','projects','templates','export','users','profile'].forEach(v => {
       document.getElementById('view-' + v).style.display = 'none';
     });
     document.getElementById('view-' + btn.dataset.view).style.display = 'block';
@@ -1951,6 +2116,257 @@ async function saveCiForm(prefix, rid) {
   renderCiView();
 }
 
+/* ==========================================
+   PROJECTS MODULE
+   ========================================== */
+let PROJECTS = [];
+let projLinks = [];
+let projPhotos = [];
+
+async function loadProjects() {
+  const { data, error } = await sb.from('projects').select('*').order('created_at', { ascending: false });
+  if (error) { console.warn('loadProjects:', error.message); return; }
+  PROJECTS = data || [];
+}
+
+function renderProjects() {
+  const el = document.getElementById('projectsList');
+  if (!el) return;
+  if (PROJECTS.length === 0) {
+    el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum projeto criado ainda. Clique em "+ Novo projeto" para começar.</p></div>';
+    return;
+  }
+  const statusMap = { planejamento: 'Planejamento', producao: 'Em produção', edicao: 'Edição', concluido: 'Concluído' };
+  const statusBadge = { planejamento: 'pending', producao: 'approved', edicao: 'pending', concluido: 'approved' };
+  const destNames = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram', tutorial: 'Tutorial' };
+
+  el.innerHTML = PROJECTS.map(p => {
+    const dests = (p.destinations || []).map(d => `<span class="proj-dest-tag ${d}">${destNames[d] || d}</span>`).join('');
+    const linkCount = (p.links || []).length;
+    const photoCount = (p.photos || []).length;
+    return `<div class="proj-card">
+      <div class="proj-card-head">
+        <h4>${escHtml(p.title || 'Sem título')}</h4>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="badge ${statusBadge[p.status] || 'pending'}">${statusMap[p.status] || p.status}</span>
+          <button class="action-btn view" style="padding:4px 10px;font-size:11px" onclick="editProject('${p.id}')">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Editar
+          </button>
+          <button class="action-btn reject" style="padding:4px 10px;font-size:11px" onclick="deleteProject('${p.id}')">Excluir</button>
+        </div>
+      </div>
+      <div style="margin-bottom:8px">${dests || '<span style="font-size:11px;color:var(--text-muted)">Sem destino definido</span>'}</div>
+      <div class="proj-meta">
+        <div class="proj-meta-item"><div class="k">Moto / Produto</div><div class="v">${escHtml(p.moto || '—')}</div></div>
+        <div class="proj-meta-item"><div class="k">Data</div><div class="v">${p.production_date ? prettyDate(p.production_date) : '—'}</div></div>
+        <div class="proj-meta-item"><div class="k">Links</div><div class="v">${linkCount} referência${linkCount !== 1 ? 's' : ''}</div></div>
+        <div class="proj-meta-item"><div class="k">Fotos</div><div class="v">${photoCount} imagem${photoCount !== 1 ? 'ns' : ''}</div></div>
+      </div>
+      ${p.observations ? `<div style="font-size:12px;color:var(--text-dim);margin-top:6px;border-top:1px solid var(--border);padding-top:8px">${escHtml(p.observations).substring(0, 200)}${p.observations.length > 200 ? '...' : ''}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function openProjectForm(projectId) {
+  document.getElementById('projectFormWrap').style.display = 'block';
+  document.getElementById('projEditId').value = '';
+  document.getElementById('projFormTitle').textContent = 'Novo projeto';
+  document.getElementById('projTitle').value = '';
+  document.getElementById('projMoto').value = '';
+  document.getElementById('projDate').value = '';
+  document.getElementById('projScript').value = '';
+  document.getElementById('projObs').value = '';
+  document.getElementById('projStatus').value = 'planejamento';
+  document.getElementById('projScriptFileName').textContent = '';
+  document.querySelectorAll('[id^="projDest"]').forEach(cb => { if (cb.type === 'checkbox') cb.checked = false; });
+  projLinks = [];
+  projPhotos = [];
+  renderProjLinks();
+  renderProjPhotos();
+  populateProjBookings();
+  document.getElementById('projBooking').value = '';
+  onProjBookingChange();
+  document.getElementById('projFormTitle').scrollIntoView({ behavior: 'smooth' });
+}
+
+function closeProjectForm() {
+  document.getElementById('projectFormWrap').style.display = 'none';
+}
+
+function populateProjBookings() {
+  const sel = document.getElementById('projBooking');
+  const approved = getRequests().filter(r => r.status === 'approved');
+  sel.innerHTML = '<option value="">Sem vínculo (projeto avulso)</option>' +
+    approved.map(r => `<option value="${r.id}" data-moto="${r.moto}" data-placa="${r.placa}" data-date="${r.date}">${r.nome} — ${r.moto} (${r.placa}) · ${prettyDate(r.date)}</option>`).join('');
+}
+
+function onProjBookingChange() {
+  const sel = document.getElementById('projBooking');
+  const opt = sel.selectedOptions[0];
+  const isManual = !sel.value;
+  document.getElementById('projMotoFieldWrap').style.display = isManual ? 'block' : 'none';
+  document.getElementById('projDateFieldWrap').style.display = isManual ? 'block' : 'none';
+  if (!isManual && opt) {
+    document.getElementById('projMoto').value = opt.dataset.moto + ' (' + opt.dataset.placa + ')';
+    document.getElementById('projDate').value = opt.dataset.date;
+  }
+}
+
+/* Links */
+function addProjLink(url) {
+  url = (url || '').trim();
+  if (!url) return;
+  if (!url.startsWith('http')) url = 'https://' + url;
+  projLinks.push(url);
+  renderProjLinks();
+}
+function rmProjLink(idx) {
+  projLinks.splice(idx, 1);
+  renderProjLinks();
+}
+function renderProjLinks() {
+  const el = document.getElementById('projLinksList');
+  if (!el) return;
+  el.innerHTML = projLinks.map((l, i) => `<div class="proj-link-item">
+    <svg viewBox="0 0 24 24" width="12" height="12" stroke="var(--text-muted)" fill="none" stroke-width="2" style="flex-shrink:0"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+    <a href="${l}" target="_blank" rel="noopener">${l.length > 60 ? l.substring(0, 60) + '...' : l}</a>
+    <button class="proj-link-rm" onclick="rmProjLink(${i})">x</button>
+  </div>`).join('');
+}
+
+/* Photos (gallery + camera) */
+async function addProjPhotos(input, isCamera) {
+  if (!input || !input.files.length) return;
+  for (const f of input.files) {
+    if (projPhotos.length >= 20) { alert('Máximo 20 fotos por projeto.'); break; }
+    projPhotos.push(await compressImg(f));
+  }
+  renderProjPhotos();
+  input.value = '';
+}
+function rmProjPhoto(idx) {
+  projPhotos.splice(idx, 1);
+  renderProjPhotos();
+}
+function renderProjPhotos() {
+  const grid = document.getElementById('projPhotoGrid');
+  if (!grid) return;
+  grid.innerHTML = projPhotos.map((p, i) =>
+    `<div class="photo-thumb"><img src="${p}" onclick="openLightbox(this.src)"/><button class="photo-remove" onclick="rmProjPhoto(${i})">x</button></div>`
+  ).join('');
+}
+
+/* Script file upload */
+let projScriptFileData = null;
+function handleScriptUpload(input) {
+  if (!input.files.length) return;
+  const file = input.files[0];
+  document.getElementById('projScriptFileName').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = e => { projScriptFileData = { name: file.name, data: e.target.result }; };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+/* Save */
+async function saveProject() {
+  const editId = document.getElementById('projEditId').value;
+  const title = document.getElementById('projTitle').value.trim();
+  if (!title) { alert('Informe o nome do projeto.'); return; }
+
+  const bookingId = document.getElementById('projBooking').value || null;
+  const sel = document.getElementById('projBooking').selectedOptions[0];
+  let moto = '', prodDate = null;
+  if (bookingId && sel) {
+    moto = sel.dataset.moto + ' (' + sel.dataset.placa + ')';
+    prodDate = sel.dataset.date;
+  } else {
+    moto = document.getElementById('projMoto').value.trim();
+    prodDate = document.getElementById('projDate').value || null;
+  }
+
+  const destinations = [];
+  if (document.getElementById('projDestYT').checked) destinations.push('youtube');
+  if (document.getElementById('projDestTK').checked) destinations.push('tiktok');
+  if (document.getElementById('projDestIG').checked) destinations.push('instagram');
+  if (document.getElementById('projDestTut').checked) destinations.push('tutorial');
+
+  const payload = {
+    title,
+    request_id: bookingId,
+    moto,
+    production_date: prodDate,
+    destinations,
+    status: document.getElementById('projStatus').value,
+    script_text: document.getElementById('projScript').value.trim(),
+    script_file: projScriptFileData,
+    links: projLinks,
+    observations: document.getElementById('projObs').value.trim(),
+    photos: projPhotos,
+    created_by: CURRENT_USER?.id || null
+  };
+
+  let result;
+  if (editId) {
+    result = await sb.from('projects').update(payload).eq('id', editId);
+  } else {
+    result = await sb.from('projects').insert(payload);
+  }
+  if (result.error) {
+    alert('Erro ao salvar projeto: ' + result.error.message + '\n\nVocê já criou a tabela "projects" no Supabase?');
+    return;
+  }
+  closeProjectForm();
+  await loadProjects();
+  renderProjects();
+  alert(editId ? 'Projeto atualizado!' : 'Projeto criado!');
+}
+
+async function editProject(id) {
+  const p = PROJECTS.find(x => x.id === id);
+  if (!p) return;
+  openProjectForm();
+  document.getElementById('projEditId').value = id;
+  document.getElementById('projFormTitle').textContent = 'Editar projeto';
+  document.getElementById('projTitle').value = p.title || '';
+  document.getElementById('projScript').value = p.script_text || '';
+  document.getElementById('projObs').value = p.observations || '';
+  document.getElementById('projStatus').value = p.status || 'planejamento';
+
+  (p.destinations || []).forEach(d => {
+    const map = { youtube: 'projDestYT', tiktok: 'projDestTK', instagram: 'projDestIG', tutorial: 'projDestTut' };
+    const cb = document.getElementById(map[d]);
+    if (cb) cb.checked = true;
+  });
+
+  projLinks = [...(p.links || [])];
+  projPhotos = [...(p.photos || [])];
+  projScriptFileData = p.script_file || null;
+  renderProjLinks();
+  renderProjPhotos();
+
+  if (p.script_file?.name) document.getElementById('projScriptFileName').textContent = p.script_file.name;
+
+  if (p.request_id) {
+    document.getElementById('projBooking').value = p.request_id;
+  } else {
+    document.getElementById('projBooking').value = '';
+    document.getElementById('projMoto').value = p.moto || '';
+    document.getElementById('projDate').value = p.production_date || '';
+  }
+  onProjBookingChange();
+}
+
+async function deleteProject(id) {
+  if (!confirm('Excluir este projeto? Ação irreversível.')) return;
+  const { error } = await sb.from('projects').delete().eq('id', id);
+  if (error) { alert('Erro: ' + error.message); return; }
+  await loadProjects();
+  renderProjects();
+  alert('Projeto excluído.');
+}
+
 /* EXPORT */
 function exportCSV() {
   const all = getRequests();
@@ -2358,11 +2774,12 @@ function openLightbox(src) {
 
 /* INIT */
 async function initApp() {
-  await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers()]);
+  await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects()]);
   renderRequests();
   renderCalendar();
   renderTemplates();
   renderCiView();
+  renderProjects();
   loadProfile();
 }
 
