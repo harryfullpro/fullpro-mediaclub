@@ -218,9 +218,21 @@
   /* Calendar management */
   .cal-admin {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
+  .cal-top { display: grid; grid-template-columns: 1fr 360px; gap: 16px; }
+  .block-compact { display: flex; flex-direction: column; gap: 10px; }
+  .block-add { display: flex; gap: 8px; align-items: flex-end; }
+  .block-add input, .block-add select { flex: 1; }
+  .block-field { display: flex; flex-direction: column; gap: 4px; }
+  .block-field label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; font-weight: 600; }
+  .block-field input, .block-field select {
+    padding: 10px 12px; background: var(--bg-elev); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; font-size: 13px; font-family: inherit;
+  }
+  .block-field input:focus, .block-field select:focus { outline: none; border-color: var(--primary); }
+  .chip-reason { font-size: 10px; color: var(--text-muted); margin-left: 2px; }
   .cal-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -460,6 +472,8 @@
     .sidebar { display: none; }
     .stats-grid { grid-template-columns: 1fr 1fr; }
     .cal-admin { grid-template-columns: 1fr; }
+    .cal-top { grid-template-columns: 1fr; }
+    .block-add { flex-direction: column; align-items: stretch; }
     main { padding: 20px; }
     th:nth-child(4), td:nth-child(4),
     th:nth-child(5), td:nth-child(5) { display: none; }
@@ -575,31 +589,51 @@
       </div>
 
       <div class="cal-admin">
-        <div class="cal-card">
-          <h3>Agenda visual</h3>
-          <p class="sub">Clique em um dia para bloquear/desbloquear. Verde = aprovado. Vermelho = bloqueio manual.</p>
-          <div class="cal-header">
-            <div class="cal-month" id="calMonth">—</div>
-            <div class="cal-nav">
-              <button id="calPrev">‹</button>
-              <button id="calNext">›</button>
+        <div class="cal-top">
+          <div class="cal-card">
+            <h3>Agenda visual</h3>
+            <p class="sub">Clique em um dia para bloquear/desbloquear. Verde = aprovado. Vermelho = bloqueio manual.</p>
+            <div class="cal-header">
+              <div class="cal-month" id="calMonth">—</div>
+              <div class="cal-nav">
+                <button id="calPrev">‹</button>
+                <button id="calNext">›</button>
+              </div>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+            <div class="cal-legend">
+              <span><i class="i-approved"></i>Aprovado</span>
+              <span><i class="i-blocked"></i>Bloqueado</span>
             </div>
           </div>
-          <div class="cal-grid" id="calGrid"></div>
-          <div class="cal-legend">
-            <span><i class="i-approved"></i>Aprovado (landing)</span>
-            <span><i class="i-blocked"></i>Bloqueio manual</span>
-          </div>
-        </div>
 
-        <div class="cal-card">
-          <h3>Dias bloqueados manualmente</h3>
-          <p class="sub">Dias marcados como ocupados por outras fontes (não via landing).</p>
-          <div>
-            <input type="date" class="login-input" id="blockDateInput" style="margin-bottom:10px" />
-            <button class="action-btn approve" style="width:100%; padding: 12px" id="addBlockBtn">+ Bloquear data</button>
+          <div class="cal-card block-compact">
+            <h3>Bloquear data</h3>
+            <p class="sub">Feriados, manutenção, indisponibilidade do estúdio, etc.</p>
+            <div class="block-field">
+              <label>Data</label>
+              <input type="date" id="blockDateInput" />
+            </div>
+            <div class="block-field">
+              <label>Motivo</label>
+              <select id="blockReasonSelect">
+                <option value="Feriado">Feriado</option>
+                <option value="Estúdio indisponível">Estúdio indisponível</option>
+                <option value="Manutenção">Manutenção</option>
+                <option value="Evento interno">Evento interno</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+            <div class="block-field" id="blockReasonCustomWrap" style="display:none">
+              <label>Especifique</label>
+              <input type="text" id="blockReasonCustom" placeholder="Motivo personalizado" />
+            </div>
+            <button class="action-btn approve" style="padding:10px; font-size:13px" id="addBlockBtn">+ Bloquear data</button>
+            <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:4px">
+              <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px; font-weight:600">Bloqueios ativos</p>
+              <div class="list-blocked" id="blockedList"></div>
+            </div>
           </div>
-          <div class="list-blocked" id="blockedList"></div>
         </div>
       </div>
     </div>
@@ -722,6 +756,7 @@ const sb = supabase.createClient(
 /* Estado em memória — alimentado pelo Supabase */
 let REQUESTS = [];
 let BLOCKED  = [];
+let BLOCKED_DATA = [];
 
 /* LOGIN (Supabase Auth) */
 async function checkAuth() {
@@ -782,9 +817,10 @@ async function loadRequests() {
   }));
 }
 async function loadBlocked() {
-  const { data, error } = await sb.from('blocked_dates').select('date').order('date');
+  const { data, error } = await sb.from('blocked_dates').select('date,reason').order('date');
   if (error) { console.error('loadBlocked:', error); return; }
-  BLOCKED = (data || []).map(r => r.date);
+  BLOCKED_DATA = (data || []).map(r => ({ date: r.date, reason: r.reason || '' }));
+  BLOCKED = BLOCKED_DATA.map(r => r.date);
 }
 function getRequests() { return REQUESTS; }
 function getBlocked()  { return BLOCKED; }
@@ -988,34 +1024,50 @@ function renderCalendar() {
   // Blocked list
   const bList = document.getElementById('blockedList');
   const sorted = getBlocked().sort();
-  if (sorted.length === 0) {
-    bList.innerHTML = '<p style="font-size:13px;color:var(--text-muted);margin-top:10px">Nenhum dia bloqueado manualmente.</p>';
+  const sortedData = BLOCKED_DATA.slice().sort((a,b) => a.date.localeCompare(b.date));
+  if (sortedData.length === 0) {
+    bList.innerHTML = '<p style="font-size:12px;color:var(--text-muted)">Nenhum bloqueio ativo.</p>';
   } else {
-    bList.innerHTML = sorted.map(d => `
-      <span class="chip">${prettyDate(d)} <button onclick="toggleBlock('${d}')">×</button></span>
+    bList.innerHTML = sortedData.map(d => `
+      <span class="chip">${prettyDate(d.date)}${d.reason ? '<span class="chip-reason">· ' + d.reason + '</span>' : ''} <button onclick="toggleBlock('${d.date}')">×</button></span>
     `).join('');
   }
 }
 
-async function toggleBlock(iso) {
+async function toggleBlock(iso, reason) {
   const already = BLOCKED.includes(iso);
   if (already) {
     const { error } = await sb.from('blocked_dates').delete().eq('date', iso);
     if (error) { alert('Erro ao desbloquear: ' + error.message); return; }
     BLOCKED = BLOCKED.filter(d => d !== iso);
+    BLOCKED_DATA = BLOCKED_DATA.filter(d => d.date !== iso);
   } else {
-    const { error } = await sb.from('blocked_dates').insert({ date: iso });
+    const payload = { date: iso };
+    if (reason) payload.reason = reason;
+    const { error } = await sb.from('blocked_dates').insert(payload);
     if (error) { alert('Erro ao bloquear: ' + error.message); return; }
     BLOCKED.push(iso);
+    BLOCKED_DATA.push({ date: iso, reason: reason || '' });
   }
   renderCalendar();
 }
 
 document.getElementById('calPrev').onclick = () => { cMonth.setMonth(cMonth.getMonth()-1); renderCalendar(); };
 document.getElementById('calNext').onclick = () => { cMonth.setMonth(cMonth.getMonth()+1); renderCalendar(); };
+document.getElementById('blockReasonSelect').addEventListener('change', () => {
+  const wrap = document.getElementById('blockReasonCustomWrap');
+  wrap.style.display = document.getElementById('blockReasonSelect').value === 'Outro' ? 'flex' : 'none';
+});
 document.getElementById('addBlockBtn').onclick = () => {
   const val = document.getElementById('blockDateInput').value;
-  if (val) { toggleBlock(val); document.getElementById('blockDateInput').value = ''; }
+  if (!val) { alert('Selecione uma data.'); return; }
+  const sel = document.getElementById('blockReasonSelect').value;
+  const reason = sel === 'Outro' ? (document.getElementById('blockReasonCustom').value.trim() || 'Outro') : sel;
+  toggleBlock(val, reason);
+  document.getElementById('blockDateInput').value = '';
+  document.getElementById('blockReasonCustom').value = '';
+  document.getElementById('blockReasonSelect').value = 'Feriado';
+  document.getElementById('blockReasonCustomWrap').style.display = 'none';
 };
 
 /* EXPORT */
