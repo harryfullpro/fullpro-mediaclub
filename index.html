@@ -2076,6 +2076,7 @@ function renderCalendar() {
 
   const today = new Date(); today.setHours(0,0,0,0);
   const minDate = new Date(today); minDate.setDate(minDate.getDate() + 2);
+  const maxDate = new Date(today); maxDate.setDate(maxDate.getDate() + 15);
   const booked = getBookedDates();
 
   for (let d = 1; d <= daysInMonth; d++) {
@@ -2088,7 +2089,7 @@ function renderCalendar() {
     const dayOfWeek = date.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     if (date.getTime() === today.getTime()) el.classList.add('today');
-    if (date < minDate || isWeekend) el.classList.add('disabled');
+    if (date < minDate || date > maxDate || isWeekend) el.classList.add('disabled');
     else if (booked.has(iso)) el.classList.add('booked');
     else {
       el.addEventListener('click', () => {
@@ -2163,6 +2164,13 @@ document.getElementById('reservaForm').addEventListener('submit', async e => {
   if (!selectedDate) {
     alert('Por favor, selecione uma data no calendário.');
     document.getElementById('agendar').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+  const selDateObj = new Date(selectedDate + 'T12:00:00');
+  const todayCheck = new Date(); todayCheck.setHours(0,0,0,0);
+  const maxAllowed = new Date(todayCheck); maxAllowed.setDate(maxAllowed.getDate() + 15);
+  if (selDateObj > maxAllowed) {
+    alert('Não é possível agendar para uma data tão distante. Selecione uma data dentro dos próximos 15 dias.');
     return;
   }
   if (document.getElementById('aceiteTermoInput').value !== '1') {

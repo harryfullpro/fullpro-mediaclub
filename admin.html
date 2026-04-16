@@ -333,29 +333,39 @@
   .cal-legend .i-blocked { background: rgba(255,45,45,.5); }
 
   /* Date viewer */
-  .date-viewer { min-height: 80px; }
-  .date-viewer .dv-header {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
-  }
-  .date-viewer .dv-date {
-    font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: .5px;
-  }
-  .date-viewer .dv-badge { margin-left: auto; }
+  .date-viewer { max-height: calc(100vh - 180px); overflow-y: auto; }
   .dv-empty {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 20px; text-align: center; color: var(--text-muted); min-height: 60px;
+    padding: 24px 12px; text-align: center; color: var(--text-muted); min-height: 60px;
   }
   .dv-empty p { font-size: 13px; }
-  .dv-booking {
+  .dv-booking-full {
     background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px; margin-bottom: 8px;
+    padding: 14px; margin-bottom: 10px;
   }
-  .dv-booking:last-child { margin-bottom: 0; }
-  .dv-booking .dv-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-  .dv-booking .dv-row:last-child { margin-bottom: 0; }
-  .dv-booking .dv-name { font-weight: 700; font-size: 14px; }
-  .dv-booking .dv-info { font-size: 12px; color: var(--text-dim); }
-  .dv-booking .dv-actions { display: flex; gap: 6px; margin-top: 10px; }
+  .dv-booking-full:last-child { margin-bottom: 0; }
+  .dv-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .dv-name { font-weight: 700; font-size: 14px; }
+  .dv-details-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin: 10px 0;
+  }
+  .dv-detail { display: flex; flex-direction: column; gap: 1px; }
+  .dv-k { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+  .dv-v { font-size: 12px; color: var(--text); font-weight: 500; }
+  .dv-actions-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .dv-separator { border-top: 1px solid var(--border); margin: 12px 0; }
+  .dv-checkin-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--accent); }
+  .checkin-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; display: block; margin-bottom: 4px; }
+  .checkin-field { margin-bottom: 10px; }
+  .checkin-input {
+    width: 100%; padding: 8px 10px; background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; font-size: 12px; font-family: inherit;
+  }
+  .checkin-input:focus, .checkin-textarea:focus { outline: none; border-color: var(--primary); }
+  .checkin-textarea {
+    width: 100%; min-height: 50px; padding: 8px 10px; background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; font-size: 12px; font-family: inherit; resize: vertical;
+  }
   .dv-block-info {
     background: rgba(255,45,45,.06); border: 1px solid rgba(255,45,45,.2); border-radius: 10px;
     padding: 16px; text-align: center;
@@ -369,9 +379,53 @@
   }
   .dv-weekend .dv-block-reason { color: var(--warning); }
 
-  /* Agenda layout: 3 equal columns side by side */
-  .cal-top { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-  .cal-right { display: none; /* unused now */ }
+  /* Fuel gauge */
+  .fuel-gauge-wrap { margin-bottom: 12px; }
+  .fuel-gauge-container { text-align: center; }
+  .fuel-svg { width: 160px; height: 95px; }
+  .fuel-value { font-family: 'Bebas Neue', sans-serif; font-size: 22px; margin-top: -14px; text-align: center; letter-spacing: 1px; }
+  .fuel-range {
+    width: 100%; margin-top: 4px; accent-color: var(--primary);
+    -webkit-appearance: none; appearance: none; height: 5px;
+    background: var(--bg-card); border-radius: 3px; outline: none;
+  }
+  .fuel-range::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--primary); cursor: pointer; border: 2px solid var(--bg-card);
+  }
+
+  /* Photo grid */
+  .photo-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .photo-thumb {
+    width: 64px; height: 64px; border-radius: 6px; overflow: hidden;
+    position: relative; border: 1px solid var(--border);
+  }
+  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+  .photo-remove {
+    position: absolute; top: 2px; right: 2px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: rgba(0,0,0,.75); color: #fff; border: none;
+    font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .photo-add {
+    width: 64px; height: 64px; border-radius: 6px;
+    border: 2px dashed var(--border); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 2px;
+    cursor: pointer; color: var(--text-muted); font-size: 9px; transition: border-color .15s;
+  }
+  .photo-add:hover { border-color: var(--primary); color: var(--primary-hi); }
+  .photo-add span:first-child { font-size: 16px; }
+
+  /* Photo lightbox */
+  .photo-lightbox {
+    position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 200;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .photo-lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+
+  /* Agenda layout: calendar | details (wider) | block (compact) */
+  .cal-top { display: grid; grid-template-columns: 340px 1fr 260px; gap: 14px; }
 
   /* Modal */
   .modal {
@@ -1224,7 +1278,6 @@ function renderDateViewer(iso) {
   headerEl.textContent = `${dayNames[dayOfWeek]}, ${prettyDate(iso)}`;
   subEl.textContent = '';
 
-  // Check if weekend
   if (isWeekend) {
     container.innerHTML = `<div class="dv-weekend">
       <div class="dv-block-icon">🚫</div>
@@ -1234,7 +1287,6 @@ function renderDateViewer(iso) {
     return;
   }
 
-  // Check if blocked
   const blockInfo = BLOCKED_DATA.find(b => b.date === iso);
   if (blockInfo) {
     container.innerHTML = `<div class="dv-block-info">
@@ -1245,7 +1297,6 @@ function renderDateViewer(iso) {
     return;
   }
 
-  // Check for bookings on this date
   const bookings = getRequests().filter(r => r.date === iso);
   if (bookings.length === 0) {
     container.innerHTML = `<div class="dv-empty">
@@ -1256,26 +1307,92 @@ function renderDateViewer(iso) {
 
   container.innerHTML = bookings.map(r => {
     const statusLabel = r.status === 'pending' ? 'Pendente' : r.status === 'approved' ? 'Aprovada' : 'Rejeitada';
-    const brindeName = r.brinde === 'pastilhas' ? '🛞 Pastilhas' : r.brinde === 'mochila' ? '🎒 Mochila' : '🧥 Capa';
-    return `<div class="dv-booking">
+    const brindeName = r.brinde === 'pastilhas' ? '🛞 Pastilhas HH' : r.brinde === 'mochila' ? '🎒 Mochila' : '🧥 Capa de chuva';
+    const modalLabel = r.modalidade === 'estudio' ? 'Leva até o estúdio' : 'Retirada no endereço';
+    const ci = CHECKINS[r.id] || { fuel_level: 0, mileage: '', observations: '', photos: [] };
+    const photos = ci.photos || [];
+
+    return `<div class="dv-booking-full">
       <div class="dv-row">
         <span class="dv-name">${r.nome}</span>
         <span class="badge ${r.status}">${statusLabel}</span>
       </div>
-      <div class="dv-row">
-        <span class="dv-info">${r.moto} · ${r.placa}</span>
-        <span class="dv-info">${brindeName}</span>
+      <div class="dv-details-grid">
+        <div class="dv-detail"><span class="dv-k">Moto</span><span class="dv-v">${r.moto}</span></div>
+        <div class="dv-detail"><span class="dv-k">Placa</span><span class="dv-v">${r.placa}</span></div>
+        <div class="dv-detail"><span class="dv-k">WhatsApp</span><span class="dv-v">${r.whatsapp}</span></div>
+        <div class="dv-detail"><span class="dv-k">Email</span><span class="dv-v">${r.email || '—'}</span></div>
+        <div class="dv-detail"><span class="dv-k">Modalidade</span><span class="dv-v">${modalLabel}</span></div>
+        <div class="dv-detail"><span class="dv-k">Brinde</span><span class="dv-v">${brindeName}</span></div>
+        ${r.endereco ? `<div class="dv-detail" style="grid-column:1/-1"><span class="dv-k">Endereço</span><span class="dv-v">${r.endereco}</span></div>` : ''}
+        ${r.obs ? `<div class="dv-detail" style="grid-column:1/-1"><span class="dv-k">Obs agendamento</span><span class="dv-v">${r.obs}</span></div>` : ''}
       </div>
-      <div class="dv-row">
-        <span class="dv-info">${r.whatsapp}</span>
-        <span class="dv-info">${r.modalidade === 'estudio' ? 'Estúdio' : 'Retirada'}</span>
-      </div>
-      <div class="dv-actions">
-        <button class="action-btn view" onclick="openDetails('${r.id}')">Ver detalhes</button>
+
+      <div class="dv-actions-row">
         <button class="action-btn whats" onclick="openWhatsApp('${r.id}')">💬 WhatsApp</button>
+        ${r.status === 'pending' ? `
+          <button class="action-btn approve" onclick="updateStatus('${r.id}','approved')">✓ Aprovar</button>
+          <button class="action-btn reject" onclick="updateStatus('${r.id}','rejected')">✕ Rejeitar</button>
+        ` : ''}
+      </div>
+
+      <div class="dv-separator"></div>
+
+      <div>
+        <h4 class="dv-checkin-title">🔧 Check-in da moto</h4>
+
+        <div class="fuel-gauge-wrap">
+          <label class="checkin-label">Nível de combustível</label>
+          <div class="fuel-gauge-container">
+            <svg class="fuel-svg" viewBox="0 0 200 115">
+              <defs>
+                <linearGradient id="fg_${r.id}" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#ff4d4d"/>
+                  <stop offset="50%" stop-color="#ffaa33"/>
+                  <stop offset="100%" stop-color="#1fd27a"/>
+                </linearGradient>
+              </defs>
+              <path d="M 25 100 A 75 75 0 0 1 175 100" fill="none" stroke="#1c1c22" stroke-width="14" stroke-linecap="round"/>
+              <path id="fuelArc_${r.id}" d="M 25 100 A 75 75 0 0 1 175 100" fill="none" stroke="url(#fg_${r.id})" stroke-width="14" stroke-linecap="round" style="stroke-dasharray:236;stroke-dashoffset:236"/>
+              <line id="fuelNeedle_${r.id}" x1="100" y1="100" x2="30" y2="100" stroke="#f5f5f7" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="100" cy="100" r="5" fill="#f5f5f7"/>
+              <text x="8" y="112" fill="#ff4d4d" font-size="11" font-weight="700" font-family="Inter,sans-serif">E</text>
+              <text x="180" y="112" fill="#1fd27a" font-size="11" font-weight="700" font-family="Inter,sans-serif">F</text>
+            </svg>
+            <div class="fuel-value" id="fuelVal_${r.id}">${ci.fuel_level}%</div>
+          </div>
+          <input type="range" class="fuel-range" id="fuelRange_${r.id}" min="0" max="100" step="5" value="${ci.fuel_level}" oninput="updateFuelGauge('${r.id}', this.value)"/>
+        </div>
+
+        <div class="checkin-field">
+          <label class="checkin-label">Quilometragem</label>
+          <input type="text" class="checkin-input" id="ciKm_${r.id}" value="${ci.mileage || ''}" placeholder="Ex: 15.432 km"/>
+        </div>
+
+        <div class="checkin-field">
+          <label class="checkin-label">Observações sobre a moto</label>
+          <textarea class="checkin-textarea" id="ciObs_${r.id}" placeholder="Arranhões, peças soltas, condição geral...">${ci.observations || ''}</textarea>
+        </div>
+
+        <div class="checkin-field">
+          <label class="checkin-label">Fotos da moto (registro de entrada)</label>
+          <div class="photo-grid" id="pgrid_${r.id}">
+            ${photos.map((p,i) => `<div class="photo-thumb"><img src="${p}" onclick="openLightbox('${p}')"/><button class="photo-remove" onclick="rmPhoto('${r.id}',${i})">×</button></div>`).join('')}
+            <label class="photo-add" for="pInput_${r.id}"><span>📷</span><span>Adicionar</span></label>
+          </div>
+          <input type="file" id="pInput_${r.id}" accept="image/*" multiple hidden onchange="addPhotos('${r.id}')"/>
+        </div>
+
+        <button class="action-btn approve" style="width:100%;padding:10px;font-size:12px;margin-top:4px" onclick="saveCheckin('${r.id}')">💾 Salvar check-in</button>
       </div>
     </div>`;
   }).join('');
+
+  // Init fuel gauges after render
+  bookings.forEach(r => {
+    const ci = CHECKINS[r.id] || { fuel_level: 0 };
+    updateFuelGauge(r.id, ci.fuel_level);
+  });
 }
 
 async function toggleBlock(iso, reason) {
@@ -1625,9 +1742,121 @@ document.getElementById('waModal').addEventListener('click', e => {
   if (e.target.id === 'waModal') closeWaModal();
 });
 
+/* ==========================================
+   CHECK-IN — fuel gauge, mileage, photos
+   ========================================== */
+let CHECKINS = {};
+
+async function loadCheckins() {
+  const { data, error } = await sb.from('checkins').select('*');
+  if (error) { console.warn('loadCheckins:', error.message); return; }
+  CHECKINS = {};
+  (data || []).forEach(c => { CHECKINS[c.request_id] = c; });
+}
+
+function updateFuelGauge(rid, val) {
+  val = parseInt(val) || 0;
+  const arcLen = 236;
+  const arc = document.getElementById('fuelArc_' + rid);
+  const needle = document.getElementById('fuelNeedle_' + rid);
+  const label = document.getElementById('fuelVal_' + rid);
+  if (arc) arc.style.strokeDashoffset = arcLen - (val / 100 * arcLen);
+  if (needle) {
+    const a = Math.PI - (val / 100 * Math.PI);
+    needle.setAttribute('x2', 100 + 65 * Math.cos(a));
+    needle.setAttribute('y2', 100 - 65 * Math.sin(a));
+  }
+  if (label) label.textContent = val + '%';
+}
+
+function compressImg(file, maxW, q) {
+  maxW = maxW || 800; q = q || 0.65;
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > maxW) { h = (h * maxW) / w; w = maxW; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', q));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function addPhotos(rid) {
+  const input = document.getElementById('pInput_' + rid);
+  if (!input || !input.files.length) return;
+  const ci = CHECKINS[rid] || { photos: [] };
+  const photos = [...(ci.photos || [])];
+  for (const f of input.files) {
+    if (photos.length >= 10) { alert('Máximo 10 fotos.'); break; }
+    photos.push(await compressImg(f));
+  }
+  ci.photos = photos;
+  CHECKINS[rid] = ci;
+  refreshPhotoGrid(rid, photos);
+  input.value = '';
+}
+
+function rmPhoto(rid, idx) {
+  const ci = CHECKINS[rid]; if (!ci || !ci.photos) return;
+  ci.photos.splice(idx, 1);
+  refreshPhotoGrid(rid, ci.photos);
+}
+
+function refreshPhotoGrid(rid, photos) {
+  const grid = document.getElementById('pgrid_' + rid);
+  if (!grid) return;
+  grid.innerHTML = photos.map((p, i) =>
+    `<div class="photo-thumb"><img src="${p}" onclick="openLightbox(this.src)"/><button class="photo-remove" onclick="rmPhoto('${rid}',${i})">×</button></div>`
+  ).join('') + `<label class="photo-add" for="pInput_${rid}"><span>📷</span><span>Adicionar</span></label>`;
+}
+
+function openLightbox(src) {
+  const lb = document.createElement('div');
+  lb.className = 'photo-lightbox';
+  lb.innerHTML = `<img src="${src}"/>`;
+  lb.onclick = () => lb.remove();
+  document.body.appendChild(lb);
+}
+
+async function saveCheckin(rid) {
+  const fuel = parseInt(document.getElementById('fuelRange_' + rid)?.value || 0);
+  const km = document.getElementById('ciKm_' + rid)?.value?.trim() || '';
+  const obs = document.getElementById('ciObs_' + rid)?.value?.trim() || '';
+  const existing = CHECKINS[rid];
+  const photos = existing?.photos || [];
+
+  const payload = { request_id: rid, fuel_level: fuel, mileage: km, observations: obs, photos };
+
+  let result;
+  if (existing?.id) {
+    result = await sb.from('checkins').update({
+      fuel_level: fuel, mileage: km, observations: obs, photos,
+      updated_at: new Date().toISOString()
+    }).eq('id', existing.id);
+  } else {
+    result = await sb.from('checkins').insert(payload).select().single();
+  }
+
+  if (result.error) {
+    alert('Erro ao salvar check-in: ' + result.error.message + '\n\nVocê já criou a tabela "checkins" no Supabase?');
+    return;
+  }
+  if (result.data) CHECKINS[rid] = result.data;
+  else CHECKINS[rid] = { ...existing, ...payload };
+  alert('Check-in salvo com sucesso!');
+}
+
 /* INIT */
 async function initApp() {
-  await Promise.all([loadRequests(), loadBlocked()]);
+  await Promise.all([loadRequests(), loadBlocked(), loadCheckins()]);
   renderRequests();
   renderCalendar();
   renderTemplates();
