@@ -379,21 +379,15 @@
   }
   .dv-weekend .dv-block-reason { color: var(--warning); }
 
-  /* Fuel gauge */
+  /* Fuel gauge — interactive SVG */
   .fuel-gauge-wrap { margin-bottom: 12px; }
-  .fuel-gauge-container { text-align: center; }
-  .fuel-svg { width: 160px; height: 95px; }
-  .fuel-value { font-family: 'Bebas Neue', sans-serif; font-size: 22px; margin-top: -14px; text-align: center; letter-spacing: 1px; }
-  .fuel-range {
-    width: 100%; margin-top: 4px; accent-color: var(--primary);
-    -webkit-appearance: none; appearance: none; height: 5px;
-    background: var(--bg-card); border-radius: 3px; outline: none;
-  }
-  .fuel-range::-webkit-slider-thumb {
-    -webkit-appearance: none; appearance: none;
-    width: 16px; height: 16px; border-radius: 50%;
-    background: var(--primary); cursor: pointer; border: 2px solid var(--bg-card);
-  }
+  .fuel-gauge-container { text-align: center; position: relative; }
+  .fuel-svg { width: 160px; height: 100px; cursor: pointer; user-select: none; -webkit-user-select: none; }
+  .fuel-value { font-family: 'Bebas Neue', sans-serif; font-size: 20px; margin-top: -10px; text-align: center; letter-spacing: 1px; }
+
+  /* Check-in grid: fuel + km side by side, obs + photos side by side */
+  .checkin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .checkin-grid .checkin-full { grid-column: 1 / -1; }
 
   /* Photo grid */
   .photo-grid { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -1340,58 +1334,65 @@ function renderDateViewer(iso) {
 
       <div>
         <h4 class="dv-checkin-title">🔧 Check-in da moto</h4>
+        <div class="checkin-grid">
 
-        <div class="fuel-gauge-wrap">
-          <label class="checkin-label">Nível de combustível</label>
-          <div class="fuel-gauge-container">
-            <svg class="fuel-svg" viewBox="0 0 200 115">
-              <defs>
-                <linearGradient id="fg_${r.id}" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#ff4d4d"/>
-                  <stop offset="50%" stop-color="#ffaa33"/>
-                  <stop offset="100%" stop-color="#1fd27a"/>
-                </linearGradient>
-              </defs>
-              <path d="M 25 100 A 75 75 0 0 1 175 100" fill="none" stroke="#1c1c22" stroke-width="14" stroke-linecap="round"/>
-              <path id="fuelArc_${r.id}" d="M 25 100 A 75 75 0 0 1 175 100" fill="none" stroke="url(#fg_${r.id})" stroke-width="14" stroke-linecap="round" style="stroke-dasharray:236;stroke-dashoffset:236"/>
-              <line id="fuelNeedle_${r.id}" x1="100" y1="100" x2="30" y2="100" stroke="#f5f5f7" stroke-width="2" stroke-linecap="round"/>
-              <circle cx="100" cy="100" r="5" fill="#f5f5f7"/>
-              <text x="8" y="112" fill="#ff4d4d" font-size="11" font-weight="700" font-family="Inter,sans-serif">E</text>
-              <text x="180" y="112" fill="#1fd27a" font-size="11" font-weight="700" font-family="Inter,sans-serif">F</text>
-            </svg>
-            <div class="fuel-value" id="fuelVal_${r.id}">${ci.fuel_level}%</div>
+          <div class="checkin-field">
+            <label class="checkin-label">Nível de combustível</label>
+            <div class="fuel-gauge-container">
+              <svg class="fuel-svg" viewBox="0 0 200 115" id="fuelSvg_${r.id}" data-rid="${r.id}">
+                <defs>
+                  <linearGradient id="fg_${r.id}" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#ff4d4d"/>
+                    <stop offset="50%" stop-color="#ffaa33"/>
+                    <stop offset="100%" stop-color="#1fd27a"/>
+                  </linearGradient>
+                </defs>
+                <path d="M 25 100 A 75 75 0 0 1 175 100" fill="none" stroke="#1c1c22" stroke-width="14" stroke-linecap="round"/>
+                <path id="fuelArc_${r.id}" d="M 25 100 A 75 75 0 0 1 175 100" fill="none" stroke="url(#fg_${r.id})" stroke-width="14" stroke-linecap="round" style="stroke-dasharray:236;stroke-dashoffset:236"/>
+                <line id="fuelNeedle_${r.id}" x1="100" y1="100" x2="30" y2="100" stroke="#f5f5f7" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="100" cy="100" r="6" fill="#f5f5f7"/>
+                <circle id="fuelKnob_${r.id}" cx="30" cy="100" r="8" fill="var(--primary)" stroke="#fff" stroke-width="2" style="cursor:grab;filter:drop-shadow(0 0 3px rgba(255,45,45,.5))"/>
+                <text x="8" y="112" fill="#ff4d4d" font-size="11" font-weight="700" font-family="Inter,sans-serif">E</text>
+                <text x="180" y="112" fill="#1fd27a" font-size="11" font-weight="700" font-family="Inter,sans-serif">F</text>
+              </svg>
+              <div class="fuel-value" id="fuelVal_${r.id}">${ci.fuel_level}%</div>
+              <input type="hidden" id="fuelRange_${r.id}" value="${ci.fuel_level}"/>
+            </div>
           </div>
-          <input type="range" class="fuel-range" id="fuelRange_${r.id}" min="0" max="100" step="5" value="${ci.fuel_level}" oninput="updateFuelGauge('${r.id}', this.value)"/>
-        </div>
 
-        <div class="checkin-field">
-          <label class="checkin-label">Quilometragem</label>
-          <input type="text" class="checkin-input" id="ciKm_${r.id}" value="${ci.mileage || ''}" placeholder="Ex: 15.432 km"/>
-        </div>
-
-        <div class="checkin-field">
-          <label class="checkin-label">Observações sobre a moto</label>
-          <textarea class="checkin-textarea" id="ciObs_${r.id}" placeholder="Arranhões, peças soltas, condição geral...">${ci.observations || ''}</textarea>
-        </div>
-
-        <div class="checkin-field">
-          <label class="checkin-label">Fotos da moto (registro de entrada)</label>
-          <div class="photo-grid" id="pgrid_${r.id}">
-            ${photos.map((p,i) => `<div class="photo-thumb"><img src="${p}" onclick="openLightbox('${p}')"/><button class="photo-remove" onclick="rmPhoto('${r.id}',${i})">×</button></div>`).join('')}
-            <label class="photo-add" for="pInput_${r.id}"><span>📷</span><span>Adicionar</span></label>
+          <div class="checkin-field">
+            <label class="checkin-label">Quilometragem</label>
+            <input type="text" class="checkin-input" id="ciKm_${r.id}" value="${ci.mileage || ''}" placeholder="Ex: 15.432 km"/>
           </div>
-          <input type="file" id="pInput_${r.id}" accept="image/*" multiple hidden onchange="addPhotos('${r.id}')"/>
-        </div>
 
-        <button class="action-btn approve" style="width:100%;padding:10px;font-size:12px;margin-top:4px" onclick="saveCheckin('${r.id}')">💾 Salvar check-in</button>
+          <div class="checkin-field">
+            <label class="checkin-label">Observações sobre a moto</label>
+            <textarea class="checkin-textarea" id="ciObs_${r.id}" placeholder="Arranhões, peças soltas, condição geral...">${ci.observations || ''}</textarea>
+          </div>
+
+          <div class="checkin-field">
+            <label class="checkin-label">Fotos da moto</label>
+            <div class="photo-grid" id="pgrid_${r.id}">
+              ${photos.map((p,i) => `<div class="photo-thumb"><img src="${p}" onclick="openLightbox('${p}')"/><button class="photo-remove" onclick="rmPhoto('${r.id}',${i})">×</button></div>`).join('')}
+              <label class="photo-add" for="pInput_${r.id}"><span>📷</span><span>Adicionar</span></label>
+            </div>
+            <input type="file" id="pInput_${r.id}" accept="image/*" multiple hidden onchange="addPhotos('${r.id}')"/>
+          </div>
+
+          <div class="checkin-full">
+            <button class="action-btn approve" style="width:100%;padding:10px;font-size:12px" onclick="saveCheckin('${r.id}')">💾 Salvar check-in</button>
+          </div>
+
+        </div>
       </div>
     </div>`;
   }).join('');
 
-  // Init fuel gauges after render
+  // Init fuel gauges — set value + bind drag
   bookings.forEach(r => {
     const ci = CHECKINS[r.id] || { fuel_level: 0 };
     updateFuelGauge(r.id, ci.fuel_level);
+    initFuelGaugeDrag(r.id);
   });
 }
 
@@ -1755,18 +1756,70 @@ async function loadCheckins() {
 }
 
 function updateFuelGauge(rid, val) {
-  val = parseInt(val) || 0;
+  val = Math.max(0, Math.min(100, Math.round(parseInt(val) || 0)));
+  // Snap to nearest 5
+  val = Math.round(val / 5) * 5;
   const arcLen = 236;
   const arc = document.getElementById('fuelArc_' + rid);
   const needle = document.getElementById('fuelNeedle_' + rid);
+  const knob = document.getElementById('fuelKnob_' + rid);
   const label = document.getElementById('fuelVal_' + rid);
+  const hidden = document.getElementById('fuelRange_' + rid);
+
+  const a = Math.PI - (val / 100 * Math.PI);
+  const nx = 100 + 65 * Math.cos(a);
+  const ny = 100 - 65 * Math.sin(a);
+
   if (arc) arc.style.strokeDashoffset = arcLen - (val / 100 * arcLen);
-  if (needle) {
-    const a = Math.PI - (val / 100 * Math.PI);
-    needle.setAttribute('x2', 100 + 65 * Math.cos(a));
-    needle.setAttribute('y2', 100 - 65 * Math.sin(a));
-  }
+  if (needle) { needle.setAttribute('x2', nx); needle.setAttribute('y2', ny); }
+  if (knob) { knob.setAttribute('cx', nx); knob.setAttribute('cy', ny); }
   if (label) label.textContent = val + '%';
+  if (hidden) hidden.value = val;
+}
+
+/* Make fuel gauge SVG interactive — click/drag the knob */
+function initFuelGaugeDrag(rid) {
+  const svg = document.getElementById('fuelSvg_' + rid);
+  if (!svg) return;
+
+  function getValFromEvent(e) {
+    const pt = svg.getBoundingClientRect();
+    const svgW = pt.width, svgH = pt.height;
+    // Map mouse position to SVG viewBox (0 0 200 115)
+    const mx = (e.clientX - pt.left) / svgW * 200;
+    const my = (e.clientY - pt.top) / svgH * 115;
+    // Angle from center (100, 100)
+    const dx = mx - 100, dy = -(my - 100);
+    let angle = Math.atan2(dy, dx); // radians, 0 = right, PI = left
+    if (angle < 0) angle = 0; // below center line → clamp to 0% or 100%
+    const pct = Math.max(0, Math.min(100, Math.round((Math.PI - angle) / Math.PI * 100)));
+    return pct;
+  }
+
+  let dragging = false;
+
+  svg.addEventListener('mousedown', e => {
+    dragging = true;
+    updateFuelGauge(rid, getValFromEvent(e));
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    updateFuelGauge(rid, getValFromEvent(e));
+  });
+  document.addEventListener('mouseup', () => { dragging = false; });
+
+  // Touch support
+  svg.addEventListener('touchstart', e => {
+    dragging = true;
+    updateFuelGauge(rid, getValFromEvent(e.touches[0]));
+    e.preventDefault();
+  }, { passive: false });
+  document.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    updateFuelGauge(rid, getValFromEvent(e.touches[0]));
+  });
+  document.addEventListener('touchend', () => { dragging = false; });
 }
 
 function compressImg(file, maxW, q) {
