@@ -66,7 +66,8 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     transition: padding .25s cubic-bezier(.4,0,.2,1);
   }
   .shell.collapsed .sidebar { padding: 24px 10px; }
@@ -83,10 +84,10 @@
   .sb-ctrl-btn svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .shell.collapsed .sb-ctrl-btn { justify-content: center; padding: 10px; }
   .sb-popover {
-    position: absolute; bottom: calc(100% + 8px); left: 0;
+    position: fixed;
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 10px; padding: 8px 0; min-width: 200px;
-    box-shadow: 0 8px 24px rgba(0,0,0,.35); z-index: 50;
+    border-radius: 10px; padding: 8px 0; min-width: 210px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.35); z-index: 200;
     display: none; flex-direction: column;
   }
   .sb-popover.show { display: flex; }
@@ -108,7 +109,6 @@
     opacity: 0; transition: opacity .15s;
   }
   .sb-popover-opt.active .sb-popover-dot { opacity: 1; }
-  .shell.collapsed .sb-popover { left: calc(100% + 8px); bottom: 0; }
   .brand {
     display: flex;
     align-items: center;
@@ -951,16 +951,16 @@
 
       <div class="sb-ctrl-wrap" id="sbCtrlWrap">
         <div class="sb-popover" id="sbPopover">
-          <div class="sb-popover-title">Sidebar control</div>
+          <div class="sb-popover-title">Controle do menu</div>
           <div class="sb-popover-sep"></div>
           <button class="sb-popover-opt" data-sbmode="expanded" onclick="setSidebarMode('expanded')">
-            <span class="sb-popover-dot"></span> Expanded
+            <span class="sb-popover-dot"></span> Expandido
           </button>
           <button class="sb-popover-opt" data-sbmode="collapsed" onclick="setSidebarMode('collapsed')">
-            <span class="sb-popover-dot"></span> Collapsed
+            <span class="sb-popover-dot"></span> Recolhido
           </button>
           <button class="sb-popover-opt" data-sbmode="hover" onclick="setSidebarMode('hover')">
-            <span class="sb-popover-dot"></span> Expand on hover
+            <span class="sb-popover-dot"></span> Expandir ao passar o mouse
           </button>
         </div>
         <button class="sb-ctrl-btn" onclick="toggleSbPopover()">
@@ -2182,7 +2182,14 @@ function sidebarHoverIn() { document.getElementById('app').classList.remove('col
 function sidebarHoverOut() { document.getElementById('app').classList.add('collapsed'); closeSbPopover(); }
 
 function toggleSbPopover() {
-  document.getElementById('sbPopover').classList.toggle('show');
+  const pop = document.getElementById('sbPopover');
+  const isOpen = pop.classList.contains('show');
+  if (isOpen) { closeSbPopover(); return; }
+  const btn = document.querySelector('.sb-ctrl-btn');
+  const r = btn.getBoundingClientRect();
+  pop.style.left = r.left + 'px';
+  pop.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+  pop.classList.add('show');
 }
 function closeSbPopover() {
   document.getElementById('sbPopover').classList.remove('show');
