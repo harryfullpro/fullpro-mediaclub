@@ -221,7 +221,6 @@
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  .cal-top { display: grid; grid-template-columns: 420px 1fr; gap: 16px; }
   .block-compact { display: flex; flex-direction: column; gap: 10px; }
   .block-add { display: flex; gap: 8px; align-items: flex-end; }
   .block-add input, .block-add select { flex: 1; }
@@ -286,9 +285,10 @@
     position: relative;
     height: 32px;
   }
-  .cal-day:hover:not(.empty):not(.past) { border-color: var(--primary); }
+  .cal-day:hover:not(.empty) { border-color: var(--primary); }
   .cal-day.empty { background: transparent; cursor: default; }
-  .cal-day.past { opacity: .35; cursor: not-allowed; }
+  .cal-day.past { opacity: .35; }
+  .cal-day.selected { border-color: var(--accent); background: rgba(255,207,51,.15); font-weight: 700; }
   .cal-day.approved {
     background: rgba(31,210,122,.2);
     border-color: rgba(31,210,122,.5);
@@ -331,6 +331,47 @@
   .cal-legend i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
   .cal-legend .i-approved { background: rgba(31,210,122,.5); }
   .cal-legend .i-blocked { background: rgba(255,45,45,.5); }
+
+  /* Date viewer */
+  .date-viewer { min-height: 80px; }
+  .date-viewer .dv-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+  }
+  .date-viewer .dv-date {
+    font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: .5px;
+  }
+  .date-viewer .dv-badge { margin-left: auto; }
+  .dv-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 20px; text-align: center; color: var(--text-muted); min-height: 60px;
+  }
+  .dv-empty p { font-size: 13px; }
+  .dv-booking {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px; margin-bottom: 8px;
+  }
+  .dv-booking:last-child { margin-bottom: 0; }
+  .dv-booking .dv-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .dv-booking .dv-row:last-child { margin-bottom: 0; }
+  .dv-booking .dv-name { font-weight: 700; font-size: 14px; }
+  .dv-booking .dv-info { font-size: 12px; color: var(--text-dim); }
+  .dv-booking .dv-actions { display: flex; gap: 6px; margin-top: 10px; }
+  .dv-block-info {
+    background: rgba(255,45,45,.06); border: 1px solid rgba(255,45,45,.2); border-radius: 10px;
+    padding: 16px; text-align: center;
+  }
+  .dv-block-info .dv-block-icon { font-size: 24px; margin-bottom: 6px; }
+  .dv-block-info .dv-block-reason { font-size: 14px; font-weight: 600; color: var(--primary-hi); }
+  .dv-block-info .dv-block-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .dv-weekend {
+    background: rgba(255,170,51,.06); border: 1px solid rgba(255,170,51,.2); border-radius: 10px;
+    padding: 16px; text-align: center;
+  }
+  .dv-weekend .dv-block-reason { color: var(--warning); }
+
+  /* Agenda layout: 3-column on wide screens */
+  .cal-top { display: grid; grid-template-columns: 420px 1fr; gap: 16px; }
+  .cal-right { display: flex; flex-direction: column; gap: 16px; }
 
   /* Modal */
   .modal {
@@ -516,7 +557,7 @@
     .sidebar { display: none; }
     .stats-grid { grid-template-columns: 1fr 1fr; }
     .cal-admin { grid-template-columns: 1fr; }
-    .cal-top { grid-template-columns: 1fr; }
+    .cal-top { grid-template-columns: 1fr !important; }
     .block-add { flex-direction: column; align-items: stretch; }
     main { padding: 20px; }
     th:nth-child(4), td:nth-child(4),
@@ -553,7 +594,7 @@
       📋 Solicitações <span class="count" id="cntReq">0</span>
     </button>
     <button class="nav-item" data-view="calendar">
-      🗓️ Calendário
+      🗓️ Agenda
     </button>
     <button class="nav-item" data-view="templates">
       💬 Templates WhatsApp
@@ -639,7 +680,7 @@
         <div class="cal-top">
           <div class="cal-card">
             <h3>Agenda visual</h3>
-            <p class="sub">Clique em um dia para bloquear/desbloquear. Verde = aprovado. Vermelho = bloqueio manual.</p>
+            <p class="sub">Selecione um dia para ver detalhes. Verde = aprovado. Vermelho = bloqueio.</p>
             <div class="cal-header">
               <div class="cal-month" id="calMonth">—</div>
               <div class="cal-nav">
@@ -654,31 +695,45 @@
             </div>
           </div>
 
-          <div class="cal-card block-compact">
-            <h3>Bloquear data</h3>
-            <p class="sub">Feriados, manutenção, indisponibilidade do estúdio, etc.</p>
-            <div class="block-field">
-              <label>Data</label>
-              <input type="date" id="blockDateInput" />
+          <div class="cal-right">
+            <!-- Date viewer -->
+            <div class="cal-card date-viewer" id="dateViewer">
+              <h3>Detalhes do dia</h3>
+              <p class="sub">Selecione uma data na agenda ao lado.</p>
+              <div id="dateViewerContent">
+                <div class="dv-empty">
+                  <p>Clique em um dia na agenda para ver os detalhes.</p>
+                </div>
+              </div>
             </div>
-            <div class="block-field">
-              <label>Motivo</label>
-              <select id="blockReasonSelect">
-                <option value="Feriado">Feriado</option>
-                <option value="Estúdio indisponível">Estúdio indisponível</option>
-                <option value="Manutenção">Manutenção</option>
-                <option value="Evento interno">Evento interno</option>
-                <option value="Outro">Outro</option>
-              </select>
-            </div>
-            <div class="block-field" id="blockReasonCustomWrap" style="display:none">
-              <label>Especifique</label>
-              <input type="text" id="blockReasonCustom" placeholder="Motivo personalizado" />
-            </div>
-            <button class="action-btn approve" style="padding:10px; font-size:13px" id="addBlockBtn">+ Bloquear data</button>
-            <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:4px">
-              <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px; font-weight:600">Bloqueios ativos</p>
-              <div class="list-blocked" id="blockedList"></div>
+
+            <!-- Block panel -->
+            <div class="cal-card block-compact">
+              <h3>Bloquear data</h3>
+              <p class="sub">Feriados, manutenção, indisponibilidade do estúdio, etc.</p>
+              <div class="block-field">
+                <label>Data</label>
+                <input type="date" id="blockDateInput" />
+              </div>
+              <div class="block-field">
+                <label>Motivo</label>
+                <select id="blockReasonSelect">
+                  <option value="Feriado">Feriado</option>
+                  <option value="Estúdio indisponível">Estúdio indisponível</option>
+                  <option value="Manutenção">Manutenção</option>
+                  <option value="Evento interno">Evento interno</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              </div>
+              <div class="block-field" id="blockReasonCustomWrap" style="display:none">
+                <label>Especifique</label>
+                <input type="text" id="blockReasonCustom" placeholder="Motivo personalizado" />
+              </div>
+              <button class="action-btn approve" style="padding:10px; font-size:13px" id="addBlockBtn">+ Bloquear data</button>
+              <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:4px">
+                <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px; font-weight:600">Bloqueios ativos</p>
+                <div class="list-blocked" id="blockedList"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -1121,8 +1176,8 @@ function renderCalendar() {
     if (approved.has(iso)) el.classList.add('approved');
     if (blocked.has(iso)) el.classList.add('blocked');
 
-    if (!el.classList.contains('past') && !approved.has(iso)) {
-      el.addEventListener('click', () => toggleBlock(iso));
+    if (!el.classList.contains('empty')) {
+      el.addEventListener('click', () => selectDate(iso));
     }
     grid.appendChild(el);
   }
@@ -1138,6 +1193,90 @@ function renderCalendar() {
       <span class="chip">${prettyDate(d.date)}${d.reason ? '<span class="chip-reason">· ' + d.reason + '</span>' : ''} <button onclick="toggleBlock('${d.date}')">×</button></span>
     `).join('');
   }
+}
+
+/* DATE VIEWER — shows info for selected date */
+let selectedDate = null;
+
+function selectDate(iso) {
+  selectedDate = iso;
+  // Highlight selected day
+  document.querySelectorAll('.cal-day').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.cal-day').forEach(el => {
+    // Match by reconstructing the iso from the day text
+    const dayNum = parseInt(el.textContent);
+    if (!dayNum) return;
+    const testDate = new Date(cMonth.getFullYear(), cMonth.getMonth(), dayNum);
+    if (fmtDate(testDate) === iso) el.classList.add('selected');
+  });
+  renderDateViewer(iso);
+}
+
+function renderDateViewer(iso) {
+  const container = document.getElementById('dateViewerContent');
+  const headerEl = document.querySelector('#dateViewer h3');
+  const subEl = document.querySelector('#dateViewer .sub');
+
+  const date = new Date(iso + 'T12:00:00');
+  const dayNames = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  const dayOfWeek = date.getDay();
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+  headerEl.textContent = `${dayNames[dayOfWeek]}, ${prettyDate(iso)}`;
+  subEl.textContent = '';
+
+  // Check if weekend
+  if (isWeekend) {
+    container.innerHTML = `<div class="dv-weekend">
+      <div class="dv-block-icon">🚫</div>
+      <div class="dv-block-reason">Fim de semana</div>
+      <div class="dv-block-sub">A empresa não opera aos sábados e domingos.</div>
+    </div>`;
+    return;
+  }
+
+  // Check if blocked
+  const blockInfo = BLOCKED_DATA.find(b => b.date === iso);
+  if (blockInfo) {
+    container.innerHTML = `<div class="dv-block-info">
+      <div class="dv-block-icon">🔒</div>
+      <div class="dv-block-reason">${blockInfo.reason || 'Data bloqueada'}</div>
+      <div class="dv-block-sub">Esta data está bloqueada para agendamentos.</div>
+    </div>`;
+    return;
+  }
+
+  // Check for bookings on this date
+  const bookings = getRequests().filter(r => r.date === iso);
+  if (bookings.length === 0) {
+    container.innerHTML = `<div class="dv-empty">
+      <p>Nenhum agendamento para esta data.</p>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = bookings.map(r => {
+    const statusLabel = r.status === 'pending' ? 'Pendente' : r.status === 'approved' ? 'Aprovada' : 'Rejeitada';
+    const brindeName = r.brinde === 'pastilhas' ? '🛞 Pastilhas' : r.brinde === 'mochila' ? '🎒 Mochila' : '🧥 Capa';
+    return `<div class="dv-booking">
+      <div class="dv-row">
+        <span class="dv-name">${r.nome}</span>
+        <span class="badge ${r.status}">${statusLabel}</span>
+      </div>
+      <div class="dv-row">
+        <span class="dv-info">${r.moto} · ${r.placa}</span>
+        <span class="dv-info">${brindeName}</span>
+      </div>
+      <div class="dv-row">
+        <span class="dv-info">${r.whatsapp}</span>
+        <span class="dv-info">${r.modalidade === 'estudio' ? 'Estúdio' : 'Retirada'}</span>
+      </div>
+      <div class="dv-actions">
+        <button class="action-btn view" onclick="openDetails('${r.id}')">Ver detalhes</button>
+        <button class="action-btn whats" onclick="openWhatsApp('${r.id}')">💬 WhatsApp</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 async function toggleBlock(iso, reason) {
