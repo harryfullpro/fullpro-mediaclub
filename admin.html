@@ -163,6 +163,43 @@
     white-space: nowrap;
   }
   .shell.collapsed .nav-item { padding: 12px; justify-content: center; }
+  /* Hover overlay mode: sidebar overlays content instead of pushing it */
+  .shell.hover-mode { grid-template-columns: 68px 1fr; }
+  .shell.hover-mode .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: 68px; z-index: 90; padding: 24px 10px;
+    transition: width .25s cubic-bezier(.4,0,.2,1), padding .25s cubic-bezier(.4,0,.2,1);
+    box-shadow: none;
+  }
+  .shell.hover-mode .sidebar .nav-label,
+  .shell.hover-mode .sidebar .brand-txt,
+  .shell.hover-mode .sidebar .nav-section,
+  .shell.hover-mode .sidebar .count,
+  .shell.hover-mode .sidebar .theme-toggle span,
+  .shell.hover-mode .sidebar .theme-switch,
+  .shell.hover-mode .sidebar .theme-ico.ico-sun { display: none; }
+  .shell.hover-mode .sidebar .theme-toggle { padding: 8px; justify-content: center; }
+  .shell.hover-mode .sidebar .nav-item { padding: 12px; justify-content: center; }
+  .shell.hover-mode .sidebar .brand { margin-bottom: 8px; padding: 4px; justify-content: center; }
+  .shell.hover-mode .sidebar .brand-mark { width: 36px; height: 36px; }
+  .shell.hover-mode .sidebar .sb-ctrl-btn { justify-content: center; padding: 10px; }
+  /* Hover expand: overlay opens wide */
+  .shell.hover-mode .sidebar.hover-open {
+    width: 260px; padding: 24px 16px;
+    box-shadow: 6px 0 24px rgba(0,0,0,.3);
+  }
+  .shell.hover-mode .sidebar.hover-open .nav-label,
+  .shell.hover-mode .sidebar.hover-open .brand-txt,
+  .shell.hover-mode .sidebar.hover-open .nav-section,
+  .shell.hover-mode .sidebar.hover-open .count,
+  .shell.hover-mode .sidebar.hover-open .theme-toggle span,
+  .shell.hover-mode .sidebar.hover-open .theme-switch,
+  .shell.hover-mode .sidebar.hover-open .theme-ico.ico-sun { display: revert; }
+  .shell.hover-mode .sidebar.hover-open .theme-toggle { padding: 8px 12px; justify-content: center; }
+  .shell.hover-mode .sidebar.hover-open .nav-item { padding: 12px 14px; justify-content: flex-start; }
+  .shell.hover-mode .sidebar.hover-open .brand { margin-bottom: 16px; padding: 8px; justify-content: flex-start; }
+  .shell.hover-mode .sidebar.hover-open .brand-mark { width: 140px; height: 42px; }
+  .shell.hover-mode .sidebar.hover-open .sb-ctrl-btn { justify-content: flex-start; padding: 10px 14px; }
   .nav-item:hover { background: var(--bg-card); color: var(--text); }
   .nav-item.active { background: rgba(255,45,45,.1); color: var(--primary); }
   .nav-item .count {
@@ -2161,16 +2198,18 @@ function setSidebarMode(mode) {
   sidebarMode = mode;
   const shell = document.getElementById('app');
   const sidebar = shell.querySelector('.sidebar');
-  // Clean up previous listeners
+  // Clean up everything
   sidebar.removeEventListener('mouseenter', sidebarHoverIn);
   sidebar.removeEventListener('mouseleave', sidebarHoverOut);
+  shell.classList.remove('collapsed', 'hover-mode');
+  sidebar.classList.remove('hover-open');
 
   if (mode === 'expanded') {
-    shell.classList.remove('collapsed');
+    // nothing extra — default grid
   } else if (mode === 'collapsed') {
     shell.classList.add('collapsed');
   } else if (mode === 'hover') {
-    shell.classList.add('collapsed');
+    shell.classList.add('hover-mode');
     sidebar.addEventListener('mouseenter', sidebarHoverIn);
     sidebar.addEventListener('mouseleave', sidebarHoverOut);
   }
@@ -2178,8 +2217,13 @@ function setSidebarMode(mode) {
   updateSbPopoverActive();
   closeSbPopover();
 }
-function sidebarHoverIn() { document.getElementById('app').classList.remove('collapsed'); }
-function sidebarHoverOut() { document.getElementById('app').classList.add('collapsed'); closeSbPopover(); }
+function sidebarHoverIn() {
+  document.getElementById('app').querySelector('.sidebar').classList.add('hover-open');
+}
+function sidebarHoverOut() {
+  document.getElementById('app').querySelector('.sidebar').classList.remove('hover-open');
+  closeSbPopover();
+}
 
 function toggleSbPopover() {
   const pop = document.getElementById('sbPopover');
@@ -2209,10 +2253,10 @@ document.addEventListener('click', e => {
   const saved = localStorage.getItem('fp_sidebar') || 'expanded';
   sidebarMode = saved;
   const shell = document.getElementById('app');
-  if (saved === 'collapsed' || saved === 'hover') {
+  if (saved === 'collapsed') {
     shell.classList.add('collapsed');
-  }
-  if (saved === 'hover') {
+  } else if (saved === 'hover') {
+    shell.classList.add('hover-mode');
     const sidebar = shell.querySelector('.sidebar');
     sidebar.addEventListener('mouseenter', sidebarHoverIn);
     sidebar.addEventListener('mouseleave', sidebarHoverOut);
