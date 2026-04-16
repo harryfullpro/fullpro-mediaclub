@@ -1629,9 +1629,10 @@ function renderCiView() {
               <!-- E and F labels -->
               <text x="12" y="118" fill="var(--text)" font-size="16" font-weight="800" font-family="Inter,sans-serif">E</text>
               <text x="196" y="118" fill="var(--text)" font-size="16" font-weight="800" font-family="Inter,sans-serif">F</text>
-              <!-- Needle (red pointer triangle) -->
-              <g id="fuelNeedleGroup_${prefix}_${rid}" transform="rotate(0,110,110)">
-                <polygon points="110,110 108,108 45,110 108,112" fill="#dd2222" stroke="#bb1111" stroke-width="0.5"/>
+              <!-- Needle (red pointer triangle — points UP at rest, rotate -90=E, +90=F) -->
+              <g id="fuelNeedleGroup_${prefix}_${rid}" transform="rotate(-90,110,110)">
+                <polygon points="110,30 107.5,106 112.5,106" fill="#dd2222" stroke="#aa1111" stroke-width="0.5"/>
+                <polygon points="110,30 108.5,100 111.5,100" fill="#ff3333" opacity="0.5"/>
               </g>
               <!-- Center hub -->
               <circle cx="110" cy="110" r="8" fill="#222" stroke="var(--text-dim)" stroke-width="1.5"/>
