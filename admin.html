@@ -1599,7 +1599,7 @@ function renderCiView() {
         <div class="checkin-field">
           <label class="checkin-label">Nivel de combustivel</label>
           <div class="fuel-gauge-container">
-            <svg class="fuel-svg" viewBox="0 0 220 130" id="fuelSvg_${prefix}_${rid}" data-rid="${prefix}_${rid}" style="cursor:pointer">
+            <svg class="fuel-svg" viewBox="0 0 220 140" id="fuelSvg_${prefix}_${rid}" data-rid="${prefix}_${rid}" style="cursor:pointer">
               <!-- Outer arc (thick black gauge track) -->
               <path d="M 28 110 A 82 82 0 0 1 192 110" fill="none" stroke="var(--text)" stroke-width="10" stroke-linecap="butt"/>
               <!-- Red reserve zone (E side, 0-15%) — thicker inner arc -->
@@ -1627,8 +1627,8 @@ function renderCiView() {
                 <rect x="5" y="20" width="4" height="3" rx="0.5"/>
               </g>
               <!-- E and F labels -->
-              <text x="12" y="118" fill="var(--text)" font-size="16" font-weight="800" font-family="Inter,sans-serif">E</text>
-              <text x="196" y="118" fill="var(--text)" font-size="16" font-weight="800" font-family="Inter,sans-serif">F</text>
+              <text x="8" y="128" fill="var(--text)" font-size="16" font-weight="800" font-family="Inter,sans-serif">E</text>
+              <text x="200" y="128" fill="var(--text)" font-size="16" font-weight="800" font-family="Inter,sans-serif">F</text>
               <!-- Needle (red pointer triangle — points UP at rest, rotate -90=E, +90=F) -->
               <g id="fuelNeedleGroup_${prefix}_${rid}" transform="rotate(-90,110,110)">
                 <polygon points="110,30 107.5,106 112.5,106" fill="#dd2222" stroke="#aa1111" stroke-width="0.5"/>
@@ -2081,7 +2081,7 @@ function initFuelGaugeDrag(rid) {
     const pt = svg.getBoundingClientRect();
     const svgW = pt.width, svgH = pt.height;
     const mx = (e.clientX - pt.left) / svgW * 220;
-    const my = (e.clientY - pt.top) / svgH * 130;
+    const my = (e.clientY - pt.top) / svgH * 140;
     const dx = mx - 110, dy = -(my - 110);
     let angle = Math.atan2(dy, dx);
     if (angle < 0) angle = 0;
