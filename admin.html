@@ -1644,7 +1644,7 @@ function renderCiView() {
         </div>
         <div class="checkin-field">
           <label class="checkin-label">Quilometragem</label>
-          <input type="text" class="checkin-input" id="${prefix}Km_${rid}" value="${ci.mileage || ''}" placeholder="Ex: 15.432 km"/>
+          <input type="text" class="checkin-input" id="${prefix}Km_${rid}" value="${formatKm(ci.mileage || '')}" placeholder="Ex: 15.432 km" oninput="this.value=formatKm(this.value)"/>
         </div>
         <div class="checkin-field">
           <label class="checkin-label">Observacoes sobre a moto</label>
@@ -1711,11 +1711,16 @@ function rmCiPhoto(compositeId, idx) {
   refreshPhotoGrid(compositeId, ci.photos, 'rmCiPhoto');
 }
 
+function formatKm(v) {
+  const nums = String(v).replace(/\D/g, '');
+  return nums.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
 async function saveCiForm(prefix, rid) {
   const table = prefix === 'ci' ? 'checkins' : 'checkouts';
   const store = prefix === 'ci' ? CHECKINS : CHECKOUTS;
   const fuel = parseInt(document.getElementById('fuelRange_' + prefix + '_' + rid)?.value || 0);
-  const km = document.getElementById(prefix + 'Km_' + rid)?.value?.trim() || '';
+  const km = (document.getElementById(prefix + 'Km_' + rid)?.value || '').replace(/\D/g, '');
   const obs = document.getElementById(prefix + 'Obs_' + rid)?.value?.trim() || '';
   const existing = store[rid];
   const photos = existing?.photos || [];
