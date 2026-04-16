@@ -112,22 +112,23 @@
   .brand {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
     padding: 8px;
-    margin-bottom: 16px;
+    height: 58px;
+    margin-bottom: 8px;
     text-decoration: none;
     color: var(--text);
     overflow: hidden;
-    transition: margin .25s;
+    flex-shrink: 0;
   }
-  .shell.collapsed .brand { margin-bottom: 8px; padding: 4px; justify-content: center; }
+  .shell.collapsed .brand { justify-content: center; }
   .brand-mark {
     width: 140px; height: 42px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: width .25s;
   }
   .shell.collapsed .brand-mark { width: 36px; height: 36px; }
   .brand-mark img { width: 100%; height: 100%; object-fit: contain; filter: var(--logo-filter); }
@@ -143,11 +144,11 @@
   /* Hide text labels when collapsed */
   .shell.collapsed .nav-label,
   .shell.collapsed .brand-txt,
-  .shell.collapsed .nav-section,
   .shell.collapsed .count,
   .shell.collapsed .theme-toggle span,
   .shell.collapsed .theme-switch,
   .shell.collapsed .theme-ico.ico-sun { display: none; }
+  .shell.collapsed .nav-section { color: transparent; }
   .shell.collapsed .theme-toggle { padding: 8px; justify-content: center; }
   .nav-item {
     padding: 12px 14px;
@@ -176,14 +177,14 @@
   .shell.hover-mode .sidebar { padding: 24px 10px; }
   .shell.hover-mode .nav-label,
   .shell.hover-mode .brand-txt,
-  .shell.hover-mode .nav-section,
   .shell.hover-mode .count,
   .shell.hover-mode .theme-toggle span,
   .shell.hover-mode .theme-switch,
   .shell.hover-mode .theme-ico.ico-sun { display: none; }
+  .shell.hover-mode .nav-section { color: transparent; }
   .shell.hover-mode .theme-toggle { padding: 8px; justify-content: center; }
   .shell.hover-mode .nav-item { padding: 12px; justify-content: center; }
-  .shell.hover-mode .brand { margin-bottom: 8px; padding: 4px; justify-content: center; }
+  .shell.hover-mode .brand { justify-content: center; }
   .shell.hover-mode .brand-mark { width: 36px; height: 36px; }
   .shell.hover-mode .sb-ctrl-btn { justify-content: center; padding: 10px; }
   /* Hover expand: sidebar overflows its grid column as overlay */
@@ -194,14 +195,14 @@
   }
   .shell.hover-mode .sidebar.hover-open .nav-label,
   .shell.hover-mode .sidebar.hover-open .brand-txt,
-  .shell.hover-mode .sidebar.hover-open .nav-section,
   .shell.hover-mode .sidebar.hover-open .count,
   .shell.hover-mode .sidebar.hover-open .theme-toggle span,
   .shell.hover-mode .sidebar.hover-open .theme-switch,
   .shell.hover-mode .sidebar.hover-open .theme-ico.ico-sun { display: revert; }
+  .shell.hover-mode .sidebar.hover-open .nav-section { color: var(--text-muted); }
   .shell.hover-mode .sidebar.hover-open .theme-toggle { padding: 8px 12px; justify-content: center; }
   .shell.hover-mode .sidebar.hover-open .nav-item { padding: 12px 14px; justify-content: flex-start; }
-  .shell.hover-mode .sidebar.hover-open .brand { margin-bottom: 16px; padding: 8px; justify-content: flex-start; }
+  .shell.hover-mode .sidebar.hover-open .brand { justify-content: flex-start; }
   .shell.hover-mode .sidebar.hover-open .brand-mark { width: 140px; height: 42px; }
   .shell.hover-mode .sidebar.hover-open .sb-ctrl-btn { justify-content: flex-start; padding: 10px 14px; }
   .nav-item:hover { background: var(--bg-card); color: var(--text); }
@@ -216,7 +217,7 @@
   }
   .nav-item.active .count { background: var(--primary); color: #fff; }
   .sidebar-foot { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); }
-  .nav-section { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding: 16px 14px 6px; }
+  .nav-section { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding: 16px 14px 6px; height: 32px; flex-shrink: 0; overflow: hidden; }
   .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .theme-toggle {
     display: flex; align-items: center; gap: 0; padding: 8px 12px;
