@@ -1486,6 +1486,36 @@
             <label>Cargo</label>
             <input type="text" class="login-input" id="profRole" style="margin:0"/>
           </div>
+          <hr style="border:none;border-top:1px solid var(--border);margin:16px 0 12px"/>
+          <h3 style="font-size:14px;margin-bottom:2px">Dados PIX</h3>
+          <p class="sub">Usado para gerar o código PIX copia e cola ao enviar custos.</p>
+          <div style="display:grid;grid-template-columns:140px 1fr;gap:10px">
+            <div class="block-field">
+              <label>Tipo da chave</label>
+              <select class="login-input" id="profPixType" style="margin:0">
+                <option value="">Selecione</option>
+                <option value="cpf">CPF</option>
+                <option value="cnpj">CNPJ</option>
+                <option value="phone">Telefone</option>
+                <option value="email">E-mail</option>
+                <option value="random">Chave aleatória</option>
+              </select>
+            </div>
+            <div class="block-field">
+              <label>Chave PIX</label>
+              <input type="text" class="login-input" id="profPixKey" style="margin:0" placeholder="Sua chave PIX"/>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="block-field">
+              <label>Nome do titular</label>
+              <input type="text" class="login-input" id="profPixName" style="margin:0" placeholder="Como aparece no PIX"/>
+            </div>
+            <div class="block-field">
+              <label>Cidade</label>
+              <input type="text" class="login-input" id="profPixCity" style="margin:0" placeholder="Ex: Joinville"/>
+            </div>
+          </div>
           <button class="action-btn approve" style="width:100%;padding:12px;margin-top:4px" onclick="saveProfile()">
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
             Salvar informações
@@ -1727,6 +1757,11 @@ function loadProfile() {
   document.getElementById('profUsername').value = CURRENT_USER.username || '';
   document.getElementById('profPhone').value = CURRENT_USER.phone || '';
   document.getElementById('profRole').value = CURRENT_USER.role || '';
+  const pix = CURRENT_USER.pix || {};
+  document.getElementById('profPixType').value = pix.type || '';
+  document.getElementById('profPixKey').value = pix.key || '';
+  document.getElementById('profPixName').value = pix.name || '';
+  document.getElementById('profPixCity').value = pix.city || '';
 }
 
 async function saveProfile() {
@@ -1736,11 +1771,19 @@ async function saveProfile() {
   const role = document.getElementById('profRole').value.trim();
   if (!name) { alert('Informe seu nome.'); return; }
 
-  const { error } = await sb.from('admin_users').update({ name, phone, role }).eq('id', CURRENT_USER.id);
+  const pix = {
+    type: document.getElementById('profPixType').value,
+    key: document.getElementById('profPixKey').value.trim(),
+    name: document.getElementById('profPixName').value.trim(),
+    city: document.getElementById('profPixCity').value.trim()
+  };
+
+  const { error } = await sb.from('admin_users').update({ name, phone, role, pix }).eq('id', CURRENT_USER.id);
   if (error) { alert('Erro ao salvar: ' + error.message); return; }
   CURRENT_USER.name = name;
   CURRENT_USER.phone = phone;
   CURRENT_USER.role = role;
+  CURRENT_USER.pix = pix;
   alert('Perfil atualizado!');
 }
 
@@ -2783,10 +2826,48 @@ function renderProjCosts() {
   `<div style="text-align:right;font-size:12px;font-weight:600;color:var(--primary);padding:4px 0;margin-bottom:8px">Total: R$ ${formatBRL(total)}</div>`;
 }
 
+/* PIX BRCode Generator (EMV standard) */
+function pixCRC16(str) {
+  let crc = 0xFFFF;
+  for (let i = 0; i < str.length; i++) {
+    crc ^= str.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
+      crc &= 0xFFFF;
+    }
+  }
+  return crc.toString(16).toUpperCase().padStart(4, '0');
+}
+function emvField(id, val) {
+  return id + String(val.length).padStart(2, '0') + val;
+}
+function generatePixCode(pixKey, merchantName, merchantCity, amount, description) {
+  const gui = emvField('00', 'br.gov.bcb.pix');
+  const key = emvField('01', pixKey);
+  let desc = '';
+  if (description) desc = emvField('02', description.substring(0, 25));
+  const mai = emvField('26', gui + key + desc);
+  let payload = emvField('00', '01') + mai + emvField('52', '0000') + emvField('53', '986');
+  if (amount && amount > 0) payload += emvField('54', amount.toFixed(2));
+  payload += emvField('58', 'BR');
+  payload += emvField('59', merchantName.substring(0, 25).toUpperCase());
+  payload += emvField('60', merchantCity.substring(0, 15).toUpperCase());
+  payload += emvField('62', emvField('05', '***'));
+  payload += '6304';
+  payload += pixCRC16(payload);
+  return payload;
+}
 function buildCostsWAMsg(title, costs) {
   const total = costs.reduce((s, c) => s + (c.value || 0), 0);
   const items = costs.map(c => `• R$ ${formatBRL(c.value)} — ${c.reason}`).join('\n');
-  return `*Custos — ${title}*\n\n${items}\n\n*Total: R$ ${formatBRL(total)}*`;
+  let msg = `*Custos — ${title}*\n\n${items}\n\n*Total: R$ ${formatBRL(total)}*`;
+
+  const pix = CURRENT_USER?.pix;
+  if (pix && pix.key && pix.name && pix.city) {
+    const pixCode = generatePixCode(pix.key, pix.name, pix.city, total, title.substring(0, 25));
+    msg += `\n\n*PIX Copia e Cola:*\n\`${pixCode}\``;
+  }
+  return msg;
 }
 function sendCostsWhatsApp() {
   if (projCosts.length === 0) { alert('Adicione pelo menos um custo antes de enviar.'); return; }
