@@ -17,7 +17,7 @@
     --border-hi: #34343e;
     --text: #f5f5f7;
     --text-dim: #a1a1aa;
-    --text-muted: #6b6b76;
+    --text-muted: #9494a0;
     --primary: #ff2d2d;
     --primary-hi: #ff5252;
     --accent: #ffcf33;
@@ -66,8 +66,10 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow: hidden;
+    height: 100vh;
+    position: sticky;
+    top: 0;
     transition: padding .25s cubic-bezier(.4,0,.2,1);
   }
   .shell.collapsed .sidebar { padding: 24px 10px; }
@@ -243,7 +245,7 @@
   [data-theme="light"] .theme-switch::after { transform: translateX(18px); background: #f59e0b; }
 
   /* Main */
-  main { padding: 32px; overflow-x: hidden; }
+  main { padding: 32px; overflow-x: hidden; overflow-y: auto; height: 100vh; }
   .page-head {
     display: flex;
     justify-content: space-between;
