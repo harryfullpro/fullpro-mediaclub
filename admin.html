@@ -369,9 +369,9 @@
   }
   .dv-weekend .dv-block-reason { color: var(--warning); }
 
-  /* Agenda layout: 3-column on wide screens */
-  .cal-top { display: grid; grid-template-columns: 420px 1fr; gap: 16px; }
-  .cal-right { display: flex; flex-direction: column; gap: 16px; }
+  /* Agenda layout: 3 equal columns side by side */
+  .cal-top { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .cal-right { display: none; /* unused now */ }
 
   /* Modal */
   .modal {
@@ -558,6 +558,7 @@
     .stats-grid { grid-template-columns: 1fr 1fr; }
     .cal-admin { grid-template-columns: 1fr; }
     .cal-top { grid-template-columns: 1fr !important; }
+    .cal-right { display: flex; flex-direction: column; gap: 16px; }
     .block-add { flex-direction: column; align-items: stretch; }
     main { padding: 20px; }
     th:nth-child(4), td:nth-child(4),
@@ -695,45 +696,43 @@
             </div>
           </div>
 
-          <div class="cal-right">
-            <!-- Date viewer -->
-            <div class="cal-card date-viewer" id="dateViewer">
-              <h3>Detalhes do dia</h3>
-              <p class="sub">Selecione uma data na agenda ao lado.</p>
-              <div id="dateViewerContent">
-                <div class="dv-empty">
-                  <p>Clique em um dia na agenda para ver os detalhes.</p>
-                </div>
+          <!-- Date viewer -->
+          <div class="cal-card date-viewer" id="dateViewer">
+            <h3>Detalhes do dia</h3>
+            <p class="sub">Selecione uma data na agenda ao lado.</p>
+            <div id="dateViewerContent">
+              <div class="dv-empty">
+                <p>Clique em um dia na agenda para ver os detalhes.</p>
               </div>
             </div>
+          </div>
 
-            <!-- Block panel -->
-            <div class="cal-card block-compact">
-              <h3>Bloquear data</h3>
-              <p class="sub">Feriados, manutenção, indisponibilidade do estúdio, etc.</p>
-              <div class="block-field">
-                <label>Data</label>
-                <input type="date" id="blockDateInput" />
-              </div>
-              <div class="block-field">
-                <label>Motivo</label>
-                <select id="blockReasonSelect">
-                  <option value="Feriado">Feriado</option>
-                  <option value="Estúdio indisponível">Estúdio indisponível</option>
-                  <option value="Manutenção">Manutenção</option>
-                  <option value="Evento interno">Evento interno</option>
-                  <option value="Outro">Outro</option>
-                </select>
-              </div>
-              <div class="block-field" id="blockReasonCustomWrap" style="display:none">
-                <label>Especifique</label>
-                <input type="text" id="blockReasonCustom" placeholder="Motivo personalizado" />
-              </div>
-              <button class="action-btn approve" style="padding:10px; font-size:13px" id="addBlockBtn">+ Bloquear data</button>
-              <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:4px">
-                <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px; font-weight:600">Bloqueios ativos</p>
-                <div class="list-blocked" id="blockedList"></div>
-              </div>
+          <!-- Block panel -->
+          <div class="cal-card block-compact">
+            <h3>Bloquear data</h3>
+            <p class="sub">Feriados, manutenção, indisponibilidade do estúdio, etc.</p>
+            <div class="block-field">
+              <label>Data</label>
+              <input type="date" id="blockDateInput" />
+            </div>
+            <div class="block-field">
+              <label>Motivo</label>
+              <select id="blockReasonSelect">
+                <option value="Feriado">Feriado</option>
+                <option value="Estúdio indisponível">Estúdio indisponível</option>
+                <option value="Manutenção">Manutenção</option>
+                <option value="Evento interno">Evento interno</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+            <div class="block-field" id="blockReasonCustomWrap" style="display:none">
+              <label>Especifique</label>
+              <input type="text" id="blockReasonCustom" placeholder="Motivo personalizado" />
+            </div>
+            <button class="action-btn approve" style="padding:10px; font-size:13px" id="addBlockBtn">+ Bloquear data</button>
+            <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:4px">
+              <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px; font-weight:600">Bloqueios ativos</p>
+              <div class="list-blocked" id="blockedList"></div>
             </div>
           </div>
         </div>
