@@ -57,15 +57,11 @@
   }
   .brand-mark {
     width: 36px; height: 36px;
-    background: linear-gradient(135deg, var(--primary), #cc1d1d);
-    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 22px;
-    color: #fff;
   }
+  .brand-mark img { width: 100%; height: 100%; object-fit: contain; filter: brightness(1.1); }
   .brand-txt { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1.5px; }
   .brand-txt small { display:block; font-family:'Inter',sans-serif; font-size: 10px; color: var(--text-muted); letter-spacing: 2px; font-weight: 500; }
   .nav-item {
@@ -422,6 +418,43 @@
   .login-err { color: var(--danger); font-size: 13px; margin-top: 12px; min-height: 18px; }
   .login-hint { color: var(--text-muted); font-size: 11px; margin-top: 16px; }
 
+  /* Booking form */
+  .book-form { display: flex; flex-direction: column; gap: 14px; }
+  .book-form label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .8px; font-weight: 600; margin-bottom: -8px; }
+  .book-form input, .book-form select, .book-form textarea {
+    width: 100%; padding: 12px 14px; background: var(--bg-elev); border: 1px solid var(--border);
+    color: var(--text); border-radius: 10px; font-size: 14px; font-family: inherit;
+  }
+  .book-form input:focus, .book-form select:focus, .book-form textarea:focus { outline: none; border-color: var(--primary); }
+  .book-form select { appearance: none; cursor: pointer; }
+  .book-form textarea { resize: vertical; min-height: 60px; }
+  .book-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .book-row > div { display: flex; flex-direction: column; gap: 6px; }
+
+  /* Operator name field */
+  .operator-field {
+    display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+    margin-bottom: 4px;
+  }
+  .operator-field label { font-size: 11px; color: var(--text-muted); white-space: nowrap; letter-spacing: .5px; }
+  .operator-field input {
+    flex: 1; background: transparent; border: none; color: var(--text);
+    font-size: 14px; font-family: inherit; font-weight: 600; outline: none;
+  }
+
+  /* WhatsApp dropdown */
+  .wa-options { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+  .wa-opt {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px;
+    text-decoration: none; color: var(--text); font-size: 13px; transition: all .15s;
+  }
+  .wa-opt:hover { border-color: #25D366; background: rgba(37,211,102,.06); }
+  .wa-opt .wa-ico { color: #25D366; font-size: 16px; flex-shrink: 0; }
+  .wa-opt .wa-title { font-weight: 600; }
+  .wa-opt .wa-preview { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+
   @media (max-width: 900px) {
     .shell { grid-template-columns: 1fr; }
     .sidebar { display: none; }
@@ -439,7 +472,7 @@
 <div id="login" class="login">
   <div class="login-card">
     <div class="brand" style="margin:0 auto 24px; width:fit-content">
-      <span class="brand-mark">F</span>
+      <span class="brand-mark"><img src="assets/logo.png" alt="FullPro" /></span>
       <span class="brand-txt">FULLPRO<small>MEDIA CLUB ADMIN</small></span>
     </div>
     <h2>Painel administrativo</h2>
@@ -456,7 +489,7 @@
 <div id="app" class="shell" style="display:none">
   <aside class="sidebar">
     <a href="admin.html" class="brand">
-      <span class="brand-mark">F</span>
+      <span class="brand-mark"><img src="assets/logo.png" alt="FullPro" /></span>
       <span class="brand-txt">FULLPRO<small>MEDIA CLUB</small></span>
     </a>
     <button class="nav-item active" data-view="requests">
@@ -469,6 +502,10 @@
       📤 Exportar
     </button>
     <div class="sidebar-foot">
+      <div class="operator-field">
+        <label>Operador:</label>
+        <input type="text" id="operatorName" placeholder="Seu nome" value="" />
+      </div>
       <a href="index.html" class="nav-item">← Ver landing page</a>
       <button class="nav-item" id="logoutBtn">🚪 Sair</button>
     </div>
@@ -532,15 +569,16 @@
     <div id="view-calendar" style="display:none">
       <div class="page-head">
         <div>
-          <h1>Calendário</h1>
-          <p>Bloqueie manualmente dias em que há motos de outras fontes agendadas.</p>
+          <h1>Agenda</h1>
+          <p>Gerencie agendamentos e bloqueios de datas.</p>
         </div>
+        <button class="action-btn approve" style="padding:12px 20px; font-size:14px" onclick="openBookingModal()">+ Novo agendamento</button>
       </div>
 
       <div class="cal-admin">
         <div class="cal-card">
           <h3>Agenda visual</h3>
-          <p class="sub">Clique em um dia para bloquear/desbloquear. Verde = aprovado via landing. Vermelho = bloqueio manual.</p>
+          <p class="sub">Clique em um dia para bloquear/desbloquear. Verde = aprovado. Vermelho = bloqueio manual.</p>
           <div class="cal-header">
             <div class="cal-month" id="calMonth">—</div>
             <div class="cal-nav">
@@ -594,6 +632,83 @@
     </div>
     <div class="modal-body" id="modalBody"></div>
     <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<!-- Modal Agendamento Manual -->
+<div class="modal" id="bookModal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <h3>Novo agendamento manual</h3>
+      <button class="modal-close" onclick="closeBookModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="book-form" id="bookForm">
+        <div class="book-row">
+          <div>
+            <label>Data *</label>
+            <input type="date" id="bDate" required />
+          </div>
+          <div>
+            <label>Modalidade *</label>
+            <select id="bModalidade">
+              <option value="estudio">Leva até o estúdio</option>
+              <option value="retirada">Retirada no endereço</option>
+            </select>
+          </div>
+        </div>
+        <label>Nome completo *</label>
+        <input type="text" id="bNome" placeholder="Nome do cliente" />
+        <div class="book-row">
+          <div>
+            <label>WhatsApp *</label>
+            <input type="text" id="bWhats" placeholder="(47) 99999-9999" />
+          </div>
+          <div>
+            <label>E-mail</label>
+            <input type="email" id="bEmail" placeholder="email@exemplo.com" />
+          </div>
+        </div>
+        <div class="book-row">
+          <div>
+            <label>Moto *</label>
+            <input type="text" id="bMoto" placeholder="Ex: Honda CB 650R 2023" />
+          </div>
+          <div>
+            <label>Placa *</label>
+            <input type="text" id="bPlaca" placeholder="ABC-1D23" />
+          </div>
+        </div>
+        <label>Endereço (se retirada)</label>
+        <input type="text" id="bEndereco" placeholder="Endereço completo" />
+        <label>Brinde *</label>
+        <select id="bBrinde">
+          <option value="pastilhas">Pastilhas HH</option>
+          <option value="mochila">Mochila</option>
+          <option value="capa">Capa de chuva</option>
+        </select>
+        <label>Observações</label>
+        <textarea id="bObs" placeholder="Notas internas..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="action-btn" onclick="closeBookModal()">Cancelar</button>
+      <button class="action-btn approve" onclick="submitBooking()">Salvar agendamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal WhatsApp -->
+<div class="modal" id="waModal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <h3>Enviar WhatsApp</h3>
+      <button class="modal-close" onclick="closeWaModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px; color:var(--text-dim); margin-bottom:14px">Escolha a mensagem a enviar para <strong id="waClientName"></strong>:</p>
+      <div class="wa-options" id="waOptions"></div>
+    </div>
   </div>
 </div>
 
@@ -793,8 +908,7 @@ async function updateStatus(id, status) {
 function openDetails(id) {
   const r = getRequests().find(x => x.id === id);
   if (!r) return;
-  const waLink = 'https://wa.me/55' + r.whatsapp.replace(/\D/g,'') +
-    '?text=' + encodeURIComponent(`Olá ${r.nome.split(' ')[0]}! Aqui é da FullPro Media Club. Vi sua solicitação para o dia ${prettyDate(r.date)} com a ${r.moto}. Podemos confirmar?`);
+  // WhatsApp is now handled via openWhatsApp(id) modal
 
   document.getElementById('modalBody').innerHTML = `
     <div class="detail-row"><div class="k">Data</div><div class="v">${prettyDate(r.date)}</div></div>
@@ -814,7 +928,7 @@ function openDetails(id) {
   `;
 
   document.getElementById('modalFoot').innerHTML = `
-    <a href="${waLink}" target="_blank" class="action-btn whats">💬 Abrir WhatsApp</a>
+    <button class="action-btn whats" onclick="closeModal(); openWhatsApp('${r.id}')">💬 WhatsApp</button>
     ${r.status === 'pending' ? `
       <button class="action-btn reject" onclick="updateStatus('${r.id}','rejected')">Rejeitar</button>
       <button class="action-btn approve" onclick="updateStatus('${r.id}','approved')">Aprovar</button>
@@ -933,6 +1047,130 @@ async function clearData() {
   renderCalendar();
   alert('Dados limpos.');
 }
+
+/* OPERATOR NAME (persists in localStorage) */
+const opInput = document.getElementById('operatorName');
+opInput.value = localStorage.getItem('fp_operator') || '';
+opInput.addEventListener('input', () => {
+  localStorage.setItem('fp_operator', opInput.value.trim());
+});
+function getOperator() {
+  return opInput.value.trim() || 'Equipe FullPro';
+}
+
+/* MANUAL BOOKING */
+function openBookingModal() {
+  document.getElementById('bookModal').classList.add('show');
+  document.getElementById('bDate').value = '';
+  document.getElementById('bNome').value = '';
+  document.getElementById('bWhats').value = '';
+  document.getElementById('bEmail').value = '';
+  document.getElementById('bMoto').value = '';
+  document.getElementById('bPlaca').value = '';
+  document.getElementById('bEndereco').value = '';
+  document.getElementById('bBrinde').value = 'pastilhas';
+  document.getElementById('bModalidade').value = 'estudio';
+  document.getElementById('bObs').value = '';
+}
+function closeBookModal() {
+  document.getElementById('bookModal').classList.remove('show');
+}
+document.getElementById('bookModal').addEventListener('click', e => {
+  if (e.target.id === 'bookModal') closeBookModal();
+});
+
+async function submitBooking() {
+  const date = document.getElementById('bDate').value;
+  const nome = document.getElementById('bNome').value.trim();
+  const whatsapp = document.getElementById('bWhats').value.trim();
+  const moto = document.getElementById('bMoto').value.trim();
+  const placa = document.getElementById('bPlaca').value.trim();
+  const brinde = document.getElementById('bBrinde').value;
+
+  if (!date || !nome || !whatsapp || !moto || !placa) {
+    alert('Preencha todos os campos obrigatórios (*).'); return;
+  }
+
+  const payload = {
+    date,
+    nome,
+    whatsapp,
+    email: document.getElementById('bEmail').value.trim() || null,
+    moto,
+    placa: placa.toUpperCase(),
+    modalidade: document.getElementById('bModalidade').value,
+    endereco: document.getElementById('bEndereco').value.trim() || null,
+    brinde,
+    obs: document.getElementById('bObs').value.trim() || null,
+    aceite_termo: true,
+    aceite_imagem: true,
+    status: 'approved'
+  };
+
+  const { error } = await sb.from('requests').insert(payload);
+  if (error) { alert('Erro ao salvar: ' + error.message); return; }
+
+  closeBookModal();
+  await loadRequests();
+  renderRequests();
+  renderCalendar();
+  alert('Agendamento criado com sucesso!');
+}
+
+/* WHATSAPP TEMPLATES */
+function getWaTemplates(r) {
+  const op = getOperator();
+  const first = r.nome.split(' ')[0];
+  const dateStr = prettyDate(r.date);
+  const brindeName = r.brinde === 'pastilhas' ? 'Jogo de Pastilhas HH' : r.brinde === 'mochila' ? 'Mochila FullPro' : 'Capa de Chuva FullPro';
+
+  return [
+    {
+      title: 'Confirmar agendamento',
+      msg: `Olá, ${first}! Tudo bem? Aqui é ${op}, da FullPro Media Club. 🏍️\n\nRecebemos sua solicitação para participar do nosso programa de conteúdo no dia *${dateStr}* com a *${r.moto}*.\n\nGostaria de confirmar sua participação! O brinde escolhido foi *${brindeName}*.\n\nPodemos confirmar essa data? Qualquer dúvida estou à disposição.\n\nAbraço,\n${op} — FullPro Media Club`
+    },
+    {
+      title: 'Lembrete (véspera)',
+      msg: `Olá, ${first}! Aqui é ${op}, da FullPro. 👋\n\nPassando para lembrar que amanhã é o dia da sua participação no Media Club com a *${r.moto}*!\n\n${r.modalidade === 'estudio' ? '📍 Nosso endereço: Rua Florianópolis, 2486 — Itaum, Joinville/SC. Horário: a partir das *8h*.' : '🚗 Nossa equipe fará a retirada no seu endereço amanhã às *8h*. Por favor, tenha a moto e o CRLV em mãos.'}\n\nSeu brinde *${brindeName}* já está separado!\n\nQualquer imprevisto, me avise com antecedência.\n\nAté amanhã! 🤝\n${op} — FullPro`
+    },
+    {
+      title: 'Agradecimento pós-gravação',
+      msg: `Olá, ${first}! Aqui é ${op}, da FullPro. 😊\n\nMuito obrigado por participar do Media Club! Foi um prazer trabalhar com a sua *${r.moto}* no estúdio hoje.\n\nEm breve compartilharemos o conteúdo produzido em nossas redes (@fullprobr). Fique de olho!\n\nEsperamos que tenha curtido a experiência e o brinde. Se puder, nos avalie no Google — ajuda muito! ⭐\n\nhttps://g.page/r/fullpro/review\n\nGrande abraço,\n${op} — FullPro Media Club`
+    },
+    {
+      title: 'Reagendar / data indisponível',
+      msg: `Olá, ${first}! Aqui é ${op}, da FullPro Media Club.\n\nInfelizmente a data *${dateStr}* que você escolheu não está mais disponível para gravação.\n\nMas gostaríamos muito de manter sua participação! Temos disponibilidade nas próximas semanas. Podemos encontrar uma nova data juntos?\n\nAguardo seu retorno! 🙏\n${op} — FullPro`
+    }
+  ];
+}
+
+function openWhatsApp(id) {
+  const r = getRequests().find(x => x.id === id);
+  if (!r) return;
+  const phone = '55' + r.whatsapp.replace(/\D/g, '');
+  const templates = getWaTemplates(r);
+
+  document.getElementById('waClientName').textContent = r.nome;
+  document.getElementById('waOptions').innerHTML = templates.map(t => {
+    const link = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(t.msg);
+    const preview = t.msg.split('\n')[0].substring(0, 80) + '...';
+    return `<a href="${link}" target="_blank" rel="noopener" class="wa-opt">
+      <span class="wa-ico">💬</span>
+      <div>
+        <div class="wa-title">${t.title}</div>
+        <div class="wa-preview">${preview}</div>
+      </div>
+    </a>`;
+  }).join('');
+
+  document.getElementById('waModal').classList.add('show');
+}
+function closeWaModal() {
+  document.getElementById('waModal').classList.remove('show');
+}
+document.getElementById('waModal').addEventListener('click', e => {
+  if (e.target.id === 'waModal') closeWaModal();
+});
 
 /* INIT */
 async function initApp() {
