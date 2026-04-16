@@ -1329,6 +1329,17 @@
   </div>
 </div>
 
+<!-- Modal Visualizar Projeto -->
+<div class="modal" id="projViewModal">
+  <div class="modal-content" style="max-width:720px">
+    <div class="modal-head">
+      <h3 id="projViewTitle">Projeto</h3>
+      <button class="modal-close" onclick="closeProjView()">×</button>
+    </div>
+    <div class="modal-body" id="projViewBody"></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script>
@@ -2165,6 +2176,10 @@ function renderProjects() {
           <select class="proj-status-select ${p.status}" onchange="quickUpdateProjectStatus('${p.id}',this.value)">
             ${['planejamento','producao','edicao','concluido'].map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${statusMap[s]}</option>`).join('')}
           </select>
+          <button class="action-btn approve" style="padding:4px 10px;font-size:11px" onclick="viewProject('${p.id}')">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Ver
+          </button>
           <button class="action-btn view" style="padding:4px 10px;font-size:11px" onclick="editProject('${p.id}')">
             <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Editar
@@ -2381,6 +2396,85 @@ async function quickUpdateProjectStatus(id, status) {
   if (p) p.status = status;
   renderProjects();
 }
+
+function viewProject(id) {
+  const p = PROJECTS.find(x => x.id === id);
+  if (!p) return;
+  const statusMap = { planejamento: 'Planejamento', producao: 'Em produção', edicao: 'Edição', concluido: 'Concluído' };
+  const destNames = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram', tutorial: 'Tutorial' };
+  const dests = (p.destinations || []).map(d => `<span class="proj-dest-tag ${d}">${destNames[d] || d}</span>`).join('') || '<span style="color:var(--text-muted)">Nenhum</span>';
+  const links = p.links || [];
+  const photos = p.photos || [];
+
+  document.getElementById('projViewTitle').textContent = p.title || 'Sem título';
+  document.getElementById('projViewBody').innerHTML = `
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
+      ${dests}
+      <span class="badge ${p.status === 'concluido' || p.status === 'producao' ? 'approved' : 'pending'}" style="margin-left:auto">${statusMap[p.status] || p.status}</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">
+      <div class="proj-meta-item"><div class="k">Moto / Produto</div><div class="v" style="font-size:14px">${escHtml(p.moto || '—')}</div></div>
+      <div class="proj-meta-item"><div class="k">Data de produção</div><div class="v" style="font-size:14px">${p.production_date ? prettyDate(p.production_date) : '—'}</div></div>
+    </div>
+
+    ${p.script_text ? `
+    <div style="margin-bottom:18px">
+      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Roteiro</div>
+      <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.6;max-height:300px;overflow-y:auto">${escHtml(p.script_text)}</div>
+    </div>` : ''}
+
+    ${p.script_file?.name ? `
+    <div style="margin-bottom:18px">
+      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Arquivo do roteiro</div>
+      <a href="${p.script_file.data}" download="${p.script_file.name}" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;color:var(--primary);text-decoration:none;font-size:13px">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        ${escHtml(p.script_file.name)}
+      </a>
+    </div>` : ''}
+
+    ${links.length ? `
+    <div style="margin-bottom:18px">
+      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Links de referência</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${links.map(l => `<a href="${l}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;color:var(--primary);text-decoration:none;font-size:13px;word-break:break-all;transition:border-color .15s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="flex-shrink:0"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          ${l.length > 70 ? l.substring(0, 70) + '...' : l}
+        </a>`).join('')}
+      </div>
+    </div>` : ''}
+
+    ${p.observations ? `
+    <div style="margin-bottom:18px">
+      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Observações</div>
+      <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.5">${escHtml(p.observations)}</div>
+    </div>` : ''}
+
+    ${photos.length ? `
+    <div>
+      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">Fotos (${photos.length})</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px">
+        ${photos.map(ph => `<div style="border-radius:8px;overflow:hidden;border:1px solid var(--border);cursor:pointer;aspect-ratio:1" onclick="openLightbox('${ph}')"><img src="${ph}" style="width:100%;height:100%;object-fit:cover"/></div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    <div style="margin-top:20px;display:flex;gap:8px;justify-content:flex-end">
+      <button class="action-btn view" style="padding:8px 16px" onclick="closeProjView();editProject('${p.id}')">
+        <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Editar projeto
+      </button>
+      <button class="action-btn reject" style="padding:8px 16px" onclick="closeProjView()">Fechar</button>
+    </div>
+  `;
+  document.getElementById('projViewModal').classList.add('show');
+}
+
+function closeProjView() {
+  document.getElementById('projViewModal').classList.remove('show');
+}
+document.getElementById('projViewModal').addEventListener('click', e => {
+  if (e.target.id === 'projViewModal') closeProjView();
+});
 
 async function deleteProject(id) {
   if (!confirm('Excluir este projeto? Ação irreversível.')) return;
