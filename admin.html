@@ -915,7 +915,13 @@ async function loadRequests() {
   }));
 }
 async function loadBlocked() {
-  const { data, error } = await sb.from('blocked_dates').select('date,reason').order('date');
+  // Try with reason column first; fall back to date-only if column doesn't exist yet
+  let { data, error } = await sb.from('blocked_dates').select('date,reason').order('date');
+  if (error && error.message && error.message.includes('reason')) {
+    const fallback = await sb.from('blocked_dates').select('date').order('date');
+    data = fallback.data;
+    error = fallback.error;
+  }
   if (error) { console.error('loadBlocked:', error); return; }
   BLOCKED_DATA = (data || []).map(r => ({ date: r.date, reason: r.reason || '' }));
   BLOCKED = BLOCKED_DATA.map(r => r.date);
@@ -1144,7 +1150,12 @@ async function toggleBlock(iso, reason) {
   } else {
     const payload = { date: iso };
     if (reason) payload.reason = reason;
-    const { error } = await sb.from('blocked_dates').insert(payload);
+    let { error } = await sb.from('blocked_dates').insert(payload);
+    // If reason column doesn't exist yet, retry without it
+    if (error && error.message && error.message.includes('reason')) {
+      const retry = await sb.from('blocked_dates').insert({ date: iso });
+      error = retry.error;
+    }
     if (error) { alert('Erro ao bloquear: ' + error.message); return; }
     BLOCKED.push(iso);
     BLOCKED_DATA.push({ date: iso, reason: reason || '' });
