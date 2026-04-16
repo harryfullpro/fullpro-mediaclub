@@ -614,6 +614,20 @@
   .proj-meta-item .k { color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: .5px; }
   .proj-meta-item .v { color: var(--text); margin-top: 2px; }
 
+  /* Project status inline select */
+  .proj-status-select {
+    padding: 4px 24px 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600;
+    font-family: inherit; cursor: pointer; border: 1px solid var(--border);
+    appearance: none; -webkit-appearance: none;
+    background: var(--bg-elev) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b6b76'/%3E%3C/svg%3E") no-repeat right 8px center;
+    color: var(--text); text-transform: uppercase; letter-spacing: .5px; transition: all .15s;
+  }
+  .proj-status-select:focus { outline: none; border-color: var(--primary); }
+  .proj-status-select.planejamento { background-color: rgba(255,170,51,.12); border-color: rgba(255,170,51,.4); color: var(--warning); }
+  .proj-status-select.producao { background-color: rgba(59,130,246,.12); border-color: rgba(59,130,246,.4); color: #3b82f6; }
+  .proj-status-select.edicao { background-color: rgba(168,85,247,.12); border-color: rgba(168,85,247,.4); color: #a855f7; }
+  .proj-status-select.concluido { background-color: rgba(31,210,122,.12); border-color: rgba(31,210,122,.4); color: var(--success); }
+
   /* WhatsApp dropdown */
   .wa-options { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
   .wa-opt {
@@ -2148,7 +2162,9 @@ function renderProjects() {
       <div class="proj-card-head">
         <h4>${escHtml(p.title || 'Sem título')}</h4>
         <div style="display:flex;align-items:center;gap:8px">
-          <span class="badge ${statusBadge[p.status] || 'pending'}">${statusMap[p.status] || p.status}</span>
+          <select class="proj-status-select ${p.status}" onchange="quickUpdateProjectStatus('${p.id}',this.value)">
+            ${['planejamento','producao','edicao','concluido'].map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${statusMap[s]}</option>`).join('')}
+          </select>
           <button class="action-btn view" style="padding:4px 10px;font-size:11px" onclick="editProject('${p.id}')">
             <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Editar
@@ -2356,6 +2372,14 @@ async function editProject(id) {
     document.getElementById('projDate').value = p.production_date || '';
   }
   onProjBookingChange();
+}
+
+async function quickUpdateProjectStatus(id, status) {
+  const { error } = await sb.from('projects').update({ status }).eq('id', id);
+  if (error) { alert('Erro ao atualizar status: ' + error.message); return; }
+  const p = PROJECTS.find(x => x.id === id);
+  if (p) p.status = status;
+  renderProjects();
 }
 
 async function deleteProject(id) {
