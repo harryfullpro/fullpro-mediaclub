@@ -164,29 +164,25 @@
   }
   .shell.collapsed .nav-item { padding: 12px; justify-content: center; }
   /* Hover overlay mode: sidebar overlays content instead of pushing it */
-  .shell.hover-mode { display: block; }
-  .shell.hover-mode main { margin-left: 68px; min-height: 100vh; }
-  .shell.hover-mode .sidebar {
-    position: fixed; top: 0; left: 0; bottom: 0;
-    width: 68px; z-index: 90; padding: 24px 10px;
-    transition: width .25s cubic-bezier(.4,0,.2,1), padding .25s cubic-bezier(.4,0,.2,1);
-    box-shadow: none;
-  }
-  .shell.hover-mode .sidebar .nav-label,
-  .shell.hover-mode .sidebar .brand-txt,
-  .shell.hover-mode .sidebar .nav-section,
-  .shell.hover-mode .sidebar .count,
-  .shell.hover-mode .sidebar .theme-toggle span,
-  .shell.hover-mode .sidebar .theme-switch,
-  .shell.hover-mode .sidebar .theme-ico.ico-sun { display: none; }
-  .shell.hover-mode .sidebar .theme-toggle { padding: 8px; justify-content: center; }
-  .shell.hover-mode .sidebar .nav-item { padding: 12px; justify-content: center; }
-  .shell.hover-mode .sidebar .brand { margin-bottom: 8px; padding: 4px; justify-content: center; }
-  .shell.hover-mode .sidebar .brand-mark { width: 36px; height: 36px; }
-  .shell.hover-mode .sidebar .sb-ctrl-btn { justify-content: center; padding: 10px; }
-  /* Hover expand: overlay opens wide */
+  /* Hover mode: grid stays 68px like collapsed, sidebar overlays on hover */
+  .shell.hover-mode { grid-template-columns: 68px 1fr; }
+  .shell.hover-mode .sidebar { padding: 24px 10px; }
+  .shell.hover-mode .nav-label,
+  .shell.hover-mode .brand-txt,
+  .shell.hover-mode .nav-section,
+  .shell.hover-mode .count,
+  .shell.hover-mode .theme-toggle span,
+  .shell.hover-mode .theme-switch,
+  .shell.hover-mode .theme-ico.ico-sun { display: none; }
+  .shell.hover-mode .theme-toggle { padding: 8px; justify-content: center; }
+  .shell.hover-mode .nav-item { padding: 12px; justify-content: center; }
+  .shell.hover-mode .brand { margin-bottom: 8px; padding: 4px; justify-content: center; }
+  .shell.hover-mode .brand-mark { width: 36px; height: 36px; }
+  .shell.hover-mode .sb-ctrl-btn { justify-content: center; padding: 10px; }
+  /* Hover expand: sidebar becomes fixed overlay */
   .shell.hover-mode .sidebar.hover-open {
-    width: 260px; padding: 24px 16px;
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: 260px; padding: 24px 16px; z-index: 90;
     box-shadow: 6px 0 24px rgba(0,0,0,.3);
   }
   .shell.hover-mode .sidebar.hover-open .nav-label,
