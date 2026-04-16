@@ -864,13 +864,6 @@
         <button class="filter-btn" data-cifilter="checkout" onclick="setCiTab('checkout')">Saída (Check-out)</button>
       </div>
 
-      <div style="margin-bottom:14px">
-        <label class="checkin-label">Selecione o agendamento</label>
-        <select class="checkin-input" id="ciSelect" onchange="loadCiForm()" style="cursor:pointer">
-          <option value="">— selecione —</option>
-        </select>
-      </div>
-
       <div id="ciFormWrap"></div>
     </div>
 
@@ -936,8 +929,8 @@
       <div class="cal-card" style="max-width:520px">
         <h3>Exportar</h3>
         <p class="sub">Gere um CSV com todas as solicitações recebidas.</p>
-        <button class="action-btn approve" style="width:100%; padding: 12px; margin-bottom: 10px" onclick="exportCSV()">📥 Baixar CSV</button>
-        <button class="action-btn reject" style="width:100%; padding: 12px" onclick="clearData()">🗑️ Limpar todos os dados</button>
+        <button class="action-btn approve" style="width:100%; padding: 12px; margin-bottom: 10px" onclick="exportCSV()"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Baixar CSV</button>
+        <button class="action-btn reject" style="width:100%; padding: 12px" onclick="clearData()"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg> Limpar todos os dados</button>
       </div>
     </div>
   </main>
@@ -1247,7 +1240,7 @@ function renderRequests() {
         <div class="sub">${r.placa}</div>
       </td>
       <td><span class="badge ${r.modalidade}">${r.modalidade === 'estudio' ? 'Estúdio' : 'Retirada'}</span></td>
-      <td>${r.brinde === 'pastilhas' ? '🛞 Pastilhas' : r.brinde === 'mochila' ? '🎒 Mochila' : '🧥 Capa'}</td>
+      <td>${r.brinde === 'pastilhas' ? 'Pastilhas' : r.brinde === 'mochila' ? 'Mochila' : 'Capa'}</td>
       <td><span class="badge ${r.status}">${r.status === 'pending' ? 'Pendente' : r.status === 'approved' ? 'Aprovada' : 'Rejeitada'}</span></td>
       <td>
         <div class="actions">
@@ -1291,7 +1284,7 @@ function openDetails(id) {
     <div class="detail-row"><div class="k">Placa</div><div class="v">${r.placa}</div></div>
     <div class="detail-row"><div class="k">Modalidade</div><div class="v">${r.modalidade === 'estudio' ? 'Leva até FullPro' : 'Retirada no endereço'}</div></div>
     ${r.modalidade === 'retirada' ? `<div class="detail-row"><div class="k">Endereço</div><div class="v">${r.endereco || '—'}</div></div>` : ''}
-    <div class="detail-row"><div class="k">Brinde</div><div class="v">${r.brinde === 'pastilhas' ? '🛞 Jogo de pastilhas' : r.brinde === 'mochila' ? '🎒 Mochila backpack' : '🧥 Capa de chuva'}</div></div>
+    <div class="detail-row"><div class="k">Brinde</div><div class="v">${r.brinde === 'pastilhas' ? 'Jogo de pastilhas' : r.brinde === 'mochila' ? 'Mochila backpack' : 'Capa de chuva'}</div></div>
     <div class="detail-row"><div class="k">Observações</div><div class="v">${r.obs || '—'}</div></div>
     <div class="detail-row"><div class="k">Aceite termo</div><div class="v">${r.aceiteTermo ? '✓ Sim' : '✕ Não'}</div></div>
     <div class="detail-row"><div class="k">Uso imagem</div><div class="v">${r.aceiteImagem ? '✓ Sim' : '✕ Não'}</div></div>
@@ -1299,7 +1292,7 @@ function openDetails(id) {
   `;
 
   document.getElementById('modalFoot').innerHTML = `
-    <button class="action-btn whats" onclick="closeModal(); openWhatsApp('${r.id}')">💬 WhatsApp</button>
+    <button class="action-btn whats" onclick="closeModal(); openWhatsApp('${r.id}')"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:3px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> WhatsApp</button>
     ${r.status === 'pending' ? `
       <button class="action-btn reject" onclick="updateStatus('${r.id}','rejected')">Rejeitar</button>
       <button class="action-btn approve" onclick="updateStatus('${r.id}','approved')">Aprovar</button>
@@ -1404,7 +1397,7 @@ function renderDateViewer(iso) {
 
   if (isWeekend) {
     container.innerHTML = `<div class="dv-weekend">
-      <div class="dv-block-icon">🚫</div>
+      <div class="dv-block-icon"><svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--text-muted)" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>
       <div class="dv-block-reason">Fim de semana</div>
       <div class="dv-block-sub">A empresa não opera aos sábados e domingos.</div>
     </div>`;
@@ -1414,7 +1407,7 @@ function renderDateViewer(iso) {
   const blockInfo = BLOCKED_DATA.find(b => b.date === iso);
   if (blockInfo) {
     container.innerHTML = `<div class="dv-block-info">
-      <div class="dv-block-icon">🔒</div>
+      <div class="dv-block-icon"><svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
       <div class="dv-block-reason">${blockInfo.reason || 'Data bloqueada'}</div>
       <div class="dv-block-sub">Esta data está bloqueada para agendamentos.</div>
     </div>`;
@@ -1431,7 +1424,7 @@ function renderDateViewer(iso) {
 
   container.innerHTML = bookings.map(r => {
     const statusLabel = r.status === 'pending' ? 'Pendente' : r.status === 'approved' ? 'Aprovada' : 'Rejeitada';
-    const brindeName = r.brinde === 'pastilhas' ? '🛞 Pastilhas HH' : r.brinde === 'mochila' ? '🎒 Mochila' : '🧥 Capa de chuva';
+    const brindeName = r.brinde === 'pastilhas' ? 'Pastilhas HH' : r.brinde === 'mochila' ? 'Mochila' : 'Capa de chuva';
     const modalLabel = r.modalidade === 'estudio' ? 'Leva até o estúdio' : 'Retirada no endereço';
     return `<div class="dv-booking-full">
       <div class="dv-row">
@@ -1450,8 +1443,8 @@ function renderDateViewer(iso) {
       </div>
 
       <div class="dv-actions-row">
-        <button class="action-btn whats" onclick="openWhatsApp('${r.id}')">💬 WhatsApp</button>
-        <button class="action-btn view" onclick="openEditBooking('${r.id}')">✏️ Editar</button>
+        <button class="action-btn whats" onclick="openWhatsApp('${r.id}')"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> WhatsApp</button>
+        <button class="action-btn view" onclick="openEditBooking('${r.id}')"><svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Editar</button>
         ${r.status === 'pending' ? `
           <button class="action-btn approve" onclick="updateStatus('${r.id}','approved')">✓ Aprovar</button>
           <button class="action-btn reject" onclick="updateStatus('${r.id}','rejected')">✕ Rejeitar</button>
@@ -1575,40 +1568,36 @@ function setCiTab(tab) {
   document.querySelectorAll('[data-cifilter]').forEach(b => {
     b.classList.toggle('active', b.dataset.cifilter === tab);
   });
-  loadCiForm();
+  renderCiView();
 }
 
-function populateCiSelect() {
-  const sel = document.getElementById('ciSelect');
-  const approved = getRequests().filter(r => r.status === 'approved');
-  approved.sort((a,b) => a.date.localeCompare(b.date));
-  sel.innerHTML = '<option value="">— selecione —</option>' +
-    approved.map(r => `<option value="${r.id}">${prettyDate(r.date)} — ${r.nome} (${r.moto})</option>`).join('');
-}
-
-function loadCiForm() {
-  const rid = document.getElementById('ciSelect').value;
+function renderCiView() {
   const wrap = document.getElementById('ciFormWrap');
-  if (!rid) { wrap.innerHTML = '<div class="dv-empty"><p>Selecione um agendamento acima.</p></div>'; return; }
+  const today = fmtDate(new Date());
+  const todayBookings = getRequests().filter(r => r.date === today && r.status === 'approved');
 
-  const r = getRequests().find(x => x.id === rid);
-  if (!r) return;
+  if (todayBookings.length === 0) {
+    wrap.innerHTML = '<div class="dv-empty"><p>Nenhum agendamento para hoje.</p></div>';
+    return;
+  }
 
   const prefix = ciTab === 'checkin' ? 'ci' : 'co';
-  const ci = ciTab === 'checkin'
-    ? (CHECKINS[rid] || { fuel_level: 0, mileage: '', observations: '', photos: [] })
-    : (CHECKOUTS[rid] || { fuel_level: 0, mileage: '', observations: '', photos: [] });
-  const photos = ci.photos || [];
+  const label = ciTab === 'checkin' ? 'check-in' : 'check-out';
 
-  wrap.innerHTML = `
-    <div class="cal-card">
+  wrap.innerHTML = todayBookings.map(r => {
+    const ci = (prefix === 'ci' ? CHECKINS : CHECKOUTS)[r.id] || { fuel_level: 0, mileage: '', observations: '', photos: [] };
+    const photos = ci.photos || [];
+    const hasSaved = !!ci.id;
+    const rid = r.id;
+
+    return `<div class="cal-card" style="margin-bottom:14px">
       <div class="dv-row" style="margin-bottom:12px">
         <span class="dv-name">${r.nome} — ${r.moto} (${r.placa})</span>
-        <span class="badge approved">${prettyDate(r.date)}</span>
+        ${hasSaved ? '<span class="badge approved">Salvo</span>' : '<span class="badge pending">Pendente</span>'}
       </div>
       <div class="checkin-grid">
         <div class="checkin-field">
-          <label class="checkin-label">Nível de combustível</label>
+          <label class="checkin-label">Nivel de combustivel</label>
           <div class="fuel-gauge-container">
             <svg class="fuel-svg" viewBox="0 0 200 115" id="fuelSvg_${prefix}_${rid}" data-rid="${prefix}_${rid}">
               <defs>
@@ -1635,25 +1624,32 @@ function loadCiForm() {
           <input type="text" class="checkin-input" id="${prefix}Km_${rid}" value="${ci.mileage || ''}" placeholder="Ex: 15.432 km"/>
         </div>
         <div class="checkin-field">
-          <label class="checkin-label">Observações sobre a moto</label>
-          <textarea class="checkin-textarea" id="${prefix}Obs_${rid}" placeholder="Arranhões, peças soltas, condição geral...">${ci.observations || ''}</textarea>
+          <label class="checkin-label">Observacoes sobre a moto</label>
+          <textarea class="checkin-textarea" id="${prefix}Obs_${rid}" placeholder="Arranhoes, pecas soltas, condicao geral...">${ci.observations || ''}</textarea>
         </div>
         <div class="checkin-field">
           <label class="checkin-label">Fotos da moto</label>
           <div class="photo-grid" id="pgrid_${prefix}_${rid}">
-            ${photos.map((p,i) => `<div class="photo-thumb"><img src="${p}" onclick="openLightbox(this.src)"/><button class="photo-remove" onclick="rmCiPhoto('${prefix}_${rid}',${i})">×</button></div>`).join('')}
-            <label class="photo-add" for="pInput_${prefix}_${rid}"><span>📷</span><span>Adicionar</span></label>
+            ${photos.map((p,i) => `<div class="photo-thumb"><img src="${p}" onclick="openLightbox(this.src)"/><button class="photo-remove" onclick="rmCiPhoto('${prefix}_${rid}',${i})">x</button></div>`).join('')}
+            <label class="photo-add" for="pInput_${prefix}_${rid}"><span><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span><span>Adicionar</span></label>
           </div>
           <input type="file" id="pInput_${prefix}_${rid}" accept="image/*" multiple hidden onchange="addCiPhotos('${prefix}','${rid}')"/>
         </div>
         <div class="checkin-full">
-          <button class="action-btn approve" style="width:100%;padding:12px;font-size:13px" onclick="saveCiForm('${prefix}','${rid}')">💾 Salvar ${ciTab === 'checkin' ? 'check-in' : 'check-out'}</button>
+          <button class="action-btn approve" style="width:100%;padding:12px;font-size:13px" onclick="saveCiForm('${prefix}','${rid}')">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Salvar ${label}
+          </button>
         </div>
       </div>
     </div>`;
+  }).join('');
 
-  updateFuelGauge(prefix + '_' + rid, ci.fuel_level);
-  initFuelGaugeDrag(prefix + '_' + rid);
+  todayBookings.forEach(r => {
+    const ci = (prefix === 'ci' ? CHECKINS : CHECKOUTS)[r.id] || { fuel_level: 0 };
+    updateFuelGauge(prefix + '_' + r.id, ci.fuel_level);
+    initFuelGaugeDrag(prefix + '_' + r.id);
+  });
 }
 
 /* Check-out storage */
@@ -1707,7 +1703,7 @@ async function saveCiForm(prefix, rid) {
     result = await sb.from(table).update({
       fuel_level: fuel, mileage: km, observations: obs, photos,
       updated_at: new Date().toISOString()
-    }).eq('id', existing.id);
+    }).eq('id', existing.id).select().single();
   } else {
     result = await sb.from(table).insert(payload).select().single();
   }
@@ -1718,6 +1714,7 @@ async function saveCiForm(prefix, rid) {
   if (result.data) store[rid] = result.data;
   else store[rid] = { ...existing, ...payload };
   alert((prefix === 'ci' ? 'Check-in' : 'Check-out') + ' salvo com sucesso!');
+  renderCiView();
 }
 
 /* EXPORT */
@@ -1825,19 +1822,19 @@ async function submitBooking() {
 const DEFAULT_TEMPLATES = [
   {
     name: 'Confirmar agendamento',
-    body: 'Olá, {nome}! Tudo bem? Aqui é {operador}, da FullPro Media Club. 🏍️\n\nRecebemos sua solicitação para participar do nosso programa de conteúdo no dia *{data}* com a *{moto}*.\n\nGostaria de confirmar sua participação! O brinde escolhido foi *{brinde}*.\n\nPodemos confirmar essa data? Qualquer dúvida estou à disposição.\n\nAbraço,\n{operador} — FullPro Media Club'
+    body: 'Olá, {nome}! Tudo bem? Aqui é {operador}, da FullPro Media Club.\n\nRecebemos sua solicitação para participar do nosso programa de conteúdo no dia *{data}* com a *{moto}*.\n\nGostaria de confirmar sua participação! O brinde escolhido foi *{brinde}*.\n\nPodemos confirmar essa data? Qualquer dúvida estou à disposição.\n\nAbraço,\n{operador} — FullPro Media Club'
   },
   {
     name: 'Lembrete (véspera)',
-    body: 'Olá, {nome}! Aqui é {operador}, da FullPro. 👋\n\nPassando para lembrar que amanhã é o dia da sua participação no Media Club com a *{moto}*!\n\n📍 Nosso endereço: Rua Florianópolis, 2486 — Itaum, Joinville/SC. Horário: a partir das *8h*.\n\nSeu brinde *{brinde}* já está separado!\n\nQualquer imprevisto, me avise com antecedência.\n\nAté amanhã! 🤝\n{operador} — FullPro'
+    body: 'Olá, {nome}! Aqui é {operador}, da FullPro.\n\nPassando para lembrar que amanhã é o dia da sua participação no Media Club com a *{moto}*!\n\nNosso endereço: Rua Florianópolis, 2486 — Itaum, Joinville/SC. Horário: a partir das *8h*.\n\nSeu brinde *{brinde}* já está separado!\n\nQualquer imprevisto, me avise com antecedência.\n\nAté amanhã!\n{operador} — FullPro'
   },
   {
     name: 'Agradecimento pós-gravação',
-    body: 'Olá, {nome}! Aqui é {operador}, da FullPro. 😊\n\nMuito obrigado por participar do Media Club! Foi um prazer trabalhar com a sua *{moto}* no estúdio hoje.\n\nEm breve compartilharemos o conteúdo produzido em nossas redes (@fullprobr). Fique de olho!\n\nEsperamos que tenha curtido a experiência e o brinde. Se puder, nos avalie no Google — ajuda muito! ⭐\n\nhttps://g.page/r/fullpro/review\n\nGrande abraço,\n{operador} — FullPro Media Club'
+    body: 'Olá, {nome}! Aqui é {operador}, da FullPro.\n\nMuito obrigado por participar do Media Club! Foi um prazer trabalhar com a sua *{moto}* no estúdio hoje.\n\nEm breve compartilharemos o conteúdo produzido em nossas redes (@fullprobr). Fique de olho!\n\nEsperamos que tenha curtido a experiência e o brinde. Se puder, nos avalie no Google — ajuda muito!\n\nhttps://g.page/r/fullpro/review\n\nGrande abraço,\n{operador} — FullPro Media Club'
   },
   {
     name: 'Reagendar / data indisponível',
-    body: 'Olá, {nome}! Aqui é {operador}, da FullPro Media Club.\n\nInfelizmente a data *{data}* que você escolheu não está mais disponível para gravação.\n\nMas gostaríamos muito de manter sua participação! Temos disponibilidade nas próximas semanas. Podemos encontrar uma nova data juntos?\n\nAguardo seu retorno! 🙏\n{operador} — FullPro'
+    body: 'Olá, {nome}! Aqui é {operador}, da FullPro Media Club.\n\nInfelizmente a data *{data}* que você escolheu não está mais disponível para gravação.\n\nMas gostaríamos muito de manter sua participação! Temos disponibilidade nas próximas semanas. Podemos encontrar uma nova data juntos?\n\nAguardo seu retorno!\n{operador} — FullPro'
   }
 ];
 
@@ -1879,8 +1876,8 @@ function renderTemplates() {
       <div class="tpl-head">
         <h4>${escHtml(t.name)}</h4>
         <div class="tpl-actions">
-          <button class="action-btn view" onclick="editTpl(${i})" title="Editar">✏️ Editar</button>
-          <button class="action-btn reject" onclick="deleteTpl(${i})" title="Excluir">🗑️</button>
+          <button class="action-btn view" onclick="editTpl(${i})" title="Editar"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Editar</button>
+          <button class="action-btn reject" onclick="deleteTpl(${i})" title="Excluir"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
         </div>
       </div>
       <div class="tpl-body">${escHtml(t.body)}</div>
@@ -2009,7 +2006,7 @@ function openWhatsApp(id) {
     const link = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(t.msg);
     const preview = t.msg.split('\n')[0].substring(0, 80) + '...';
     return `<a href="${link}" target="_blank" rel="noopener" class="wa-opt">
-      <span class="wa-ico">💬</span>
+      <span class="wa-ico"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></span>
       <div>
         <div class="wa-title">${t.title}</div>
         <div class="wa-preview">${preview}</div>
@@ -2125,34 +2122,14 @@ function compressImg(file, maxW, q) {
   });
 }
 
-async function addPhotos(rid) {
-  const input = document.getElementById('pInput_' + rid);
-  if (!input || !input.files.length) return;
-  const ci = CHECKINS[rid] || { photos: [] };
-  const photos = [...(ci.photos || [])];
-  for (const f of input.files) {
-    if (photos.length >= 10) { alert('Máximo 10 fotos.'); break; }
-    photos.push(await compressImg(f));
-  }
-  ci.photos = photos;
-  CHECKINS[rid] = ci;
-  refreshPhotoGrid(rid, photos);
-  input.value = '';
-}
-
-function rmPhoto(rid, idx) {
-  const ci = CHECKINS[rid]; if (!ci || !ci.photos) return;
-  ci.photos.splice(idx, 1);
-  refreshPhotoGrid(rid, ci.photos);
-}
 
 function refreshPhotoGrid(compositeId, photos, rmFn) {
-  rmFn = rmFn || 'rmPhoto';
+  rmFn = rmFn || 'rmCiPhoto';
   const grid = document.getElementById('pgrid_' + compositeId);
   if (!grid) return;
   grid.innerHTML = photos.map((p, i) =>
     `<div class="photo-thumb"><img src="${p}" onclick="openLightbox(this.src)"/><button class="photo-remove" onclick="${rmFn}('${compositeId}',${i})">×</button></div>`
-  ).join('') + `<label class="photo-add" for="pInput_${compositeId}"><span>📷</span><span>Adicionar</span></label>`;
+  ).join('') + `<label class="photo-add" for="pInput_${compositeId}"><span><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span><span>Adicionar</span></label>`;
 }
 
 function openLightbox(src) {
@@ -2163,33 +2140,6 @@ function openLightbox(src) {
   document.body.appendChild(lb);
 }
 
-async function saveCheckin(rid) {
-  const fuel = parseInt(document.getElementById('fuelRange_' + rid)?.value || 0);
-  const km = document.getElementById('ciKm_' + rid)?.value?.trim() || '';
-  const obs = document.getElementById('ciObs_' + rid)?.value?.trim() || '';
-  const existing = CHECKINS[rid];
-  const photos = existing?.photos || [];
-
-  const payload = { request_id: rid, fuel_level: fuel, mileage: km, observations: obs, photos };
-
-  let result;
-  if (existing?.id) {
-    result = await sb.from('checkins').update({
-      fuel_level: fuel, mileage: km, observations: obs, photos,
-      updated_at: new Date().toISOString()
-    }).eq('id', existing.id);
-  } else {
-    result = await sb.from('checkins').insert(payload).select().single();
-  }
-
-  if (result.error) {
-    alert('Erro ao salvar check-in: ' + result.error.message + '\n\nVocê já criou a tabela "checkins" no Supabase?');
-    return;
-  }
-  if (result.data) CHECKINS[rid] = result.data;
-  else CHECKINS[rid] = { ...existing, ...payload };
-  alert('Check-in salvo com sucesso!');
-}
 
 /* INIT */
 async function initApp() {
@@ -2197,7 +2147,7 @@ async function initApp() {
   renderRequests();
   renderCalendar();
   renderTemplates();
-  populateCiSelect();
+  renderCiView();
 }
 
 checkAuth();
