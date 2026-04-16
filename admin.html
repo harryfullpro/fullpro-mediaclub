@@ -70,22 +70,45 @@
     transition: padding .25s cubic-bezier(.4,0,.2,1);
   }
   .shell.collapsed .sidebar { padding: 24px 10px; }
-  .sidebar-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
+  /* Sidebar control popover */
+  .sb-ctrl-wrap { position: relative; }
+  .sb-ctrl-btn {
+    width: 100%; padding: 10px 14px; border-radius: 10px;
+    border: none; background: transparent; color: var(--text-dim);
+    cursor: pointer; display: flex; align-items: center; gap: 10px;
+    font-size: 13px; font-weight: 500; font-family: inherit;
+    transition: all .15s; overflow: hidden; white-space: nowrap;
   }
-  .sidebar-collapse-btn {
-    width: 32px; height: 32px; border-radius: 8px;
-    border: 1px solid var(--border); background: var(--bg-elev);
-    color: var(--text-dim); cursor: pointer; display: flex;
-    align-items: center; justify-content: center;
-    transition: all .15s; flex-shrink: 0;
+  .sb-ctrl-btn:hover { background: var(--bg-card); color: var(--text); }
+  .sb-ctrl-btn svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .shell.collapsed .sb-ctrl-btn { justify-content: center; padding: 10px; }
+  .sb-popover {
+    position: absolute; bottom: calc(100% + 8px); left: 0;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 0; min-width: 200px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.35); z-index: 50;
+    display: none; flex-direction: column;
   }
-  .sidebar-collapse-btn:hover { background: var(--bg-card); color: var(--text); border-color: var(--border-hi); }
-  .sidebar-collapse-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .25s; }
-  .shell.collapsed .sidebar-collapse-btn svg { transform: rotate(180deg); }
+  .sb-popover.show { display: flex; }
+  .sb-popover-title {
+    font-size: 11px; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: .5px; font-weight: 600; padding: 8px 14px 6px;
+  }
+  .sb-popover-sep { height: 1px; background: var(--border); margin: 6px 0; }
+  .sb-popover-opt {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 14px; border: none; background: transparent;
+    color: var(--text-dim); font-size: 13px; font-family: inherit;
+    cursor: pointer; width: 100%; text-align: left; transition: all .12s;
+  }
+  .sb-popover-opt:hover { background: var(--bg-elev); color: var(--text); }
+  .sb-popover-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--primary); flex-shrink: 0;
+    opacity: 0; transition: opacity .15s;
+  }
+  .sb-popover-opt.active .sb-popover-dot { opacity: 1; }
+  .shell.collapsed .sb-popover { left: calc(100% + 8px); bottom: 0; }
   .brand {
     display: flex;
     align-items: center;
@@ -140,7 +163,6 @@
     white-space: nowrap;
   }
   .shell.collapsed .nav-item { padding: 12px; justify-content: center; }
-  .shell.collapsed .sidebar-collapse-btn { width: 100%; }
   .nav-item:hover { background: var(--bg-card); color: var(--text); }
   .nav-item.active { background: rgba(255,45,45,.1); color: var(--primary); }
   .nav-item .count {
@@ -866,14 +888,9 @@
 <!-- APP -->
 <div id="app" class="shell" style="display:none">
   <aside class="sidebar">
-    <div class="sidebar-top">
-      <a href="admin.html" class="brand" style="margin-bottom:0">
-        <span class="brand-mark"><img src="assets/logo.png" alt="FullPro" /></span>
-      </a>
-      <button class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Recolher menu">
-        <svg viewBox="0 0 24 24"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
-      </button>
-    </div>
+    <a href="admin.html" class="brand">
+      <span class="brand-mark"><img src="assets/logo.png" alt="FullPro" /></span>
+    </a>
 
     <div class="nav-section">Geral</div>
     <button class="nav-item active" data-view="requests">
@@ -931,6 +948,26 @@
         <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         <span class="nav-label">Sair</span>
       </button>
+
+      <div class="sb-ctrl-wrap" id="sbCtrlWrap">
+        <div class="sb-popover" id="sbPopover">
+          <div class="sb-popover-title">Sidebar control</div>
+          <div class="sb-popover-sep"></div>
+          <button class="sb-popover-opt" data-sbmode="expanded" onclick="setSidebarMode('expanded')">
+            <span class="sb-popover-dot"></span> Expanded
+          </button>
+          <button class="sb-popover-opt" data-sbmode="collapsed" onclick="setSidebarMode('collapsed')">
+            <span class="sb-popover-dot"></span> Collapsed
+          </button>
+          <button class="sb-popover-opt" data-sbmode="hover" onclick="setSidebarMode('hover')">
+            <span class="sb-popover-dot"></span> Expand on hover
+          </button>
+        </div>
+        <button class="sb-ctrl-btn" onclick="toggleSbPopover()">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+          <span class="nav-label">Sidebar</span>
+        </button>
+      </div>
     </div>
   </aside>
 
@@ -2118,17 +2155,62 @@ function toggleTheme() {
   document.documentElement.setAttribute('data-theme', saved);
 })();
 
-/* SIDEBAR COLLAPSE */
-function toggleSidebar() {
+/* SIDEBAR CONTROL */
+let sidebarMode = 'expanded';
+function setSidebarMode(mode) {
+  sidebarMode = mode;
   const shell = document.getElementById('app');
-  shell.classList.toggle('collapsed');
-  localStorage.setItem('fp_sidebar', shell.classList.contains('collapsed') ? 'collapsed' : 'expanded');
-}
-(function initSidebar() {
-  const saved = localStorage.getItem('fp_sidebar');
-  if (saved === 'collapsed') {
-    document.getElementById('app').classList.add('collapsed');
+  const sidebar = shell.querySelector('.sidebar');
+  // Clean up previous listeners
+  sidebar.removeEventListener('mouseenter', sidebarHoverIn);
+  sidebar.removeEventListener('mouseleave', sidebarHoverOut);
+
+  if (mode === 'expanded') {
+    shell.classList.remove('collapsed');
+  } else if (mode === 'collapsed') {
+    shell.classList.add('collapsed');
+  } else if (mode === 'hover') {
+    shell.classList.add('collapsed');
+    sidebar.addEventListener('mouseenter', sidebarHoverIn);
+    sidebar.addEventListener('mouseleave', sidebarHoverOut);
   }
+  localStorage.setItem('fp_sidebar', mode);
+  updateSbPopoverActive();
+  closeSbPopover();
+}
+function sidebarHoverIn() { document.getElementById('app').classList.remove('collapsed'); }
+function sidebarHoverOut() { document.getElementById('app').classList.add('collapsed'); closeSbPopover(); }
+
+function toggleSbPopover() {
+  document.getElementById('sbPopover').classList.toggle('show');
+}
+function closeSbPopover() {
+  document.getElementById('sbPopover').classList.remove('show');
+}
+function updateSbPopoverActive() {
+  document.querySelectorAll('.sb-popover-opt').forEach(opt => {
+    opt.classList.toggle('active', opt.dataset.sbmode === sidebarMode);
+  });
+}
+// Close popover on outside click
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('sbCtrlWrap');
+  if (wrap && !wrap.contains(e.target)) closeSbPopover();
+});
+
+(function initSidebar() {
+  const saved = localStorage.getItem('fp_sidebar') || 'expanded';
+  sidebarMode = saved;
+  const shell = document.getElementById('app');
+  if (saved === 'collapsed' || saved === 'hover') {
+    shell.classList.add('collapsed');
+  }
+  if (saved === 'hover') {
+    const sidebar = shell.querySelector('.sidebar');
+    sidebar.addEventListener('mouseenter', sidebarHoverIn);
+    sidebar.addEventListener('mouseleave', sidebarHoverOut);
+  }
+  updateSbPopoverActive();
 })();
 
 /* EDIT BOOKING */
