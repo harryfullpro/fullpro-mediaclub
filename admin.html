@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
-  :root {
+  :root, [data-theme="dark"] {
     --bg: #0a0a0b;
     --bg-soft: #111114;
     --bg-card: #16161a;
@@ -24,6 +24,25 @@
     --success: #1fd27a;
     --warning: #ffaa33;
     --danger: #ff4d4d;
+    --logo-filter: brightness(1.1);
+  }
+  [data-theme="light"] {
+    --bg: #f5f5f7;
+    --bg-soft: #ffffff;
+    --bg-card: #ffffff;
+    --bg-elev: #f0f0f2;
+    --border: #e0e0e4;
+    --border-hi: #c8c8ce;
+    --text: #1a1a1e;
+    --text-dim: #5a5a66;
+    --text-muted: #8a8a96;
+    --primary: #dd2222;
+    --primary-hi: #ee3333;
+    --accent: #e6a800;
+    --success: #18a863;
+    --warning: #e09500;
+    --danger: #dd3333;
+    --logo-filter: brightness(0.2);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -61,7 +80,7 @@
     align-items: center;
     justify-content: center;
   }
-  .brand-mark img { width: 100%; height: 100%; object-fit: contain; filter: brightness(1.1); }
+  .brand-mark img { width: 100%; height: 100%; object-fit: contain; filter: var(--logo-filter); }
   .brand-txt { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1.5px; }
   .brand-txt small { display:block; font-family:'Inter',sans-serif; font-size: 10px; color: var(--text-muted); letter-spacing: 2px; font-weight: 500; }
   .nav-item {
@@ -94,6 +113,26 @@
   }
   .nav-item.active .count { background: var(--primary); color: #fff; }
   .sidebar-foot { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); }
+  .nav-section { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding: 16px 14px 6px; }
+  .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .theme-toggle {
+    display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+    margin-bottom: 8px; cursor: pointer;
+  }
+  .theme-toggle span { font-size: 12px; color: var(--text-dim); }
+  .theme-switch {
+    width: 36px; height: 20px; border-radius: 10px; background: var(--bg-elev);
+    border: 1px solid var(--border); position: relative; transition: background .2s;
+    margin-left: auto;
+  }
+  .theme-switch::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 14px; height: 14px; border-radius: 50%; background: var(--text-dim);
+    transition: transform .2s;
+  }
+  [data-theme="light"] .theme-switch { background: var(--primary); border-color: var(--primary); }
+  [data-theme="light"] .theme-switch::after { transform: translateX(16px); background: #fff; }
 
   /* Main */
   main { padding: 32px; overflow-x: hidden; }
@@ -638,26 +677,50 @@
   <aside class="sidebar">
     <a href="admin.html" class="brand">
       <span class="brand-mark"><img src="assets/logo.png" alt="FullPro" /></span>
-          </a>
+    </a>
+
+    <div class="nav-section">Geral</div>
     <button class="nav-item active" data-view="requests">
-      📋 Solicitações <span class="count" id="cntReq">0</span>
+      <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+      Solicitações <span class="count" id="cntReq">0</span>
     </button>
     <button class="nav-item" data-view="calendar">
-      🗓️ Agenda
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+      Agenda
     </button>
+    <button class="nav-item" data-view="checkin">
+      <svg viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/><path d="M16 3l1.5 1.5M8 3L6.5 4.5"/></svg>
+      Check-in / Check-out
+    </button>
+
+    <div class="nav-section">Configurações</div>
     <button class="nav-item" data-view="templates">
-      💬 Templates WhatsApp
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><path d="M8 9h8M8 13h6"/></svg>
+      Templates WhatsApp
     </button>
     <button class="nav-item" data-view="export">
-      📤 Exportar
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar
     </button>
+
     <div class="sidebar-foot">
+      <div class="theme-toggle" onclick="toggleTheme()">
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <span>Tema</span>
+        <div class="theme-switch"></div>
+      </div>
       <div class="operator-field">
         <label>Operador:</label>
         <input type="text" id="operatorName" placeholder="Seu nome" value="" />
       </div>
-      <a href="index.html" class="nav-item">← Ver landing page</a>
-      <button class="nav-item" id="logoutBtn">🚪 Sair</button>
+      <a href="index.html" class="nav-item">
+        <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Ver landing page
+      </a>
+      <button class="nav-item" id="logoutBtn">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sair
+      </button>
     </div>
   </aside>
 
@@ -785,6 +848,30 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- CHECK-IN / CHECK-OUT VIEW -->
+    <div id="view-checkin" style="display:none">
+      <div class="page-head">
+        <div>
+          <h1>Check-in / Check-out</h1>
+          <p>Registre a entrada e saída de motos com combustível, km, fotos e observações.</p>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <button class="filter-btn active" data-cifilter="checkin" onclick="setCiTab('checkin')">Entrada (Check-in)</button>
+        <button class="filter-btn" data-cifilter="checkout" onclick="setCiTab('checkout')">Saída (Check-out)</button>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label class="checkin-label">Selecione o agendamento</label>
+        <select class="checkin-input" id="ciSelect" onchange="loadCiForm()" style="cursor:pointer">
+          <option value="">— selecione —</option>
+        </select>
+      </div>
+
+      <div id="ciFormWrap"></div>
     </div>
 
     <!-- TEMPLATES VIEW -->
@@ -931,6 +1018,49 @@
   </div>
 </div>
 
+<!-- Modal Editar Agendamento -->
+<div class="modal" id="editBookModal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <h3>Editar agendamento</h3>
+      <button class="modal-close" onclick="closeEditBooking()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="book-form" id="editBookForm">
+        <input type="hidden" id="ebId"/>
+        <div class="book-row">
+          <div><label>Data *</label><input type="date" id="ebDate" required /></div>
+          <div><label>Modalidade *</label>
+            <select id="ebModalidade"><option value="estudio">Leva até o estúdio</option><option value="retirada">Retirada no endereço</option></select>
+          </div>
+        </div>
+        <label>Nome completo *</label>
+        <input type="text" id="ebNome" placeholder="Nome do cliente"/>
+        <div class="book-row">
+          <div><label>WhatsApp *</label><input type="text" id="ebWhats" placeholder="(47) 99999-9999"/></div>
+          <div><label>E-mail</label><input type="email" id="ebEmail" placeholder="email@exemplo.com"/></div>
+        </div>
+        <div class="book-row">
+          <div><label>Moto *</label><input type="text" id="ebMoto" placeholder="Ex: Honda CB 650R 2023"/></div>
+          <div><label>Placa *</label><input type="text" id="ebPlaca" placeholder="ABC-1D23"/></div>
+        </div>
+        <label>Endereço (se retirada)</label>
+        <input type="text" id="ebEndereco" placeholder="Endereço completo"/>
+        <label>Brinde *</label>
+        <select id="ebBrinde"><option value="pastilhas">Pastilhas HH</option><option value="mochila">Mochila</option><option value="capa">Capa de chuva</option></select>
+        <label>Status</label>
+        <select id="ebStatus"><option value="pending">Pendente</option><option value="approved">Aprovada</option><option value="rejected">Rejeitada</option></select>
+        <label>Observações</label>
+        <textarea id="ebObs" placeholder="Notas internas..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="action-btn" onclick="closeEditBooking()">Cancelar</button>
+      <button class="action-btn approve" onclick="submitEditBooking()">Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal WhatsApp -->
 <div class="modal" id="waModal">
   <div class="modal-content">
@@ -1052,7 +1182,7 @@ document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['requests','calendar','templates','export'].forEach(v => {
+    ['requests','calendar','checkin','templates','export'].forEach(v => {
       document.getElementById('view-' + v).style.display = 'none';
     });
     document.getElementById('view-' + btn.dataset.view).style.display = 'block';
@@ -1303,9 +1433,6 @@ function renderDateViewer(iso) {
     const statusLabel = r.status === 'pending' ? 'Pendente' : r.status === 'approved' ? 'Aprovada' : 'Rejeitada';
     const brindeName = r.brinde === 'pastilhas' ? '🛞 Pastilhas HH' : r.brinde === 'mochila' ? '🎒 Mochila' : '🧥 Capa de chuva';
     const modalLabel = r.modalidade === 'estudio' ? 'Leva até o estúdio' : 'Retirada no endereço';
-    const ci = CHECKINS[r.id] || { fuel_level: 0, mileage: '', observations: '', photos: [] };
-    const photos = ci.photos || [];
-
     return `<div class="dv-booking-full">
       <div class="dv-row">
         <span class="dv-name">${r.nome}</span>
@@ -1324,76 +1451,15 @@ function renderDateViewer(iso) {
 
       <div class="dv-actions-row">
         <button class="action-btn whats" onclick="openWhatsApp('${r.id}')">💬 WhatsApp</button>
+        <button class="action-btn view" onclick="openEditBooking('${r.id}')">✏️ Editar</button>
         ${r.status === 'pending' ? `
           <button class="action-btn approve" onclick="updateStatus('${r.id}','approved')">✓ Aprovar</button>
           <button class="action-btn reject" onclick="updateStatus('${r.id}','rejected')">✕ Rejeitar</button>
         ` : ''}
       </div>
-
-      <div class="dv-separator"></div>
-
-      <div>
-        <h4 class="dv-checkin-title">🔧 Check-in da moto</h4>
-        <div class="checkin-grid">
-
-          <div class="checkin-field">
-            <label class="checkin-label">Nível de combustível</label>
-            <div class="fuel-gauge-container">
-              <svg class="fuel-svg" viewBox="0 0 200 115" id="fuelSvg_${r.id}" data-rid="${r.id}">
-                <defs>
-                  <linearGradient id="fg_${r.id}" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stop-color="#ff4d4d"/>
-                    <stop offset="50%" stop-color="#ffaa33"/>
-                    <stop offset="100%" stop-color="#1fd27a"/>
-                  </linearGradient>
-                </defs>
-                <path d="M 25 100 A 75 75 0 0 1 175 100" fill="none" stroke="#1c1c22" stroke-width="14" stroke-linecap="round"/>
-                <path id="fuelArc_${r.id}" d="M 25 100 A 75 75 0 0 1 175 100" fill="none" stroke="url(#fg_${r.id})" stroke-width="14" stroke-linecap="round" style="stroke-dasharray:236;stroke-dashoffset:236"/>
-                <line id="fuelNeedle_${r.id}" x1="100" y1="100" x2="30" y2="100" stroke="#f5f5f7" stroke-width="2.5" stroke-linecap="round"/>
-                <circle cx="100" cy="100" r="6" fill="#f5f5f7"/>
-                <circle id="fuelKnob_${r.id}" cx="30" cy="100" r="8" fill="var(--primary)" stroke="#fff" stroke-width="2" style="cursor:grab;filter:drop-shadow(0 0 3px rgba(255,45,45,.5))"/>
-                <text x="8" y="112" fill="#ff4d4d" font-size="11" font-weight="700" font-family="Inter,sans-serif">E</text>
-                <text x="180" y="112" fill="#1fd27a" font-size="11" font-weight="700" font-family="Inter,sans-serif">F</text>
-              </svg>
-              <div class="fuel-value" id="fuelVal_${r.id}">${ci.fuel_level}%</div>
-              <input type="hidden" id="fuelRange_${r.id}" value="${ci.fuel_level}"/>
-            </div>
-          </div>
-
-          <div class="checkin-field">
-            <label class="checkin-label">Quilometragem</label>
-            <input type="text" class="checkin-input" id="ciKm_${r.id}" value="${ci.mileage || ''}" placeholder="Ex: 15.432 km"/>
-          </div>
-
-          <div class="checkin-field">
-            <label class="checkin-label">Observações sobre a moto</label>
-            <textarea class="checkin-textarea" id="ciObs_${r.id}" placeholder="Arranhões, peças soltas, condição geral...">${ci.observations || ''}</textarea>
-          </div>
-
-          <div class="checkin-field">
-            <label class="checkin-label">Fotos da moto</label>
-            <div class="photo-grid" id="pgrid_${r.id}">
-              ${photos.map((p,i) => `<div class="photo-thumb"><img src="${p}" onclick="openLightbox('${p}')"/><button class="photo-remove" onclick="rmPhoto('${r.id}',${i})">×</button></div>`).join('')}
-              <label class="photo-add" for="pInput_${r.id}"><span>📷</span><span>Adicionar</span></label>
-            </div>
-            <input type="file" id="pInput_${r.id}" accept="image/*" multiple hidden onchange="addPhotos('${r.id}')"/>
-          </div>
-
-          <div class="checkin-full">
-            <button class="action-btn approve" style="width:100%;padding:10px;font-size:12px" onclick="saveCheckin('${r.id}')">💾 Salvar check-in</button>
-          </div>
-
-        </div>
-      </div>
     </div>`;
   }).join('');
 
-  // Init fuel gauges — set value + bind drag
-  bookings.forEach(r => {
-    const ci = CHECKINS[r.id] || { fuel_level: 0 };
-    updateFuelGauge(r.id, ci.fuel_level);
-    initFuelGaugeDrag(r.id);
-  });
 }
 
 async function toggleBlock(iso, reason) {
@@ -1436,6 +1502,223 @@ document.getElementById('addBlockBtn').onclick = () => {
   document.getElementById('blockReasonSelect').value = 'Feriado';
   document.getElementById('blockReasonCustomWrap').style.display = 'none';
 };
+
+/* THEME TOGGLE */
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('fp_theme', next);
+}
+(function initTheme() {
+  const saved = localStorage.getItem('fp_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+
+/* EDIT BOOKING */
+function openEditBooking(id) {
+  const r = getRequests().find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('ebId').value = r.id;
+  document.getElementById('ebDate').value = r.date;
+  document.getElementById('ebNome').value = r.nome;
+  document.getElementById('ebWhats').value = r.whatsapp;
+  document.getElementById('ebEmail').value = r.email || '';
+  document.getElementById('ebMoto').value = r.moto;
+  document.getElementById('ebPlaca').value = r.placa;
+  document.getElementById('ebModalidade').value = r.modalidade;
+  document.getElementById('ebEndereco').value = r.endereco || '';
+  document.getElementById('ebBrinde').value = r.brinde;
+  document.getElementById('ebStatus').value = r.status;
+  document.getElementById('ebObs').value = r.obs || '';
+  document.getElementById('editBookModal').classList.add('show');
+}
+function closeEditBooking() {
+  document.getElementById('editBookModal').classList.remove('show');
+}
+document.getElementById('editBookModal').addEventListener('click', e => {
+  if (e.target.id === 'editBookModal') closeEditBooking();
+});
+async function submitEditBooking() {
+  const id = document.getElementById('ebId').value;
+  const payload = {
+    date: document.getElementById('ebDate').value,
+    nome: document.getElementById('ebNome').value.trim(),
+    whatsapp: document.getElementById('ebWhats').value.trim(),
+    email: document.getElementById('ebEmail').value.trim() || null,
+    moto: document.getElementById('ebMoto').value.trim(),
+    placa: document.getElementById('ebPlaca').value.trim().toUpperCase(),
+    modalidade: document.getElementById('ebModalidade').value,
+    endereco: document.getElementById('ebEndereco').value.trim() || null,
+    brinde: document.getElementById('ebBrinde').value,
+    status: document.getElementById('ebStatus').value,
+    obs: document.getElementById('ebObs').value.trim() || null
+  };
+  if (!payload.date || !payload.nome || !payload.whatsapp || !payload.moto || !payload.placa) {
+    alert('Preencha os campos obrigatórios.'); return;
+  }
+  const { error } = await sb.from('requests').update(payload).eq('id', id);
+  if (error) { alert('Erro: ' + error.message); return; }
+  closeEditBooking();
+  await loadRequests();
+  renderRequests();
+  renderCalendar();
+  if (selectedDate) renderDateViewer(selectedDate);
+  alert('Agendamento atualizado!');
+}
+
+/* CHECK-IN / CHECK-OUT MODULE */
+let ciTab = 'checkin';
+function setCiTab(tab) {
+  ciTab = tab;
+  document.querySelectorAll('[data-cifilter]').forEach(b => {
+    b.classList.toggle('active', b.dataset.cifilter === tab);
+  });
+  loadCiForm();
+}
+
+function populateCiSelect() {
+  const sel = document.getElementById('ciSelect');
+  const approved = getRequests().filter(r => r.status === 'approved');
+  approved.sort((a,b) => a.date.localeCompare(b.date));
+  sel.innerHTML = '<option value="">— selecione —</option>' +
+    approved.map(r => `<option value="${r.id}">${prettyDate(r.date)} — ${r.nome} (${r.moto})</option>`).join('');
+}
+
+function loadCiForm() {
+  const rid = document.getElementById('ciSelect').value;
+  const wrap = document.getElementById('ciFormWrap');
+  if (!rid) { wrap.innerHTML = '<div class="dv-empty"><p>Selecione um agendamento acima.</p></div>'; return; }
+
+  const r = getRequests().find(x => x.id === rid);
+  if (!r) return;
+
+  const prefix = ciTab === 'checkin' ? 'ci' : 'co';
+  const ci = ciTab === 'checkin'
+    ? (CHECKINS[rid] || { fuel_level: 0, mileage: '', observations: '', photos: [] })
+    : (CHECKOUTS[rid] || { fuel_level: 0, mileage: '', observations: '', photos: [] });
+  const photos = ci.photos || [];
+
+  wrap.innerHTML = `
+    <div class="cal-card">
+      <div class="dv-row" style="margin-bottom:12px">
+        <span class="dv-name">${r.nome} — ${r.moto} (${r.placa})</span>
+        <span class="badge approved">${prettyDate(r.date)}</span>
+      </div>
+      <div class="checkin-grid">
+        <div class="checkin-field">
+          <label class="checkin-label">Nível de combustível</label>
+          <div class="fuel-gauge-container">
+            <svg class="fuel-svg" viewBox="0 0 200 115" id="fuelSvg_${prefix}_${rid}" data-rid="${prefix}_${rid}">
+              <defs>
+                <linearGradient id="fg_${prefix}_${rid}" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#ff4d4d"/>
+                  <stop offset="50%" stop-color="#ffaa33"/>
+                  <stop offset="100%" stop-color="#1fd27a"/>
+                </linearGradient>
+              </defs>
+              <path d="M 25 100 A 75 75 0 0 1 175 100" fill="none" stroke="var(--bg-elev)" stroke-width="14" stroke-linecap="round"/>
+              <path id="fuelArc_${prefix}_${rid}" d="M 25 100 A 75 75 0 0 1 175 100" fill="none" stroke="url(#fg_${prefix}_${rid})" stroke-width="14" stroke-linecap="round" style="stroke-dasharray:236;stroke-dashoffset:236"/>
+              <line id="fuelNeedle_${prefix}_${rid}" x1="100" y1="100" x2="30" y2="100" stroke="var(--text)" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="100" cy="100" r="6" fill="var(--text)"/>
+              <circle id="fuelKnob_${prefix}_${rid}" cx="30" cy="100" r="8" fill="var(--primary)" stroke="#fff" stroke-width="2" style="cursor:grab;filter:drop-shadow(0 0 3px rgba(255,45,45,.5))"/>
+              <text x="8" y="112" fill="#ff4d4d" font-size="11" font-weight="700" font-family="Inter,sans-serif">E</text>
+              <text x="180" y="112" fill="#1fd27a" font-size="11" font-weight="700" font-family="Inter,sans-serif">F</text>
+            </svg>
+            <div class="fuel-value" id="fuelVal_${prefix}_${rid}">${ci.fuel_level}%</div>
+            <input type="hidden" id="fuelRange_${prefix}_${rid}" value="${ci.fuel_level}"/>
+          </div>
+        </div>
+        <div class="checkin-field">
+          <label class="checkin-label">Quilometragem</label>
+          <input type="text" class="checkin-input" id="${prefix}Km_${rid}" value="${ci.mileage || ''}" placeholder="Ex: 15.432 km"/>
+        </div>
+        <div class="checkin-field">
+          <label class="checkin-label">Observações sobre a moto</label>
+          <textarea class="checkin-textarea" id="${prefix}Obs_${rid}" placeholder="Arranhões, peças soltas, condição geral...">${ci.observations || ''}</textarea>
+        </div>
+        <div class="checkin-field">
+          <label class="checkin-label">Fotos da moto</label>
+          <div class="photo-grid" id="pgrid_${prefix}_${rid}">
+            ${photos.map((p,i) => `<div class="photo-thumb"><img src="${p}" onclick="openLightbox(this.src)"/><button class="photo-remove" onclick="rmCiPhoto('${prefix}_${rid}',${i})">×</button></div>`).join('')}
+            <label class="photo-add" for="pInput_${prefix}_${rid}"><span>📷</span><span>Adicionar</span></label>
+          </div>
+          <input type="file" id="pInput_${prefix}_${rid}" accept="image/*" multiple hidden onchange="addCiPhotos('${prefix}','${rid}')"/>
+        </div>
+        <div class="checkin-full">
+          <button class="action-btn approve" style="width:100%;padding:12px;font-size:13px" onclick="saveCiForm('${prefix}','${rid}')">💾 Salvar ${ciTab === 'checkin' ? 'check-in' : 'check-out'}</button>
+        </div>
+      </div>
+    </div>`;
+
+  updateFuelGauge(prefix + '_' + rid, ci.fuel_level);
+  initFuelGaugeDrag(prefix + '_' + rid);
+}
+
+/* Check-out storage */
+let CHECKOUTS = {};
+async function loadCheckouts() {
+  const { data, error } = await sb.from('checkouts').select('*');
+  if (error) { console.warn('loadCheckouts:', error.message); return; }
+  CHECKOUTS = {};
+  (data || []).forEach(c => { CHECKOUTS[c.request_id] = c; });
+}
+
+async function addCiPhotos(prefix, rid) {
+  const compositeId = prefix + '_' + rid;
+  const input = document.getElementById('pInput_' + compositeId);
+  if (!input || !input.files.length) return;
+  const store = prefix === 'ci' ? CHECKINS : CHECKOUTS;
+  const ci = store[rid] || { photos: [] };
+  const photos = [...(ci.photos || [])];
+  for (const f of input.files) {
+    if (photos.length >= 10) { alert('Máximo 10 fotos.'); break; }
+    photos.push(await compressImg(f));
+  }
+  ci.photos = photos;
+  store[rid] = ci;
+  refreshPhotoGrid(compositeId, photos, 'rmCiPhoto');
+  input.value = '';
+}
+
+function rmCiPhoto(compositeId, idx) {
+  const parts = compositeId.split('_');
+  const prefix = parts[0];
+  const rid = parts.slice(1).join('_');
+  const store = prefix === 'ci' ? CHECKINS : CHECKOUTS;
+  const ci = store[rid]; if (!ci || !ci.photos) return;
+  ci.photos.splice(idx, 1);
+  refreshPhotoGrid(compositeId, ci.photos, 'rmCiPhoto');
+}
+
+async function saveCiForm(prefix, rid) {
+  const table = prefix === 'ci' ? 'checkins' : 'checkouts';
+  const store = prefix === 'ci' ? CHECKINS : CHECKOUTS;
+  const fuel = parseInt(document.getElementById('fuelRange_' + prefix + '_' + rid)?.value || 0);
+  const km = document.getElementById(prefix + 'Km_' + rid)?.value?.trim() || '';
+  const obs = document.getElementById(prefix + 'Obs_' + rid)?.value?.trim() || '';
+  const existing = store[rid];
+  const photos = existing?.photos || [];
+
+  const payload = { request_id: rid, fuel_level: fuel, mileage: km, observations: obs, photos };
+  let result;
+  if (existing?.id) {
+    result = await sb.from(table).update({
+      fuel_level: fuel, mileage: km, observations: obs, photos,
+      updated_at: new Date().toISOString()
+    }).eq('id', existing.id);
+  } else {
+    result = await sb.from(table).insert(payload).select().single();
+  }
+  if (result.error) {
+    alert('Erro ao salvar: ' + result.error.message + '\n\nVocê já criou a tabela "' + table + '" no Supabase?');
+    return;
+  }
+  if (result.data) store[rid] = result.data;
+  else store[rid] = { ...existing, ...payload };
+  alert((prefix === 'ci' ? 'Check-in' : 'Check-out') + ' salvo com sucesso!');
+}
 
 /* EXPORT */
 function exportCSV() {
@@ -1863,12 +2146,13 @@ function rmPhoto(rid, idx) {
   refreshPhotoGrid(rid, ci.photos);
 }
 
-function refreshPhotoGrid(rid, photos) {
-  const grid = document.getElementById('pgrid_' + rid);
+function refreshPhotoGrid(compositeId, photos, rmFn) {
+  rmFn = rmFn || 'rmPhoto';
+  const grid = document.getElementById('pgrid_' + compositeId);
   if (!grid) return;
   grid.innerHTML = photos.map((p, i) =>
-    `<div class="photo-thumb"><img src="${p}" onclick="openLightbox(this.src)"/><button class="photo-remove" onclick="rmPhoto('${rid}',${i})">×</button></div>`
-  ).join('') + `<label class="photo-add" for="pInput_${rid}"><span>📷</span><span>Adicionar</span></label>`;
+    `<div class="photo-thumb"><img src="${p}" onclick="openLightbox(this.src)"/><button class="photo-remove" onclick="${rmFn}('${compositeId}',${i})">×</button></div>`
+  ).join('') + `<label class="photo-add" for="pInput_${compositeId}"><span>📷</span><span>Adicionar</span></label>`;
 }
 
 function openLightbox(src) {
@@ -1909,10 +2193,11 @@ async function saveCheckin(rid) {
 
 /* INIT */
 async function initApp() {
-  await Promise.all([loadRequests(), loadBlocked(), loadCheckins()]);
+  await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts()]);
   renderRequests();
   renderCalendar();
   renderTemplates();
+  populateCiSelect();
 }
 
 checkAuth();
