@@ -179,10 +179,10 @@
   .shell.hover-mode .brand { margin-bottom: 8px; padding: 4px; justify-content: center; }
   .shell.hover-mode .brand-mark { width: 36px; height: 36px; }
   .shell.hover-mode .sb-ctrl-btn { justify-content: center; padding: 10px; }
-  /* Hover expand: sidebar becomes fixed overlay */
+  /* Hover expand: sidebar overflows its grid column as overlay */
   .shell.hover-mode .sidebar.hover-open {
-    position: fixed; top: 0; left: 0; bottom: 0;
-    width: 260px; padding: 24px 16px; z-index: 90;
+    position: relative; z-index: 90;
+    width: 260px; padding: 24px 16px;
     box-shadow: 6px 0 24px rgba(0,0,0,.3);
   }
   .shell.hover-mode .sidebar.hover-open .nav-label,
