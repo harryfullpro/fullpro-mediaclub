@@ -629,6 +629,52 @@
   .proj-status-select.a_publicar { background-color: rgba(245,158,11,.12); border-color: rgba(245,158,11,.4); color: #f59e0b; }
   .proj-status-select.concluido { background-color: rgba(31,210,122,.12); border-color: rgba(31,210,122,.4); color: var(--success); }
 
+  /* Project filters */
+  .proj-filters {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .proj-filter-chip {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .proj-filter-chip:hover { border-color: var(--border-hi); color: var(--text); }
+  .proj-filter-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .proj-filter-chip.active:hover { background: var(--primary-hi); border-color: var(--primary-hi); }
+  .proj-sort-select {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+    color: var(--text);
+    cursor: pointer;
+    margin-left: auto;
+  }
+  .proj-sort-select:focus { outline: none; border-color: var(--primary); }
+  .proj-filter-separator {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+    margin: 0 4px;
+  }
+
   /* Editing module */
   .edit-card {
     background: var(--bg-card);
@@ -1061,6 +1107,27 @@
           <p>Planeje roteiros, destinos e referências para cada produção.</p>
         </div>
         <button class="action-btn approve" style="padding:12px 20px; font-size:14px" onclick="openProjectForm()">+ Novo projeto</button>
+      </div>
+
+      <!-- Project filters -->
+      <div class="proj-filters">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--text-muted)" fill="none" stroke-width="2" style="flex-shrink:0"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        <button class="proj-filter-chip active" data-pfilter="default" onclick="setProjFilter('default')">Planejamento + Produção</button>
+        <button class="proj-filter-chip" data-pfilter="all" onclick="setProjFilter('all')">Todos</button>
+        <div class="proj-filter-separator"></div>
+        <button class="proj-filter-chip" data-pfilter="planejamento" onclick="setProjFilter('planejamento')">Planejamento</button>
+        <button class="proj-filter-chip" data-pfilter="producao" onclick="setProjFilter('producao')">Em produção</button>
+        <button class="proj-filter-chip" data-pfilter="edicao" onclick="setProjFilter('edicao')">Edição</button>
+        <button class="proj-filter-chip" data-pfilter="a_publicar" onclick="setProjFilter('a_publicar')">A publicar</button>
+        <button class="proj-filter-chip" data-pfilter="concluido" onclick="setProjFilter('concluido')">Concluído</button>
+        <select class="proj-sort-select" id="projSortSelect" onchange="renderProjects()">
+          <option value="newest">Mais recentes</option>
+          <option value="oldest">Mais antigos</option>
+          <option value="az">A → Z</option>
+          <option value="za">Z → A</option>
+          <option value="date_asc">Data produção ↑</option>
+          <option value="date_desc">Data produção ↓</option>
+        </select>
       </div>
 
       <!-- Project form (hidden by default) -->
@@ -2264,6 +2331,49 @@ async function loadProjects() {
   PROJECTS = data || [];
 }
 
+let projFilterStatus = 'default';
+function setProjFilter(f) {
+  projFilterStatus = f;
+  document.querySelectorAll('.proj-filter-chip').forEach(c => c.classList.toggle('active', c.dataset.pfilter === f));
+  renderProjects();
+}
+
+function getFilteredProjects() {
+  let list = [...PROJECTS];
+
+  // Filter
+  if (projFilterStatus === 'default') {
+    list = list.filter(p => p.status === 'planejamento' || p.status === 'producao');
+  } else if (projFilterStatus !== 'all') {
+    list = list.filter(p => p.status === projFilterStatus);
+  }
+
+  // Sort
+  const sortSel = document.getElementById('projSortSelect');
+  const sortVal = sortSel ? sortSel.value : 'newest';
+  switch (sortVal) {
+    case 'newest':
+      list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      break;
+    case 'oldest':
+      list.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+      break;
+    case 'az':
+      list.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'pt'));
+      break;
+    case 'za':
+      list.sort((a, b) => (b.title || '').localeCompare(a.title || '', 'pt'));
+      break;
+    case 'date_asc':
+      list.sort((a, b) => (a.production_date || '').localeCompare(b.production_date || ''));
+      break;
+    case 'date_desc':
+      list.sort((a, b) => (b.production_date || '').localeCompare(a.production_date || ''));
+      break;
+  }
+  return list;
+}
+
 function renderProjects() {
   const el = document.getElementById('projectsList');
   if (!el) return;
@@ -2271,11 +2381,17 @@ function renderProjects() {
     el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum projeto criado ainda. Clique em "+ Novo projeto" para começar.</p></div>';
     return;
   }
+  const filtered = getFilteredProjects();
   const statusMap = { planejamento: 'Planejamento', producao: 'Em produção', edicao: 'Edição', a_publicar: 'A publicar', concluido: 'Concluído' };
   const statusBadge = { planejamento: 'pending', producao: 'approved', edicao: 'pending', concluido: 'approved' };
   const destNames = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram', tutorial: 'Tutorial' };
 
-  el.innerHTML = PROJECTS.map(p => {
+  if (filtered.length === 0) {
+    el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum projeto encontrado com este filtro.</p></div>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(p => {
     const dests = (p.destinations || []).map(d => `<span class="proj-dest-tag ${d}">${destNames[d] || d}</span>`).join('');
     const linkCount = (p.links || []).length;
     const photoCount = (p.photos || []).length;
