@@ -1012,8 +1012,10 @@ function renderCalendar() {
     const iso = fmtDate(date);
     el.className = 'cal-day';
     el.textContent = d;
+    const dayOfWeek = date.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     if (date.getTime() === today.getTime()) el.classList.add('today');
-    if (date < today) el.classList.add('past');
+    if (date < today || isWeekend) el.classList.add('past');
     if (approved.has(iso)) el.classList.add('approved');
     if (blocked.has(iso)) el.classList.add('blocked');
 

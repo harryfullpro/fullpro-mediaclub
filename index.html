@@ -2085,8 +2085,10 @@ function renderCalendar() {
     el.className = 'cal-day';
     el.textContent = d;
 
+    const dayOfWeek = date.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     if (date.getTime() === today.getTime()) el.classList.add('today');
-    if (date < minDate) el.classList.add('disabled');
+    if (date < minDate || isWeekend) el.classList.add('disabled');
     else if (booked.has(iso)) el.classList.add('booked');
     else {
       el.addEventListener('click', () => {
