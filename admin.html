@@ -626,7 +626,69 @@
   .proj-status-select.planejamento { background-color: rgba(255,170,51,.12); border-color: rgba(255,170,51,.4); color: var(--warning); }
   .proj-status-select.producao { background-color: rgba(59,130,246,.12); border-color: rgba(59,130,246,.4); color: #3b82f6; }
   .proj-status-select.edicao { background-color: rgba(168,85,247,.12); border-color: rgba(168,85,247,.4); color: #a855f7; }
+  .proj-status-select.a_publicar { background-color: rgba(245,158,11,.12); border-color: rgba(245,158,11,.4); color: #f59e0b; }
   .proj-status-select.concluido { background-color: rgba(31,210,122,.12); border-color: rgba(31,210,122,.4); color: var(--success); }
+
+  /* Editing module */
+  .edit-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 14px;
+    transition: border-color .15s;
+  }
+  .edit-card:hover { border-color: var(--border-hi); }
+  .edit-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .edit-card-head h4 { font-size: 15px; font-weight: 600; }
+  .edit-script-section {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .edit-script-section .section-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .edit-pdf-embed {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    min-height: 400px;
+    background: #1a1a1a;
+  }
+  .edit-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .edit-meta-item {
+    background: var(--bg-elev);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .edit-meta-item .k { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; margin-bottom: 2px; }
+  .edit-meta-item .v { font-size: 13px; color: var(--text); font-weight: 500; }
+  .edit-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
 
   /* WhatsApp dropdown */
   .wa-options { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
@@ -739,6 +801,10 @@
     <button class="nav-item" data-view="projects">
       <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
       Projetos
+    </button>
+    <button class="nav-item" data-view="editing">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/><path d="M2 20h4M22 20H10"/></svg>
+      Edição
     </button>
 
     <div class="nav-section">Configurações</div>
@@ -1043,6 +1109,7 @@
                 <option value="planejamento">Planejamento</option>
                 <option value="producao">Em produção</option>
                 <option value="edicao">Edição</option>
+                <option value="a_publicar">A publicar</option>
                 <option value="concluido">Concluído</option>
               </select>
             </div>
@@ -1108,6 +1175,40 @@
 
       <!-- Project list -->
       <div id="projectsList"></div>
+    </div>
+
+    <!-- EDITING VIEW -->
+    <div id="view-editing" style="display:none">
+      <div class="page-head">
+        <div>
+          <h1>Edição</h1>
+          <p>Projetos em fase de edição e pós-produção.</p>
+        </div>
+      </div>
+
+      <div class="stats-grid" style="margin-bottom:18px">
+        <div class="stat-card" style="border-left:3px solid #a855f7">
+          <div class="label">Em edição</div>
+          <div class="value" id="editStatEdicao">0</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid #f59e0b">
+          <div class="label">A publicar</div>
+          <div class="value" id="editStatPublicar">0</div>
+        </div>
+      </div>
+
+      <div id="editingList"></div>
+
+      <!-- Editing PDF viewer modal -->
+      <div class="modal" id="editPdfModal">
+        <div class="modal-content" style="max-width:900px;max-height:92vh;display:flex;flex-direction:column">
+          <div class="modal-head">
+            <h3 id="editPdfTitle">Roteiro</h3>
+            <button class="modal-close" onclick="closeEditPdf()">&times;</button>
+          </div>
+          <div id="editPdfBody" style="flex:1;overflow-y:auto;padding:0"></div>
+        </div>
+      </div>
     </div>
 
     <!-- USERS VIEW -->
@@ -1571,7 +1672,7 @@ document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['requests','calendar','checkin','projects','templates','export','users','profile'].forEach(v => {
+    ['requests','calendar','checkin','projects','editing','templates','export','users','profile'].forEach(v => {
       document.getElementById('view-' + v).style.display = 'none';
     });
     document.getElementById('view-' + btn.dataset.view).style.display = 'block';
@@ -2147,7 +2248,7 @@ async function saveCiForm(prefix, rid) {
     await sb.from('projects').update({ status: newStatus }).eq('id', lp.id);
     lp.status = newStatus;
   }
-  if (linkedProjects.length) renderProjects();
+  if (linkedProjects.length) { renderProjects(); renderEditingView(); }
 }
 
 /* ==========================================
@@ -2170,7 +2271,7 @@ function renderProjects() {
     el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum projeto criado ainda. Clique em "+ Novo projeto" para começar.</p></div>';
     return;
   }
-  const statusMap = { planejamento: 'Planejamento', producao: 'Em produção', edicao: 'Edição', concluido: 'Concluído' };
+  const statusMap = { planejamento: 'Planejamento', producao: 'Em produção', edicao: 'Edição', a_publicar: 'A publicar', concluido: 'Concluído' };
   const statusBadge = { planejamento: 'pending', producao: 'approved', edicao: 'pending', concluido: 'approved' };
   const destNames = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram', tutorial: 'Tutorial' };
 
@@ -2183,7 +2284,7 @@ function renderProjects() {
         <h4>${escHtml(p.title || 'Sem título')}</h4>
         <div style="display:flex;align-items:center;gap:8px">
           <select class="proj-status-select ${p.status}" onchange="quickUpdateProjectStatus('${p.id}',this.value)">
-            ${['planejamento','producao','edicao','concluido'].map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${statusMap[s]}</option>`).join('')}
+            ${['planejamento','producao','edicao','a_publicar','concluido'].map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${statusMap[s]}</option>`).join('')}
           </select>
           <button class="action-btn approve" style="padding:4px 10px;font-size:11px" onclick="viewProject('${p.id}')">
             <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -2360,6 +2461,7 @@ async function saveProject() {
   closeProjectForm();
   await loadProjects();
   renderProjects();
+  renderEditingView();
   alert(editId ? 'Projeto atualizado!' : 'Projeto criado!');
 }
 
@@ -2404,12 +2506,13 @@ async function quickUpdateProjectStatus(id, status) {
   const p = PROJECTS.find(x => x.id === id);
   if (p) p.status = status;
   renderProjects();
+  renderEditingView();
 }
 
 function viewProject(id) {
   const p = PROJECTS.find(x => x.id === id);
   if (!p) return;
-  const statusMap = { planejamento: 'Planejamento', producao: 'Em produção', edicao: 'Edição', concluido: 'Concluído' };
+  const statusMap = { planejamento: 'Planejamento', producao: 'Em produção', edicao: 'Edição', a_publicar: 'A publicar', concluido: 'Concluído' };
   const destNames = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram', tutorial: 'Tutorial' };
   const dests = (p.destinations || []).map(d => `<span class="proj-dest-tag ${d}">${destNames[d] || d}</span>`).join('') || '<span style="color:var(--text-muted)">Nenhum</span>';
   const links = p.links || [];
@@ -2419,7 +2522,7 @@ function viewProject(id) {
   document.getElementById('projViewBody').innerHTML = `
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
       ${dests}
-      <span class="badge ${p.status === 'concluido' || p.status === 'producao' ? 'approved' : 'pending'}" style="margin-left:auto">${statusMap[p.status] || p.status}</span>
+      <span class="badge ${p.status === 'concluido' || p.status === 'producao' || p.status === 'a_publicar' ? 'approved' : 'pending'}" style="margin-left:auto">${statusMap[p.status] || p.status}</span>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">
@@ -2491,6 +2594,7 @@ async function deleteProject(id) {
   if (error) { alert('Erro: ' + error.message); return; }
   await loadProjects();
   renderProjects();
+  renderEditingView();
   alert('Projeto excluído.');
 }
 
@@ -2899,6 +3003,138 @@ function openLightbox(src) {
 }
 
 
+/* EDITING MODULE */
+function renderEditingView() {
+  const editProjects = PROJECTS.filter(p => p.status === 'edicao' || p.status === 'a_publicar');
+  const el = document.getElementById('editingList');
+  if (!el) return;
+
+  // Stats
+  const edicaoCount = PROJECTS.filter(p => p.status === 'edicao').length;
+  const publicarCount = PROJECTS.filter(p => p.status === 'a_publicar').length;
+  const eEd = document.getElementById('editStatEdicao');
+  const ePub = document.getElementById('editStatPublicar');
+  if (eEd) eEd.textContent = edicaoCount;
+  if (ePub) ePub.textContent = publicarCount;
+
+  if (editProjects.length === 0) {
+    el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum projeto em fase de edição no momento.</p></div>';
+    return;
+  }
+
+  const statusMap = { edicao: 'Edição', a_publicar: 'A publicar', concluido: 'Concluído' };
+  const destNames = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram', tutorial: 'Tutorial' };
+
+  el.innerHTML = editProjects.map(p => {
+    const dests = (p.destinations || []).map(d => `<span class="proj-dest-tag ${d}">${destNames[d] || d}</span>`).join('');
+    const links = p.links || [];
+    const photos = p.photos || [];
+    const hasPdf = p.script_file && p.script_file.data && p.script_file.name && p.script_file.name.toLowerCase().endsWith('.pdf');
+    const hasScript = p.script_text && p.script_text.trim().length > 0;
+
+    return `<div class="edit-card">
+      <div class="edit-card-head">
+        <div>
+          <h4>${escHtml(p.title || 'Sem título')}</h4>
+          <div style="display:flex;gap:6px;margin-top:4px">${dests || '<span style="font-size:11px;color:var(--text-muted)">Sem destino</span>'}</div>
+        </div>
+        <div class="edit-actions">
+          <select class="proj-status-select ${p.status}" onchange="editingUpdateStatus('${p.id}',this.value)" style="min-width:120px">
+            <option value="edicao" ${p.status === 'edicao' ? 'selected' : ''}>Edição</option>
+            <option value="a_publicar" ${p.status === 'a_publicar' ? 'selected' : ''}>A publicar</option>
+            <option value="concluido" ${p.status === 'concluido' ? 'selected' : ''}>Concluído</option>
+          </select>
+          <button class="action-btn approve" style="padding:4px 10px;font-size:11px" onclick="viewProject('${p.id}')">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Ver completo
+          </button>
+        </div>
+      </div>
+
+      <div class="edit-meta-grid">
+        <div class="edit-meta-item"><div class="k">Moto / Produto</div><div class="v">${escHtml(p.moto || '—')}</div></div>
+        <div class="edit-meta-item"><div class="k">Data</div><div class="v">${p.production_date ? prettyDate(p.production_date) : '—'}</div></div>
+        <div class="edit-meta-item"><div class="k">Links</div><div class="v">${links.length} referência${links.length !== 1 ? 's' : ''}</div></div>
+        <div class="edit-meta-item"><div class="k">Fotos</div><div class="v">${photos.length} imagem${photos.length !== 1 ? 'ns' : ''}</div></div>
+      </div>
+
+      ${hasPdf ? `
+      <div class="edit-script-section">
+        <div class="section-label">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Roteiro (PDF)
+        </div>
+        <iframe src="${p.script_file.data}" class="edit-pdf-embed" title="Roteiro PDF"></iframe>
+        <div style="margin-top:8px;text-align:right">
+          <button class="action-btn view" style="padding:6px 14px;font-size:12px" onclick="openEditPdf('${p.id}')">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+            Ampliar roteiro
+          </button>
+        </div>
+      </div>` : hasScript ? `
+      <div class="edit-script-section">
+        <div class="section-label">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+          Roteiro
+        </div>
+        <div style="font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.6;max-height:250px;overflow-y:auto">${escHtml(p.script_text)}</div>
+      </div>` : `
+      <div class="edit-script-section" style="text-align:center;padding:24px">
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="var(--text-muted)" fill="none" stroke-width="1.5" style="margin-bottom:6px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <div style="font-size:12px;color:var(--text-muted)">Nenhum roteiro adicionado a este projeto.</div>
+      </div>`}
+
+      ${links.length ? `
+      <div style="margin-bottom:10px">
+        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Links de referência</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${links.map((l, i) => `<a href="${l}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;color:var(--primary);text-decoration:none;font-size:12px;transition:border-color .15s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+            <svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" fill="none" stroke-width="2" style="flex-shrink:0"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Link ${i + 1}
+          </a>`).join('')}
+        </div>
+      </div>` : ''}
+
+      ${photos.length ? `
+      <div>
+        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Fotos (${photos.length})</div>
+        <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px">
+          ${photos.map(ph => `<div style="flex-shrink:0;width:80px;height:80px;border-radius:8px;overflow:hidden;border:1px solid var(--border);cursor:pointer" onclick="openLightbox('${ph}')"><img src="${ph}" style="width:100%;height:100%;object-fit:cover"/></div>`).join('')}
+        </div>
+      </div>` : ''}
+
+      ${p.observations ? `
+      <div style="font-size:12px;color:var(--text-dim);margin-top:10px;border-top:1px solid var(--border);padding-top:8px">${escHtml(p.observations).substring(0, 200)}${p.observations.length > 200 ? '...' : ''}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function editingUpdateStatus(id, status) {
+  const { error } = await sb.from('projects').update({ status }).eq('id', id);
+  if (error) { alert('Erro ao atualizar status: ' + error.message); return; }
+  const proj = PROJECTS.find(p => p.id === id);
+  if (proj) proj.status = status;
+  renderEditingView();
+  renderProjects();
+}
+
+function openEditPdf(id) {
+  const p = PROJECTS.find(x => x.id === id);
+  if (!p || !p.script_file?.data) return;
+  document.getElementById('editPdfTitle').textContent = 'Roteiro — ' + (p.title || 'Projeto');
+  document.getElementById('editPdfBody').innerHTML = `<iframe src="${p.script_file.data}" style="width:100%;height:75vh;border:none;border-radius:0 0 16px 16px;background:#1a1a1a" title="Roteiro PDF"></iframe>`;
+  document.getElementById('editPdfModal').classList.add('show');
+}
+
+function closeEditPdf() {
+  document.getElementById('editPdfModal').classList.remove('show');
+  document.getElementById('editPdfBody').innerHTML = '';
+}
+document.getElementById('editPdfModal').addEventListener('click', e => {
+  if (e.target.id === 'editPdfModal') closeEditPdf();
+});
+
+
 /* INIT */
 async function initApp() {
   await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects()]);
@@ -2907,6 +3143,7 @@ async function initApp() {
   renderTemplates();
   renderCiView();
   renderProjects();
+  renderEditingView();
   loadProfile();
 }
 
