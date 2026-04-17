@@ -962,6 +962,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/><path d="M2 20h4M22 20H10"/></svg>
       <span class="nav-label">Edição</span>
     </button>
+    <button class="nav-item" data-view="performance">
+      <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3V3z"/><path d="M14 3h7v7h-7V3z"/><path d="M14 14h7v7h-7v-7z"/><path d="M3 14h7v7H3v-7z"/></svg>
+      <span class="nav-label">Performance</span>
+    </button>
 
     <div class="nav-section">Configurações</div>
     <button class="nav-item" data-view="templates">
@@ -1407,6 +1411,90 @@
       <div id="projectsList"></div>
     </div>
 
+    <!-- PERFORMANCE VIEW -->
+    <div id="view-performance" style="display:none">
+      <div class="page-head">
+        <div>
+          <h1>Performance</h1>
+          <p>Acompanhe metas, posts e bonificação do pool coletivo.</p>
+        </div>
+      </div>
+
+      <!-- Performance tabs -->
+      <div class="proj-filters" style="margin-bottom:16px">
+        <button class="proj-filter-chip active" data-perf-tab="metas" onclick="setPerfTab('metas')">Metas</button>
+        <button class="proj-filter-chip" data-perf-tab="posts" onclick="setPerfTab('posts')">Meus Posts</button>
+        <button class="proj-filter-chip" data-perf-tab="influencers" onclick="setPerfTab('influencers')">Influenciadores</button>
+        <button class="proj-filter-chip" data-perf-tab="bonificacao" onclick="setPerfTab('bonificacao')">Bonificação</button>
+      </div>
+
+      <!-- METAS TAB -->
+      <div id="perf-tab-metas" style="display:block">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="font-size:18px;font-weight:600">Metas do mês</h3>
+          <button class="action-btn view" style="padding:8px 14px;font-size:12px" onclick="openPerfGoalsModal()">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:4px"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+            Configurar
+          </button>
+        </div>
+        <div class="stats-grid" id="perfMetasCards"></div>
+        <div class="cal-card" style="margin-top:16px">
+          <h3>Resumo do pool coletivo</h3>
+          <div id="perfPoolSummary"></div>
+        </div>
+      </div>
+
+      <!-- MEUS POSTS TAB -->
+      <div id="perf-tab-posts" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="font-size:18px;font-weight:600">Posts deste mês</h3>
+          <button class="action-btn approve" style="padding:8px 14px;font-size:12px" onclick="openAddPostModal()">+ Novo post</button>
+        </div>
+
+        <!-- Post filters -->
+        <div class="proj-filters" style="margin-bottom:16px">
+          <button class="proj-filter-chip active" data-post-filter="todos" onclick="setPerfPostFilter('todos')">Todos</button>
+          <button class="proj-filter-chip" data-post-filter="longo" onclick="setPerfPostFilter('longo')">Longos</button>
+          <button class="proj-filter-chip" data-post-filter="short" onclick="setPerfPostFilter('short')">Shorts</button>
+          <div class="proj-filter-separator"></div>
+          <button class="proj-filter-chip" data-post-filter="yt" onclick="setPerfPostFilter('yt')">YouTube</button>
+          <button class="proj-filter-chip" data-post-filter="yts" onclick="setPerfPostFilter('yts')">YT Shorts</button>
+          <button class="proj-filter-chip" data-post-filter="ig" onclick="setPerfPostFilter('ig')">Instagram</button>
+          <button class="proj-filter-chip" data-post-filter="tt" onclick="setPerfPostFilter('tt')">TikTok</button>
+        </div>
+
+        <div id="perfPostsList"></div>
+      </div>
+
+      <!-- INFLUENCIADORES TAB -->
+      <div id="perf-tab-influencers" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="font-size:18px;font-weight:600">Influenciadores e parceiros</h3>
+          <button class="action-btn approve" style="padding:8px 14px;font-size:12px" onclick="openAddInfluencerModal()">+ Novo influenciador</button>
+        </div>
+        <div id="perfInfluencersList"></div>
+      </div>
+
+      <!-- BONIFICAÇÃO TAB -->
+      <div id="perf-tab-bonificacao" style="display:none">
+        <h3 style="font-size:18px;font-weight:600;margin-bottom:16px">Bonificação do pool</h3>
+        <div class="cal-card" style="margin-bottom:16px">
+          <h3>Regras e distribuição</h3>
+          <p class="sub">Configurações atuais do sistema de bonificação.</p>
+          <div id="perfBonusRules"></div>
+          <button class="action-btn view" style="margin-top:12px;padding:8px 14px;font-size:12px" onclick="openBonusConfigModal()">Editar regras</button>
+        </div>
+        <div class="cal-card" style="margin-bottom:16px">
+          <h3>Projeção do mês atual</h3>
+          <div id="perfBonusProjection"></div>
+        </div>
+        <div class="cal-card">
+          <h3>Histórico de pagamentos</h3>
+          <div id="perfBonusHistory"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- EDITING VIEW -->
     <div id="view-editing" style="display:none">
       <div class="page-head">
@@ -1701,6 +1789,228 @@
   </div>
 </div>
 
+<!-- Modal Configurar Metas -->
+<div class="modal" id="perfGoalsModal">
+  <div class="modal-content" style="max-width:560px">
+    <div class="modal-head">
+      <h3>Configurar metas mensais</h3>
+      <button class="modal-close" onclick="closePerfGoalsModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="book-form">
+        <div class="book-row">
+          <div>
+            <label>Vídeos longos (meta)</label>
+            <input type="number" id="goalLongTarget" min="0" placeholder="0"/>
+          </div>
+          <div>
+            <label>Shorts (meta)</label>
+            <input type="number" id="goalShortTarget" min="0" placeholder="0"/>
+          </div>
+        </div>
+        <div class="book-row">
+          <div>
+            <label>Views totais (meta)</label>
+            <input type="number" id="goalViewsTarget" min="0" placeholder="0"/>
+          </div>
+          <div>
+            <label>Cliques pro site (meta)</label>
+            <input type="number" id="goalClicksTarget" min="0" placeholder="0"/>
+          </div>
+        </div>
+        <div class="book-row">
+          <div>
+            <label>Pool por goal atingido (R$)</label>
+            <input type="text" id="goalPoolValue" placeholder="500,00" oninput="maskCurrency(this)"/>
+          </div>
+          <div>
+            <label>Mês</label>
+            <input type="month" id="goalMonth"/>
+          </div>
+        </div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:16px 0"/>
+        <h4 style="font-size:13px;font-weight:600;margin-bottom:12px">Distribuição de bônus</h4>
+        <div class="book-row">
+          <div>
+            <label>Gravador/Gestor (%)</label>
+            <input type="number" id="distGravador" min="0" max="100" placeholder="40"/>
+          </div>
+          <div>
+            <label>Editor (%)</label>
+            <input type="number" id="distEditor" min="0" max="100" placeholder="35"/>
+          </div>
+        </div>
+        <div class="block-field">
+          <label>Mecânico (%)</label>
+          <input type="number" id="distMecanico" min="0" max="100" placeholder="25" style="width:100%;padding:9px 10px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:12px;font-family:inherit;cursor:pointer"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="action-btn" onclick="closePerfGoalsModal()">Cancelar</button>
+      <button class="action-btn approve" onclick="savePerfGoals()">Salvar metas</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Adicionar Post -->
+<div class="modal" id="perfAddPostModal">
+  <div class="modal-content" style="max-width:560px">
+    <div class="modal-head">
+      <h3>Adicionar novo post</h3>
+      <button class="modal-close" onclick="closePerfAddPostModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="book-form">
+        <label>Título do post *</label>
+        <input type="text" id="postTitle" placeholder="Ex: Review Honda CB 500"/>
+
+        <label>Tipo de conteúdo *</label>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <label style="flex:1">
+            <input type="radio" name="postType" value="longo" checked style="margin-right:6px"/>
+            Vídeo longo
+          </label>
+          <label style="flex:1">
+            <input type="radio" name="postType" value="short" style="margin-right:6px"/>
+            Short
+          </label>
+        </div>
+
+        <label>Plataformas *</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+          <label><input type="checkbox" class="postPlatform" value="yt" style="margin-right:6px"/>YouTube</label>
+          <label><input type="checkbox" class="postPlatform" value="yts" style="margin-right:6px"/>YT Shorts</label>
+          <label><input type="checkbox" class="postPlatform" value="ig" style="margin-right:6px"/>Instagram</label>
+          <label><input type="checkbox" class="postPlatform" value="tt" style="margin-right:6px"/>TikTok</label>
+        </div>
+
+        <div class="book-row">
+          <div>
+            <label>Views totais</label>
+            <input type="number" id="postViews" min="0" placeholder="0"/>
+          </div>
+          <div>
+            <label>Likes totais</label>
+            <input type="number" id="postLikes" min="0" placeholder="0"/>
+          </div>
+        </div>
+
+        <div class="book-row">
+          <div>
+            <label>Retenção média (%)</label>
+            <input type="number" id="postRetention" min="0" max="100" placeholder="0"/>
+          </div>
+          <div>
+            <label>Cliques pro site</label>
+            <input type="number" id="postClicks" min="0" placeholder="0"/>
+          </div>
+        </div>
+
+        <label>Avaliação (1-5)</label>
+        <input type="number" id="postRating" min="1" max="5" placeholder="5"/>
+
+        <label>Notas / Insights</label>
+        <textarea style="width:100%;min-height:60px;padding:10px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:12px;font-family:inherit;resize:vertical" id="postNotes" placeholder="Observações sobre performance..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="action-btn" onclick="closePerfAddPostModal()">Cancelar</button>
+      <button class="action-btn approve" onclick="savePerfPost()">Salvar post</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Adicionar Influenciador -->
+<div class="modal" id="perfAddInfluencerModal">
+  <div class="modal-content" style="max-width:560px">
+    <div class="modal-head">
+      <h3>Adicionar influenciador</h3>
+      <button class="modal-close" onclick="closePerfAddInfluencerModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="book-form">
+        <label>Nome *</label>
+        <input type="text" id="infName" placeholder="Nome do influenciador"/>
+
+        <label>Instagram handle (sem @)</label>
+        <input type="text" id="infInstagram" placeholder="username"/>
+
+        <label>Nicho / Categoria</label>
+        <input type="text" id="infNiche" placeholder="Ex: Motos, lifestyle..."/>
+
+        <label>Status</label>
+        <select id="infStatus">
+          <option value="ativo">Ativo</option>
+          <option value="negociacao">Em negociação</option>
+          <option value="inativo">Inativo</option>
+        </select>
+
+        <div class="book-row">
+          <div>
+            <label>Seguidores (aprox.)</label>
+            <input type="number" id="infFollowers" min="0" placeholder="0"/>
+          </div>
+          <div>
+            <label>Taxa de engajamento (%)</label>
+            <input type="number" id="infEngagement" min="0" max="100" placeholder="0"/>
+          </div>
+        </div>
+
+        <label>WhatsApp</label>
+        <input type="text" id="infWhatsapp" placeholder="(47) 99999-9999"/>
+
+        <label>Notas</label>
+        <textarea style="width:100%;min-height:60px;padding:10px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:12px;font-family:inherit;resize:vertical" id="infNotes" placeholder="Informações adicionais..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="action-btn" onclick="closePerfAddInfluencerModal()">Cancelar</button>
+      <button class="action-btn approve" onclick="savePerfInfluencer()">Salvar influenciador</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Configurar Bonificação -->
+<div class="modal" id="perfBonusConfigModal">
+  <div class="modal-content" style="max-width:560px">
+    <div class="modal-head">
+      <h3>Configurar bonificação</h3>
+      <button class="modal-close" onclick="closePerfBonusConfigModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="book-form">
+        <label>Valor pool por goal atingido (R$) *</label>
+        <input type="text" id="bonusPoolValue" placeholder="500,00" oninput="maskCurrency(this)"/>
+
+        <h4 style="font-size:13px;font-weight:600;margin:16px 0 12px">Distribuição percentual</h4>
+
+        <div class="book-row">
+          <div>
+            <label>Gravador/Gestor (%)</label>
+            <input type="number" id="bonusDistGravador" min="0" max="100" placeholder="40"/>
+          </div>
+          <div>
+            <label>Editor (%)</label>
+            <input type="number" id="bonusDistEditor" min="0" max="100" placeholder="35"/>
+          </div>
+        </div>
+
+        <div class="block-field">
+          <label>Mecânico (%)</label>
+          <input type="number" id="bonusDistMecanico" min="0" max="100" placeholder="25" style="width:100%;padding:9px 10px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:12px;font-family:inherit;cursor:pointer"/>
+        </div>
+
+        <p style="font-size:11px;color:var(--text-muted);margin-top:12px;text-align:center">Total: <span id="bonusTotalPercentage">100</span>%</p>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="action-btn" onclick="closePerfBonusConfigModal()">Cancelar</button>
+      <button class="action-btn approve" onclick="savePerfBonusConfig()">Salvar configuração</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script>
@@ -1945,7 +2255,7 @@ document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['dashboard','requests','calendar','checkin','projects','editing','templates','export','users','profile'].forEach(v => {
+    ['dashboard','requests','calendar','checkin','projects','editing','performance','templates','export','users','profile'].forEach(v => {
       document.getElementById('view-' + v).style.display = 'none';
     });
     document.getElementById('view-' + btn.dataset.view).style.display = 'block';
@@ -3838,9 +4148,555 @@ function renderDashboard() {
   `;
 }
 
+/* ==========================================
+   PERFORMANCE MODULE
+   ========================================== */
+
+/* Tables to create in Supabase:
+-- performance_posts: id, title, type(longo/short), platforms(jsonb), views, likes, retention, clicks, rating, notes, month, created_at, created_by
+-- performance_goals: id, month, volume_long_target, volume_short_target, views_target, clicks_target, pool_per_goal, dist_gravador, dist_editor, dist_mecanico, created_at
+-- performance_influencers: id, name, instagram, niche, status, followers, engagement, notes, whatsapp, created_at
+-- performance_bonuses: id, month, goals_hit, total_pool, paid, paid_at, created_at
+*/
+
+let PERF_POSTS = [];
+let PERF_GOALS = {};
+let PERF_INFLUENCERS = [];
+let PERF_BONUSES = [];
+let PERF_CURRENT_TAB = 'metas';
+let PERF_POST_FILTER = 'todos';
+
+async function loadPerfPosts() {
+  const { data, error } = await sb.from('performance_posts').select('*').order('created_at', { ascending: false });
+  if (error) { console.warn('loadPerfPosts:', error.message); return; }
+  PERF_POSTS = data || [];
+}
+
+async function loadPerfGoals() {
+  const now = new Date();
+  const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const { data, error } = await sb.from('performance_goals').select('*').eq('month', monthStr).single();
+  if (error && error.code !== 'PGRST116') { console.warn('loadPerfGoals:', error.message); return; }
+  PERF_GOALS = data || { volume_long_target: 0, volume_short_target: 0, views_target: 0, clicks_target: 0, pool_per_goal: 500, dist_gravador: 40, dist_editor: 35, dist_mecanico: 25 };
+}
+
+async function loadPerfInfluencers() {
+  const { data, error } = await sb.from('performance_influencers').select('*').order('created_at', { ascending: false });
+  if (error) { console.warn('loadPerfInfluencers:', error.message); return; }
+  PERF_INFLUENCERS = data || [];
+}
+
+async function loadPerfBonuses() {
+  const { data, error } = await sb.from('performance_bonuses').select('*').order('created_at', { ascending: false });
+  if (error) { console.warn('loadPerfBonuses:', error.message); return; }
+  PERF_BONUSES = data || [];
+}
+
+function getPerfPostsThisMonth() {
+  const now = new Date();
+  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  return PERF_POSTS.filter(p => (p.month || '').startsWith(month));
+}
+
+function getPerfGoalsThisMonth() {
+  const now = new Date();
+  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  return PERF_GOALS?.month === month ? PERF_GOALS : null;
+}
+
+function setPerfTab(tab) {
+  PERF_CURRENT_TAB = tab;
+  document.querySelectorAll('[data-perf-tab]').forEach(b => {
+    b.classList.toggle('active', b.dataset.perfTab === tab);
+  });
+  document.querySelectorAll('[id^="perf-tab-"]').forEach(el => {
+    el.style.display = 'none';
+  });
+  document.getElementById('perf-tab-' + tab).style.display = 'block';
+}
+
+function setPerfPostFilter(filter) {
+  PERF_POST_FILTER = filter;
+  document.querySelectorAll('[data-post-filter]').forEach(b => {
+    b.classList.toggle('active', b.dataset.postFilter === filter);
+  });
+  renderPerfPosts();
+}
+
+function renderPerformance() {
+  renderPerfMetas();
+  renderPerfPosts();
+  renderPerfInfluencers();
+  renderPerfBonuses();
+}
+
+function renderPerfMetas() {
+  const posts = getPerfPostsThisMonth();
+  const goals = PERF_GOALS || {};
+
+  const longCount = posts.filter(p => p.type === 'longo').length;
+  const shortCount = posts.filter(p => p.type === 'short').length;
+  const totalViews = posts.reduce((s, p) => s + (p.views || 0), 0);
+  const totalClicks = posts.reduce((s, p) => s + (p.clicks || 0), 0);
+
+  const longTarget = goals.volume_long_target || 0;
+  const shortTarget = goals.volume_short_target || 0;
+  const viewsTarget = goals.views_target || 0;
+  const clicksTarget = goals.clicks_target || 0;
+
+  const longPct = longTarget > 0 ? Math.min(100, (longCount / longTarget) * 100) : 0;
+  const shortPct = shortTarget > 0 ? Math.min(100, (shortCount / shortTarget) * 100) : 0;
+  const viewsPct = viewsTarget > 0 ? Math.min(100, (totalViews / viewsTarget) * 100) : 0;
+  const clicksPct = clicksTarget > 0 ? Math.min(100, (totalClicks / clicksTarget) * 100) : 0;
+
+  const longProjection = longTarget > 0 ? Math.round((longCount / (new Date().getDate() / 30)) / longTarget * 100) : 0;
+  const shortProjection = shortTarget > 0 ? Math.round((shortCount / (new Date().getDate() / 30)) / shortTarget * 100) : 0;
+  const viewsProjection = viewsTarget > 0 ? Math.round((totalViews / (new Date().getDate() / 30)) / viewsTarget * 100) : 0;
+  const clicksProjection = clicksTarget > 0 ? Math.round((totalClicks / (new Date().getDate() / 30)) / clicksTarget * 100) : 0;
+
+  const renderCard = (label, current, target, projection, icon) => `
+    <div class="stat-card" style="border-left:3px solid var(--primary)">
+      <div class="label">${label}</div>
+      <div class="value">${current}<small>/${target}</small></div>
+      <div style="margin-top:10px;height:6px;background:var(--bg-elev);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${Math.min(100, ((current / target) * 100) || 0)}%;background:${current >= target ? 'var(--success)' : 'var(--primary)'}"></div>
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:6px">Projeção: ${projection}%</div>
+    </div>
+  `;
+
+  document.getElementById('perfMetasCards').innerHTML = `
+    ${renderCard('Volume de conteúdo (Longos)', longCount, longTarget, longProjection, '🎬')}
+    ${renderCard('Volume de conteúdo (Shorts)', shortCount, shortTarget, shortProjection, '📱')}
+    ${renderCard('Views totais', totalViews.toLocaleString('pt-BR'), (viewsTarget || 0).toLocaleString('pt-BR'), viewsProjection, '👁')}
+    ${renderCard('Cliques pro site', totalClicks, (clicksTarget || 0), clicksProjection, '🔗')}
+  `;
+
+  const goalsHit = (longCount >= longTarget && longTarget > 0 ? 1 : 0) + (shortCount >= shortTarget && shortTarget > 0 ? 1 : 0) + (totalViews >= viewsTarget && viewsTarget > 0 ? 1 : 0) + (totalClicks >= clicksTarget && clicksTarget > 0 ? 1 : 0);
+  const poolValue = (goals.pool_per_goal || 500);
+  const totalBonus = goalsHit * poolValue;
+
+  document.getElementById('perfPoolSummary').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Goals atingidas</div>
+        <div style="font-family:'Bebas Neue';font-size:28px;color:${goalsHit > 0 ? 'var(--success)' : 'var(--warning)'}">${goalsHit}/4</div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Bônus pool estimado</div>
+        <div style="font-family:'Bebas Neue';font-size:28px;color:var(--primary)">R$ ${formatBRL(totalBonus)}</div>
+      </div>
+    </div>
+    <div style="padding-top:12px;font-size:12px;color:var(--text-dim)">
+      <p style="margin-bottom:8px"><strong>Distribução do pool:</strong></p>
+      <p style="margin:4px 0">🎬 Gravador/Gestor (${goals.dist_gravador || 40}%): R$ ${formatBRL(totalBonus * ((goals.dist_gravador || 40) / 100))}</p>
+      <p style="margin:4px 0">✂️ Editor (${goals.dist_editor || 35}%): R$ ${formatBRL(totalBonus * ((goals.dist_editor || 35) / 100))}</p>
+      <p style="margin:4px 0">🔧 Mecânico (${goals.dist_mecanico || 25}%): R$ ${formatBRL(totalBonus * ((goals.dist_mecanico || 25) / 100))}</p>
+    </div>
+  `;
+}
+
+function renderPerfPosts() {
+  const el = document.getElementById('perfPostsList');
+  if (!el) return;
+
+  let posts = getPerfPostsThisMonth();
+
+  if (PERF_POST_FILTER !== 'todos') {
+    if (PERF_POST_FILTER === 'longo') posts = posts.filter(p => p.type === 'longo');
+    else if (PERF_POST_FILTER === 'short') posts = posts.filter(p => p.type === 'short');
+    else {
+      posts = posts.filter(p => {
+        const plats = p.platforms || [];
+        return plats.includes(PERF_POST_FILTER);
+      });
+    }
+  }
+
+  if (posts.length === 0) {
+    el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum post neste período.</p></div>';
+    return;
+  }
+
+  el.innerHTML = posts.map(p => {
+    const plats = (p.platforms || []).map(pl => {
+      const names = { yt: 'YouTube', yts: 'YT Shorts', ig: 'Instagram', tt: 'TikTok' };
+      return `<span class="proj-dest-tag">${names[pl] || pl}</span>`;
+    }).join('');
+
+    const stars = Array.from({ length: 5 }, (_, i) => `
+      <span style="cursor:pointer;font-size:20px;color:${(i + 1) <= (p.rating || 0) ? 'var(--accent)' : 'var(--border)'}" onclick="updatePostRating('${p.id}', ${i + 1})">★</span>
+    `).join('');
+
+    return `
+      <div class="proj-card">
+        <div class="proj-card-head">
+          <div>
+            <h4>${escHtml(p.title)}</h4>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${p.type === 'longo' ? '📹 Vídeo longo' : '📱 Short'}</div>
+          </div>
+          <button class="action-btn reject" style="padding:4px 10px;font-size:11px" onclick="deletePerfPost('${p.id}')">Remover</button>
+        </div>
+        <div style="margin-bottom:12px">${plats}</div>
+        <div class="proj-meta">
+          <div class="proj-meta-item"><div class="k">Views</div><div class="v">${(p.views || 0).toLocaleString('pt-BR')}</div></div>
+          <div class="proj-meta-item"><div class="k">Likes</div><div class="v">${(p.likes || 0).toLocaleString('pt-BR')}</div></div>
+          <div class="proj-meta-item"><div class="k">Retenção</div><div class="v">${(p.retention || 0)}%</div></div>
+          <div class="proj-meta-item"><div class="k">Cliques</div><div class="v">${(p.clicks || 0)}</div></div>
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Avaliação</div>
+          <div style="display:flex;gap:4px">${stars}</div>
+        </div>
+        ${p.notes ? `<div style="margin-top:10px;padding:10px;background:var(--bg-elev);border-radius:8px;font-size:12px;color:var(--text-dim)">${escHtml(p.notes)}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderPerfInfluencers() {
+  const el = document.getElementById('perfInfluencersList');
+  if (!el) return;
+
+  if (PERF_INFLUENCERS.length === 0) {
+    el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum influenciador cadastrado.</p></div>';
+    return;
+  }
+
+  el.innerHTML = PERF_INFLUENCERS.map(inf => {
+    const statusLabel = { ativo: 'Ativo', negociacao: 'Em negociação', inativo: 'Inativo' }[inf.status] || inf.status;
+    const statusColor = { ativo: 'var(--success)', negociacao: 'var(--warning)', inativo: 'var(--danger)' }[inf.status] || 'var(--text-dim)';
+
+    return `
+      <div class="proj-card">
+        <div class="proj-card-head">
+          <div>
+            <h4>${escHtml(inf.name)}</h4>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">@${escHtml(inf.instagram)}</div>
+          </div>
+          <button class="action-btn reject" style="padding:4px 10px;font-size:11px" onclick="deletePerfInfluencer('${inf.id}')">Remover</button>
+        </div>
+        <div class="proj-meta">
+          <div class="proj-meta-item"><div class="k">Status</div><div class="v"><span style="color:${statusColor};font-weight:600">${statusLabel}</span></div></div>
+          <div class="proj-meta-item"><div class="k">Seguidores</div><div class="v">${(inf.followers || 0).toLocaleString('pt-BR')}</div></div>
+          <div class="proj-meta-item"><div class="k">Engajamento</div><div class="v">${(inf.engagement || 0)}%</div></div>
+          <div class="proj-meta-item"><div class="k">Nicho</div><div class="v">${escHtml(inf.niche || '—')}</div></div>
+        </div>
+        ${inf.notes ? `<div style="margin-top:10px;padding:10px;background:var(--bg-elev);border-radius:8px;font-size:12px;color:var(--text-dim)">${escHtml(inf.notes)}</div>` : ''}
+        ${inf.whatsapp ? `<a href="https://wa.me/${inf.whatsapp.replace(/\D/g, '')}?text=Olá%20${encodeURIComponent(inf.name)}" target="_blank" class="action-btn whats" style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:8px 12px;font-size:12px"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> Contatar</a>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderPerfBonuses() {
+  const goals = PERF_GOALS || {};
+  const rulesEl = document.getElementById('perfBonusRules');
+  if (rulesEl) {
+    rulesEl.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0">
+        <div style="padding:12px;background:var(--bg-elev);border-radius:8px">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">Pool por goal</div>
+          <div style="font-family:'Bebas Neue';font-size:24px;color:var(--primary)">R$ ${formatBRL(goals.pool_per_goal || 500)}</div>
+        </div>
+        <div style="padding:12px;background:var(--bg-elev);border-radius:8px">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">Goals totais</div>
+          <div style="font-family:'Bebas Neue';font-size:24px;color:var(--text)">4</div>
+        </div>
+      </div>
+      <div style="padding:12px;background:var(--bg-elev);border-radius:8px;margin:12px 0">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">Distribuição</div>
+        <p style="font-size:12px;color:var(--text-dim);margin:4px 0">🎬 Gravador/Gestor: ${goals.dist_gravador || 40}%</p>
+        <p style="font-size:12px;color:var(--text-dim);margin:4px 0">✂️ Editor: ${goals.dist_editor || 35}%</p>
+        <p style="font-size:12px;color:var(--text-dim);margin:4px 0">🔧 Mecânico: ${goals.dist_mecanico || 25}%</p>
+      </div>
+    `;
+  }
+
+  const posts = getPerfPostsThisMonth();
+  const longCount = posts.filter(p => p.type === 'longo').length;
+  const shortCount = posts.filter(p => p.type === 'short').length;
+  const totalViews = posts.reduce((s, p) => s + (p.views || 0), 0);
+  const totalClicks = posts.reduce((s, p) => s + (p.clicks || 0), 0);
+
+  const longTarget = goals.volume_long_target || 0;
+  const shortTarget = goals.volume_short_target || 0;
+  const viewsTarget = goals.views_target || 0;
+  const clicksTarget = goals.clicks_target || 0;
+
+  const goalsHit = (longCount >= longTarget && longTarget > 0 ? 1 : 0) + (shortCount >= shortTarget && shortTarget > 0 ? 1 : 0) + (totalViews >= viewsTarget && viewsTarget > 0 ? 1 : 0) + (totalClicks >= clicksTarget && clicksTarget > 0 ? 1 : 0);
+  const poolValue = (goals.pool_per_goal || 500);
+  const totalBonus = goalsHit * poolValue;
+
+  const projEl = document.getElementById('perfBonusProjection');
+  if (projEl) {
+    projEl.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
+        <div style="text-align:center">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Goals atingidas</div>
+          <div style="font-family:'Bebas Neue';font-size:32px;color:${goalsHit > 0 ? 'var(--success)' : 'var(--warning)'};margin:6px 0">${goalsHit}</div>
+          <div style="font-size:10px;color:var(--text-muted)">de 4</div>
+        </div>
+        <div style="text-align:center;border-left:1px solid var(--border);border-right:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Pool total</div>
+          <div style="font-family:'Bebas Neue';font-size:32px;color:var(--primary);margin:6px 0">R$ ${formatBRL(totalBonus)}</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Status</div>
+          <div style="margin-top:6px">
+            <span class="badge ${goalsHit > 0 ? 'approved' : 'pending'}">${goalsHit > 0 ? 'Em progresso' : 'Aguardando'}</span>
+          </div>
+        </div>
+      </div>
+      <div style="padding-top:12px">
+        <p style="font-size:12px;color:var(--text-dim);margin-bottom:8px"><strong>Distribuição estimada:</strong></p>
+        <p style="font-size:12px;color:var(--text-dim);margin:4px 0">🎬 Gravador/Gestor: R$ ${formatBRL(totalBonus * ((goals.dist_gravador || 40) / 100))}</p>
+        <p style="font-size:12px;color:var(--text-dim);margin:4px 0">✂️ Editor: R$ ${formatBRL(totalBonus * ((goals.dist_editor || 35) / 100))}</p>
+        <p style="font-size:12px;color:var(--text-dim);margin:4px 0">🔧 Mecânico: R$ ${formatBRL(totalBonus * ((goals.dist_mecanico || 25) / 100))}</p>
+      </div>
+    `;
+  }
+
+  const histEl = document.getElementById('perfBonusHistory');
+  if (histEl) {
+    if (PERF_BONUSES.length === 0) {
+      histEl.innerHTML = '<p style="color:var(--text-muted);font-size:12px;text-align:center;padding:16px 0">Nenhum registro de pagamento ainda.</p>';
+    } else {
+      histEl.innerHTML = `<table style="width:100%;font-size:12px;border-collapse:collapse">
+        <thead style="border-bottom:1px solid var(--border)">
+          <tr style="color:var(--text-dim);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">
+            <th style="text-align:left;padding:8px 0">Mês</th>
+            <th style="text-align:right;padding:8px 0">Goals</th>
+            <th style="text-align:right;padding:8px 0">Total</th>
+            <th style="text-align:center;padding:8px 0">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${PERF_BONUSES.map(b => {
+            const paidDate = b.paid_at ? prettyDT(b.paid_at) : '—';
+            return `<tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:10px 0;color:var(--text)">${b.month}</td>
+              <td style="padding:10px 0;text-align:right;color:var(--text)">${b.goals_hit}/4</td>
+              <td style="padding:10px 0;text-align:right;color:var(--primary);font-weight:600">R$ ${formatBRL(b.total_pool || 0)}</td>
+              <td style="padding:10px 0;text-align:center">
+                ${b.paid ? `<span class="badge approved">Pago</span>` : `<button class="action-btn approve" style="padding:3px 10px;font-size:10px;cursor:pointer" onclick="markBonusPaid('${b.id}')">Marcar como pago</button>`}
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+    }
+  }
+}
+
+/* Modal functions */
+function openPerfGoalsModal() {
+  const goals = PERF_GOALS || {};
+  const now = new Date();
+  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+  document.getElementById('goalLongTarget').value = goals.volume_long_target || '';
+  document.getElementById('goalShortTarget').value = goals.volume_short_target || '';
+  document.getElementById('goalViewsTarget').value = goals.views_target || '';
+  document.getElementById('goalClicksTarget').value = goals.clicks_target || '';
+  document.getElementById('goalPoolValue').value = formatBRL(goals.pool_per_goal || 500);
+  document.getElementById('goalMonth').value = month;
+  document.getElementById('distGravador').value = goals.dist_gravador || 40;
+  document.getElementById('distEditor').value = goals.dist_editor || 35;
+  document.getElementById('distMecanico').value = goals.dist_mecanico || 25;
+
+  document.getElementById('perfGoalsModal').classList.add('show');
+}
+function closePerfGoalsModal() { document.getElementById('perfGoalsModal').classList.remove('show'); }
+
+function openAddPostModal() {
+  document.getElementById('postTitle').value = '';
+  document.getElementById('postViews').value = '';
+  document.getElementById('postLikes').value = '';
+  document.getElementById('postRetention').value = '';
+  document.getElementById('postClicks').value = '';
+  document.getElementById('postRating').value = 5;
+  document.getElementById('postNotes').value = '';
+  document.querySelectorAll('.postPlatform').forEach(cb => cb.checked = false);
+  document.querySelector('input[name="postType"][value="longo"]').checked = true;
+  document.getElementById('perfAddPostModal').classList.add('show');
+}
+function closePerfAddPostModal() { document.getElementById('perfAddPostModal').classList.remove('show'); }
+
+function openAddInfluencerModal() {
+  document.getElementById('infName').value = '';
+  document.getElementById('infInstagram').value = '';
+  document.getElementById('infNiche').value = '';
+  document.getElementById('infStatus').value = 'ativo';
+  document.getElementById('infFollowers').value = '';
+  document.getElementById('infEngagement').value = '';
+  document.getElementById('infWhatsapp').value = '';
+  document.getElementById('infNotes').value = '';
+  document.getElementById('perfAddInfluencerModal').classList.add('show');
+}
+function closePerfAddInfluencerModal() { document.getElementById('perfAddInfluencerModal').classList.remove('show'); }
+
+function openBonusConfigModal() {
+  const goals = PERF_GOALS || {};
+  document.getElementById('bonusPoolValue').value = formatBRL(goals.pool_per_goal || 500);
+  document.getElementById('bonusDistGravador').value = goals.dist_gravador || 40;
+  document.getElementById('bonusDistEditor').value = goals.dist_editor || 35;
+  document.getElementById('bonusDistMecanico').value = goals.dist_mecanico || 25;
+  document.getElementById('perfBonusConfigModal').classList.add('show');
+}
+function closePerfBonusConfigModal() { document.getElementById('perfBonusConfigModal').classList.remove('show'); }
+
+/* Save functions */
+async function savePerfGoals() {
+  const month = document.getElementById('goalMonth').value;
+  const payload = {
+    month,
+    volume_long_target: parseInt(document.getElementById('goalLongTarget').value) || 0,
+    volume_short_target: parseInt(document.getElementById('goalShortTarget').value) || 0,
+    views_target: parseInt(document.getElementById('goalViewsTarget').value) || 0,
+    clicks_target: parseInt(document.getElementById('goalClicksTarget').value) || 0,
+    pool_per_goal: parseCurrency(document.getElementById('goalPoolValue').value),
+    dist_gravador: parseInt(document.getElementById('distGravador').value) || 40,
+    dist_editor: parseInt(document.getElementById('distEditor').value) || 35,
+    dist_mecanico: parseInt(document.getElementById('distMecanico').value) || 25
+  };
+
+  let result;
+  if (PERF_GOALS?.id) {
+    result = await sb.from('performance_goals').update(payload).eq('id', PERF_GOALS.id);
+  } else {
+    result = await sb.from('performance_goals').insert([payload]).select().single();
+  }
+
+  if (result.error) { alert('Erro ao salvar: ' + result.error.message); return; }
+  if (result.data) PERF_GOALS = result.data;
+  else Object.assign(PERF_GOALS, payload);
+
+  closePerfGoalsModal();
+  renderPerformance();
+  alert('Metas salvas!');
+}
+
+async function savePerfPost() {
+  const title = document.getElementById('postTitle').value.trim();
+  if (!title) { alert('Informe o título do post.'); return; }
+
+  const platforms = Array.from(document.querySelectorAll('.postPlatform:checked')).map(cb => cb.value);
+  if (platforms.length === 0) { alert('Selecione pelo menos uma plataforma.'); return; }
+
+  const now = new Date();
+  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+  const payload = {
+    title,
+    type: document.querySelector('input[name="postType"]:checked').value,
+    platforms,
+    views: parseInt(document.getElementById('postViews').value) || 0,
+    likes: parseInt(document.getElementById('postLikes').value) || 0,
+    retention: parseInt(document.getElementById('postRetention').value) || 0,
+    clicks: parseInt(document.getElementById('postClicks').value) || 0,
+    rating: parseInt(document.getElementById('postRating').value) || 5,
+    notes: document.getElementById('postNotes').value.trim(),
+    month,
+    created_by: CURRENT_USER?.id || null
+  };
+
+  const { error, data } = await sb.from('performance_posts').insert([payload]).select().single();
+  if (error) { alert('Erro ao salvar: ' + error.message); return; }
+
+  PERF_POSTS.unshift(data);
+  closePerfAddPostModal();
+  renderPerformance();
+  alert('Post adicionado!');
+}
+
+async function savePerfInfluencer() {
+  const name = document.getElementById('infName').value.trim();
+  if (!name) { alert('Informe o nome do influenciador.'); return; }
+
+  const payload = {
+    name,
+    instagram: document.getElementById('infInstagram').value.trim(),
+    niche: document.getElementById('infNiche').value.trim(),
+    status: document.getElementById('infStatus').value,
+    followers: parseInt(document.getElementById('infFollowers').value) || 0,
+    engagement: parseFloat(document.getElementById('infEngagement').value) || 0,
+    whatsapp: document.getElementById('infWhatsapp').value.trim(),
+    notes: document.getElementById('infNotes').value.trim()
+  };
+
+  const { error, data } = await sb.from('performance_influencers').insert([payload]).select().single();
+  if (error) { alert('Erro ao salvar: ' + error.message); return; }
+
+  PERF_INFLUENCERS.unshift(data);
+  closePerfAddInfluencerModal();
+  renderPerformance();
+  alert('Influenciador adicionado!');
+}
+
+async function savePerfBonusConfig() {
+  const payload = {
+    pool_per_goal: parseCurrency(document.getElementById('bonusPoolValue').value),
+    dist_gravador: parseInt(document.getElementById('bonusDistGravador').value) || 40,
+    dist_editor: parseInt(document.getElementById('bonusDistEditor').value) || 35,
+    dist_mecanico: parseInt(document.getElementById('bonusDistMecanico').value) || 25
+  };
+
+  let result;
+  if (PERF_GOALS?.id) {
+    result = await sb.from('performance_goals').update(payload).eq('id', PERF_GOALS.id);
+  } else {
+    const now = new Date();
+    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    result = await sb.from('performance_goals').insert([{ ...payload, month }]).select().single();
+  }
+
+  if (result.error) { alert('Erro ao salvar: ' + result.error.message); return; }
+  if (result.data) PERF_GOALS = result.data;
+  else Object.assign(PERF_GOALS, payload);
+
+  closePerfBonusConfigModal();
+  renderPerformance();
+  alert('Configuração salva!');
+}
+
+async function updatePostRating(id, rating) {
+  const { error } = await sb.from('performance_posts').update({ rating }).eq('id', id);
+  if (error) { alert('Erro: ' + error.message); return; }
+  const p = PERF_POSTS.find(x => x.id === id);
+  if (p) p.rating = rating;
+  renderPerformance();
+}
+
+async function deletePerfPost(id) {
+  if (!confirm('Remover este post?')) return;
+  const { error } = await sb.from('performance_posts').delete().eq('id', id);
+  if (error) { alert('Erro: ' + error.message); return; }
+  PERF_POSTS = PERF_POSTS.filter(p => p.id !== id);
+  renderPerformance();
+}
+
+async function deletePerfInfluencer(id) {
+  if (!confirm('Remover este influenciador?')) return;
+  const { error } = await sb.from('performance_influencers').delete().eq('id', id);
+  if (error) { alert('Erro: ' + error.message); return; }
+  PERF_INFLUENCERS = PERF_INFLUENCERS.filter(i => i.id !== id);
+  renderPerformance();
+}
+
+async function markBonusPaid(id) {
+  const now = new Date().toISOString();
+  const { error } = await sb.from('performance_bonuses').update({ paid: true, paid_at: now }).eq('id', id);
+  if (error) { alert('Erro: ' + error.message); return; }
+  const b = PERF_BONUSES.find(x => x.id === id);
+  if (b) { b.paid = true; b.paid_at = now; }
+  renderPerformance();
+  alert('Marcado como pago!');
+}
+
 /* INIT */
 async function initApp() {
-  await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects()]);
+  await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects(), loadPerfPosts(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses()]);
   renderDashboard();
   renderRequests();
   renderCalendar();
@@ -3848,6 +4704,7 @@ async function initApp() {
   renderCiView();
   renderProjects();
   renderEditingView();
+  renderPerformance();
   loadProfile();
 }
 
