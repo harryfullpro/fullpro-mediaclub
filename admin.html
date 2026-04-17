@@ -691,6 +691,13 @@
   }
   .proj-dest-chip input { display: none; }
   .proj-dest-chip:has(input:checked) { background: rgba(255,45,45,.15); border-color: var(--primary); color: var(--text); }
+  .proj-dest-chip:has(input[value="youtube"]:checked),
+  .proj-dest-chip:has(input[value="shorts"]:checked) { background: rgba(255,0,0,.15); border-color: rgba(255,0,0,.5); color: #ff4444; }
+  .proj-dest-chip:has(input[value="tiktok"]:checked) { background: rgba(168,85,247,.15); border-color: rgba(168,85,247,.5); color: #a855f7; }
+  .proj-dest-chip:has(input[value="reels"]:checked) { background: rgba(225,48,108,.15); border-color: rgba(225,48,108,.5); color: #e1306c; }
+  .proj-dest-chip:has(input[value="clips"]:checked) { background: rgba(250,204,21,.15); border-color: rgba(250,204,21,.5); color: #facc15; }
+  .proj-dest-chip:has(input[value="site"]:checked) { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.3); color: #e0e0e0; }
+  .proj-dest-chip:has(input[value="ads"]:checked) { background: rgba(59,130,246,.15); border-color: rgba(59,130,246,.5); color: #3b82f6; }
   .proj-card {
     background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
     padding: 18px; margin-bottom: 12px; transition: border-color .15s;
@@ -704,9 +711,12 @@
     background: var(--bg-elev); color: var(--text-dim); border: 1px solid var(--border);
   }
   .proj-dest-tag.youtube { background: rgba(255,0,0,.15); color: #ff4444; border-color: rgba(255,0,0,.3); }
-  .proj-dest-tag.tiktok { background: rgba(0,242,234,.12); color: #00f2ea; border-color: rgba(0,242,234,.3); }
-  .proj-dest-tag.instagram { background: rgba(225,48,108,.15); color: #e1306c; border-color: rgba(225,48,108,.3); }
-  .proj-dest-tag.tutorial { background: rgba(31,210,122,.15); color: var(--success); border-color: rgba(31,210,122,.3); }
+  .proj-dest-tag.shorts { background: rgba(255,0,0,.15); color: #ff4444; border-color: rgba(255,0,0,.3); }
+  .proj-dest-tag.tiktok { background: rgba(168,85,247,.15); color: #a855f7; border-color: rgba(168,85,247,.3); }
+  .proj-dest-tag.reels { background: rgba(225,48,108,.15); color: #e1306c; border-color: rgba(225,48,108,.3); }
+  .proj-dest-tag.clips { background: rgba(250,204,21,.15); color: #facc15; border-color: rgba(250,204,21,.3); }
+  .proj-dest-tag.site { background: rgba(255,255,255,.1); color: #e0e0e0; border-color: rgba(255,255,255,.2); }
+  .proj-dest-tag.ads { background: rgba(59,130,246,.15); color: #3b82f6; border-color: rgba(59,130,246,.3); }
   .proj-link-item {
     display: flex; align-items: center; gap: 6px; padding: 6px 10px;
     background: var(--bg-elev); border-radius: 8px; font-size: 12px; word-break: break-all;
@@ -3448,7 +3458,7 @@ function renderProjects() {
   const filtered = getFilteredProjects();
   const statusMap = { planejamento: 'Planejamento', producao: 'Em produção', edicao: 'Edição', a_publicar: 'A publicar', concluido: 'Concluído' };
   const statusBadge = { planejamento: 'pending', producao: 'approved', edicao: 'pending', concluido: 'approved' };
-  const destNames = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram', tutorial: 'Tutorial' };
+  const destNames = { youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads' };
 
   if (filtered.length === 0) {
     el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum projeto encontrado com este filtro.</p></div>';
@@ -3731,9 +3741,12 @@ async function saveProject() {
 
   const destinations = [];
   if (document.getElementById('projDestYT').checked) destinations.push('youtube');
+  if (document.getElementById('projDestShorts').checked) destinations.push('shorts');
   if (document.getElementById('projDestTK').checked) destinations.push('tiktok');
-  if (document.getElementById('projDestIG').checked) destinations.push('instagram');
-  if (document.getElementById('projDestTut').checked) destinations.push('tutorial');
+  if (document.getElementById('projDestReels').checked) destinations.push('reels');
+  if (document.getElementById('projDestClips').checked) destinations.push('clips');
+  if (document.getElementById('projDestSite').checked) destinations.push('site');
+  if (document.getElementById('projDestAds').checked) destinations.push('ads');
 
   const payload = {
     title,
@@ -3922,9 +3935,12 @@ function renderProjTabProducao(p) {
         <label>Destino do conteúdo</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
           <label class="proj-dest-chip"><input type="checkbox" id="projDestYT" value="youtube"/> <span>YouTube</span></label>
+          <label class="proj-dest-chip"><input type="checkbox" id="projDestShorts" value="shorts"/> <span>Shorts</span></label>
           <label class="proj-dest-chip"><input type="checkbox" id="projDestTK" value="tiktok"/> <span>TikTok</span></label>
-          <label class="proj-dest-chip"><input type="checkbox" id="projDestIG" value="instagram"/> <span>Instagram</span></label>
-          <label class="proj-dest-chip"><input type="checkbox" id="projDestTut" value="tutorial"/> <span>Tutorial interno</span></label>
+          <label class="proj-dest-chip"><input type="checkbox" id="projDestReels" value="reels"/> <span>Reels</span></label>
+          <label class="proj-dest-chip"><input type="checkbox" id="projDestClips" value="clips"/> <span>Clips</span></label>
+          <label class="proj-dest-chip"><input type="checkbox" id="projDestSite" value="site"/> <span>Site</span></label>
+          <label class="proj-dest-chip"><input type="checkbox" id="projDestAds" value="ads"/> <span>Ads</span></label>
         </div>
       </div>
       <div class="block-field" style="grid-column:1/-1">
@@ -4020,7 +4036,7 @@ function renderProjTabProducao(p) {
       if (fn) fn.textContent = p.script_file.name;
     }
     (p.destinations || []).forEach(d => {
-      const map = { youtube: 'projDestYT', tiktok: 'projDestTK', instagram: 'projDestIG', tutorial: 'projDestTut' };
+      const map = { youtube: 'projDestYT', shorts: 'projDestShorts', tiktok: 'projDestTK', reels: 'projDestReels', clips: 'projDestClips', site: 'projDestSite', ads: 'projDestAds' };
       const cb = document.getElementById(map[d]);
       if (cb) cb.checked = true;
     });
@@ -4072,7 +4088,7 @@ function renderProjTabAvaliacao(p) {
   // Clips section
   if (dests.length) {
     html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-top:8px">CLIPS</div>';
-    const destNames = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram', tutorial: 'Tutorial' };
+    const destNames = { youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads' };
     const clipEvals = evaluation.clips || {};
     dests.forEach(d => {
       const tempClip = (tempEvalRatings.clips && tempEvalRatings.clips[d]) || clipEvals[d] || {};
@@ -5136,7 +5152,7 @@ function renderEditingView() {
   }
 
   const statusMap = { edicao: 'Edição', a_publicar: 'A publicar', concluido: 'Concluído' };
-  const destNames = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram', tutorial: 'Tutorial' };
+  const destNames = { youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads' };
 
   el.innerHTML = editProjects.map(p => {
     const dests = (p.destinations || []).map(d => `<span class="proj-dest-tag ${d}">${destNames[d] || d}</span>`).join('');
@@ -5400,7 +5416,7 @@ function renderDashboard() {
       ${recentProjects.length ? `<div style="display:flex;flex-direction:column;gap:1px">
         ${recentProjects.map(p => {
           const costs = (p.costs || []).reduce((s, c) => s + (c.value || 0), 0);
-          const destNames = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram', tutorial: 'Tutorial' };
+          const destNames = { youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads' };
           const dests = (p.destinations || []).map(d => `<span class="proj-dest-tag ${d}" style="font-size:9px;padding:2px 6px">${destNames[d] || d}</span>`).join('');
           return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openProjectDetail('${p.id}')">
             <div style="flex:1;min-width:0">
