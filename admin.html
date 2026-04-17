@@ -4327,7 +4327,7 @@ async function savePostSingle(dest) {
       p.posts[dest].comments = stats.comments;
     }
   } else if (igShortcode) {
-    const stats = await fetchIGStats(igShortcode);
+    const stats = await fetchIGStats(igShortcode, link);
     if (stats) {
       p.posts[dest].views = stats.views;
       p.posts[dest].likes = stats.likes;
@@ -4408,7 +4408,7 @@ async function resolveIGPageToken() {
   } catch(e) { console.warn('IG resolvePageToken error:', e); return false; }
 }
 
-async function fetchIGStats(shortcode) {
+async function fetchIGStats(shortcode, igUrl) {
   const userToken = window.FULLPRO_CONFIG?.IG_ACCESS_TOKEN;
   if (!userToken) return null;
 
@@ -4425,23 +4425,31 @@ async function fetchIGStats(shortcode) {
       const res = await fetch(`https://graph.facebook.com/v21.0/${igPageIgId}/media?fields=id,shortcode,permalink,like_count,comments_count&limit=50&access_token=${igPageToken}`);
       const json = await res.json();
       if (json.error) { console.warn('IG API error:', json.error.message); return null; }
-      igMediaCache = json.data || [];
+      igMediaCache = (json.data || []).map(m => ({ ...m, _own: true }));
       igMediaCacheTime = now;
     }
 
     // Find the media by shortcode
-    const media = igMediaCache.find(m => m.shortcode === shortcode || (m.permalink && m.permalink.includes(shortcode)));
+    let media = igMediaCache.find(m => m.shortcode === shortcode || (m.permalink && m.permalink.includes(shortcode)));
+
+    // Fallback: if not found (collab post from another account), try business_discovery
+    if (!media && igUrl) {
+      media = await fetchIGViaDiscovery(shortcode, igUrl);
+    }
+
     if (!media) return null;
 
-    // Try to get insights (impressions/reach) for business accounts
+    // Try to get insights (impressions/reach) for own media only
     let views = 0;
-    try {
-      const insRes = await fetch(`https://graph.facebook.com/v21.0/${media.id}/insights?metric=impressions&access_token=${igPageToken}`);
-      const insJson = await insRes.json();
-      if (insJson.data && insJson.data[0]) {
-        views = insJson.data[0].values?.[0]?.value || 0;
-      }
-    } catch(e) { /* impressions may not be available for all media types */ }
+    if (media._own) {
+      try {
+        const insRes = await fetch(`https://graph.facebook.com/v21.0/${media.id}/insights?metric=impressions&access_token=${igPageToken}`);
+        const insJson = await insRes.json();
+        if (insJson.data && insJson.data[0]) {
+          views = insJson.data[0].values?.[0]?.value || 0;
+        }
+      } catch(e) { /* impressions may not be available for all media types */ }
+    }
 
     return {
       views: views,
@@ -4452,14 +4460,55 @@ async function fetchIGStats(shortcode) {
   return null;
 }
 
+/* Fetch IG stats for collab/external posts via Business Discovery API */
+async function fetchIGViaDiscovery(shortcode, igUrl) {
+  try {
+    // Try to get the username from the IG post page via a proxy-free approach:
+    // Use IG's public ?__a=1 or just brute-force known collaborator usernames
+    // The most reliable: ask the Graph API to search by shortcode across business_discovery
+    // We need a username — try extracting from stored project data or common collaborators
+
+    // Strategy: fetch the page's own recently_tagged media
+    const tagRes = await fetch(`https://graph.facebook.com/v21.0/${igPageIgId}/recently_tagged_media?fields=id,shortcode,permalink,like_count,comments_count&limit=50&access_token=${igPageToken}`);
+    const tagJson = await tagRes.json();
+    if (tagJson.data) {
+      const found = tagJson.data.find(m => m.shortcode === shortcode || (m.permalink && m.permalink.includes(shortcode)));
+      if (found) return found;
+    }
+  } catch(e) { console.warn('IG tagged_media fallback error:', e); }
+
+  try {
+    // Strategy 2: try /stories and /live_media endpoints (less likely but worth a shot)
+    // Strategy 3: use the mentioned_media endpoint
+    const mentRes = await fetch(`https://graph.facebook.com/v21.0/${igPageIgId}/mentioned_media?fields=id,shortcode,permalink,like_count,comments_count&limit=50&access_token=${igPageToken}`);
+    const mentJson = await mentRes.json();
+    if (mentJson.data) {
+      const found = mentJson.data.find(m => m.shortcode === shortcode || (m.permalink && m.permalink.includes(shortcode)));
+      if (found) return found;
+    }
+  } catch(e) { /* silently fail */ }
+
+  return null;
+}
+
 async function refreshIGStats(dest, shortcode) {
   const btn = document.getElementById('igRefresh_' + dest);
   if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
 
-  const stats = await fetchIGStats(shortcode);
-  if (!stats) { alert('Não foi possível atualizar. Configure IG_ACCESS_TOKEN e IG_USER_ID no config.js'); if (btn) { btn.disabled = false; btn.style.opacity = '1'; } return; }
-
   const p = PROJECTS.find(x => x.id === projDetailId);
+  const igUrl = p?.posts?.[dest]?.link || '';
+  const stats = await fetchIGStats(shortcode, igUrl);
+  if (!stats) {
+    const hasToken = !!window.FULLPRO_CONFIG?.IG_ACCESS_TOKEN;
+    if (!hasToken) {
+      alert('Configure IG_ACCESS_TOKEN no config.js');
+    } else {
+      alert('Post não encontrado na conta IG da FullPro.\nSe for um post de colaboração (collab), os dados precisam ser preenchidos manualmente.');
+    }
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    return;
+  }
+
   if (!p || !p.posts?.[dest]) return;
 
   p.posts[dest].views = stats.views;
@@ -4502,7 +4551,7 @@ async function autoRefreshEngagement() {
     if (ytId && apiKey) {
       stats = await fetchYTStats(ytId);
     } else if (igShortcode) {
-      stats = await fetchIGStats(igShortcode);
+      stats = await fetchIGStats(igShortcode, post.link);
     }
     // Future: add TikTok API fetching here
 
