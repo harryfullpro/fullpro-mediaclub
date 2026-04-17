@@ -11,5 +11,5 @@ window.FULLPRO_CONFIG = {
   /* YouTube Data API v3 key (free, até 10k req/dia)
    * Crie em: https://console.cloud.google.com → APIs → YouTube Data API v3
    * Deixe vazio para preencher engajamento manualmente. */
-  YOUTUBE_API_KEY:   ''
+  YOUTUBE_API_KEY:   'AIzaSyD_s4_RmQU1wYxAW28JEom3xkyzkQB3LuA'
 };
