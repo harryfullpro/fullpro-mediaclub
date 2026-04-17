@@ -874,10 +874,10 @@
     color: var(--text); text-transform: uppercase; letter-spacing: .5px; transition: all .15s;
   }
   .proj-status-select:focus { outline: none; border-color: var(--primary); }
-  .proj-status-select.planejamento { background-color: rgba(255,170,51,.12); border-color: rgba(255,170,51,.4); color: var(--warning); }
-  .proj-status-select.producao { background-color: rgba(59,130,246,.12); border-color: rgba(59,130,246,.4); color: #3b82f6; }
+  .proj-status-select.planejamento { background-color: rgba(59,130,246,.12); border-color: rgba(59,130,246,.4); color: #3b82f6; }
+  .proj-status-select.producao { background-color: rgba(245,158,11,.12); border-color: rgba(245,158,11,.4); color: #f59e0b; }
   .proj-status-select.edicao { background-color: rgba(168,85,247,.12); border-color: rgba(168,85,247,.4); color: #a855f7; }
-  .proj-status-select.a_publicar { background-color: rgba(245,158,11,.12); border-color: rgba(245,158,11,.4); color: #f59e0b; }
+  .proj-status-select.a_publicar { background-color: rgba(236,72,153,.12); border-color: rgba(236,72,153,.4); color: #ec4899; }
   .proj-status-select.concluido { background-color: rgba(31,210,122,.12); border-color: rgba(31,210,122,.4); color: var(--success); }
 
   /* Project detail view */
@@ -1055,22 +1055,22 @@
   [data-theme="light"] .proj-filter-chip[data-pfilter="todos"] { border-color: rgba(0,0,0,.15); color: rgba(0,0,0,.35); }
   [data-theme="light"] .proj-filter-chip[data-pfilter="todos"]:hover { background: rgba(0,0,0,.03); }
   [data-theme="light"] .proj-filter-chip[data-pfilter="todos"].active { background: rgba(0,0,0,.08); border-color: rgba(0,0,0,.3); color: #222; }
-  /* Planejamento — orange/warning */
-  .proj-filter-chip[data-pfilter="planejamento"] { border-color: rgba(255,170,51,.3); color: rgba(255,170,51,.6); }
-  .proj-filter-chip[data-pfilter="planejamento"]:hover { background: rgba(255,170,51,.06); }
-  .proj-filter-chip[data-pfilter="planejamento"].active { background: rgba(255,170,51,.15); border-color: var(--warning); color: var(--warning); }
-  /* Em produção — blue */
-  .proj-filter-chip[data-pfilter="producao"] { border-color: rgba(59,130,246,.3); color: rgba(59,130,246,.6); }
-  .proj-filter-chip[data-pfilter="producao"]:hover { background: rgba(59,130,246,.06); }
-  .proj-filter-chip[data-pfilter="producao"].active { background: rgba(59,130,246,.15); border-color: #3b82f6; color: #3b82f6; }
+  /* Planejamento — blue */
+  .proj-filter-chip[data-pfilter="planejamento"] { border-color: rgba(59,130,246,.3); color: rgba(59,130,246,.6); }
+  .proj-filter-chip[data-pfilter="planejamento"]:hover { background: rgba(59,130,246,.06); }
+  .proj-filter-chip[data-pfilter="planejamento"].active { background: rgba(59,130,246,.15); border-color: #3b82f6; color: #3b82f6; }
+  /* Em produção — yellow */
+  .proj-filter-chip[data-pfilter="producao"] { border-color: rgba(245,158,11,.3); color: rgba(245,158,11,.6); }
+  .proj-filter-chip[data-pfilter="producao"]:hover { background: rgba(245,158,11,.06); }
+  .proj-filter-chip[data-pfilter="producao"].active { background: rgba(245,158,11,.15); border-color: #f59e0b; color: #f59e0b; }
   /* Edição — purple */
   .proj-filter-chip[data-pfilter="edicao"] { border-color: rgba(168,85,247,.3); color: rgba(168,85,247,.6); }
   .proj-filter-chip[data-pfilter="edicao"]:hover { background: rgba(168,85,247,.06); }
   .proj-filter-chip[data-pfilter="edicao"].active { background: rgba(168,85,247,.15); border-color: #a855f7; color: #a855f7; }
-  /* A publicar — amber */
-  .proj-filter-chip[data-pfilter="a_publicar"] { border-color: rgba(245,158,11,.3); color: rgba(245,158,11,.6); }
-  .proj-filter-chip[data-pfilter="a_publicar"]:hover { background: rgba(245,158,11,.06); }
-  .proj-filter-chip[data-pfilter="a_publicar"].active { background: rgba(245,158,11,.15); border-color: #f59e0b; color: #f59e0b; }
+  /* A publicar — pink */
+  .proj-filter-chip[data-pfilter="a_publicar"] { border-color: rgba(236,72,153,.3); color: rgba(236,72,153,.6); }
+  .proj-filter-chip[data-pfilter="a_publicar"]:hover { background: rgba(236,72,153,.06); }
+  .proj-filter-chip[data-pfilter="a_publicar"].active { background: rgba(236,72,153,.15); border-color: #ec4899; color: #ec4899; }
   /* Concluído — green */
   .proj-filter-chip[data-pfilter="concluido"] { border-color: rgba(31,210,122,.3); color: rgba(31,210,122,.6); }
   .proj-filter-chip[data-pfilter="concluido"]:hover { background: rgba(31,210,122,.06); }
