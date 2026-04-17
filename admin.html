@@ -4196,14 +4196,26 @@ function buildPostCard(dest, data) {
         </a>
       </div>`;
     } else if (dest === 'instagram') {
-      embedHtml = `<div class="post-embed">
-        <a href="${escHtml(data.link)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)">
-          <div style="text-align:center;color:#fff">
-            ${info.icon}
-            <div style="font-size:11px;margin-top:6px;opacity:.8">Ver no Instagram</div>
-          </div>
-        </a>
-      </div>`;
+      const igThumb = data._igThumb || '';
+      if (igThumb) {
+        embedHtml = `<div class="post-embed">
+          <a href="${escHtml(data.link)}" target="_blank" rel="noopener">
+            <img src="${escHtml(igThumb)}" alt="thumbnail" loading="lazy" style="width:100%;height:100%;object-fit:cover"/>
+            <div style="position:absolute;bottom:8px;right:8px;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);border-radius:6px;padding:3px 6px">
+              ${info.icon}
+            </div>
+          </a>
+        </div>`;
+      } else {
+        embedHtml = `<div class="post-embed">
+          <a href="${escHtml(data.link)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)">
+            <div style="text-align:center;color:#fff">
+              ${info.icon}
+              <div style="font-size:11px;margin-top:6px;opacity:.8">Ver no Instagram</div>
+            </div>
+          </a>
+        </div>`;
+      }
     } else if (dest === 'tiktok') {
       embedHtml = `<div class="post-embed">
         <a href="${escHtml(data.link)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg,#010101,#161823)">
@@ -4332,6 +4344,7 @@ async function savePostSingle(dest) {
       p.posts[dest].views = stats.views;
       p.posts[dest].likes = stats.likes;
       p.posts[dest].comments = stats.comments;
+      if (stats.thumb) p.posts[dest]._igThumb = stats.thumb;
     }
   }
 
@@ -4422,7 +4435,7 @@ async function fetchIGStats(shortcode, igUrl) {
     // Use cache if less than 5 min old
     const now = Date.now();
     if (!igMediaCache || now - igMediaCacheTime > 300000) {
-      const res = await fetch(`https://graph.facebook.com/v21.0/${igPageIgId}/media?fields=id,shortcode,permalink,like_count,comments_count&limit=50&access_token=${igPageToken}`);
+      const res = await fetch(`https://graph.facebook.com/v21.0/${igPageIgId}/media?fields=id,shortcode,permalink,like_count,comments_count,media_type,thumbnail_url,media_url&limit=50&access_token=${igPageToken}`);
       const json = await res.json();
       if (json.error) { console.warn('IG API error:', json.error.message); return null; }
       igMediaCache = (json.data || []).map(m => ({ ...m, _own: true }));
@@ -4439,22 +4452,33 @@ async function fetchIGStats(shortcode, igUrl) {
 
     if (!media) return null;
 
-    // Try to get insights (impressions/reach) for own media only
+    // Get thumbnail: VIDEO → thumbnail_url, IMAGE/CAROUSEL → media_url
+    const thumb = media.thumbnail_url || media.media_url || '';
+
+    // Try to get views via insights (requires instagram_manage_insights permission)
     let views = 0;
-    if (media._own) {
+    if (media._own && media.id) {
       try {
-        const insRes = await fetch(`https://graph.facebook.com/v21.0/${media.id}/insights?metric=impressions&access_token=${igPageToken}`);
-        const insJson = await insRes.json();
-        if (insJson.data && insJson.data[0]) {
-          views = insJson.data[0].values?.[0]?.value || 0;
+        // For reels/video: try ig_reels_aggregated_all_plays_count first, then plays, then impressions
+        const metricsToTry = media.media_type === 'VIDEO'
+          ? ['ig_reels_aggregated_all_plays_count', 'plays', 'impressions']
+          : ['impressions'];
+        for (const metric of metricsToTry) {
+          const insRes = await fetch(`https://graph.facebook.com/v21.0/${media.id}/insights?metric=${metric}&access_token=${igPageToken}`);
+          const insJson = await insRes.json();
+          if (insJson.data && insJson.data[0]) {
+            views = insJson.data[0].values?.[0]?.value || insJson.data[0].total_value?.value || 0;
+            if (views > 0) break;
+          }
         }
-      } catch(e) { /* impressions may not be available for all media types */ }
+      } catch(e) { console.warn('IG insights error:', e); }
     }
 
     return {
       views: views,
       likes: parseInt(media.like_count) || 0,
-      comments: parseInt(media.comments_count) || 0
+      comments: parseInt(media.comments_count) || 0,
+      thumb: thumb
     };
   } catch (e) { console.warn('IG API error:', e); }
   return null;
@@ -4514,6 +4538,7 @@ async function refreshIGStats(dest, shortcode) {
   p.posts[dest].views = stats.views;
   p.posts[dest].likes = stats.likes;
   p.posts[dest].comments = stats.comments;
+  if (stats.thumb) p.posts[dest]._igThumb = stats.thumb;
 
   await sb.from('projects').update({ posts: p.posts }).eq('id', projDetailId);
   renderProjTabPostagem(p);
@@ -4556,11 +4581,12 @@ async function autoRefreshEngagement() {
     // Future: add TikTok API fetching here
 
     if (stats) {
-      const changed = post.views !== stats.views || post.likes !== stats.likes || post.comments !== stats.comments;
+      const changed = post.views !== stats.views || post.likes !== stats.likes || post.comments !== stats.comments || (stats.thumb && post._igThumb !== stats.thumb);
       if (changed) {
         post.views = stats.views;
         post.likes = stats.likes;
         post.comments = stats.comments;
+        if (stats.thumb) post._igThumb = stats.thumb;
         updated = true;
       }
     }
