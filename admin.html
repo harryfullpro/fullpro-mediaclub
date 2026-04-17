@@ -793,24 +793,24 @@
   /* Posting grid container */
   .post-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
   }
 
-  /* Posting cards — compact square style */
+  /* Posting cards */
   .proj-post-card {
-    border: 1px solid var(--border); border-radius: 12px;
+    border: 1px solid var(--border); border-radius: 14px;
     background: var(--bg-elev); overflow: hidden;
     display: flex; flex-direction: column;
   }
   .post-card-head {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 12px; border-bottom: 1px solid var(--border);
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
   }
-  .post-card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
+  .post-card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
   .post-embed {
-    position: relative; border-radius: 8px; overflow: hidden;
-    background: #000; aspect-ratio: 1/1; margin-bottom: 10px;
+    position: relative; border-radius: 10px; overflow: hidden;
+    background: #000; aspect-ratio: 1/1; margin-bottom: 14px;
   }
   .post-embed iframe { width: 100%; height: 100%; border: none; }
   .post-embed img { width: 100%; height: 100%; object-fit: cover; }
@@ -820,33 +820,49 @@
     transition: background .2s;
   }
   .post-embed .play-overlay:hover { background: rgba(0,0,0,.15); }
-  .post-embed .play-overlay svg { width: 40px; height: 40px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.5)); }
+  .post-embed .play-overlay svg { width: 52px; height: 52px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.5)); }
   .post-actions {
-    display: flex; gap: 6px; margin-top: auto; padding-top: 8px;
-    flex-wrap: wrap;
+    display: flex; gap: 8px; flex-wrap: wrap;
   }
   .post-action-btn {
-    display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px;
-    border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card);
-    color: var(--text-dim); font-size: 10px; font-weight: 600; font-family: inherit;
-    cursor: pointer; transition: all .15s;
+    display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px;
+    border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card);
+    color: var(--text-dim); font-size: 11px; font-weight: 600; font-family: inherit;
+    cursor: pointer; transition: all .15s; flex: 1; justify-content: center;
   }
   .post-action-btn:hover { border-color: var(--text-muted); color: var(--text); }
   .post-link-input-wrap {
     display: flex; flex-direction: column; gap: 8px;
   }
+  /* Shareable link field */
+  .post-share-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+  .post-share-link {
+    flex: 1; padding: 8px 12px; border-radius: 8px; font-size: 12px;
+    font-family: inherit; color: #a78bfa; background: rgba(139,92,246,.08);
+    border: 1px solid rgba(139,92,246,.25); white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; cursor: default;
+  }
+  .post-share-btn {
+    width: 36px; height: 36px; flex-shrink: 0; border-radius: 8px;
+    border: 1px solid rgba(139,92,246,.3); background: rgba(139,92,246,.1);
+    color: #a78bfa; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; transition: all .15s;
+  }
+  .post-share-btn:hover { background: rgba(139,92,246,.2); border-color: #a78bfa; }
   .engagement-row {
-    display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;
+    display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;
   }
   .engagement-stat {
-    display: flex; align-items: center; gap: 4px; padding: 4px 8px;
+    display: flex; align-items: center; gap: 6px; padding: 6px 10px;
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 6px; flex: 1; min-width: 0;
+    border-radius: 8px; flex: 1; min-width: 0;
   }
   .engagement-stat .e-icon { flex-shrink: 0; display: flex; align-items: center; }
-  .engagement-stat .e-icon svg { width: 13px; height: 13px; }
-  .engagement-stat .e-val { font-size: 12px; font-weight: 700; color: var(--text); }
-  .engagement-stat .e-label { font-size: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; }
+  .engagement-stat .e-icon svg { width: 15px; height: 15px; }
+  .engagement-stat .e-val { font-size: 14px; font-weight: 700; color: var(--text); }
+  .engagement-stat .e-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; }
 
   /* Cost categories with colored dots */
   .cost-category {
@@ -1294,8 +1310,9 @@
     .proj-sort-select { width: 100%; margin-left: 0; margin-top: 4px; }
 
     /* Post grid + cards */
-    .post-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
-    .post-card-body { padding: 10px; }
+    .post-grid { grid-template-columns: 1fr; gap: 12px; }
+    .post-card-body { padding: 12px; }
+    .post-share-link { font-size: 11px; }
     .engagement-row { gap: 4px; }
     .engagement-stat { padding: 4px 6px; }
     .post-actions { flex-wrap: wrap; }
@@ -1353,7 +1370,7 @@
     .actions { flex-wrap: wrap; }
     .action-btn { padding: 5px 10px; font-size: 11px; }
 
-    .post-grid { grid-template-columns: 1fr 1fr; }
+    .post-grid { grid-template-columns: 1fr; }
     .engagement-stat { min-width: 100%; }
 
     .post-embed .play-overlay svg { width: 32px; height: 32px; }
@@ -4227,19 +4244,21 @@ function buildPostCard(dest, data) {
           <div><div class="e-val">${formatNum(comments)}</div><div class="e-label">coment.</div></div>
         </div>
       </div>
+      <div class="post-share-row">
+        <div class="post-share-link" title="${escHtml(data.link)}">${escHtml(data.link)}</div>
+        <button class="post-share-btn" onclick="copyPostLink('${dest}')" title="Copiar link">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+        </button>
+      </div>
       <div class="post-actions">
-        <button class="post-action-btn" onclick="copyPostLink('${dest}')">
-          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-          Copiar link
-        </button>
-        <button class="post-action-btn" onclick="editPostLink('${dest}')">
-          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          Editar postagem
-        </button>
         ${ytId ? `<button class="post-action-btn" onclick="refreshYTStats('${dest}','${ytId}')" id="ytRefresh_${dest}">
           <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
           Atualizar dados
         </button>` : ''}
+        <button class="post-action-btn" onclick="editPostLink('${dest}')">
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Editar postagem
+        </button>
       </div>
     </div>`;
   }
