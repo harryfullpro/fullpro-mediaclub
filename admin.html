@@ -4351,7 +4351,7 @@ let engagementInterval = null;
 
 function startEngagementAutoRefresh() {
   stopEngagementAutoRefresh();
-  engagementInterval = setInterval(autoRefreshEngagement, 60000);
+  engagementInterval = setInterval(autoRefreshEngagement, 3600000); // 60 min
 }
 
 function stopEngagementAutoRefresh() {
