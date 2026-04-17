@@ -4455,21 +4455,14 @@ async function fetchIGStats(shortcode, igUrl) {
     // Get thumbnail: VIDEO → thumbnail_url, IMAGE/CAROUSEL → media_url
     const thumb = media.thumbnail_url || media.media_url || '';
 
-    // Try to get views via insights (requires instagram_manage_insights permission)
+    // Get reach (views) via insights (requires instagram_manage_insights permission)
     let views = 0;
     if (media._own && media.id) {
       try {
-        // For reels/video: try ig_reels_aggregated_all_plays_count first, then plays, then impressions
-        const metricsToTry = media.media_type === 'VIDEO'
-          ? ['ig_reels_aggregated_all_plays_count', 'plays', 'impressions']
-          : ['impressions'];
-        for (const metric of metricsToTry) {
-          const insRes = await fetch(`https://graph.facebook.com/v21.0/${media.id}/insights?metric=${metric}&access_token=${igPageToken}`);
-          const insJson = await insRes.json();
-          if (insJson.data && insJson.data[0]) {
-            views = insJson.data[0].values?.[0]?.value || insJson.data[0].total_value?.value || 0;
-            if (views > 0) break;
-          }
+        const insRes = await fetch(`https://graph.facebook.com/v21.0/${media.id}/insights?metric=reach&access_token=${igPageToken}`);
+        const insJson = await insRes.json();
+        if (insJson.data && insJson.data[0]) {
+          views = insJson.data[0].values?.[0]?.value || insJson.data[0].total_value?.value || 0;
         }
       } catch(e) { console.warn('IG insights error:', e); }
     }
