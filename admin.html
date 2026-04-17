@@ -962,9 +962,22 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/><path d="M2 20h4M22 20H10"/></svg>
       <span class="nav-label">Edição</span>
     </button>
-    <button class="nav-item" data-view="performance">
-      <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3V3z"/><path d="M14 3h7v7h-7V3z"/><path d="M14 14h7v7h-7v-7z"/><path d="M3 14h7v7H3v-7z"/></svg>
-      <span class="nav-label">Performance</span>
+    <div class="nav-section">Performance</div>
+    <button class="nav-item" data-view="perf-metas">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      <span class="nav-label">Metas</span>
+    </button>
+    <button class="nav-item" data-view="perf-posts">
+      <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      <span class="nav-label">Meus Posts</span>
+    </button>
+    <button class="nav-item" data-view="perf-influencers">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      <span class="nav-label">Influenciadores</span>
+    </button>
+    <button class="nav-item" data-view="perf-bonificacao">
+      <svg viewBox="0 0 24 24"><path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z"/></svg>
+      <span class="nav-label">Bonificação</span>
     </button>
 
     <div class="nav-section">Configurações</div>
@@ -1412,86 +1425,80 @@
     </div>
 
     <!-- PERFORMANCE VIEW -->
-    <div id="view-performance" style="display:none">
+    <!-- METAS VIEW -->
+    <div id="view-perf-metas" style="display:none">
       <div class="page-head">
         <div>
-          <h1>Performance</h1>
-          <p>Acompanhe metas, posts e bonificação do pool coletivo.</p>
+          <h1>Metas</h1>
+          <p>Acompanhe o progresso das metas mensais do pool.</p>
         </div>
+        <button class="action-btn view" style="padding:10px 16px;font-size:13px" onclick="openPerfGoalsModal()">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:4px"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          Configurar
+        </button>
       </div>
+      <div class="stats-grid" id="perfMetasCards"></div>
+      <div class="cal-card" style="margin-top:16px">
+        <h3>Resumo do pool coletivo</h3>
+        <div id="perfPoolSummary"></div>
+      </div>
+    </div>
 
-      <!-- Performance tabs -->
+    <!-- MEUS POSTS VIEW -->
+    <div id="view-perf-posts" style="display:none">
+      <div class="page-head">
+        <div>
+          <h1>Meus Posts</h1>
+          <p>Registre e acompanhe a performance de cada publicação.</p>
+        </div>
+        <button class="action-btn approve" style="padding:10px 16px;font-size:13px" onclick="openAddPostModal()">+ Novo post</button>
+      </div>
       <div class="proj-filters" style="margin-bottom:16px">
-        <button class="proj-filter-chip active" data-perf-tab="metas" onclick="setPerfTab('metas')">Metas</button>
-        <button class="proj-filter-chip" data-perf-tab="posts" onclick="setPerfTab('posts')">Meus Posts</button>
-        <button class="proj-filter-chip" data-perf-tab="influencers" onclick="setPerfTab('influencers')">Influenciadores</button>
-        <button class="proj-filter-chip" data-perf-tab="bonificacao" onclick="setPerfTab('bonificacao')">Bonificação</button>
+        <button class="proj-filter-chip active" data-post-filter="todos" onclick="setPerfPostFilter('todos')">Todos</button>
+        <button class="proj-filter-chip" data-post-filter="longo" onclick="setPerfPostFilter('longo')">Longos</button>
+        <button class="proj-filter-chip" data-post-filter="short" onclick="setPerfPostFilter('short')">Shorts</button>
+        <div class="proj-filter-separator"></div>
+        <button class="proj-filter-chip" data-post-filter="yt" onclick="setPerfPostFilter('yt')">YouTube</button>
+        <button class="proj-filter-chip" data-post-filter="yts" onclick="setPerfPostFilter('yts')">YT Shorts</button>
+        <button class="proj-filter-chip" data-post-filter="ig" onclick="setPerfPostFilter('ig')">Instagram</button>
+        <button class="proj-filter-chip" data-post-filter="tt" onclick="setPerfPostFilter('tt')">TikTok</button>
       </div>
+      <div id="perfPostsList"></div>
+    </div>
 
-      <!-- METAS TAB -->
-      <div id="perf-tab-metas" style="display:block">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <h3 style="font-size:18px;font-weight:600">Metas do mês</h3>
-          <button class="action-btn view" style="padding:8px 14px;font-size:12px" onclick="openPerfGoalsModal()">
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:4px"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-            Configurar
-          </button>
+    <!-- INFLUENCIADORES VIEW -->
+    <div id="view-perf-influencers" style="display:none">
+      <div class="page-head">
+        <div>
+          <h1>Influenciadores</h1>
+          <p>Gerencie influenciadores e parceiros de conteúdo.</p>
         </div>
-        <div class="stats-grid" id="perfMetasCards"></div>
-        <div class="cal-card" style="margin-top:16px">
-          <h3>Resumo do pool coletivo</h3>
-          <div id="perfPoolSummary"></div>
+        <button class="action-btn approve" style="padding:10px 16px;font-size:13px" onclick="openAddInfluencerModal()">+ Novo influenciador</button>
+      </div>
+      <div id="perfInfluencersList"></div>
+    </div>
+
+    <!-- BONIFICAÇÃO VIEW -->
+    <div id="view-perf-bonificacao" style="display:none">
+      <div class="page-head">
+        <div>
+          <h1>Bonificação</h1>
+          <p>Pool de bonificação mensal baseado nas metas atingidas.</p>
         </div>
       </div>
-
-      <!-- MEUS POSTS TAB -->
-      <div id="perf-tab-posts" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <h3 style="font-size:18px;font-weight:600">Posts deste mês</h3>
-          <button class="action-btn approve" style="padding:8px 14px;font-size:12px" onclick="openAddPostModal()">+ Novo post</button>
-        </div>
-
-        <!-- Post filters -->
-        <div class="proj-filters" style="margin-bottom:16px">
-          <button class="proj-filter-chip active" data-post-filter="todos" onclick="setPerfPostFilter('todos')">Todos</button>
-          <button class="proj-filter-chip" data-post-filter="longo" onclick="setPerfPostFilter('longo')">Longos</button>
-          <button class="proj-filter-chip" data-post-filter="short" onclick="setPerfPostFilter('short')">Shorts</button>
-          <div class="proj-filter-separator"></div>
-          <button class="proj-filter-chip" data-post-filter="yt" onclick="setPerfPostFilter('yt')">YouTube</button>
-          <button class="proj-filter-chip" data-post-filter="yts" onclick="setPerfPostFilter('yts')">YT Shorts</button>
-          <button class="proj-filter-chip" data-post-filter="ig" onclick="setPerfPostFilter('ig')">Instagram</button>
-          <button class="proj-filter-chip" data-post-filter="tt" onclick="setPerfPostFilter('tt')">TikTok</button>
-        </div>
-
-        <div id="perfPostsList"></div>
+      <div class="cal-card" style="margin-bottom:16px">
+        <h3>Regras e distribuição</h3>
+        <p class="sub">Configurações atuais do sistema de bonificação.</p>
+        <div id="perfBonusRules"></div>
+        <button class="action-btn view" style="margin-top:12px;padding:8px 14px;font-size:12px" onclick="openBonusConfigModal()">Editar regras</button>
       </div>
-
-      <!-- INFLUENCIADORES TAB -->
-      <div id="perf-tab-influencers" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <h3 style="font-size:18px;font-weight:600">Influenciadores e parceiros</h3>
-          <button class="action-btn approve" style="padding:8px 14px;font-size:12px" onclick="openAddInfluencerModal()">+ Novo influenciador</button>
-        </div>
-        <div id="perfInfluencersList"></div>
+      <div class="cal-card" style="margin-bottom:16px">
+        <h3>Projeção do mês atual</h3>
+        <div id="perfBonusProjection"></div>
       </div>
-
-      <!-- BONIFICAÇÃO TAB -->
-      <div id="perf-tab-bonificacao" style="display:none">
-        <h3 style="font-size:18px;font-weight:600;margin-bottom:16px">Bonificação do pool</h3>
-        <div class="cal-card" style="margin-bottom:16px">
-          <h3>Regras e distribuição</h3>
-          <p class="sub">Configurações atuais do sistema de bonificação.</p>
-          <div id="perfBonusRules"></div>
-          <button class="action-btn view" style="margin-top:12px;padding:8px 14px;font-size:12px" onclick="openBonusConfigModal()">Editar regras</button>
-        </div>
-        <div class="cal-card" style="margin-bottom:16px">
-          <h3>Projeção do mês atual</h3>
-          <div id="perfBonusProjection"></div>
-        </div>
-        <div class="cal-card">
-          <h3>Histórico de pagamentos</h3>
-          <div id="perfBonusHistory"></div>
-        </div>
+      <div class="cal-card">
+        <h3>Histórico de pagamentos</h3>
+        <div id="perfBonusHistory"></div>
       </div>
     </div>
 
@@ -2255,7 +2262,7 @@ document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['dashboard','requests','calendar','checkin','projects','editing','performance','templates','export','users','profile'].forEach(v => {
+    ['dashboard','requests','calendar','checkin','projects','editing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'].forEach(v => {
       document.getElementById('view-' + v).style.display = 'none';
     });
     document.getElementById('view-' + btn.dataset.view).style.display = 'block';
@@ -4202,17 +4209,6 @@ function getPerfGoalsThisMonth() {
   const now = new Date();
   const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   return PERF_GOALS?.month === month ? PERF_GOALS : null;
-}
-
-function setPerfTab(tab) {
-  PERF_CURRENT_TAB = tab;
-  document.querySelectorAll('[data-perf-tab]').forEach(b => {
-    b.classList.toggle('active', b.dataset.perfTab === tab);
-  });
-  document.querySelectorAll('[id^="perf-tab-"]').forEach(el => {
-    el.style.display = 'none';
-  });
-  document.getElementById('perf-tab-' + tab).style.display = 'block';
 }
 
 function setPerfPostFilter(filter) {
