@@ -1167,19 +1167,199 @@
     font-size: 14px;
   }
 
+  /* ============================================
+     RESPONSIVE: Ultrawide (>1600px)
+     ============================================ */
+  @media (min-width: 1600px) {
+    main { padding: 40px 48px; }
+    main > div { max-width: 1400px; margin-left: auto; margin-right: auto; }
+    .stats-grid { gap: 18px; }
+    .stat-card { padding: 24px; }
+    .stat-card .value { font-size: 36px; }
+    .page-head h1 { font-size: 40px; }
+  }
+
+  /* ============================================
+     RESPONSIVE: Large desktop cap (>2000px)
+     ============================================ */
+  @media (min-width: 2000px) {
+    main > div { max-width: 1600px; }
+    .stats-grid { grid-template-columns: repeat(4, 1fr); max-width: 1200px; }
+  }
+
+  /* ============================================
+     RESPONSIVE: Tablet (901–1200px)
+     ============================================ */
+  @media (max-width: 1200px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .cal-top { grid-template-columns: 1fr 1fr !important; }
+    #perfInfluencersList { grid-template-columns: 1fr !important; }
+    #infSummaryCards { grid-template-columns: 1fr !important; }
+  }
+
+  /* ============================================
+     MOBILE HEADER BAR (hidden on desktop)
+     ============================================ */
+  .mobile-header {
+    display: none;
+    position: sticky; top: 0; z-index: 100;
+    background: var(--bg-soft); border-bottom: 1px solid var(--border);
+    padding: 10px 16px; align-items: center; gap: 12px;
+  }
+  .mobile-header .brand-mark { width: 100px; height: 30px; flex-shrink: 0; }
+  .mobile-header .brand-mark img { width: 100%; height: 100%; object-fit: contain; filter: var(--logo-filter); }
+  .hamburger-btn {
+    width: 36px; height: 36px; border: 1px solid var(--border);
+    background: var(--bg-card); border-radius: 8px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text); flex-shrink: 0; transition: all .15s;
+  }
+  .hamburger-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .hamburger-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .mobile-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5);
+    z-index: 199; opacity: 0; transition: opacity .25s;
+  }
+  .mobile-overlay.show { display: block; opacity: 1; }
+
+  /* ============================================
+     RESPONSIVE: Mobile (≤900px)
+     ============================================ */
   @media (max-width: 900px) {
     .shell { grid-template-columns: 1fr; }
-    .sidebar { display: none; }
-    .stats-grid { grid-template-columns: 1fr 1fr; }
-    #infSummaryCards { grid-template-columns: 1fr !important; }
-    #perfInfluencersList { grid-template-columns: 1fr !important; }
+    .sidebar {
+      display: flex; position: fixed; left: -280px; top: 0; bottom: 0;
+      width: 270px; z-index: 200; transition: left .3s cubic-bezier(.4,0,.2,1);
+      box-shadow: none;
+    }
+    .sidebar.mobile-open {
+      left: 0; box-shadow: 6px 0 24px rgba(0,0,0,.4);
+    }
+    .mobile-header { display: flex; }
+    main { padding: 16px; height: auto; min-height: calc(100vh - 56px); }
+
+    /* Stats grid */
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stats-grid[style*="repeat(5"] { grid-template-columns: 1fr 1fr !important; }
+    .stat-card { padding: 14px; }
+    .stat-card .value { font-size: 26px; }
+    .stat-card .label { font-size: 10px; }
+
+    /* Page head */
+    .page-head h1 { font-size: 26px; }
+    .page-head { margin-bottom: 18px; gap: 10px; }
+
+    /* Tables */
+    .table-wrap { border-radius: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { min-width: 600px; }
+    th, td { padding: 10px 12px; font-size: 13px; }
+    th:nth-child(4), td:nth-child(4),
+    th:nth-child(5), td:nth-child(5) { display: none; }
+
+    /* Calendar */
     .cal-admin { grid-template-columns: 1fr; }
     .cal-top { grid-template-columns: 1fr !important; }
     .cal-right { display: flex; flex-direction: column; gap: 16px; }
     .block-add { flex-direction: column; align-items: stretch; }
-    main { padding: 20px; }
-    th:nth-child(4), td:nth-child(4),
-    th:nth-child(5), td:nth-child(5) { display: none; }
+
+    /* Project detail header */
+    #view-project-detail > div:first-child {
+      flex-wrap: wrap !important; gap: 8px !important;
+    }
+    #view-project-detail > div:first-child h1 {
+      font-size: 22px !important; flex-basis: 100% !important; order: -1 !important;
+    }
+
+    /* Project form grids */
+    .proj-tab-content [style*="grid-template-columns: 1fr 1fr"] {
+      grid-template-columns: 1fr !important;
+    }
+
+    /* Project modal tabs */
+    .proj-modal-tab { padding: 10px 8px; font-size: 11px; letter-spacing: .3px; }
+
+    /* Project filters */
+    .proj-filters { padding: 10px 12px; gap: 6px; }
+    .proj-filter-chip { padding: 5px 10px; font-size: 11px; }
+    .proj-filter-separator { display: none; }
+    .proj-sort-select { width: 100%; margin-left: 0; margin-top: 4px; }
+
+    /* Post cards */
+    .post-card-body { padding: 12px; }
+    .post-link-input-wrap { flex-direction: column; }
+    .post-link-input-wrap input { width: 100% !important; }
+    .post-link-input-wrap button { width: 100%; }
+    .engagement-row { flex-wrap: wrap; gap: 8px; }
+    .engagement-stat { min-width: calc(50% - 4px); padding: 6px 10px; }
+    .post-actions { flex-wrap: wrap; }
+
+    /* Influencer cards */
+    #infSummaryCards { grid-template-columns: 1fr !important; }
+    #perfInfluencersList { grid-template-columns: 1fr !important; }
+
+    /* Checkin grid */
+    .checkin-grid { grid-template-columns: 1fr !important; }
+
+    /* Generic inline grids → single column */
+    .book-row { grid-template-columns: 1fr !important; }
+    .detail-row { grid-template-columns: 100px 1fr; font-size: 13px; }
+    .proj-meta { grid-template-columns: 1fr 1fr; }
+
+    /* Modal content */
+    .modal-content { max-width: 95vw !important; margin: 8px; }
+    .modal-content[style*="max-width:900px"] {
+      max-width: 95vw !important; max-height: 90vh !important;
+    }
+
+    /* Various inline grids in performance views */
+    div[style*="grid-template-columns:1fr 340px"] { grid-template-columns: 1fr !important; }
+    div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+    div[style*="grid-template-columns:140px 1fr"] { grid-template-columns: 1fr !important; }
+    div[style*="grid-template-columns:1fr 1fr 1fr"] { grid-template-columns: 1fr !important; }
+    div[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
+
+    /* Edit meta grid */
+    .edit-meta-grid { grid-template-columns: 1fr 1fr; }
+
+    /* Login */
+    .login-card { margin: 16px; padding: 28px 20px; }
+  }
+
+  /* ============================================
+     RESPONSIVE: Small mobile (≤480px)
+     ============================================ */
+  @media (max-width: 480px) {
+    main { padding: 12px; }
+    .stats-grid { grid-template-columns: 1fr; gap: 8px; }
+    .stat-card { padding: 12px; }
+    .stat-card .value { font-size: 24px; }
+    .page-head h1 { font-size: 22px; }
+
+    .filter-bar { gap: 6px; }
+    .filter-btn { padding: 6px 12px; font-size: 12px; }
+
+    .proj-card { padding: 14px; }
+    .proj-card-head { flex-direction: column; align-items: flex-start; gap: 8px; }
+
+    .proj-modal-tab { padding: 8px 6px; font-size: 10px; }
+
+    .actions { flex-wrap: wrap; }
+    .action-btn { padding: 5px 10px; font-size: 11px; }
+
+    .engagement-stat { min-width: 100%; }
+
+    .post-embed .play-overlay svg { width: 40px; height: 40px; }
+
+    .proj-meta { grid-template-columns: 1fr; }
+    .edit-meta-grid { grid-template-columns: 1fr; }
+
+    .cal-card { padding: 12px; }
+
+    /* Full width modals */
+    .modal-content { width: 100% !important; max-width: 100vw !important; margin: 0; border-radius: 12px 12px 0 0; }
+
+    .tpl-card { padding: 14px; }
+    .inf-card { padding: 14px; }
   }
 </style>
 </head>
@@ -1203,6 +1383,14 @@
 
 <!-- APP -->
 <div id="app" class="shell" style="display:none">
+  <!-- Mobile header -->
+  <div class="mobile-header">
+    <button class="hamburger-btn" onclick="toggleMobileSidebar()" aria-label="Menu">
+      <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <span class="brand-mark"><img src="assets/logo-mediaclub.png" alt="FullPro Media Club" /></span>
+  </div>
+  <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileSidebar()"></div>
   <aside class="sidebar">
     <a href="admin.html" class="brand">
       <span class="brand-mark brand-full"><img src="assets/logo.png" alt="FullPro" /></span>
@@ -2802,6 +2990,35 @@ function toggleTheme() {
   const saved = localStorage.getItem('fp_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', saved);
 })();
+
+/* MOBILE SIDEBAR TOGGLE */
+function toggleMobileSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('mobileOverlay');
+  const isOpen = sidebar.classList.contains('mobile-open');
+  if (isOpen) {
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('show');
+    document.body.style.overflow = '';
+  } else {
+    sidebar.classList.add('mobile-open');
+    overlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+}
+// Close mobile sidebar when a nav item is clicked
+document.addEventListener('click', function(e) {
+  const navItem = e.target.closest('.nav-item');
+  if (navItem && window.innerWidth <= 900) {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('mobileOverlay');
+    if (sidebar.classList.contains('mobile-open')) {
+      sidebar.classList.remove('mobile-open');
+      overlay.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+  }
+});
 
 /* SIDEBAR CONTROL */
 let sidebarMode = 'expanded';
