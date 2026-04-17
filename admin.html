@@ -1046,7 +1046,15 @@
     transition: all .15s;
     white-space: nowrap;
   }
+  .proj-filter-chip { text-transform: uppercase; }
   .proj-filter-chip:hover { opacity: .85; }
+  /* Todos — white/neutral */
+  .proj-filter-chip[data-pfilter="todos"] { border-color: rgba(255,255,255,.2); color: rgba(255,255,255,.45); }
+  .proj-filter-chip[data-pfilter="todos"]:hover { background: rgba(255,255,255,.04); }
+  .proj-filter-chip[data-pfilter="todos"].active { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); color: #fff; }
+  [data-theme="light"] .proj-filter-chip[data-pfilter="todos"] { border-color: rgba(0,0,0,.15); color: rgba(0,0,0,.35); }
+  [data-theme="light"] .proj-filter-chip[data-pfilter="todos"]:hover { background: rgba(0,0,0,.03); }
+  [data-theme="light"] .proj-filter-chip[data-pfilter="todos"].active { background: rgba(0,0,0,.08); border-color: rgba(0,0,0,.3); color: #222; }
   /* Planejamento — orange/warning */
   .proj-filter-chip[data-pfilter="planejamento"] { border-color: rgba(255,170,51,.3); color: rgba(255,170,51,.6); }
   .proj-filter-chip[data-pfilter="planejamento"]:hover { background: rgba(255,170,51,.06); }
@@ -1891,11 +1899,12 @@
       <!-- Project filters -->
       <div class="proj-filters">
         <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--text-muted)" fill="none" stroke-width="2" style="flex-shrink:0"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-        <button class="proj-filter-chip active" data-pfilter="planejamento" onclick="toggleProjFilter('planejamento')">Planejamento</button>
-        <button class="proj-filter-chip active" data-pfilter="producao" onclick="toggleProjFilter('producao')">Em produção</button>
-        <button class="proj-filter-chip" data-pfilter="edicao" onclick="toggleProjFilter('edicao')">Edição</button>
-        <button class="proj-filter-chip" data-pfilter="a_publicar" onclick="toggleProjFilter('a_publicar')">A publicar</button>
-        <button class="proj-filter-chip" data-pfilter="concluido" onclick="toggleProjFilter('concluido')">Concluído</button>
+        <button class="proj-filter-chip" data-pfilter="todos" onclick="toggleProjFilter('todos')" style="text-transform:uppercase">TODOS</button>
+        <button class="proj-filter-chip active" data-pfilter="planejamento" onclick="toggleProjFilter('planejamento')" style="text-transform:uppercase">PLANEJAMENTO</button>
+        <button class="proj-filter-chip active" data-pfilter="producao" onclick="toggleProjFilter('producao')" style="text-transform:uppercase">EM PRODUÇÃO</button>
+        <button class="proj-filter-chip" data-pfilter="edicao" onclick="toggleProjFilter('edicao')" style="text-transform:uppercase">EDIÇÃO</button>
+        <button class="proj-filter-chip" data-pfilter="a_publicar" onclick="toggleProjFilter('a_publicar')" style="text-transform:uppercase">A PUBLICAR</button>
+        <button class="proj-filter-chip" data-pfilter="concluido" onclick="toggleProjFilter('concluido')" style="text-transform:uppercase">CONCLUÍDO</button>
         <select class="proj-sort-select" id="projSortSelect" onchange="renderProjects()">
           <option value="newest">Mais recentes</option>
           <option value="oldest">Mais antigos</option>
@@ -3512,15 +3521,30 @@ async function loadProjects() {
   PROJECTS = data || [];
 }
 
+const ALL_PROJ_STATUSES = ['planejamento','producao','edicao','a_publicar','concluido'];
 let projActiveFilters = new Set(['planejamento', 'producao']);
 function toggleProjFilter(f) {
-  if (projActiveFilters.has(f)) {
-    projActiveFilters.delete(f);
+  if (f === 'todos') {
+    // Toggle all: if all are active, deselect all; otherwise select all
+    const allActive = ALL_PROJ_STATUSES.every(s => projActiveFilters.has(s));
+    if (allActive) {
+      projActiveFilters.clear();
+    } else {
+      ALL_PROJ_STATUSES.forEach(s => projActiveFilters.add(s));
+    }
   } else {
-    projActiveFilters.add(f);
+    if (projActiveFilters.has(f)) {
+      projActiveFilters.delete(f);
+    } else {
+      projActiveFilters.add(f);
+    }
   }
+  // Sync UI
+  const allActive = ALL_PROJ_STATUSES.every(s => projActiveFilters.has(s));
   document.querySelectorAll('.proj-filters .proj-filter-chip[data-pfilter]').forEach(c => {
-    c.classList.toggle('active', projActiveFilters.has(c.dataset.pfilter));
+    const key = c.dataset.pfilter;
+    if (key === 'todos') c.classList.toggle('active', allActive);
+    else c.classList.toggle('active', projActiveFilters.has(key));
   });
   renderProjects();
 }
