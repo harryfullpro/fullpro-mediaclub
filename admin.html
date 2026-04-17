@@ -652,6 +652,10 @@
   .rot-shot-note span[contenteditable] { outline: none; flex: 1; }
   .rot-note-rm { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 0 4px; transition: color .15s; }
   .rot-note-rm:hover { color: var(--danger); }
+  .rot-speech { background: rgba(59,130,246,.04); border-top-color: rgba(59,130,246,.12); }
+  .rot-speech .rot-note-label { color: #60a5fa; }
+  .rot-note span[contenteditable]:empty:not(:focus)::before,
+  .rot-shot-note span[contenteditable]:empty:not(:focus)::before { content: attr(data-placeholder); color: var(--text-muted); opacity: .4; }
 
   /* Agenda layout: calendar | details (wider) | block (compact) */
   .cal-top { display: grid; grid-template-columns: 340px 1fr 260px; gap: 14px; align-items: start; }
@@ -3861,7 +3865,7 @@ async function saveProject() {
     costs: projCosts,
     script_scenes: roteiroScenes.map(s => ({
       title: s.title, location: s.location, note: s.note,
-      shots: (s.shots || []).map(sh => ({ title: sh.title, duration: sh.duration, done: sh.done, note: sh.note }))
+      shots: (s.shots || []).map(sh => ({ title: sh.title, duration: sh.duration, done: sh.done, note: sh.note, speech: sh.speech }))
     })),
     shoot_order: roteiroShootOrder,
     created_by: CURRENT_USER?.id || null
@@ -4269,7 +4273,7 @@ function renderClaqueteView(container) {
           </button>
         </div>
       </div>
-      ${scene.note ? `<div class="rot-note"><span class="rot-note-label">Nota:</span> <span contenteditable="true" onblur="updateSceneNote(${si},this.textContent)">${escHtml(scene.note)}</span><button class="rot-note-rm" onclick="removeSceneNote(${si})">×</button></div>` : ''}
+      ${scene.note !== undefined && scene.note !== null ? `<div class="rot-note"><span class="rot-note-label">Nota:</span> <span contenteditable="true" onblur="updateSceneNote(${si},this.textContent)" data-placeholder="Ex: Luz natural, cenário externo, transição suave...">${escHtml(scene.note)}</span><button class="rot-note-rm" onclick="removeSceneNote(${si})">×</button></div>` : ''}
       ${expanded ? renderShots(scene.shots || [], si) : ''}
     </div>`;
   });
@@ -4319,13 +4323,15 @@ function renderShots(shots, si) {
       <span class="rot-shot-title ${shot.done?'done':''}" contenteditable="true" onblur="updateShotTitle(${si},${pi},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" data-placeholder="Descrição do plano">${escHtml(shot.title || '')}</span>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0">
         <input type="text" class="rot-dur-input" value="${shot.duration||0}" onblur="updateShotDuration(${si},${pi},this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" title="Duração em segundos"/> <span style="font-size:10px;color:var(--text-muted)">s</span>
-        ${shot.note !== undefined && shot.note !== null ? '' : `<button class="rot-icon-btn" onclick="addShotNote(${si},${pi})" title="Nota"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button>`}
+        ${shot.note !== undefined && shot.note !== null ? '' : `<button class="rot-icon-btn" onclick="addShotNote(${si},${pi})" title="Nota ao editor"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button>`}
+        ${shot.speech !== undefined && shot.speech !== null ? '' : `<button class="rot-icon-btn" onclick="addShotSpeech(${si},${pi})" title="Fala do apresentador"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></button>`}
         <button class="rot-icon-btn rot-delete" onclick="deleteShot(${si},${pi})" title="Excluir plano">
           <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
     </div>
-    ${shot.note !== undefined && shot.note !== null ? `<div class="rot-shot-note"><span class="rot-note-label">Nota:</span> <span contenteditable="true" onblur="updateShotNote(${si},${pi},this.textContent)">${escHtml(shot.note)}</span><button class="rot-note-rm" onclick="removeShotNote(${si},${pi})">×</button></div>` : ''}
+    ${shot.note !== undefined && shot.note !== null ? `<div class="rot-shot-note"><span class="rot-note-label">Nota:</span> <span contenteditable="true" onblur="updateShotNote(${si},${pi},this.textContent)" data-placeholder="Ex: Ângulo baixo, câmera fixa, zoom lento...">${escHtml(shot.note)}</span><button class="rot-note-rm" onclick="removeShotNote(${si},${pi})">×</button></div>` : ''}
+    ${shot.speech !== undefined && shot.speech !== null ? `<div class="rot-shot-note rot-speech"><span class="rot-note-label">Fala:</span> <span contenteditable="true" onblur="updateShotSpeech(${si},${pi},this.textContent)" data-placeholder="Ex: E aí pessoal, hoje vamos conhecer...">${escHtml(shot.speech)}</span><button class="rot-note-rm" onclick="removeShotSpeech(${si},${pi})">×</button></div>` : ''}
   `).join('');
 }
 
@@ -4390,6 +4396,9 @@ function updateShotDuration(si, pi, val) {
 function addShotNote(si, pi) { roteiroScenes[si].shots[pi].note = ''; renderRoteiroContent(); }
 function updateShotNote(si, pi, val) { roteiroScenes[si].shots[pi].note = val.trim() || null; autoSaveRoteiro(); }
 function removeShotNote(si, pi) { roteiroScenes[si].shots[pi].note = null; renderRoteiroContent(); autoSaveRoteiro(); }
+function addShotSpeech(si, pi) { roteiroScenes[si].shots[pi].speech = ''; renderRoteiroContent(); }
+function updateShotSpeech(si, pi, val) { roteiroScenes[si].shots[pi].speech = val.trim() || null; autoSaveRoteiro(); }
+function removeShotSpeech(si, pi) { roteiroScenes[si].shots[pi].speech = null; renderRoteiroContent(); autoSaveRoteiro(); }
 
 /* ── Drag & Drop ── */
 function rotDragStart(e, type, idx, subIdx) {
@@ -4446,7 +4455,7 @@ function autoSaveRoteiro() {
     // Strip internal props for storage
     const cleanScenes = roteiroScenes.map(s => ({
       title: s.title, location: s.location, note: s.note,
-      shots: (s.shots || []).map(sh => ({ title: sh.title, duration: sh.duration, done: sh.done, note: sh.note }))
+      shots: (s.shots || []).map(sh => ({ title: sh.title, duration: sh.duration, done: sh.done, note: sh.note, speech: sh.speech }))
     }));
     const { error } = await sb.from('projects').update({
       script_scenes: cleanScenes,
@@ -4487,6 +4496,7 @@ async function downloadRoteiroPDF() {
       const durS = shot.duration ? ` (${shot.duration}s)` : '';
       lines.push({ text: `     ${check}  ${shot.title || 'Plano ' + (pi + 1)}${durS}`, size: 11, y: y += 15, done: shot.done });
       if (shot.note) lines.push({ text: `         Nota: ${shot.note}`, size: 9, color: '#888', y: y += 12 });
+      if (shot.speech) lines.push({ text: `         Fala: "${shot.speech}"`, size: 9, color: '#4488cc', y: y += 12 });
     });
   });
 
