@@ -3553,9 +3553,7 @@ function getFilteredProjects() {
   let list = [...PROJECTS];
 
   // Filter by active status tags
-  if (projActiveFilters.size > 0) {
-    list = list.filter(p => projActiveFilters.has(p.status));
-  }
+  list = list.filter(p => projActiveFilters.has(p.status));
 
   // Sort
   const sortSel = document.getElementById('projSortSelect');
