@@ -4490,11 +4490,24 @@ async function downloadRoteiroPDF() {
   if (roteiroScenes.length === 0) { alert('Adicione pelo menos uma cena ao roteiro.'); return; }
   const p = PROJECTS.find(x => x.id === projDetailId);
   const title = p?.title || 'Roteiro';
+  const destNames = { youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads' };
 
-  // Render via canvas (supports UTF-8 / accents properly)
-  const pageW = 595, pageH = 842, margin = 50;
+  // --- Color palette ---
+  const COL = {
+    bg: '#ffffff', headerBg: '#1a1a2e', headerText: '#ffffff',
+    accent: '#8b9cf7', accentLight: '#e8ecff',
+    gold: '#f59e0b', goldLight: '#fef3c7', goldDark: '#b8860b',
+    green: '#22c55e', greenLight: '#dcfce7',
+    muted: '#94a3b8', mutedLight: '#f1f5f9',
+    text: '#1e293b', textSoft: '#64748b',
+    border: '#e2e8f0', cardBg: '#f8fafc',
+    danger: '#ef4444', sceneBg: '#f0f4ff', sceneBorder: '#c7d2fe'
+  };
+
+  const pageW = 595, pageH = 842, margin = 40;
   const usableW = pageW - margin * 2;
   const canvasPages = [];
+  let pageNum = 0;
   let cvs = document.createElement('canvas');
   cvs.width = pageW * 2; cvs.height = pageH * 2;
   let ctx = cvs.getContext('2d');
@@ -4503,79 +4516,412 @@ async function downloadRoteiroPDF() {
 
   function newPage() {
     canvasPages.push(cvs);
+    pageNum++;
     cvs = document.createElement('canvas');
     cvs.width = pageW * 2; cvs.height = pageH * 2;
     ctx = cvs.getContext('2d');
     ctx.scale(2, 2);
-    curY = margin;
+    ctx.fillStyle = COL.bg; ctx.fillRect(0, 0, pageW, pageH);
+    curY = margin + 10;
   }
 
-  function wrapText(text, maxW, fontSize) {
-    ctx.font = `${fontSize}px Inter, Helvetica, Arial, sans-serif`;
-    const words = text.split(' ');
+  function ensureSpace(need) { if (curY + need > pageH - margin - 20) newPage(); }
+
+  function font(size, weight) { return `${weight || '400'} ${size}px Inter, Helvetica, Arial, sans-serif`; }
+
+  function wrapText(text, maxW, fontSize, weight) {
+    ctx.font = font(fontSize, weight);
+    const words = String(text).split(' ');
     const result = [];
     let line = '';
     for (const w of words) {
       const test = line ? line + ' ' + w : w;
-      if (ctx.measureText(test).width > maxW && line) {
-        result.push(line);
-        line = w;
-      } else {
-        line = test;
-      }
+      if (ctx.measureText(test).width > maxW && line) { result.push(line); line = w; }
+      else line = test;
     }
     if (line) result.push(line);
     return result;
   }
 
   function drawText(text, fontSize, opts = {}) {
-    const { bold, color, indent } = opts;
+    const { bold, color, indent, lineH: lhOvr } = opts;
+    const weight = bold ? '700' : '400';
     const x = margin + (indent || 0);
     const maxW = usableW - (indent || 0);
-    const font = `${bold ? '700' : '400'} ${fontSize}px Inter, Helvetica, Arial, sans-serif`;
-    ctx.font = font;
-    const wrapped = wrapText(text, maxW, fontSize);
-    const lineH = fontSize * 1.5;
-
+    const f = font(fontSize, weight);
+    ctx.font = f;
+    const wrapped = wrapText(text, maxW, fontSize, weight);
+    const lineH = lhOvr || fontSize * 1.55;
     wrapped.forEach(line => {
-      if (curY + lineH > pageH - margin) newPage();
-      ctx.font = font;
-      ctx.fillStyle = color || '#222';
+      ensureSpace(lineH);
+      ctx.font = f; ctx.fillStyle = color || COL.text;
       ctx.fillText(line, x, curY + fontSize);
       curY += lineH;
     });
   }
 
-  // White background
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, pageW, pageH);
+  function drawLine(x1, x2, y, color, width) {
+    ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y);
+    ctx.strokeStyle = color || COL.border; ctx.lineWidth = width || 0.5; ctx.stroke();
+  }
+
+  function drawRoundedRect(x, y, w, h, r, fill, stroke) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r); ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r); ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 0.8; ctx.stroke(); }
+  }
+
+  function drawPill(text, x, y, fg, bg) {
+    ctx.font = font(8, '600');
+    const tw = ctx.measureText(text).width;
+    const pw = tw + 14, ph = 16;
+    drawRoundedRect(x, y, pw, ph, 8, bg);
+    ctx.fillStyle = fg; ctx.font = font(8, '600');
+    ctx.fillText(text, x + 7, y + 11.5);
+    return pw;
+  }
+
+  function formatDuration(sec) {
+    if (!sec || sec === 0) return '0s';
+    const m = Math.floor(sec / 60), s = sec % 60;
+    if (m > 0) return `${m}min ${s > 0 ? s + 's' : ''}`.trim();
+    return `${s}s`;
+  }
+
+  // ========== WHITE BG ==========
+  ctx.fillStyle = COL.bg; ctx.fillRect(0, 0, pageW, pageH);
+
+  // ========== HEADER BLOCK ==========
+  const headerH = 110;
+  drawRoundedRect(margin, curY, usableW, headerH, 10, COL.headerBg);
+
+  // Logo / Brand
+  ctx.font = font(9, '600'); ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.fillText('FULLPRO MEDIA CLUB', margin + 20, curY + 22);
 
   // Title
-  drawText(title, 22, { bold: true });
-  if (p?.moto) drawText(p.moto, 12, { color: '#888' });
-  curY += 10;
+  ctx.font = font(20, '700'); ctx.fillStyle = COL.headerText;
+  const titleLines = wrapText(title, usableW - 40, 20, '700');
+  let ty = curY + 44;
+  titleLines.forEach(line => { ctx.font = font(20, '700'); ctx.fillStyle = COL.headerText; ctx.fillText(line, margin + 20, ty); ty += 26; });
 
+  // Moto subtitle
+  if (p?.moto) {
+    ctx.font = font(11, '400'); ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillText(p.moto, margin + 20, ty + 2);
+    ty += 16;
+  }
+
+  // Right side info badges
+  const rightX = margin + usableW - 20;
+  let badgeY = curY + 18;
+  // Date
+  if (p?.production_date) {
+    const dStr = new Date(p.production_date + 'T12:00:00').toLocaleDateString('pt-BR');
+    ctx.font = font(9, '600'); ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    const dw = ctx.measureText(dStr).width;
+    ctx.fillText(dStr, rightX - dw, badgeY);
+    badgeY += 16;
+  }
+  // Status badge
+  if (p?.status) {
+    const statusLabels = { draft: 'Rascunho', filming: 'Filmando', editing: 'Editando', review: 'Revisão', done: 'Concluído' };
+    const sLabel = statusLabels[p.status] || p.status;
+    const sBg = p.status === 'done' ? COL.green : COL.accent;
+    ctx.font = font(8, '700');
+    const sw = ctx.measureText(sLabel).width;
+    drawRoundedRect(rightX - sw - 14, badgeY - 3, sw + 14, 16, 8, sBg);
+    ctx.fillStyle = '#fff'; ctx.font = font(8, '700');
+    ctx.fillText(sLabel, rightX - sw - 7, badgeY + 9);
+  }
+
+  curY += headerH + 14;
+
+  // ========== DESTINATIONS ROW ==========
+  const dests = p?.destinations || [];
+  if (dests.length > 0) {
+    const destColors = {
+      youtube: { fg: '#dc2626', bg: '#fef2f2' }, shorts: { fg: '#dc2626', bg: '#fef2f2' },
+      tiktok: { fg: '#111', bg: '#e5e7eb' }, reels: { fg: '#d946ef', bg: '#fdf4ff' },
+      clips: { fg: '#8b5cf6', bg: '#f5f3ff' }, site: { fg: '#0284c7', bg: '#f0f9ff' },
+      ads: { fg: '#ea580c', bg: '#fff7ed' }
+    };
+    let dx = margin;
+    dests.forEach(d => {
+      const dc = destColors[d] || { fg: COL.text, bg: COL.mutedLight };
+      const pw = drawPill(destNames[d] || d, dx, curY, dc.fg, dc.bg);
+      dx += pw + 6;
+    });
+    curY += 26;
+  }
+
+  // ========== DESCRIPTION ==========
+  if (p?.description) {
+    curY += 4;
+    ctx.font = font(8, '600'); ctx.fillStyle = COL.textSoft;
+    ctx.fillText('DESCRIÇÃO', margin, curY + 8); curY += 16;
+    drawText(p.description, 9, { color: COL.textSoft });
+    curY += 6;
+  }
+
+  // ========== STATS BAR ==========
+  const allShots = roteiroScenes.flatMap(s => s.shots || []);
+  const totalScenes = roteiroScenes.length;
+  const totalShots = allShots.length;
+  const doneShots = allShots.filter(s => s.done).length;
+  const totalDurAll = allShots.reduce((s, sh) => s + (sh.duration || 0), 0);
+  const progress = totalShots > 0 ? Math.round((doneShots / totalShots) * 100) : 0;
+
+  ensureSpace(50);
+  drawRoundedRect(margin, curY, usableW, 42, 8, COL.cardBg, COL.border);
+
+  const statsItems = [
+    { label: 'Cenas', value: String(totalScenes), color: COL.accent },
+    { label: 'Planos', value: String(totalShots), color: COL.accent },
+    { label: 'Concluídos', value: `${doneShots}/${totalShots}`, color: COL.green },
+    { label: 'Progresso', value: `${progress}%`, color: progress === 100 ? COL.green : COL.gold },
+    { label: 'Duração Total', value: formatDuration(totalDurAll), color: COL.accent }
+  ];
+  const statW = usableW / statsItems.length;
+  statsItems.forEach((st, i) => {
+    const sx = margin + i * statW + statW / 2;
+    ctx.font = font(13, '700'); ctx.fillStyle = st.color; ctx.textAlign = 'center';
+    ctx.fillText(st.value, sx, curY + 18);
+    ctx.font = font(7, '500'); ctx.fillStyle = COL.muted;
+    ctx.fillText(st.label, sx, curY + 30);
+    ctx.textAlign = 'left';
+    // Divider
+    if (i < statsItems.length - 1) {
+      drawLine(margin + (i + 1) * statW, margin + (i + 1) * statW, curY + 8, COL.border, 0.5);
+      const lineEndY = curY + 34;
+      ctx.beginPath(); ctx.moveTo(margin + (i + 1) * statW, curY + 8);
+      ctx.lineTo(margin + (i + 1) * statW, lineEndY);
+      ctx.strokeStyle = COL.border; ctx.lineWidth = 0.5; ctx.stroke();
+    }
+  });
+  curY += 52;
+
+  // ========== SEPARATOR ==========
+  drawLine(margin, margin + usableW, curY, COL.border, 0.8);
+  curY += 12;
+
+  // ========== SECTION TITLE ==========
+  ctx.font = font(8, '700'); ctx.fillStyle = COL.muted;
+  ctx.fillText('ROTEIRO DETALHADO', margin, curY + 8);
+  curY += 20;
+
+  // ========== SCENES ==========
   const order = roteiroShootOrder || roteiroScenes.map((_, i) => ({ sceneIdx: i }));
   order.forEach((ref, oi) => {
     const scene = roteiroScenes[ref.sceneIdx];
     if (!scene) return;
-    curY += 12;
-    const totalDur = (scene.shots || []).reduce((s, sh) => s + (sh.duration || 0), 0);
-    const mm = Math.floor(totalDur / 60); const sec = totalDur % 60;
-    const durStr = mm > 0 ? `${mm}:${String(sec).padStart(2,'0')}` : `${totalDur}s`;
-    drawText(`${oi + 1}. ${scene.title || 'Cena'}  ${scene.location ? '\u2014 ' + scene.location : ''}  [${durStr}]`, 13, { bold: true });
-    if (scene.note) drawText(`Nota: ${scene.note}`, 9, { color: '#888', indent: 16 });
+    const shots = scene.shots || [];
+    const sceneDur = shots.reduce((s, sh) => s + (sh.duration || 0), 0);
+    const sceneDone = shots.filter(sh => sh.done).length;
 
-    (scene.shots || []).forEach((shot, pi) => {
-      const check = shot.done ? '\u2611' : '\u2610';
-      const durS = shot.duration ? ` (${shot.duration}s)` : '';
-      drawText(`${check}  ${shot.title || 'Plano ' + (pi + 1)}${durS}`, 10, { indent: 24, color: shot.done ? '#999' : '#222' });
-      if (shot.note) drawText(`Nota: ${shot.note}`, 8, { color: '#888', indent: 40 });
-      if (shot.speech) drawText(`Fala: "${shot.speech}"`, 8, { color: '#b8860b', indent: 40 });
+    // Estimate card height for page break
+    let estH = 44 + shots.length * 28 + (scene.note ? 20 : 0);
+    shots.forEach(sh => { if (sh.note) estH += 16; if (sh.speech) estH += 16; });
+    ensureSpace(Math.min(estH, 120));
+
+    // --- Scene card header ---
+    drawRoundedRect(margin, curY, usableW, 32, 8, COL.sceneBg, COL.sceneBorder);
+
+    // Scene number circle
+    const circX = margin + 18, circY = curY + 16;
+    ctx.beginPath(); ctx.arc(circX, circY, 10, 0, Math.PI * 2);
+    ctx.fillStyle = COL.accent; ctx.fill();
+    ctx.font = font(10, '700'); ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+    ctx.fillText(String(oi + 1), circX, circY + 4); ctx.textAlign = 'left';
+
+    // Scene title
+    ctx.font = font(11, '700'); ctx.fillStyle = COL.text;
+    ctx.fillText(scene.title || 'Cena ' + (oi + 1), margin + 34, curY + 20);
+
+    // Location pill
+    let pillX = margin + 34;
+    ctx.font = font(11, '700');
+    pillX += ctx.measureText(scene.title || 'Cena ' + (oi + 1)).width + 10;
+    if (scene.location) {
+      drawPill('\u{1F4CD} ' + scene.location, pillX, curY + 8, COL.textSoft, COL.mutedLight);
+      ctx.font = font(8, '600');
+      pillX += ctx.measureText('\u{1F4CD} ' + scene.location).width + 22;
+    }
+
+    // Duration & progress on right
+    const rightInfo = `${formatDuration(sceneDur)}  \u2022  ${sceneDone}/${shots.length} planos`;
+    ctx.font = font(8, '500'); ctx.fillStyle = COL.muted;
+    const riw = ctx.measureText(rightInfo).width;
+    ctx.fillText(rightInfo, margin + usableW - riw - 12, curY + 20);
+
+    curY += 38;
+
+    // Scene note
+    if (scene.note) {
+      ensureSpace(20);
+      drawRoundedRect(margin + 12, curY, usableW - 24, 1, 0, null, null);
+      ctx.font = font(7, '700'); ctx.fillStyle = COL.accent;
+      ctx.fillText('NOTA DA CENA:', margin + 16, curY + 9);
+      ctx.font = font(8, '400'); ctx.fillStyle = COL.textSoft;
+      const noteX = margin + 16 + ctx.measureText('NOTA DA CENA: ').width + 4;
+      ctx.font = font(7, '700');
+      const lblW = ctx.measureText('NOTA DA CENA:').width;
+      ctx.font = font(8, '400'); ctx.fillStyle = COL.textSoft;
+      const noteLines = wrapText(scene.note, usableW - 40 - lblW, 8, '400');
+      ctx.fillText(noteLines[0] || '', margin + 16 + lblW + 6, curY + 9);
+      curY += 14;
+      if (noteLines.length > 1) {
+        noteLines.slice(1).forEach(nl => {
+          ensureSpace(12);
+          ctx.font = font(8, '400'); ctx.fillStyle = COL.textSoft;
+          ctx.fillText(nl, margin + 24, curY + 8);
+          curY += 12;
+        });
+      }
+    }
+
+    // --- Shots ---
+    shots.forEach((shot, pi) => {
+      ensureSpace(40);
+      const shotY = curY;
+      const shotH = 22;
+
+      // Alternating bg
+      if (pi % 2 === 0) {
+        drawRoundedRect(margin + 8, shotY, usableW - 16, shotH, 4, 'rgba(241,245,249,0.6)');
+      }
+
+      // Checkbox
+      const cbX = margin + 18, cbY = shotY + 5;
+      drawRoundedRect(cbX, cbY, 12, 12, 2, shot.done ? COL.green : '#fff', shot.done ? COL.green : COL.border);
+      if (shot.done) {
+        ctx.beginPath(); ctx.moveTo(cbX + 3, cbY + 6); ctx.lineTo(cbX + 5.5, cbY + 9); ctx.lineTo(cbX + 9, cbY + 3.5);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.8; ctx.stroke();
+      }
+
+      // Shot number
+      ctx.font = font(7, '500'); ctx.fillStyle = COL.muted;
+      ctx.fillText(`#${pi + 1}`, margin + 36, shotY + 14);
+
+      // Shot title
+      ctx.font = font(9, shot.done ? '400' : '600'); ctx.fillStyle = shot.done ? COL.muted : COL.text;
+      ctx.fillText(shot.title || 'Plano ' + (pi + 1), margin + 52, shotY + 14);
+
+      // Duration badge
+      if (shot.duration) {
+        const durLabel = formatDuration(shot.duration);
+        ctx.font = font(7, '600');
+        const dw = ctx.measureText(durLabel).width;
+        const durX = margin + usableW - dw - 26;
+        drawRoundedRect(durX, shotY + 4, dw + 12, 14, 7, COL.accentLight);
+        ctx.fillStyle = COL.accent; ctx.font = font(7, '600');
+        ctx.fillText(durLabel, durX + 6, shotY + 14);
+      }
+
+      curY += shotH + 2;
+
+      // Shot note
+      if (shot.note) {
+        ensureSpace(16);
+        drawRoundedRect(margin + 48, curY, usableW - 64, 1, 0, null);
+        ctx.font = font(7, '600'); ctx.fillStyle = COL.accent;
+        ctx.fillText('\u270E', margin + 50, curY + 9);
+        ctx.font = font(7, '600'); ctx.fillStyle = COL.accent;
+        ctx.fillText('Nota:', margin + 62, curY + 9);
+        ctx.font = font(7.5, '400'); ctx.fillStyle = COL.textSoft;
+        const noteLines2 = wrapText(shot.note, usableW - 120, 7.5, '400');
+        ctx.fillText(noteLines2[0] || '', margin + 86, curY + 9);
+        curY += 13;
+        if (noteLines2.length > 1) {
+          noteLines2.slice(1).forEach(nl => {
+            ensureSpace(11);
+            ctx.font = font(7.5, '400'); ctx.fillStyle = COL.textSoft;
+            ctx.fillText(nl, margin + 86, curY + 8);
+            curY += 11;
+          });
+        }
+      }
+
+      // Shot speech
+      if (shot.speech) {
+        ensureSpace(16);
+        ctx.font = font(7, '600'); ctx.fillStyle = COL.gold;
+        ctx.fillText('\u{1F3A4}', margin + 50, curY + 9);
+        ctx.font = font(7, '700'); ctx.fillStyle = COL.gold;
+        ctx.fillText('Fala:', margin + 64, curY + 9);
+        ctx.font = font(7.5, '400'); ctx.fillStyle = COL.goldDark;
+        const speechLines = wrapText('"' + shot.speech + '"', usableW - 124, 7.5, '400');
+        ctx.fillText(speechLines[0] || '', margin + 88, curY + 9);
+        curY += 13;
+        if (speechLines.length > 1) {
+          speechLines.slice(1).forEach(sl => {
+            ensureSpace(11);
+            ctx.font = font(7.5, '400'); ctx.fillStyle = COL.goldDark;
+            ctx.fillText(sl, margin + 88, curY + 8);
+            curY += 11;
+          });
+        }
+      }
     });
+
+    curY += 10;
+    // Scene separator
+    if (oi < order.length - 1) {
+      drawLine(margin + 40, margin + usableW - 40, curY, COL.border, 0.3);
+      curY += 10;
+    }
   });
 
+  // ========== COSTS SECTION ==========
+  if (projCosts && projCosts.length > 0) {
+    curY += 8;
+    ensureSpace(60);
+    drawLine(margin, margin + usableW, curY, COL.border, 0.8); curY += 14;
+    ctx.font = font(8, '700'); ctx.fillStyle = COL.muted;
+    ctx.fillText('CUSTOS OPERACIONAIS', margin, curY + 8); curY += 20;
+    const costsTotal = projCosts.reduce((s, c) => s + (c.value || 0), 0);
+    projCosts.forEach(c => {
+      ensureSpace(16);
+      ctx.font = font(9, '600'); ctx.fillStyle = COL.text;
+      ctx.fillText('R$ ' + (c.value || 0).toFixed(2).replace('.', ','), margin + 8, curY + 10);
+      ctx.font = font(8, '400'); ctx.fillStyle = COL.textSoft;
+      ctx.fillText(c.reason || '', margin + 80, curY + 10);
+      curY += 16;
+    });
+    // Total
+    drawLine(margin + 8, margin + 160, curY, COL.gold, 0.8); curY += 8;
+    ctx.font = font(10, '700'); ctx.fillStyle = COL.gold;
+    ctx.fillText('Total: R$ ' + costsTotal.toFixed(2).replace('.', ','), margin + 8, curY + 10);
+    curY += 18;
+  }
+
   canvasPages.push(cvs);
+
+  // ========== FOOTER ON ALL PAGES ==========
+  const totalPages = canvasPages.length;
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  canvasPages.forEach((c, i) => {
+    const cx = c.getContext('2d');
+    cx.save(); cx.scale(2, 2);
+    // Footer line
+    cx.beginPath(); cx.moveTo(margin, pageH - 30); cx.lineTo(margin + usableW, pageH - 30);
+    cx.strokeStyle = COL.border; cx.lineWidth = 0.5; cx.stroke();
+    // Left: brand + date
+    cx.font = font(7, '400'); cx.fillStyle = COL.muted;
+    cx.fillText('FullPro Media Club  \u2022  ' + dateStr, margin, pageH - 18);
+    // Right: page number
+    const pgText = `${i + 1} / ${totalPages}`;
+    cx.font = font(7, '500'); cx.fillStyle = COL.muted;
+    const pgW = cx.measureText(pgText).width;
+    cx.fillText(pgText, margin + usableW - pgW, pageH - 18);
+    cx.restore();
+  });
 
   // Fill white bg on all pages
   canvasPages.forEach(c => {
