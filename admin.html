@@ -4183,6 +4183,7 @@ function buildPostCard(dest, data) {
   } else {
     // Filled state: embed + engagement + actions
     const ytId = extractYouTubeId(data.link);
+    const igShortcode = extractIGShortcode(data.link);
     let embedHtml = '';
 
     if (ytId) {
@@ -4233,15 +4234,15 @@ function buildPostCard(dest, data) {
       <div class="engagement-row">
         <div class="engagement-stat">
           <div class="e-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
-          <div><div class="e-val">${formatNum(views)}</div><div class="e-label">views</div></div>
+          <div class="e-val">${formatNum(views)}</div>
         </div>
         <div class="engagement-stat">
           <div class="e-icon"><svg viewBox="0 0 24 24" fill="${likes > 0 ? '#ff4d6a' : 'none'}" stroke="${likes > 0 ? '#ff4d6a' : 'var(--text-muted)'}" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
-          <div><div class="e-val">${formatNum(likes)}</div><div class="e-label">likes</div></div>
+          <div class="e-val">${formatNum(likes)}</div>
         </div>
         <div class="engagement-stat">
           <div class="e-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
-          <div><div class="e-val">${formatNum(comments)}</div><div class="e-label">coment.</div></div>
+          <div class="e-val">${formatNum(comments)}</div>
         </div>
       </div>
       <div class="post-share-row">
@@ -4252,6 +4253,10 @@ function buildPostCard(dest, data) {
       </div>
       <div class="post-actions">
         ${ytId ? `<button class="post-action-btn" onclick="refreshYTStats('${dest}','${ytId}')" id="ytRefresh_${dest}">
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+          Atualizar dados
+        </button>` : ''}
+        ${igShortcode ? `<button class="post-action-btn" onclick="refreshIGStats('${dest}','${igShortcode}')" id="igRefresh_${dest}">
           <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
           Atualizar dados
         </button>` : ''}
@@ -4311,10 +4316,18 @@ async function savePostSingle(dest) {
   if (!p.posts) p.posts = {};
   p.posts[dest] = { link, views: 0, likes: 0, comments: 0 };
 
-  // Try auto-fetch YouTube stats
+  // Try auto-fetch engagement stats
   const ytId = extractYouTubeId(link);
+  const igShortcode = extractIGShortcode(link);
   if (ytId) {
     const stats = await fetchYTStats(ytId);
+    if (stats) {
+      p.posts[dest].views = stats.views;
+      p.posts[dest].likes = stats.likes;
+      p.posts[dest].comments = stats.comments;
+    }
+  } else if (igShortcode) {
+    const stats = await fetchIGStats(igShortcode);
     if (stats) {
       p.posts[dest].views = stats.views;
       p.posts[dest].likes = stats.likes;
@@ -4365,7 +4378,76 @@ async function fetchYTStats(videoId) {
   return null;
 }
 
-/* ── Auto-refresh engagement every 60s ── */
+/* ── Instagram Graph API helpers ── */
+function extractIGShortcode(url) {
+  if (!url) return null;
+  const m = url.match(/instagram\.com\/(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+
+// Cache of IG media list to avoid repeated API calls
+let igMediaCache = null;
+let igMediaCacheTime = 0;
+
+async function fetchIGStats(shortcode) {
+  const token = window.FULLPRO_CONFIG?.IG_ACCESS_TOKEN;
+  const userId = window.FULLPRO_CONFIG?.IG_USER_ID;
+  if (!token || !userId) return null;
+
+  try {
+    // Use cache if less than 5 min old
+    const now = Date.now();
+    if (!igMediaCache || now - igMediaCacheTime > 300000) {
+      const res = await fetch(`https://graph.facebook.com/v21.0/${userId}/media?fields=id,shortcode,permalink,like_count,comments_count&limit=50&access_token=${token}`);
+      const json = await res.json();
+      if (json.error) { console.warn('IG API error:', json.error.message); return null; }
+      igMediaCache = json.data || [];
+      igMediaCacheTime = now;
+    }
+
+    // Find the media by shortcode
+    const media = igMediaCache.find(m => m.shortcode === shortcode || (m.permalink && m.permalink.includes(shortcode)));
+    if (!media) return null;
+
+    // Try to get insights (impressions/reach) for business accounts
+    let views = 0;
+    try {
+      const insRes = await fetch(`https://graph.facebook.com/v21.0/${media.id}/insights?metric=impressions&access_token=${token}`);
+      const insJson = await insRes.json();
+      if (insJson.data && insJson.data[0]) {
+        views = insJson.data[0].values?.[0]?.value || 0;
+      }
+    } catch(e) { /* impressions may not be available for all media types */ }
+
+    return {
+      views: views,
+      likes: parseInt(media.like_count) || 0,
+      comments: parseInt(media.comments_count) || 0
+    };
+  } catch (e) { console.warn('IG API error:', e); }
+  return null;
+}
+
+async function refreshIGStats(dest, shortcode) {
+  const btn = document.getElementById('igRefresh_' + dest);
+  if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
+
+  const stats = await fetchIGStats(shortcode);
+  if (!stats) { alert('Não foi possível atualizar. Configure IG_ACCESS_TOKEN e IG_USER_ID no config.js'); if (btn) { btn.disabled = false; btn.style.opacity = '1'; } return; }
+
+  const p = PROJECTS.find(x => x.id === projDetailId);
+  if (!p || !p.posts?.[dest]) return;
+
+  p.posts[dest].views = stats.views;
+  p.posts[dest].likes = stats.likes;
+  p.posts[dest].comments = stats.comments;
+
+  await sb.from('projects').update({ posts: p.posts }).eq('id', projDetailId);
+  renderProjTabPostagem(p);
+  if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+}
+
+/* ── Auto-refresh engagement every 60 min ── */
 let engagementInterval = null;
 
 function startEngagementAutoRefresh() {
@@ -4389,20 +4471,26 @@ async function autoRefreshEngagement() {
     const post = p.posts[dest];
     if (!post.link) continue;
 
+    let stats = null;
     const ytId = extractYouTubeId(post.link);
+    const igShortcode = extractIGShortcode(post.link);
+
     if (ytId && apiKey) {
-      const stats = await fetchYTStats(ytId);
-      if (stats) {
-        const changed = post.views !== stats.views || post.likes !== stats.likes || post.comments !== stats.comments;
-        if (changed) {
-          post.views = stats.views;
-          post.likes = stats.likes;
-          post.comments = stats.comments;
-          updated = true;
-        }
+      stats = await fetchYTStats(ytId);
+    } else if (igShortcode) {
+      stats = await fetchIGStats(igShortcode);
+    }
+    // Future: add TikTok API fetching here
+
+    if (stats) {
+      const changed = post.views !== stats.views || post.likes !== stats.likes || post.comments !== stats.comments;
+      if (changed) {
+        post.views = stats.views;
+        post.likes = stats.likes;
+        post.comments = stats.comments;
+        updated = true;
       }
     }
-    // Future: add TikTok/Instagram API fetching here
   }
 
   if (updated) {
