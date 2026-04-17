@@ -64,6 +64,41 @@ Sempre que houver um campo de link (input, display, ou botão de link) no site, 
 .url-display-item a { color: #a78bfa; text-decoration: none; flex: 1; }
 ```
 
+---
+
+## Botões — Regras de Cor
+
+### Verde (`--success` / `.action-btn.approve`) — EXCLUSIVO para:
+- **Salvar** (salvar projeto, salvar agendamento, salvar template, etc.)
+- **Aprovar** (aprovar agendamento, marcar como pago)
+- **WhatsApp** (`.action-btn.whats` com `#25D366`)
+
+### Vermelho (`--danger` / `.action-btn.reject` / `.action-btn.danger`) — EXCLUSIVO para:
+- **Excluir** (lixeira, remover item)
+- **Cancelar / Rejeitar** (rejeitar agendamento)
+
+### Azul lua `#8b9cf7` (`.action-btn.view`) — PADRÃO para todo o resto:
+- **Criar** (+ Novo projeto, + Novo agendamento, + Novo post, etc.)
+- **Ações gerais** (Ver, Editar, Galeria, Tirar foto, Upload, Baixar CSV, etc.)
+- **Adicionar** (+ custos, + links, + bloquear data)
+- **Configurar** (editar regras, alterar senha, criar usuário)
+
+### Cores CSS
+```css
+/* Azul padrão (lua / moon) */
+.action-btn.view {
+  background: rgba(139,156,247,.15);
+  border-color: rgba(139,156,247,.4);
+  color: #8b9cf7;
+}
+.action-btn.view:hover {
+  background: rgba(139,156,247,.25);
+  border-color: #8b9cf7;
+}
+```
+
+---
+
 ### Ícone SVG de link (corrente)
 ```html
 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2">

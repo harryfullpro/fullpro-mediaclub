@@ -350,7 +350,10 @@
   .action-btn.approve:hover { background: #36df89; }
   .action-btn.reject { background: transparent; color: var(--danger); border-color: rgba(255,77,77,.3); }
   .action-btn.reject:hover { background: rgba(255,77,77,.1); }
-  .action-btn.view { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .action-btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+  .action-btn.danger:hover { background: #ff5555; }
+  .action-btn.view { background: rgba(139,156,247,.15); border-color: rgba(139,156,247,.4); color: #8b9cf7; }
+  .action-btn.view:hover { background: rgba(139,156,247,.25); border-color: #8b9cf7; }
   .action-btn.whats {
     background: #25D366; border-color: #25D366; color: #00180a;
   }
@@ -1623,7 +1626,7 @@
           <h1>Agenda</h1>
           <p>Gerencie agendamentos e bloqueios de datas.</p>
         </div>
-        <button class="action-btn approve" style="padding:12px 20px; font-size:14px" onclick="openBookingModal()">+ Novo agendamento</button>
+        <button class="action-btn view" style="padding:12px 20px; font-size:14px" onclick="openBookingModal()">+ Novo agendamento</button>
       </div>
 
       <div class="cal-admin">
@@ -1678,7 +1681,7 @@
               <label>Especifique</label>
               <input type="text" id="blockReasonCustom" placeholder="Motivo personalizado" />
             </div>
-            <button class="action-btn approve" style="padding:10px; font-size:13px" id="addBlockBtn">+ Bloquear data</button>
+            <button class="action-btn view" style="padding:10px; font-size:13px" id="addBlockBtn">+ Bloquear data</button>
             <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:4px">
               <p style="font-size:11px; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px; font-weight:600">Bloqueios ativos</p>
               <div class="list-blocked" id="blockedList"></div>
@@ -1712,7 +1715,7 @@
           <h1>Templates WhatsApp</h1>
           <p>Gerencie as mensagens pré-definidas. Use variáveis para personalizar automaticamente.</p>
         </div>
-        <button class="action-btn approve" style="padding:12px 20px; font-size:14px" onclick="openTplEditor()">+ Novo template</button>
+        <button class="action-btn view" style="padding:12px 20px; font-size:14px" onclick="openTplEditor()">+ Novo template</button>
       </div>
       <div class="tpl-vars" style="margin-bottom:18px">
         <span style="font-size:11px; color:var(--text-muted); margin-right:4px">Variáveis disponíveis:</span>
@@ -1767,7 +1770,7 @@
       <div class="cal-card" style="max-width:520px">
         <h3>Exportar</h3>
         <p class="sub">Gere um CSV com todas as solicitações recebidas.</p>
-        <button class="action-btn approve" style="width:100%; padding: 12px; margin-bottom: 10px" onclick="exportCSV()"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Baixar CSV</button>
+        <button class="action-btn view" style="width:100%; padding: 12px; margin-bottom: 10px" onclick="exportCSV()"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Baixar CSV</button>
         <button class="action-btn reject" style="width:100%; padding: 12px" onclick="clearData()"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg> Limpar todos os dados</button>
       </div>
     </div>
@@ -1779,7 +1782,7 @@
           <h1>Projetos</h1>
           <p>Planeje roteiros, destinos e referências para cada produção.</p>
         </div>
-        <button class="action-btn approve" style="padding:12px 20px; font-size:14px" onclick="openProjectDetail()">+ Novo projeto</button>
+        <button class="action-btn view" style="padding:12px 20px; font-size:14px" onclick="openProjectDetail()">+ Novo projeto</button>
       </div>
 
       <!-- Project filters -->
@@ -1861,7 +1864,7 @@
           <h1>Meus Posts</h1>
           <p>Registre e acompanhe a performance de cada publicação.</p>
         </div>
-        <button class="action-btn approve" style="padding:10px 16px;font-size:13px" onclick="openAddPostModal()">+ Novo post</button>
+        <button class="action-btn view" style="padding:10px 16px;font-size:13px" onclick="openAddPostModal()">+ Novo post</button>
       </div>
       <div class="proj-filters" style="margin-bottom:16px">
         <button class="proj-filter-chip active" data-post-filter="todos" onclick="setPerfPostFilter('todos')">Todos</button>
@@ -1883,7 +1886,7 @@
           <h1>Influenciadores</h1>
           <p id="infSubtitle">Comparativo conteúdo geral × patrocinado FullPro.</p>
         </div>
-        <button class="action-btn approve" style="padding:10px 16px;font-size:13px" onclick="openAddInfluencerModal()">+ Novo influenciador</button>
+        <button class="action-btn view" style="padding:10px 16px;font-size:13px" onclick="openAddInfluencerModal()">+ Novo influenciador</button>
       </div>
       <!-- Summary stats -->
       <div class="stats-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:18px" id="infSummaryCards"></div>
@@ -1972,7 +1975,7 @@
             <input type="text" class="login-input" id="newUserPhone" placeholder="Telefone" style="margin:0"/>
             <input type="text" class="login-input" id="newUserRole" placeholder="Cargo (ex: Operador)" style="margin:0"/>
             <input type="password" class="login-input" id="newUserPw" placeholder="Senha" style="margin:0"/>
-            <button class="action-btn approve" style="width:100%;padding:12px" onclick="createUser()">
+            <button class="action-btn view" style="width:100%;padding:12px" onclick="createUser()">
               <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
               Criar usuário
             </button>
@@ -3482,7 +3485,7 @@ function renderProjects() {
           <select class="proj-status-select ${p.status}" onchange="quickUpdateProjectStatus('${p.id}',this.value)">
             ${['planejamento','producao','edicao','a_publicar','concluido'].map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${statusMap[s]}</option>`).join('')}
           </select>
-          <button class="action-btn approve" style="padding:4px 10px;font-size:11px" onclick="openProjectDetail('${p.id}')">
+          <button class="action-btn view" style="padding:4px 10px;font-size:11px" onclick="openProjectDetail('${p.id}')">
             <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             Ver
           </button>
@@ -3985,9 +3988,9 @@ function renderProjTabProducao(p) {
               <span style="font-size:10px;color:var(--text-muted)">R$</span>
               <input type="text" class="login-input" id="projCostValue" style="margin:0" placeholder="0,00" oninput="maskCurrency(this)"/>
             </div>
-            <button class="action-btn approve" style="padding:8px 14px" onclick="addProjCost()">+</button>
+            <button class="action-btn view" style="padding:8px 14px" onclick="addProjCost()">+</button>
           </div>
-          <button class="action-btn approve" style="padding:8px 14px;font-size:12px;margin-top:8px;display:inline-flex;align-items:center;gap:6px" onclick="sendCostsWhatsApp()">
+          <button class="action-btn whats" style="padding:8px 14px;font-size:12px;margin-top:8px;display:inline-flex;align-items:center;gap:6px" onclick="sendCostsWhatsApp()">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
             Enviar custos ao financeiro
           </button>
@@ -4002,7 +4005,7 @@ function renderProjTabProducao(p) {
             Galeria
           </label>
           <input type="file" id="projPhotoFile" accept="image/*" multiple hidden onchange="addProjPhotos(this, false)"/>
-          <label class="action-btn approve" style="padding:8px 14px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px" for="projCameraFile">
+          <label class="action-btn view" style="padding:8px 14px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px" for="projCameraFile">
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
             Tirar foto
           </label>
@@ -5190,7 +5193,7 @@ function renderEditingView() {
             <option value="a_publicar" ${p.status === 'a_publicar' ? 'selected' : ''}>A publicar</option>
             <option value="concluido" ${p.status === 'concluido' ? 'selected' : ''}>Concluído</option>
           </select>
-          <button class="action-btn approve" style="padding:4px 10px;font-size:11px" onclick="openProjectDetail('${p.id}')">
+          <button class="action-btn view" style="padding:4px 10px;font-size:11px" onclick="openProjectDetail('${p.id}')">
             <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             Ver completo
           </button>
