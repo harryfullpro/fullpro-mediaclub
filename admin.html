@@ -609,7 +609,21 @@
     align-items: center; justify-content: center; transition: all .15s; padding: 0;
   }
   .rot-icon-btn:hover { border-color: #8b9cf7; color: #8b9cf7; background: rgba(139,156,247,.08); }
+  .rot-icon-btn.rot-speech-btn:hover { border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,.08); }
   .rot-icon-btn.rot-delete:hover { border-color: var(--danger); color: var(--danger); background: rgba(255,77,77,.08); }
+  /* Icon-only tooltip popup */
+  .rot-icon-btn { position: relative; }
+  .rot-icon-btn .rot-tip {
+    display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    padding: 5px 10px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 6px;
+    font-size: 10px; font-weight: 500; color: var(--text-dim); white-space: nowrap; z-index: 20;
+    pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,.25);
+  }
+  .rot-icon-btn .rot-tip::after {
+    content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    border: 5px solid transparent; border-top-color: var(--border);
+  }
+  .rot-icon-btn:hover .rot-tip { display: block; }
   .rot-shot {
     display: flex; align-items: center; gap: 8px; padding: 8px 14px 8px 48px;
     border-top: 1px solid var(--border); transition: background .1s; min-height: 42px;
@@ -4262,13 +4276,16 @@ function renderClaqueteView(container) {
         <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0">
           <span class="rot-duration">${formatDuration(totalDur)}</span>
           <span style="font-size:11px;color:var(--text-muted)">${doneCount}/${totalShots}</span>
-          <button class="rot-icon-btn" onclick="event.stopPropagation();addRoteiroShot(${si})" title="Adicionar plano">
+          <button class="rot-icon-btn" onclick="event.stopPropagation();addRoteiroShot(${si})">
+            <span class="rot-tip">Adicionar plano</span>
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
-          <button class="rot-icon-btn" onclick="event.stopPropagation();addSceneNote(${si})" title="Adicionar nota">
+          <button class="rot-icon-btn" onclick="event.stopPropagation();addSceneNote(${si})">
+            <span class="rot-tip">Nota ao editor</span>
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           </button>
-          <button class="rot-icon-btn rot-delete" onclick="event.stopPropagation();deleteScene(${si})" title="Excluir cena">
+          <button class="rot-icon-btn rot-delete" onclick="event.stopPropagation();deleteScene(${si})">
+            <span class="rot-tip">Excluir cena</span>
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
@@ -4323,9 +4340,9 @@ function renderShots(shots, si) {
       <span class="rot-shot-title ${shot.done?'done':''}" contenteditable="true" onblur="updateShotTitle(${si},${pi},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" data-placeholder="Descrição do plano">${escHtml(shot.title || '')}</span>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0">
         <input type="text" class="rot-dur-input" value="${shot.duration||0}" onblur="updateShotDuration(${si},${pi},this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" title="Duração em segundos"/> <span style="font-size:10px;color:var(--text-muted)">s</span>
-        ${shot.note !== undefined && shot.note !== null ? '' : `<button class="rot-icon-btn" onclick="addShotNote(${si},${pi})" title="Nota ao editor"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button>`}
-        ${shot.speech !== undefined && shot.speech !== null ? '' : `<button class="rot-icon-btn" onclick="addShotSpeech(${si},${pi})" title="Fala do apresentador"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></button>`}
-        <button class="rot-icon-btn rot-delete" onclick="deleteShot(${si},${pi})" title="Excluir plano">
+        ${shot.note !== undefined && shot.note !== null ? '' : `<button class="rot-icon-btn" onclick="addShotNote(${si},${pi})"><span class="rot-tip">Nota ao editor</span><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button>`}
+        ${shot.speech !== undefined && shot.speech !== null ? '' : `<button class="rot-icon-btn rot-speech-btn" onclick="addShotSpeech(${si},${pi})"><span class="rot-tip">Fala do apresentador</span><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></button>`}
+        <button class="rot-icon-btn rot-delete" onclick="deleteShot(${si},${pi})"><span class="rot-tip">Excluir plano</span>
           <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
