@@ -1425,6 +1425,7 @@
      ============================================ */
   @media (max-width: 1200px) {
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .dash-kpi-row { grid-template-columns: repeat(2, 1fr) !important; }
     .cal-top { grid-template-columns: 1fr 1fr !important; }
     #perfInfluencersList { grid-template-columns: 1fr !important; }
     #infSummaryCards { grid-template-columns: 1fr !important; }
@@ -1474,6 +1475,7 @@
     /* Stats grid */
     .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
     .stats-grid[style*="repeat(5"] { grid-template-columns: 1fr 1fr !important; }
+    .dash-kpi-row { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
     .stat-card { padding: 14px; }
     .stat-card .value { font-size: 26px; }
     .stat-card .label { font-size: 10px; }
@@ -1563,6 +1565,7 @@
   @media (max-width: 480px) {
     main { padding: 12px; }
     .stats-grid { grid-template-columns: 1fr; gap: 8px; }
+    .dash-kpi-row { grid-template-columns: 1fr !important; }
     .stat-card { padding: 12px; }
     .stat-card .value { font-size: 24px; }
     .page-head h1 { font-size: 22px; }
@@ -6514,105 +6517,142 @@ function renderDashboard() {
 
   const recentProjects = [...PROJECTS].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)).slice(0, 5);
 
+  const activeProjects = projByStatus.planejamento + projByStatus.producao + projByStatus.edicao + projByStatus.a_publicar;
+  const completionRate = projTotal > 0 ? Math.round((projByStatus.concluido / projTotal) * 100) : 0;
+
+  // Pipeline segments for visual bar
+  const pipelineOrder = ['planejamento', 'producao', 'edicao', 'a_publicar', 'concluido'];
+  const pipelineSegments = pipelineOrder.map(k => {
+    const pct = projTotal > 0 ? (projByStatus[k] / projTotal * 100) : 0;
+    return { key: k, label: statusMap[k], count: projByStatus[k], pct, color: statusColors[k] };
+  }).filter(s => s.count > 0);
+
   el.innerHTML = `
-    <!-- KPI Cards -->
-    <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:24px">
-      <div class="stat-card primary">
-        <div class="label">Pendentes</div>
-        <div class="value">${pending}</div>
+    <!-- Hero KPI row -->
+    <div class="dash-kpi-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;align-items:center;gap:14px">
+        <div style="width:46px;height:46px;border-radius:12px;background:rgba(255,45,45,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--primary)" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Pendentes</div>
+          <div style="font-family:'Bebas Neue';font-size:32px;line-height:1;color:var(--primary)">${pending}</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${thisMonth} este mes</div>
+        </div>
       </div>
-      <div class="stat-card" style="border-left:3px solid var(--success)">
-        <div class="label">Aprovadas</div>
-        <div class="value">${approved}</div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;align-items:center;gap:14px">
+        <div style="width:46px;height:46px;border-radius:12px;background:rgba(31,210,122,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Aprovadas</div>
+          <div style="font-family:'Bebas Neue';font-size:32px;line-height:1;color:var(--success)">${approved}</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${rejected} rejeitada${rejected !== 1 ? 's' : ''}</div>
+        </div>
       </div>
-      <div class="stat-card" style="border-left:3px solid #a855f7">
-        <div class="label">Projetos ativos</div>
-        <div class="value">${projByStatus.planejamento + projByStatus.producao + projByStatus.edicao + projByStatus.a_publicar}</div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;align-items:center;gap:14px">
+        <div style="width:46px;height:46px;border-radius:12px;background:rgba(168,85,247,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#a855f7" stroke-width="1.8"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Projetos ativos</div>
+          <div style="font-family:'Bebas Neue';font-size:32px;line-height:1;color:#a855f7">${activeProjects}</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${projByStatus.concluido} concluido${projByStatus.concluido !== 1 ? 's' : ''}</div>
+        </div>
       </div>
-      <div class="stat-card" style="border-left:3px solid #f59e0b">
-        <div class="label">Custos totais</div>
-        <div class="value" style="font-size:24px">R$ ${formatBRL(totalCosts)}</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">Este mês</div>
-        <div class="value">${thisMonth}<small>solicitações</small></div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;align-items:center;gap:14px">
+        <div style="width:46px;height:46px;border-radius:12px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#f59e0b" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Custos totais</div>
+          <div style="font-family:'Bebas Neue';font-size:28px;line-height:1;color:#f59e0b">R$ ${formatBRL(totalCosts)}</div>
+        </div>
       </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-      <!-- Projetos por status -->
-      <div class="cal-card">
-        <h3 style="margin-bottom:12px">Projetos por status</h3>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          ${Object.entries(projByStatus).map(([k, v]) => {
-            const pct = projTotal > 0 ? (v / projTotal * 100) : 0;
-            return `<div>
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-                <span style="font-size:12px;color:var(--text-dim)">${statusMap[k]}</span>
-                <span style="font-size:13px;font-weight:600;color:var(--text)">${v}</span>
-              </div>
-              <div style="height:6px;background:var(--bg-elev);border-radius:3px;overflow:hidden">
-                <div style="height:100%;width:${pct}%;background:${statusColors[k]};border-radius:3px;transition:width .4s"></div>
-              </div>
-            </div>`;
-          }).join('')}
-        </div>
-        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Total de projetos</span>
-          <span style="font-family:'Bebas Neue';font-size:24px;color:var(--text)">${projTotal}</span>
-        </div>
+    <!-- Pipeline visual -->
+    <div class="cal-card" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h3>Pipeline de projetos</h3>
+        <span style="font-size:12px;color:var(--text-muted)">${projTotal} projeto${projTotal !== 1 ? 's' : ''} no total</span>
       </div>
+      <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--bg-elev);gap:2px;margin-bottom:14px">
+        ${pipelineSegments.map(s => `<div style="height:100%;width:${s.pct}%;background:${s.color};min-width:${s.count > 0 ? '8px' : '0'};transition:width .4s" title="${s.label}: ${s.count}"></div>`).join('')}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:16px">
+        ${pipelineOrder.map(k => `<div style="display:flex;align-items:center;gap:8px">
+          <div style="width:10px;height:10px;border-radius:3px;background:${statusColors[k]};flex-shrink:0"></div>
+          <span style="font-size:12px;color:var(--text-dim)">${statusMap[k]}</span>
+          <span style="font-size:13px;font-weight:700;color:var(--text)">${projByStatus[k]}</span>
+        </div>`).join('')}
+      </div>
+      ${projTotal > 0 ? `<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:12px">
+        <div style="width:48px;height:48px;position:relative">
+          <svg viewBox="0 0 36 36" width="48" height="48" style="transform:rotate(-90deg)">
+            <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--bg-elev)" stroke-width="3"/>
+            <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--success)" stroke-width="3" stroke-dasharray="${completionRate * 0.974} 100" stroke-linecap="round"/>
+          </svg>
+          <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text)">${completionRate}%</span>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Taxa de conclusao</div>
+          <div style="font-size:11px;color:var(--text-muted)">${projByStatus.concluido} de ${projTotal} projetos concluidos</div>
+        </div>
+      </div>` : ''}
+    </div>
 
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
       <!-- Próximos agendamentos -->
       <div class="cal-card">
-        <h3 style="margin-bottom:12px">Próximos agendamentos</h3>
-        ${upcoming.length ? upcoming.map(r => `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
-          <div style="min-width:42px;text-align:center;background:var(--bg-elev);border-radius:8px;padding:6px 8px">
-            <div style="font-family:'Bebas Neue';font-size:18px;line-height:1;color:var(--text)">${new Date(r.date + 'T12:00').getDate()}</div>
-            <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">${new Date(r.date + 'T12:00').toLocaleDateString('pt-BR', { month: 'short' })}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <h3>Proximos agendamentos</h3>
+          ${blockedCount > 0 ? `<span style="font-size:10px;padding:3px 8px;background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.2);border-radius:6px;color:var(--danger);font-weight:600">${blockedCount} bloqueada${blockedCount > 1 ? 's' : ''}</span>` : ''}
+        </div>
+        ${upcoming.length ? upcoming.map((r, i) => `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;${i < upcoming.length - 1 ? 'border-bottom:1px solid var(--border)' : ''}">
+          <div style="min-width:46px;text-align:center;background:var(--bg-elev);border-radius:10px;padding:8px 10px">
+            <div style="font-family:'Bebas Neue';font-size:20px;line-height:1;color:var(--text)">${new Date(r.date + 'T12:00').getDate()}</div>
+            <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;font-weight:600">${new Date(r.date + 'T12:00').toLocaleDateString('pt-BR', { month: 'short' })}</div>
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(r.nome)}</div>
-            <div style="font-size:11px;color:var(--text-dim)">${escHtml(r.moto)} · ${escHtml(r.placa || '')}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(r.nome)}</div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${escHtml(r.moto)} · ${escHtml(r.placa || '')}</div>
           </div>
-        </div>`).join('') : '<p style="color:var(--text-muted);font-size:13px;padding:16px 0;text-align:center">Nenhum agendamento próximo.</p>'}
-        ${blockedCount > 0 ? `<div style="margin-top:10px;padding:8px 12px;background:rgba(255,77,77,.08);border:1px solid rgba(255,77,77,.2);border-radius:8px;font-size:12px;color:var(--danger)">
-          <strong>${blockedCount}</strong> data${blockedCount > 1 ? 's' : ''} bloqueada${blockedCount > 1 ? 's' : ''}
-        </div>` : ''}
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--text-muted)" stroke-width="2" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>`).join('') : '<div style="text-align:center;padding:24px 0"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--text-muted)" stroke-width="1.2" style="margin-bottom:6px;opacity:.4"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div style="font-size:12px;color:var(--text-muted)">Nenhum agendamento proximo</div></div>'}
       </div>
-    </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-      <!-- Check-in / Check-out -->
+      <!-- Frota -->
       <div class="cal-card">
-        <h3 style="margin-bottom:12px">Check-in / Check-out</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center">
-          <div>
-            <div style="font-family:'Bebas Neue';font-size:28px;color:var(--success)">${ciCount}</div>
-            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Entradas</div>
+        <h3 style="margin-bottom:14px">Frota</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+          <div style="text-align:center;padding:14px 8px;background:rgba(31,210,122,.06);border:1px solid rgba(31,210,122,.15);border-radius:10px">
+            <div style="font-family:'Bebas Neue';font-size:26px;color:var(--success);line-height:1">${ciCount}</div>
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-top:4px">Entradas</div>
           </div>
-          <div>
-            <div style="font-family:'Bebas Neue';font-size:28px;color:var(--primary)">${coCount}</div>
-            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Saídas</div>
+          <div style="text-align:center;padding:14px 8px;background:rgba(139,156,247,.06);border:1px solid rgba(139,156,247,.15);border-radius:10px">
+            <div style="font-family:'Bebas Neue';font-size:26px;color:#8b9cf7;line-height:1">${coCount}</div>
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-top:4px">Saidas</div>
           </div>
-          <div>
-            <div style="font-family:'Bebas Neue';font-size:28px;color:${inUse > 0 ? '#f59e0b' : 'var(--text-dim)'}">${inUse > 0 ? inUse : 0}</div>
-            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Em uso</div>
+          <div style="text-align:center;padding:14px 8px;background:${inUse > 0 ? 'rgba(245,158,11,.06)' : 'var(--bg-elev)'};border:1px solid ${inUse > 0 ? 'rgba(245,158,11,.15)' : 'var(--border)'};border-radius:10px">
+            <div style="font-family:'Bebas Neue';font-size:26px;color:${inUse > 0 ? '#f59e0b' : 'var(--text-muted)'};line-height:1">${inUse > 0 ? inUse : 0}</div>
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-top:4px">Em uso</div>
           </div>
         </div>
-      </div>
-
-      <!-- Edição -->
-      <div class="cal-card">
-        <h3 style="margin-bottom:12px">Pós-produção</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center">
-          <div style="padding:12px;background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.15);border-radius:10px">
-            <div style="font-family:'Bebas Neue';font-size:28px;color:#a855f7">${projByStatus.edicao}</div>
-            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Em edição</div>
-          </div>
-          <div style="padding:12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:10px">
-            <div style="font-family:'Bebas Neue';font-size:28px;color:#f59e0b">${projByStatus.a_publicar}</div>
-            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">A publicar</div>
+        <!-- Pós-produção mini -->
+        <div style="padding-top:12px;border-top:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">Pos-producao</div>
+          <div style="display:flex;gap:10px">
+            <div style="flex:1;display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.12);border-radius:8px">
+              <div style="width:8px;height:8px;border-radius:50%;background:#a855f7"></div>
+              <span style="font-size:12px;color:var(--text-dim)">Edicao</span>
+              <span style="margin-left:auto;font-weight:700;font-size:14px;color:#a855f7">${projByStatus.edicao}</span>
+            </div>
+            <div style="flex:1;display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.12);border-radius:8px">
+              <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b"></div>
+              <span style="font-size:12px;color:var(--text-dim)">A publicar</span>
+              <span style="margin-left:auto;font-weight:700;font-size:14px;color:#f59e0b">${projByStatus.a_publicar}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -6620,24 +6660,29 @@ function renderDashboard() {
 
     <!-- Projetos recentes -->
     <div class="cal-card">
-      <h3 style="margin-bottom:12px">Projetos recentes</h3>
-      ${recentProjects.length ? `<div style="display:flex;flex-direction:column;gap:1px">
-        ${recentProjects.map(p => {
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h3>Projetos recentes</h3>
+        <button class="action-btn view" style="padding:4px 10px;font-size:11px" onclick="switchView('projects')">Ver todos</button>
+      </div>
+      ${recentProjects.length ? `<div style="display:flex;flex-direction:column">
+        ${recentProjects.map((p, i) => {
           const costs = (p.costs || []).reduce((s, c) => s + (c.value || 0), 0);
           const destNames = { youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads' };
           const dests = (p.destinations || []).map(d => `<span class="proj-dest-tag ${d}" style="font-size:9px;padding:2px 6px">${destNames[d] || d}</span>`).join('');
-          return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openProjectDetail('${p.id}')">
+          const sc = statusColors[p.status] || '#6b7280';
+          return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;${i < recentProjects.length - 1 ? 'border-bottom:1px solid var(--border)' : ''};cursor:pointer;transition:opacity .15s" onclick="openProjectDetail('${p.id}')" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+            <div style="width:4px;height:36px;border-radius:2px;background:${sc};flex-shrink:0"></div>
             <div style="flex:1;min-width:0">
-              <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.title || 'Sem título')}</div>
-              <div style="display:flex;gap:4px;margin-top:4px">${dests || ''}</div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.title || 'Sem titulo')}</div>
+              <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap">${dests || '<span style="font-size:10px;color:var(--text-muted)">Sem destino</span>'}</div>
             </div>
-            <div style="text-align:right;flex-shrink:0">
-              <span class="badge ${p.status === 'concluido' || p.status === 'producao' ? 'approved' : 'pending'}" style="font-size:10px">${statusMap[p.status] || p.status}</span>
-              ${costs > 0 ? `<div style="font-size:11px;color:#f59e0b;font-weight:600;margin-top:4px">R$ ${formatBRL(costs)}</div>` : ''}
+            <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+              <span style="font-size:10px;padding:3px 8px;border-radius:6px;font-weight:600;background:${sc}20;color:${sc}">${statusMap[p.status] || p.status}</span>
+              ${costs > 0 ? `<span style="font-size:11px;color:#f59e0b;font-weight:600">R$ ${formatBRL(costs)}</span>` : ''}
             </div>
           </div>`;
         }).join('')}
-      </div>` : '<p style="color:var(--text-muted);font-size:13px;padding:16px 0;text-align:center">Nenhum projeto criado ainda.</p>'}
+      </div>` : '<div style="text-align:center;padding:24px 0"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--text-muted)" stroke-width="1.2" style="margin-bottom:6px;opacity:.4"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg><div style="font-size:12px;color:var(--text-muted)">Nenhum projeto criado ainda</div></div>'}
     </div>
   `;
 }
