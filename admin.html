@@ -3816,9 +3816,13 @@ function openProjectDetail(id) {
 
   // Scroll to top
   document.querySelector('main').scrollTop = 0;
+
+  // Start auto-refresh engagement every 60s
+  startEngagementAutoRefresh();
 }
 
 function backToProjects() {
+  stopEngagementAutoRefresh();
   projDetailId = null;
   ['dashboard','requests','calendar','checkin','projects','project-detail','editing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'].forEach(v => {
     document.getElementById('view-' + v).style.display = 'none';
@@ -4340,6 +4344,55 @@ async function fetchYTStats(videoId) {
     }
   } catch (e) { console.warn('YT API error:', e); }
   return null;
+}
+
+/* ── Auto-refresh engagement every 60s ── */
+let engagementInterval = null;
+
+function startEngagementAutoRefresh() {
+  stopEngagementAutoRefresh();
+  engagementInterval = setInterval(autoRefreshEngagement, 60000);
+}
+
+function stopEngagementAutoRefresh() {
+  if (engagementInterval) { clearInterval(engagementInterval); engagementInterval = null; }
+}
+
+async function autoRefreshEngagement() {
+  if (!projDetailId) return;
+  const p = PROJECTS.find(x => x.id === projDetailId);
+  if (!p || !p.posts) return;
+
+  const apiKey = window.FULLPRO_CONFIG?.YOUTUBE_API_KEY;
+  let updated = false;
+
+  for (const dest of Object.keys(p.posts)) {
+    const post = p.posts[dest];
+    if (!post.link) continue;
+
+    const ytId = extractYouTubeId(post.link);
+    if (ytId && apiKey) {
+      const stats = await fetchYTStats(ytId);
+      if (stats) {
+        const changed = post.views !== stats.views || post.likes !== stats.likes || post.comments !== stats.comments;
+        if (changed) {
+          post.views = stats.views;
+          post.likes = stats.likes;
+          post.comments = stats.comments;
+          updated = true;
+        }
+      }
+    }
+    // Future: add TikTok/Instagram API fetching here
+  }
+
+  if (updated) {
+    await sb.from('projects').update({ posts: p.posts }).eq('id', projDetailId);
+    // Only re-render if the postagem tab is active (avoid disrupting other tabs)
+    if (currentDetailTab === 'postagem') {
+      renderProjTabPostagem(p);
+    }
+  }
 }
 
 // Keep savePosts for the header save button
