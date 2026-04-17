@@ -717,13 +717,29 @@
   .proj-dest-tag.clips { background: rgba(250,204,21,.15); color: #facc15; border-color: rgba(250,204,21,.3); }
   .proj-dest-tag.site { background: rgba(255,255,255,.1); color: #e0e0e0; border-color: rgba(255,255,255,.2); }
   .proj-dest-tag.ads { background: rgba(59,130,246,.15); color: #3b82f6; border-color: rgba(59,130,246,.3); }
-  .proj-link-item {
-    display: flex; align-items: center; gap: 6px; padding: 6px 10px;
-    background: var(--bg-elev); border-radius: 8px; font-size: 12px; word-break: break-all;
+  /* ── URL / Link field pattern (violeta) ── */
+  .url-input {
+    padding: 8px 14px; border-radius: 20px; font-size: 12px; font-family: inherit;
+    color: #a78bfa; background: rgba(139,92,246,.08); border: 1px solid rgba(139,92,246,.25);
+    outline: none; transition: border-color .15s; width: 100%;
   }
-  .proj-link-item a { color: var(--primary); text-decoration: none; flex: 1; }
+  .url-input::placeholder { color: rgba(167,139,250,.35); }
+  .url-input:focus { border-color: rgba(139,92,246,.5); }
+  .url-link-btn {
+    width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%;
+    border: 1px solid rgba(139,92,246,.3); background: rgba(139,92,246,.1);
+    color: #a78bfa; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; transition: all .15s; padding: 0;
+  }
+  .url-link-btn:hover { background: rgba(139,92,246,.2); border-color: #a78bfa; }
+  .proj-link-item {
+    display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+    background: rgba(139,92,246,.08); border: 1px solid rgba(139,92,246,.25);
+    border-radius: 20px; font-size: 12px; word-break: break-all;
+  }
+  .proj-link-item a { color: #a78bfa; text-decoration: none; flex: 1; overflow: hidden; text-overflow: ellipsis; }
   .proj-link-item a:hover { text-decoration: underline; }
-  .proj-link-rm { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 0 4px; }
+  .proj-link-rm { background: none; border: none; color: rgba(167,139,250,.5); cursor: pointer; font-size: 14px; padding: 0 4px; }
   .proj-link-rm:hover { color: var(--danger); }
   .proj-meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin: 10px 0; }
   .proj-meta-item { font-size: 12px; }
@@ -849,16 +865,16 @@
     display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
   }
   .post-share-link {
-    flex: 1; padding: 8px 12px; border-radius: 8px; font-size: 12px;
+    flex: 1; padding: 8px 14px; border-radius: 20px; font-size: 12px;
     font-family: inherit; color: #a78bfa; background: rgba(139,92,246,.08);
     border: 1px solid rgba(139,92,246,.25); white-space: nowrap;
     overflow: hidden; text-overflow: ellipsis; cursor: default;
   }
   .post-share-btn {
-    width: 36px; height: 36px; flex-shrink: 0; border-radius: 8px;
+    width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%;
     border: 1px solid rgba(139,92,246,.3); background: rgba(139,92,246,.1);
     color: #a78bfa; cursor: pointer; display: flex; align-items: center;
-    justify-content: center; transition: all .15s;
+    justify-content: center; transition: all .15s; padding: 0;
   }
   .post-share-btn:hover { background: rgba(139,92,246,.2); border-color: #a78bfa; }
   .engagement-row {
@@ -3555,9 +3571,9 @@ function renderProjLinks() {
   const el = document.getElementById('projLinksList');
   if (!el) return;
   el.innerHTML = projLinks.map((l, i) => `<div class="proj-link-item">
-    <svg viewBox="0 0 24 24" width="12" height="12" stroke="var(--text-muted)" fill="none" stroke-width="2" style="flex-shrink:0"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+    <svg viewBox="0 0 24 24" width="12" height="12" stroke="#a78bfa" fill="none" stroke-width="2" style="flex-shrink:0"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
     <a href="${l}" target="_blank" rel="noopener">${l.length > 60 ? l.substring(0, 60) + '...' : l}</a>
-    <button class="proj-link-rm" onclick="rmProjLink(${i})">x</button>
+    <button class="proj-link-rm" onclick="rmProjLink(${i})" title="Remover">×</button>
   </div>`).join('');
 }
 
@@ -3943,9 +3959,11 @@ function renderProjTabProducao(p) {
       <div class="block-field">
         <label>Links de referência</label>
         <div id="projLinksWrap">
-          <div style="display:flex;gap:6px;margin-bottom:6px">
-            <input type="text" class="login-input" style="margin:0;flex:1" placeholder="https://..." onkeydown="if(event.key==='Enter'){addProjLink(this.value);this.value='';event.preventDefault();}"/>
-            <button class="action-btn view" style="padding:8px 12px;white-space:nowrap" onclick="addProjLink(this.previousElementSibling.value);this.previousElementSibling.value='';">+</button>
+          <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+            <input type="text" class="url-input" style="flex:1" placeholder="https://..." onkeydown="if(event.key==='Enter'){addProjLink(this.value);this.value='';event.preventDefault();}"/>
+            <button class="url-link-btn" onclick="addProjLink(this.previousElementSibling.value);this.previousElementSibling.value='';" title="Adicionar link">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
           </div>
           <div id="projLinksList" style="display:flex;flex-direction:column;gap:4px"></div>
         </div>
@@ -4207,11 +4225,12 @@ function buildPostCard(dest, data) {
     // Empty state / editing state: show input + save button
     body = `<div class="post-card-body">
       <div class="post-link-input-wrap">
-        <input type="text" class="login-input" id="postLink_${dest}" style="margin:0;width:100%;font-size:12px;padding:8px 10px" placeholder="Cole o link aqui..." value="${escHtml(data.link||'')}"/>
-        <button class="action-btn approve" style="padding:7px 14px;font-size:11px;white-space:nowrap;width:100%" onclick="savePostSingle('${dest}')">
-          <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><polyline points="20 6 9 17 4 12"/></svg>
-          Salvar
-        </button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" class="url-input" id="postLink_${dest}" style="flex:1" placeholder="Cole o link aqui..." value="${escHtml(data.link||'')}"/>
+          <button class="url-link-btn" onclick="savePostSingle('${dest}')" title="Salvar link">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+        </div>
       </div>
     </div>`;
   } else {
