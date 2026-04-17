@@ -4385,20 +4385,44 @@ function extractIGShortcode(url) {
   return m ? m[1] : null;
 }
 
-// Cache of IG media list to avoid repeated API calls
+// Cache of IG media list and page token to avoid repeated API calls
 let igMediaCache = null;
 let igMediaCacheTime = 0;
+let igPageToken = null;   // Page Access Token (resolved from User token)
+let igPageIgId = null;    // IG Business Account ID (resolved from API)
+
+async function resolveIGPageToken() {
+  if (igPageToken && igPageIgId) return true;
+  const userToken = window.FULLPRO_CONFIG?.IG_ACCESS_TOKEN;
+  if (!userToken) return false;
+  try {
+    const res = await fetch(`https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token,instagram_business_account&access_token=${userToken}`);
+    const json = await res.json();
+    if (json.error || !json.data) { console.warn('IG pages error:', json.error?.message); return false; }
+    // Find the page that has an instagram_business_account connected
+    const page = json.data.find(p => p.instagram_business_account);
+    if (!page) { console.warn('IG: no page with instagram_business_account found'); return false; }
+    igPageToken = page.access_token;
+    igPageIgId = page.instagram_business_account.id;
+    return true;
+  } catch(e) { console.warn('IG resolvePageToken error:', e); return false; }
+}
 
 async function fetchIGStats(shortcode) {
-  const token = window.FULLPRO_CONFIG?.IG_ACCESS_TOKEN;
-  const userId = window.FULLPRO_CONFIG?.IG_USER_ID;
-  if (!token || !userId) return null;
+  const userToken = window.FULLPRO_CONFIG?.IG_ACCESS_TOKEN;
+  if (!userToken) return null;
+
+  // Resolve page token + IG ID on first call
+  if (!igPageToken || !igPageIgId) {
+    const ok = await resolveIGPageToken();
+    if (!ok) return null;
+  }
 
   try {
     // Use cache if less than 5 min old
     const now = Date.now();
     if (!igMediaCache || now - igMediaCacheTime > 300000) {
-      const res = await fetch(`https://graph.facebook.com/v21.0/${userId}/media?fields=id,shortcode,permalink,like_count,comments_count&limit=50&access_token=${token}`);
+      const res = await fetch(`https://graph.facebook.com/v21.0/${igPageIgId}/media?fields=id,shortcode,permalink,like_count,comments_count&limit=50&access_token=${igPageToken}`);
       const json = await res.json();
       if (json.error) { console.warn('IG API error:', json.error.message); return null; }
       igMediaCache = json.data || [];
@@ -4412,7 +4436,7 @@ async function fetchIGStats(shortcode) {
     // Try to get insights (impressions/reach) for business accounts
     let views = 0;
     try {
-      const insRes = await fetch(`https://graph.facebook.com/v21.0/${media.id}/insights?metric=impressions&access_token=${token}`);
+      const insRes = await fetch(`https://graph.facebook.com/v21.0/${media.id}/insights?metric=impressions&access_token=${igPageToken}`);
       const insJson = await insRes.json();
       if (insJson.data && insJson.data[0]) {
         views = insJson.data[0].values?.[0]?.value || 0;
