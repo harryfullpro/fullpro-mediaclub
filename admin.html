@@ -896,10 +896,137 @@
     font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.5;
   }
 
+  /* Influencer Card Styles */
+  .inf-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .inf-card:hover { border-color: var(--border-hi); }
+  .inf-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+  .inf-card-head-left { flex: 1; }
+  .inf-card-head-right { text-align: right; }
+  .inf-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    display: inline-block;
+    margin-bottom: 6px;
+  }
+  .inf-badge.macro {
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+  }
+  .inf-badge.micro {
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+  }
+  .inf-badge.nano {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+  }
+  .inf-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 4px 0;
+  }
+  .inf-handle {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .inf-followers-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  .inf-followers {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--text);
+    margin-top: 4px;
+  }
+  .inf-table {
+    width: 100%;
+    font-size: 12px;
+    border-collapse: collapse;
+    margin: 16px 0;
+  }
+  .inf-table th {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    padding: 8px 0;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+  }
+  .inf-table th:first-child {
+    text-align: left;
+  }
+  .inf-table td {
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+  }
+  .inf-table td:first-child {
+    color: var(--text-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    font-weight: 500;
+  }
+  .inf-table td:nth-child(2) {
+    text-align: right;
+    color: var(--text-dim);
+  }
+  .inf-table td:nth-child(3) {
+    text-align: right;
+    color: var(--primary);
+    font-weight: 600;
+  }
+  .inf-coupon {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .inf-coupon:hover {
+    border-color: var(--primary);
+  }
+  .inf-coupon-text {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .inf-coupon-arrow {
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
   @media (max-width: 900px) {
     .shell { grid-template-columns: 1fr; }
     .sidebar { display: none; }
     .stats-grid { grid-template-columns: 1fr 1fr; }
+    #infSummaryCards { grid-template-columns: 1fr !important; }
+    #perfInfluencersList { grid-template-columns: 1fr !important; }
     .cal-admin { grid-template-columns: 1fr; }
     .cal-top { grid-template-columns: 1fr !important; }
     .cal-right { display: flex; flex-direction: column; gap: 16px; }
@@ -1471,11 +1598,14 @@
       <div class="page-head">
         <div>
           <h1>Influenciadores</h1>
-          <p>Gerencie influenciadores e parceiros de conteúdo.</p>
+          <p id="infSubtitle">Comparativo conteúdo geral × patrocinado FullPro.</p>
         </div>
         <button class="action-btn approve" style="padding:10px 16px;font-size:13px" onclick="openAddInfluencerModal()">+ Novo influenciador</button>
       </div>
-      <div id="perfInfluencersList"></div>
+      <!-- Summary stats -->
+      <div class="stats-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:18px" id="infSummaryCards"></div>
+      <!-- Influencer cards -->
+      <div id="perfInfluencersList" style="display:grid;grid-template-columns:1fr 1fr;gap:16px"></div>
     </div>
 
     <!-- BONIFICAÇÃO VIEW -->
@@ -1930,45 +2060,90 @@
 
 <!-- Modal Adicionar Influenciador -->
 <div class="modal" id="perfAddInfluencerModal">
-  <div class="modal-content" style="max-width:560px">
+  <div class="modal-content" style="max-width:900px">
     <div class="modal-head">
       <h3>Adicionar influenciador</h3>
       <button class="modal-close" onclick="closePerfAddInfluencerModal()">×</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
       <div class="book-form">
-        <label>Nome *</label>
-        <input type="text" id="infName" placeholder="Nome do influenciador"/>
+        <!-- Dados Gerais -->
+        <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px">
+          <legend style="padding:0 8px;color:var(--text-muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Dados gerais</legend>
 
-        <label>Instagram handle (sem @)</label>
-        <input type="text" id="infInstagram" placeholder="username"/>
+          <label>Instagram handle *</label>
+          <input type="text" id="infInstagram" placeholder="@username"/>
 
-        <label>Nicho / Categoria</label>
-        <input type="text" id="infNiche" placeholder="Ex: Motos, lifestyle..."/>
+          <label>Nome do influenciador</label>
+          <input type="text" id="infName" placeholder="Nome completo"/>
 
-        <label>Status</label>
-        <select id="infStatus">
-          <option value="ativo">Ativo</option>
-          <option value="negociacao">Em negociação</option>
-          <option value="inativo">Inativo</option>
-        </select>
+          <label>Categoria</label>
+          <select id="infCategory">
+            <option value="">Auto-detect (por seguidores)</option>
+            <option value="macro">MACRO (&gt;100k)</option>
+            <option value="micro">MICRO (&gt;10k)</option>
+            <option value="nano">NANO (&lt;10k)</option>
+          </select>
 
-        <div class="book-row">
-          <div>
-            <label>Seguidores (aprox.)</label>
-            <input type="number" id="infFollowers" min="0" placeholder="0"/>
-          </div>
-          <div>
-            <label>Taxa de engajamento (%)</label>
-            <input type="number" id="infEngagement" min="0" max="100" placeholder="0"/>
-          </div>
+          <label>Seguidores</label>
+          <input type="number" id="infFollowers" min="0" placeholder="0"/>
+
+          <label>WhatsApp</label>
+          <input type="text" id="infWhatsapp" placeholder="(47) 99999-9999"/>
+
+          <label>Notas</label>
+          <textarea style="width:100%;min-height:60px;padding:10px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:12px;font-family:inherit;resize:vertical" id="infNotes" placeholder="Informações adicionais..."></textarea>
+        </fieldset>
+
+        <!-- Stats Geral vs FullPro -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <!-- Dados Geral -->
+          <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px">
+            <legend style="padding:0 8px;color:var(--text-muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Estatísticas geral</legend>
+
+            <label>Views (total)</label>
+            <input type="number" id="infViewsGeral" min="0" placeholder="0"/>
+
+            <label>Posts (total)</label>
+            <input type="number" id="infPostsGeral" min="0" placeholder="0"/>
+
+            <label>Engajamento (%)</label>
+            <input type="number" id="infEngagementGeral" min="0" max="100" step="0.1" placeholder="0"/>
+          </fieldset>
+
+          <!-- Dados FullPro -->
+          <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px">
+            <legend style="padding:0 8px;color:var(--text-muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Estatísticas FullPro</legend>
+
+            <label>Views (patrocinado)</label>
+            <input type="number" id="infViewsFullpro" min="0" placeholder="0"/>
+
+            <label>Posts (FullPro)</label>
+            <input type="number" id="infPostsFullpro" min="0" placeholder="0"/>
+
+            <label>Engajamento (%)</label>
+            <input type="number" id="infEngagementFullpro" min="0" max="100" step="0.1" placeholder="0"/>
+          </fieldset>
         </div>
 
-        <label>WhatsApp</label>
-        <input type="text" id="infWhatsapp" placeholder="(47) 99999-9999"/>
+        <!-- Cupom -->
+        <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px">
+          <legend style="padding:0 8px;color:var(--text-muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Cupom / Vendas</legend>
 
-        <label>Notas</label>
-        <textarea style="width:100%;min-height:60px;padding:10px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:12px;font-family:inherit;resize:vertical" id="infNotes" placeholder="Informações adicionais..."></textarea>
+          <label>Código do cupom</label>
+          <input type="text" id="infCouponCode" placeholder="CUPOM10"/>
+
+          <div class="book-row">
+            <div>
+              <label>Número de vendas</label>
+              <input type="number" id="infCouponSales" min="0" placeholder="0"/>
+            </div>
+            <div>
+              <label>Faturamento (R$)</label>
+              <input type="number" id="infCouponRevenue" min="0" step="0.01" placeholder="0.00"/>
+            </div>
+          </div>
+        </fieldset>
       </div>
     </div>
     <div class="modal-foot">
@@ -3612,6 +3787,15 @@ function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function formatNum(n) {
+  if (n >= 1000000) {
+    return (n / 1000000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'M';
+  } else if (n >= 1000) {
+    return (n / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'k';
+  }
+  return n.toLocaleString('pt-BR');
+}
+
 /* Template Editor */
 let editingTplIndex = -1; // -1 = new
 
@@ -4351,35 +4535,120 @@ function renderPerfPosts() {
 }
 
 function renderPerfInfluencers() {
+  // Filter active influencers only
+  const active = PERF_INFLUENCERS.filter(i => i.status === 'ativo' || !i.status);
+
+  // Render summary cards
+  const summaryEl = document.getElementById('infSummaryCards');
+  if (summaryEl) {
+    const totalViewsFullpro = active.reduce((sum, i) => sum + (i.views_fullpro || 0), 0);
+    const totalCouponSales = active.reduce((sum, i) => sum + (i.coupon_sales || 0), 0);
+    const totalCouponRevenue = active.reduce((sum, i) => sum + (i.coupon_revenue || 0), 0);
+
+    summaryEl.innerHTML = `
+      <div class="stat-card">
+        <div class="label">Views patrocinadas</div>
+        <div class="value">${formatNum(totalViewsFullpro)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Vendas via cupom</div>
+        <div class="value">${totalCouponSales}</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid var(--primary)">
+        <div class="label">Faturamento atribuído</div>
+        <div class="value">R$ <small>${formatBRL(totalCouponRevenue)}</small></div>
+      </div>
+    `;
+  }
+
+  // Update subtitle
+  const subtitleEl = document.getElementById('infSubtitle');
+  if (subtitleEl) {
+    subtitleEl.textContent = `${active.length} ativos · comparativo conteúdo geral × patrocinado FullPro`;
+  }
+
+  // Render influencer cards
   const el = document.getElementById('perfInfluencersList');
   if (!el) return;
 
-  if (PERF_INFLUENCERS.length === 0) {
-    el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum influenciador cadastrado.</p></div>';
+  if (active.length === 0) {
+    el.innerHTML = '<div class="cal-card" style="grid-column:1/-1"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum influenciador ativo cadastrado.</p></div>';
     return;
   }
 
-  el.innerHTML = PERF_INFLUENCERS.map(inf => {
-    const statusLabel = { ativo: 'Ativo', negociacao: 'Em negociação', inativo: 'Inativo' }[inf.status] || inf.status;
-    const statusColor = { ativo: 'var(--success)', negociacao: 'var(--warning)', inativo: 'var(--danger)' }[inf.status] || 'var(--text-dim)';
+  el.innerHTML = active.map(inf => {
+    // Determine category
+    const followers = inf.followers || 0;
+    const category = inf.category || (followers > 100000 ? 'macro' : followers > 10000 ? 'micro' : 'nano');
+    const categoryLabel = { macro: 'MACRO', micro: 'MICRO', nano: 'NANO' }[category] || category;
+
+    // Calculate views per post
+    const postsGeral = inf.posts_geral || 0;
+    const postsFullpro = inf.posts_fullpro || 0;
+    const viewsPerPostGeral = postsGeral > 0 ? (inf.views_geral || 0) / postsGeral : 0;
+    const viewsPerPostFullpro = postsFullpro > 0 ? (inf.views_fullpro || 0) / postsFullpro : 0;
+
+    // Engagement comparison
+    const engagementGeral = inf.engagement_geral || 0;
+    const engagementFullpro = inf.engagement_fullpro || 0;
+    const engagementArrow = engagementFullpro > engagementGeral ? '↑' : engagementFullpro < engagementGeral ? '↓' : '';
+
+    // Coupon info
+    const couponCode = inf.coupon_code || '';
+    const couponSales = inf.coupon_sales || 0;
+    const couponRevenue = inf.coupon_revenue || 0;
+    const couponText = couponCode ? `${couponCode} · ${couponSales} vendas · R$ ${formatBRL(couponRevenue)}` : 'Sem cupom';
 
     return `
-      <div class="proj-card">
-        <div class="proj-card-head">
-          <div>
-            <h4>${escHtml(inf.name)}</h4>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">@${escHtml(inf.instagram)}</div>
+      <div class="inf-card">
+        <div class="inf-card-head">
+          <div class="inf-card-head-left">
+            <div><span class="inf-badge ${category}">${categoryLabel}</span></div>
+            <div class="inf-name">${escHtml(inf.name)}</div>
+            <div class="inf-handle">@${escHtml(inf.instagram)}</div>
           </div>
-          <button class="action-btn reject" style="padding:4px 10px;font-size:11px" onclick="deletePerfInfluencer('${inf.id}')">Remover</button>
+          <div class="inf-card-head-right">
+            <div class="inf-followers-label">Seguidores</div>
+            <div class="inf-followers">${formatNum(followers)}</div>
+          </div>
         </div>
-        <div class="proj-meta">
-          <div class="proj-meta-item"><div class="k">Status</div><div class="v"><span style="color:${statusColor};font-weight:600">${statusLabel}</span></div></div>
-          <div class="proj-meta-item"><div class="k">Seguidores</div><div class="v">${(inf.followers || 0).toLocaleString('pt-BR')}</div></div>
-          <div class="proj-meta-item"><div class="k">Engajamento</div><div class="v">${(inf.engagement || 0)}%</div></div>
-          <div class="proj-meta-item"><div class="k">Nicho</div><div class="v">${escHtml(inf.niche || '—')}</div></div>
+
+        <table class="inf-table">
+          <thead>
+            <tr>
+              <th style="text-align:left"></th>
+              <th>Geral</th>
+              <th>FullPro</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Views</td>
+              <td>${formatNum(inf.views_geral || 0)}</td>
+              <td>${formatNum(inf.views_fullpro || 0)}</td>
+            </tr>
+            <tr>
+              <td>Posts</td>
+              <td>${postsGeral}</td>
+              <td>${postsFullpro}</td>
+            </tr>
+            <tr>
+              <td>Views/Post</td>
+              <td>${formatNum(Math.round(viewsPerPostGeral))}</td>
+              <td>${formatNum(Math.round(viewsPerPostFullpro))}</td>
+            </tr>
+            <tr>
+              <td>Engaj. %</td>
+              <td>${engagementGeral.toFixed(1)}%</td>
+              <td>${engagementFullpro.toFixed(1)}% ${engagementArrow}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="inf-coupon" onclick="deletePerfInfluencer('${inf.id}')">
+          <div class="inf-coupon-text">${escHtml(couponText)}</div>
+          <div class="inf-coupon-arrow">×</div>
         </div>
-        ${inf.notes ? `<div style="margin-top:10px;padding:10px;background:var(--bg-elev);border-radius:8px;font-size:12px;color:var(--text-dim)">${escHtml(inf.notes)}</div>` : ''}
-        ${inf.whatsapp ? `<a href="https://wa.me/${inf.whatsapp.replace(/\D/g, '')}?text=Olá%20${encodeURIComponent(inf.name)}" target="_blank" class="action-btn whats" style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:8px 12px;font-size:12px"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> Contatar</a>` : ''}
       </div>
     `;
   }).join('');
@@ -4522,12 +4791,19 @@ function closePerfAddPostModal() { document.getElementById('perfAddPostModal').c
 function openAddInfluencerModal() {
   document.getElementById('infName').value = '';
   document.getElementById('infInstagram').value = '';
-  document.getElementById('infNiche').value = '';
-  document.getElementById('infStatus').value = 'ativo';
+  document.getElementById('infCategory').value = '';
   document.getElementById('infFollowers').value = '';
-  document.getElementById('infEngagement').value = '';
   document.getElementById('infWhatsapp').value = '';
   document.getElementById('infNotes').value = '';
+  document.getElementById('infViewsGeral').value = '';
+  document.getElementById('infPostsGeral').value = '';
+  document.getElementById('infEngagementGeral').value = '';
+  document.getElementById('infViewsFullpro').value = '';
+  document.getElementById('infPostsFullpro').value = '';
+  document.getElementById('infEngagementFullpro').value = '';
+  document.getElementById('infCouponCode').value = '';
+  document.getElementById('infCouponSales').value = '';
+  document.getElementById('infCouponRevenue').value = '';
   document.getElementById('perfAddInfluencerModal').classList.add('show');
 }
 function closePerfAddInfluencerModal() { document.getElementById('perfAddInfluencerModal').classList.remove('show'); }
@@ -4607,18 +4883,42 @@ async function savePerfPost() {
 }
 
 async function savePerfInfluencer() {
-  const name = document.getElementById('infName').value.trim();
-  if (!name) { alert('Informe o nome do influenciador.'); return; }
+  /*
+    Updated performance_influencers table:
+    id, name, instagram, category(macro/micro/nano), followers,
+    views_geral, posts_geral, engagement_geral,
+    views_fullpro, posts_fullpro, engagement_fullpro,
+    coupon_code, coupon_sales, coupon_revenue,
+    whatsapp, notes, status, created_at
+  */
+
+  const instagram = document.getElementById('infInstagram').value.trim();
+  if (!instagram) { alert('Informe o Instagram handle.'); return; }
+
+  let name = document.getElementById('infName').value.trim();
+  if (!name) name = instagram;
+
+  const followers = parseInt(document.getElementById('infFollowers').value) || 0;
+  const categoryField = document.getElementById('infCategory').value;
+  const category = categoryField || (followers > 100000 ? 'macro' : followers > 10000 ? 'micro' : 'nano');
 
   const payload = {
     name,
-    instagram: document.getElementById('infInstagram').value.trim(),
-    niche: document.getElementById('infNiche').value.trim(),
-    status: document.getElementById('infStatus').value,
-    followers: parseInt(document.getElementById('infFollowers').value) || 0,
-    engagement: parseFloat(document.getElementById('infEngagement').value) || 0,
+    instagram,
+    category,
+    followers,
+    views_geral: parseInt(document.getElementById('infViewsGeral').value) || 0,
+    posts_geral: parseInt(document.getElementById('infPostsGeral').value) || 0,
+    engagement_geral: parseFloat(document.getElementById('infEngagementGeral').value) || 0,
+    views_fullpro: parseInt(document.getElementById('infViewsFullpro').value) || 0,
+    posts_fullpro: parseInt(document.getElementById('infPostsFullpro').value) || 0,
+    engagement_fullpro: parseFloat(document.getElementById('infEngagementFullpro').value) || 0,
+    coupon_code: document.getElementById('infCouponCode').value.trim(),
+    coupon_sales: parseInt(document.getElementById('infCouponSales').value) || 0,
+    coupon_revenue: parseFloat(document.getElementById('infCouponRevenue').value) || 0,
     whatsapp: document.getElementById('infWhatsapp').value.trim(),
-    notes: document.getElementById('infNotes').value.trim()
+    notes: document.getElementById('infNotes').value.trim(),
+    status: 'ativo'
   };
 
   const { error, data } = await sb.from('performance_influencers').insert([payload]).select().single();
