@@ -302,6 +302,8 @@
   .filter-btn:hover { border-color: var(--border-hi); color: var(--text); }
   .filter-btn.active { background: #8b9cf7; border-color: #8b9cf7; color: #fff; }
   .filter-btn.active:hover { background: #7b8ce7; border-color: #7b8ce7; }
+  .filter-btn[data-cifilter="checkout"].active { background: #5b6abf; border-color: #5b6abf; }
+  .filter-btn[data-cifilter="checkout"].active:hover { background: #4d5aad; border-color: #4d5aad; }
 
   /* Requests Table */
   .table-wrap {
@@ -327,7 +329,7 @@
     text-transform: uppercase;
     letter-spacing: .5px;
   }
-  .badge.pending { background: rgba(139,156,247,.15); color: #8b9cf7; }
+  .badge.pending { background: rgba(255,170,51,.15); color: var(--warning); }
   .badge.approved { background: rgba(31,210,122,.15); color: var(--success); }
   .badge.rejected { background: rgba(255,77,77,.15); color: var(--danger); }
   .badge.estudio { background: rgba(255,207,51,.15); color: var(--accent); }
@@ -558,7 +560,7 @@
     align-items: center; justify-content: center; gap: 2px;
     cursor: pointer; color: var(--text-muted); font-size: 9px; transition: border-color .15s;
   }
-  .photo-add:hover { border-color: var(--primary); color: var(--primary-hi); }
+  .photo-add:hover { border-color: #8b9cf7; color: #8b9cf7; }
   .photo-add span:first-child { font-size: 16px; }
 
   /* Photo lightbox */
