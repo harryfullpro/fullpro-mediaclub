@@ -3210,21 +3210,16 @@ function renderProjects() {
         <div class="proj-meta-item"><div class="k">Custos</div><div class="v" style="${totalCost > 0 ? 'color:#f59e0b;font-weight:600' : ''}">R$ ${formatBRL(totalCost)}</div></div>
       </div>
       ${p.observations ? `<div style="font-size:12px;color:var(--text-dim);margin-top:6px;border-top:1px solid var(--border);padding-top:8px">${escHtml(p.observations).substring(0, 200)}${p.observations.length > 200 ? '...' : ''}</div>` : ''}
-      ${p.status === 'concluido' && CURRENT_USER?.role?.toLowerCase() === 'admin' ? `
-        <div class="star-rating-wrap">
+      ${p.status === 'concluido' ? (() => {
+        const isAdm = isUserAdmin();
+        return `<div class="star-rating-wrap">
           <span class="star-rating-label">Avaliação</span>
-          <div class="star-rating" data-project-id="${p.id}" onmouseleave="starHoverOut(this)">
-            ${[1,2,3,4,5].map(n => `<span class="star ${(p.rating || 0) >= n ? 'active' : ''}" data-value="${n}" onclick="setProjectRating('${p.id}',${n})" onmouseenter="starHoverIn(this,${n})">★</span>`).join('')}
+          <div class="star-rating" ${isAdm ? `data-project-id="${p.id}" onmouseleave="starHoverOut(this)"` : ''}>
+            ${[1,2,3,4,5].map(n => `<span class="star ${(p.rating || 0) >= n ? 'active' : ''}" ${isAdm ? `data-value="${n}" onclick="setProjectRating('${p.id}',${n})" onmouseenter="starHoverIn(this,${n})"` : 'style="cursor:default"'}>★</span>`).join('')}
           </div>
           <span style="font-size:12px;color:var(--text-dim);min-width:28px">${p.rating ? p.rating + '/5' : '—'}</span>
-        </div>` : p.status === 'concluido' && p.rating ? `
-        <div class="star-rating-wrap">
-          <span class="star-rating-label">Avaliação</span>
-          <div class="star-rating">
-            ${[1,2,3,4,5].map(n => `<span class="star ${(p.rating || 0) >= n ? 'active' : ''}" style="cursor:default">★</span>`).join('')}
-          </div>
-          <span style="font-size:12px;color:var(--text-dim)">${p.rating}/5</span>
-        </div>` : ''}
+        </div>`;
+      })() : ''}
     </div>`;
   }).join('');
 }
@@ -3546,8 +3541,12 @@ async function quickUpdateProjectStatus(id, status) {
 }
 
 /* Star Rating — admin only */
+function isUserAdmin() {
+  const r = (CURRENT_USER?.role || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return r === 'admin' || r === 'administrador' || r.startsWith('admin');
+}
 async function setProjectRating(id, value) {
-  if (CURRENT_USER?.role?.toLowerCase() !== 'admin') return;
+  if (!isUserAdmin()) return;
   const p = PROJECTS.find(x => x.id === id);
   // Clicou na mesma estrela = remove rating
   const newVal = (p && p.rating === value) ? 0 : value;
