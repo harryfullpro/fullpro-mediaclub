@@ -5176,10 +5176,13 @@ async function saveEvaluation() {
 
 /* === POSTAGEM TAB === */
 const DEST_ICONS = {
-  youtube:   { color: '#ff0000', name: 'YouTube',   icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="#ff0000"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"/><path d="M9.545 15.568V8.432L15.818 12l-6.273 3.568z" fill="#fff"/></svg>' },
-  tiktok:    { color: '#00f2ea', name: 'TikTok',    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="#00f2ea"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-.81-.05l-.38.05z"/></svg>' },
-  instagram: { color: '#e1306c', name: 'Instagram', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="#e1306c"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>' },
-  tutorial:  { color: '#1fd27a', name: 'Tutorial',  icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1fd27a" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="#1fd27a"/></svg>' }
+  youtube: { color: '#ff0000', name: 'YouTube', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="#ff0000"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"/><path d="M9.545 15.568V8.432L15.818 12l-6.273 3.568z" fill="#fff"/></svg>' },
+  shorts:  { color: '#ff0000', name: 'Shorts', icon: '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M10 14.65v-5.3L15 12l-5 2.65zm7.77-4.33c.44-.76.07-1.76-.81-1.86a3.56 3.56 0 01-2.44-1.37c-.58-.72-.46-1.79.28-2.4l.24-.2c.7-.57.43-1.72-.44-1.87A3.57 3.57 0 0112 .5c-1.2 0-2.27.6-2.93 1.5-.7.57-.43 1.72.44 1.87.9.16 1.6.79 1.91 1.6.26.68-.09 1.47-.79 1.74l-.2.08c-.82.3-1.06 1.38-.44 1.93a3.56 3.56 0 011.37 2.44c.1.88-.58 1.67-1.47 1.67h-.28c-.9 0-1.47.96-.98 1.72A3.57 3.57 0 0112 23.5c1.2 0 2.27-.6 2.93-1.5.7-.57.43-1.72-.44-1.87-.9-.16-1.6-.79-1.91-1.6-.26-.68.09-1.47.79-1.74l.2-.08c.82-.3 1.06-1.38.44-1.93a3.56 3.56 0 01-1.37-2.44c-.1-.88.58-1.67 1.47-1.67h.28c.9 0 1.47-.96.98-1.72z" fill="#ff0000"/></svg>' },
+  tiktok:  { color: '#000000', name: 'TikTok', icon: '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-.81-.05z" fill="var(--text)"/></svg>' },
+  reels:   { color: '#e1306c', name: 'Reels', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none"><defs><linearGradient id="igP" x1="0" y1="24" x2="24" y2="0"><stop offset="0%" stop-color="#feda75"/><stop offset="25%" stop-color="#fa7e1e"/><stop offset="50%" stop-color="#d62976"/><stop offset="75%" stop-color="#962fbf"/><stop offset="100%" stop-color="#4f5bd5"/></linearGradient></defs><rect x="2" y="2" width="20" height="20" rx="6" stroke="url(#igP)" stroke-width="2" fill="none"/><circle cx="12" cy="12" r="5" stroke="url(#igP)" stroke-width="2" fill="none"/><circle cx="18.5" cy="5.5" r="1.5" fill="url(#igP)"/></svg>' },
+  clips:   { color: '#8b5cf6', name: 'Clips', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#8b5cf6" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="3"/><polygon points="10,8 16,12 10,16" fill="#8b5cf6" stroke="none"/></svg>' },
+  site:    { color: '#0284c7', name: 'Site', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#0284c7" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>' },
+  ads:     { color: '#ea580c', name: 'Ads', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ea580c" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 17l3-4 2 2.5L16.5 11 20 17H4" fill="none"/><circle cx="8.5" cy="8.5" r="1.5" fill="#ea580c" stroke="none"/></svg>' }
 };
 
 function extractYouTubeId(url) {
@@ -5211,7 +5214,8 @@ function renderProjTabPostagem(p) {
 }
 
 function buildPostCard(dest, data) {
-  const info = DEST_ICONS[dest] || DEST_ICONS.tutorial;
+  const fallback = { color: '#8b9cf7', name: dest, icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#8b9cf7" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="#8b9cf7"/></svg>' };
+  const info = DEST_ICONS[dest] || fallback;
   const hasLink = !!(data.link && data.link.trim());
   const isEditing = data._editing;
 
@@ -5244,7 +5248,7 @@ function buildPostCard(dest, data) {
           </div>
         </a>
       </div>`;
-    } else if (dest === 'instagram') {
+    } else if (dest === 'reels' || dest === 'instagram') {
       const igThumb = data._igThumb || '';
       if (igThumb) {
         embedHtml = `<div class="post-embed">
@@ -5279,7 +5283,7 @@ function buildPostCard(dest, data) {
         <a href="${escHtml(data.link)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;height:100%;background:var(--bg-card)">
           <div style="text-align:center;color:var(--text-dim)">
             ${info.icon}
-            <div style="font-size:11px;margin-top:6px">Abrir link</div>
+            <div style="font-size:11px;margin-top:6px">Ver em ${info.name}</div>
           </div>
         </a>
       </div>`;
