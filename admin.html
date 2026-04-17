@@ -346,18 +346,15 @@
     font-family: inherit;
   }
   .action-btn:hover { border-color: var(--border-hi); }
-  .action-btn.approve { background: var(--success); border-color: var(--success); color: #001e10; }
-  .action-btn.approve:hover { background: #36df89; }
+  .action-btn.approve, .action-btn.whats { background: var(--success); border-color: var(--success); color: #fff; }
+  .action-btn.approve:hover, .action-btn.whats:hover { background: #36df89; border-color: #36df89; }
+  [data-theme="light"] .action-btn.approve, [data-theme="light"] .action-btn.whats { color: #001e10; }
   .action-btn.reject { background: transparent; color: var(--danger); border-color: rgba(255,77,77,.3); }
   .action-btn.reject:hover { background: rgba(255,77,77,.1); }
   .action-btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
   .action-btn.danger:hover { background: #ff5555; }
   .action-btn.view { background: rgba(139,156,247,.15); border-color: rgba(139,156,247,.4); color: #8b9cf7; }
   .action-btn.view:hover { background: rgba(139,156,247,.25); border-color: #8b9cf7; }
-  .action-btn.whats {
-    background: #25D366; border-color: #25D366; color: #00180a;
-  }
-  .action-btn.whats:hover { background: #36e577; }
 
   .empty {
     padding: 60px 20px;
