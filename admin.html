@@ -1544,11 +1544,17 @@
 
     <!-- PROJECT DETAIL VIEW -->
     <div id="view-project-detail" style="display:none">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
         <button class="action-btn" style="padding:6px 14px;font-size:13px" onclick="backToProjects()">← Projetos</button>
         <h1 id="projDetailTitle" style="flex:1;font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px">Projeto</h1>
+        <button class="action-btn approve" id="projDetailSaveBtn" style="padding:6px 16px;font-size:12px" onclick="saveCurrentTab()">
+          <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Salvar
+        </button>
         <select class="proj-status-select" id="projDetailStatus" onchange="quickDetailStatus(this.value)"></select>
-        <button class="action-btn reject" style="padding:6px 14px;font-size:12px" onclick="deleteProject(projDetailId)">Excluir</button>
+        <button style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 8px;cursor:pointer;color:var(--text-muted);transition:all .15s;display:flex;align-items:center" onclick="deleteProject(projDetailId)" onmouseover="this.style.borderColor='var(--danger)';this.style.color='var(--danger)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'" title="Excluir projeto">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+        </button>
       </div>
       <div class="proj-modal-tabs" style="margin-bottom:20px;border-radius:10px;overflow:hidden">
         <button class="proj-modal-tab active" data-dtab="producao" onclick="switchDetailTab('producao')">Produção</button>
@@ -3571,11 +3577,18 @@ function backToProjects() {
   renderProjects();
 }
 
+let currentDetailTab = 'producao';
 function switchDetailTab(tab) {
+  currentDetailTab = tab;
   document.querySelectorAll('.proj-modal-tab[data-dtab]').forEach(t => t.classList.toggle('active', t.dataset.dtab === tab));
   ['Producao','Avaliacao','Postagem'].forEach(t => {
     document.getElementById('projTab' + t).classList.toggle('active', t.toLowerCase() === tab);
   });
+}
+function saveCurrentTab() {
+  if (currentDetailTab === 'producao') saveProject();
+  else if (currentDetailTab === 'avaliacao') saveEvaluation();
+  else if (currentDetailTab === 'postagem') savePosts();
 }
 
 async function quickDetailStatus(status) {
@@ -3700,13 +3713,6 @@ function renderProjTabProducao(p) {
         </div>
       </div>
     </div>
-    <div style="display:flex;gap:8px;margin-top:16px">
-      <button class="action-btn approve" style="flex:1;padding:12px" onclick="saveProject()">
-        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Salvar projeto
-      </button>
-      <button class="action-btn reject" style="padding:12px 20px" onclick="backToProjects()">Cancelar</button>
-    </div>
   `;
 
   // Now fill in data AFTER HTML is in the DOM
@@ -3798,13 +3804,6 @@ function renderProjTabAvaliacao(p) {
     });
   }
 
-  if (adm) {
-    html += `<button class="action-btn approve" style="padding:12px;width:100%" onclick="saveEvaluation()">
-      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-      Salvar avaliação
-    </button>`;
-  }
-
   html += '</div>';
   el.innerHTML = html;
 }
@@ -3877,10 +3876,6 @@ function renderProjTabPostagem(p) {
     html += buildPostCard(d, destNames[d] || d, 'CLIP', cp);
   });
 
-  html += `<button class="action-btn approve" style="padding:12px;width:100%" onclick="savePosts()">
-    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-    Salvar postagem
-  </button>`;
   html += '</div>';
   el.innerHTML = html;
 }
