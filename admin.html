@@ -874,20 +874,6 @@
   .engagement-stat .e-val { font-size: 14px; font-weight: 700; color: var(--text); }
   .engagement-stat .e-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; }
 
-  /* Cost categories with colored dots */
-  .cost-category {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 2px 8px; border-radius: 4px; font-size: 10px;
-    font-weight: 600; text-transform: capitalize;
-  }
-  .cost-category::before {
-    content: '●'; width: 6px; height: 6px; border-radius: 50%;
-    display: inline-block;
-  }
-  .cost-category.produto::before { color: #f97316; }
-  .cost-category.mao_de_obra::before { color: #3b82f6; }
-  .cost-category.logistica::before { color: #22c55e; }
-  .cost-category.equipamento::before { color: #eab308; }
 
   /* Notification cards */
   .notif-card {
@@ -1822,10 +1808,12 @@
       </div>
       <div class="proj-modal-tabs" style="margin-bottom:20px;border-radius:10px;overflow:hidden">
         <button class="proj-modal-tab active" data-dtab="producao" onclick="switchDetailTab('producao')">Produção</button>
+        <button class="proj-modal-tab" data-dtab="roteiro" onclick="switchDetailTab('roteiro')">Roteiro</button>
         <button class="proj-modal-tab" data-dtab="avaliacao" onclick="switchDetailTab('avaliacao')">Avaliação</button>
         <button class="proj-modal-tab" data-dtab="postagem" onclick="switchDetailTab('postagem')">Postagem</button>
       </div>
       <div class="proj-tab-content active" id="projTabProducao"></div>
+      <div class="proj-tab-content" id="projTabRoteiro"></div>
       <div class="proj-tab-content" id="projTabAvaliacao"></div>
       <div class="proj-tab-content" id="projTabPostagem"></div>
     </div>
@@ -3536,7 +3524,7 @@ function populateProjBookings() {
   const sel = document.getElementById('projBooking');
   const approved = getRequests().filter(r => r.status === 'approved');
   sel.innerHTML = '<option value="">Sem vínculo (projeto avulso)</option>' +
-    approved.map(r => `<option value="${r.id}" data-moto="${r.moto}" data-placa="${r.placa}" data-date="${r.date}">${r.nome} — ${r.moto} (${r.placa}) · ${prettyDate(r.date)}</option>`).join('');
+    approved.map(r => `<option value="${r.id}" data-moto="${r.moto}" data-placa="${r.placa}" data-date="${r.date}">${r.moto} (${r.placa}) — ${r.nome} · ${prettyDate(r.date)}</option>`).join('');
 }
 
 function onProjBookingChange() {
@@ -3622,13 +3610,11 @@ async function saveProjCostsToDb() {
 async function addProjCost() {
   const valInput = document.getElementById('projCostValue');
   const reasonInput = document.getElementById('projCostReason');
-  const categoryInput = document.getElementById('projCostCategory');
   const value = parseCurrency(valInput.value);
   const reason = (reasonInput.value || '').trim();
-  const category = (categoryInput?.value || 'produto').trim();
   if (value <= 0) { alert('Informe um valor válido.'); return; }
   if (!reason) { alert('Informe a descrição do custo.'); return; }
-  projCosts.push({ value, reason, category });
+  projCosts.push({ value, reason });
   valInput.value = '';
   reasonInput.value = '';
   renderProjCosts();
@@ -3644,11 +3630,9 @@ function renderProjCosts() {
   if (!el) return;
   if (projCosts.length === 0) { el.innerHTML = ''; return; }
   const total = projCosts.reduce((s, c) => s + c.value, 0);
-  const categoryNames = { produto: 'Produto', mao_de_obra: 'Mão de obra', logistica: 'Logística', equipamento: 'Equipamento' };
   el.innerHTML = projCosts.map((c, i) => `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
     <span style="font-weight:600;color:var(--text);font-size:13px;white-space:nowrap">R$ ${formatBRL(c.value)}</span>
     <span style="color:var(--text-dim);font-size:12px;flex:1">${escHtml(c.reason)}</span>
-    <span class="cost-category ${c.category || 'produto'}">${categoryNames[c.category || 'produto']}</span>
     <button onclick="rmProjCost(${i})" style="background:none;border:1px solid var(--danger);color:var(--danger);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;white-space:nowrap;transition:all .15s" onmouseover="this.style.background='var(--danger)';this.style.color='#fff'" onmouseout="this.style.background='none';this.style.color='var(--danger)'">remover</button>
   </div>`).join('') +
   `<div style="text-align:right;font-size:12px;font-weight:600;color:var(--primary);padding:4px 0;margin-bottom:8px">Total: R$ ${formatBRL(total)}</div>`;
@@ -3748,6 +3732,8 @@ async function saveProject() {
   if (document.getElementById('projDestSite').checked) destinations.push('site');
   if (document.getElementById('projDestAds').checked) destinations.push('ads');
 
+  const descEl = document.getElementById('projDescription');
+  const scriptEl = document.getElementById('projScript');
   const payload = {
     title,
     request_id: bookingId,
@@ -3755,7 +3741,8 @@ async function saveProject() {
     production_date: prodDate,
     destinations,
     status: document.getElementById('projStatus').value,
-    script_text: document.getElementById('projScript').value.trim(),
+    description: descEl ? descEl.value.trim() : '',
+    script_text: scriptEl ? scriptEl.value.trim() : '',
     script_file: projScriptFileData,
     links: projLinks,
     observations: document.getElementById('projObs').value.trim(),
@@ -3844,6 +3831,7 @@ function openProjectDetail(id) {
 
   // Render tab contents
   renderProjTabProducao(p);
+  renderProjTabRoteiro(p);
   renderProjTabAvaliacao(p);
   renderProjTabPostagem(p);
 
@@ -3883,12 +3871,13 @@ let currentDetailTab = 'producao';
 function switchDetailTab(tab) {
   currentDetailTab = tab;
   document.querySelectorAll('.proj-modal-tab[data-dtab]').forEach(t => t.classList.toggle('active', t.dataset.dtab === tab));
-  ['Producao','Avaliacao','Postagem'].forEach(t => {
+  ['Producao','Roteiro','Avaliacao','Postagem'].forEach(t => {
     document.getElementById('projTab' + t).classList.toggle('active', t.toLowerCase() === tab);
   });
 }
 function saveCurrentTab() {
   if (currentDetailTab === 'producao') saveProject();
+  else if (currentDetailTab === 'roteiro') saveProject();
   else if (currentDetailTab === 'avaliacao') saveEvaluation();
   else if (currentDetailTab === 'postagem') savePosts();
 }
@@ -3913,25 +3902,31 @@ function renderProjTabProducao(p) {
     <input type="hidden" id="projStatus" value="${p?.status || 'planejamento'}"/>`
     + `
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px">
-      <div class="block-field">
-        <label>Vincular agendamento</label>
-        <select class="login-input" id="projBooking" style="margin:0" onchange="onProjBookingChange()">
-          <option value="">Sem vínculo (projeto avulso)</option>
-        </select>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="block-field">
+          <label>Nome do projeto</label>
+          <input type="text" class="login-input" id="projTitle" style="margin:0" placeholder="Ex: Review Harley 883"/>
+        </div>
+        <div class="block-field">
+          <label>Vincular agendamento</label>
+          <select class="login-input" id="projBooking" style="margin:0" onchange="onProjBookingChange()">
+            <option value="">Sem vínculo (projeto avulso)</option>
+          </select>
+        </div>
+        <div class="block-field" id="projMotoFieldWrap" style="display:none">
+          <label>Moto / Produto (manual)</label>
+          <input type="text" class="login-input" id="projMoto" style="margin:0" placeholder="Ex: Ducati Panigale V4"/>
+        </div>
+        <div class="block-field" id="projDateFieldWrap" style="display:none">
+          <label>Data de produção</label>
+          <input type="date" class="login-input" id="projDate" style="margin:0"/>
+        </div>
       </div>
-      <div class="block-field">
-        <label>Nome do projeto</label>
-        <input type="text" class="login-input" id="projTitle" style="margin:0" placeholder="Ex: Review Harley 883"/>
+      <div class="block-field" style="display:flex;flex-direction:column">
+        <label>Descrição do projeto</label>
+        <textarea class="checkin-textarea" id="projDescription" style="min-height:140px;flex:1" placeholder="Descreva o objetivo, escopo e detalhes do projeto..."></textarea>
       </div>
-      <div class="block-field" id="projMotoFieldWrap" style="display:none">
-        <label>Moto / Produto (manual)</label>
-        <input type="text" class="login-input" id="projMoto" style="margin:0" placeholder="Ex: Ducati Panigale V4"/>
-      </div>
-      <div class="block-field" id="projDateFieldWrap" style="display:none">
-        <label>Data de produção</label>
-        <input type="date" class="login-input" id="projDate" style="margin:0"/>
-      </div>
-      <div class="block-field">
+      <div class="block-field" style="grid-column:1/-1">
         <label>Destino do conteúdo</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
           <label class="proj-dest-chip"><input type="checkbox" id="projDestYT" value="youtube"/> <span>YouTube</span></label>
@@ -3941,20 +3936,6 @@ function renderProjTabProducao(p) {
           <label class="proj-dest-chip"><input type="checkbox" id="projDestClips" value="clips"/> <span>Clips</span></label>
           <label class="proj-dest-chip"><input type="checkbox" id="projDestSite" value="site"/> <span>Site</span></label>
           <label class="proj-dest-chip"><input type="checkbox" id="projDestAds" value="ads"/> <span>Ads</span></label>
-        </div>
-      </div>
-      <div class="block-field" style="grid-column:1/-1">
-        <label>Roteiro do vídeo</label>
-        <div style="display:flex;gap:8px;align-items:flex-start">
-          <textarea class="checkin-textarea" id="projScript" style="min-height:100px;flex:1" placeholder="Cole o roteiro ou descreva as cenas/tópicos..."></textarea>
-          <div>
-            <label class="action-btn view" style="padding:8px 12px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:4px" for="projScriptFile">
-              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              Upload
-            </label>
-            <input type="file" id="projScriptFile" accept=".txt,.pdf,.doc,.docx" hidden onchange="handleScriptUpload(this)"/>
-            <div id="projScriptFileName" style="font-size:10px;color:var(--text-muted);margin-top:4px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
-          </div>
         </div>
       </div>
       </div><!-- close main grid -->
@@ -3981,15 +3962,6 @@ function renderProjTabProducao(p) {
             <div style="flex:1">
               <span style="font-size:10px;color:var(--text-muted)">Descrição</span>
               <input type="text" class="login-input" id="projCostReason" style="margin:0" placeholder="Ex: Ponteira GT Trail"/>
-            </div>
-            <div style="flex:0 0 140px">
-              <span style="font-size:10px;color:var(--text-muted)">Categoria</span>
-              <select class="login-input" id="projCostCategory" style="margin:0">
-                <option value="produto">Produto</option>
-                <option value="mao_de_obra">Mão de obra</option>
-                <option value="logistica">Logística</option>
-                <option value="equipamento">Equipamento</option>
-              </select>
             </div>
             <div style="flex:0 0 100px">
               <span style="font-size:10px;color:var(--text-muted)">R$</span>
@@ -4025,16 +3997,12 @@ function renderProjTabProducao(p) {
   // Now fill in data AFTER HTML is in the DOM
   if (p && projDetailId) {
     document.getElementById('projTitle').value = p.title || '';
-    document.getElementById('projScript').value = p.script_text || '';
+    document.getElementById('projDescription').value = p.description || '';
     document.getElementById('projObs').value = p.observations || '';
     projLinks = [...(p.links || [])];
     projPhotos = [...(p.photos || [])];
     projCosts = [...(p.costs || [])];
     projScriptFileData = p.script_file || null;
-    if (p.script_file?.name) {
-      const fn = document.getElementById('projScriptFileName');
-      if (fn) fn.textContent = p.script_file.name;
-    }
     (p.destinations || []).forEach(d => {
       const map = { youtube: 'projDestYT', shorts: 'projDestShorts', tiktok: 'projDestTK', reels: 'projDestReels', clips: 'projDestClips', site: 'projDestSite', ads: 'projDestAds' };
       const cb = document.getElementById(map[d]);
@@ -4061,6 +4029,36 @@ function renderProjTabProducao(p) {
   renderProjLinks();
   renderProjPhotos();
   renderProjCosts();
+}
+
+function renderProjTabRoteiro(p) {
+  const el = document.getElementById('projTabRoteiro');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="block-field">
+      <label>Roteiro do vídeo</label>
+      <div style="display:flex;gap:8px;align-items:flex-start">
+        <textarea class="checkin-textarea" id="projScript" style="min-height:280px;flex:1" placeholder="Cole o roteiro ou descreva as cenas/tópicos..."></textarea>
+        <div>
+          <label class="action-btn view" style="padding:8px 12px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:4px" for="projScriptFile">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload
+          </label>
+          <input type="file" id="projScriptFile" accept=".txt,.pdf,.doc,.docx" hidden onchange="handleScriptUpload(this)"/>
+          <div id="projScriptFileName" style="font-size:10px;color:var(--text-muted);margin-top:4px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+        </div>
+      </div>
+    </div>
+  `;
+  // Fill data
+  if (p) {
+    document.getElementById('projScript').value = p.script_text || '';
+    projScriptFileData = p.script_file || null;
+    if (p.script_file?.name) {
+      const fn = document.getElementById('projScriptFileName');
+      if (fn) fn.textContent = p.script_file.name;
+    }
+  }
 }
 
 function renderProjTabAvaliacao(p) {
