@@ -567,6 +567,92 @@
   }
   .photo-lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
 
+  /* ── Roteiro tool ── */
+  .rot-mode-btn {
+    width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--bg-elev); color: var(--text-muted); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all .15s;
+  }
+  .rot-mode-btn:hover { border-color: var(--border-hi); color: var(--text-dim); }
+  .rot-mode-btn.active { background: rgba(139,156,247,.15); border-color: rgba(139,156,247,.5); color: #8b9cf7; }
+  .rot-scene {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+    margin-bottom: 8px; overflow: hidden; transition: border-color .15s;
+  }
+  .rot-scene:hover { border-color: var(--border-hi); }
+  .rot-scene-head {
+    display: flex; align-items: center; gap: 8px; padding: 12px 14px;
+    cursor: pointer; user-select: none;
+  }
+  .rot-chevron { transition: transform .15s; flex-shrink: 0; color: var(--text-muted); }
+  .rot-chevron.open { transform: rotate(90deg); }
+  .rot-drag-handle {
+    cursor: grab; color: var(--text-muted); font-size: 14px; letter-spacing: 1px;
+    user-select: none; opacity: .5; transition: opacity .15s;
+  }
+  .rot-drag-handle:hover { opacity: 1; }
+  .rot-scene-title {
+    font-weight: 600; font-size: 14px; color: var(--text); outline: none;
+    border-bottom: 1px solid transparent; transition: border-color .15s; min-width: 40px;
+  }
+  .rot-scene-title:focus { border-color: #8b9cf7; }
+  .rot-scene-location {
+    font-size: 12px; color: var(--text-muted); outline: none; min-width: 30px;
+    border-bottom: 1px solid transparent; transition: border-color .15s; margin-left: 4px;
+  }
+  .rot-scene-location:empty:not(:focus)::before { content: attr(data-placeholder); color: var(--text-muted); opacity: .5; }
+  .rot-scene-location:focus { border-color: #8b9cf7; }
+  .rot-duration { font-size: 12px; }
+  .rot-icon-btn {
+    width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
+    background: none; color: var(--text-muted); cursor: pointer; display: flex;
+    align-items: center; justify-content: center; transition: all .15s; padding: 0;
+  }
+  .rot-icon-btn:hover { border-color: #8b9cf7; color: #8b9cf7; background: rgba(139,156,247,.08); }
+  .rot-icon-btn.rot-delete:hover { border-color: var(--danger); color: var(--danger); background: rgba(255,77,77,.08); }
+  .rot-shot {
+    display: flex; align-items: center; gap: 8px; padding: 8px 14px 8px 48px;
+    border-top: 1px solid var(--border); transition: background .1s; min-height: 42px;
+  }
+  .rot-shot:hover { background: rgba(139,156,247,.03); }
+  .rot-check { display: flex; align-items: center; cursor: pointer; flex-shrink: 0; }
+  .rot-check input { display: none; }
+  .rot-check-box {
+    width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center; transition: all .15s;
+    background: var(--bg-elev);
+  }
+  .rot-check input:checked + .rot-check-box {
+    background: var(--success); border-color: var(--success);
+  }
+  .rot-check input:checked + .rot-check-box::after {
+    content: '✓'; color: #fff; font-size: 12px; font-weight: 700;
+  }
+  .rot-shot-title {
+    font-size: 12px; color: var(--text-dim); outline: none; flex: 1; min-width: 60px;
+    border-bottom: 1px solid transparent; transition: border-color .15s;
+  }
+  .rot-shot-title:focus { border-color: #8b9cf7; color: var(--text); }
+  .rot-shot-title.done { text-decoration: line-through; color: var(--text-muted); }
+  .rot-shot-title:empty:not(:focus)::before { content: attr(data-placeholder); color: var(--text-muted); opacity: .4; }
+  .rot-dur-input {
+    width: 40px; text-align: center; padding: 3px 4px; border-radius: 6px; font-size: 11px;
+    font-family: inherit; background: var(--bg-elev); border: 1px solid var(--border);
+    color: var(--success); font-weight: 600; outline: none; transition: border-color .15s;
+  }
+  .rot-dur-input:focus { border-color: #8b9cf7; }
+  .rot-note, .rot-shot-note {
+    padding: 6px 14px 8px 48px; font-size: 11px; color: var(--text-muted);
+    background: rgba(139,156,247,.04); border-top: 1px solid rgba(139,156,247,.1);
+    display: flex; align-items: baseline; gap: 6px;
+  }
+  .rot-note { padding-left: 58px; }
+  .rot-note-label { color: #8b9cf7; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; flex-shrink: 0; }
+  .rot-note span[contenteditable] { outline: none; flex: 1; }
+  .rot-shot-note span[contenteditable] { outline: none; flex: 1; }
+  .rot-note-rm { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 0 4px; transition: color .15s; }
+  .rot-note-rm:hover { color: var(--danger); }
+
   /* Agenda layout: calendar | details (wider) | block (compact) */
   .cal-top { display: grid; grid-template-columns: 340px 1fr 260px; gap: 14px; align-items: start; }
 
@@ -3773,6 +3859,11 @@ async function saveProject() {
     observations: document.getElementById('projObs').value.trim(),
     photos: projPhotos,
     costs: projCosts,
+    script_scenes: roteiroScenes.map(s => ({
+      title: s.title, location: s.location, note: s.note,
+      shots: (s.shots || []).map(sh => ({ title: sh.title, duration: sh.duration, done: sh.done, note: sh.note }))
+    })),
+    shoot_order: roteiroShootOrder,
     created_by: CURRENT_USER?.id || null
   };
 
@@ -4058,34 +4149,414 @@ function renderProjTabProducao(p) {
   renderProjCosts();
 }
 
+/* ═══════════════════════════════════════════════════════
+ *  ROTEIRO TOOL — Scenes & Shots editor
+ * ═══════════════════════════════════════════════════════ */
+let roteiroScenes = [];        // source of truth (claquete order)
+let roteiroShootOrder = null;  // null = same as scenes, or array of {sceneIdx, shotIdx?}
+let roteiroView = 'claquete';  // 'claquete' | 'camera'
+let roteiroDragEl = null;
+
 function renderProjTabRoteiro(p) {
   const el = document.getElementById('projTabRoteiro');
   if (!el) return;
+
+  // Load data
+  if (p && p.script_scenes && Array.isArray(p.script_scenes)) {
+    roteiroScenes = JSON.parse(JSON.stringify(p.script_scenes));
+  } else {
+    roteiroScenes = [];
+  }
+  roteiroShootOrder = (p && p.shoot_order) ? JSON.parse(JSON.stringify(p.shoot_order)) : null;
+  roteiroView = 'claquete';
+
   el.innerHTML = `
-    <div class="block-field">
-      <label>Roteiro do vídeo</label>
-      <div style="display:flex;gap:8px;align-items:flex-start">
-        <textarea class="checkin-textarea" id="projScript" style="min-height:280px;flex:1" placeholder="Cole o roteiro ou descreva as cenas/tópicos..."></textarea>
-        <div>
-          <label class="action-btn view" style="padding:8px 12px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:4px" for="projScriptFile">
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Upload
-          </label>
-          <input type="file" id="projScriptFile" accept=".txt,.pdf,.doc,.docx" hidden onchange="handleScriptUpload(this)"/>
-          <div id="projScriptFileName" style="font-size:10px;color:var(--text-muted);margin-top:4px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
-        </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;gap:4px;position:relative">
+        <button class="rot-mode-btn active" id="rotBtnClaquete" onclick="switchRoteiroView('claquete')" onmouseenter="showRotTooltip(this,'Roteiro — organize as cenas e planos do vídeo')" onmouseleave="hideRotTooltip()">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a1 1 0 001-1V7H3v12a1 1 0 001 1z"/><path d="M3 7l2.5-4h13L21 7"/><path d="M7 3l2 4"/><path d="M12 3l2 4"/><path d="M17 3l2 4"/></svg>
+        </button>
+        <button class="rot-mode-btn" id="rotBtnCamera" onclick="switchRoteiroView('camera')" onmouseenter="showRotTooltip(this,'Ordem de gravação — arraste para reordenar a sequência de filmagem')" onmouseleave="hideRotTooltip()">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        </button>
+        <div id="rotTooltip" style="display:none;position:absolute;top:100%;left:0;margin-top:6px;padding:6px 10px;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-dim);white-space:nowrap;z-index:10;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.3)"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="action-btn view" style="padding:6px 14px;font-size:11px" onclick="addRoteiroScene()">+ Cena</button>
+        <button class="action-btn view" style="padding:6px 14px;font-size:11px" onclick="downloadRoteiroPDF()">
+          <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Baixar PDF
+        </button>
       </div>
     </div>
+    <div id="roteiroContainer"></div>
   `;
-  // Fill data
-  if (p) {
-    document.getElementById('projScript').value = p.script_text || '';
-    projScriptFileData = p.script_file || null;
-    if (p.script_file?.name) {
-      const fn = document.getElementById('projScriptFileName');
-      if (fn) fn.textContent = p.script_file.name;
-    }
+  renderRoteiroContent();
+}
+
+function showRotTooltip(btn, text) {
+  const tip = document.getElementById('rotTooltip');
+  if (!tip) return;
+  tip.textContent = text;
+  tip.style.display = 'block';
+}
+function hideRotTooltip() {
+  const tip = document.getElementById('rotTooltip');
+  if (tip) tip.style.display = 'none';
+}
+
+function switchRoteiroView(view) {
+  roteiroView = view;
+  document.getElementById('rotBtnClaquete').classList.toggle('active', view === 'claquete');
+  document.getElementById('rotBtnCamera').classList.toggle('active', view === 'camera');
+  renderRoteiroContent();
+}
+
+function getRoteiroItems() {
+  if (roteiroView === 'camera' && roteiroShootOrder) {
+    return roteiroShootOrder.map(ref => {
+      const scene = roteiroScenes[ref.sceneIdx];
+      return scene ? { ...ref, scene } : null;
+    }).filter(Boolean);
   }
+  return null; // use roteiroScenes directly for claquete
+}
+
+function renderRoteiroContent() {
+  const container = document.getElementById('roteiroContainer');
+  if (!container) return;
+
+  if (roteiroScenes.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--text-muted)">
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.2" style="margin-bottom:12px;opacity:.4"><path d="M4 20h16a1 1 0 001-1V7H3v12a1 1 0 001 1z"/><path d="M3 7l2.5-4h13L21 7"/><path d="M7 3l2 4"/><path d="M12 3l2 4"/><path d="M17 3l2 4"/></svg>
+      <div style="font-size:13px;margin-bottom:12px">Nenhuma cena criada ainda</div>
+      <button class="action-btn view" style="padding:8px 18px;font-size:12px" onclick="addRoteiroScene()">+ Criar primeira cena</button>
+    </div>`;
+    return;
+  }
+
+  if (roteiroView === 'camera') {
+    renderCameraView(container);
+  } else {
+    renderClaqueteView(container);
+  }
+}
+
+function renderClaqueteView(container) {
+  let html = '';
+  roteiroScenes.forEach((scene, si) => {
+    const expanded = scene._expanded !== false;
+    const totalDur = (scene.shots || []).reduce((s, sh) => s + (sh.duration || 0), 0);
+    const doneCount = (scene.shots || []).filter(sh => sh.done).length;
+    const totalShots = (scene.shots || []).length;
+    html += `<div class="rot-scene" draggable="true" ondragstart="rotDragStart(event,'scene',${si})" ondragover="rotDragOver(event)" ondrop="rotDrop(event,'scene',${si})" data-si="${si}">
+      <div class="rot-scene-head" onclick="toggleSceneExpand(${si})">
+        <svg class="rot-chevron ${expanded?'open':''}" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <span class="rot-drag-handle" onclick="event.stopPropagation()" title="Arrastar">⠿</span>
+        <span class="rot-scene-title" contenteditable="true" onclick="event.stopPropagation()" onblur="updateSceneTitle(${si},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">${escHtml(scene.title || 'Nova Cena')}</span>
+        <span class="rot-scene-location" contenteditable="true" onclick="event.stopPropagation()" onblur="updateSceneLocation(${si},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" data-placeholder="Local">${escHtml(scene.location || '')}</span>
+        <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0">
+          <span class="rot-duration">${formatDuration(totalDur)}</span>
+          <span style="font-size:11px;color:var(--text-muted)">${doneCount}/${totalShots}</span>
+          <button class="rot-icon-btn" onclick="event.stopPropagation();addRoteiroShot(${si})" title="Adicionar plano">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <button class="rot-icon-btn" onclick="event.stopPropagation();addSceneNote(${si})" title="Adicionar nota">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </button>
+          <button class="rot-icon-btn rot-delete" onclick="event.stopPropagation();deleteScene(${si})" title="Excluir cena">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+      ${scene.note ? `<div class="rot-note"><span class="rot-note-label">Nota:</span> <span contenteditable="true" onblur="updateSceneNote(${si},this.textContent)">${escHtml(scene.note)}</span><button class="rot-note-rm" onclick="removeSceneNote(${si})">×</button></div>` : ''}
+      ${expanded ? renderShots(scene.shots || [], si) : ''}
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function renderCameraView(container) {
+  if (!roteiroShootOrder) {
+    // Build default shoot order from scene order
+    roteiroShootOrder = [];
+    roteiroScenes.forEach((scene, si) => {
+      roteiroShootOrder.push({ sceneIdx: si, type: 'scene' });
+    });
+  }
+  let html = '';
+  roteiroShootOrder.forEach((ref, oi) => {
+    const scene = roteiroScenes[ref.sceneIdx];
+    if (!scene) return;
+    const totalDur = (scene.shots || []).reduce((s, sh) => s + (sh.duration || 0), 0);
+    const doneCount = (scene.shots || []).filter(sh => sh.done).length;
+    const expanded = scene._camExpanded !== false;
+    html += `<div class="rot-scene" draggable="true" ondragstart="rotDragStart(event,'cam',${oi})" ondragover="rotDragOver(event)" ondrop="rotDrop(event,'cam',${oi})" data-oi="${oi}">
+      <div class="rot-scene-head" onclick="toggleCamExpand(${ref.sceneIdx})">
+        <svg class="rot-chevron ${expanded?'open':''}" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <span class="rot-drag-handle" onclick="event.stopPropagation()" title="Arrastar">⠿</span>
+        <span style="font-weight:600;font-size:14px;color:var(--text)">${escHtml(scene.title || 'Nova Cena')}</span>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:4px">${escHtml(scene.location || '')}</span>
+        <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0">
+          <span class="rot-duration">${formatDuration(totalDur)}</span>
+          <span style="font-size:11px;color:var(--text-muted)">${doneCount}/${(scene.shots||[]).length}</span>
+        </div>
+      </div>
+      ${expanded ? renderShots(scene.shots || [], ref.sceneIdx) : ''}
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function renderShots(shots, si) {
+  if (shots.length === 0) return '<div style="padding:12px 12px 12px 48px;font-size:12px;color:var(--text-muted)">Nenhum plano — clique + para adicionar</div>';
+  return shots.map((shot, pi) => `
+    <div class="rot-shot" draggable="true" ondragstart="rotDragStart(event,'shot',${si},${pi})" ondragover="rotDragOver(event)" ondrop="rotDrop(event,'shot',${si},${pi})" data-si="${si}" data-pi="${pi}">
+      <label class="rot-check" onclick="event.stopPropagation()">
+        <input type="checkbox" ${shot.done?'checked':''} onchange="toggleShotDone(${si},${pi},this.checked)"/>
+        <span class="rot-check-box"></span>
+      </label>
+      <span class="rot-shot-title ${shot.done?'done':''}" contenteditable="true" onblur="updateShotTitle(${si},${pi},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" data-placeholder="Descrição do plano">${escHtml(shot.title || '')}</span>
+      <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0">
+        <input type="text" class="rot-dur-input" value="${shot.duration||0}" onblur="updateShotDuration(${si},${pi},this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" title="Duração em segundos"/> <span style="font-size:10px;color:var(--text-muted)">s</span>
+        ${shot.note !== undefined && shot.note !== null ? '' : `<button class="rot-icon-btn" onclick="addShotNote(${si},${pi})" title="Nota"><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button>`}
+        <button class="rot-icon-btn rot-delete" onclick="deleteShot(${si},${pi})" title="Excluir plano">
+          <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    ${shot.note !== undefined && shot.note !== null ? `<div class="rot-shot-note"><span class="rot-note-label">Nota:</span> <span contenteditable="true" onblur="updateShotNote(${si},${pi},this.textContent)">${escHtml(shot.note)}</span><button class="rot-note-rm" onclick="removeShotNote(${si},${pi})">×</button></div>` : ''}
+  `).join('');
+}
+
+function formatDuration(s) {
+  if (!s || s <= 0) return '<span style="color:var(--text-muted)">0s</span>';
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `<span style="color:var(--success);font-weight:600;font-size:12px">${m > 0 ? m + ':' + String(sec).padStart(2,'0') : sec + 's'}</span>`;
+}
+
+/* ── Scene CRUD ── */
+function addRoteiroScene() {
+  roteiroScenes.push({ title: 'Nova Cena', location: '', shots: [], note: null, _expanded: true });
+  if (roteiroShootOrder) roteiroShootOrder.push({ sceneIdx: roteiroScenes.length - 1, type: 'scene' });
+  renderRoteiroContent();
+  autoSaveRoteiro();
+}
+function deleteScene(si) {
+  if (!confirm('Excluir esta cena e todos os planos?')) return;
+  roteiroScenes.splice(si, 1);
+  // Rebuild shoot order indices
+  if (roteiroShootOrder) {
+    roteiroShootOrder = roteiroShootOrder.filter(r => r.sceneIdx !== si).map(r => ({
+      ...r, sceneIdx: r.sceneIdx > si ? r.sceneIdx - 1 : r.sceneIdx
+    }));
+  }
+  renderRoteiroContent();
+  autoSaveRoteiro();
+}
+function updateSceneTitle(si, val) { roteiroScenes[si].title = val.trim(); autoSaveRoteiro(); }
+function updateSceneLocation(si, val) { roteiroScenes[si].location = val.trim(); autoSaveRoteiro(); }
+function updateSceneNote(si, val) { roteiroScenes[si].note = val.trim() || null; autoSaveRoteiro(); }
+function addSceneNote(si) { roteiroScenes[si].note = ''; renderRoteiroContent(); }
+function removeSceneNote(si) { roteiroScenes[si].note = null; renderRoteiroContent(); autoSaveRoteiro(); }
+function toggleSceneExpand(si) { roteiroScenes[si]._expanded = roteiroScenes[si]._expanded === false; renderRoteiroContent(); }
+function toggleCamExpand(si) { roteiroScenes[si]._camExpanded = roteiroScenes[si]._camExpanded === false; renderRoteiroContent(); }
+
+/* ── Shot CRUD ── */
+function addRoteiroShot(si) {
+  if (!roteiroScenes[si].shots) roteiroScenes[si].shots = [];
+  roteiroScenes[si].shots.push({ title: '', duration: 0, done: false, note: null });
+  roteiroScenes[si]._expanded = true;
+  renderRoteiroContent();
+  autoSaveRoteiro();
+}
+function deleteShot(si, pi) {
+  roteiroScenes[si].shots.splice(pi, 1);
+  renderRoteiroContent();
+  autoSaveRoteiro();
+}
+function toggleShotDone(si, pi, checked) {
+  roteiroScenes[si].shots[pi].done = checked;
+  renderRoteiroContent();
+  autoSaveRoteiro();
+}
+function updateShotTitle(si, pi, val) { roteiroScenes[si].shots[pi].title = val.trim(); autoSaveRoteiro(); }
+function updateShotDuration(si, pi, val) {
+  roteiroScenes[si].shots[pi].duration = parseInt(val) || 0;
+  renderRoteiroContent();
+  autoSaveRoteiro();
+}
+function addShotNote(si, pi) { roteiroScenes[si].shots[pi].note = ''; renderRoteiroContent(); }
+function updateShotNote(si, pi, val) { roteiroScenes[si].shots[pi].note = val.trim() || null; autoSaveRoteiro(); }
+function removeShotNote(si, pi) { roteiroScenes[si].shots[pi].note = null; renderRoteiroContent(); autoSaveRoteiro(); }
+
+/* ── Drag & Drop ── */
+function rotDragStart(e, type, idx, subIdx) {
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', JSON.stringify({ type, idx, subIdx }));
+  e.currentTarget.style.opacity = '0.5';
+  setTimeout(() => { if(e.currentTarget) e.currentTarget.style.opacity = ''; }, 200);
+}
+function rotDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+function rotDrop(e, targetType, targetIdx, targetSubIdx) {
+  e.preventDefault(); e.stopPropagation();
+  let data;
+  try { data = JSON.parse(e.dataTransfer.getData('text/plain')); } catch { return; }
+
+  if (data.type === 'cam' && targetType === 'cam') {
+    // Reorder shoot order
+    if (!roteiroShootOrder || data.idx === targetIdx) return;
+    const item = roteiroShootOrder.splice(data.idx, 1)[0];
+    roteiroShootOrder.splice(targetIdx, 0, item);
+    renderRoteiroContent();
+    autoSaveRoteiro();
+  } else if (data.type === 'scene' && targetType === 'scene') {
+    if (data.idx === targetIdx) return;
+    const item = roteiroScenes.splice(data.idx, 1)[0];
+    roteiroScenes.splice(targetIdx, 0, item);
+    // Update shoot order refs
+    if (roteiroShootOrder) {
+      roteiroShootOrder = roteiroShootOrder.map(r => {
+        let si = r.sceneIdx;
+        if (si === data.idx) si = targetIdx;
+        else if (data.idx < targetIdx && si > data.idx && si <= targetIdx) si--;
+        else if (data.idx > targetIdx && si >= targetIdx && si < data.idx) si++;
+        return { ...r, sceneIdx: si };
+      });
+    }
+    renderRoteiroContent();
+    autoSaveRoteiro();
+  } else if (data.type === 'shot' && targetType === 'shot') {
+    if (data.idx === targetIdx && data.subIdx === targetSubIdx) return;
+    const shot = roteiroScenes[data.idx].shots.splice(data.subIdx, 1)[0];
+    if (data.idx === targetIdx && data.subIdx < targetSubIdx) targetSubIdx--;
+    roteiroScenes[targetIdx].shots.splice(targetSubIdx, 0, shot);
+    renderRoteiroContent();
+    autoSaveRoteiro();
+  }
+}
+
+/* ── Auto-save ── */
+let _rotSaveTimer = null;
+function autoSaveRoteiro() {
+  clearTimeout(_rotSaveTimer);
+  _rotSaveTimer = setTimeout(async () => {
+    if (!projDetailId) return;
+    // Strip internal props for storage
+    const cleanScenes = roteiroScenes.map(s => ({
+      title: s.title, location: s.location, note: s.note,
+      shots: (s.shots || []).map(sh => ({ title: sh.title, duration: sh.duration, done: sh.done, note: sh.note }))
+    }));
+    const { error } = await sb.from('projects').update({
+      script_scenes: cleanScenes,
+      shoot_order: roteiroShootOrder
+    }).eq('id', projDetailId);
+    if (error) console.warn('Roteiro save error:', error.message);
+    // Update local PROJECTS cache
+    const p = PROJECTS.find(x => x.id === projDetailId);
+    if (p) { p.script_scenes = cleanScenes; p.shoot_order = roteiroShootOrder; }
+  }, 800);
+}
+
+/* ── Download PDF ── */
+async function downloadRoteiroPDF() {
+  if (roteiroScenes.length === 0) { alert('Adicione pelo menos uma cena ao roteiro.'); return; }
+  const p = PROJECTS.find(x => x.id === projDetailId);
+  const title = p?.title || 'Roteiro';
+
+  // Build content
+  let y = 0;
+  const lines = [];
+  lines.push({ text: title, size: 22, bold: true, y: y += 30 });
+  if (p?.moto) lines.push({ text: p.moto, size: 12, color: '#888', y: y += 20 });
+  y += 10;
+
+  const order = roteiroShootOrder || roteiroScenes.map((_, i) => ({ sceneIdx: i }));
+  order.forEach((ref, oi) => {
+    const scene = roteiroScenes[ref.sceneIdx];
+    if (!scene) return;
+    y += 16;
+    const totalDur = (scene.shots || []).reduce((s, sh) => s + (sh.duration || 0), 0);
+    const m = Math.floor(totalDur / 60); const sec = totalDur % 60;
+    const durStr = m > 0 ? `${m}:${String(sec).padStart(2,'0')}` : `${totalDur}s`;
+    lines.push({ text: `${oi + 1}. ${scene.title || 'Cena'}  ${scene.location ? '— ' + scene.location : ''}  [${durStr}]`, size: 14, bold: true, y: y += 18 });
+    if (scene.note) lines.push({ text: `   Nota: ${scene.note}`, size: 10, color: '#888', y: y += 14 });
+    (scene.shots || []).forEach((shot, pi) => {
+      const check = shot.done ? '☑' : '☐';
+      const durS = shot.duration ? ` (${shot.duration}s)` : '';
+      lines.push({ text: `     ${check}  ${shot.title || 'Plano ' + (pi + 1)}${durS}`, size: 11, y: y += 15, done: shot.done });
+      if (shot.note) lines.push({ text: `         Nota: ${shot.note}`, size: 9, color: '#888', y: y += 12 });
+    });
+  });
+
+  // Create PDF via canvas-like text rendering
+  const pageH = 842, pageW = 595, margin = 50;
+  const pages = [[]];
+  let pageY = 50;
+  lines.forEach(l => {
+    const lineH = l.size + 6;
+    if (pageY + lineH > pageH - margin) { pages.push([]); pageY = 50; }
+    pages[pages.length - 1].push({ ...l, y: pageY });
+    pageY += lineH;
+  });
+
+  // Build minimal PDF
+  const enc = s => unescape(encodeURIComponent(s));
+  let objs = [];
+  const addObj = content => { objs.push(content); return objs.length; };
+
+  addObj('<< /Type /Catalog /Pages 2 0 R >>');
+
+  const pageRefs = pages.map((_, i) => `${i + 4} 0 R`).join(' ');
+  addObj(`<< /Type /Pages /Kids [${pageRefs}] /Count ${pages.length} >>`);
+
+  addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
+
+  pages.forEach((pageLines, pi) => {
+    let stream = '';
+    pageLines.forEach(l => {
+      const text = enc(l.text || '').replace(/\\/g, '\\\\').replace(/\\(/g, '\\(').replace(/\\)/g, '\\)').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+      const color = l.color ? l.color : (l.done ? '0.6 0.6 0.6' : '0.1 0.1 0.1');
+      if (l.color) {
+        const r = parseInt(l.color.slice(1,3),16)/255;
+        const g = parseInt(l.color.slice(3,5),16)/255;
+        const b = parseInt(l.color.slice(5,7),16)/255;
+        stream += `${r.toFixed(2)} ${g.toFixed(2)} ${b.toFixed(2)} rg `;
+      } else if (l.done) {
+        stream += '0.6 0.6 0.6 rg ';
+      } else {
+        stream += '0.13 0.13 0.13 rg ';
+      }
+      stream += `BT /F1 ${l.size || 11} Tf ${margin} ${pageH - l.y} Td (${text}) Tj ET\n`;
+    });
+    addObj(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Contents ${pi + 4 + pages.length} 0 R /Resources << /Font << /F1 3 0 R >> >> >>`);
+    // We'll add streams after
+    pageLines._stream = stream;
+  });
+
+  pages.forEach((pageLines) => {
+    const stream = pageLines._stream;
+    addObj(`<< /Length ${stream.length} >>\nstream\n${stream}endstream`);
+  });
+
+  // Build PDF bytes
+  let pdf = '%PDF-1.4\n';
+  const offsets = [];
+  objs.forEach((obj, i) => {
+    offsets.push(pdf.length);
+    pdf += `${i + 1} 0 obj\n${obj}\nendobj\n`;
+  });
+  const xrefOff = pdf.length;
+  pdf += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n`;
+  offsets.forEach(o => { pdf += String(o).padStart(10, '0') + ' 00000 n \n'; });
+  pdf += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOff}\n%%EOF`;
+
+  const blob = new Blob([pdf], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `Roteiro - ${title}.pdf`; a.click();
+  URL.revokeObjectURL(url);
 }
 
 function renderProjTabAvaliacao(p) {
