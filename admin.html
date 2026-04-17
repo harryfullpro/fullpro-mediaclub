@@ -2797,7 +2797,17 @@ function parseCurrency(str) {
 function formatBRL(val) {
   return val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
-function addProjCost() {
+async function saveProjCostsToDb() {
+  const editId = document.getElementById('projEditId').value;
+  if (!editId) return;
+  const { error } = await sb.from('projects').update({ costs: projCosts }).eq('id', editId);
+  if (error) { console.warn('Erro ao salvar custos:', error.message); return; }
+  const p = PROJECTS.find(x => x.id === editId);
+  if (p) p.costs = [...projCosts];
+  renderProjects();
+  renderEditingView();
+}
+async function addProjCost() {
   const valInput = document.getElementById('projCostValue');
   const reasonInput = document.getElementById('projCostReason');
   const value = parseCurrency(valInput.value);
@@ -2808,10 +2818,12 @@ function addProjCost() {
   valInput.value = '';
   reasonInput.value = '';
   renderProjCosts();
+  await saveProjCostsToDb();
 }
-function rmProjCost(idx) {
+async function rmProjCost(idx) {
   projCosts.splice(idx, 1);
   renderProjCosts();
+  await saveProjCostsToDb();
 }
 function renderProjCosts() {
   const el = document.getElementById('projCostsList');
@@ -2821,7 +2833,7 @@ function renderProjCosts() {
   el.innerHTML = projCosts.map((c, i) => `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
     <span style="font-weight:600;color:var(--text);font-size:13px;white-space:nowrap">R$ ${formatBRL(c.value)}</span>
     <span style="color:var(--text-dim);font-size:12px;flex:1">${escHtml(c.reason)}</span>
-    <button class="proj-link-rm" onclick="rmProjCost(${i})">x</button>
+    <button onclick="rmProjCost(${i})" style="background:none;border:1px solid var(--danger);color:var(--danger);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;white-space:nowrap;transition:all .15s" onmouseover="this.style.background='var(--danger)';this.style.color='#fff'" onmouseout="this.style.background='none';this.style.color='var(--danger)'">remover</button>
   </div>`).join('') +
   `<div style="text-align:right;font-size:12px;font-weight:600;color:var(--primary);padding:4px 0;margin-bottom:8px">Total: R$ ${formatBRL(total)}</div>`;
 }
