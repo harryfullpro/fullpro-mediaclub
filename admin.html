@@ -1058,6 +1058,69 @@
   [data-theme="light"] .proj-filter-chip[data-pfilter="todos"] { border-color: rgba(0,0,0,.15); color: rgba(0,0,0,.35); }
   [data-theme="light"] .proj-filter-chip[data-pfilter="todos"]:hover { background: rgba(0,0,0,.03); }
   [data-theme="light"] .proj-filter-chip[data-pfilter="todos"].active { background: rgba(0,0,0,.08); border-color: rgba(0,0,0,.3); color: #222; }
+
+  /* ── Light theme: sun yellow accent + contrast fixes ── */
+  /* Check-in filter buttons: moon blue → sun yellow */
+  [data-theme="light"] .filter-btn.active { background: #d97706; border-color: #d97706; color: #fff; }
+  [data-theme="light"] .filter-btn[data-cifilter="checkout"].active { background: #b45309; border-color: #b45309; }
+  /* Action button "view" variant */
+  [data-theme="light"] .action-btn.view { background: rgba(217,119,6,.1); border-color: rgba(217,119,6,.35); color: #b45309; }
+  [data-theme="light"] .action-btn.view:hover { background: rgba(217,119,6,.18); border-color: #d97706; }
+  /* Form inputs focus */
+  [data-theme="light"] .checkin-input:focus,
+  [data-theme="light"] .checkin-textarea:focus { border-color: #d97706; }
+  [data-theme="light"] .book-form input:focus,
+  [data-theme="light"] .book-form select:focus,
+  [data-theme="light"] .book-form textarea:focus { border-color: #d97706; }
+  [data-theme="light"] .block-field input:focus,
+  [data-theme="light"] .block-field select:focus { border-color: #d97706; }
+  [data-theme="light"] .proj-sort-select:focus { border-color: #d97706; }
+  /* Photo add hover */
+  [data-theme="light"] .photo-add:hover { border-color: #d97706; color: #b45309; }
+  /* Roteiro tool accents */
+  [data-theme="light"] .rot-mode-btn.active { background: rgba(217,119,6,.1); border-color: rgba(217,119,6,.45); color: #b45309; }
+  [data-theme="light"] .rot-scene-title:focus { border-color: #d97706; }
+  [data-theme="light"] .rot-scene-location:focus { border-color: #d97706; }
+  [data-theme="light"] .rot-icon-btn:hover { border-color: #d97706; color: #b45309; background: rgba(217,119,6,.06); }
+  [data-theme="light"] .rot-icon-btn.rot-speech-btn:hover { border-color: #d97706; color: #b45309; background: rgba(217,119,6,.06); }
+  [data-theme="light"] .rot-shot-title:focus { border-color: #d97706; color: var(--text); }
+  [data-theme="light"] .rot-dur-input:focus { border-color: #d97706; }
+  [data-theme="light"] .rot-note-label { color: #b45309; }
+  [data-theme="light"] .rot-note, [data-theme="light"] .rot-shot-note { background: rgba(217,119,6,.04); border-top-color: rgba(217,119,6,.12); }
+  [data-theme="light"] .rot-shot:hover { background: rgba(217,119,6,.03); }
+  /* Cards & elevations: sharper borders on light */
+  [data-theme="light"] .cal-card,
+  [data-theme="light"] .edit-card,
+  [data-theme="light"] .stat-card,
+  [data-theme="light"] .modal-content { box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  [data-theme="light"] .edit-meta-item { background: #f7f7f9; }
+  [data-theme="light"] .edit-script-section { background: #f7f7f9; }
+  /* Input fields: ensure readable bg on light */
+  [data-theme="light"] .checkin-input,
+  [data-theme="light"] .checkin-textarea { background: #fff; border-color: #d4d4d8; }
+  [data-theme="light"] .rot-dur-input { background: #fff; border-color: #d4d4d8; color: #15803d; }
+  [data-theme="light"] .rot-check-box { background: #fff; border-color: #d4d4d8; }
+  /* Date picker icon: no invert on light */
+  [data-theme="light"] .block-field input[type="date"]::-webkit-calendar-picker-indicator { filter: none; }
+  /* PDF embed background on light */
+  [data-theme="light"] .edit-pdf-embed { background: #f0f0f2; }
+  /* Popover shadow lighter */
+  [data-theme="light"] .sb-popover { box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+  [data-theme="light"] .rot-icon-btn .rot-tip { box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+  /* Edição dashboard third card icon recolor */
+  [data-theme="light"] #editDashboard > div:nth-child(3) > div:first-child { background: rgba(217,119,6,.1); }
+  [data-theme="light"] #editDashboard > div:nth-child(3) > div:first-child svg { stroke: #d97706; }
+  [data-theme="light"] #editStatBarFill,
+  [data-theme="light"] #editDashboard #editStatBar > div { background: linear-gradient(90deg,#a855f7,#d97706); }
+  /* Project dest chips on light: improve contrast for yellow */
+  [data-theme="light"] .proj-dest-chip:has(input[value="clips"]:checked) { color: #a16207; }
+  [data-theme="light"] .proj-dest-chip:has(input[value="site"]:checked) { background: rgba(0,0,0,.06); border-color: rgba(0,0,0,.2); color: #444; }
+  /* Ver roteiro button on light */
+  [data-theme="light"] .edit-actions button[onclick^="openEditRoteiro"] { border-color: rgba(126,87,194,.3); }
+  [data-theme="light"] .edit-actions button[onclick^="openEditRoteiro"]:hover { background: rgba(126,87,194,.08); }
+  /* Photo upload label accent on light */
+  [data-theme="light"] label[for="projPhotoFile"] { color: #b45309 !important; border-color: rgba(217,119,6,.35) !important; }
+  [data-theme="light"] label[for="projPhotoFile"]:hover { border-color: #d97706 !important; background: rgba(217,119,6,.06) !important; }
   /* Planejamento — blue */
   .proj-filter-chip[data-pfilter="planejamento"] { border-color: rgba(59,130,246,.3); color: rgba(59,130,246,.6); }
   .proj-filter-chip[data-pfilter="planejamento"]:hover { background: rgba(59,130,246,.06); }
