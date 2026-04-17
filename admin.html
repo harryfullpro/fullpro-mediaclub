@@ -3575,59 +3575,11 @@ function renderProjTabProducao(p) {
   const el = document.getElementById('projTabProducao');
   if (!el) return;
 
-  // If we're editing an existing project, load its data
-  if (p && projDetailId) {
-    // Pre-fill the form fields
-    document.getElementById('projEditId').value = p.id;
-    document.getElementById('projTitle').value = p.title || '';
-    document.getElementById('projScript').value = p.script_text || '';
-    document.getElementById('projObs').value = p.observations || '';
-    document.getElementById('projStatus').value = p.status || 'planejamento';
-
-    (p.destinations || []).forEach(d => {
-      const map = { youtube: 'projDestYT', tiktok: 'projDestTK', instagram: 'projDestIG', tutorial: 'projDestTut' };
-      const cb = document.getElementById(map[d]);
-      if (cb) cb.checked = true;
-    });
-
-    projLinks = [...(p.links || [])];
-    projPhotos = [...(p.photos || [])];
-    projCosts = [...(p.costs || [])];
-    projScriptFileData = p.script_file || null;
-
-    if (p.script_file?.name) document.getElementById('projScriptFileName').textContent = p.script_file.name;
-
-    if (p.request_id) {
-      document.getElementById('projBooking').value = p.request_id;
-    } else {
-      document.getElementById('projBooking').value = '';
-      document.getElementById('projMoto').value = p.moto || '';
-      document.getElementById('projDate').value = p.production_date || '';
-    }
-  } else {
-    // New project - reset form
-    document.getElementById('projEditId').value = '';
-    document.getElementById('projTitle').value = '';
-    document.getElementById('projScript').value = '';
-    document.getElementById('projObs').value = '';
-    document.getElementById('projStatus').value = 'planejamento';
-    document.querySelectorAll('[id^="projDest"]').forEach(cb => { if (cb.type === 'checkbox') cb.checked = false; });
-    projLinks = [];
-    projPhotos = [];
-    projCosts = [];
-    projScriptFileData = null;
-    document.getElementById('projScriptFileName').textContent = '';
-    document.getElementById('projBooking').value = '';
-  }
-
-  populateProjBookings();
-  onProjBookingChange();
-  renderProjLinks();
-  renderProjPhotos();
-  renderProjCosts();
-
-  // Render the Produção tab content (using the existing form structure)
+  // First: render the HTML so elements exist in the DOM
   el.innerHTML = `
+    <input type="hidden" id="projEditId" value="${p ? p.id : ''}"/>
+    <input type="hidden" id="projStatus" value="${p?.status || 'planejamento'}"/>`
+    + `
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px">
       <div class="block-field">
         <label>Vincular agendamento</label>
@@ -3739,6 +3691,46 @@ function renderProjTabProducao(p) {
       <button class="action-btn reject" style="padding:12px 20px" onclick="backToProjects()">Cancelar</button>
     </div>
   `;
+
+  // Now fill in data AFTER HTML is in the DOM
+  if (p && projDetailId) {
+    document.getElementById('projTitle').value = p.title || '';
+    document.getElementById('projScript').value = p.script_text || '';
+    document.getElementById('projObs').value = p.observations || '';
+    projLinks = [...(p.links || [])];
+    projPhotos = [...(p.photos || [])];
+    projCosts = [...(p.costs || [])];
+    projScriptFileData = p.script_file || null;
+    if (p.script_file?.name) {
+      const fn = document.getElementById('projScriptFileName');
+      if (fn) fn.textContent = p.script_file.name;
+    }
+    (p.destinations || []).forEach(d => {
+      const map = { youtube: 'projDestYT', tiktok: 'projDestTK', instagram: 'projDestIG', tutorial: 'projDestTut' };
+      const cb = document.getElementById(map[d]);
+      if (cb) cb.checked = true;
+    });
+  } else {
+    projLinks = [];
+    projPhotos = [];
+    projCosts = [];
+    projScriptFileData = null;
+  }
+
+  populateProjBookings();
+  if (p && p.request_id) {
+    document.getElementById('projBooking').value = p.request_id;
+  } else if (p) {
+    document.getElementById('projBooking').value = '';
+    const motoEl = document.getElementById('projMoto');
+    const dateEl = document.getElementById('projDate');
+    if (motoEl) motoEl.value = p.moto || '';
+    if (dateEl) dateEl.value = p.production_date || '';
+  }
+  onProjBookingChange();
+  renderProjLinks();
+  renderProjPhotos();
+  renderProjCosts();
 }
 
 function renderProjTabAvaliacao(p) {
