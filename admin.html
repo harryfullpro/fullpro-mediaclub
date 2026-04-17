@@ -750,13 +750,10 @@
   .proj-status-select.a_publicar { background-color: rgba(245,158,11,.12); border-color: rgba(245,158,11,.4); color: #f59e0b; }
   .proj-status-select.concluido { background-color: rgba(31,210,122,.12); border-color: rgba(31,210,122,.4); color: var(--success); }
 
-  /* Project modal (new unified modal) */
-  .proj-modal {
-    max-width: 900px !important;
-  }
+  /* Project detail view */
   .proj-modal-tabs {
     display: flex; gap: 0; border-bottom: 1px solid var(--border);
-    background: var(--bg-soft);
+    background: var(--bg-card);
   }
   .proj-modal-tab {
     flex: 1; padding: 12px 16px; border: none; background: transparent;
@@ -773,8 +770,7 @@
     height: 2px; background: var(--primary);
   }
   .proj-tab-content {
-    display: none; padding: 24px;
-    max-height: calc(90vh - 200px); overflow-y: auto;
+    display: none; padding: 0;
   }
   .proj-tab-content.active { display: block; }
 
@@ -1500,7 +1496,7 @@
           <h1>Projetos</h1>
           <p>Planeje roteiros, destinos e referências para cada produção.</p>
         </div>
-        <button class="action-btn approve" style="padding:12px 20px; font-size:14px" onclick="openProjModal()">+ Novo projeto</button>
+        <button class="action-btn approve" style="padding:12px 20px; font-size:14px" onclick="openProjectDetail()">+ Novo projeto</button>
       </div>
 
       <!-- Project filters -->
@@ -1527,6 +1523,24 @@
 
       <!-- Project list -->
       <div id="projectsList"></div>
+    </div>
+
+    <!-- PROJECT DETAIL VIEW -->
+    <div id="view-project-detail" style="display:none">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <button class="action-btn" style="padding:6px 14px;font-size:13px" onclick="backToProjects()">← Projetos</button>
+        <h1 id="projDetailTitle" style="flex:1;font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px">Projeto</h1>
+        <select class="proj-status-select" id="projDetailStatus" onchange="quickDetailStatus(this.value)"></select>
+        <button class="action-btn reject" style="padding:6px 14px;font-size:12px" onclick="deleteProject(projDetailId)">Excluir</button>
+      </div>
+      <div class="proj-modal-tabs" style="margin-bottom:20px;border-radius:10px;overflow:hidden">
+        <button class="proj-modal-tab active" data-dtab="producao" onclick="switchDetailTab('producao')">Produção</button>
+        <button class="proj-modal-tab" data-dtab="avaliacao" onclick="switchDetailTab('avaliacao')">Avaliação</button>
+        <button class="proj-modal-tab" data-dtab="postagem" onclick="switchDetailTab('postagem')">Postagem</button>
+      </div>
+      <div class="proj-tab-content active" id="projTabProducao"></div>
+      <div class="proj-tab-content" id="projTabAvaliacao"></div>
+      <div class="proj-tab-content" id="projTabPostagem"></div>
     </div>
 
     <!-- PERFORMANCE VIEW -->
@@ -1894,28 +1908,6 @@
   </div>
 </div>
 
-<!-- Modal Unificado: Produção, Avaliação, Postagem -->
-<div class="modal" id="projModal">
-  <div class="modal-content proj-modal">
-    <div class="modal-head" style="flex-wrap:wrap;gap:10px">
-      <div style="display:flex;align-items:center;gap:12px;flex:1">
-        <h3 id="projModalTitle">Projeto</h3>
-        <select class="proj-status-select" id="projModalStatus" onchange="quickModalStatus(this.value)"></select>
-      </div>
-      <button class="modal-close" onclick="closeProjModal()">×</button>
-      <div class="proj-modal-tabs" style="width:100%">
-        <button class="proj-modal-tab active" data-tab="producao" onclick="switchProjTab('producao')">Produção</button>
-        <button class="proj-modal-tab" data-tab="avaliacao" onclick="switchProjTab('avaliacao')">Avaliação</button>
-        <button class="proj-modal-tab" data-tab="postagem" onclick="switchProjTab('postagem')">Postagem</button>
-      </div>
-    </div>
-    <div class="modal-body" style="padding:0">
-      <div class="proj-tab-content active" id="projTabProducao"></div>
-      <div class="proj-tab-content" id="projTabAvaliacao"></div>
-      <div class="proj-tab-content" id="projTabPostagem"></div>
-    </div>
-  </div>
-</div>
 
 <!-- Modal Configurar Metas -->
 <div class="modal" id="perfGoalsModal">
@@ -2429,7 +2421,7 @@ document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['dashboard','requests','calendar','checkin','projects','editing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'].forEach(v => {
+    ['dashboard','requests','calendar','checkin','projects','project-detail','editing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'].forEach(v => {
       document.getElementById('view-' + v).style.display = 'none';
     });
     document.getElementById('view-' + btn.dataset.view).style.display = 'block';
@@ -3088,7 +3080,7 @@ let projLinks = [];
 let projPhotos = [];
 let projCosts = [];
 let NOTIFICATIONS = [];
-let projModalId = null;
+let projDetailId = null;
 let tempEvalRatings = {};
 
 async function loadProjects() {
@@ -3170,11 +3162,11 @@ function renderProjects() {
           <select class="proj-status-select ${p.status}" onchange="quickUpdateProjectStatus('${p.id}',this.value)">
             ${['planejamento','producao','edicao','a_publicar','concluido'].map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${statusMap[s]}</option>`).join('')}
           </select>
-          <button class="action-btn approve" style="padding:4px 10px;font-size:11px" onclick="openProjModal('${p.id}')">
+          <button class="action-btn approve" style="padding:4px 10px;font-size:11px" onclick="openProjectDetail('${p.id}')">
             <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             Ver
           </button>
-          <button class="action-btn view" style="padding:4px 10px;font-size:11px" onclick="openProjModal('${p.id}')">
+          <button class="action-btn view" style="padding:4px 10px;font-size:11px" onclick="openProjectDetail('${p.id}')">
             <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Editar
           </button>
@@ -3461,15 +3453,21 @@ async function saveProject() {
     alert('Erro ao salvar projeto: ' + result.error.message + '\n\nVocê já criou a tabela "projects" no Supabase?');
     return;
   }
-  closeProjModal();
   await loadProjects();
   renderProjects();
   renderEditingView();
-  alert(editId ? 'Projeto atualizado!' : 'Projeto criado!');
+  // If editing, stay on detail; if new, go back to list
+  if (editId) {
+    openProjectDetail(editId);
+    alert('Projeto atualizado!');
+  } else {
+    backToProjects();
+    alert('Projeto criado!');
+  }
 }
 
 async function editProject(id) {
-  openProjModal(id);
+  openProjectDetail(id);
 }
 
 async function quickUpdateProjectStatus(id, status) {
@@ -3506,62 +3504,70 @@ function starHoverOut(wrap) {
   wrap.querySelectorAll('.star').forEach(s => s.classList.remove('hover-preview'));
 }
 
-function viewProject(id) { openProjModal(id); }
+function viewProject(id) { openProjectDetail(id); }
 
-// Unified project modal functions
+// Project detail page functions
 
-function openProjModal(id) {
-  projModalId = id || null;
+function openProjectDetail(id) {
+  projDetailId = id || null;
   const p = id ? PROJECTS.find(x => x.id === id) : null;
 
   // Set title
-  document.getElementById('projModalTitle').textContent = p ? (p.title || 'Sem título') : 'Novo projeto';
+  document.getElementById('projDetailTitle').textContent = p ? (p.title || 'Sem título') : 'Novo projeto';
 
   // Set status dropdown
-  const statusSel = document.getElementById('projModalStatus');
+  const statusSel = document.getElementById('projDetailStatus');
   const statusMap = { planejamento: 'Planejamento', producao: 'Em produção', edicao: 'Edição', a_publicar: 'A publicar', concluido: 'Concluído' };
   statusSel.innerHTML = Object.entries(statusMap).map(([k,v]) => `<option value="${k}" ${(p?.status||'planejamento')===k?'selected':''}>${v}</option>`).join('');
   statusSel.className = 'proj-status-select ' + (p?.status || 'planejamento');
 
-  // Initialize evaluation ratings tracking
-  tempEvalRatings = {};
-  if (p?.evaluation) {
-    tempEvalRatings.main_rating = p.evaluation.main_rating || 0;
-    tempEvalRatings.main_obs = p.evaluation.main_obs || '';
-    if (p.evaluation.clips) {
-      tempEvalRatings.clips = { ...p.evaluation.clips };
-    }
-  }
-
-  // Render tabs
+  // Render tab contents
   renderProjTabProducao(p);
   renderProjTabAvaliacao(p);
   renderProjTabPostagem(p);
 
-  // Show modal, activate first tab
-  switchProjTab('producao');
-  document.getElementById('projModal').classList.add('show');
+  // Switch to producao tab
+  switchDetailTab('producao');
+
+  // Hide all views, show project-detail
+  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'].forEach(v => {
+    document.getElementById('view-' + v).style.display = 'none';
+  });
+  document.getElementById('view-project-detail').style.display = 'block';
+
+  // Deselect sidebar items
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  // Highlight projects nav
+  const projNav = document.querySelector('.nav-item[data-view="projects"]');
+  if (projNav) projNav.classList.add('active');
+
+  // Scroll to top
+  document.querySelector('main').scrollTop = 0;
 }
 
-function closeProjModal() {
-  document.getElementById('projModal').classList.remove('show');
-  projModalId = null;
+function backToProjects() {
+  projDetailId = null;
+  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'].forEach(v => {
+    document.getElementById('view-' + v).style.display = 'none';
+  });
+  document.getElementById('view-projects').style.display = 'block';
+  renderProjects();
 }
 
-function switchProjTab(tab) {
-  document.querySelectorAll('.proj-modal-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-  document.querySelectorAll('.proj-tab-content').forEach(c => c.classList.remove('active'));
-  const tabEl = document.getElementById('projTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
-  if (tabEl) tabEl.classList.add('active');
+function switchDetailTab(tab) {
+  document.querySelectorAll('.proj-modal-tab[data-dtab]').forEach(t => t.classList.toggle('active', t.dataset.dtab === tab));
+  ['Producao','Avaliacao','Postagem'].forEach(t => {
+    document.getElementById('projTab' + t).classList.toggle('active', t.toLowerCase() === tab);
+  });
 }
 
-async function quickModalStatus(status) {
-  if (!projModalId) return;
-  const { error } = await sb.from('projects').update({ status }).eq('id', projModalId);
+async function quickDetailStatus(status) {
+  if (!projDetailId) return;
+  const { error } = await sb.from('projects').update({ status }).eq('id', projDetailId);
   if (error) { alert('Erro: ' + error.message); return; }
-  const p = PROJECTS.find(x => x.id === projModalId);
+  const p = PROJECTS.find(x => x.id === projDetailId);
   if (p) p.status = status;
-  document.getElementById('projModalStatus').className = 'proj-status-select ' + status;
+  document.getElementById('projDetailStatus').className = 'proj-status-select ' + status;
   renderProjects();
 }
 
@@ -3570,7 +3576,7 @@ function renderProjTabProducao(p) {
   if (!el) return;
 
   // If we're editing an existing project, load its data
-  if (p && projModalId) {
+  if (p && projDetailId) {
     // Pre-fill the form fields
     document.getElementById('projEditId').value = p.id;
     document.getElementById('projTitle').value = p.title || '';
@@ -3730,7 +3736,7 @@ function renderProjTabProducao(p) {
         <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Salvar projeto
       </button>
-      <button class="action-btn reject" style="padding:12px 20px" onclick="closeProjModal()">Cancelar</button>
+      <button class="action-btn reject" style="padding:12px 20px" onclick="backToProjects()">Cancelar</button>
     </div>
   `;
 }
@@ -3809,13 +3815,13 @@ function setEvalRating(key, val) {
   }
 
   // Re-render the avaliacao tab to show the updated ratings
-  const p = PROJECTS.find(x => x.id === projModalId);
+  const p = PROJECTS.find(x => x.id === projDetailId);
   if (p) renderProjTabAvaliacao(p);
 }
 
 async function saveEvaluation() {
-  if (!isUserAdmin() || !projModalId) return;
-  const p = PROJECTS.find(x => x.id === projModalId);
+  if (!isUserAdmin() || !projDetailId) return;
+  const p = PROJECTS.find(x => x.id === projDetailId);
   if (!p) return;
 
   const evaluation = {};
@@ -3830,7 +3836,7 @@ async function saveEvaluation() {
     evaluation.clips[d].rating = (tempEvalRatings.clips && tempEvalRatings.clips[d]?.rating) || 0;
   });
 
-  const { error } = await sb.from('projects').update({ evaluation }).eq('id', projModalId);
+  const { error } = await sb.from('projects').update({ evaluation }).eq('id', projDetailId);
   if (error) { alert('Erro: ' + error.message); return; }
   p.evaluation = evaluation;
 
@@ -3891,8 +3897,8 @@ function buildPostCard(key, title, badge, data) {
 }
 
 async function savePosts() {
-  if (!projModalId) return;
-  const p = PROJECTS.find(x => x.id === projModalId);
+  if (!projDetailId) return;
+  const p = PROJECTS.find(x => x.id === projDetailId);
   if (!p) return;
 
   const posts = {};
@@ -3909,7 +3915,7 @@ async function savePosts() {
     };
   });
 
-  const { error } = await sb.from('projects').update({ posts }).eq('id', projModalId);
+  const { error } = await sb.from('projects').update({ posts }).eq('id', projDetailId);
   if (error) { alert('Erro: ' + error.message); return; }
   p.posts = posts;
   alert('Postagem salva!');
@@ -3982,12 +3988,6 @@ async function dismissNotif(id) {
   renderProfileNotifications();
 }
 
-// Setup modal click-outside-to-close
-if (document.getElementById('projModal')) {
-  document.getElementById('projModal').addEventListener('click', e => {
-    if (e.target.id === 'projModal') closeProjModal();
-  });
-}
 
 async function deleteProject(id) {
   if (!confirm('Excluir este projeto? Ação irreversível.')) return;
@@ -4454,7 +4454,7 @@ function renderEditingView() {
             <option value="a_publicar" ${p.status === 'a_publicar' ? 'selected' : ''}>A publicar</option>
             <option value="concluido" ${p.status === 'concluido' ? 'selected' : ''}>Concluído</option>
           </select>
-          <button class="action-btn approve" style="padding:4px 10px;font-size:11px" onclick="openProjModal('${p.id}')">
+          <button class="action-btn approve" style="padding:4px 10px;font-size:11px" onclick="openProjectDetail('${p.id}')">
             <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             Ver completo
           </button>
@@ -4699,7 +4699,7 @@ function renderDashboard() {
           const costs = (p.costs || []).reduce((s, c) => s + (c.value || 0), 0);
           const destNames = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram', tutorial: 'Tutorial' };
           const dests = (p.destinations || []).map(d => `<span class="proj-dest-tag ${d}" style="font-size:9px;padding:2px 6px">${destNames[d] || d}</span>`).join('');
-          return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="document.querySelector('[data-view=projects]').click();viewProject('${p.id}')">
+          return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openProjectDetail('${p.id}')">
             <div style="flex:1;min-width:0">
               <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.title || 'Sem título')}</div>
               <div style="display:flex;gap:4px;margin-top:4px">${dests || ''}</div>
