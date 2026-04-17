@@ -796,6 +796,23 @@
     border-radius: 10px; background: var(--bg-elev);
     margin-bottom: 12px;
   }
+  .engagement-row {
+    display: flex; gap: 12px; margin-top: 12px; padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .engagement-item {
+    display: flex; align-items: center; gap: 6px; flex: 1;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px; transition: border-color .15s;
+  }
+  .engagement-item:focus-within { border-color: var(--primary); }
+  .engagement-icon { flex-shrink: 0; display: flex; align-items: center; }
+  .engagement-icon svg { width: 16px; height: 16px; }
+  .engagement-input {
+    background: none; border: none; color: var(--text); font-size: 13px;
+    font-family: inherit; font-weight: 600; width: 100%; outline: none;
+  }
+  .engagement-input::placeholder { color: var(--text-muted); font-weight: 400; }
 
   /* Cost categories with colored dots */
   .cost-category {
@@ -3885,7 +3902,31 @@ function buildPostCard(key, title, badge, data) {
       <input type="text" class="login-input" id="postLink_${key}" style="margin:0;flex:1" placeholder="Link da postagem..." value="${escHtml(data.link||'')}"/>
       ${data.link ? `<a href="${escHtml(data.link)}" target="_blank" style="color:var(--primary);padding:6px"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>` : ''}
     </div>
+    <div class="engagement-row">
+      <div class="engagement-item">
+        <div class="engagement-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <input type="text" class="engagement-input" id="postViews_${key}" placeholder="Views" value="${data.views || ''}" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
+      </div>
+      <div class="engagement-item">
+        <div class="engagement-icon"><svg viewBox="0 0 24 24" fill="${(data.likes || 0) > 0 ? '#ff4d6a' : 'none'}" stroke="${(data.likes || 0) > 0 ? '#ff4d6a' : 'var(--text-muted)'}" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
+        <input type="text" class="engagement-input" id="postLikes_${key}" placeholder="Likes" value="${data.likes || ''}" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
+      </div>
+      <div class="engagement-item">
+        <div class="engagement-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+        <input type="text" class="engagement-input" id="postComments_${key}" placeholder="Coment." value="${data.comments || ''}" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
+      </div>
+    </div>
   </div>`;
+}
+
+function collectPostData(key) {
+  return {
+    status: document.getElementById('postStatus_' + key)?.value || 'Pendente',
+    link: document.getElementById('postLink_' + key)?.value || '',
+    views: parseInt(document.getElementById('postViews_' + key)?.value) || 0,
+    likes: parseInt(document.getElementById('postLikes_' + key)?.value) || 0,
+    comments: parseInt(document.getElementById('postComments_' + key)?.value) || 0
+  };
 }
 
 async function savePosts() {
@@ -3894,18 +3935,8 @@ async function savePosts() {
   if (!p) return;
 
   const posts = {};
-  // Main
-  posts.main = {
-    status: document.getElementById('postStatus_main')?.value || 'Pendente',
-    link: document.getElementById('postLink_main')?.value || ''
-  };
-  // Clips
-  (p.destinations || []).forEach(d => {
-    posts[d] = {
-      status: document.getElementById('postStatus_' + d)?.value || 'Pendente',
-      link: document.getElementById('postLink_' + d)?.value || ''
-    };
-  });
+  posts.main = collectPostData('main');
+  (p.destinations || []).forEach(d => { posts[d] = collectPostData(d); });
 
   const { error } = await sb.from('projects').update({ posts }).eq('id', projDetailId);
   if (error) { alert('Erro: ' + error.message); return; }
