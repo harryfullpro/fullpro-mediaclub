@@ -790,19 +790,27 @@
   .proj-eval-status:focus { outline: none; border-color: var(--primary); }
   .proj-eval-status:disabled { opacity: 0.6; cursor: not-allowed; }
 
-  /* Posting cards */
+  /* Posting grid container */
+  .post-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  /* Posting cards — compact square style */
   .proj-post-card {
     border: 1px solid var(--border); border-radius: 12px;
-    background: var(--bg-elev); overflow: hidden; margin-bottom: 16px;
+    background: var(--bg-elev); overflow: hidden;
+    display: flex; flex-direction: column;
   }
   .post-card-head {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 16px; border-bottom: 1px solid var(--border);
+    padding: 10px 12px; border-bottom: 1px solid var(--border);
   }
-  .post-card-body { padding: 16px; }
+  .post-card-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
   .post-embed {
     position: relative; border-radius: 8px; overflow: hidden;
-    background: #000; aspect-ratio: 16/9; margin-bottom: 14px;
+    background: #000; aspect-ratio: 1/1; margin-bottom: 10px;
   }
   .post-embed iframe { width: 100%; height: 100%; border: none; }
   .post-embed img { width: 100%; height: 100%; object-fit: cover; }
@@ -812,32 +820,33 @@
     transition: background .2s;
   }
   .post-embed .play-overlay:hover { background: rgba(0,0,0,.15); }
-  .post-embed .play-overlay svg { width: 56px; height: 56px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.5)); }
+  .post-embed .play-overlay svg { width: 40px; height: 40px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.5)); }
   .post-actions {
-    display: flex; gap: 8px; margin-top: 12px;
+    display: flex; gap: 6px; margin-top: auto; padding-top: 8px;
+    flex-wrap: wrap;
   }
   .post-action-btn {
-    display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px;
-    border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card);
-    color: var(--text-dim); font-size: 11px; font-weight: 600; font-family: inherit;
+    display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px;
+    border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card);
+    color: var(--text-dim); font-size: 10px; font-weight: 600; font-family: inherit;
     cursor: pointer; transition: all .15s;
   }
   .post-action-btn:hover { border-color: var(--text-muted); color: var(--text); }
   .post-link-input-wrap {
-    display: flex; gap: 8px; align-items: center;
+    display: flex; flex-direction: column; gap: 8px;
   }
   .engagement-row {
-    display: flex; gap: 10px; margin-top: 14px;
+    display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;
   }
   .engagement-stat {
-    display: flex; align-items: center; gap: 6px; padding: 8px 14px;
+    display: flex; align-items: center; gap: 4px; padding: 4px 8px;
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 8px; flex: 1;
+    border-radius: 6px; flex: 1; min-width: 0;
   }
   .engagement-stat .e-icon { flex-shrink: 0; display: flex; align-items: center; }
-  .engagement-stat .e-icon svg { width: 16px; height: 16px; }
-  .engagement-stat .e-val { font-size: 14px; font-weight: 700; color: var(--text); }
-  .engagement-stat .e-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; }
+  .engagement-stat .e-icon svg { width: 13px; height: 13px; }
+  .engagement-stat .e-val { font-size: 12px; font-weight: 700; color: var(--text); }
+  .engagement-stat .e-label { font-size: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; }
 
   /* Cost categories with colored dots */
   .cost-category {
@@ -1284,13 +1293,11 @@
     .proj-filter-separator { display: none; }
     .proj-sort-select { width: 100%; margin-left: 0; margin-top: 4px; }
 
-    /* Post cards */
-    .post-card-body { padding: 12px; }
-    .post-link-input-wrap { flex-direction: column; }
-    .post-link-input-wrap input { width: 100% !important; }
-    .post-link-input-wrap button { width: 100%; }
-    .engagement-row { flex-wrap: wrap; gap: 8px; }
-    .engagement-stat { min-width: calc(50% - 4px); padding: 6px 10px; }
+    /* Post grid + cards */
+    .post-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+    .post-card-body { padding: 10px; }
+    .engagement-row { gap: 4px; }
+    .engagement-stat { padding: 4px 6px; }
     .post-actions { flex-wrap: wrap; }
 
     /* Influencer cards */
@@ -1346,9 +1353,10 @@
     .actions { flex-wrap: wrap; }
     .action-btn { padding: 5px 10px; font-size: 11px; }
 
+    .post-grid { grid-template-columns: 1fr 1fr; }
     .engagement-stat { min-width: 100%; }
 
-    .post-embed .play-overlay svg { width: 40px; height: 40px; }
+    .post-embed .play-overlay svg { width: 32px; height: 32px; }
 
     .proj-meta { grid-template-columns: 1fr; }
     .edit-meta-grid { grid-template-columns: 1fr; }
@@ -4124,7 +4132,7 @@ function renderProjTabPostagem(p) {
     return;
   }
 
-  let html = '<div style="display:flex;flex-direction:column;gap:16px">';
+  let html = '<div class="post-grid">';
   dests.forEach(d => {
     const pd = posts[d] || {};
     html += buildPostCard(d, pd);
@@ -4144,8 +4152,8 @@ function buildPostCard(dest, data) {
     // Empty state / editing state: show input + save button
     body = `<div class="post-card-body">
       <div class="post-link-input-wrap">
-        <input type="text" class="login-input" id="postLink_${dest}" style="margin:0;flex:1" placeholder="Cole o link da postagem aqui..." value="${escHtml(data.link||'')}"/>
-        <button class="action-btn approve" style="padding:8px 16px;font-size:12px;white-space:nowrap" onclick="savePostSingle('${dest}')">
+        <input type="text" class="login-input" id="postLink_${dest}" style="margin:0;width:100%;font-size:12px;padding:8px 10px" placeholder="Cole o link aqui..." value="${escHtml(data.link||'')}"/>
+        <button class="action-btn approve" style="padding:7px 14px;font-size:11px;white-space:nowrap;width:100%" onclick="savePostSingle('${dest}')">
           <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><polyline points="20 6 9 17 4 12"/></svg>
           Salvar
         </button>
@@ -4166,29 +4174,29 @@ function buildPostCard(dest, data) {
         </a>
       </div>`;
     } else if (dest === 'instagram') {
-      embedHtml = `<div class="post-embed" style="aspect-ratio:1/1;max-height:300px">
+      embedHtml = `<div class="post-embed">
         <a href="${escHtml(data.link)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)">
           <div style="text-align:center;color:#fff">
             ${info.icon}
-            <div style="font-size:12px;margin-top:8px;opacity:.8">Ver no Instagram</div>
+            <div style="font-size:11px;margin-top:6px;opacity:.8">Ver no Instagram</div>
           </div>
         </a>
       </div>`;
     } else if (dest === 'tiktok') {
-      embedHtml = `<div class="post-embed" style="aspect-ratio:9/16;max-height:340px;max-width:200px">
+      embedHtml = `<div class="post-embed">
         <a href="${escHtml(data.link)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg,#010101,#161823)">
           <div style="text-align:center;color:#fff">
             ${info.icon}
-            <div style="font-size:12px;margin-top:8px;opacity:.8">Ver no TikTok</div>
+            <div style="font-size:11px;margin-top:6px;opacity:.8">Ver no TikTok</div>
           </div>
         </a>
       </div>`;
     } else {
-      embedHtml = `<div class="post-embed" style="aspect-ratio:16/9;max-height:200px">
+      embedHtml = `<div class="post-embed">
         <a href="${escHtml(data.link)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;height:100%;background:var(--bg-card)">
           <div style="text-align:center;color:var(--text-dim)">
             ${info.icon}
-            <div style="font-size:12px;margin-top:8px">Abrir link</div>
+            <div style="font-size:11px;margin-top:6px">Abrir link</div>
           </div>
         </a>
       </div>`;
@@ -4234,11 +4242,11 @@ function buildPostCard(dest, data) {
 
   return `<div class="proj-post-card">
     <div class="post-card-head">
-      <div style="display:flex;align-items:center;gap:8px">
-        ${info.icon}
-        <span style="font-size:14px;font-weight:600;color:var(--text)">${info.name}</span>
-        ${hasLink && !isEditing ? `<span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(31,210,122,.15);color:var(--success);letter-spacing:.5px">PUBLICADO</span>` : `<span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(255,170,51,.15);color:var(--warning);letter-spacing:.5px">PENDENTE</span>`}
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="display:flex;align-items:center">${info.icon}</span>
+        <span style="font-size:12px;font-weight:600;color:var(--text)">${info.name}</span>
       </div>
+      ${hasLink && !isEditing ? `<span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(31,210,122,.15);color:var(--success);letter-spacing:.3px">PUBLICADO</span>` : `<span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(255,170,51,.15);color:var(--warning);letter-spacing:.3px">PENDENTE</span>`}
     </div>
     ${body}
   </div>`;
