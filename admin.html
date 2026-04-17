@@ -2039,14 +2039,36 @@
         </div>
       </div>
 
-      <div class="stats-grid" style="margin-bottom:18px">
-        <div class="stat-card" style="border-left:3px solid #a855f7">
-          <div class="label">Em edição</div>
-          <div class="value" id="editStatEdicao">0</div>
+      <div id="editDashboard" style="margin-bottom:18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;padding:18px 20px;display:flex;align-items:center;gap:14px">
+          <div style="width:42px;height:42px;border-radius:12px;background:rgba(168,85,247,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#a855f7" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:500">Em edicao</div>
+            <div style="font-size:28px;font-weight:700;color:#a855f7;line-height:1.1" id="editStatEdicao">0</div>
+          </div>
         </div>
-        <div class="stat-card" style="border-left:3px solid #f59e0b">
-          <div class="label">A publicar</div>
-          <div class="value" id="editStatPublicar">0</div>
+        <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;padding:18px 20px;display:flex;align-items:center;gap:14px">
+          <div style="width:42px;height:42px;border-radius:12px;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f59e0b" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:500">A publicar</div>
+            <div style="font-size:28px;font-weight:700;color:#f59e0b;line-height:1.1" id="editStatPublicar">0</div>
+          </div>
+        </div>
+        <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;padding:18px 20px;display:flex;align-items:center;gap:14px">
+          <div style="width:42px;height:42px;border-radius:12px;background:rgba(139,156,247,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#8b9cf7" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:500">Total pipeline</div>
+            <div style="font-size:28px;font-weight:700;color:var(--text);line-height:1.1" id="editStatTotal">0</div>
+            <div id="editStatBar" style="margin-top:6px;height:4px;width:100px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden">
+              <div id="editStatBarFill" style="height:100%;border-radius:2px;background:linear-gradient(90deg,#a855f7,#f59e0b);width:0%;transition:width .4s ease"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -6186,10 +6208,15 @@ function renderEditingView() {
   // Stats
   const edicaoCount = PROJECTS.filter(p => p.status === 'edicao').length;
   const publicarCount = PROJECTS.filter(p => p.status === 'a_publicar').length;
+  const totalPipeline = edicaoCount + publicarCount;
   const eEd = document.getElementById('editStatEdicao');
   const ePub = document.getElementById('editStatPublicar');
+  const eTot = document.getElementById('editStatTotal');
+  const eBar = document.getElementById('editStatBarFill');
   if (eEd) eEd.textContent = edicaoCount;
   if (ePub) ePub.textContent = publicarCount;
+  if (eTot) eTot.textContent = totalPipeline;
+  if (eBar) eBar.style.width = totalPipeline > 0 ? Math.round((publicarCount / totalPipeline) * 100) + '%' : '0%';
 
   if (editProjects.length === 0) {
     el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum projeto em fase de edição no momento.</p></div>';
@@ -6218,6 +6245,10 @@ function renderEditingView() {
             <option value="a_publicar" ${p.status === 'a_publicar' ? 'selected' : ''}>A publicar</option>
             <option value="concluido" ${p.status === 'concluido' ? 'selected' : ''}>Concluído</option>
           </select>
+          <button style="padding:4px 10px;font-size:11px;background:none;border:1px solid rgba(167,139,250,.3);color:#a78bfa;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .15s" onmouseover="this.style.background='rgba(167,139,250,.1)';this.style.borderColor='#a78bfa'" onmouseout="this.style.background='none';this.style.borderColor='rgba(167,139,250,.3)'" onclick="openEditRoteiro('${p.id}')">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Ver roteiro
+          </button>
           <button class="action-btn view" style="padding:4px 10px;font-size:11px" onclick="openProjectDetail('${p.id}')">
             <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             Ver completo
@@ -6263,7 +6294,7 @@ function renderEditingView() {
       <div style="margin-bottom:10px">
         <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Links de referência</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
-          ${links.map((l, i) => `<a href="${l}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;color:var(--primary);text-decoration:none;font-size:12px;transition:border-color .15s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+          ${links.map((l, i) => `<a href="${l}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;color:#a78bfa;text-decoration:none;font-size:12px;transition:border-color .15s" onmouseover="this.style.borderColor='#a78bfa'" onmouseout="this.style.borderColor='var(--border)'">
             <svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" fill="none" stroke-width="2" style="flex-shrink:0"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             Link ${i + 1}
           </a>`).join('')}
@@ -6308,6 +6339,75 @@ function closeEditPdf() {
 document.getElementById('editPdfModal').addEventListener('click', e => {
   if (e.target.id === 'editPdfModal') closeEditPdf();
 });
+
+function openEditRoteiro(id) {
+  const p = PROJECTS.find(x => x.id === id);
+  if (!p) return;
+  const scenes = p.script_scenes || [];
+  document.getElementById('editPdfTitle').textContent = 'Roteiro — ' + (p.title || 'Projeto');
+
+  if (scenes.length === 0) {
+    document.getElementById('editPdfBody').innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--text-muted)">
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.2" style="margin-bottom:12px;opacity:.4"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <div style="font-size:13px">Nenhuma cena criada neste projeto.</div>
+    </div>`;
+    document.getElementById('editPdfModal').classList.add('show');
+    return;
+  }
+
+  let html = '<div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px">';
+  scenes.forEach((scene, si) => {
+    const shots = scene.shots || [];
+    const totalDur = shots.reduce((s, sh) => s + (sh.duration || 0), 0);
+    const doneCount = shots.filter(sh => sh.done).length;
+    const mins = Math.floor(totalDur / 60);
+    const secs = totalDur % 60;
+    const durStr = mins > 0 ? mins + 'min ' + secs + 's' : totalDur + 's';
+
+    html += `<div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+      <div style="padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)">
+        <span style="width:28px;height:28px;border-radius:50%;background:#a855f7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">${si + 1}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:14px;color:var(--text)">${escHtml(scene.title || 'Cena ' + (si + 1))}</div>
+          ${scene.location ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px">${escHtml(scene.location)}</div>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+          <span style="font-size:11px;color:var(--text-muted)">${doneCount}/${shots.length} planos</span>
+          <span style="font-size:11px;padding:3px 8px;background:rgba(168,85,247,.12);color:#a855f7;border-radius:6px;font-weight:600">${durStr}</span>
+        </div>
+      </div>`;
+
+    if (scene.note) {
+      html += `<div style="padding:8px 16px;background:rgba(96,165,250,.06);border-bottom:1px solid var(--border);font-size:12px;color:#60a5fa"><span style="font-weight:600;margin-right:4px">Nota:</span>${escHtml(scene.note)}</div>`;
+    }
+
+    if (shots.length > 0) {
+      html += '<div style="padding:8px 12px;display:flex;flex-direction:column;gap:4px">';
+      shots.forEach((shot, pi) => {
+        html += `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:${shot.done ? 'rgba(34,197,94,.06)' : 'transparent'}">
+          <div style="width:18px;height:18px;border-radius:4px;border:2px solid ${shot.done ? '#22c55e' : 'var(--border)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            ${shot.done ? '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#22c55e" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+          </div>
+          <span style="flex:1;font-size:13px;color:${shot.done ? 'var(--text-muted)' : 'var(--text)'};${shot.done ? 'text-decoration:line-through;opacity:.7' : ''}">${escHtml(shot.title || 'Plano ' + (pi + 1))}</span>
+          <span style="font-size:10px;color:var(--text-muted);flex-shrink:0">${shot.duration || 0}s</span>
+        </div>`;
+        if (shot.note) {
+          html += `<div style="margin-left:34px;font-size:11px;color:#60a5fa;padding:2px 0"><span style="font-weight:600">Nota:</span> ${escHtml(shot.note)}</div>`;
+        }
+        if (shot.speech) {
+          html += `<div style="margin-left:34px;font-size:11px;color:#d4a843;padding:2px 0"><span style="font-weight:600">Fala:</span> ${escHtml(shot.speech)}</div>`;
+        }
+      });
+      html += '</div>';
+    }
+
+    html += '</div>';
+  });
+  html += '</div>';
+
+  document.getElementById('editPdfBody').innerHTML = html;
+  document.getElementById('editPdfModal').classList.add('show');
+}
 
 
 /* DASHBOARD */
