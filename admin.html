@@ -720,6 +720,21 @@
   .proj-meta-item .k { color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: .5px; }
   .proj-meta-item .v { color: var(--text); margin-top: 2px; }
 
+  /* Star Rating */
+  .star-rating { display: inline-flex; gap: 2px; }
+  .star-rating .star {
+    cursor: pointer; font-size: 20px; color: var(--border-hi); transition: color .15s, transform .1s;
+    line-height: 1; user-select: none;
+  }
+  .star-rating .star:hover { transform: scale(1.15); }
+  .star-rating .star.active { color: #f59e0b; }
+  .star-rating .star.hover-preview { color: #fbbf24; }
+  .star-rating-wrap {
+    display: flex; align-items: center; gap: 10px; margin-top: 10px;
+    padding-top: 10px; border-top: 1px solid var(--border);
+  }
+  .star-rating-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+
   /* Project status inline select */
   .proj-status-select {
     padding: 4px 24px 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600;
@@ -3195,6 +3210,21 @@ function renderProjects() {
         <div class="proj-meta-item"><div class="k">Custos</div><div class="v" style="${totalCost > 0 ? 'color:#f59e0b;font-weight:600' : ''}">R$ ${formatBRL(totalCost)}</div></div>
       </div>
       ${p.observations ? `<div style="font-size:12px;color:var(--text-dim);margin-top:6px;border-top:1px solid var(--border);padding-top:8px">${escHtml(p.observations).substring(0, 200)}${p.observations.length > 200 ? '...' : ''}</div>` : ''}
+      ${p.status === 'concluido' && CURRENT_USER?.role?.toLowerCase() === 'admin' ? `
+        <div class="star-rating-wrap">
+          <span class="star-rating-label">Avaliação</span>
+          <div class="star-rating" data-project-id="${p.id}" onmouseleave="starHoverOut(this)">
+            ${[1,2,3,4,5].map(n => `<span class="star ${(p.rating || 0) >= n ? 'active' : ''}" data-value="${n}" onclick="setProjectRating('${p.id}',${n})" onmouseenter="starHoverIn(this,${n})">★</span>`).join('')}
+          </div>
+          <span style="font-size:12px;color:var(--text-dim);min-width:28px">${p.rating ? p.rating + '/5' : '—'}</span>
+        </div>` : p.status === 'concluido' && p.rating ? `
+        <div class="star-rating-wrap">
+          <span class="star-rating-label">Avaliação</span>
+          <div class="star-rating">
+            ${[1,2,3,4,5].map(n => `<span class="star ${(p.rating || 0) >= n ? 'active' : ''}" style="cursor:default">★</span>`).join('')}
+          </div>
+          <span style="font-size:12px;color:var(--text-dim)">${p.rating}/5</span>
+        </div>` : ''}
     </div>`;
   }).join('');
 }
@@ -3513,6 +3543,27 @@ async function quickUpdateProjectStatus(id, status) {
   if (p) p.status = status;
   renderProjects();
   renderEditingView();
+}
+
+/* Star Rating — admin only */
+async function setProjectRating(id, value) {
+  if (CURRENT_USER?.role?.toLowerCase() !== 'admin') return;
+  const p = PROJECTS.find(x => x.id === id);
+  // Clicou na mesma estrela = remove rating
+  const newVal = (p && p.rating === value) ? 0 : value;
+  const { error } = await sb.from('projects').update({ rating: newVal }).eq('id', id);
+  if (error) { alert('Erro ao salvar avaliação: ' + error.message); return; }
+  if (p) p.rating = newVal;
+  renderProjects();
+}
+function starHoverIn(starEl, value) {
+  const wrap = starEl.closest('.star-rating');
+  wrap.querySelectorAll('.star').forEach(s => {
+    s.classList.toggle('hover-preview', parseInt(s.dataset.value) <= value);
+  });
+}
+function starHoverOut(wrap) {
+  wrap.querySelectorAll('.star').forEach(s => s.classList.remove('hover-preview'));
 }
 
 function viewProject(id) {
