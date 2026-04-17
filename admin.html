@@ -1046,25 +1046,27 @@
     transition: all .15s;
     white-space: nowrap;
   }
-  .proj-filter-chip:hover { border-color: var(--border-hi); color: var(--text); }
-  .proj-filter-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-  .proj-filter-chip.active:hover { background: var(--primary-hi); border-color: var(--primary-hi); }
-  /* Status-colored filter chips */
-  .proj-filter-chip[data-pfilter="Planejamento"] { border-color: rgba(255,170,51,.35); color: var(--warning); }
-  .proj-filter-chip[data-pfilter="Planejamento"]:hover { background: rgba(255,170,51,.08); }
-  .proj-filter-chip[data-pfilter="Planejamento"].active { background: rgba(255,170,51,.18); border-color: var(--warning); color: var(--warning); }
-  .proj-filter-chip[data-pfilter="Em produção"] { border-color: rgba(59,130,246,.35); color: #3b82f6; }
-  .proj-filter-chip[data-pfilter="Em produção"]:hover { background: rgba(59,130,246,.08); }
-  .proj-filter-chip[data-pfilter="Em produção"].active { background: rgba(59,130,246,.18); border-color: #3b82f6; color: #3b82f6; }
-  .proj-filter-chip[data-pfilter="Edição"] { border-color: rgba(168,85,247,.35); color: #a855f7; }
-  .proj-filter-chip[data-pfilter="Edição"]:hover { background: rgba(168,85,247,.08); }
-  .proj-filter-chip[data-pfilter="Edição"].active { background: rgba(168,85,247,.18); border-color: #a855f7; color: #a855f7; }
-  .proj-filter-chip[data-pfilter="A publicar"] { border-color: rgba(245,158,11,.35); color: #f59e0b; }
-  .proj-filter-chip[data-pfilter="A publicar"]:hover { background: rgba(245,158,11,.08); }
-  .proj-filter-chip[data-pfilter="A publicar"].active { background: rgba(245,158,11,.18); border-color: #f59e0b; color: #f59e0b; }
-  .proj-filter-chip[data-pfilter="Concluído"] { border-color: rgba(31,210,122,.35); color: var(--success); }
-  .proj-filter-chip[data-pfilter="Concluído"]:hover { background: rgba(31,210,122,.08); }
-  .proj-filter-chip[data-pfilter="Concluído"].active { background: rgba(31,210,122,.18); border-color: var(--success); color: var(--success); }
+  .proj-filter-chip:hover { opacity: .85; }
+  /* Planejamento — orange/warning */
+  .proj-filter-chip[data-pfilter="planejamento"] { border-color: rgba(255,170,51,.3); color: rgba(255,170,51,.6); }
+  .proj-filter-chip[data-pfilter="planejamento"]:hover { background: rgba(255,170,51,.06); }
+  .proj-filter-chip[data-pfilter="planejamento"].active { background: rgba(255,170,51,.15); border-color: var(--warning); color: var(--warning); }
+  /* Em produção — blue */
+  .proj-filter-chip[data-pfilter="producao"] { border-color: rgba(59,130,246,.3); color: rgba(59,130,246,.6); }
+  .proj-filter-chip[data-pfilter="producao"]:hover { background: rgba(59,130,246,.06); }
+  .proj-filter-chip[data-pfilter="producao"].active { background: rgba(59,130,246,.15); border-color: #3b82f6; color: #3b82f6; }
+  /* Edição — purple */
+  .proj-filter-chip[data-pfilter="edicao"] { border-color: rgba(168,85,247,.3); color: rgba(168,85,247,.6); }
+  .proj-filter-chip[data-pfilter="edicao"]:hover { background: rgba(168,85,247,.06); }
+  .proj-filter-chip[data-pfilter="edicao"].active { background: rgba(168,85,247,.15); border-color: #a855f7; color: #a855f7; }
+  /* A publicar — amber */
+  .proj-filter-chip[data-pfilter="a_publicar"] { border-color: rgba(245,158,11,.3); color: rgba(245,158,11,.6); }
+  .proj-filter-chip[data-pfilter="a_publicar"]:hover { background: rgba(245,158,11,.06); }
+  .proj-filter-chip[data-pfilter="a_publicar"].active { background: rgba(245,158,11,.15); border-color: #f59e0b; color: #f59e0b; }
+  /* Concluído — green */
+  .proj-filter-chip[data-pfilter="concluido"] { border-color: rgba(31,210,122,.3); color: rgba(31,210,122,.6); }
+  .proj-filter-chip[data-pfilter="concluido"]:hover { background: rgba(31,210,122,.06); }
+  .proj-filter-chip[data-pfilter="concluido"].active { background: rgba(31,210,122,.15); border-color: var(--success); color: var(--success); }
   .proj-sort-select {
     padding: 6px 12px;
     border-radius: 8px;
@@ -1889,14 +1891,11 @@
       <!-- Project filters -->
       <div class="proj-filters">
         <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--text-muted)" fill="none" stroke-width="2" style="flex-shrink:0"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-        <button class="proj-filter-chip active" data-pfilter="default" onclick="setProjFilter('default')">Planejamento + Produção</button>
-        <button class="proj-filter-chip" data-pfilter="all" onclick="setProjFilter('all')">Todos</button>
-        <div class="proj-filter-separator"></div>
-        <button class="proj-filter-chip" data-pfilter="planejamento" onclick="setProjFilter('planejamento')">Planejamento</button>
-        <button class="proj-filter-chip" data-pfilter="producao" onclick="setProjFilter('producao')">Em produção</button>
-        <button class="proj-filter-chip" data-pfilter="edicao" onclick="setProjFilter('edicao')">Edição</button>
-        <button class="proj-filter-chip" data-pfilter="a_publicar" onclick="setProjFilter('a_publicar')">A publicar</button>
-        <button class="proj-filter-chip" data-pfilter="concluido" onclick="setProjFilter('concluido')">Concluído</button>
+        <button class="proj-filter-chip active" data-pfilter="planejamento" onclick="toggleProjFilter('planejamento')">Planejamento</button>
+        <button class="proj-filter-chip active" data-pfilter="producao" onclick="toggleProjFilter('producao')">Em produção</button>
+        <button class="proj-filter-chip" data-pfilter="edicao" onclick="toggleProjFilter('edicao')">Edição</button>
+        <button class="proj-filter-chip" data-pfilter="a_publicar" onclick="toggleProjFilter('a_publicar')">A publicar</button>
+        <button class="proj-filter-chip" data-pfilter="concluido" onclick="toggleProjFilter('concluido')">Concluído</button>
         <select class="proj-sort-select" id="projSortSelect" onchange="renderProjects()">
           <option value="newest">Mais recentes</option>
           <option value="oldest">Mais antigos</option>
@@ -3513,21 +3512,25 @@ async function loadProjects() {
   PROJECTS = data || [];
 }
 
-let projFilterStatus = 'default';
-function setProjFilter(f) {
-  projFilterStatus = f;
-  document.querySelectorAll('.proj-filter-chip').forEach(c => c.classList.toggle('active', c.dataset.pfilter === f));
+let projActiveFilters = new Set(['planejamento', 'producao']);
+function toggleProjFilter(f) {
+  if (projActiveFilters.has(f)) {
+    projActiveFilters.delete(f);
+  } else {
+    projActiveFilters.add(f);
+  }
+  document.querySelectorAll('.proj-filters .proj-filter-chip[data-pfilter]').forEach(c => {
+    c.classList.toggle('active', projActiveFilters.has(c.dataset.pfilter));
+  });
   renderProjects();
 }
 
 function getFilteredProjects() {
   let list = [...PROJECTS];
 
-  // Filter
-  if (projFilterStatus === 'default') {
-    list = list.filter(p => p.status === 'planejamento' || p.status === 'producao');
-  } else if (projFilterStatus !== 'all') {
-    list = list.filter(p => p.status === projFilterStatus);
+  // Filter by active status tags
+  if (projActiveFilters.size > 0) {
+    list = list.filter(p => projActiveFilters.has(p.status));
   }
 
   // Sort
