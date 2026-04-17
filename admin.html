@@ -750,6 +750,99 @@
   .proj-status-select.a_publicar { background-color: rgba(245,158,11,.12); border-color: rgba(245,158,11,.4); color: #f59e0b; }
   .proj-status-select.concluido { background-color: rgba(31,210,122,.12); border-color: rgba(31,210,122,.4); color: var(--success); }
 
+  /* Project modal (new unified modal) */
+  .proj-modal {
+    max-width: 900px !important;
+  }
+  .proj-modal-tabs {
+    display: flex; gap: 0; border-bottom: 1px solid var(--border);
+    background: var(--bg-soft);
+  }
+  .proj-modal-tab {
+    flex: 1; padding: 12px 16px; border: none; background: transparent;
+    color: var(--text-dim); font-size: 13px; font-weight: 600; font-family: inherit;
+    cursor: pointer; text-transform: uppercase; letter-spacing: .5px;
+    transition: all .15s; position: relative;
+  }
+  .proj-modal-tab:hover { color: var(--text); background: var(--bg-elev); }
+  .proj-modal-tab.active {
+    color: var(--primary); background: var(--bg-elev);
+  }
+  .proj-modal-tab.active::after {
+    content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
+    height: 2px; background: var(--primary);
+  }
+  .proj-tab-content {
+    display: none; padding: 24px;
+    max-height: calc(90vh - 200px); overflow-y: auto;
+  }
+  .proj-tab-content.active { display: block; }
+
+  /* Evaluation cards */
+  .proj-eval-card {
+    padding: 16px; border: 1px solid var(--border);
+    border-radius: 10px; background: var(--bg-elev);
+    margin-bottom: 12px;
+  }
+  .proj-eval-status {
+    padding: 4px 24px 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600;
+    font-family: inherit; cursor: pointer; border: 1px solid var(--border);
+    appearance: none; -webkit-appearance: none;
+    background: var(--bg-card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b6b76'/%3E%3C/svg%3E") no-repeat right 8px center;
+    color: var(--text-dim); text-transform: capitalize; transition: all .15s;
+  }
+  .proj-eval-status:focus { outline: none; border-color: var(--primary); }
+  .proj-eval-status:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* Posting cards */
+  .proj-post-card {
+    padding: 16px; border: 1px solid var(--border);
+    border-radius: 10px; background: var(--bg-elev);
+    margin-bottom: 12px;
+  }
+
+  /* Cost categories with colored dots */
+  .cost-category {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 8px; border-radius: 4px; font-size: 10px;
+    font-weight: 600; text-transform: capitalize;
+  }
+  .cost-category::before {
+    content: '●'; width: 6px; height: 6px; border-radius: 50%;
+    display: inline-block;
+  }
+  .cost-category.produto::before { color: #f97316; }
+  .cost-category.mao_de_obra::before { color: #3b82f6; }
+  .cost-category.logistica::before { color: #22c55e; }
+  .cost-category.equipamento::before { color: #eab308; }
+
+  /* Notification cards */
+  .notif-card {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px; border: 1px solid var(--border);
+    border-radius: 10px; background: var(--bg-elev);
+  }
+  .notif-dismiss {
+    background: transparent; border: none;
+    color: var(--text-muted); font-size: 18px;
+    cursor: pointer; padding: 0; width: 24px; height: 24px;
+    flex-shrink: 0; transition: color .15s;
+  }
+  .notif-dismiss:hover { color: var(--text); }
+  .notif-badge {
+    display: flex; align-items: center; justify-content: center;
+    background: var(--primary); color: #fff;
+    border-radius: 10px; min-width: 20px; height: 20px;
+    font-size: 10px; font-weight: 700;
+    position: absolute; top: 4px; right: 4px;
+  }
+  .notif-count {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--primary); color: #fff;
+    border-radius: 20px; padding: 2px 8px;
+    font-size: 11px; font-weight: 700; margin-left: auto;
+  }
+
   /* Project filters */
   .proj-filters {
     display: flex;
@@ -1135,9 +1228,10 @@
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
       <span class="nav-label">Usuários</span>
     </button>
-    <button class="nav-item" data-view="profile">
+    <button class="nav-item" data-view="profile" style="position:relative">
       <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       <span class="nav-label">Meu perfil</span>
+      <span class="notif-badge" id="notifBadge" style="display:none">0</span>
     </button>
 
     <div class="sidebar-foot">
@@ -1406,7 +1500,7 @@
           <h1>Projetos</h1>
           <p>Planeje roteiros, destinos e referências para cada produção.</p>
         </div>
-        <button class="action-btn approve" style="padding:12px 20px; font-size:14px" onclick="openProjectForm()">+ Novo projeto</button>
+        <button class="action-btn approve" style="padding:12px 20px; font-size:14px" onclick="openProjModal()">+ Novo projeto</button>
       </div>
 
       <!-- Project filters -->
@@ -1430,137 +1524,6 @@
         </select>
       </div>
 
-      <!-- Project form (hidden by default) -->
-      <div id="projectFormWrap" style="display:none">
-        <div class="cal-card" style="margin-bottom:16px">
-          <h3 id="projFormTitle">Novo projeto</h3>
-          <p class="sub">Preencha as informações do projeto de produção.</p>
-          <input type="hidden" id="projEditId" value=""/>
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px">
-
-            <div class="block-field">
-              <label>Vincular agendamento</label>
-              <select class="login-input" id="projBooking" style="margin:0" onchange="onProjBookingChange()">
-                <option value="">Sem vínculo (projeto avulso)</option>
-              </select>
-            </div>
-
-            <div class="block-field">
-              <label>Nome do projeto</label>
-              <input type="text" class="login-input" id="projTitle" style="margin:0" placeholder="Ex: Review Harley 883"/>
-            </div>
-
-            <div class="block-field" id="projMotoFieldWrap" style="display:none">
-              <label>Moto / Produto (manual)</label>
-              <input type="text" class="login-input" id="projMoto" style="margin:0" placeholder="Ex: Ducati Panigale V4"/>
-            </div>
-
-            <div class="block-field" id="projDateFieldWrap" style="display:none">
-              <label>Data de produção</label>
-              <input type="date" class="login-input" id="projDate" style="margin:0"/>
-            </div>
-
-            <div class="block-field">
-              <label>Destino do conteúdo</label>
-              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
-                <label class="proj-dest-chip"><input type="checkbox" id="projDestYT" value="youtube"/> <span>YouTube</span></label>
-                <label class="proj-dest-chip"><input type="checkbox" id="projDestTK" value="tiktok"/> <span>TikTok</span></label>
-                <label class="proj-dest-chip"><input type="checkbox" id="projDestIG" value="instagram"/> <span>Instagram</span></label>
-                <label class="proj-dest-chip"><input type="checkbox" id="projDestTut" value="tutorial"/> <span>Tutorial interno</span></label>
-              </div>
-            </div>
-
-            <div class="block-field">
-              <label>Status</label>
-              <select class="login-input" id="projStatus" style="margin:0">
-                <option value="planejamento">Planejamento</option>
-                <option value="producao">Em produção</option>
-                <option value="edicao">Edição</option>
-                <option value="a_publicar">A publicar</option>
-                <option value="concluido">Concluído</option>
-              </select>
-            </div>
-
-            <div class="block-field" style="grid-column:1/-1">
-              <label>Roteiro do vídeo</label>
-              <div style="display:flex;gap:8px;align-items:flex-start">
-                <textarea class="checkin-textarea" id="projScript" style="min-height:100px;flex:1" placeholder="Cole o roteiro ou descreva as cenas/tópicos..."></textarea>
-                <div>
-                  <label class="action-btn view" style="padding:8px 12px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:4px" for="projScriptFile">
-                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    Upload
-                  </label>
-                  <input type="file" id="projScriptFile" accept=".txt,.pdf,.doc,.docx" hidden onchange="handleScriptUpload(this)"/>
-                  <div id="projScriptFileName" style="font-size:10px;color:var(--text-muted);margin-top:4px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="block-field" style="grid-column:1/-1">
-              <label>Links de referência</label>
-              <div id="projLinksWrap">
-                <div style="display:flex;gap:6px;margin-bottom:6px">
-                  <input type="text" class="login-input" style="margin:0;flex:1" placeholder="https://youtube.com/watch?v=..." onkeydown="if(event.key==='Enter'){addProjLink(this.value);this.value='';event.preventDefault();}"/>
-                  <button class="action-btn view" style="padding:8px 12px;white-space:nowrap" onclick="addProjLink(this.previousElementSibling.value);this.previousElementSibling.value='';">+ Adicionar</button>
-                </div>
-                <div id="projLinksList" style="display:flex;flex-direction:column;gap:4px"></div>
-              </div>
-            </div>
-
-            <div class="block-field" style="grid-column:1/-1">
-              <label>Observações do projeto</label>
-              <textarea class="checkin-textarea" id="projObs" style="min-height:80px" placeholder="Informações adicionais, anotações, detalhes técnicos..."></textarea>
-            </div>
-
-            <div class="block-field" style="grid-column:1/-1">
-              <label>Custos operacionais</label>
-              <div id="projCostsWrap">
-                <div id="projCostsList"></div>
-                <div style="display:flex;gap:6px;align-items:flex-end">
-                  <div style="flex:0 0 140px">
-                    <span style="font-size:10px;color:var(--text-muted)">Valor (R$)</span>
-                    <input type="text" class="login-input" id="projCostValue" style="margin:0" placeholder="0,00" oninput="maskCurrency(this)"/>
-                  </div>
-                  <div style="flex:1">
-                    <span style="font-size:10px;color:var(--text-muted)">Motivo</span>
-                    <input type="text" class="login-input" id="projCostReason" style="margin:0" placeholder="Ex: Combustível, alimentação..." onkeydown="if(event.key==='Enter'){addProjCost();event.preventDefault();}"/>
-                  </div>
-                  <button class="action-btn view" style="padding:8px 12px;white-space:nowrap;margin-bottom:0" onclick="addProjCost()">+ Adicionar</button>
-                </div>
-                <button class="action-btn approve" style="padding:8px 14px;font-size:12px;margin-top:8px;display:inline-flex;align-items:center;gap:6px" onclick="sendCostsWhatsApp()">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                  Enviar custos ao financeiro
-                </button>
-              </div>
-            </div>
-
-            <div class="block-field" style="grid-column:1/-1">
-              <label>Imagens / Fotos de referência</label>
-              <div class="photo-grid" id="projPhotoGrid"></div>
-              <div style="display:flex;gap:8px;margin-top:8px">
-                <label class="action-btn view" style="padding:8px 14px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px" for="projPhotoFile">
-                  <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                  Galeria
-                </label>
-                <input type="file" id="projPhotoFile" accept="image/*" multiple hidden onchange="addProjPhotos(this, false)"/>
-                <label class="action-btn approve" style="padding:8px 14px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px" for="projCameraFile">
-                  <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  Tirar foto
-                </label>
-                <input type="file" id="projCameraFile" accept="image/*" capture="environment" hidden onchange="addProjPhotos(this, true)"/>
-              </div>
-            </div>
-          </div>
-
-          <div style="display:flex;gap:8px;margin-top:16px">
-            <button class="action-btn approve" style="flex:1;padding:12px" onclick="saveProject()">
-              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-              Salvar projeto
-            </button>
-            <button class="action-btn reject" style="padding:12px 20px" onclick="closeProjectForm()">Cancelar</button>
-          </div>
-        </div>
-      </div>
 
       <!-- Project list -->
       <div id="projectsList"></div>
@@ -1721,6 +1684,7 @@
           <p>Atualize suas informações pessoais e senha de acesso.</p>
         </div>
       </div>
+      <div id="profileNotifications"></div>
       <div class="cal-card" style="max-width:480px">
         <h3>Informações do operador</h3>
         <p class="sub">Seus dados são usados nas mensagens e no registro de atividades.</p>
@@ -1930,14 +1894,26 @@
   </div>
 </div>
 
-<!-- Modal Visualizar Projeto -->
-<div class="modal" id="projViewModal">
-  <div class="modal-content" style="max-width:720px">
-    <div class="modal-head">
-      <h3 id="projViewTitle">Projeto</h3>
-      <button class="modal-close" onclick="closeProjView()">×</button>
+<!-- Modal Unificado: Produção, Avaliação, Postagem -->
+<div class="modal" id="projModal">
+  <div class="modal-content proj-modal">
+    <div class="modal-head" style="flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px;flex:1">
+        <h3 id="projModalTitle">Projeto</h3>
+        <select class="proj-status-select" id="projModalStatus" onchange="quickModalStatus(this.value)"></select>
+      </div>
+      <button class="modal-close" onclick="closeProjModal()">×</button>
+      <div class="proj-modal-tabs" style="width:100%">
+        <button class="proj-modal-tab active" data-tab="producao" onclick="switchProjTab('producao')">Produção</button>
+        <button class="proj-modal-tab" data-tab="avaliacao" onclick="switchProjTab('avaliacao')">Avaliação</button>
+        <button class="proj-modal-tab" data-tab="postagem" onclick="switchProjTab('postagem')">Postagem</button>
+      </div>
     </div>
-    <div class="modal-body" id="projViewBody"></div>
+    <div class="modal-body" style="padding:0">
+      <div class="proj-tab-content active" id="projTabProducao"></div>
+      <div class="proj-tab-content" id="projTabAvaliacao"></div>
+      <div class="proj-tab-content" id="projTabPostagem"></div>
+    </div>
   </div>
 </div>
 
@@ -2284,6 +2260,7 @@ function loadProfile() {
   document.getElementById('profPixKey').value = pix.key || '';
   document.getElementById('profPixName').value = pix.name || '';
   document.getElementById('profPixCity').value = pix.city || '';
+  renderProfileNotifications();
 }
 
 async function saveProfile() {
@@ -3110,6 +3087,9 @@ let PROJECTS = [];
 let projLinks = [];
 let projPhotos = [];
 let projCosts = [];
+let NOTIFICATIONS = [];
+let projModalId = null;
+let tempEvalRatings = {};
 
 async function loadProjects() {
   const { data, error } = await sb.from('projects').select('*').order('created_at', { ascending: false });
@@ -3190,11 +3170,11 @@ function renderProjects() {
           <select class="proj-status-select ${p.status}" onchange="quickUpdateProjectStatus('${p.id}',this.value)">
             ${['planejamento','producao','edicao','a_publicar','concluido'].map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${statusMap[s]}</option>`).join('')}
           </select>
-          <button class="action-btn approve" style="padding:4px 10px;font-size:11px" onclick="viewProject('${p.id}')">
+          <button class="action-btn approve" style="padding:4px 10px;font-size:11px" onclick="openProjModal('${p.id}')">
             <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             Ver
           </button>
-          <button class="action-btn view" style="padding:4px 10px;font-size:11px" onclick="editProject('${p.id}')">
+          <button class="action-btn view" style="padding:4px 10px;font-size:11px" onclick="openProjModal('${p.id}')">
             <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Editar
           </button>
@@ -3210,16 +3190,6 @@ function renderProjects() {
         <div class="proj-meta-item"><div class="k">Custos</div><div class="v" style="${totalCost > 0 ? 'color:#f59e0b;font-weight:600' : ''}">R$ ${formatBRL(totalCost)}</div></div>
       </div>
       ${p.observations ? `<div style="font-size:12px;color:var(--text-dim);margin-top:6px;border-top:1px solid var(--border);padding-top:8px">${escHtml(p.observations).substring(0, 200)}${p.observations.length > 200 ? '...' : ''}</div>` : ''}
-      ${p.status === 'concluido' ? (() => {
-        const isAdm = isUserAdmin();
-        return `<div class="star-rating-wrap">
-          <span class="star-rating-label">Avaliação</span>
-          <div class="star-rating" ${isAdm ? `data-project-id="${p.id}" onmouseleave="starHoverOut(this)"` : ''}>
-            ${[1,2,3,4,5].map(n => `<span class="star ${(p.rating || 0) >= n ? 'active' : ''}" ${isAdm ? `data-value="${n}" onclick="setProjectRating('${p.id}',${n})" onmouseenter="starHoverIn(this,${n})"` : 'style="cursor:default"'}>★</span>`).join('')}
-          </div>
-          <span style="font-size:12px;color:var(--text-dim);min-width:28px">${p.rating ? p.rating + '/5' : '—'}</span>
-        </div>`;
-      })() : ''}
     </div>`;
   }).join('');
 }
@@ -3342,11 +3312,13 @@ async function saveProjCostsToDb() {
 async function addProjCost() {
   const valInput = document.getElementById('projCostValue');
   const reasonInput = document.getElementById('projCostReason');
+  const categoryInput = document.getElementById('projCostCategory');
   const value = parseCurrency(valInput.value);
   const reason = (reasonInput.value || '').trim();
+  const category = (categoryInput?.value || 'produto').trim();
   if (value <= 0) { alert('Informe um valor válido.'); return; }
-  if (!reason) { alert('Informe o motivo do custo.'); return; }
-  projCosts.push({ value, reason });
+  if (!reason) { alert('Informe a descrição do custo.'); return; }
+  projCosts.push({ value, reason, category });
   valInput.value = '';
   reasonInput.value = '';
   renderProjCosts();
@@ -3362,9 +3334,11 @@ function renderProjCosts() {
   if (!el) return;
   if (projCosts.length === 0) { el.innerHTML = ''; return; }
   const total = projCosts.reduce((s, c) => s + c.value, 0);
+  const categoryNames = { produto: 'Produto', mao_de_obra: 'Mão de obra', logistica: 'Logística', equipamento: 'Equipamento' };
   el.innerHTML = projCosts.map((c, i) => `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
     <span style="font-weight:600;color:var(--text);font-size:13px;white-space:nowrap">R$ ${formatBRL(c.value)}</span>
     <span style="color:var(--text-dim);font-size:12px;flex:1">${escHtml(c.reason)}</span>
+    <span class="cost-category ${c.category || 'produto'}">${categoryNames[c.category || 'produto']}</span>
     <button onclick="rmProjCost(${i})" style="background:none;border:1px solid var(--danger);color:var(--danger);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;white-space:nowrap;transition:all .15s" onmouseover="this.style.background='var(--danger)';this.style.color='#fff'" onmouseout="this.style.background='none';this.style.color='var(--danger)'">remover</button>
   </div>`).join('') +
   `<div style="text-align:right;font-size:12px;font-weight:600;color:var(--primary);padding:4px 0;margin-bottom:8px">Total: R$ ${formatBRL(total)}</div>`;
@@ -3487,7 +3461,7 @@ async function saveProject() {
     alert('Erro ao salvar projeto: ' + result.error.message + '\n\nVocê já criou a tabela "projects" no Supabase?');
     return;
   }
-  closeProjectForm();
+  closeProjModal();
   await loadProjects();
   renderProjects();
   renderEditingView();
@@ -3495,40 +3469,7 @@ async function saveProject() {
 }
 
 async function editProject(id) {
-  const p = PROJECTS.find(x => x.id === id);
-  if (!p) return;
-  openProjectForm();
-  document.getElementById('projEditId').value = id;
-  document.getElementById('projFormTitle').textContent = 'Editar projeto';
-  document.getElementById('projTitle').value = p.title || '';
-  document.getElementById('projScript').value = p.script_text || '';
-  document.getElementById('projObs').value = p.observations || '';
-  document.getElementById('projStatus').value = p.status || 'planejamento';
-
-  (p.destinations || []).forEach(d => {
-    const map = { youtube: 'projDestYT', tiktok: 'projDestTK', instagram: 'projDestIG', tutorial: 'projDestTut' };
-    const cb = document.getElementById(map[d]);
-    if (cb) cb.checked = true;
-  });
-
-  projLinks = [...(p.links || [])];
-  projPhotos = [...(p.photos || [])];
-  projCosts = [...(p.costs || [])];
-  projScriptFileData = p.script_file || null;
-  renderProjLinks();
-  renderProjPhotos();
-  renderProjCosts();
-
-  if (p.script_file?.name) document.getElementById('projScriptFileName').textContent = p.script_file.name;
-
-  if (p.request_id) {
-    document.getElementById('projBooking').value = p.request_id;
-  } else {
-    document.getElementById('projBooking').value = '';
-    document.getElementById('projMoto').value = p.moto || '';
-    document.getElementById('projDate').value = p.production_date || '';
-  }
-  onProjBookingChange();
+  openProjModal(id);
 }
 
 async function quickUpdateProjectStatus(id, status) {
@@ -3565,103 +3506,488 @@ function starHoverOut(wrap) {
   wrap.querySelectorAll('.star').forEach(s => s.classList.remove('hover-preview'));
 }
 
-function viewProject(id) {
-  const p = PROJECTS.find(x => x.id === id);
-  if (!p) return;
+function viewProject(id) { openProjModal(id); }
+
+// Unified project modal functions
+
+function openProjModal(id) {
+  projModalId = id || null;
+  const p = id ? PROJECTS.find(x => x.id === id) : null;
+
+  // Set title
+  document.getElementById('projModalTitle').textContent = p ? (p.title || 'Sem título') : 'Novo projeto';
+
+  // Set status dropdown
+  const statusSel = document.getElementById('projModalStatus');
   const statusMap = { planejamento: 'Planejamento', producao: 'Em produção', edicao: 'Edição', a_publicar: 'A publicar', concluido: 'Concluído' };
-  const destNames = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram', tutorial: 'Tutorial' };
-  const dests = (p.destinations || []).map(d => `<span class="proj-dest-tag ${d}">${destNames[d] || d}</span>`).join('') || '<span style="color:var(--text-muted)">Nenhum</span>';
-  const links = p.links || [];
-  const photos = p.photos || [];
+  statusSel.innerHTML = Object.entries(statusMap).map(([k,v]) => `<option value="${k}" ${(p?.status||'planejamento')===k?'selected':''}>${v}</option>`).join('');
+  statusSel.className = 'proj-status-select ' + (p?.status || 'planejamento');
 
-  document.getElementById('projViewTitle').textContent = p.title || 'Sem título';
-  document.getElementById('projViewBody').innerHTML = `
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
-      ${dests}
-      <span class="badge ${p.status === 'concluido' || p.status === 'producao' || p.status === 'a_publicar' ? 'approved' : 'pending'}" style="margin-left:auto">${statusMap[p.status] || p.status}</span>
-    </div>
+  // Initialize evaluation ratings tracking
+  tempEvalRatings = {};
+  if (p?.evaluation) {
+    tempEvalRatings.main_rating = p.evaluation.main_rating || 0;
+    tempEvalRatings.main_obs = p.evaluation.main_obs || '';
+    if (p.evaluation.clips) {
+      tempEvalRatings.clips = { ...p.evaluation.clips };
+    }
+  }
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">
-      <div class="proj-meta-item"><div class="k">Moto / Produto</div><div class="v" style="font-size:14px">${escHtml(p.moto || '—')}</div></div>
-      <div class="proj-meta-item"><div class="k">Data de produção</div><div class="v" style="font-size:14px">${p.production_date ? prettyDate(p.production_date) : '—'}</div></div>
-    </div>
+  // Render tabs
+  renderProjTabProducao(p);
+  renderProjTabAvaliacao(p);
+  renderProjTabPostagem(p);
 
-    ${p.script_text ? `
-    <div style="margin-bottom:18px">
-      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Roteiro</div>
-      <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.6;max-height:300px;overflow-y:auto">${escHtml(p.script_text)}</div>
-    </div>` : ''}
+  // Show modal, activate first tab
+  switchProjTab('producao');
+  document.getElementById('projModal').classList.add('show');
+}
 
-    ${p.script_file?.name ? `
-    <div style="margin-bottom:18px">
-      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Arquivo do roteiro</div>
-      <a href="${p.script_file.data}" download="${p.script_file.name}" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;color:var(--primary);text-decoration:none;font-size:13px">
-        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        ${escHtml(p.script_file.name)}
-      </a>
-    </div>` : ''}
+function closeProjModal() {
+  document.getElementById('projModal').classList.remove('show');
+  projModalId = null;
+}
 
-    ${links.length ? `
-    <div style="margin-bottom:18px">
-      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Links de referência</div>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        ${links.map(l => `<a href="${l}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;color:var(--primary);text-decoration:none;font-size:13px;word-break:break-all;transition:border-color .15s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
-          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="flex-shrink:0"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          ${l.length > 70 ? l.substring(0, 70) + '...' : l}
-        </a>`).join('')}
+function switchProjTab(tab) {
+  document.querySelectorAll('.proj-modal-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.proj-tab-content').forEach(c => c.classList.remove('active'));
+  const tabEl = document.getElementById('projTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+  if (tabEl) tabEl.classList.add('active');
+}
+
+async function quickModalStatus(status) {
+  if (!projModalId) return;
+  const { error } = await sb.from('projects').update({ status }).eq('id', projModalId);
+  if (error) { alert('Erro: ' + error.message); return; }
+  const p = PROJECTS.find(x => x.id === projModalId);
+  if (p) p.status = status;
+  document.getElementById('projModalStatus').className = 'proj-status-select ' + status;
+  renderProjects();
+}
+
+function renderProjTabProducao(p) {
+  const el = document.getElementById('projTabProducao');
+  if (!el) return;
+
+  // If we're editing an existing project, load its data
+  if (p && projModalId) {
+    // Pre-fill the form fields
+    document.getElementById('projEditId').value = p.id;
+    document.getElementById('projTitle').value = p.title || '';
+    document.getElementById('projScript').value = p.script_text || '';
+    document.getElementById('projObs').value = p.observations || '';
+    document.getElementById('projStatus').value = p.status || 'planejamento';
+
+    (p.destinations || []).forEach(d => {
+      const map = { youtube: 'projDestYT', tiktok: 'projDestTK', instagram: 'projDestIG', tutorial: 'projDestTut' };
+      const cb = document.getElementById(map[d]);
+      if (cb) cb.checked = true;
+    });
+
+    projLinks = [...(p.links || [])];
+    projPhotos = [...(p.photos || [])];
+    projCosts = [...(p.costs || [])];
+    projScriptFileData = p.script_file || null;
+
+    if (p.script_file?.name) document.getElementById('projScriptFileName').textContent = p.script_file.name;
+
+    if (p.request_id) {
+      document.getElementById('projBooking').value = p.request_id;
+    } else {
+      document.getElementById('projBooking').value = '';
+      document.getElementById('projMoto').value = p.moto || '';
+      document.getElementById('projDate').value = p.production_date || '';
+    }
+  } else {
+    // New project - reset form
+    document.getElementById('projEditId').value = '';
+    document.getElementById('projTitle').value = '';
+    document.getElementById('projScript').value = '';
+    document.getElementById('projObs').value = '';
+    document.getElementById('projStatus').value = 'planejamento';
+    document.querySelectorAll('[id^="projDest"]').forEach(cb => { if (cb.type === 'checkbox') cb.checked = false; });
+    projLinks = [];
+    projPhotos = [];
+    projCosts = [];
+    projScriptFileData = null;
+    document.getElementById('projScriptFileName').textContent = '';
+    document.getElementById('projBooking').value = '';
+  }
+
+  populateProjBookings();
+  onProjBookingChange();
+  renderProjLinks();
+  renderProjPhotos();
+  renderProjCosts();
+
+  // Render the Produção tab content (using the existing form structure)
+  el.innerHTML = `
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px">
+      <div class="block-field">
+        <label>Vincular agendamento</label>
+        <select class="login-input" id="projBooking" style="margin:0" onchange="onProjBookingChange()">
+          <option value="">Sem vínculo (projeto avulso)</option>
+        </select>
       </div>
-    </div>` : ''}
-
-    ${(p.costs || []).length ? `
-    <div style="margin-bottom:18px">
-      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Custos operacionais</div>
-      <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:10px;overflow:hidden">
-        ${p.costs.map(c => `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border)">
-          <span style="font-size:13px;color:var(--text-dim)">${escHtml(c.reason)}</span>
-          <span style="font-weight:600;font-size:13px;color:var(--text);white-space:nowrap">R$ ${formatBRL(c.value)}</span>
-        </div>`).join('')}
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(245,158,11,.08)">
-          <span style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px">Total</span>
-          <span style="font-weight:700;font-size:14px;color:#f59e0b">R$ ${formatBRL(p.costs.reduce((s,c) => s + (c.value||0), 0))}</span>
+      <div class="block-field">
+        <label>Nome do projeto</label>
+        <input type="text" class="login-input" id="projTitle" style="margin:0" placeholder="Ex: Review Harley 883"/>
+      </div>
+      <div class="block-field" id="projMotoFieldWrap" style="display:none">
+        <label>Moto / Produto (manual)</label>
+        <input type="text" class="login-input" id="projMoto" style="margin:0" placeholder="Ex: Ducati Panigale V4"/>
+      </div>
+      <div class="block-field" id="projDateFieldWrap" style="display:none">
+        <label>Data de produção</label>
+        <input type="date" class="login-input" id="projDate" style="margin:0"/>
+      </div>
+      <div class="block-field">
+        <label>Destino do conteúdo</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+          <label class="proj-dest-chip"><input type="checkbox" id="projDestYT" value="youtube"/> <span>YouTube</span></label>
+          <label class="proj-dest-chip"><input type="checkbox" id="projDestTK" value="tiktok"/> <span>TikTok</span></label>
+          <label class="proj-dest-chip"><input type="checkbox" id="projDestIG" value="instagram"/> <span>Instagram</span></label>
+          <label class="proj-dest-chip"><input type="checkbox" id="projDestTut" value="tutorial"/> <span>Tutorial interno</span></label>
         </div>
       </div>
-      <button class="action-btn approve" style="padding:8px 14px;font-size:12px;margin-top:8px;display:inline-flex;align-items:center;gap:6px" onclick="sendCostsWhatsAppView('${p.id}')">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        Enviar custos ao financeiro
-      </button>
-    </div>` : ''}
-
-    ${p.observations ? `
-    <div style="margin-bottom:18px">
-      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Observações</div>
-      <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.5">${escHtml(p.observations)}</div>
-    </div>` : ''}
-
-    ${photos.length ? `
-    <div>
-      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">Fotos (${photos.length})</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px">
-        ${photos.map(ph => `<div style="border-radius:8px;overflow:hidden;border:1px solid var(--border);cursor:pointer;aspect-ratio:1" onclick="openLightbox('${ph}')"><img src="${ph}" style="width:100%;height:100%;object-fit:cover"/></div>`).join('')}
+      <div class="block-field" style="grid-column:1/-1">
+        <label>Roteiro do vídeo</label>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <textarea class="checkin-textarea" id="projScript" style="min-height:100px;flex:1" placeholder="Cole o roteiro ou descreva as cenas/tópicos..."></textarea>
+          <div>
+            <label class="action-btn view" style="padding:8px 12px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:4px" for="projScriptFile">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload
+            </label>
+            <input type="file" id="projScriptFile" accept=".txt,.pdf,.doc,.docx" hidden onchange="handleScriptUpload(this)"/>
+            <div id="projScriptFileName" style="font-size:10px;color:var(--text-muted);margin-top:4px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+          </div>
+        </div>
       </div>
-    </div>` : ''}
-
-    <div style="margin-top:20px;display:flex;gap:8px;justify-content:flex-end">
-      <button class="action-btn view" style="padding:8px 16px" onclick="closeProjView();editProject('${p.id}')">
-        <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        Editar projeto
+      <div class="block-field" style="grid-column:1/-1">
+        <label>Links de referência</label>
+        <div id="projLinksWrap">
+          <div style="display:flex;gap:6px;margin-bottom:6px">
+            <input type="text" class="login-input" style="margin:0;flex:1" placeholder="https://youtube.com/watch?v=..." onkeydown="if(event.key==='Enter'){addProjLink(this.value);this.value='';event.preventDefault();}"/>
+            <button class="action-btn view" style="padding:8px 12px;white-space:nowrap" onclick="addProjLink(this.previousElementSibling.value);this.previousElementSibling.value='';">+ Adicionar</button>
+          </div>
+          <div id="projLinksList" style="display:flex;flex-direction:column;gap:4px"></div>
+        </div>
+      </div>
+      <div class="block-field" style="grid-column:1/-1">
+        <label>Observações do projeto</label>
+        <textarea class="checkin-textarea" id="projObs" style="min-height:80px" placeholder="Informações adicionais, anotações, detalhes técnicos..."></textarea>
+      </div>
+      <div class="block-field" style="grid-column:1/-1">
+        <label>Custos operacionais</label>
+        <div id="projCostsWrap">
+          <div id="projCostsList"></div>
+          <div style="display:flex;gap:6px;align-items:flex-end">
+            <div style="flex:1">
+              <span style="font-size:10px;color:var(--text-muted)">Descrição</span>
+              <input type="text" class="login-input" id="projCostReason" style="margin:0" placeholder="Ex: Ponteira GT Trail"/>
+            </div>
+            <div style="flex:0 0 140px">
+              <span style="font-size:10px;color:var(--text-muted)">Categoria</span>
+              <select class="login-input" id="projCostCategory" style="margin:0">
+                <option value="produto">Produto</option>
+                <option value="mao_de_obra">Mão de obra</option>
+                <option value="logistica">Logística</option>
+                <option value="equipamento">Equipamento</option>
+              </select>
+            </div>
+            <div style="flex:0 0 100px">
+              <span style="font-size:10px;color:var(--text-muted)">R$</span>
+              <input type="text" class="login-input" id="projCostValue" style="margin:0" placeholder="0,00" oninput="maskCurrency(this)"/>
+            </div>
+            <button class="action-btn approve" style="padding:8px 14px" onclick="addProjCost()">+</button>
+          </div>
+          <button class="action-btn approve" style="padding:8px 14px;font-size:12px;margin-top:8px;display:inline-flex;align-items:center;gap:6px" onclick="sendCostsWhatsApp()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Enviar custos ao financeiro
+          </button>
+        </div>
+      </div>
+      <div class="block-field" style="grid-column:1/-1">
+        <label>Imagens / Fotos de referência</label>
+        <div class="photo-grid" id="projPhotoGrid"></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <label class="action-btn view" style="padding:8px 14px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px" for="projPhotoFile">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            Galeria
+          </label>
+          <input type="file" id="projPhotoFile" accept="image/*" multiple hidden onchange="addProjPhotos(this, false)"/>
+          <label class="action-btn approve" style="padding:8px 14px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px" for="projCameraFile">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Tirar foto
+          </label>
+          <input type="file" id="projCameraFile" accept="image/*" capture="environment" hidden onchange="addProjPhotos(this, true)"/>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="action-btn approve" style="flex:1;padding:12px" onclick="saveProject()">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Salvar projeto
       </button>
-      <button class="action-btn reject" style="padding:8px 16px" onclick="closeProjView()">Fechar</button>
+      <button class="action-btn reject" style="padding:12px 20px" onclick="closeProjModal()">Cancelar</button>
     </div>
   `;
-  document.getElementById('projViewModal').classList.add('show');
 }
 
-function closeProjView() {
-  document.getElementById('projViewModal').classList.remove('show');
+function renderProjTabAvaliacao(p) {
+  const el = document.getElementById('projTabAvaliacao');
+  if (!el) return;
+  if (!p) { el.innerHTML = '<div style="padding:24px;color:var(--text-muted);text-align:center">Salve o projeto primeiro para poder avaliar.</div>'; return; }
+
+  const evaluation = p.evaluation || {};
+  const adm = isUserAdmin();
+  const dests = p.destinations || [];
+
+  let html = '<div style="padding:24px;display:flex;flex-direction:column;gap:16px">';
+
+  // Main video evaluation
+  html += `<div class="proj-eval-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <h4 style="font-size:14px;font-weight:600">🎬 Vídeo Principal</h4>
+      <div class="star-rating" ${adm ? `onmouseleave="starHoverOut(this)"` : ''}>
+        ${[1,2,3,4,5].map(n => `<span class="star ${(tempEvalRatings.main_rating||evaluation.main_rating||0)>=n?'active':''}" ${adm?`data-value="${n}" onclick="setEvalRating('main',${n})" onmouseenter="starHoverIn(this,${n})"`:'style="cursor:default"'}>★</span>`).join('')}
+      </div>
+    </div>
+    <textarea class="checkin-textarea" id="evalMainObs" style="min-height:80px" placeholder="Observações..." ${adm?'':'disabled'}>${escHtml(tempEvalRatings.main_obs||evaluation.main_obs||'')}</textarea>
+  </div>`;
+
+  // Clips section
+  if (dests.length) {
+    html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-top:8px">CLIPS</div>';
+    const destNames = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram', tutorial: 'Tutorial' };
+    const clipEvals = evaluation.clips || {};
+    dests.forEach(d => {
+      const tempClip = (tempEvalRatings.clips && tempEvalRatings.clips[d]) || clipEvals[d] || {};
+      const ce = { ...clipEvals[d], ...tempClip };
+      const statusOpts = ['Ideia','Em Edição','Finalizado'];
+      html += `<div class="proj-eval-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <h4 style="font-size:14px;font-weight:600">${destNames[d]||d}</h4>
+            <select class="proj-eval-status" id="evalClipStatus_${d}" ${adm?'':'disabled'}>
+              ${statusOpts.map(s => `<option ${ce.status===s?'selected':''}>${s}</option>`).join('')}
+            </select>
+          </div>
+          <div class="star-rating" ${adm?`onmouseleave="starHoverOut(this)"`:''}>
+            ${[1,2,3,4,5].map(n => `<span class="star ${(ce.rating||0)>=n?'active':''}" ${adm?`data-value="${n}" onclick="setEvalRating('${d}',${n})" onmouseenter="starHoverIn(this,${n})"`:'style="cursor:default"'}>★</span>`).join('')}
+          </div>
+        </div>
+        <textarea class="checkin-textarea" id="evalClipObs_${d}" style="min-height:60px" placeholder="Observações do clip..." ${adm?'':'disabled'}>${escHtml(ce.obs||'')}</textarea>
+      </div>`;
+    });
+  }
+
+  if (adm) {
+    html += `<button class="action-btn approve" style="padding:12px;width:100%" onclick="saveEvaluation()">
+      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Salvar avaliação
+    </button>`;
+  }
+
+  html += '</div>';
+  el.innerHTML = html;
 }
-document.getElementById('projViewModal').addEventListener('click', e => {
-  if (e.target.id === 'projViewModal') closeProjView();
-});
+
+function setEvalRating(key, val) {
+  if (!isUserAdmin()) return;
+  // Toggle: clicking the same rating again unsets it
+  const oldVal = key === 'main' ? (tempEvalRatings.main_rating || 0) : ((tempEvalRatings.clips && tempEvalRatings.clips[key] && tempEvalRatings.clips[key].rating) || 0);
+  const newVal = oldVal === val ? 0 : val;
+
+  if (key === 'main') {
+    tempEvalRatings.main_rating = newVal;
+  } else {
+    if (!tempEvalRatings.clips) tempEvalRatings.clips = {};
+    if (!tempEvalRatings.clips[key]) tempEvalRatings.clips[key] = {};
+    tempEvalRatings.clips[key].rating = newVal;
+  }
+
+  // Re-render the avaliacao tab to show the updated ratings
+  const p = PROJECTS.find(x => x.id === projModalId);
+  if (p) renderProjTabAvaliacao(p);
+}
+
+async function saveEvaluation() {
+  if (!isUserAdmin() || !projModalId) return;
+  const p = PROJECTS.find(x => x.id === projModalId);
+  if (!p) return;
+
+  const evaluation = {};
+  evaluation.main_rating = tempEvalRatings.main_rating || 0;
+  evaluation.main_obs = document.getElementById('evalMainObs')?.value || '';
+
+  (p.destinations || []).forEach(d => {
+    if (!evaluation.clips) evaluation.clips = {};
+    if (!evaluation.clips[d]) evaluation.clips[d] = {};
+    evaluation.clips[d].obs = document.getElementById('evalClipObs_' + d)?.value || '';
+    evaluation.clips[d].status = document.getElementById('evalClipStatus_' + d)?.value || '';
+    evaluation.clips[d].rating = (tempEvalRatings.clips && tempEvalRatings.clips[d]?.rating) || 0;
+  });
+
+  const { error } = await sb.from('projects').update({ evaluation }).eq('id', projModalId);
+  if (error) { alert('Erro: ' + error.message); return; }
+  p.evaluation = evaluation;
+
+  // Send notifications to team members
+  await sendEvalNotifications(p);
+
+  alert('Avaliação salva!');
+  renderProjects();
+}
+
+function renderProjTabPostagem(p) {
+  const el = document.getElementById('projTabPostagem');
+  if (!el) return;
+  if (!p) { el.innerHTML = '<div style="padding:24px;color:var(--text-muted);text-align:center">Salve o projeto primeiro.</div>'; return; }
+
+  const posts = p.posts || {};
+  const dests = p.destinations || [];
+  const destNames = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram', tutorial: 'Tutorial' };
+
+  let html = '<div style="padding:24px;display:flex;flex-direction:column;gap:16px">';
+
+  // Main video
+  const mainPost = posts.main || {};
+  html += buildPostCard('main', p.title || 'Vídeo Principal', 'PRINCIPAL', mainPost);
+
+  // Clips per destination
+  dests.forEach(d => {
+    const cp = posts[d] || {};
+    html += buildPostCard(d, destNames[d] || d, 'CLIP', cp);
+  });
+
+  html += `<button class="action-btn approve" style="padding:12px;width:100%" onclick="savePosts()">
+    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+    Salvar postagem
+  </button>`;
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function buildPostCard(key, title, badge, data) {
+  const statusOpts = ['Pendente','Aprovado','Publicado','Campanha'];
+  const badgeColor = badge === 'PRINCIPAL' ? 'var(--primary)' : 'var(--warning)';
+  return `<div class="proj-post-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <h4 style="font-size:14px;font-weight:600">${escHtml(title)}</h4>
+        <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;background:${badgeColor};color:#fff;letter-spacing:.5px">${badge}</span>
+      </div>
+      <select class="proj-eval-status" id="postStatus_${key}">
+        ${statusOpts.map(s => `<option ${data.status===s?'selected':''}>${s}</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="text" class="login-input" id="postLink_${key}" style="margin:0;flex:1" placeholder="Link da postagem..." value="${escHtml(data.link||'')}"/>
+      ${data.link ? `<a href="${escHtml(data.link)}" target="_blank" style="color:var(--primary);padding:6px"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>` : ''}
+    </div>
+  </div>`;
+}
+
+async function savePosts() {
+  if (!projModalId) return;
+  const p = PROJECTS.find(x => x.id === projModalId);
+  if (!p) return;
+
+  const posts = {};
+  // Main
+  posts.main = {
+    status: document.getElementById('postStatus_main')?.value || 'Pendente',
+    link: document.getElementById('postLink_main')?.value || ''
+  };
+  // Clips
+  (p.destinations || []).forEach(d => {
+    posts[d] = {
+      status: document.getElementById('postStatus_' + d)?.value || 'Pendente',
+      link: document.getElementById('postLink_' + d)?.value || ''
+    };
+  });
+
+  const { error } = await sb.from('projects').update({ posts }).eq('id', projModalId);
+  if (error) { alert('Erro: ' + error.message); return; }
+  p.posts = posts;
+  alert('Postagem salva!');
+  renderProjects();
+}
+
+async function sendEvalNotifications(project) {
+  // Get all users except current
+  const { data: users } = await sb.from('admin_users').select('id, name, role');
+  if (!users) return;
+  const others = users.filter(u => u.id !== CURRENT_USER.id);
+  const notifs = others.map(u => ({
+    user_id: u.id,
+    project_id: project.id,
+    project_title: project.title,
+    message: `${CURRENT_USER.name || 'Admin'} atualizou a avaliação do projeto "${project.title}"`,
+    read: false
+  }));
+  if (notifs.length) {
+    await sb.from('notifications').insert(notifs);
+  }
+  // Reload notifications for current user
+  await loadNotifications();
+}
+
+async function loadNotifications() {
+  if (!CURRENT_USER) return;
+  const { data } = await sb.from('notifications').select('*').eq('user_id', CURRENT_USER.id).eq('read', false).order('created_at', { ascending: false });
+  NOTIFICATIONS = data || [];
+  renderNotifBadge();
+}
+
+function renderNotifBadge() {
+  const badge = document.getElementById('notifBadge');
+  if (badge) {
+    badge.textContent = NOTIFICATIONS.length;
+    badge.style.display = NOTIFICATIONS.length > 0 ? 'flex' : 'none';
+  }
+}
+
+function renderProfileNotifications() {
+  const el = document.getElementById('profileNotifications');
+  if (!el) return;
+  if (NOTIFICATIONS.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = `
+    <div class="cal-card" style="max-width:480px;margin-bottom:16px">
+      <h3 style="display:flex;align-items:center;gap:8px">Notificações <span class="notif-count">${NOTIFICATIONS.length}</span></h3>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+        ${NOTIFICATIONS.map(n => `
+          <div class="notif-card">
+            <div style="flex:1">
+              <div style="font-size:13px;color:var(--text)">${escHtml(n.message)}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${n.created_at ? new Date(n.created_at).toLocaleString('pt-BR') : ''}</div>
+            </div>
+            <button class="notif-dismiss" onclick="dismissNotif('${n.id}')">×</button>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+async function dismissNotif(id) {
+  await sb.from('notifications').update({ read: true }).eq('id', id);
+  NOTIFICATIONS = NOTIFICATIONS.filter(n => n.id !== id);
+  renderNotifBadge();
+  renderProfileNotifications();
+}
+
+// Setup modal click-outside-to-close
+if (document.getElementById('projModal')) {
+  document.getElementById('projModal').addEventListener('click', e => {
+    if (e.target.id === 'projModal') closeProjModal();
+  });
+}
 
 async function deleteProject(id) {
   if (!confirm('Excluir este projeto? Ação irreversível.')) return;
@@ -4128,7 +4454,7 @@ function renderEditingView() {
             <option value="a_publicar" ${p.status === 'a_publicar' ? 'selected' : ''}>A publicar</option>
             <option value="concluido" ${p.status === 'concluido' ? 'selected' : ''}>Concluído</option>
           </select>
-          <button class="action-btn approve" style="padding:4px 10px;font-size:11px" onclick="viewProject('${p.id}')">
+          <button class="action-btn approve" style="padding:4px 10px;font-size:11px" onclick="openProjModal('${p.id}')">
             <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             Ver completo
           </button>
@@ -5042,7 +5368,7 @@ async function markBonusPaid(id) {
 
 /* INIT */
 async function initApp() {
-  await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects(), loadPerfPosts(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses()]);
+  await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects(), loadPerfPosts(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses(), loadNotifications()]);
   renderDashboard();
   renderRequests();
   renderCalendar();
