@@ -4516,7 +4516,7 @@ async function downloadRoteiroPDF() {
   pages.forEach((pageLines, pi) => {
     let stream = '';
     pageLines.forEach(l => {
-      const text = enc(l.text || '').replace(/\\/g, '\\\\').replace(/\\(/g, '\\(').replace(/\\)/g, '\\)').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+      const text = enc(l.text || '').replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
       const color = l.color ? l.color : (l.done ? '0.6 0.6 0.6' : '0.1 0.1 0.1');
       if (l.color) {
         const r = parseInt(l.color.slice(1,3),16)/255;
