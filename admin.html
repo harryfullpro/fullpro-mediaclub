@@ -792,27 +792,52 @@
 
   /* Posting cards */
   .proj-post-card {
-    padding: 16px; border: 1px solid var(--border);
-    border-radius: 10px; background: var(--bg-elev);
-    margin-bottom: 12px;
+    border: 1px solid var(--border); border-radius: 12px;
+    background: var(--bg-elev); overflow: hidden; margin-bottom: 16px;
+  }
+  .post-card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; border-bottom: 1px solid var(--border);
+  }
+  .post-card-body { padding: 16px; }
+  .post-embed {
+    position: relative; border-radius: 8px; overflow: hidden;
+    background: #000; aspect-ratio: 16/9; margin-bottom: 14px;
+  }
+  .post-embed iframe { width: 100%; height: 100%; border: none; }
+  .post-embed img { width: 100%; height: 100%; object-fit: cover; }
+  .post-embed .play-overlay {
+    position: absolute; inset: 0; display: flex; align-items: center;
+    justify-content: center; background: rgba(0,0,0,.35); cursor: pointer;
+    transition: background .2s;
+  }
+  .post-embed .play-overlay:hover { background: rgba(0,0,0,.15); }
+  .post-embed .play-overlay svg { width: 56px; height: 56px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.5)); }
+  .post-actions {
+    display: flex; gap: 8px; margin-top: 12px;
+  }
+  .post-action-btn {
+    display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px;
+    border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card);
+    color: var(--text-dim); font-size: 11px; font-weight: 600; font-family: inherit;
+    cursor: pointer; transition: all .15s;
+  }
+  .post-action-btn:hover { border-color: var(--text-muted); color: var(--text); }
+  .post-link-input-wrap {
+    display: flex; gap: 8px; align-items: center;
   }
   .engagement-row {
-    display: flex; gap: 12px; margin-top: 12px; padding-top: 12px;
-    border-top: 1px solid var(--border);
+    display: flex; gap: 10px; margin-top: 14px;
   }
-  .engagement-item {
-    display: flex; align-items: center; gap: 6px; flex: 1;
+  .engagement-stat {
+    display: flex; align-items: center; gap: 6px; padding: 8px 14px;
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 8px; padding: 8px 10px; transition: border-color .15s;
+    border-radius: 8px; flex: 1;
   }
-  .engagement-item:focus-within { border-color: var(--primary); }
-  .engagement-icon { flex-shrink: 0; display: flex; align-items: center; }
-  .engagement-icon svg { width: 16px; height: 16px; }
-  .engagement-input {
-    background: none; border: none; color: var(--text); font-size: 13px;
-    font-family: inherit; font-weight: 600; width: 100%; outline: none;
-  }
-  .engagement-input::placeholder { color: var(--text-muted); font-weight: 400; }
+  .engagement-stat .e-icon { flex-shrink: 0; display: flex; align-items: center; }
+  .engagement-stat .e-icon svg { width: 16px; height: 16px; }
+  .engagement-stat .e-val { font-size: 14px; font-weight: 700; color: var(--text); }
+  .engagement-stat .e-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; }
 
   /* Cost categories with colored dots */
   .cost-category {
@@ -3855,89 +3880,252 @@ async function saveEvaluation() {
   renderProjects();
 }
 
+/* === POSTAGEM TAB === */
+const DEST_ICONS = {
+  youtube:   { color: '#ff0000', name: 'YouTube',   icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="#ff0000"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"/><path d="M9.545 15.568V8.432L15.818 12l-6.273 3.568z" fill="#fff"/></svg>' },
+  tiktok:    { color: '#00f2ea', name: 'TikTok',    icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="#00f2ea"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-.81-.05l-.38.05z"/></svg>' },
+  instagram: { color: '#e1306c', name: 'Instagram', icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="#e1306c"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>' },
+  tutorial:  { color: '#1fd27a', name: 'Tutorial',  icon: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1fd27a" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="#1fd27a"/></svg>' }
+};
+
+function extractYouTubeId(url) {
+  if (!url) return null;
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/))([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
 function renderProjTabPostagem(p) {
   const el = document.getElementById('projTabPostagem');
   if (!el) return;
-  if (!p) { el.innerHTML = '<div style="padding:24px;color:var(--text-muted);text-align:center">Salve o projeto primeiro.</div>'; return; }
+  if (!p) { el.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:40px 0">Salve o projeto primeiro.</div>'; return; }
 
   const posts = p.posts || {};
   const dests = p.destinations || [];
-  const destNames = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram', tutorial: 'Tutorial' };
 
-  let html = '<div style="padding:24px;display:flex;flex-direction:column;gap:16px">';
+  if (dests.length === 0) {
+    el.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:40px 0">Nenhum destino selecionado na aba Produção.</div>';
+    return;
+  }
 
-  // Main video
-  const mainPost = posts.main || {};
-  html += buildPostCard('main', p.title || 'Vídeo Principal', 'PRINCIPAL', mainPost);
-
-  // Clips per destination
+  let html = '<div style="display:flex;flex-direction:column;gap:16px">';
   dests.forEach(d => {
-    const cp = posts[d] || {};
-    html += buildPostCard(d, destNames[d] || d, 'CLIP', cp);
+    const pd = posts[d] || {};
+    html += buildPostCard(d, pd);
   });
-
   html += '</div>';
   el.innerHTML = html;
 }
 
-function buildPostCard(key, title, badge, data) {
-  const statusOpts = ['Pendente','Aprovado','Publicado','Campanha'];
-  const badgeColor = badge === 'PRINCIPAL' ? 'var(--primary)' : 'var(--warning)';
+function buildPostCard(dest, data) {
+  const info = DEST_ICONS[dest] || DEST_ICONS.tutorial;
+  const hasLink = !!(data.link && data.link.trim());
+  const isEditing = data._editing;
+
+  let body = '';
+
+  if (!hasLink || isEditing) {
+    // Empty state / editing state: show input + save button
+    body = `<div class="post-card-body">
+      <div class="post-link-input-wrap">
+        <input type="text" class="login-input" id="postLink_${dest}" style="margin:0;flex:1" placeholder="Cole o link da postagem aqui..." value="${escHtml(data.link||'')}"/>
+        <button class="action-btn approve" style="padding:8px 16px;font-size:12px;white-space:nowrap" onclick="savePostSingle('${dest}')">
+          <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><polyline points="20 6 9 17 4 12"/></svg>
+          Salvar
+        </button>
+      </div>
+    </div>`;
+  } else {
+    // Filled state: embed + engagement + actions
+    const ytId = extractYouTubeId(data.link);
+    let embedHtml = '';
+
+    if (ytId) {
+      embedHtml = `<div class="post-embed">
+        <a href="${escHtml(data.link)}" target="_blank" rel="noopener">
+          <img src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="thumbnail" loading="lazy"/>
+          <div class="play-overlay">
+            <svg viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55C3.97 2.33 2.27 4.81 1.48 7.74.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="red"/><path d="M45 24L27 14v20" fill="#fff"/></svg>
+          </div>
+        </a>
+      </div>`;
+    } else if (dest === 'instagram') {
+      embedHtml = `<div class="post-embed" style="aspect-ratio:1/1;max-height:300px">
+        <a href="${escHtml(data.link)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)">
+          <div style="text-align:center;color:#fff">
+            ${info.icon}
+            <div style="font-size:12px;margin-top:8px;opacity:.8">Ver no Instagram</div>
+          </div>
+        </a>
+      </div>`;
+    } else if (dest === 'tiktok') {
+      embedHtml = `<div class="post-embed" style="aspect-ratio:9/16;max-height:340px;max-width:200px">
+        <a href="${escHtml(data.link)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg,#010101,#161823)">
+          <div style="text-align:center;color:#fff">
+            ${info.icon}
+            <div style="font-size:12px;margin-top:8px;opacity:.8">Ver no TikTok</div>
+          </div>
+        </a>
+      </div>`;
+    } else {
+      embedHtml = `<div class="post-embed" style="aspect-ratio:16/9;max-height:200px">
+        <a href="${escHtml(data.link)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;height:100%;background:var(--bg-card)">
+          <div style="text-align:center;color:var(--text-dim)">
+            ${info.icon}
+            <div style="font-size:12px;margin-top:8px">Abrir link</div>
+          </div>
+        </a>
+      </div>`;
+    }
+
+    // Engagement stats (read-only display)
+    const views = data.views || 0;
+    const likes = data.likes || 0;
+    const comments = data.comments || 0;
+
+    body = `<div class="post-card-body">
+      ${embedHtml}
+      <div class="engagement-row">
+        <div class="engagement-stat">
+          <div class="e-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <div><div class="e-val">${formatNum(views)}</div><div class="e-label">views</div></div>
+        </div>
+        <div class="engagement-stat">
+          <div class="e-icon"><svg viewBox="0 0 24 24" fill="${likes > 0 ? '#ff4d6a' : 'none'}" stroke="${likes > 0 ? '#ff4d6a' : 'var(--text-muted)'}" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
+          <div><div class="e-val">${formatNum(likes)}</div><div class="e-label">likes</div></div>
+        </div>
+        <div class="engagement-stat">
+          <div class="e-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+          <div><div class="e-val">${formatNum(comments)}</div><div class="e-label">coment.</div></div>
+        </div>
+      </div>
+      <div class="post-actions">
+        <button class="post-action-btn" onclick="copyPostLink('${dest}')">
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copiar link
+        </button>
+        <button class="post-action-btn" onclick="editPostLink('${dest}')">
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Editar postagem
+        </button>
+        ${ytId ? `<button class="post-action-btn" onclick="refreshYTStats('${dest}','${ytId}')" id="ytRefresh_${dest}">
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+          Atualizar dados
+        </button>` : ''}
+      </div>
+    </div>`;
+  }
+
   return `<div class="proj-post-card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div class="post-card-head">
       <div style="display:flex;align-items:center;gap:8px">
-        <h4 style="font-size:14px;font-weight:600">${escHtml(title)}</h4>
-        <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;background:${badgeColor};color:#fff;letter-spacing:.5px">${badge}</span>
-      </div>
-      <select class="proj-eval-status" id="postStatus_${key}">
-        ${statusOpts.map(s => `<option ${data.status===s?'selected':''}>${s}</option>`).join('')}
-      </select>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <input type="text" class="login-input" id="postLink_${key}" style="margin:0;flex:1" placeholder="Link da postagem..." value="${escHtml(data.link||'')}"/>
-      ${data.link ? `<a href="${escHtml(data.link)}" target="_blank" style="color:var(--primary);padding:6px"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>` : ''}
-    </div>
-    <div class="engagement-row">
-      <div class="engagement-item">
-        <div class="engagement-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
-        <input type="text" class="engagement-input" id="postViews_${key}" placeholder="Views" value="${data.views || ''}" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
-      </div>
-      <div class="engagement-item">
-        <div class="engagement-icon"><svg viewBox="0 0 24 24" fill="${(data.likes || 0) > 0 ? '#ff4d6a' : 'none'}" stroke="${(data.likes || 0) > 0 ? '#ff4d6a' : 'var(--text-muted)'}" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
-        <input type="text" class="engagement-input" id="postLikes_${key}" placeholder="Likes" value="${data.likes || ''}" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
-      </div>
-      <div class="engagement-item">
-        <div class="engagement-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
-        <input type="text" class="engagement-input" id="postComments_${key}" placeholder="Coment." value="${data.comments || ''}" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
+        ${info.icon}
+        <span style="font-size:14px;font-weight:600;color:var(--text)">${info.name}</span>
+        ${hasLink && !isEditing ? `<span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(31,210,122,.15);color:var(--success);letter-spacing:.5px">PUBLICADO</span>` : `<span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(255,170,51,.15);color:var(--warning);letter-spacing:.5px">PENDENTE</span>`}
       </div>
     </div>
+    ${body}
   </div>`;
 }
 
-function collectPostData(key) {
-  return {
-    status: document.getElementById('postStatus_' + key)?.value || 'Pendente',
-    link: document.getElementById('postLink_' + key)?.value || '',
-    views: parseInt(document.getElementById('postViews_' + key)?.value) || 0,
-    likes: parseInt(document.getElementById('postLikes_' + key)?.value) || 0,
-    comments: parseInt(document.getElementById('postComments_' + key)?.value) || 0
-  };
+function copyPostLink(dest) {
+  const p = PROJECTS.find(x => x.id === projDetailId);
+  const link = p?.posts?.[dest]?.link;
+  if (!link) return;
+  navigator.clipboard.writeText(link).then(() => {
+    alert('Link copiado!');
+  }).catch(() => {
+    // Fallback
+    const t = document.createElement('textarea');
+    t.value = link; document.body.appendChild(t); t.select();
+    document.execCommand('copy'); document.body.removeChild(t);
+    alert('Link copiado!');
+  });
 }
 
-async function savePosts() {
+function editPostLink(dest) {
+  const p = PROJECTS.find(x => x.id === projDetailId);
+  if (!p) return;
+  if (!p.posts) p.posts = {};
+  if (!p.posts[dest]) p.posts[dest] = {};
+  p.posts[dest]._editing = true;
+  renderProjTabPostagem(p);
+}
+
+async function savePostSingle(dest) {
   if (!projDetailId) return;
   const p = PROJECTS.find(x => x.id === projDetailId);
   if (!p) return;
 
-  const posts = {};
-  posts.main = collectPostData('main');
-  (p.destinations || []).forEach(d => { posts[d] = collectPostData(d); });
+  const linkEl = document.getElementById('postLink_' + dest);
+  const link = (linkEl?.value || '').trim();
+  if (!link) { alert('Cole o link da postagem.'); return; }
 
-  const { error } = await sb.from('projects').update({ posts }).eq('id', projDetailId);
+  if (!p.posts) p.posts = {};
+  p.posts[dest] = { link, views: 0, likes: 0, comments: 0 };
+
+  // Try auto-fetch YouTube stats
+  const ytId = extractYouTubeId(link);
+  if (ytId) {
+    const stats = await fetchYTStats(ytId);
+    if (stats) {
+      p.posts[dest].views = stats.views;
+      p.posts[dest].likes = stats.likes;
+      p.posts[dest].comments = stats.comments;
+    }
+  }
+
+  const { error } = await sb.from('projects').update({ posts: p.posts }).eq('id', projDetailId);
   if (error) { alert('Erro: ' + error.message); return; }
-  p.posts = posts;
-  alert('Postagem salva!');
+
+  renderProjTabPostagem(p);
   renderProjects();
+}
+
+async function refreshYTStats(dest, ytId) {
+  const btn = document.getElementById('ytRefresh_' + dest);
+  if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
+
+  const stats = await fetchYTStats(ytId);
+  if (!stats) { alert('Não foi possível atualizar. Configure a YouTube API Key no config.js'); if (btn) { btn.disabled = false; btn.style.opacity = '1'; } return; }
+
+  const p = PROJECTS.find(x => x.id === projDetailId);
+  if (!p || !p.posts?.[dest]) return;
+
+  p.posts[dest].views = stats.views;
+  p.posts[dest].likes = stats.likes;
+  p.posts[dest].comments = stats.comments;
+
+  await sb.from('projects').update({ posts: p.posts }).eq('id', projDetailId);
+  renderProjTabPostagem(p);
+}
+
+async function fetchYTStats(videoId) {
+  const apiKey = window.FULLPRO_CONFIG?.YOUTUBE_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoId}&key=${apiKey}`);
+    const json = await res.json();
+    if (json.items && json.items.length > 0) {
+      const s = json.items[0].statistics;
+      return {
+        views: parseInt(s.viewCount) || 0,
+        likes: parseInt(s.likeCount) || 0,
+        comments: parseInt(s.commentCount) || 0
+      };
+    }
+  } catch (e) { console.warn('YT API error:', e); }
+  return null;
+}
+
+// Keep savePosts for the header save button
+async function savePosts() {
+  if (!projDetailId) return;
+  const p = PROJECTS.find(x => x.id === projDetailId);
+  if (!p) return;
+  // Just re-save current posts state
+  const { error } = await sb.from('projects').update({ posts: p.posts || {} }).eq('id', projDetailId);
+  if (error) { alert('Erro: ' + error.message); return; }
+  alert('Postagens salvas!');
 }
 
 async function sendEvalNotifications(project) {
