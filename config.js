@@ -19,6 +19,6 @@ window.FULLPRO_CONFIG = {
    * 4. Cole o token abaixo. Renove antes de expirar.
    * 5. IG_USER_ID: ID numérico da conta IG Business (visível em /me?fields=id)
    * Deixe vazio para preencher engajamento do Instagram manualmente. */
-  IG_ACCESS_TOKEN:   'EAAMfQnMLWAMBRLZCnIDJIgGLgmRFf8oNoXVwTBnZBnqv22Pp08u2qzNzIDqVfT6ZCRC7o7uan97LS7aAtzJULloc0VoC67SMi9D9sIuzMOyFM4Ow18EWZBwOzTkryupdZBgWytkUfYEVNFxkPoyhd3UCwFCHdZCnRVO0S4b11OMvXzG4cQD6cPhVQtgVGaAm6R',
+  IG_ACCESS_TOKEN:   'EAAMfQnMLWAMBRDPJob9KeKsCG2woBa1VPCFoIL64OdeJ6xfLSd7PfZACFZACGC5lVXMYP42eSRhex079K9lJIf4IS0EGvD8NE9SZBMHyhSPEFMNdpeJBBVoWuAEpXmpnHX61bzvzP0rwKaBYAP4tV1IJRe6pR4pOZCXj2ZAsC8JhwuqrZA52bGxNyNeTg1ogsI',
   IG_USER_ID:        '17841408535149834'
 };
