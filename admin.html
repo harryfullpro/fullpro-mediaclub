@@ -937,7 +937,11 @@
     </a>
 
     <div class="nav-section">Geral</div>
-    <button class="nav-item active" data-view="requests">
+    <button class="nav-item active" data-view="dashboard">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span class="nav-label">Dashboard</span>
+    </button>
+    <button class="nav-item" data-view="requests">
       <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
       <span class="nav-label">Solicitações</span> <span class="count" id="cntReq">0</span>
     </button>
@@ -1016,8 +1020,19 @@
   </aside>
 
   <main>
+    <!-- DASHBOARD VIEW -->
+    <div id="view-dashboard">
+      <div class="page-head">
+        <div>
+          <h1>Dashboard</h1>
+          <p>Visão geral de todas as áreas do Media Club.</p>
+        </div>
+      </div>
+      <div id="dashboardContent"></div>
+    </div>
+
     <!-- REQUESTS VIEW -->
-    <div id="view-requests">
+    <div id="view-requests" style="display:none">
       <div class="page-head">
         <div>
           <h1>Solicitações</h1>
@@ -1930,7 +1945,7 @@ document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['requests','calendar','checkin','projects','editing','templates','export','users','profile'].forEach(v => {
+    ['dashboard','requests','calendar','checkin','projects','editing','templates','export','users','profile'].forEach(v => {
       document.getElementById('view-' + v).style.display = 'none';
     });
     document.getElementById('view-' + btn.dataset.view).style.display = 'block';
@@ -3654,9 +3669,179 @@ document.getElementById('editPdfModal').addEventListener('click', e => {
 });
 
 
+/* DASHBOARD */
+function renderDashboard() {
+  const el = document.getElementById('dashboardContent');
+  if (!el) return;
+
+  const reqs = getRequests();
+  const pending = reqs.filter(r => r.status === 'pending').length;
+  const approved = reqs.filter(r => r.status === 'approved').length;
+  const rejected = reqs.filter(r => r.status === 'rejected').length;
+
+  const now = new Date();
+  const thisMonth = reqs.filter(r => {
+    const d = new Date(r.created_at);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+
+  const blockedCount = BLOCKED.length;
+
+  const upcoming = reqs.filter(r => r.status === 'approved' && r.date >= new Date().toISOString().slice(0, 10))
+    .sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
+
+  const projTotal = PROJECTS.length;
+  const projByStatus = {
+    planejamento: PROJECTS.filter(p => p.status === 'planejamento').length,
+    producao: PROJECTS.filter(p => p.status === 'producao').length,
+    edicao: PROJECTS.filter(p => p.status === 'edicao').length,
+    a_publicar: PROJECTS.filter(p => p.status === 'a_publicar').length,
+    concluido: PROJECTS.filter(p => p.status === 'concluido').length
+  };
+
+  const totalCosts = PROJECTS.reduce((s, p) => s + (p.costs || []).reduce((cs, c) => cs + (c.value || 0), 0), 0);
+
+  const ciCount = Object.keys(CHECKINS).length;
+  const coCount = Object.keys(CHECKOUTS).length;
+  const inUse = ciCount - coCount;
+
+  const statusMap = { planejamento: 'Planejamento', producao: 'Em produção', edicao: 'Edição', a_publicar: 'A publicar', concluido: 'Concluído' };
+  const statusColors = { planejamento: '#3b82f6', producao: '#10b981', edicao: '#a855f7', a_publicar: '#f59e0b', concluido: '#6b7280' };
+
+  const recentProjects = [...PROJECTS].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)).slice(0, 5);
+
+  el.innerHTML = `
+    <!-- KPI Cards -->
+    <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:24px">
+      <div class="stat-card primary">
+        <div class="label">Pendentes</div>
+        <div class="value">${pending}</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid var(--success)">
+        <div class="label">Aprovadas</div>
+        <div class="value">${approved}</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid #a855f7">
+        <div class="label">Projetos ativos</div>
+        <div class="value">${projByStatus.planejamento + projByStatus.producao + projByStatus.edicao + projByStatus.a_publicar}</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid #f59e0b">
+        <div class="label">Custos totais</div>
+        <div class="value" style="font-size:24px">R$ ${formatBRL(totalCosts)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Este mês</div>
+        <div class="value">${thisMonth}<small>solicitações</small></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <!-- Projetos por status -->
+      <div class="cal-card">
+        <h3 style="margin-bottom:12px">Projetos por status</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${Object.entries(projByStatus).map(([k, v]) => {
+            const pct = projTotal > 0 ? (v / projTotal * 100) : 0;
+            return `<div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                <span style="font-size:12px;color:var(--text-dim)">${statusMap[k]}</span>
+                <span style="font-size:13px;font-weight:600;color:var(--text)">${v}</span>
+              </div>
+              <div style="height:6px;background:var(--bg-elev);border-radius:3px;overflow:hidden">
+                <div style="height:100%;width:${pct}%;background:${statusColors[k]};border-radius:3px;transition:width .4s"></div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Total de projetos</span>
+          <span style="font-family:'Bebas Neue';font-size:24px;color:var(--text)">${projTotal}</span>
+        </div>
+      </div>
+
+      <!-- Próximos agendamentos -->
+      <div class="cal-card">
+        <h3 style="margin-bottom:12px">Próximos agendamentos</h3>
+        ${upcoming.length ? upcoming.map(r => `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="min-width:42px;text-align:center;background:var(--bg-elev);border-radius:8px;padding:6px 8px">
+            <div style="font-family:'Bebas Neue';font-size:18px;line-height:1;color:var(--text)">${new Date(r.date + 'T12:00').getDate()}</div>
+            <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">${new Date(r.date + 'T12:00').toLocaleDateString('pt-BR', { month: 'short' })}</div>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(r.nome)}</div>
+            <div style="font-size:11px;color:var(--text-dim)">${escHtml(r.moto)} · ${escHtml(r.placa || '')}</div>
+          </div>
+        </div>`).join('') : '<p style="color:var(--text-muted);font-size:13px;padding:16px 0;text-align:center">Nenhum agendamento próximo.</p>'}
+        ${blockedCount > 0 ? `<div style="margin-top:10px;padding:8px 12px;background:rgba(255,77,77,.08);border:1px solid rgba(255,77,77,.2);border-radius:8px;font-size:12px;color:var(--danger)">
+          <strong>${blockedCount}</strong> data${blockedCount > 1 ? 's' : ''} bloqueada${blockedCount > 1 ? 's' : ''}
+        </div>` : ''}
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <!-- Check-in / Check-out -->
+      <div class="cal-card">
+        <h3 style="margin-bottom:12px">Check-in / Check-out</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center">
+          <div>
+            <div style="font-family:'Bebas Neue';font-size:28px;color:var(--success)">${ciCount}</div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Entradas</div>
+          </div>
+          <div>
+            <div style="font-family:'Bebas Neue';font-size:28px;color:var(--primary)">${coCount}</div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Saídas</div>
+          </div>
+          <div>
+            <div style="font-family:'Bebas Neue';font-size:28px;color:${inUse > 0 ? '#f59e0b' : 'var(--text-dim)'}">${inUse > 0 ? inUse : 0}</div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Em uso</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edição -->
+      <div class="cal-card">
+        <h3 style="margin-bottom:12px">Pós-produção</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center">
+          <div style="padding:12px;background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.15);border-radius:10px">
+            <div style="font-family:'Bebas Neue';font-size:28px;color:#a855f7">${projByStatus.edicao}</div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Em edição</div>
+          </div>
+          <div style="padding:12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:10px">
+            <div style="font-family:'Bebas Neue';font-size:28px;color:#f59e0b">${projByStatus.a_publicar}</div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">A publicar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Projetos recentes -->
+    <div class="cal-card">
+      <h3 style="margin-bottom:12px">Projetos recentes</h3>
+      ${recentProjects.length ? `<div style="display:flex;flex-direction:column;gap:1px">
+        ${recentProjects.map(p => {
+          const costs = (p.costs || []).reduce((s, c) => s + (c.value || 0), 0);
+          const destNames = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram', tutorial: 'Tutorial' };
+          const dests = (p.destinations || []).map(d => `<span class="proj-dest-tag ${d}" style="font-size:9px;padding:2px 6px">${destNames[d] || d}</span>`).join('');
+          return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="document.querySelector('[data-view=projects]').click();viewProject('${p.id}')">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.title || 'Sem título')}</div>
+              <div style="display:flex;gap:4px;margin-top:4px">${dests || ''}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <span class="badge ${p.status === 'concluido' || p.status === 'producao' ? 'approved' : 'pending'}" style="font-size:10px">${statusMap[p.status] || p.status}</span>
+              ${costs > 0 ? `<div style="font-size:11px;color:#f59e0b;font-weight:600;margin-top:4px">R$ ${formatBRL(costs)}</div>` : ''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>` : '<p style="color:var(--text-muted);font-size:13px;padding:16px 0;text-align:center">Nenhum projeto criado ainda.</p>'}
+    </div>
+  `;
+}
+
 /* INIT */
 async function initApp() {
   await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects()]);
+  renderDashboard();
   renderRequests();
   renderCalendar();
   renderTemplates();
