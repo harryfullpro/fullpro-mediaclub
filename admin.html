@@ -2039,19 +2039,19 @@
       <div class="page-head">
         <div>
           <h1>Meus Posts</h1>
-          <p>Registre e acompanhe a performance de cada publicação.</p>
+          <p id="perfPostsSubtitle">Registre e acompanhe a performance de cada publicacao.</p>
         </div>
         <button class="action-btn view" style="padding:10px 16px;font-size:13px" onclick="openAddPostModal()">+ Novo post</button>
       </div>
       <div class="proj-filters" style="margin-bottom:16px">
-        <button class="proj-filter-chip active" data-post-filter="todos" onclick="setPerfPostFilter('todos')">Todos</button>
-        <button class="proj-filter-chip" data-post-filter="longo" onclick="setPerfPostFilter('longo')">Longos</button>
-        <button class="proj-filter-chip" data-post-filter="short" onclick="setPerfPostFilter('short')">Shorts</button>
+        <button class="proj-filter-chip active" data-post-filter="todos" onclick="setPerfPostFilter('todos')" style="text-transform:uppercase">Todos</button>
+        <button class="proj-filter-chip" data-post-filter="longo" onclick="setPerfPostFilter('longo')" style="text-transform:uppercase">Longos</button>
+        <button class="proj-filter-chip" data-post-filter="short" onclick="setPerfPostFilter('short')" style="text-transform:uppercase">Shorts</button>
         <div class="proj-filter-separator"></div>
-        <button class="proj-filter-chip" data-post-filter="yt" onclick="setPerfPostFilter('yt')">YouTube</button>
-        <button class="proj-filter-chip" data-post-filter="yts" onclick="setPerfPostFilter('yts')">YT Shorts</button>
-        <button class="proj-filter-chip" data-post-filter="ig" onclick="setPerfPostFilter('ig')">Instagram</button>
-        <button class="proj-filter-chip" data-post-filter="tt" onclick="setPerfPostFilter('tt')">TikTok</button>
+        <button class="proj-filter-chip" data-post-filter="yt" onclick="setPerfPostFilter('yt')"><img src="yt_shorts.png" width="14" height="14" style="object-fit:contain;vertical-align:-2px"> YT</button>
+        <button class="proj-filter-chip" data-post-filter="yts" onclick="setPerfPostFilter('yts')"><img src="yt_shorts.png" width="14" height="14" style="object-fit:contain;vertical-align:-2px"> YTS</button>
+        <button class="proj-filter-chip" data-post-filter="ig" onclick="setPerfPostFilter('ig')"><img src="Instagram.png" width="14" height="14" style="object-fit:contain;vertical-align:-2px;border-radius:3px"> IG</button>
+        <button class="proj-filter-chip" data-post-filter="tt" onclick="setPerfPostFilter('tt')"><img src="tiktok_2.png" width="14" height="14" style="object-fit:contain;vertical-align:-2px"> TT</button>
       </div>
       <div id="perfPostsList"></div>
     </div>
@@ -6976,11 +6976,18 @@ function renderPerfMetas() {
   `;
 }
 
+function fmtKPosts(v) {
+  if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M';
+  if (v >= 1000) return (v / 1000).toFixed(1) + 'k';
+  return v.toLocaleString('pt-BR');
+}
+
 function renderPerfPosts() {
   const el = document.getElementById('perfPostsList');
   if (!el) return;
 
-  let posts = getPerfPostsThisMonth();
+  let allPosts = getPerfPostsThisMonth();
+  let posts = [...allPosts];
 
   if (PERF_POST_FILTER !== 'todos') {
     if (PERF_POST_FILTER === 'longo') posts = posts.filter(p => p.type === 'longo');
@@ -6993,44 +7000,93 @@ function renderPerfPosts() {
     }
   }
 
+  // Update subtitle
+  const subEl = document.getElementById('perfPostsSubtitle');
+  if (subEl) {
+    const avgRating = allPosts.length > 0 ? (allPosts.reduce((s, p) => s + (p.rating || 0), 0) / allPosts.length).toFixed(1) : '0';
+    subEl.textContent = `${allPosts.length} posts · avaliacao media ${avgRating}★`;
+  }
+
+  const platColors = { yt: { bg: 'rgba(255,0,0,.12)', border: 'rgba(255,0,0,.3)', color: '#ff4444', label: 'YT', icon: '<img src="yt_shorts.png" width="12" height="12" style="object-fit:contain;vertical-align:-1px">' }, yts: { bg: 'rgba(255,0,0,.12)', border: 'rgba(255,0,0,.3)', color: '#ff4444', label: 'YTS', icon: '<img src="yt_shorts.png" width="12" height="12" style="object-fit:contain;vertical-align:-1px">' }, ig: { bg: 'rgba(225,48,108,.12)', border: 'rgba(225,48,108,.3)', color: '#e1306c', label: 'IG', icon: '<img src="Instagram.png" width="12" height="12" style="object-fit:contain;vertical-align:-1px;border-radius:2px">' }, tt: { bg: 'rgba(168,85,247,.12)', border: 'rgba(168,85,247,.3)', color: '#a855f7', label: 'TT', icon: '<img src="tiktok_2.png" width="12" height="12" style="object-fit:contain;vertical-align:-1px">' } };
+
   if (posts.length === 0) {
-    el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum post neste período.</p></div>';
+    el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum post neste periodo.</p></div>';
     return;
   }
 
   el.innerHTML = posts.map(p => {
-    const plats = (p.platforms || []).map(pl => {
-      const names = { yt: 'YouTube', yts: 'YT Shorts', ig: 'Instagram', tt: 'TikTok' };
-      return `<span class="proj-dest-tag">${names[pl] || pl}</span>`;
+    const plats = (p.platforms || []);
+    const typeTag = p.type === 'longo'
+      ? '<span style="display:inline-block;padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:rgba(31,210,122,.15);color:var(--success);border:1px solid rgba(31,210,122,.3)">Longo</span>'
+      : '<span style="display:inline-block;padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:rgba(139,156,247,.15);color:#8b9cf7;border:1px solid rgba(139,156,247,.3)">Short</span>';
+
+    const platTags = plats.map(pl => {
+      const pc = platColors[pl] || { bg: 'var(--bg-elev)', border: 'var(--border)', color: 'var(--text-dim)', label: pl, icon: '' };
+      return `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600;background:${pc.bg};color:${pc.color};border:1px solid ${pc.border}">${pc.icon} ${pc.label}</span>`;
     }).join('');
 
-    const stars = Array.from({ length: 5 }, (_, i) => `
-      <span style="cursor:pointer;font-size:20px;color:${(i + 1) <= (p.rating || 0) ? 'var(--accent)' : 'var(--border)'}" onclick="updatePostRating('${p.id}', ${i + 1})">★</span>
-    `).join('');
+    const stars = Array.from({ length: 5 }, (_, i) => `<span style="cursor:pointer;font-size:22px;color:${(i + 1) <= (p.rating || 0) ? '#e6a800' : 'var(--border)'};transition:color .1s" onclick="updatePostRating('${p.id}', ${i + 1})" onmouseover="this.style.color='#e6a800'" onmouseout="this.style.color='${(i + 1) <= (p.rating || 0) ? '#e6a800' : 'var(--border)'}'">\u2605</span>`).join('');
 
-    return `
-      <div class="proj-card">
-        <div class="proj-card-head">
-          <div>
-            <h4>${escHtml(p.title)}</h4>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${p.type === 'longo' ? '📹 Vídeo longo' : '📱 Short'}</div>
-          </div>
-          <button class="action-btn reject" style="padding:4px 10px;font-size:11px" onclick="deletePerfPost('${p.id}')">Remover</button>
+    // Per-platform breakdown data (simulate from total / platforms count for now)
+    const platCount = plats.length || 1;
+
+    return `<div class="cal-card" style="margin-bottom:14px;padding:0;overflow:hidden">
+      <!-- Header -->
+      <div style="padding:18px 20px 14px;display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">${escHtml(p.title)}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${typeTag} ${platTags}</div>
         </div>
-        <div style="margin-bottom:12px">${plats}</div>
-        <div class="proj-meta">
-          <div class="proj-meta-item"><div class="k">Views</div><div class="v">${(p.views || 0).toLocaleString('pt-BR')}</div></div>
-          <div class="proj-meta-item"><div class="k">Likes</div><div class="v">${(p.likes || 0).toLocaleString('pt-BR')}</div></div>
-          <div class="proj-meta-item"><div class="k">Retenção</div><div class="v">${(p.retention || 0)}%</div></div>
-          <div class="proj-meta-item"><div class="k">Cliques</div><div class="v">${(p.clicks || 0)}</div></div>
-        </div>
-        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Avaliação</div>
-          <div style="display:flex;gap:4px">${stars}</div>
-        </div>
-        ${p.notes ? `<div style="margin-top:10px;padding:10px;background:var(--bg-elev);border-radius:8px;font-size:12px;color:var(--text-dim)">${escHtml(p.notes)}</div>` : ''}
+        <div style="display:flex;gap:2px;flex-shrink:0;margin-left:12px">${stars}</div>
       </div>
-    `;
+
+      <!-- Stats grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+        <div style="padding:14px 20px;${p.views > 0 ? '' : ''}">
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">Views totais</div>
+          <div style="font-size:18px;font-weight:700;color:var(--primary)">${fmtKPosts(p.views || 0)}</div>
+        </div>
+        <div style="padding:14px 20px;border-left:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">Likes totais</div>
+          <div style="font-size:18px;font-weight:700;color:var(--text)">${fmtKPosts(p.likes || 0)}</div>
+        </div>
+        <div style="padding:14px 20px;border-left:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">Retencao media</div>
+          <div style="font-size:18px;font-weight:700;color:#f59e0b">${p.retention || 0}%</div>
+        </div>
+        <div style="padding:14px 20px;border-left:1px solid var(--border)">
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">Cliques pro site</div>
+          <div style="font-size:18px;font-weight:700;color:var(--text)">${(p.clicks || 0).toLocaleString('pt-BR')}</div>
+        </div>
+      </div>
+
+      <!-- Breakdown toggle -->
+      ${plats.length > 1 ? `<div style="padding:0 20px">
+        <button onclick="this.parentElement.nextElementSibling.style.display=this.parentElement.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('svg').style.transform=this.parentElement.nextElementSibling.style.display==='none'?'':'rotate(90deg)'" style="background:none;border:none;cursor:pointer;padding:10px 0;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;display:flex;align-items:center;gap:6px;font-family:inherit;width:100%">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="transition:transform .15s"><polyline points="9 18 15 12 9 6"/></svg>
+          Breakdown por plataforma (${plats.length})
+        </button>
+      </div>
+      <div style="display:none;padding:0 20px 14px">
+        <div style="display:grid;grid-template-columns:repeat(${Math.min(plats.length, 4)},1fr);gap:8px">
+          ${plats.map(pl => {
+            const pc = platColors[pl] || { bg: 'var(--bg-elev)', color: 'var(--text-dim)', label: pl, icon: '' };
+            return `<div style="background:var(--bg-elev);border-radius:8px;padding:10px 12px">
+              <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;font-size:11px;font-weight:600;color:${pc.color}">${pc.icon} ${pc.label}</div>
+              <div style="font-size:10px;color:var(--text-muted)">Dados por plataforma em breve</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>` : ''}
+
+      <!-- Notes -->
+      ${p.notes ? `<div style="margin:0 20px 16px;padding:12px 16px;border-left:3px solid #e6a800;background:rgba(230,168,0,.04);border-radius:0 8px 8px 0;font-size:13px;color:var(--text-dim);font-style:italic;line-height:1.5">${escHtml(p.notes)}</div>` : ''}
+
+      <!-- Admin actions -->
+      ${isUserAdmin() ? `<div style="padding:${p.notes ? '0' : '0'} 20px 14px;display:flex;justify-content:flex-end">
+        <button style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-muted);font-family:inherit;padding:4px 8px;border-radius:6px;transition:all .15s" onmouseover="this.style.color='var(--danger)';this.style.background='rgba(255,77,77,.06)'" onmouseout="this.style.color='var(--text-muted)';this.style.background='none'" onclick="deletePerfPost('${p.id}')">Remover post</button>
+      </div>` : ''}
+    </div>`;
   }).join('');
 }
 
