@@ -2023,16 +2023,9 @@
           <h1>Metas</h1>
           <p>Acompanhe o progresso das metas mensais do pool.</p>
         </div>
-        <button class="action-btn view" style="padding:10px 16px;font-size:13px" onclick="openPerfGoalsModal()">
-          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:4px"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-          Configurar
-        </button>
+        <div id="perfMetasAdminBtn"></div>
       </div>
-      <div class="stats-grid" id="perfMetasCards"></div>
-      <div class="cal-card" style="margin-top:16px">
-        <h3>Resumo do pool coletivo</h3>
-        <div id="perfPoolSummary"></div>
-      </div>
+      <div id="perfMetasContent"></div>
     </div>
 
     <!-- MEUS POSTS VIEW -->
@@ -6758,69 +6751,222 @@ function renderPerformance() {
   renderPerfBonuses();
 }
 
-function renderPerfMetas() {
-  const posts = getPerfPostsThisMonth();
-  const goals = PERF_GOALS || {};
+function getPublishedThisMonth() {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  // Projects that have at least one published post (link) — consider 'a_publicar' and 'concluido' or any with posts
+  const results = { longCount: 0, shortCount: 0, totalViews: 0, totalClicks: 0 };
+  PROJECTS.forEach(p => {
+    const posts = p.posts || {};
+    const dests = p.destinations || [];
+    // Check if project was published this month (use production_date or created_at as reference)
+    const pDate = p.production_date ? new Date(p.production_date + 'T12:00') : (p.created_at ? new Date(p.created_at) : null);
+    // Count published destinations (those with a link)
+    dests.forEach(d => {
+      const pd = posts[d];
+      if (!pd || !pd.link || !pd.link.trim()) return;
+      // Check month — use post publish or project date
+      if (pDate && (pDate.getMonth() !== m || pDate.getFullYear() !== y)) return;
+      if (d === 'youtube') results.longCount++;
+      else results.shortCount++;
+      results.totalViews += (pd.views || 0);
+      results.totalClicks += (pd.clicks || 0);
+    });
+  });
+  // Also add from performance_posts
+  const perfPosts = getPerfPostsThisMonth();
+  perfPosts.forEach(pp => {
+    if (pp.type === 'longo') results.longCount++;
+    else results.shortCount++;
+    results.totalViews += (pp.views || 0);
+    results.totalClicks += (pp.clicks || 0);
+  });
+  return results;
+}
 
-  const longCount = posts.filter(p => p.type === 'longo').length;
-  const shortCount = posts.filter(p => p.type === 'short').length;
-  const totalViews = posts.reduce((s, p) => s + (p.views || 0), 0);
-  const totalClicks = posts.reduce((s, p) => s + (p.clicks || 0), 0);
+function renderPerfMetas() {
+  const el = document.getElementById('perfMetasContent');
+  const adminBtn = document.getElementById('perfMetasAdminBtn');
+  if (!el) return;
+
+  // Admin config button
+  if (adminBtn) {
+    adminBtn.innerHTML = isUserAdmin() ? `<button class="action-btn view" style="padding:10px 16px;font-size:13px" onclick="openPerfGoalsModal()">
+      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:4px"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+      Configurar metas
+    </button>` : '';
+  }
+
+  const goals = PERF_GOALS || {};
+  const pub = getPublishedThisMonth();
+
+  const longCount = pub.longCount;
+  const shortCount = pub.shortCount;
+  const totalViews = pub.totalViews;
+  const totalClicks = pub.totalClicks;
 
   const longTarget = goals.volume_long_target || 0;
   const shortTarget = goals.volume_short_target || 0;
   const viewsTarget = goals.views_target || 0;
   const clicksTarget = goals.clicks_target || 0;
 
-  const longPct = longTarget > 0 ? Math.min(100, (longCount / longTarget) * 100) : 0;
-  const shortPct = shortTarget > 0 ? Math.min(100, (shortCount / shortTarget) * 100) : 0;
-  const viewsPct = viewsTarget > 0 ? Math.min(100, (totalViews / viewsTarget) * 100) : 0;
-  const clicksPct = clicksTarget > 0 ? Math.min(100, (totalClicks / clicksTarget) * 100) : 0;
+  const now = new Date();
+  const dayOfMonth = now.getDate();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const daysLeft = daysInMonth - dayOfMonth;
+  const pace = dayOfMonth > 0 ? dayOfMonth / daysInMonth : 1;
 
-  const longProjection = longTarget > 0 ? Math.round((longCount / (new Date().getDate() / 30)) / longTarget * 100) : 0;
-  const shortProjection = shortTarget > 0 ? Math.round((shortCount / (new Date().getDate() / 30)) / shortTarget * 100) : 0;
-  const viewsProjection = viewsTarget > 0 ? Math.round((totalViews / (new Date().getDate() / 30)) / viewsTarget * 100) : 0;
-  const clicksProjection = clicksTarget > 0 ? Math.round((totalClicks / (new Date().getDate() / 30)) / clicksTarget * 100) : 0;
+  // Projections
+  const projLong = dayOfMonth > 0 ? Math.round(longCount / pace) : longCount;
+  const projShort = dayOfMonth > 0 ? Math.round(shortCount / pace) : shortCount;
+  const projViews = dayOfMonth > 0 ? Math.round(totalViews / pace) : totalViews;
+  const projClicks = dayOfMonth > 0 ? Math.round(totalClicks / pace) : totalClicks;
 
-  const renderCard = (label, current, target, projection, icon) => `
-    <div class="stat-card" style="border-left:3px solid var(--primary)">
-      <div class="label">${label}</div>
-      <div class="value">${current}<small>/${target}</small></div>
-      <div style="margin-top:10px;height:6px;background:var(--bg-elev);border-radius:3px;overflow:hidden">
-        <div style="height:100%;width:${Math.min(100, ((current / target) * 100) || 0)}%;background:${current >= target ? 'var(--success)' : 'var(--primary)'}"></div>
+  // Percentages
+  const volTarget = longTarget + shortTarget;
+  const volCurrent = longCount + shortCount;
+  const volPct = volTarget > 0 ? Math.min(100, Math.round((volCurrent / volTarget) * 100)) : 0;
+  const viewsPct = viewsTarget > 0 ? Math.min(100, Math.round((totalViews / viewsTarget) * 100)) : 0;
+  const clicksPct = clicksTarget > 0 ? Math.min(100, Math.round((totalClicks / clicksTarget) * 100)) : 0;
+
+  // Projection hits
+  const volProjHit = (projLong + projShort) >= volTarget && volTarget > 0;
+  const viewsProjHit = projViews >= viewsTarget && viewsTarget > 0;
+  const clicksProjHit = projClicks >= clicksTarget && clicksTarget > 0;
+
+  // Goals hit count (projected)
+  const goalsProjected = (volProjHit ? 1 : 0) + (viewsProjHit ? 1 : 0) + (clicksProjHit ? 1 : 0);
+  const totalGoals = 3;
+  const poolPerGoal = goals.pool_per_goal || 500;
+  const projectedPool = goalsProjected * poolPerGoal;
+
+  function fmtK(v) {
+    if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M';
+    if (v >= 1000) return (v / 1000).toFixed(1) + 'k';
+    return v.toLocaleString('pt-BR');
+  }
+
+  const monthNames = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  el.innerHTML = `
+    <!-- Month header -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,45,45,.1);display:flex;align-items:center;justify-content:center">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
       </div>
-      <div style="font-size:10px;color:var(--text-muted);margin-top:6px">Projeção: ${projection}%</div>
-    </div>
-  `;
-
-  document.getElementById('perfMetasCards').innerHTML = `
-    ${renderCard('Volume de conteúdo (Longos)', longCount, longTarget, longProjection, '🎬')}
-    ${renderCard('Volume de conteúdo (Shorts)', shortCount, shortTarget, shortProjection, '📱')}
-    ${renderCard('Views totais', totalViews.toLocaleString('pt-BR'), (viewsTarget || 0).toLocaleString('pt-BR'), viewsProjection, '👁')}
-    ${renderCard('Cliques pro site', totalClicks, (clicksTarget || 0), clicksProjection, '🔗')}
-  `;
-
-  const goalsHit = (longCount >= longTarget && longTarget > 0 ? 1 : 0) + (shortCount >= shortTarget && shortTarget > 0 ? 1 : 0) + (totalViews >= viewsTarget && viewsTarget > 0 ? 1 : 0) + (totalClicks >= clicksTarget && clicksTarget > 0 ? 1 : 0);
-  const poolValue = (goals.pool_per_goal || 500);
-  const totalBonus = goalsHit * poolValue;
-
-  document.getElementById('perfPoolSummary').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px 0;border-bottom:1px solid var(--border)">
       <div>
-        <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Goals atingidas</div>
-        <div style="font-family:'Bebas Neue';font-size:28px;color:${goalsHit > 0 ? 'var(--success)' : 'var(--warning)'}">${goalsHit}/4</div>
-      </div>
-      <div>
-        <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Bônus pool estimado</div>
-        <div style="font-family:'Bebas Neue';font-size:28px;color:var(--primary)">R$ ${formatBRL(totalBonus)}</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text)">Metas do Pool — ${monthNames[now.getMonth()]} ${now.getFullYear()}</div>
+        <div style="font-size:12px;color:var(--text-muted)">dia ${dayOfMonth} de ${daysInMonth} · ${daysLeft} dias restantes</div>
       </div>
     </div>
-    <div style="padding-top:12px;font-size:12px;color:var(--text-dim)">
-      <p style="margin-bottom:8px"><strong>Distribução do pool:</strong></p>
-      <p style="margin:4px 0">🎬 Gravador/Gestor (${goals.dist_gravador || 40}%): R$ ${formatBRL(totalBonus * ((goals.dist_gravador || 40) / 100))}</p>
-      <p style="margin:4px 0">✂️ Editor (${goals.dist_editor || 35}%): R$ ${formatBRL(totalBonus * ((goals.dist_editor || 35) / 100))}</p>
-      <p style="margin:4px 0">🔧 Mecânico (${goals.dist_mecanico || 25}%): R$ ${formatBRL(totalBonus * ((goals.dist_mecanico || 25) / 100))}</p>
+
+    <!-- KPI Cards -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:20px 0">
+      <!-- Volume -->
+      <div class="cal-card" style="padding:20px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#3b82f6" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Volume de conteudo</div>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">
+          <span style="font-family:'Bebas Neue';font-size:34px;line-height:1;color:var(--text)">${longCount}L + ${shortCount}S</span>
+          <span style="font-size:13px;color:var(--text-muted)">/ ${longTarget}L + ${shortTarget}S</span>
+        </div>
+        <div style="height:6px;background:var(--bg-elev);border-radius:3px;overflow:hidden;margin-bottom:10px">
+          <div style="height:100%;width:${volPct}%;background:linear-gradient(90deg,#3b82f6,#60a5fa);border-radius:3px;transition:width .4s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:11px;color:var(--text-muted)">${volPct}% atingido</span>
+          <span style="font-size:11px;color:${volProjHit ? 'var(--success)' : 'var(--warning)'};font-weight:600">projecao: ${projLong}L + ${projShort}S ${volProjHit ? '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg>' : ''}</span>
+        </div>
+      </div>
+
+      <!-- Views -->
+      <div class="cal-card" style="padding:20px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,45,45,.1);display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Views totais</div>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">
+          <span style="font-family:'Bebas Neue';font-size:34px;line-height:1;color:var(--text)">${fmtK(totalViews)}</span>
+          <span style="font-size:13px;color:var(--text-muted)">/ ${fmtK(viewsTarget)}</span>
+        </div>
+        <div style="height:6px;background:var(--bg-elev);border-radius:3px;overflow:hidden;margin-bottom:10px">
+          <div style="height:100%;width:${viewsPct}%;background:linear-gradient(90deg,var(--primary),#ff6b6b);border-radius:3px;transition:width .4s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:11px;color:var(--text-muted)">${viewsPct}% atingido</span>
+          <span style="font-size:11px;color:${viewsProjHit ? 'var(--success)' : 'var(--warning)'};font-weight:600">projecao: ${fmtK(projViews)} ${viewsProjHit ? '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg>' : ''}</span>
+        </div>
+      </div>
+
+      <!-- Cliques -->
+      <div class="cal-card" style="padding:20px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Cliques pro site</div>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">
+          <span style="font-family:'Bebas Neue';font-size:34px;line-height:1;color:var(--text)">${totalClicks.toLocaleString('pt-BR')}</span>
+          <span style="font-size:13px;color:var(--text-muted)">/ ${clicksTarget.toLocaleString('pt-BR')}</span>
+        </div>
+        <div style="height:6px;background:var(--bg-elev);border-radius:3px;overflow:hidden;margin-bottom:10px">
+          <div style="height:100%;width:${clicksPct}%;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:3px;transition:width .4s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:11px;color:var(--text-muted)">${clicksPct}% atingido</span>
+          <span style="font-size:11px;color:${clicksProjHit ? 'var(--success)' : 'var(--warning)'};font-weight:600">projecao: ${projClicks.toLocaleString('pt-BR')} ${clicksProjHit ? '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg>' : ''}</span>
+        </div>
+      </div>
     </div>
+
+    <!-- Pool coletivo banner -->
+    <div style="background:${goalsProjected >= totalGoals ? 'linear-gradient(135deg,rgba(31,210,122,.08),rgba(31,210,122,.02))' : 'linear-gradient(135deg,rgba(245,158,11,.08),rgba(245,158,11,.02))'};border:1px solid ${goalsProjected >= totalGoals ? 'rgba(31,210,122,.25)' : 'rgba(245,158,11,.25)'};border-radius:14px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:42px;height:42px;border-radius:12px;background:${goalsProjected >= totalGoals ? 'rgba(31,210,122,.12)' : 'rgba(245,158,11,.12)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="${goalsProjected >= totalGoals ? 'var(--success)' : '#f59e0b'}" stroke-width="1.8"><path d="M6 9H4.5a2.5 2.5 0 010-5C7 4 7 7 7 7"/><path d="M18 9h1.5a2.5 2.5 0 000-5C17 4 17 7 17 7"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Pool coletivo — projecao fim do mes</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:2px">${goalsProjected} de ${totalGoals} metas no pace atual</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:500">pool projetado</div>
+        <div style="font-family:'Bebas Neue';font-size:32px;color:var(--success);line-height:1;margin-top:2px">R$ ${formatBRL(projectedPool)}</div>
+      </div>
+    </div>
+
+    <!-- Distribution breakdown (admin only) -->
+    ${isUserAdmin() ? `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px">
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#3b82f6;flex-shrink:0"></div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text-muted)">Gravador/Gestor (${goals.dist_gravador || 40}%)</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">R$ ${formatBRL(projectedPool * ((goals.dist_gravador || 40) / 100))}</div>
+        </div>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#a855f7;flex-shrink:0"></div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text-muted)">Editor (${goals.dist_editor || 35}%)</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">R$ ${formatBRL(projectedPool * ((goals.dist_editor || 35) / 100))}</div>
+        </div>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;flex-shrink:0"></div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text-muted)">Mecanico (${goals.dist_mecanico || 25}%)</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">R$ ${formatBRL(projectedPool * ((goals.dist_mecanico || 25) / 100))}</div>
+        </div>
+      </div>
+    </div>` : ''}
   `;
 }
 
