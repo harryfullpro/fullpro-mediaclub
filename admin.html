@@ -62,21 +62,27 @@
   .sidebar {
     background: var(--bg-soft);
     border-right: 1px solid var(--border);
-    padding: 14px 16px;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    overflow-y: auto;
-    overflow-x: hidden;
+    gap: 0;
+    overflow: hidden;
     height: 100vh;
     position: sticky;
     top: 0;
     transition: padding .25s cubic-bezier(.4,0,.2,1);
-    scrollbar-width: none;
-    -ms-overflow-style: none;
   }
-  .sidebar::-webkit-scrollbar { display: none; }
-  .shell.collapsed .sidebar { padding: 14px 10px; }
+  .sidebar-head { padding: 10px 16px 4px; flex-shrink: 0; }
+  .sidebar-nav {
+    flex: 1; overflow-y: auto; overflow-x: hidden; padding: 0 12px;
+    scrollbar-width: none; -ms-overflow-style: none;
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .sidebar-nav::-webkit-scrollbar { display: none; }
+  .sidebar-foot { flex-shrink: 0; padding: 6px 12px 10px; border-top: 1px solid var(--border); }
+  .shell.collapsed .sidebar-head { padding: 10px 10px 4px; }
+  .shell.collapsed .sidebar-nav { padding: 0 8px; }
+  .shell.collapsed .sidebar-foot { padding: 6px 8px 10px; }
   /* Sidebar control popover */
   .sb-ctrl-wrap { position: relative; }
   .sb-ctrl-btn {
@@ -122,8 +128,8 @@
     justify-content: center;
     gap: 10px;
     padding: 4px 8px;
-    height: 44px;
-    margin-bottom: 4px;
+    height: 38px;
+    margin-bottom: 2px;
     text-decoration: none;
     color: var(--text);
     overflow: hidden;
@@ -158,11 +164,11 @@
   .shell.collapsed .nav-section { color: transparent; }
   .shell.collapsed .theme-toggle { padding: 8px; justify-content: center; }
   .nav-item {
-    padding: 9px 14px;
+    padding: 5px 14px;
     color: var(--text-dim);
     text-decoration: none;
-    border-radius: 10px;
-    font-size: 13px;
+    border-radius: 8px;
+    font-size: 12px;
     font-weight: 500;
     cursor: pointer;
     display: flex;
@@ -178,7 +184,7 @@
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .shell.collapsed .nav-item { padding: 10px; justify-content: center; }
+  .shell.collapsed .nav-item { padding: 6px; justify-content: center; }
   /* Hover overlay mode: sidebar overlays content instead of pushing it */
   /* Hover mode: grid stays 68px like collapsed, sidebar overlays on hover */
   .shell.hover-mode { grid-template-columns: 68px 1fr; }
@@ -191,7 +197,7 @@
   .shell.hover-mode .theme-ico.ico-sun { display: none; }
   .shell.hover-mode .nav-section { color: transparent; }
   .shell.hover-mode .theme-toggle { padding: 8px; justify-content: center; }
-  .shell.hover-mode .nav-item { padding: 12px; justify-content: center; }
+  .shell.hover-mode .nav-item { padding: 6px; justify-content: center; }
   .shell.hover-mode .brand { justify-content: center; }
   .shell.hover-mode .brand-mark { width: 36px; height: 36px; }
   .shell.hover-mode .sb-ctrl-btn { justify-content: center; padding: 10px; }
@@ -209,7 +215,7 @@
   .shell.hover-mode .sidebar.hover-open .theme-ico.ico-sun { display: revert; }
   .shell.hover-mode .sidebar.hover-open .nav-section { color: var(--text-muted); }
   .shell.hover-mode .sidebar.hover-open .theme-toggle { padding: 8px 12px; justify-content: center; }
-  .shell.hover-mode .sidebar.hover-open .nav-item { padding: 12px 14px; justify-content: flex-start; }
+  .shell.hover-mode .sidebar.hover-open .nav-item { padding: 5px 14px; justify-content: flex-start; }
   .shell.hover-mode .sidebar.hover-open .brand { justify-content: flex-start; }
   .shell.hover-mode .sidebar.hover-open .brand-mark { width: 130px; height: 36px; }
   .shell.hover-mode .sidebar.hover-open .sb-ctrl-btn { justify-content: flex-start; padding: 10px 14px; }
@@ -224,8 +230,8 @@
     font-weight: 700;
   }
   .nav-item.active .count { background: var(--primary); color: #fff; }
-  .sidebar-foot { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--border); flex-shrink: 0; }
-  .nav-section { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding: 10px 14px 4px; height: 26px; flex-shrink: 0; overflow: hidden; }
+  /* sidebar-foot defined in sidebar block above */
+  .nav-section { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding: 5px 14px 2px; height: 18px; flex-shrink: 0; overflow: hidden; }
   .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .theme-toggle {
     display: flex; align-items: center; gap: 0; padding: 6px 12px;
@@ -1634,11 +1640,13 @@
   </div>
   <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileSidebar()"></div>
   <aside class="sidebar">
-    <a href="admin.html" class="brand">
-      <span class="brand-mark brand-full"><img src="assets/logo.png" alt="FullPro" /></span>
-      <span class="brand-mark brand-short"><img src="assets/logo-short.png" alt="FP" /></span>
-    </a>
-
+    <div class="sidebar-head">
+      <a href="admin.html" class="brand">
+        <span class="brand-mark brand-full"><img src="assets/logo.png" alt="FullPro" /></span>
+        <span class="brand-mark brand-short"><img src="assets/logo-short.png" alt="FP" /></span>
+      </a>
+    </div>
+    <div class="sidebar-nav">
     <div class="nav-section">Geral</div>
     <button class="nav-item active" data-view="dashboard">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -1701,6 +1709,7 @@
       <span class="nav-label">Meu perfil</span>
       <span class="notif-badge" id="notifBadge" style="display:none">0</span>
     </button>
+    </div><!-- /sidebar-nav -->
 
     <div class="sidebar-foot">
       <div class="theme-toggle" onclick="toggleTheme()">
