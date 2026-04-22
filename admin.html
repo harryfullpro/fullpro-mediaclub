@@ -961,11 +961,19 @@
   .post-embed img { width: 100%; height: 100%; object-fit: cover; }
   .post-embed .play-overlay {
     position: absolute; inset: 0; display: flex; align-items: center;
-    justify-content: center; background: rgba(0,0,0,.35); cursor: pointer;
+    justify-content: center; background: rgba(0,0,0,.25); cursor: pointer;
     transition: background .2s;
   }
-  .post-embed .play-overlay:hover { background: rgba(0,0,0,.15); }
-  .post-embed .play-overlay svg { width: 52px; height: 52px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.5)); }
+  .post-embed .play-overlay:hover { background: rgba(0,0,0,.1); }
+  .post-embed .play-overlay svg { width: 48px; height: 48px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.5)); }
+  .post-embed .blur-bg {
+    position: absolute; inset: -20px; width: calc(100% + 40px); height: calc(100% + 40px);
+    object-fit: cover; filter: blur(18px) brightness(.7); z-index: 0;
+  }
+  .post-embed .thumb-sharp {
+    position: relative; z-index: 1; height: 100%; width: auto; max-width: 100%;
+    object-fit: contain; display: block; margin: 0 auto;
+  }
   .post-actions {
     display: flex; gap: 8px; flex-wrap: wrap;
   }
@@ -5472,13 +5480,15 @@ function buildPostCard(dest, data) {
     const tkVideoId = extractTKVideoId(data.link);
     let embedHtml = '';
 
+    // Generic play button SVG (circle + triangle)
+    const playSvg = `<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="rgba(0,0,0,.55)"/><polygon points="26,18 26,46 50,32" fill="#fff"/></svg>`;
+
     if (ytId) {
+      // YouTube already provides blur-bg in hqdefault.jpg for vertical videos
       embedHtml = `<div class="post-embed">
         <a href="${escHtml(data.link)}" target="_blank" rel="noopener">
           <img src="https://img.youtube.com/vi/${ytId}/hqdefault.jpg" alt="thumbnail" loading="lazy"/>
-          <div class="play-overlay">
-            <svg viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55C3.97 2.33 2.27 4.81 1.48 7.74.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="red"/><path d="M45 24L27 14v20" fill="#fff"/></svg>
-          </div>
+          <div class="play-overlay">${playSvg}</div>
         </a>
       </div>`;
     } else if (dest === 'reels' || dest === 'instagram') {
@@ -5486,10 +5496,9 @@ function buildPostCard(dest, data) {
       if (igThumb) {
         embedHtml = `<div class="post-embed">
           <a href="${escHtml(data.link)}" target="_blank" rel="noopener">
-            <img src="${escHtml(igThumb)}" alt="thumbnail" loading="lazy"/>
-            <div class="play-overlay">
-              <svg viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55C3.97 2.33 2.27 4.81 1.48 7.74.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="red"/><path d="M45 24L27 14v20" fill="#fff"/></svg>
-            </div>
+            <img class="blur-bg" src="${escHtml(igThumb)}" alt="" aria-hidden="true"/>
+            <img class="thumb-sharp" src="${escHtml(igThumb)}" alt="thumbnail" loading="lazy"/>
+            <div class="play-overlay">${playSvg}</div>
           </a>
         </div>`;
       } else {
@@ -5507,10 +5516,9 @@ function buildPostCard(dest, data) {
       if (tkThumb) {
         embedHtml = `<div class="post-embed">
           <a href="${escHtml(data.link)}" target="_blank" rel="noopener">
-            <img src="${escHtml(tkThumb)}" alt="thumbnail" loading="lazy"/>
-            <div class="play-overlay">
-              <svg viewBox="0 0 68 48"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55C3.97 2.33 2.27 4.81 1.48 7.74.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="red"/><path d="M45 24L27 14v20" fill="#fff"/></svg>
-            </div>
+            <img class="blur-bg" src="${escHtml(tkThumb)}" alt="" aria-hidden="true"/>
+            <img class="thumb-sharp" src="${escHtml(tkThumb)}" alt="thumbnail" loading="lazy"/>
+            <div class="play-overlay">${playSvg}</div>
           </a>
         </div>`;
       } else {
