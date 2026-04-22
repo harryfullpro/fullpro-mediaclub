@@ -6038,12 +6038,11 @@ async function fetchIGStatsViaDiscovery(igHandle, dataPub) {
       console.log('[IG] No date match, using most recent post from @' + handle);
     }
 
-    const estViews = (found.like_count || 0) * 15;
     const cap = (found.caption || '').substring(0, 50);
 
-    console.log(`[IG] @${handle} matched: ${found.like_count} likes, ${found.comments_count} comments, est ${estViews} views, "${cap}..."`);
+    console.log(`[IG] @${handle} matched: ${found.like_count} likes, ${found.comments_count} comments, "${cap}..."`);
     return {
-      views: estViews,
+      views: 0,
       likes: parseInt(found.like_count) || 0,
       comments: parseInt(found.comments_count) || 0,
       thumb: ''
@@ -7854,12 +7853,8 @@ async function fetchIGBusinessDiscovery(igHandleRaw) {
       const avgInteractions = (totalLikes + totalComments) / mediaItems.length;
       result.engagement_geral = Math.round((avgInteractions / bd.followers_count) * 1000) / 10;
 
-      // Estimate views: avg likes × 15 for video-heavy accounts
-      const reelsCount = mediaItems.filter(m => m.media_type === 'VIDEO').length;
-      if (reelsCount > 0) {
-        const avgLikes = totalLikes / mediaItems.length;
-        result.views_geral = Math.round(avgLikes * 15 * bd.media_count);
-      }
+      // Views not available via business_discovery — only own media has insights
+      // views_geral left unset (no estimation)
     }
 
     // Auto-detect category
@@ -7933,10 +7928,7 @@ async function autoRefreshInfFollowers() {
             if (user) {
               if (user.follower_count !== undefined) { changes.tk_followers = user.follower_count; changed = true; }
               if (user.video_count !== undefined) { changes.posts_geral = (changes.posts_geral || inf.posts_geral || 0) + user.video_count; }
-              if (user.likes_count !== undefined && user.video_count > 0) {
-                // Estimate views from total likes (likes × ~8 for TikTok)
-                changes.views_geral = (changes.views_geral || 0) + Math.round(user.likes_count * 8);
-              }
+              // Views not available via TikTok basic stats — no estimation
               console.log(`[InfRefresh] TK @${inf.tiktok}: ${user.follower_count} seg, ${user.video_count} vids`);
             }
           } else {
