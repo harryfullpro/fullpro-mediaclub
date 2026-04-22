@@ -7753,6 +7753,70 @@ async function loadInfExtras() {
    Instagram: business_discovery endpoint
    TikTok:    user.info.stats (requer OAuth por influenciador)
    ═══════════════════════════════════════════════ */
+/* Shared helper: fetch IG profile + media via business_discovery */
+async function fetchIGBusinessDiscovery(igHandleRaw) {
+  const igHandle = (igHandleRaw || '').replace(/^@/, '').trim();
+  const igToken = window.FULLPRO_CONFIG?.IG_ACCESS_TOKEN;
+  const igUserId = window.FULLPRO_CONFIG?.IG_USER_ID;
+  if (!igToken || !igUserId || !igHandle) return null;
+
+  try {
+    // Correct URL format: .username(handle)%7Bfields%7D — only outer braces encoded
+    const inner = 'followers_count,media_count,media.limit(25){like_count,comments_count,media_type}';
+    const url = 'https://graph.facebook.com/v21.0/' + igUserId
+      + '?fields=business_discovery.username(' + igHandle + ')%7B' + inner + '%7D'
+      + '&access_token=' + igToken;
+
+    const res = await fetch(url);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.warn(`[IG] @${igHandle} falhou:`, err.error?.message || res.status);
+      return null;
+    }
+
+    const data = await res.json();
+    const bd = data.business_discovery;
+    if (!bd) return null;
+
+    const result = {};
+
+    // Followers
+    if (bd.followers_count !== undefined) result.followers = bd.followers_count;
+    // Total posts
+    if (bd.media_count !== undefined) result.posts_geral = bd.media_count;
+
+    // Engagement + views from recent media
+    const mediaItems = bd.media?.data || [];
+    if (mediaItems.length > 0 && bd.followers_count > 0) {
+      let totalLikes = 0, totalComments = 0;
+      mediaItems.forEach(m => {
+        totalLikes += (m.like_count || 0);
+        totalComments += (m.comments_count || 0);
+      });
+      const avgInteractions = (totalLikes + totalComments) / mediaItems.length;
+      result.engagement_geral = Math.round((avgInteractions / bd.followers_count) * 1000) / 10;
+
+      // Estimate views: avg likes × 15 for video-heavy accounts
+      const reelsCount = mediaItems.filter(m => m.media_type === 'VIDEO').length;
+      if (reelsCount > 0) {
+        const avgLikes = totalLikes / mediaItems.length;
+        result.views_geral = Math.round(avgLikes * 15 * bd.media_count);
+      }
+    }
+
+    // Auto-detect category
+    if (result.followers) {
+      result.category = result.followers > 100000 ? 'macro' : result.followers > 10000 ? 'micro' : 'nano';
+    }
+
+    console.log(`[IG] @${igHandle}: ${bd.followers_count} seg, ${bd.media_count} posts, eng ${result.engagement_geral||0}%`);
+    return result;
+  } catch (e) {
+    console.warn(`[IG] @${igHandle} erro:`, e.message);
+    return null;
+  }
+}
+
 let INF_REFRESH_RUNNING = false;
 
 async function autoRefreshInfFollowers() {
@@ -7791,58 +7855,10 @@ async function autoRefreshInfFollowers() {
 
       // ── Instagram: business_discovery (followers + media + engagement) ──
       if (inf.instagram) {
-        const igHandle = inf.instagram.replace(/^@/, '').trim();
-        const igToken = window.FULLPRO_CONFIG?.IG_ACCESS_TOKEN;
-        const igUserId = window.FULLPRO_CONFIG?.IG_USER_ID;
-        if (igToken && igUserId && igHandle) {
-          try {
-            // Fetch profile + last 25 media items for engagement calculation
-            const fields = 'followers_count,media_count,media.limit(25){like_count,comments_count,media_type,timestamp}';
-            const res = await fetch(
-              `https://graph.facebook.com/v21.0/${igUserId}?fields=business_discovery.fields(${fields}){username=${igHandle}}&access_token=${igToken}`
-            );
-            if (res.ok) {
-              const data = await res.json();
-              const bd = data.business_discovery;
-              if (bd) {
-                // Followers
-                if (bd.followers_count !== undefined) {
-                  changes.followers = bd.followers_count;
-                  changed = true;
-                }
-                // Total posts
-                if (bd.media_count !== undefined) {
-                  changes.posts_geral = bd.media_count;
-                }
-                // Engagement calculation from recent media
-                const mediaItems = bd.media?.data || [];
-                if (mediaItems.length > 0 && bd.followers_count > 0) {
-                  let totalLikes = 0, totalComments = 0;
-                  mediaItems.forEach(m => {
-                    totalLikes += (m.like_count || 0);
-                    totalComments += (m.comments_count || 0);
-                  });
-                  const avgInteractions = (totalLikes + totalComments) / mediaItems.length;
-                  const engRate = (avgInteractions / bd.followers_count) * 100;
-                  changes.engagement_geral = Math.round(engRate * 10) / 10;
-
-                  // Estimate total views from engagement (rough: avg likes * 10 for reels)
-                  const reelsCount = mediaItems.filter(m => m.media_type === 'VIDEO').length;
-                  if (reelsCount > 0) {
-                    const avgLikesPerReel = totalLikes / mediaItems.length;
-                    // Conservative estimate: views ≈ likes × 15 (typical for reels)
-                    changes.views_geral = Math.round(avgLikesPerReel * 15 * bd.media_count);
-                  }
-                }
-                console.log(`[InfRefresh] IG @${igHandle}: ${bd.followers_count} seg, ${bd.media_count} posts, eng ${changes.engagement_geral||0}%`);
-              }
-            } else {
-              const err = await res.json().catch(() => ({}));
-              console.warn(`[InfRefresh] IG @${igHandle} falhou:`, err.error?.message || res.status);
-            }
-          } catch (e) {
-            console.warn(`[InfRefresh] IG @${igHandle} erro:`, e.message);
-          }
+        const igData = await fetchIGBusinessDiscovery(inf.instagram);
+        if (igData) {
+          Object.assign(changes, igData);
+          changed = true;
         }
       }
 
@@ -7880,8 +7896,9 @@ async function autoRefreshInfFollowers() {
         if (!inf.category) changes.category = autoCategory;
       }
 
-      // ── Save to Supabase ──
-      changes.followers_updated_at = new Date().toISOString();
+      // ── Save to Supabase (only mark updated if we got data) ──
+      if (changed) changes.followers_updated_at = new Date().toISOString();
+      if (!changed) continue; // skip if no API returned data
       const { error } = await sb.from('performance_influencers').update(changes).eq('id', inf.id);
       if (!error) {
         Object.assign(inf, changes);
@@ -8683,63 +8700,27 @@ async function refreshSingleInfluencer(infId) {
   if (!inf || !inf.instagram) return;
 
   const igHandle = inf.instagram.replace(/^@/, '').trim();
-  const igToken = window.FULLPRO_CONFIG?.IG_ACCESS_TOKEN;
-  const igUserId = window.FULLPRO_CONFIG?.IG_USER_ID;
-  if (!igToken || !igUserId || !igHandle) return;
-
   const sub = document.getElementById('infSubtitle');
   if (sub) sub.innerHTML = `<span style="color:var(--primary)">⟳</span> Puxando dados de @${igHandle}...`;
 
-  try {
-    const fields = 'followers_count,media_count,media.limit(25){like_count,comments_count,media_type,timestamp}';
-    const res = await fetch(
-      `https://graph.facebook.com/v21.0/${igUserId}?fields=business_discovery.fields(${fields}){username=${igHandle}}&access_token=${igToken}`
-    );
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      console.warn(`[InfRefresh] @${igHandle}:`, err.error?.message || res.status);
-      if (sub) sub.textContent = `Erro ao buscar @${igHandle}: ${err.error?.message || 'API indisponível'}`;
-      return;
-    }
-    const data = await res.json();
-    const bd = data.business_discovery;
-    if (!bd) return;
+  const igData = await fetchIGBusinessDiscovery(inf.instagram);
+  if (!igData) {
+    if (sub) sub.textContent = `Erro ao buscar @${igHandle} — verifique se a conta é Business/Creator`;
+    return;
+  }
 
-    const changes = { followers_updated_at: new Date().toISOString() };
-    if (bd.followers_count !== undefined) changes.followers = bd.followers_count;
-    if (bd.media_count !== undefined) changes.posts_geral = bd.media_count;
-
-    const mediaItems = bd.media?.data || [];
-    if (mediaItems.length > 0 && bd.followers_count > 0) {
-      let totalLikes = 0, totalComments = 0;
-      mediaItems.forEach(m => { totalLikes += (m.like_count||0); totalComments += (m.comments_count||0); });
-      const avgInt = (totalLikes + totalComments) / mediaItems.length;
-      changes.engagement_geral = Math.round((avgInt / bd.followers_count) * 1000) / 10;
-      const reelsCount = mediaItems.filter(m => m.media_type === 'VIDEO').length;
-      if (reelsCount > 0) {
-        changes.views_geral = Math.round((totalLikes / mediaItems.length) * 15 * bd.media_count);
-      }
+  const changes = { ...igData, followers_updated_at: new Date().toISOString() };
+  const { error } = await sb.from('performance_influencers').update(changes).eq('id', infId);
+  if (!error) {
+    Object.assign(inf, changes);
+    renderInfHub();
+    if (sub) {
+      sub.innerHTML = `<span style="color:var(--success)">✓</span> @${igHandle}: ${formatNum(changes.followers||0)} seguidores, ${changes.posts_geral||0} posts, ${changes.engagement_geral||0}% eng`;
+      setTimeout(() => {
+        const c = PERF_INFLUENCERS.filter(i => i.status==='ativo'||!i.status).length;
+        if (sub) sub.textContent = `${c} influenciadores ativos · Hub de gestão FullPro`;
+      }, 4000);
     }
-
-    // Auto-category
-    if (changes.followers && !inf.category) {
-      changes.category = changes.followers > 100000 ? 'macro' : changes.followers > 10000 ? 'micro' : 'nano';
-    }
-
-    const { error } = await sb.from('performance_influencers').update(changes).eq('id', infId);
-    if (!error) {
-      Object.assign(inf, changes);
-      renderInfHub();
-      if (sub) {
-        sub.innerHTML = `<span style="color:var(--success)">✓</span> @${igHandle}: ${formatNum(changes.followers||0)} seguidores, ${changes.posts_geral||0} posts`;
-        setTimeout(() => {
-          const c = PERF_INFLUENCERS.filter(i => i.status==='ativo'||!i.status).length;
-          if (sub) sub.textContent = `${c} influenciadores ativos · Hub de gestão FullPro`;
-        }, 4000);
-      }
-    }
-  } catch (e) {
-    console.warn(`[InfRefresh] @${igHandle} erro:`, e.message);
   }
 }
 
