@@ -7533,10 +7533,46 @@ async function loadPerfBonuses() {
   PERF_BONUSES = data || [];
 }
 
-function getPerfPostsThisMonth() {
-  const now = new Date();
-  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  return PERF_POSTS.filter(p => (p.month || '').startsWith(month));
+/* Extract all individual posts from PROJECTS[].posts into a flat list for Meus Posts grid.
+ * Each project post entry (main, youtube, reels, shorts, instagram, tiktok) becomes one card. */
+function getAllProjectPosts() {
+  const keyToPlatform = { main: 'yt', youtube: 'yt', reels: 'ig', instagram: 'ig', shorts: 'yts', tiktok: 'tt' };
+  const keyToType = { main: 'longo', youtube: 'longo', reels: 'short', instagram: 'short', shorts: 'short', tiktok: 'short' };
+  const keyToLabel = { main: 'Principal', youtube: 'YouTube', reels: 'Reels', instagram: 'Instagram', shorts: 'YT Shorts', tiktok: 'TikTok' };
+  const posts = [];
+
+  PROJECTS.forEach(proj => {
+    if (!proj.posts) return;
+    Object.entries(proj.posts).forEach(([key, post]) => {
+      if (!post || !post.link) return;
+      // Auto-detect thumbnail
+      let thumb = post._igThumb || '';
+      if (!thumb) {
+        const ytId = extractYouTubeId(post.link);
+        if (ytId) thumb = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+      }
+      posts.push({
+        id: proj.id + '_' + key,
+        projectId: proj.id,
+        title: proj.title,
+        label: keyToLabel[key] || key,
+        platform: keyToPlatform[key] || 'yt',
+        type: keyToType[key] || 'longo',
+        link: post.link,
+        thumbnail: thumb,
+        views: post.views || 0,
+        likes: post.likes || 0,
+        comments: post.comments || 0,
+        rating: proj.rating || 0,
+        status: post.status || proj.status || '',
+        created_at: proj.created_at
+      });
+    });
+  });
+
+  // Sort: most views first, then by creation date
+  posts.sort((a, b) => (b.views - a.views) || (new Date(b.created_at) - new Date(a.created_at)));
+  return posts;
 }
 
 function getPerfGoalsThisMonth() {
@@ -7789,26 +7825,23 @@ function renderPerfPosts() {
   const el = document.getElementById('perfPostsList');
   if (!el) return;
 
-  let allPosts = getPerfPostsThisMonth();
+  let allPosts = getAllProjectPosts();
   let posts = [...allPosts];
 
+  // Apply filter
   if (PERF_POST_FILTER !== 'todos') {
     if (PERF_POST_FILTER === 'longo') posts = posts.filter(p => p.type === 'longo');
     else if (PERF_POST_FILTER === 'short') posts = posts.filter(p => p.type === 'short');
-    else {
-      posts = posts.filter(p => {
-        const plats = p.platforms || [];
-        return plats.includes(PERF_POST_FILTER);
-      });
-    }
+    else posts = posts.filter(p => p.platform === PERF_POST_FILTER);
   }
 
-  // Update subtitle
+  // Update subtitle with totals
   const subEl = document.getElementById('perfPostsSubtitle');
   if (subEl) {
     const totalViews = allPosts.reduce((s, p) => s + (p.views || 0), 0);
     const totalLikes = allPosts.reduce((s, p) => s + (p.likes || 0), 0);
-    subEl.textContent = `${allPosts.length} posts · ${fmtKPosts(totalViews)} views · ${fmtKPosts(totalLikes)} likes`;
+    const totalComments = allPosts.reduce((s, p) => s + (p.comments || 0), 0);
+    subEl.textContent = `${allPosts.length} posts · ${fmtKPosts(totalViews)} views · ${fmtKPosts(totalLikes)} likes · ${fmtKPosts(totalComments)} comments`;
   }
 
   const platIcons = {
@@ -7825,43 +7858,39 @@ function renderPerfPosts() {
   };
 
   if (posts.length === 0) {
-    el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0">Nenhum post neste periodo.</p></div>';
+    el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0">Nenhum post encontrado.</p></div>';
     return;
   }
 
   el.innerHTML = `<div class="posts-grid">${posts.map(p => {
-    const plats = (p.platforms || []);
-    const mainPlat = plats[0] || 'yt';
+    const plat = p.platform;
     const thumb = p.thumbnail || '';
     const hasThumb = !!thumb;
-    const gradient = platGradients[mainPlat] || platGradients.yt;
+    const gradient = platGradients[plat] || platGradients.yt;
     const isShort = p.type === 'short';
-
-    // Platform badges
-    const platBadges = plats.map(pl => `<span class="post-card-plat">${platIcons[pl] || ''}</span>`).join('');
 
     // Stars
     const stars = Array.from({ length: 5 }, (_, i) =>
-      `<span class="post-card-star${(i + 1) <= (p.rating || 0) ? ' active' : ''}" onclick="event.stopPropagation();updatePostRating('${p.id}', ${i + 1})">\u2605</span>`
+      `<span class="post-card-star${(i + 1) <= (p.rating || 0) ? ' active' : ''}">\u2605</span>`
     ).join('');
 
-    return `<div class="post-card${isShort ? ' post-card-short' : ''}" onclick="${p.link ? `window.open('${p.link}','_blank')` : ''}">
+    return `<div class="post-card${isShort ? ' post-card-short' : ''}" onclick="${p.link ? `window.open('${p.link.replace(/'/g, "\\'")}','_blank')` : ''}">
       <div class="post-card-thumb" style="${hasThumb ? `background-image:url('${thumb}')` : `background:${gradient}`}">
-        ${!hasThumb ? `<div class="post-card-no-thumb">${platIcons[mainPlat] || ''}<span>${escHtml(p.title.substring(0, 30))}</span></div>` : ''}
+        ${!hasThumb ? `<div class="post-card-no-thumb">${platIcons[plat] || ''}<span>${escHtml(p.title.substring(0, 30))}</span></div>` : ''}
         <div class="post-card-type">${isShort ? 'SHORT' : 'LONGO'}</div>
-        <div class="post-card-plats">${platBadges}</div>
+        <div class="post-card-plats"><span class="post-card-plat">${platIcons[plat] || ''}</span></div>
         <div class="post-card-overlay">
           <div class="post-card-stat"><svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg> ${fmtKPosts(p.views || 0)}</div>
           <div class="post-card-stat"><svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> ${fmtKPosts(p.likes || 0)}</div>
           <div class="post-card-stat"><svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg> ${fmtKPosts(p.comments || 0)}</div>
-          ${p.link ? '<div class="post-card-stat" style="margin-top:4px;font-size:10px;opacity:.8">Clique para abrir</div>' : ''}
+          <div class="post-card-stat" style="margin-top:4px;font-size:10px;opacity:.8">Clique para abrir</div>
         </div>
       </div>
       <div class="post-card-info">
         <div class="post-card-title">${escHtml(p.title)}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">${p.label}</div>
         <div class="post-card-meta">
           <div class="post-card-stars">${stars}</div>
-          ${isUserAdmin() ? `<button class="post-card-delete" onclick="event.stopPropagation();deletePerfPost('${p.id}')" title="Remover">&times;</button>` : ''}
         </div>
       </div>
     </div>`;
