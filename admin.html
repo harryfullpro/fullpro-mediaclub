@@ -5763,14 +5763,27 @@ async function fetchIGStats(shortcode, igUrl) {
     // Get thumbnail: VIDEO → thumbnail_url, IMAGE/CAROUSEL → media_url
     const thumb = media.thumbnail_url || media.media_url || '';
 
-    // Get reach (views) via insights (requires instagram_manage_insights permission)
+    // Get views via insights — use "plays" for Reels/Video, fallback to "impressions"
     let views = 0;
     if (media._own && media.id) {
       try {
-        const insRes = await fetch(`https://graph.facebook.com/v21.0/${media.id}/insights?metric=reach&access_token=${igPageToken}`);
+        // Try "plays" first (Reels/Video view count)
+        const isVideo = media.media_type === 'VIDEO' || media.media_type === 'REEL';
+        const metric = isVideo ? 'plays' : 'impressions';
+        const insRes = await fetch(`https://graph.facebook.com/v21.0/${media.id}/insights?metric=${metric}&access_token=${igPageToken}`);
         const insJson = await insRes.json();
         if (insJson.data && insJson.data[0]) {
           views = insJson.data[0].values?.[0]?.value || insJson.data[0].total_value?.value || 0;
+        }
+        // Fallback: if plays returned 0 or error, try ig_reels_aggregated_all_plays_count
+        if (!views && isVideo) {
+          try {
+            const res2 = await fetch(`https://graph.facebook.com/v21.0/${media.id}/insights?metric=ig_reels_aggregated_all_plays_count&access_token=${igPageToken}`);
+            const json2 = await res2.json();
+            if (json2.data && json2.data[0]) {
+              views = json2.data[0].values?.[0]?.value || json2.data[0].total_value?.value || views;
+            }
+          } catch(e2) { /* keep previous value */ }
         }
       } catch(e) { console.warn('IG insights error:', e); }
     }
