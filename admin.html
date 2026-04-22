@@ -5503,14 +5503,26 @@ function buildPostCard(dest, data) {
         </div>`;
       }
     } else if (dest === 'tiktok') {
-      embedHtml = `<div class="post-embed">
-        <a href="${escHtml(data.link)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg,#010101,#161823)">
-          <div style="text-align:center;color:#fff">
-            ${info.icon}
-            <div style="font-size:11px;margin-top:6px;opacity:.8">Ver no TikTok</div>
-          </div>
-        </a>
-      </div>`;
+      const tkThumb = data._tkThumb || '';
+      if (tkThumb) {
+        embedHtml = `<div class="post-embed">
+          <a href="${escHtml(data.link)}" target="_blank" rel="noopener">
+            <img src="${escHtml(tkThumb)}" alt="thumbnail" loading="lazy" style="width:100%;height:100%;object-fit:cover"/>
+            <div style="position:absolute;bottom:8px;right:8px;background:#010101;border-radius:6px;padding:3px 6px">
+              ${info.icon}
+            </div>
+          </a>
+        </div>`;
+      } else {
+        embedHtml = `<div class="post-embed">
+          <a href="${escHtml(data.link)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg,#010101,#161823)">
+            <div style="text-align:center;color:#fff">
+              ${info.icon}
+              <div style="font-size:11px;margin-top:6px;opacity:.8">Ver no TikTok</div>
+            </div>
+          </a>
+        </div>`;
+      }
     } else {
       embedHtml = `<div class="post-embed">
         <a href="${escHtml(data.link)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;height:100%;background:var(--bg-card)">
@@ -5646,6 +5658,7 @@ async function savePostSingle(dest) {
       p.posts[dest].views = stats.views;
       p.posts[dest].likes = stats.likes;
       p.posts[dest].comments = stats.comments;
+      if (stats.thumb) p.posts[dest]._tkThumb = stats.thumb;
     }
   }
 
@@ -6005,7 +6018,7 @@ async function fetchTKStats(videoId) {
     // Use cache if less than 5 min old
     const now = Date.now();
     if (!tkVideoCache || now - tkVideoCacheTime > 300000) {
-      const res = await fetch('https://open.tiktokapis.com/v2/video/list/?fields=id,title,video_description,like_count,comment_count,share_count,view_count,create_time', {
+      const res = await fetch('https://open.tiktokapis.com/v2/video/list/?fields=id,title,video_description,like_count,comment_count,share_count,view_count,create_time,cover_image_url', {
         method: 'POST',
         headers: {
           'Authorization': 'Bearer ' + tkAccessToken,
@@ -6036,7 +6049,8 @@ async function fetchTKStats(videoId) {
       views: parseInt(video.view_count) || 0,
       likes: parseInt(video.like_count) || 0,
       comments: parseInt(video.comment_count) || 0,
-      shares: parseInt(video.share_count) || 0
+      shares: parseInt(video.share_count) || 0,
+      thumb: video.cover_image_url || null
     };
   } catch(e) { console.warn('TikTok API error:', e); }
   return null;
@@ -6066,6 +6080,7 @@ async function refreshTKStats(dest, videoId) {
   p.posts[dest].views = stats.views;
   p.posts[dest].likes = stats.likes;
   p.posts[dest].comments = stats.comments;
+  if (stats.thumb) p.posts[dest]._tkThumb = stats.thumb;
 
   await sb.from('projects').update({ posts: p.posts }).eq('id', projDetailId);
   renderProjTabPostagem(p);
@@ -6115,12 +6130,16 @@ async function autoRefreshEngagement() {
     }
 
     if (stats) {
-      const changed = post.views !== stats.views || post.likes !== stats.likes || post.comments !== stats.comments || (stats.thumb && post._igThumb !== stats.thumb);
+      const changed = post.views !== stats.views || post.likes !== stats.likes || post.comments !== stats.comments || (stats.thumb && (post._igThumb !== stats.thumb && post._tkThumb !== stats.thumb));
       if (changed) {
         post.views = stats.views;
         post.likes = stats.likes;
         post.comments = stats.comments;
-        if (stats.thumb) post._igThumb = stats.thumb;
+        if (stats.thumb) {
+          const isTK = extractTKVideoId(post.link);
+          if (isTK) post._tkThumb = stats.thumb;
+          else post._igThumb = stats.thumb;
+        }
         updated = true;
       }
     }
