@@ -7621,8 +7621,8 @@ function getPublishedThisMonth() {
       results.totalClicks += (pd.clicks || 0);
     });
   });
-  // Also add from performance_posts
-  const perfPosts = getPerfPostsThisMonth();
+  // Also add from project posts
+  const perfPosts = getAllProjectPosts();
   perfPosts.forEach(pp => {
     if (pp.type === 'longo') results.longCount++;
     else results.shortCount++;
@@ -8522,7 +8522,7 @@ function renderPerfBonuses() {
     `;
   }
 
-  const posts = getPerfPostsThisMonth();
+  const posts = getAllProjectPosts();
   const longCount = posts.filter(p => p.type === 'longo').length;
   const shortCount = posts.filter(p => p.type === 'short').length;
   const totalViews = posts.reduce((s, p) => s + (p.views || 0), 0);
