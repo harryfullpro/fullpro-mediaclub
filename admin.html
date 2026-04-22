@@ -1308,6 +1308,112 @@
   .inf-tab-content { display:none; }
   .inf-tab-content.active { display:block; }
 
+  /* ── Posts Grid (Instagram-style) ── */
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .post-card {
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .post-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0,0,0,.25);
+  }
+  .post-card-thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+  }
+  .post-card-short .post-card-thumb {
+    aspect-ratio: 9/16;
+    max-height: 340px;
+  }
+  .post-card-no-thumb {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 10px; padding: 20px;
+  }
+  .post-card-no-thumb img { width: 32px; height: 32px; opacity: .5; }
+  .post-card-no-thumb span {
+    font-size: 12px; font-weight: 600; color: rgba(255,255,255,.45);
+    text-align: center; line-height: 1.4;
+  }
+  .post-card-type {
+    position: absolute; top: 10px; left: 10px;
+    padding: 3px 10px; border-radius: 6px;
+    font-size: 9px; font-weight: 800; letter-spacing: .8px;
+    background: rgba(0,0,0,.65); color: #fff;
+    backdrop-filter: blur(6px);
+  }
+  .post-card-plats {
+    position: absolute; top: 10px; right: 10px;
+    display: flex; gap: 4px;
+  }
+  .post-card-plat {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.55); border-radius: 8px;
+    backdrop-filter: blur(6px);
+  }
+  .post-card-overlay {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 6px;
+    background: rgba(0,0,0,.65);
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    transition: opacity .2s ease;
+  }
+  .post-card:hover .post-card-overlay { opacity: 1; }
+  .post-card-stat {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 15px; font-weight: 700; color: #fff;
+  }
+  .post-card-info {
+    padding: 12px 14px 10px;
+  }
+  .post-card-title {
+    font-size: 13px; font-weight: 600; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 6px;
+  }
+  .post-card-meta {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .post-card-stars { display: flex; gap: 1px; }
+  .post-card-star {
+    font-size: 14px; color: var(--border); cursor: pointer;
+    transition: color .1s;
+  }
+  .post-card-star.active { color: #e6a800; }
+  .post-card-star:hover { color: #e6a800; }
+  .post-card-delete {
+    background: none; border: none; cursor: pointer;
+    font-size: 18px; color: var(--text-muted); line-height: 1;
+    padding: 2px 6px; border-radius: 6px;
+    transition: all .15s;
+  }
+  .post-card-delete:hover { color: var(--danger); background: rgba(255,77,77,.08); }
+
+  @media (max-width: 1200px) {
+    .posts-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 768px) {
+    .posts-grid { grid-template-columns: 1fr; }
+  }
+
   /* ── Influencer Hub Stat Cards ── */
   .inf-stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
   .inf-stat-card {
@@ -2603,6 +2709,9 @@
         <label>Título do post *</label>
         <input type="text" id="postTitle" placeholder="Ex: Review Honda CB 500"/>
 
+        <label>Link do post</label>
+        <input type="url" id="postLink" placeholder="https://youtube.com/watch?v=... ou https://instagram.com/reel/..." oninput="autoDetectPostPlatform(this.value)"/>
+
         <label>Tipo de conteúdo *</label>
         <div style="display:flex;gap:8px;margin-bottom:14px">
           <label style="flex:1">
@@ -2623,14 +2732,18 @@
           <label><input type="checkbox" class="postPlatform" value="tt" style="margin-right:6px"/>TikTok</label>
         </div>
 
-        <div class="book-row">
+        <div class="book-row" style="grid-template-columns:1fr 1fr 1fr">
           <div>
-            <label>Views totais</label>
+            <label>Views</label>
             <input type="number" id="postViews" min="0" placeholder="0"/>
           </div>
           <div>
-            <label>Likes totais</label>
+            <label>Likes</label>
             <input type="number" id="postLikes" min="0" placeholder="0"/>
+          </div>
+          <div>
+            <label>Comments</label>
+            <input type="number" id="postComments" min="0" placeholder="0"/>
           </div>
         </div>
 
@@ -7693,91 +7806,66 @@ function renderPerfPosts() {
   // Update subtitle
   const subEl = document.getElementById('perfPostsSubtitle');
   if (subEl) {
-    const avgRating = allPosts.length > 0 ? (allPosts.reduce((s, p) => s + (p.rating || 0), 0) / allPosts.length).toFixed(1) : '0';
-    subEl.textContent = `${allPosts.length} posts · avaliacao media ${avgRating}★`;
+    const totalViews = allPosts.reduce((s, p) => s + (p.views || 0), 0);
+    const totalLikes = allPosts.reduce((s, p) => s + (p.likes || 0), 0);
+    subEl.textContent = `${allPosts.length} posts · ${fmtKPosts(totalViews)} views · ${fmtKPosts(totalLikes)} likes`;
   }
 
-  const platColors = { yt: { bg: 'rgba(255,0,0,.12)', border: 'rgba(255,0,0,.3)', color: '#ff4444', label: 'YT', icon: '<img src="yt_shorts.png" width="12" height="12" style="object-fit:contain;vertical-align:-1px">' }, yts: { bg: 'rgba(255,0,0,.12)', border: 'rgba(255,0,0,.3)', color: '#ff4444', label: 'YTS', icon: '<img src="yt_shorts.png" width="12" height="12" style="object-fit:contain;vertical-align:-1px">' }, ig: { bg: 'rgba(225,48,108,.12)', border: 'rgba(225,48,108,.3)', color: '#e1306c', label: 'IG', icon: '<img src="Instagram.png" width="12" height="12" style="object-fit:contain;vertical-align:-1px;border-radius:2px">' }, tt: { bg: 'rgba(168,85,247,.12)', border: 'rgba(168,85,247,.3)', color: '#a855f7', label: 'TT', icon: '<img src="tiktok_2.png" width="12" height="12" style="object-fit:contain;vertical-align:-1px">' } };
+  const platIcons = {
+    yt: '<img src="yt_shorts.png" width="14" height="14" style="object-fit:contain">',
+    yts: '<img src="yt_shorts.png" width="14" height="14" style="object-fit:contain">',
+    ig: '<img src="Instagram.png" width="14" height="14" style="object-fit:contain;border-radius:3px">',
+    tt: '<img src="tiktok_2.png" width="14" height="14" style="object-fit:contain">'
+  };
+  const platGradients = {
+    yt: 'linear-gradient(135deg, #1a1a2e 0%, #3d0c0c 100%)',
+    yts: 'linear-gradient(135deg, #1a1a2e 0%, #3d0c0c 100%)',
+    ig: 'linear-gradient(135deg, #1a1a2e 0%, #2d1038 50%, #3d1c0c 100%)',
+    tt: 'linear-gradient(135deg, #1a1a2e 0%, #1a0c3d 100%)'
+  };
 
   if (posts.length === 0) {
-    el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum post neste periodo.</p></div>';
+    el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0">Nenhum post neste periodo.</p></div>';
     return;
   }
 
-  el.innerHTML = posts.map(p => {
+  el.innerHTML = `<div class="posts-grid">${posts.map(p => {
     const plats = (p.platforms || []);
-    const typeTag = p.type === 'longo'
-      ? '<span style="display:inline-block;padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:rgba(31,210,122,.15);color:var(--success);border:1px solid rgba(31,210,122,.3)">Longo</span>'
-      : '<span style="display:inline-block;padding:3px 10px;border-radius:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:rgba(139,156,247,.15);color:#8b9cf7;border:1px solid rgba(139,156,247,.3)">Short</span>';
+    const mainPlat = plats[0] || 'yt';
+    const thumb = p.thumbnail || '';
+    const hasThumb = !!thumb;
+    const gradient = platGradients[mainPlat] || platGradients.yt;
+    const isShort = p.type === 'short';
 
-    const platTags = plats.map(pl => {
-      const pc = platColors[pl] || { bg: 'var(--bg-elev)', border: 'var(--border)', color: 'var(--text-dim)', label: pl, icon: '' };
-      return `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600;background:${pc.bg};color:${pc.color};border:1px solid ${pc.border}">${pc.icon} ${pc.label}</span>`;
-    }).join('');
+    // Platform badges
+    const platBadges = plats.map(pl => `<span class="post-card-plat">${platIcons[pl] || ''}</span>`).join('');
 
-    const stars = Array.from({ length: 5 }, (_, i) => `<span style="cursor:pointer;font-size:22px;color:${(i + 1) <= (p.rating || 0) ? '#e6a800' : 'var(--border)'};transition:color .1s" onclick="updatePostRating('${p.id}', ${i + 1})" onmouseover="this.style.color='#e6a800'" onmouseout="this.style.color='${(i + 1) <= (p.rating || 0) ? '#e6a800' : 'var(--border)'}'">\u2605</span>`).join('');
+    // Stars
+    const stars = Array.from({ length: 5 }, (_, i) =>
+      `<span class="post-card-star${(i + 1) <= (p.rating || 0) ? ' active' : ''}" onclick="event.stopPropagation();updatePostRating('${p.id}', ${i + 1})">\u2605</span>`
+    ).join('');
 
-    // Per-platform breakdown data (simulate from total / platforms count for now)
-    const platCount = plats.length || 1;
-
-    return `<div class="cal-card" style="margin-bottom:14px;padding:0;overflow:hidden">
-      <!-- Header -->
-      <div style="padding:18px 20px 14px;display:flex;justify-content:space-between;align-items:flex-start">
-        <div>
-          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">${escHtml(p.title)}</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">${typeTag} ${platTags}</div>
-        </div>
-        <div style="display:flex;gap:2px;flex-shrink:0;margin-left:12px">${stars}</div>
-      </div>
-
-      <!-- Stats grid -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
-        <div style="padding:14px 20px;${p.views > 0 ? '' : ''}">
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">Views totais</div>
-          <div style="font-size:18px;font-weight:700;color:var(--primary)">${fmtKPosts(p.views || 0)}</div>
-        </div>
-        <div style="padding:14px 20px;border-left:1px solid var(--border)">
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">Likes totais</div>
-          <div style="font-size:18px;font-weight:700;color:var(--text)">${fmtKPosts(p.likes || 0)}</div>
-        </div>
-        <div style="padding:14px 20px;border-left:1px solid var(--border)">
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">Retencao media</div>
-          <div style="font-size:18px;font-weight:700;color:#f59e0b">${p.retention || 0}%</div>
-        </div>
-        <div style="padding:14px 20px;border-left:1px solid var(--border)">
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">Cliques pro site</div>
-          <div style="font-size:18px;font-weight:700;color:var(--text)">${(p.clicks || 0).toLocaleString('pt-BR')}</div>
+    return `<div class="post-card${isShort ? ' post-card-short' : ''}" onclick="${p.link ? `window.open('${p.link}','_blank')` : ''}">
+      <div class="post-card-thumb" style="${hasThumb ? `background-image:url('${thumb}')` : `background:${gradient}`}">
+        ${!hasThumb ? `<div class="post-card-no-thumb">${platIcons[mainPlat] || ''}<span>${escHtml(p.title.substring(0, 30))}</span></div>` : ''}
+        <div class="post-card-type">${isShort ? 'SHORT' : 'LONGO'}</div>
+        <div class="post-card-plats">${platBadges}</div>
+        <div class="post-card-overlay">
+          <div class="post-card-stat"><svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg> ${fmtKPosts(p.views || 0)}</div>
+          <div class="post-card-stat"><svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> ${fmtKPosts(p.likes || 0)}</div>
+          <div class="post-card-stat"><svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg> ${fmtKPosts(p.comments || 0)}</div>
+          ${p.link ? '<div class="post-card-stat" style="margin-top:4px;font-size:10px;opacity:.8">Clique para abrir</div>' : ''}
         </div>
       </div>
-
-      <!-- Breakdown toggle -->
-      ${plats.length > 1 ? `<div style="padding:0 20px">
-        <button onclick="this.parentElement.nextElementSibling.style.display=this.parentElement.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('svg').style.transform=this.parentElement.nextElementSibling.style.display==='none'?'':'rotate(90deg)'" style="background:none;border:none;cursor:pointer;padding:10px 0;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;display:flex;align-items:center;gap:6px;font-family:inherit;width:100%">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="transition:transform .15s"><polyline points="9 18 15 12 9 6"/></svg>
-          Breakdown por plataforma (${plats.length})
-        </button>
-      </div>
-      <div style="display:none;padding:0 20px 14px">
-        <div style="display:grid;grid-template-columns:repeat(${Math.min(plats.length, 4)},1fr);gap:8px">
-          ${plats.map(pl => {
-            const pc = platColors[pl] || { bg: 'var(--bg-elev)', color: 'var(--text-dim)', label: pl, icon: '' };
-            return `<div style="background:var(--bg-elev);border-radius:8px;padding:10px 12px">
-              <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;font-size:11px;font-weight:600;color:${pc.color}">${pc.icon} ${pc.label}</div>
-              <div style="font-size:10px;color:var(--text-muted)">Dados por plataforma em breve</div>
-            </div>`;
-          }).join('')}
+      <div class="post-card-info">
+        <div class="post-card-title">${escHtml(p.title)}</div>
+        <div class="post-card-meta">
+          <div class="post-card-stars">${stars}</div>
+          ${isUserAdmin() ? `<button class="post-card-delete" onclick="event.stopPropagation();deletePerfPost('${p.id}')" title="Remover">&times;</button>` : ''}
         </div>
-      </div>` : ''}
-
-      <!-- Notes -->
-      ${p.notes ? `<div style="margin:0 20px 16px;padding:12px 16px;border-left:3px solid #e6a800;background:rgba(230,168,0,.04);border-radius:0 8px 8px 0;font-size:13px;color:var(--text-dim);font-style:italic;line-height:1.5">${escHtml(p.notes)}</div>` : ''}
-
-      <!-- Admin actions -->
-      ${isUserAdmin() ? `<div style="padding:${p.notes ? '0' : '0'} 20px 14px;display:flex;justify-content:flex-end">
-        <button style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-muted);font-family:inherit;padding:4px 8px;border-radius:6px;transition:all .15s" onmouseover="this.style.color='var(--danger)';this.style.background='rgba(255,77,77,.06)'" onmouseout="this.style.color='var(--text-muted)';this.style.background='none'" onclick="deletePerfPost('${p.id}')">Remover post</button>
-      </div>` : ''}
+      </div>
     </div>`;
-  }).join('');
+  }).join('')}</div>`;
 }
 
 /* ═══════════════════════════════════════════
@@ -8500,8 +8588,10 @@ function closePerfGoalsModal() { document.getElementById('perfGoalsModal').class
 
 function openAddPostModal() {
   document.getElementById('postTitle').value = '';
+  document.getElementById('postLink').value = '';
   document.getElementById('postViews').value = '';
   document.getElementById('postLikes').value = '';
+  document.getElementById('postComments').value = '';
   document.getElementById('postRetention').value = '';
   document.getElementById('postClicks').value = '';
   document.getElementById('postRating').value = 5;
@@ -8509,6 +8599,30 @@ function openAddPostModal() {
   document.querySelectorAll('.postPlatform').forEach(cb => cb.checked = false);
   document.querySelector('input[name="postType"][value="longo"]').checked = true;
   document.getElementById('perfAddPostModal').classList.add('show');
+}
+
+/* Auto-detect platform from post link */
+function autoDetectPostPlatform(url) {
+  if (!url) return;
+  document.querySelectorAll('.postPlatform').forEach(cb => cb.checked = false);
+  const u = url.toLowerCase();
+  if (u.includes('youtube.com/watch') || u.includes('youtu.be/')) {
+    const cb = document.querySelector('.postPlatform[value="yt"]');
+    if (cb) cb.checked = true;
+    document.querySelector('input[name="postType"][value="longo"]').checked = true;
+  } else if (u.includes('youtube.com/shorts')) {
+    const cb = document.querySelector('.postPlatform[value="yts"]');
+    if (cb) cb.checked = true;
+    document.querySelector('input[name="postType"][value="short"]').checked = true;
+  } else if (u.includes('instagram.com')) {
+    const cb = document.querySelector('.postPlatform[value="ig"]');
+    if (cb) cb.checked = true;
+    document.querySelector('input[name="postType"][value="short"]').checked = true;
+  } else if (u.includes('tiktok.com')) {
+    const cb = document.querySelector('.postPlatform[value="tt"]');
+    if (cb) cb.checked = true;
+    document.querySelector('input[name="postType"][value="short"]').checked = true;
+  }
 }
 function closePerfAddPostModal() { document.getElementById('perfAddPostModal').classList.remove('show'); }
 
@@ -8662,15 +8776,26 @@ async function savePerfPost() {
   const platforms = Array.from(document.querySelectorAll('.postPlatform:checked')).map(cb => cb.value);
   if (platforms.length === 0) { alert('Selecione pelo menos uma plataforma.'); return; }
 
+  const link = document.getElementById('postLink').value.trim();
   const now = new Date();
   const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
+  // Auto-fetch thumbnail from link
+  let thumbnail = '';
+  if (link) {
+    const ytId = extractYouTubeId(link);
+    if (ytId) thumbnail = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+  }
+
   const payload = {
     title,
+    link: link || null,
+    thumbnail: thumbnail || null,
     type: document.querySelector('input[name="postType"]:checked').value,
     platforms,
     views: parseInt(document.getElementById('postViews').value) || 0,
     likes: parseInt(document.getElementById('postLikes').value) || 0,
+    comments: parseInt(document.getElementById('postComments').value) || 0,
     retention: parseInt(document.getElementById('postRetention').value) || 0,
     clicks: parseInt(document.getElementById('postClicks').value) || 0,
     rating: parseInt(document.getElementById('postRating').value) || 5,
