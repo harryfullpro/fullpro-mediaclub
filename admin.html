@@ -2159,31 +2159,6 @@
         </div>
       </div>
 
-      <!-- Publish Link Modal -->
-      <div class="modal" id="publishLinkModal">
-        <div class="modal-content" style="max-width:480px">
-          <div class="modal-head">
-            <h3 id="publishLinkTitle" style="display:flex;align-items:center;gap:8px">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              Link do arquivo
-            </h3>
-            <button class="modal-close" onclick="closePublishLinkModal()">&times;</button>
-          </div>
-          <div style="padding:20px;display:flex;flex-direction:column;gap:16px">
-            <p id="publishLinkDesc" style="font-size:13px;color:var(--text-dim);margin:0">Insira o link do arquivo no Drive para este projeto ficar pronto para publicação.</p>
-            <input type="url" id="publishLinkInput" class="login-input" placeholder="https://drive.google.com/..." style="margin:0;font-size:14px"/>
-            <input type="hidden" id="publishLinkProjectId"/>
-            <input type="hidden" id="publishLinkOrigin"/>
-            <div style="display:flex;gap:8px;justify-content:flex-end">
-              <button class="action-btn" style="padding:8px 16px;font-size:13px;background:var(--bg-elev);color:var(--text-dim);border:1px solid var(--border)" onclick="closePublishLinkModal()">Cancelar</button>
-              <button class="action-btn" id="publishLinkSaveBtn" style="padding:8px 20px;font-size:13px;background:#ec4899;color:#fff;border:none;font-weight:600" onclick="savePublishLink()">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                Salvar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- USERS VIEW -->
@@ -2700,6 +2675,32 @@
     <div class="modal-foot">
       <button class="action-btn" onclick="closePerfBonusConfigModal()">Cancelar</button>
       <button class="action-btn approve" onclick="savePerfBonusConfig()">Salvar configuração</button>
+    </div>
+  </div>
+</div>
+
+<!-- Publish Link Modal (global — must be outside view containers) -->
+<div class="modal" id="publishLinkModal">
+  <div class="modal-content" style="max-width:480px">
+    <div class="modal-head">
+      <h3 id="publishLinkTitle" style="display:flex;align-items:center;gap:8px">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Link do arquivo
+      </h3>
+      <button class="modal-close" onclick="closePublishLinkModal()">&times;</button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:16px">
+      <p id="publishLinkDesc" style="font-size:13px;color:var(--text-dim);margin:0">Insira o link do arquivo no Drive para este projeto ficar pronto para publicação.</p>
+      <input type="url" id="publishLinkInput" class="login-input" placeholder="https://drive.google.com/..." style="margin:0;font-size:14px"/>
+      <input type="hidden" id="publishLinkProjectId"/>
+      <input type="hidden" id="publishLinkOrigin"/>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="action-btn" style="padding:8px 16px;font-size:13px;background:var(--bg-elev);color:var(--text-dim);border:1px solid var(--border)" onclick="closePublishLinkModal()">Cancelar</button>
+        <button class="action-btn" id="publishLinkSaveBtn" style="padding:8px 20px;font-size:13px;background:#ec4899;color:#fff;border:none;font-weight:600" onclick="savePublishLink()">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Salvar
+        </button>
+      </div>
     </div>
   </div>
 </div>
