@@ -27,6 +27,6 @@ window.FULLPRO_CONFIG = {
    * 3. Configure redirect URI: https://fullpro-mediaclub.vercel.app/admin
    * 4. Use Sandbox mode para desenvolvimento (até 20 test users)
    * 5. Clique "Conectar TikTok" no admin para autenticar via OAuth */
-  TK_CLIENT_KEY:     'awt9x0v2h89awe3s',
-  TK_CLIENT_SECRET:  'DHpC8YbY8q4newYRJZtM4jNfORKKWO7z'
+  TK_CLIENT_KEY:     'sbawuf3rne01g5gm3m',
+  TK_CLIENT_SECRET:  'YEtvCowh33RpjHaHPPByby2XZRhD0Rz3'
 };
