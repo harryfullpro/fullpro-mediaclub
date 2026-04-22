@@ -5996,6 +5996,46 @@ async function fetchIGViaDiscovery(shortcode, igUrl) {
   return null;
 }
 
+/* Fetch IG stats for a specific post from an external influencer via Business Discovery */
+async function fetchIGStatsViaDiscovery(igHandle, shortcode) {
+  if (!igHandle || !shortcode) return null;
+  const handle = igHandle.replace(/^@/, '').trim();
+  const igToken = window.FULLPRO_CONFIG?.IG_ACCESS_TOKEN;
+  const igUserId = window.FULLPRO_CONFIG?.IG_USER_ID;
+  if (!igToken || !igUserId || !handle) return null;
+
+  try {
+    const inner = 'media.limit(50){shortcode,permalink,like_count,comments_count,media_type,thumbnail_url}';
+    const url = 'https://graph.facebook.com/v21.0/' + igUserId
+      + '?fields=business_discovery.username(' + handle + ')%7B' + inner + '%7D'
+      + '&access_token=' + igToken;
+
+    const res = await fetch(url);
+    if (!res.ok) { console.warn('[IG] business_discovery media failed for @' + handle); return null; }
+    const data = await res.json();
+    const mediaItems = data.business_discovery?.media?.data || [];
+
+    const found = mediaItems.find(m =>
+      m.shortcode === shortcode || (m.permalink && m.permalink.includes(shortcode))
+    );
+    if (!found) { console.warn('[IG] shortcode ' + shortcode + ' not found in @' + handle + ' recent 50 posts'); return null; }
+
+    // Views not available via business_discovery — estimate from likes
+    const estViews = (found.like_count || 0) * 15;
+
+    console.log(`[IG] @${handle} post ${shortcode}: ${found.like_count} likes, ${found.comments_count} comments (est ${estViews} views)`);
+    return {
+      views: estViews,
+      likes: parseInt(found.like_count) || 0,
+      comments: parseInt(found.comments_count) || 0,
+      thumb: found.thumbnail_url || ''
+    };
+  } catch (e) {
+    console.warn('[IG] fetchIGStatsViaDiscovery error:', e.message);
+    return null;
+  }
+}
+
 async function refreshIGStats(dest, shortcode) {
   const btn = document.getElementById('igRefresh_' + dest);
   if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
@@ -8783,7 +8823,15 @@ async function saveInfConteudo() {
   if (platform === 'instagram') {
     const shortcode = extractIGShortcode(link);
     if (shortcode) {
-      const stats = await fetchIGStats(shortcode, link);
+      let stats = await fetchIGStats(shortcode, link);
+      // Fallback: if not found in FullPro's own media, use business_discovery with influencer's handle
+      if (!stats) {
+        const inf = PERF_INFLUENCERS.find(i => i.id === infId);
+        if (inf?.instagram) {
+          console.log('[IG] Fallback: buscando via business_discovery de @' + inf.instagram);
+          stats = await fetchIGStatsViaDiscovery(inf.instagram, shortcode);
+        }
+      }
       if (stats) {
         payload.views = stats.views || 0;
         payload.likes = stats.likes || 0;
