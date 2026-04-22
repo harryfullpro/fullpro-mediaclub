@@ -5487,9 +5487,6 @@ function buildPostCard(dest, data) {
         embedHtml = `<div class="post-embed">
           <a href="${escHtml(data.link)}" target="_blank" rel="noopener">
             <img src="${escHtml(igThumb)}" alt="thumbnail" loading="lazy" style="width:100%;height:100%;object-fit:cover"/>
-            <div style="position:absolute;bottom:8px;right:8px;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);border-radius:6px;padding:3px 6px">
-              ${info.icon}
-            </div>
           </a>
         </div>`;
       } else {
@@ -5508,9 +5505,6 @@ function buildPostCard(dest, data) {
         embedHtml = `<div class="post-embed">
           <a href="${escHtml(data.link)}" target="_blank" rel="noopener">
             <img src="${escHtml(tkThumb)}" alt="thumbnail" loading="lazy" style="width:100%;height:100%;object-fit:cover"/>
-            <div style="position:absolute;bottom:8px;right:8px;background:#010101;border-radius:6px;padding:3px 6px">
-              ${info.icon}
-            </div>
           </a>
         </div>`;
       } else {
