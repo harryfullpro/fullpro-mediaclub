@@ -1296,130 +1296,125 @@
     font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.5;
   }
 
-  /* Influencer Card Styles */
+  /* ── Influencer Hub Tabs ── */
+  .inf-tabs { display:flex; gap:4px; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:0; }
+  .inf-tab {
+    padding:10px 18px; font-size:12px; font-weight:600; color:var(--text-muted); cursor:pointer;
+    border:none; background:none; font-family:inherit; border-bottom:2px solid transparent;
+    transition:all .15s; letter-spacing:.3px; text-transform:uppercase;
+  }
+  .inf-tab:hover { color:var(--text); }
+  .inf-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+  .inf-tab-content { display:none; }
+  .inf-tab-content.active { display:block; }
+
+  /* ── Influencer Hub Stat Cards ── */
+  .inf-stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+  .inf-stat-card {
+    background:var(--bg-card); border:1px solid var(--border); border-radius:14px;
+    padding:18px 20px; display:flex; align-items:center; gap:14px;
+  }
+  .inf-stat-icon {
+    width:42px; height:42px; border-radius:12px; display:flex; align-items:center;
+    justify-content:center; flex-shrink:0;
+  }
+  .inf-stat-label { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; font-weight:500; }
+  .inf-stat-value { font-size:28px; font-weight:700; line-height:1.1; }
+
+  /* ── Influencer Card (Visão Geral / Config) ── */
   .inf-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; transition: border-color .15s;
   }
   .inf-card:hover { border-color: var(--border-hi); }
-  .inf-card-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 16px;
-  }
-  .inf-card-head-left { flex: 1; }
-  .inf-card-head-right { text-align: right; }
+  .inf-card-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
+  .inf-card-head-left { flex:1; }
+  .inf-card-head-right { text-align:right; }
   .inf-badge {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    padding: 3px 8px;
-    border-radius: 4px;
-    text-transform: uppercase;
-    display: inline-block;
-    margin-bottom: 6px;
+    font-size:10px; font-weight:700; letter-spacing:1px; padding:3px 8px;
+    border-radius:4px; text-transform:uppercase; display:inline-block; margin-bottom:6px;
   }
-  .inf-badge.macro {
-    background: rgba(249, 115, 22, 0.15);
-    color: #f97316;
-  }
-  .inf-badge.micro {
-    background: rgba(168, 85, 247, 0.15);
-    color: #a855f7;
-  }
-  .inf-badge.nano {
-    background: rgba(59, 130, 246, 0.15);
-    color: #3b82f6;
-  }
-  .inf-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-    margin: 4px 0;
-  }
-  .inf-handle {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 2px;
-  }
-  .inf-followers-label {
-    font-size: 10px;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-  }
-  .inf-followers {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px;
-    line-height: 1;
-    color: var(--text);
-    margin-top: 4px;
-  }
-  .inf-table {
-    width: 100%;
-    font-size: 12px;
-    border-collapse: collapse;
-    margin: 16px 0;
-  }
+  .inf-badge.macro { background:rgba(249,115,22,.15); color:#f97316; }
+  .inf-badge.micro { background:rgba(168,85,247,.15); color:#a855f7; }
+  .inf-badge.nano { background:rgba(59,130,246,.15); color:#3b82f6; }
+  .inf-name { font-size:14px; font-weight:600; color:var(--text); margin:4px 0; }
+  .inf-handle { font-size:12px; color:var(--text-muted); margin-top:2px; }
+  .inf-followers-label { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
+  .inf-followers { font-family:'Bebas Neue',sans-serif; font-size:20px; line-height:1; color:var(--text); margin-top:4px; }
+
+  /* ── Influencer Table (reusable) ── */
+  .inf-table { width:100%; font-size:12px; border-collapse:collapse; margin:16px 0; }
   .inf-table th {
-    font-size: 10px;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-    padding: 8px 0;
-    text-align: right;
-    border-bottom: 1px solid var(--border);
+    font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px;
+    font-weight:600; padding:8px 0; text-align:right; border-bottom:1px solid var(--border);
   }
-  .inf-table th:first-child {
-    text-align: left;
+  .inf-table th:first-child { text-align:left; }
+  .inf-table td { padding:8px 0; border-top:1px solid var(--border); }
+  .inf-table td:first-child { color:var(--text-muted); font-size:11px; text-transform:uppercase; letter-spacing:.3px; font-weight:500; }
+  .inf-table td:nth-child(2) { text-align:right; color:var(--text-dim); }
+  .inf-table td:nth-child(3) { text-align:right; color:var(--primary); font-weight:600; }
+
+  /* ── Inf list table (for Cupons, Envios, Financeiro) ── */
+  .inf-list-table { width:100%; font-size:12px; border-collapse:collapse; }
+  .inf-list-table thead { border-bottom:2px solid var(--border); }
+  .inf-list-table th {
+    font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px;
+    font-weight:600; padding:10px 12px; text-align:left;
   }
-  .inf-table td {
-    padding: 8px 0;
-    border-top: 1px solid var(--border);
+  .inf-list-table th:last-child { text-align:right; }
+  .inf-list-table td { padding:12px; border-top:1px solid var(--border); vertical-align:middle; }
+  .inf-list-table tr:hover { background:var(--bg-elev); }
+  .inf-list-table .inf-row-name { display:flex; align-items:center; gap:10px; }
+  .inf-list-table .inf-row-avatar {
+    width:32px; height:32px; border-radius:50%; background:var(--primary);
+    display:flex; align-items:center; justify-content:center; color:#fff;
+    font-weight:700; font-size:12px; flex-shrink:0;
   }
-  .inf-table td:first-child {
-    color: var(--text-muted);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    font-weight: 500;
+  .inf-list-table .inf-row-info { line-height:1.3; }
+  .inf-list-table .inf-row-info .name { font-weight:600; color:var(--text); font-size:13px; }
+  .inf-list-table .inf-row-info .handle { color:var(--text-muted); font-size:11px; }
+
+  /* ── Coupon badge ── */
+  .inf-coupon-badge {
+    display:inline-block; padding:4px 10px; background:rgba(168,85,247,.12);
+    color:#a855f7; border-radius:6px; font-size:11px; font-weight:700;
+    letter-spacing:.5px; font-family:'JetBrains Mono',monospace;
   }
-  .inf-table td:nth-child(2) {
-    text-align: right;
-    color: var(--text-dim);
+
+  /* ── Motorcycle tag ── */
+  .inf-moto-tag {
+    display:inline-flex; align-items:center; gap:4px; padding:3px 8px;
+    background:var(--bg-elev); border:1px solid var(--border); border-radius:6px;
+    font-size:11px; color:var(--text-dim); margin:2px;
   }
-  .inf-table td:nth-child(3) {
-    text-align: right;
-    color: var(--primary);
-    font-weight: 600;
+  .inf-moto-tag .remove { cursor:pointer; color:var(--text-muted); font-size:14px; margin-left:4px; }
+  .inf-moto-tag .remove:hover { color:var(--danger); }
+
+  /* ── Action icons ── */
+  .inf-actions { display:flex; gap:6px; justify-content:flex-end; }
+  .inf-action-icon {
+    width:30px; height:30px; border-radius:8px; border:1px solid var(--border);
+    background:var(--bg-card); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; transition:all .15s; color:var(--text-muted);
   }
-  .inf-coupon {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 14px;
-    padding: 10px 14px;
-    background: var(--bg-elev);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    cursor: pointer;
+  .inf-action-icon:hover { border-color:var(--primary); color:var(--primary); }
+  .inf-action-icon.danger:hover { border-color:var(--danger); color:var(--danger); }
+
+  /* ── Content link cards ── */
+  .inf-content-card {
+    background:var(--bg-card); border:1px solid var(--border); border-radius:10px;
+    padding:14px 16px; display:flex; align-items:center; gap:12px; margin-bottom:8px;
+    transition:border-color .15s;
   }
-  .inf-coupon:hover {
-    border-color: var(--primary);
+  .inf-content-card:hover { border-color:var(--border-hi); }
+  .inf-content-platform {
+    width:36px; height:36px; border-radius:8px; display:flex; align-items:center;
+    justify-content:center; flex-shrink:0;
   }
-  .inf-coupon-text {
-    font-size: 12px;
-    color: var(--text-dim);
-  }
-  .inf-coupon-arrow {
-    color: var(--text-muted);
-    font-size: 14px;
-  }
+
+  /* ── Ranking bar ── */
+  .inf-rank-bar { height:6px; border-radius:3px; background:var(--border); overflow:hidden; margin-top:6px; }
+  .inf-rank-fill { height:100%; border-radius:3px; transition:width .4s ease; }
 
   /* ============================================
      RESPONSIVE: Ultrawide (>1600px)
@@ -1448,8 +1443,10 @@
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .dash-kpi-row { grid-template-columns: repeat(2, 1fr) !important; }
     .cal-top { grid-template-columns: 1fr 1fr !important; }
-    #perfInfluencersList { grid-template-columns: 1fr !important; }
-    #infSummaryCards { grid-template-columns: 1fr !important; }
+    #infOverviewCards { grid-template-columns: 1fr !important; }
+    .inf-stat-grid { grid-template-columns: repeat(2,1fr) !important; }
+    .inf-tabs { overflow-x:auto; flex-wrap:nowrap; }
+    .inf-tab { white-space:nowrap; font-size:11px; padding:8px 12px; }
   }
 
   /* ============================================
@@ -1548,9 +1545,11 @@
     .engagement-stat { padding: 4px 6px; }
     .post-actions { flex-wrap: wrap; }
 
-    /* Influencer cards */
-    #infSummaryCards { grid-template-columns: 1fr !important; }
-    #perfInfluencersList { grid-template-columns: 1fr !important; }
+    /* Influencer hub */
+    .inf-stat-grid { grid-template-columns: 1fr !important; }
+    #infOverviewCards { grid-template-columns: 1fr !important; }
+    .inf-list-table { font-size:11px; }
+    .inf-list-table th:nth-child(n+3), .inf-list-table td:nth-child(n+3) { display:none; }
 
     /* Checkin grid */
     .checkin-grid { grid-template-columns: 1fr !important; }
@@ -2074,19 +2073,88 @@
       <div id="perfPostsList"></div>
     </div>
 
-    <!-- INFLUENCIADORES VIEW -->
+    <!-- INFLUENCIADORES HUB VIEW -->
     <div id="view-perf-influencers" style="display:none">
       <div class="page-head">
         <div>
           <h1>Influenciadores</h1>
-          <p id="infSubtitle">Comparativo conteúdo geral × patrocinado FullPro.</p>
+          <p id="infSubtitle">Hub de gestão de influenciadores patrocinados FullPro</p>
         </div>
-        <button class="action-btn view" style="padding:10px 16px;font-size:13px" onclick="openAddInfluencerModal()">+ Novo influenciador</button>
+        <button class="action-btn view" style="padding:10px 16px;font-size:13px" onclick="openInfModal()">+ Novo Influenciador</button>
       </div>
-      <!-- Summary stats -->
-      <div class="stats-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:18px" id="infSummaryCards"></div>
-      <!-- Influencer cards -->
-      <div id="perfInfluencersList" style="display:grid;grid-template-columns:1fr 1fr;gap:16px"></div>
+
+      <!-- Hub Tabs -->
+      <div class="inf-tabs" id="infHubTabs">
+        <button class="inf-tab active" data-inftab="visao" onclick="switchInfTab('visao')">Visão Geral</button>
+        <button class="inf-tab" data-inftab="config" onclick="switchInfTab('config')">Configurações</button>
+        <button class="inf-tab" data-inftab="cupons" onclick="switchInfTab('cupons')">Cupons & Métricas</button>
+        <button class="inf-tab" data-inftab="envios" onclick="switchInfTab('envios')">Envios & Produtos</button>
+        <button class="inf-tab" data-inftab="conteudo" onclick="switchInfTab('conteudo')">Conteúdo</button>
+        <button class="inf-tab" data-inftab="financeiro" onclick="switchInfTab('financeiro')">Financeiro</button>
+      </div>
+
+      <!-- TAB: Visão Geral -->
+      <div class="inf-tab-content active" id="infTabVisao">
+        <div class="inf-stat-grid" id="infOverviewStats"></div>
+        <div class="cal-card" style="margin-bottom:16px">
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:14px">Ranking de Influenciadores</h3>
+          <div id="infRanking"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" id="infOverviewCards"></div>
+      </div>
+
+      <!-- TAB: Configurações -->
+      <div class="inf-tab-content" id="infTabConfig">
+        <div class="cal-card" style="margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <h3 style="font-size:14px;font-weight:700;margin:0">Influenciadores Cadastrados</h3>
+            <span style="font-size:12px;color:var(--text-muted)" id="infConfigCount">0 cadastrados</span>
+          </div>
+          <div id="infConfigList"></div>
+        </div>
+      </div>
+
+      <!-- TAB: Cupons & Métricas -->
+      <div class="inf-tab-content" id="infTabCupons">
+        <div class="inf-stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px" id="infCuponsStats"></div>
+        <div class="cal-card">
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:14px">Desempenho por Cupom</h3>
+          <div id="infCuponsList"></div>
+        </div>
+      </div>
+
+      <!-- TAB: Envios & Produtos -->
+      <div class="inf-tab-content" id="infTabEnvios">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div></div>
+          <button class="action-btn view" style="padding:8px 14px;font-size:12px" onclick="openInfEnvioModal()">+ Novo Envio</button>
+        </div>
+        <div class="cal-card">
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:14px">Histórico de Envios</h3>
+          <div id="infEnviosList"></div>
+        </div>
+      </div>
+
+      <!-- TAB: Conteúdo -->
+      <div class="inf-tab-content" id="infTabConteudo">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div></div>
+          <button class="action-btn view" style="padding:8px 14px;font-size:12px" onclick="openInfConteudoModal()">+ Registrar Conteúdo</button>
+        </div>
+        <div class="cal-card">
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:14px">Conteúdos Publicados</h3>
+          <div id="infConteudoList"></div>
+        </div>
+      </div>
+
+      <!-- TAB: Financeiro -->
+      <div class="inf-tab-content" id="infTabFinanceiro">
+        <div class="inf-stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px" id="infFinanceiroStats"></div>
+        <div class="cal-card">
+          <h3 style="font-size:14px;font-weight:700;margin-bottom:14px">Extrato por Influenciador</h3>
+          <div id="infFinanceiroList"></div>
+        </div>
+      </div>
     </div>
 
     <!-- BONIFICAÇÃO VIEW -->
@@ -2588,97 +2656,189 @@
   </div>
 </div>
 
-<!-- Modal Adicionar Influenciador -->
-<div class="modal" id="perfAddInfluencerModal">
-  <div class="modal-content" style="max-width:900px">
+<!-- Modal Influenciador (Criar / Editar) -->
+<div class="modal" id="infModal">
+  <div class="modal-content" style="max-width:960px">
     <div class="modal-head">
-      <h3>Adicionar influenciador</h3>
-      <button class="modal-close" onclick="closePerfAddInfluencerModal()">×</button>
+      <h3 id="infModalTitle">Novo Influenciador</h3>
+      <button class="modal-close" onclick="closeInfModal()">×</button>
     </div>
-    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+    <div class="modal-body" style="max-height:72vh;overflow-y:auto">
       <div class="book-form">
-        <!-- Dados Gerais -->
+        <input type="hidden" id="infEditId" value=""/>
+
+        <!-- Dados Pessoais -->
         <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px">
-          <legend style="padding:0 8px;color:var(--text-muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Dados gerais</legend>
+          <legend style="padding:0 8px;color:var(--text-muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Dados Pessoais</legend>
+          <div class="book-row">
+            <div><label>Nome completo *</label><input type="text" id="infName" placeholder="Nome completo"/></div>
+            <div><label>CPF</label><input type="text" id="infCpf" placeholder="000.000.000-00"/></div>
+          </div>
+          <div class="book-row">
+            <div><label>Email</label><input type="email" id="infEmail" placeholder="email@example.com"/></div>
+            <div><label>Telefone / WhatsApp *</label><input type="text" id="infWhatsapp" placeholder="(47) 99999-9999"/></div>
+          </div>
+          <label>Notas</label>
+          <textarea style="width:100%;min-height:50px;padding:10px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:12px;font-family:inherit;resize:vertical" id="infNotes" placeholder="Observações gerais..."></textarea>
+        </fieldset>
 
-          <label>Instagram handle *</label>
-          <input type="text" id="infInstagram" placeholder="@username"/>
+        <!-- Endereço de Envio -->
+        <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px">
+          <legend style="padding:0 8px;color:var(--text-muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Endereço de Envio</legend>
+          <div class="book-row">
+            <div style="flex:2"><label>Rua / Logradouro</label><input type="text" id="infRua" placeholder="Rua Exemplo, 123"/></div>
+            <div style="flex:1"><label>Complemento</label><input type="text" id="infComplemento" placeholder="Apto 4B"/></div>
+          </div>
+          <div class="book-row">
+            <div><label>Bairro</label><input type="text" id="infBairro" placeholder="Centro"/></div>
+            <div><label>Cidade</label><input type="text" id="infCidade" placeholder="Joinville"/></div>
+            <div><label>UF</label><input type="text" id="infUf" placeholder="SC" maxlength="2" style="text-transform:uppercase"/></div>
+            <div><label>CEP</label><input type="text" id="infCep" placeholder="89000-000"/></div>
+          </div>
+        </fieldset>
 
-          <label>Nome do influenciador</label>
-          <input type="text" id="infName" placeholder="Nome completo"/>
-
+        <!-- Redes Sociais -->
+        <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px">
+          <legend style="padding:0 8px;color:var(--text-muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Redes Sociais</legend>
+          <div class="book-row">
+            <div><label>Instagram *</label><input type="text" id="infInstagram" placeholder="@username"/></div>
+            <div><label>Seguidores IG</label><input type="number" id="infFollowers" min="0" placeholder="0"/></div>
+          </div>
+          <div class="book-row">
+            <div><label>YouTube</label><input type="text" id="infYoutube" placeholder="@channel ou URL"/></div>
+            <div><label>Inscritos YT</label><input type="number" id="infYtSubs" min="0" placeholder="0"/></div>
+          </div>
+          <div class="book-row">
+            <div><label>TikTok</label><input type="text" id="infTiktok" placeholder="@username"/></div>
+            <div><label>Seguidores TK</label><input type="number" id="infTkFollowers" min="0" placeholder="0"/></div>
+          </div>
           <label>Categoria</label>
           <select id="infCategory">
-            <option value="">Auto-detect (por seguidores)</option>
+            <option value="">Auto-detect (por seguidores IG)</option>
             <option value="macro">MACRO (&gt;100k)</option>
             <option value="micro">MICRO (&gt;10k)</option>
             <option value="nano">NANO (&lt;10k)</option>
           </select>
+        </fieldset>
 
-          <label>Seguidores</label>
-          <input type="number" id="infFollowers" min="0" placeholder="0"/>
+        <!-- Motos -->
+        <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px">
+          <legend style="padding:0 8px;color:var(--text-muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Motos</legend>
+          <div id="infMotosList" style="margin-bottom:10px"></div>
+          <div class="book-row">
+            <div style="flex:2"><input type="text" id="infMotoInput" placeholder="Ex: BMW R 1300 GS 2025"/></div>
+            <div style="flex:0"><button type="button" class="action-btn view" style="padding:8px 14px;font-size:12px;white-space:nowrap" onclick="addInfMoto()">+ Moto</button></div>
+          </div>
+        </fieldset>
 
-          <label>WhatsApp</label>
-          <input type="text" id="infWhatsapp" placeholder="(47) 99999-9999"/>
-
-          <label>Notas</label>
-          <textarea style="width:100%;min-height:60px;padding:10px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:12px;font-family:inherit;resize:vertical" id="infNotes" placeholder="Informações adicionais..."></textarea>
+        <!-- Cupom -->
+        <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px">
+          <legend style="padding:0 8px;color:var(--text-muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Cupom de Desconto</legend>
+          <div class="book-row">
+            <div><label>Código do cupom</label><input type="text" id="infCouponCode" placeholder="FULLINF10" style="text-transform:uppercase;font-family:'JetBrains Mono',monospace"/></div>
+            <div><label>Desconto (%)</label><input type="number" id="infCouponDiscount" min="0" max="100" placeholder="10"/></div>
+          </div>
+          <div class="book-row">
+            <div><label>Link personalizado</label><input type="text" id="infCouponLink" placeholder="https://fullpro.parts/?ref=nome"/></div>
+          </div>
         </fieldset>
 
         <!-- Stats Geral vs FullPro -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-          <!-- Dados Geral -->
           <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px">
-            <legend style="padding:0 8px;color:var(--text-muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Estatísticas geral</legend>
-
-            <label>Views (total)</label>
-            <input type="number" id="infViewsGeral" min="0" placeholder="0"/>
-
-            <label>Posts (total)</label>
-            <input type="number" id="infPostsGeral" min="0" placeholder="0"/>
-
-            <label>Engajamento (%)</label>
-            <input type="number" id="infEngagementGeral" min="0" max="100" step="0.1" placeholder="0"/>
+            <legend style="padding:0 8px;color:var(--text-muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Estatísticas Geral</legend>
+            <label>Views (total)</label><input type="number" id="infViewsGeral" min="0" placeholder="0"/>
+            <label>Posts (total)</label><input type="number" id="infPostsGeral" min="0" placeholder="0"/>
+            <label>Engajamento (%)</label><input type="number" id="infEngagementGeral" min="0" max="100" step="0.1" placeholder="0"/>
           </fieldset>
-
-          <!-- Dados FullPro -->
           <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px">
             <legend style="padding:0 8px;color:var(--text-muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Estatísticas FullPro</legend>
-
-            <label>Views (patrocinado)</label>
-            <input type="number" id="infViewsFullpro" min="0" placeholder="0"/>
-
-            <label>Posts (FullPro)</label>
-            <input type="number" id="infPostsFullpro" min="0" placeholder="0"/>
-
-            <label>Engajamento (%)</label>
-            <input type="number" id="infEngagementFullpro" min="0" max="100" step="0.1" placeholder="0"/>
+            <label>Views (patrocinado)</label><input type="number" id="infViewsFullpro" min="0" placeholder="0"/>
+            <label>Posts (FullPro)</label><input type="number" id="infPostsFullpro" min="0" placeholder="0"/>
+            <label>Engajamento (%)</label><input type="number" id="infEngagementFullpro" min="0" max="100" step="0.1" placeholder="0"/>
           </fieldset>
         </div>
-
-        <!-- Cupom -->
-        <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px">
-          <legend style="padding:0 8px;color:var(--text-muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Cupom / Vendas</legend>
-
-          <label>Código do cupom</label>
-          <input type="text" id="infCouponCode" placeholder="CUPOM10"/>
-
-          <div class="book-row">
-            <div>
-              <label>Número de vendas</label>
-              <input type="number" id="infCouponSales" min="0" placeholder="0"/>
-            </div>
-            <div>
-              <label>Faturamento (R$)</label>
-              <input type="number" id="infCouponRevenue" min="0" step="0.01" placeholder="0.00"/>
-            </div>
-          </div>
-        </fieldset>
       </div>
     </div>
     <div class="modal-foot">
-      <button class="action-btn" onclick="closePerfAddInfluencerModal()">Cancelar</button>
-      <button class="action-btn approve" onclick="savePerfInfluencer()">Salvar influenciador</button>
+      <button class="action-btn" onclick="closeInfModal()">Cancelar</button>
+      <button class="action-btn approve" onclick="saveInfluencer()">Salvar Influenciador</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Envio de Produto -->
+<div class="modal" id="infEnvioModal">
+  <div class="modal-content" style="max-width:560px">
+    <div class="modal-head">
+      <h3>Registrar Envio</h3>
+      <button class="modal-close" onclick="closeInfEnvioModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="book-form">
+        <label>Influenciador *</label>
+        <select id="envioInfId"></select>
+        <label>Produto / Peça *</label>
+        <input type="text" id="envioProduto" placeholder="Ex: Slider protetor motor R1300GS"/>
+        <div class="book-row">
+          <div><label>Quantidade</label><input type="number" id="envioQtd" min="1" value="1"/></div>
+          <div><label>Valor (R$)</label><input type="number" id="envioValor" min="0" step="0.01" placeholder="0.00"/></div>
+        </div>
+        <label>Código de rastreio</label>
+        <input type="text" id="envioTracking" placeholder="Código dos Correios / transportadora"/>
+        <label>Status</label>
+        <select id="envioStatus">
+          <option value="preparando">Preparando</option>
+          <option value="enviado">Enviado</option>
+          <option value="entregue">Entregue</option>
+        </select>
+        <label>Notas</label>
+        <textarea style="width:100%;min-height:50px;padding:10px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:12px;font-family:inherit;resize:vertical" id="envioNotas" placeholder="Observações..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="action-btn" onclick="closeInfEnvioModal()">Cancelar</button>
+      <button class="action-btn approve" onclick="saveInfEnvio()">Salvar Envio</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Conteúdo -->
+<div class="modal" id="infConteudoModal">
+  <div class="modal-content" style="max-width:560px">
+    <div class="modal-head">
+      <h3>Registrar Conteúdo</h3>
+      <button class="modal-close" onclick="closeInfConteudoModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="book-form">
+        <label>Influenciador *</label>
+        <select id="conteudoInfId"></select>
+        <label>Plataforma *</label>
+        <select id="conteudoPlatform">
+          <option value="instagram">Instagram</option>
+          <option value="youtube">YouTube</option>
+          <option value="tiktok">TikTok</option>
+          <option value="outro">Outro</option>
+        </select>
+        <label>Tipo</label>
+        <select id="conteudoTipo">
+          <option value="reels">Reels / Short</option>
+          <option value="video">Vídeo longo</option>
+          <option value="story">Story</option>
+          <option value="post">Post / Foto</option>
+        </select>
+        <label>Link do conteúdo *</label>
+        <input type="text" id="conteudoLink" placeholder="https://..."/>
+        <label>Descrição</label>
+        <input type="text" id="conteudoDesc" placeholder="Breve descrição do conteúdo"/>
+        <label>Data de publicação</label>
+        <input type="date" id="conteudoDate"/>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="action-btn" onclick="closeInfConteudoModal()">Cancelar</button>
+      <button class="action-btn approve" onclick="saveInfConteudo()">Salvar Conteúdo</button>
     </div>
   </div>
 </div>
@@ -7560,124 +7720,403 @@ function renderPerfPosts() {
   }).join('');
 }
 
-function renderPerfInfluencers() {
-  // Filter active influencers only
+/* ═══════════════════════════════════════════
+   INFLUENCER HUB — Render functions
+   ═══════════════════════════════════════════ */
+let INF_CURRENT_TAB = 'visao';
+let INF_MOTOS_TEMP = [];
+let INF_ENVIOS = [];
+let INF_CONTEUDOS = [];
+
+function switchInfTab(tab) {
+  INF_CURRENT_TAB = tab;
+  document.querySelectorAll('.inf-tab').forEach(t => t.classList.toggle('active', t.dataset.inftab === tab));
+  document.querySelectorAll('.inf-tab-content').forEach(c => c.classList.remove('active'));
+  const map = { visao:'infTabVisao', config:'infTabConfig', cupons:'infTabCupons', envios:'infTabEnvios', conteudo:'infTabConteudo', financeiro:'infTabFinanceiro' };
+  const el = document.getElementById(map[tab]);
+  if (el) el.classList.add('active');
+  renderInfHub();
+}
+
+async function loadInfExtras() {
+  const { data: envios } = await sb.from('influencer_envios').select('*').order('created_at',{ascending:false});
+  INF_ENVIOS = envios || [];
+  const { data: conteudos } = await sb.from('influencer_conteudos').select('*').order('created_at',{ascending:false});
+  INF_CONTEUDOS = conteudos || [];
+}
+
+function renderPerfInfluencers() { renderInfHub(); }
+
+function renderInfHub() {
   const active = PERF_INFLUENCERS.filter(i => i.status === 'ativo' || !i.status);
+  const sub = document.getElementById('infSubtitle');
+  if (sub) sub.textContent = `${active.length} influenciadores ativos · Hub de gestão FullPro`;
 
-  // Render summary cards
-  const summaryEl = document.getElementById('infSummaryCards');
-  if (summaryEl) {
-    const totalViewsFullpro = active.reduce((sum, i) => sum + (i.views_fullpro || 0), 0);
-    const totalCouponSales = active.reduce((sum, i) => sum + (i.coupon_sales || 0), 0);
-    const totalCouponRevenue = active.reduce((sum, i) => sum + (i.coupon_revenue || 0), 0);
+  renderInfVisaoGeral(active);
+  renderInfConfig(active);
+  renderInfCupons(active);
+  renderInfEnvios(active);
+  renderInfConteudo(active);
+  renderInfFinanceiro(active);
+}
 
-    summaryEl.innerHTML = `
-      <div class="stat-card">
-        <div class="label">Views patrocinadas</div>
-        <div class="value">${formatNum(totalViewsFullpro)}</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">Vendas via cupom</div>
-        <div class="value">${totalCouponSales}</div>
-      </div>
-      <div class="stat-card" style="border-left:3px solid var(--primary)">
-        <div class="label">Faturamento atribuído</div>
-        <div class="value">R$ <small>${formatBRL(totalCouponRevenue)}</small></div>
-      </div>
-    `;
-  }
+function infInitials(name) {
+  return (name || '?').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+}
+function infCatColor(cat) {
+  return { macro:'#f97316', micro:'#a855f7', nano:'#3b82f6' }[cat] || '#6b7280';
+}
+function getInfCategory(inf) {
+  const f = inf.followers || 0;
+  return inf.category || (f > 100000 ? 'macro' : f > 10000 ? 'micro' : 'nano');
+}
 
-  // Update subtitle
-  const subtitleEl = document.getElementById('infSubtitle');
-  if (subtitleEl) {
-    subtitleEl.textContent = `${active.length} ativos · comparativo conteúdo geral × patrocinado FullPro`;
-  }
-
-  // Render influencer cards
-  const el = document.getElementById('perfInfluencersList');
+/* ── TAB: Visão Geral ── */
+function renderInfVisaoGeral(active) {
+  const el = document.getElementById('infOverviewStats');
   if (!el) return;
+  const totalViews = active.reduce((s,i) => s + (i.views_fullpro||0), 0);
+  const totalSales = active.reduce((s,i) => s + (i.coupon_sales||0), 0);
+  const totalRevenue = active.reduce((s,i) => s + (i.coupon_revenue||0), 0);
 
-  if (active.length === 0) {
-    el.innerHTML = '<div class="cal-card" style="grid-column:1/-1"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum influenciador ativo cadastrado.</p></div>';
-    return;
+  el.innerHTML = `
+    <div class="inf-stat-card">
+      <div class="inf-stat-icon" style="background:rgba(168,85,247,.12)">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#a855f7" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      </div>
+      <div>
+        <div class="inf-stat-label">Influenciadores</div>
+        <div class="inf-stat-value" style="color:#a855f7">${active.length}</div>
+      </div>
+    </div>
+    <div class="inf-stat-card">
+      <div class="inf-stat-icon" style="background:rgba(59,130,246,.12)">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#3b82f6" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </div>
+      <div>
+        <div class="inf-stat-label">Views Patrocinadas</div>
+        <div class="inf-stat-value" style="color:#3b82f6">${formatNum(totalViews)}</div>
+      </div>
+    </div>
+    <div class="inf-stat-card">
+      <div class="inf-stat-icon" style="background:rgba(34,197,94,.12)">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#22c55e" stroke-width="1.8"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+      </div>
+      <div>
+        <div class="inf-stat-label">Vendas via Cupom</div>
+        <div class="inf-stat-value" style="color:#22c55e">${totalSales}</div>
+      </div>
+    </div>
+    <div class="inf-stat-card">
+      <div class="inf-stat-icon" style="background:rgba(249,115,22,.12)">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f97316" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      </div>
+      <div>
+        <div class="inf-stat-label">Faturamento</div>
+        <div class="inf-stat-value" style="color:#f97316;font-size:22px">R$ ${formatBRL(totalRevenue)}</div>
+      </div>
+    </div>
+  `;
+
+  // Ranking
+  const rankEl = document.getElementById('infRanking');
+  if (rankEl) {
+    if (active.length === 0) {
+      rankEl.innerHTML = '<p style="color:var(--text-muted);font-size:12px;text-align:center;padding:16px 0">Nenhum influenciador cadastrado.</p>';
+    } else {
+      const sorted = [...active].sort((a,b) => (b.views_fullpro||0) - (a.views_fullpro||0));
+      const maxViews = sorted[0]?.views_fullpro || 1;
+      rankEl.innerHTML = sorted.map((inf, i) => {
+        const cat = getInfCategory(inf);
+        const pct = maxViews > 0 ? ((inf.views_fullpro||0)/maxViews*100) : 0;
+        const motos = (inf.motos || []).join(', ') || 'Sem moto cadastrada';
+        return `<div style="display:flex;align-items:center;gap:14px;padding:12px 0;${i<sorted.length-1?'border-bottom:1px solid var(--border)':''}">
+          <div style="width:24px;font-family:'Bebas Neue';font-size:18px;color:${i<3?'var(--primary)':'var(--text-muted)'};text-align:center">${i+1}</div>
+          <div class="inf-list-table .inf-row-avatar" style="width:36px;height:36px;border-radius:50%;background:${infCatColor(cat)};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0">${infInitials(inf.name)}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px;color:var(--text)">${escHtml(inf.name)} <span class="inf-badge ${cat}" style="font-size:9px;padding:2px 5px;margin-left:4px">${cat.toUpperCase()}</span></div>
+            <div style="font-size:11px;color:var(--text-muted)">@${escHtml(inf.instagram)} · ${motos}</div>
+            <div class="inf-rank-bar" style="max-width:300px"><div class="inf-rank-fill" style="width:${pct}%;background:${infCatColor(cat)}"></div></div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-family:'Bebas Neue';font-size:20px;color:var(--text)">${formatNum(inf.views_fullpro||0)}</div>
+            <div style="font-size:10px;color:var(--text-muted)">views</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
   }
 
-  el.innerHTML = active.map(inf => {
-    // Determine category
-    const followers = inf.followers || 0;
-    const category = inf.category || (followers > 100000 ? 'macro' : followers > 10000 ? 'micro' : 'nano');
-    const categoryLabel = { macro: 'MACRO', micro: 'MICRO', nano: 'NANO' }[category] || category;
-
-    // Calculate views per post
-    const postsGeral = inf.posts_geral || 0;
-    const postsFullpro = inf.posts_fullpro || 0;
-    const viewsPerPostGeral = postsGeral > 0 ? (inf.views_geral || 0) / postsGeral : 0;
-    const viewsPerPostFullpro = postsFullpro > 0 ? (inf.views_fullpro || 0) / postsFullpro : 0;
-
-    // Engagement comparison
-    const engagementGeral = inf.engagement_geral || 0;
-    const engagementFullpro = inf.engagement_fullpro || 0;
-    const engagementArrow = engagementFullpro > engagementGeral ? '↑' : engagementFullpro < engagementGeral ? '↓' : '';
-
-    // Coupon info
-    const couponCode = inf.coupon_code || '';
-    const couponSales = inf.coupon_sales || 0;
-    const couponRevenue = inf.coupon_revenue || 0;
-    const couponText = couponCode ? `${couponCode} · ${couponSales} vendas · R$ ${formatBRL(couponRevenue)}` : 'Sem cupom';
-
-    return `
-      <div class="inf-card">
+  // Overview cards (top influencers)
+  const cardsEl = document.getElementById('infOverviewCards');
+  if (cardsEl) {
+    if (active.length === 0) {
+      cardsEl.innerHTML = '';
+      return;
+    }
+    cardsEl.innerHTML = active.slice(0,4).map(inf => {
+      const cat = getInfCategory(inf);
+      const catLabel = {macro:'MACRO',micro:'MICRO',nano:'NANO'}[cat]||cat;
+      const vpp = (inf.posts_fullpro||0) > 0 ? Math.round((inf.views_fullpro||0)/(inf.posts_fullpro)) : 0;
+      return `<div class="inf-card">
         <div class="inf-card-head">
           <div class="inf-card-head-left">
-            <div><span class="inf-badge ${category}">${categoryLabel}</span></div>
+            <span class="inf-badge ${cat}">${catLabel}</span>
             <div class="inf-name">${escHtml(inf.name)}</div>
             <div class="inf-handle">@${escHtml(inf.instagram)}</div>
           </div>
           <div class="inf-card-head-right">
             <div class="inf-followers-label">Seguidores</div>
-            <div class="inf-followers">${formatNum(followers)}</div>
+            <div class="inf-followers">${formatNum(inf.followers||0)}</div>
           </div>
         </div>
+        <table class="inf-table"><thead><tr><th style="text-align:left"></th><th>Geral</th><th>FullPro</th></tr></thead>
+        <tbody>
+          <tr><td>Views</td><td>${formatNum(inf.views_geral||0)}</td><td>${formatNum(inf.views_fullpro||0)}</td></tr>
+          <tr><td>Posts</td><td>${inf.posts_geral||0}</td><td>${inf.posts_fullpro||0}</td></tr>
+          <tr><td>Views/Post</td><td>${formatNum((inf.posts_geral||0)>0?Math.round((inf.views_geral||0)/(inf.posts_geral)):0)}</td><td>${formatNum(vpp)}</td></tr>
+          <tr><td>Engaj.</td><td>${(inf.engagement_geral||0).toFixed(1)}%</td><td>${(inf.engagement_fullpro||0).toFixed(1)}%</td></tr>
+        </tbody></table>
+        ${inf.coupon_code ? `<div style="padding:8px 12px;background:var(--bg-elev);border-radius:8px;font-size:12px;color:var(--text-dim)"><span class="inf-coupon-badge">${escHtml(inf.coupon_code)}</span> · ${inf.coupon_sales||0} vendas · R$ ${formatBRL(inf.coupon_revenue||0)}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+}
 
-        <table class="inf-table">
-          <thead>
-            <tr>
-              <th style="text-align:left"></th>
-              <th>Geral</th>
-              <th>FullPro</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Views</td>
-              <td>${formatNum(inf.views_geral || 0)}</td>
-              <td>${formatNum(inf.views_fullpro || 0)}</td>
-            </tr>
-            <tr>
-              <td>Posts</td>
-              <td>${postsGeral}</td>
-              <td>${postsFullpro}</td>
-            </tr>
-            <tr>
-              <td>Views/Post</td>
-              <td>${formatNum(Math.round(viewsPerPostGeral))}</td>
-              <td>${formatNum(Math.round(viewsPerPostFullpro))}</td>
-            </tr>
-            <tr>
-              <td>Engaj. %</td>
-              <td>${engagementGeral.toFixed(1)}%</td>
-              <td>${engagementFullpro.toFixed(1)}% ${engagementArrow}</td>
-            </tr>
-          </tbody>
-        </table>
+/* ── TAB: Configurações ── */
+function renderInfConfig(active) {
+  const countEl = document.getElementById('infConfigCount');
+  if (countEl) countEl.textContent = `${PERF_INFLUENCERS.length} cadastrados`;
 
-        <div class="inf-coupon" onclick="deletePerfInfluencer('${inf.id}')">
-          <div class="inf-coupon-text">${escHtml(couponText)}</div>
-          <div class="inf-coupon-arrow">×</div>
-        </div>
+  const el = document.getElementById('infConfigList');
+  if (!el) return;
+
+  if (PERF_INFLUENCERS.length === 0) {
+    el.innerHTML = '<p style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px 0">Nenhum influenciador cadastrado. Clique em "+ Novo Influenciador" para começar.</p>';
+    return;
+  }
+
+  el.innerHTML = `<table class="inf-list-table">
+    <thead><tr>
+      <th>Influenciador</th><th>Redes</th><th>Motos</th><th>Cupom</th><th>Status</th><th style="text-align:right">Ações</th>
+    </tr></thead>
+    <tbody>${PERF_INFLUENCERS.map(inf => {
+      const cat = getInfCategory(inf);
+      const motos = (inf.motos || []);
+      const statusColor = (inf.status === 'ativo' || !inf.status) ? 'var(--success)' : 'var(--text-muted)';
+      const statusLabel = (inf.status === 'ativo' || !inf.status) ? 'Ativo' : 'Inativo';
+      const socials = [];
+      if (inf.instagram) socials.push(`IG: @${inf.instagram}`);
+      if (inf.youtube) socials.push(`YT: ${inf.youtube}`);
+      if (inf.tiktok) socials.push(`TK: ${inf.tiktok}`);
+
+      return `<tr>
+        <td>
+          <div class="inf-row-name">
+            <div class="inf-row-avatar" style="background:${infCatColor(cat)}">${infInitials(inf.name)}</div>
+            <div class="inf-row-info">
+              <div class="name">${escHtml(inf.name)} <span class="inf-badge ${cat}" style="font-size:8px;padding:1px 5px">${cat.toUpperCase()}</span></div>
+              <div class="handle">${escHtml(inf.whatsapp || inf.email || '')}</div>
+            </div>
+          </div>
+        </td>
+        <td style="font-size:11px;color:var(--text-dim);max-width:160px">${socials.map(s => escHtml(s)).join('<br>')}</td>
+        <td>${motos.length > 0 ? motos.map(m => `<span class="inf-moto-tag">${escHtml(m)}</span>`).join('') : '<span style="color:var(--text-muted);font-size:11px">—</span>'}</td>
+        <td>${inf.coupon_code ? `<span class="inf-coupon-badge">${escHtml(inf.coupon_code)}</span>` : '<span style="color:var(--text-muted);font-size:11px">—</span>'}</td>
+        <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${statusColor};margin-right:6px"></span><span style="font-size:11px;color:var(--text-dim)">${statusLabel}</span></td>
+        <td>
+          <div class="inf-actions">
+            <div class="inf-action-icon" title="Editar" onclick="editInfluencer('${inf.id}')">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+            <div class="inf-action-icon ${(inf.status==='ativo'||!inf.status)?'danger':''}" title="${(inf.status==='ativo'||!inf.status)?'Desativar':'Ativar'}" onclick="toggleInfStatus('${inf.id}')">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">${(inf.status==='ativo'||!inf.status)?'<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>':'<path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>'}</svg>
+            </div>
+            <div class="inf-action-icon danger" title="Excluir" onclick="deleteInfluencer('${inf.id}')">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            </div>
+          </div>
+        </td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+/* ── TAB: Cupons & Métricas ── */
+function renderInfCupons(active) {
+  const withCoupon = active.filter(i => i.coupon_code);
+  const totalOrders = withCoupon.reduce((s,i) => s + (i.coupon_sales||0), 0);
+  const totalAccess = withCoupon.reduce((s,i) => s + (i.coupon_clicks||0), 0);
+  const totalRevenue = withCoupon.reduce((s,i) => s + (i.coupon_revenue||0), 0);
+
+  const statsEl = document.getElementById('infCuponsStats');
+  if (statsEl) {
+    statsEl.innerHTML = `
+      <div class="inf-stat-card">
+        <div class="inf-stat-icon" style="background:rgba(168,85,247,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#a855f7" stroke-width="1.8"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div>
+        <div><div class="inf-stat-label">Cupons Ativos</div><div class="inf-stat-value" style="color:#a855f7">${withCoupon.length}</div></div>
+      </div>
+      <div class="inf-stat-card">
+        <div class="inf-stat-icon" style="background:rgba(34,197,94,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#22c55e" stroke-width="1.8"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg></div>
+        <div><div class="inf-stat-label">Total Pedidos</div><div class="inf-stat-value" style="color:#22c55e">${totalOrders}</div></div>
+      </div>
+      <div class="inf-stat-card">
+        <div class="inf-stat-icon" style="background:rgba(249,115,22,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f97316" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+        <div><div class="inf-stat-label">Faturamento</div><div class="inf-stat-value" style="color:#f97316;font-size:22px">R$ ${formatBRL(totalRevenue)}</div></div>
       </div>
     `;
+  }
+
+  const listEl = document.getElementById('infCuponsList');
+  if (!listEl) return;
+
+  if (withCoupon.length === 0) {
+    listEl.innerHTML = '<p style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px 0">Nenhum cupom configurado. Configure cupons na aba Configurações.</p>';
+    return;
+  }
+
+  listEl.innerHTML = `<table class="inf-list-table">
+    <thead><tr><th>Influenciador</th><th>Cupom</th><th>Pedidos</th><th>Acessos</th><th style="text-align:right">Faturamento</th></tr></thead>
+    <tbody>${withCoupon.map(inf => {
+      const cat = getInfCategory(inf);
+      return `<tr>
+        <td><div class="inf-row-name">
+          <div class="inf-row-avatar" style="background:${infCatColor(cat)}">${infInitials(inf.name)}</div>
+          <div class="inf-row-info"><div class="name">${escHtml(inf.name)}</div><div class="handle">@${escHtml(inf.instagram)}</div></div>
+        </div></td>
+        <td><span class="inf-coupon-badge">${escHtml(inf.coupon_code)}</span>${inf.coupon_discount ? ` <span style="font-size:10px;color:var(--text-muted)">${inf.coupon_discount}% off</span>` : ''}</td>
+        <td style="font-weight:600;color:var(--text)">${inf.coupon_sales||0}</td>
+        <td style="color:var(--text-dim)">${inf.coupon_clicks||0}</td>
+        <td style="text-align:right;font-weight:600;color:var(--primary)">R$ ${formatBRL(inf.coupon_revenue||0)}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+/* ── TAB: Envios & Produtos ── */
+function renderInfEnvios(active) {
+  const el = document.getElementById('infEnviosList');
+  if (!el) return;
+
+  if (INF_ENVIOS.length === 0) {
+    el.innerHTML = '<p style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px 0">Nenhum envio registrado ainda.</p>';
+    return;
+  }
+
+  const statusBadge = s => {
+    const m = {preparando:['var(--warning)','Preparando'],enviado:['#3b82f6','Enviado'],entregue:['var(--success)','Entregue']};
+    const [c,l] = m[s] || ['var(--text-muted)',s];
+    return `<span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;background:${c}22;color:${c}">${l}</span>`;
+  };
+
+  el.innerHTML = `<table class="inf-list-table">
+    <thead><tr><th>Influenciador</th><th>Produto</th><th>Qtd</th><th>Valor</th><th>Rastreio</th><th>Status</th><th style="text-align:right">Data</th></tr></thead>
+    <tbody>${INF_ENVIOS.map(e => {
+      const inf = PERF_INFLUENCERS.find(i => i.id === e.influencer_id);
+      const name = inf ? inf.name : 'Desconhecido';
+      return `<tr>
+        <td style="font-weight:600;color:var(--text);font-size:12px">${escHtml(name)}</td>
+        <td style="color:var(--text-dim)">${escHtml(e.produto||'')}</td>
+        <td style="text-align:center">${e.qtd||1}</td>
+        <td style="color:var(--primary);font-weight:600">R$ ${formatBRL(e.valor||0)}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim)">${e.tracking ? escHtml(e.tracking) : '—'}</td>
+        <td>${statusBadge(e.status||'preparando')}</td>
+        <td style="text-align:right;font-size:11px;color:var(--text-muted)">${e.created_at ? new Date(e.created_at).toLocaleDateString('pt-BR') : '—'}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+/* ── TAB: Conteúdo ── */
+function renderInfConteudo(active) {
+  const el = document.getElementById('infConteudoList');
+  if (!el) return;
+
+  if (INF_CONTEUDOS.length === 0) {
+    el.innerHTML = '<p style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px 0">Nenhum conteúdo registrado ainda.</p>';
+    return;
+  }
+
+  const platformIcon = p => {
+    const colors = {instagram:'#E4405F',youtube:'#FF0000',tiktok:'#00f2ea',outro:'#6b7280'};
+    return `<div class="inf-content-platform" style="background:${colors[p]||colors.outro}22">
+      <span style="font-size:11px;font-weight:700;color:${colors[p]||colors.outro}">${(p||'?').charAt(0).toUpperCase()+(p||'').slice(1,3).toUpperCase()}</span>
+    </div>`;
+  };
+
+  el.innerHTML = INF_CONTEUDOS.map(c => {
+    const inf = PERF_INFLUENCERS.find(i => i.id === c.influencer_id);
+    const name = inf ? inf.name : 'Desconhecido';
+    const tipoLabel = {reels:'Reels/Short',video:'Vídeo',story:'Story',post:'Post/Foto'}[c.tipo] || c.tipo;
+    return `<div class="inf-content-card">
+      ${platformIcon(c.platform)}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px;color:var(--text)">${escHtml(name)} <span style="font-size:11px;color:var(--text-muted);font-weight:400">· ${tipoLabel}</span></div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${escHtml(c.descricao||c.link||'')}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:11px;color:var(--text-muted)">${c.data_pub ? new Date(c.data_pub+'T12:00').toLocaleDateString('pt-BR') : (c.created_at ? new Date(c.created_at).toLocaleDateString('pt-BR') : '—')}</div>
+        ${c.link ? `<a href="${escHtml(c.link)}" target="_blank" rel="noopener" style="font-size:11px;color:var(--primary);text-decoration:none">Ver ↗</a>` : ''}
+      </div>
+      <div class="inf-action-icon danger" title="Excluir" onclick="deleteInfConteudo('${c.id}')" style="flex-shrink:0">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+      </div>
+    </div>`;
   }).join('');
+}
+
+/* ── TAB: Financeiro ── */
+function renderInfFinanceiro(active) {
+  const totalEnviosVal = INF_ENVIOS.reduce((s,e) => s + (e.valor||0)*(e.qtd||1), 0);
+  const totalRevenue = active.reduce((s,i) => s + (i.coupon_revenue||0), 0);
+  const roi = totalEnviosVal > 0 ? ((totalRevenue - totalEnviosVal) / totalEnviosVal * 100) : 0;
+
+  const statsEl = document.getElementById('infFinanceiroStats');
+  if (statsEl) {
+    statsEl.innerHTML = `
+      <div class="inf-stat-card">
+        <div class="inf-stat-icon" style="background:rgba(239,68,68,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ef4444" stroke-width="1.8"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+        <div><div class="inf-stat-label">Investido (Envios)</div><div class="inf-stat-value" style="color:#ef4444;font-size:22px">R$ ${formatBRL(totalEnviosVal)}</div></div>
+      </div>
+      <div class="inf-stat-card">
+        <div class="inf-stat-icon" style="background:rgba(34,197,94,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#22c55e" stroke-width="1.8"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+        <div><div class="inf-stat-label">Faturamento Cupons</div><div class="inf-stat-value" style="color:#22c55e;font-size:22px">R$ ${formatBRL(totalRevenue)}</div></div>
+      </div>
+      <div class="inf-stat-card">
+        <div class="inf-stat-icon" style="background:rgba(59,130,246,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#3b82f6" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+        <div><div class="inf-stat-label">ROI</div><div class="inf-stat-value" style="color:${roi>=0?'#22c55e':'#ef4444'};font-size:22px">${roi.toFixed(1)}%</div></div>
+      </div>
+    `;
+  }
+
+  const listEl = document.getElementById('infFinanceiroList');
+  if (!listEl) return;
+
+  if (active.length === 0) {
+    listEl.innerHTML = '<p style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px 0">Nenhum influenciador cadastrado.</p>';
+    return;
+  }
+
+  listEl.innerHTML = `<table class="inf-list-table">
+    <thead><tr><th>Influenciador</th><th>Produtos Enviados</th><th>Valor Investido</th><th>Faturamento</th><th style="text-align:right">Balanço</th></tr></thead>
+    <tbody>${active.map(inf => {
+      const cat = getInfCategory(inf);
+      const envios = INF_ENVIOS.filter(e => e.influencer_id === inf.id);
+      const investido = envios.reduce((s,e) => s + (e.valor||0)*(e.qtd||1), 0);
+      const faturamento = inf.coupon_revenue || 0;
+      const balance = faturamento - investido;
+      return `<tr>
+        <td><div class="inf-row-name">
+          <div class="inf-row-avatar" style="background:${infCatColor(cat)}">${infInitials(inf.name)}</div>
+          <div class="inf-row-info"><div class="name">${escHtml(inf.name)}</div><div class="handle">@${escHtml(inf.instagram)}</div></div>
+        </div></td>
+        <td style="color:var(--text-dim)">${envios.length} envio${envios.length!==1?'s':''}</td>
+        <td style="color:#ef4444;font-weight:600">R$ ${formatBRL(investido)}</td>
+        <td style="color:#22c55e;font-weight:600">R$ ${formatBRL(faturamento)}</td>
+        <td style="text-align:right;font-weight:700;color:${balance>=0?'#22c55e':'#ef4444'}">R$ ${formatBRL(Math.abs(balance))} ${balance>=0?'↑':'↓'}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
 }
 
 function renderPerfBonuses() {
@@ -7814,25 +8253,107 @@ function openAddPostModal() {
 }
 function closePerfAddPostModal() { document.getElementById('perfAddPostModal').classList.remove('show'); }
 
-function openAddInfluencerModal() {
-  document.getElementById('infName').value = '';
-  document.getElementById('infInstagram').value = '';
-  document.getElementById('infCategory').value = '';
-  document.getElementById('infFollowers').value = '';
-  document.getElementById('infWhatsapp').value = '';
-  document.getElementById('infNotes').value = '';
-  document.getElementById('infViewsGeral').value = '';
-  document.getElementById('infPostsGeral').value = '';
-  document.getElementById('infEngagementGeral').value = '';
-  document.getElementById('infViewsFullpro').value = '';
-  document.getElementById('infPostsFullpro').value = '';
-  document.getElementById('infEngagementFullpro').value = '';
-  document.getElementById('infCouponCode').value = '';
-  document.getElementById('infCouponSales').value = '';
-  document.getElementById('infCouponRevenue').value = '';
-  document.getElementById('perfAddInfluencerModal').classList.add('show');
+/* ═══ Influencer Modal (Create / Edit) ═══ */
+function openInfModal(id) {
+  const isEdit = !!id;
+  document.getElementById('infModalTitle').textContent = isEdit ? 'Editar Influenciador' : 'Novo Influenciador';
+  document.getElementById('infEditId').value = id || '';
+  INF_MOTOS_TEMP = [];
+
+  if (isEdit) {
+    const inf = PERF_INFLUENCERS.find(i => i.id === id);
+    if (!inf) return;
+    document.getElementById('infName').value = inf.name || '';
+    document.getElementById('infCpf').value = inf.cpf || '';
+    document.getElementById('infEmail').value = inf.email || '';
+    document.getElementById('infWhatsapp').value = inf.whatsapp || '';
+    document.getElementById('infNotes').value = inf.notes || '';
+    document.getElementById('infRua').value = inf.endereco_rua || '';
+    document.getElementById('infComplemento').value = inf.endereco_complemento || '';
+    document.getElementById('infBairro').value = inf.endereco_bairro || '';
+    document.getElementById('infCidade').value = inf.endereco_cidade || '';
+    document.getElementById('infUf').value = inf.endereco_uf || '';
+    document.getElementById('infCep').value = inf.endereco_cep || '';
+    document.getElementById('infInstagram').value = inf.instagram || '';
+    document.getElementById('infFollowers').value = inf.followers || '';
+    document.getElementById('infYoutube').value = inf.youtube || '';
+    document.getElementById('infYtSubs').value = inf.yt_subs || '';
+    document.getElementById('infTiktok').value = inf.tiktok || '';
+    document.getElementById('infTkFollowers').value = inf.tk_followers || '';
+    document.getElementById('infCategory').value = inf.category || '';
+    INF_MOTOS_TEMP = [...(inf.motos || [])];
+    document.getElementById('infCouponCode').value = inf.coupon_code || '';
+    document.getElementById('infCouponDiscount').value = inf.coupon_discount || '';
+    document.getElementById('infCouponLink').value = inf.coupon_link || '';
+    document.getElementById('infViewsGeral').value = inf.views_geral || '';
+    document.getElementById('infPostsGeral').value = inf.posts_geral || '';
+    document.getElementById('infEngagementGeral').value = inf.engagement_geral || '';
+    document.getElementById('infViewsFullpro').value = inf.views_fullpro || '';
+    document.getElementById('infPostsFullpro').value = inf.posts_fullpro || '';
+    document.getElementById('infEngagementFullpro').value = inf.engagement_fullpro || '';
+  } else {
+    ['infName','infCpf','infEmail','infWhatsapp','infNotes','infRua','infComplemento','infBairro','infCidade','infUf','infCep','infInstagram','infFollowers','infYoutube','infYtSubs','infTiktok','infTkFollowers','infCouponCode','infCouponDiscount','infCouponLink','infViewsGeral','infPostsGeral','infEngagementGeral','infViewsFullpro','infPostsFullpro','infEngagementFullpro'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.getElementById('infCategory').value = '';
+  }
+  renderInfMotos();
+  document.getElementById('infModal').classList.add('show');
 }
-function closePerfAddInfluencerModal() { document.getElementById('perfAddInfluencerModal').classList.remove('show'); }
+function editInfluencer(id) { openInfModal(id); }
+function closeInfModal() { document.getElementById('infModal').classList.remove('show'); }
+
+function addInfMoto() {
+  const input = document.getElementById('infMotoInput');
+  const val = input.value.trim();
+  if (!val) return;
+  INF_MOTOS_TEMP.push(val);
+  input.value = '';
+  renderInfMotos();
+}
+function removeInfMoto(idx) {
+  INF_MOTOS_TEMP.splice(idx, 1);
+  renderInfMotos();
+}
+function renderInfMotos() {
+  const el = document.getElementById('infMotosList');
+  if (!el) return;
+  if (INF_MOTOS_TEMP.length === 0) {
+    el.innerHTML = '<p style="color:var(--text-muted);font-size:11px">Nenhuma moto adicionada.</p>';
+    return;
+  }
+  el.innerHTML = INF_MOTOS_TEMP.map((m, i) =>
+    `<span class="inf-moto-tag">${escHtml(m)} <span class="remove" onclick="removeInfMoto(${i})">×</span></span>`
+  ).join('');
+}
+
+/* Envio Modal */
+function openInfEnvioModal() {
+  const sel = document.getElementById('envioInfId');
+  sel.innerHTML = PERF_INFLUENCERS.filter(i=>i.status==='ativo'||!i.status).map(i => `<option value="${i.id}">${escHtml(i.name)}</option>`).join('');
+  document.getElementById('envioProduto').value = '';
+  document.getElementById('envioQtd').value = 1;
+  document.getElementById('envioValor').value = '';
+  document.getElementById('envioTracking').value = '';
+  document.getElementById('envioStatus').value = 'preparando';
+  document.getElementById('envioNotas').value = '';
+  document.getElementById('infEnvioModal').classList.add('show');
+}
+function closeInfEnvioModal() { document.getElementById('infEnvioModal').classList.remove('show'); }
+
+/* Conteúdo Modal */
+function openInfConteudoModal() {
+  const sel = document.getElementById('conteudoInfId');
+  sel.innerHTML = PERF_INFLUENCERS.filter(i=>i.status==='ativo'||!i.status).map(i => `<option value="${i.id}">${escHtml(i.name)}</option>`).join('');
+  document.getElementById('conteudoPlatform').value = 'instagram';
+  document.getElementById('conteudoTipo').value = 'reels';
+  document.getElementById('conteudoLink').value = '';
+  document.getElementById('conteudoDesc').value = '';
+  document.getElementById('conteudoDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('infConteudoModal').classList.add('show');
+}
+function closeInfConteudoModal() { document.getElementById('infConteudoModal').classList.remove('show'); }
 
 function openBonusConfigModal() {
   const goals = PERF_GOALS || {};
@@ -7908,19 +8429,9 @@ async function savePerfPost() {
   alert('Post adicionado!');
 }
 
-async function savePerfInfluencer() {
-  /*
-    Updated performance_influencers table:
-    id, name, instagram, category(macro/micro/nano), followers,
-    views_geral, posts_geral, engagement_geral,
-    views_fullpro, posts_fullpro, engagement_fullpro,
-    coupon_code, coupon_sales, coupon_revenue,
-    whatsapp, notes, status, created_at
-  */
-
+async function saveInfluencer() {
   const instagram = document.getElementById('infInstagram').value.trim();
   if (!instagram) { alert('Informe o Instagram handle.'); return; }
-
   let name = document.getElementById('infName').value.trim();
   if (!name) name = instagram;
 
@@ -7929,31 +8440,113 @@ async function savePerfInfluencer() {
   const category = categoryField || (followers > 100000 ? 'macro' : followers > 10000 ? 'micro' : 'nano');
 
   const payload = {
-    name,
-    instagram,
-    category,
-    followers,
+    name, instagram, category, followers,
+    cpf: document.getElementById('infCpf').value.trim(),
+    email: document.getElementById('infEmail').value.trim(),
+    whatsapp: document.getElementById('infWhatsapp').value.trim(),
+    notes: document.getElementById('infNotes').value.trim(),
+    endereco_rua: document.getElementById('infRua').value.trim(),
+    endereco_complemento: document.getElementById('infComplemento').value.trim(),
+    endereco_bairro: document.getElementById('infBairro').value.trim(),
+    endereco_cidade: document.getElementById('infCidade').value.trim(),
+    endereco_uf: document.getElementById('infUf').value.trim().toUpperCase(),
+    endereco_cep: document.getElementById('infCep').value.trim(),
+    youtube: document.getElementById('infYoutube').value.trim(),
+    yt_subs: parseInt(document.getElementById('infYtSubs').value) || 0,
+    tiktok: document.getElementById('infTiktok').value.trim(),
+    tk_followers: parseInt(document.getElementById('infTkFollowers').value) || 0,
+    motos: INF_MOTOS_TEMP,
+    coupon_code: document.getElementById('infCouponCode').value.trim().toUpperCase(),
+    coupon_discount: parseInt(document.getElementById('infCouponDiscount').value) || 0,
+    coupon_link: document.getElementById('infCouponLink').value.trim(),
     views_geral: parseInt(document.getElementById('infViewsGeral').value) || 0,
     posts_geral: parseInt(document.getElementById('infPostsGeral').value) || 0,
     engagement_geral: parseFloat(document.getElementById('infEngagementGeral').value) || 0,
     views_fullpro: parseInt(document.getElementById('infViewsFullpro').value) || 0,
     posts_fullpro: parseInt(document.getElementById('infPostsFullpro').value) || 0,
     engagement_fullpro: parseFloat(document.getElementById('infEngagementFullpro').value) || 0,
-    coupon_code: document.getElementById('infCouponCode').value.trim(),
-    coupon_sales: parseInt(document.getElementById('infCouponSales').value) || 0,
-    coupon_revenue: parseFloat(document.getElementById('infCouponRevenue').value) || 0,
-    whatsapp: document.getElementById('infWhatsapp').value.trim(),
-    notes: document.getElementById('infNotes').value.trim(),
     status: 'ativo'
   };
 
-  const { error, data } = await sb.from('performance_influencers').insert([payload]).select().single();
-  if (error) { alert('Erro ao salvar: ' + error.message); return; }
+  const editId = document.getElementById('infEditId').value;
+  let result;
+  if (editId) {
+    result = await sb.from('performance_influencers').update(payload).eq('id', editId).select().single();
+    if (result.error) { alert('Erro ao atualizar: ' + result.error.message); return; }
+    const idx = PERF_INFLUENCERS.findIndex(i => i.id === editId);
+    if (idx >= 0) PERF_INFLUENCERS[idx] = { ...PERF_INFLUENCERS[idx], ...result.data };
+  } else {
+    result = await sb.from('performance_influencers').insert([payload]).select().single();
+    if (result.error) { alert('Erro ao salvar: ' + result.error.message); return; }
+    PERF_INFLUENCERS.unshift(result.data);
+  }
 
-  PERF_INFLUENCERS.unshift(data);
-  closePerfAddInfluencerModal();
+  closeInfModal();
   renderPerformance();
-  alert('Influenciador adicionado!');
+  alert(editId ? 'Influenciador atualizado!' : 'Influenciador adicionado!');
+}
+
+async function toggleInfStatus(id) {
+  const inf = PERF_INFLUENCERS.find(i => i.id === id);
+  if (!inf) return;
+  const newStatus = (inf.status === 'ativo' || !inf.status) ? 'inativo' : 'ativo';
+  const { error } = await sb.from('performance_influencers').update({ status: newStatus }).eq('id', id);
+  if (error) { alert('Erro: ' + error.message); return; }
+  inf.status = newStatus;
+  renderPerformance();
+}
+
+async function saveInfEnvio() {
+  const infId = document.getElementById('envioInfId').value;
+  const produto = document.getElementById('envioProduto').value.trim();
+  if (!infId || !produto) { alert('Preencha influenciador e produto.'); return; }
+
+  const payload = {
+    influencer_id: infId,
+    produto,
+    qtd: parseInt(document.getElementById('envioQtd').value) || 1,
+    valor: parseFloat(document.getElementById('envioValor').value) || 0,
+    tracking: document.getElementById('envioTracking').value.trim(),
+    status: document.getElementById('envioStatus').value,
+    notas: document.getElementById('envioNotas').value.trim()
+  };
+
+  const { error, data } = await sb.from('influencer_envios').insert([payload]).select().single();
+  if (error) { alert('Erro: ' + error.message); return; }
+  INF_ENVIOS.unshift(data);
+  closeInfEnvioModal();
+  renderInfHub();
+  alert('Envio registrado!');
+}
+
+async function saveInfConteudo() {
+  const infId = document.getElementById('conteudoInfId').value;
+  const link = document.getElementById('conteudoLink').value.trim();
+  if (!infId || !link) { alert('Preencha influenciador e link.'); return; }
+
+  const payload = {
+    influencer_id: infId,
+    platform: document.getElementById('conteudoPlatform').value,
+    tipo: document.getElementById('conteudoTipo').value,
+    link,
+    descricao: document.getElementById('conteudoDesc').value.trim(),
+    data_pub: document.getElementById('conteudoDate').value || null
+  };
+
+  const { error, data } = await sb.from('influencer_conteudos').insert([payload]).select().single();
+  if (error) { alert('Erro: ' + error.message); return; }
+  INF_CONTEUDOS.unshift(data);
+  closeInfConteudoModal();
+  renderInfHub();
+  alert('Conteúdo registrado!');
+}
+
+async function deleteInfConteudo(id) {
+  if (!confirm('Remover este conteúdo?')) return;
+  const { error } = await sb.from('influencer_conteudos').delete().eq('id', id);
+  if (error) { alert('Erro: ' + error.message); return; }
+  INF_CONTEUDOS = INF_CONTEUDOS.filter(c => c.id !== id);
+  renderInfHub();
 }
 
 async function savePerfBonusConfig() {
@@ -7998,8 +8591,8 @@ async function deletePerfPost(id) {
   renderPerformance();
 }
 
-async function deletePerfInfluencer(id) {
-  if (!confirm('Remover este influenciador?')) return;
+async function deleteInfluencer(id) {
+  if (!confirm('Remover este influenciador permanentemente?')) return;
   const { error } = await sb.from('performance_influencers').delete().eq('id', id);
   if (error) { alert('Erro: ' + error.message); return; }
   PERF_INFLUENCERS = PERF_INFLUENCERS.filter(i => i.id !== id);
@@ -8022,7 +8615,7 @@ async function initApp() {
   loadTKTokens();
   await handleTKCallback();
 
-  await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects(), loadPerfPosts(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses(), loadNotifications()]);
+  await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects(), loadPerfPosts(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses(), loadNotifications(), loadInfExtras()]);
   renderDashboard();
   renderRequests();
   renderCalendar();
