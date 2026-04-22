@@ -20,5 +20,13 @@ window.FULLPRO_CONFIG = {
    * 5. IG_USER_ID: ID numérico da conta IG Business (visível em /me?fields=id)
    * Deixe vazio para preencher engajamento do Instagram manualmente. */
   IG_ACCESS_TOKEN:   'EAAMfQnMLWAMBRDPJob9KeKsCG2woBa1VPCFoIL64OdeJ6xfLSd7PfZACFZACGC5lVXMYP42eSRhex079K9lJIf4IS0EGvD8NE9SZBMHyhSPEFMNdpeJBBVoWuAEpXmpnHX61bzvzP0rwKaBYAP4tV1IJRe6pR4pOZCXj2ZAsC8JhwuqrZA52bGxNyNeTg1ogsI',
-  IG_USER_ID:        '17841408535149834'
+  IG_USER_ID:        '17841408535149834',
+  /* TikTok API v2 (requer app no TikTok for Developers)
+   * 1. Crie um App em: https://developers.tiktok.com
+   * 2. Adicione Login Kit + scopes: user.info.basic, user.info.stats, video.list
+   * 3. Configure redirect URI: https://fullpro-mediaclub.vercel.app/admin
+   * 4. Use Sandbox mode para desenvolvimento (até 20 test users)
+   * 5. Clique "Conectar TikTok" no admin para autenticar via OAuth */
+  TK_CLIENT_KEY:     'awt9x0v2h89awe3s',
+  TK_CLIENT_SECRET:  'DHpC8YbY8q4newYRJZtM4jNfORKKWO7z'
 };

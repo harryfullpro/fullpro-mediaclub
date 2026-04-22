@@ -2274,6 +2274,41 @@
             Alterar senha
           </button>
         </div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:20px 0 16px"/>
+        <h3>Integrações</h3>
+        <p class="sub">Conecte suas contas de redes sociais para puxar métricas automaticamente.</p>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:10px">
+              <img src="tiktok_2.png" width="24" height="24" style="object-fit:contain"/>
+              <div>
+                <div style="font-size:13px;font-weight:600;color:var(--text)">TikTok</div>
+                <div style="font-size:11px;color:var(--text-dim)" id="tkStatusText">Verificando...</div>
+              </div>
+            </div>
+            <button id="tkConnectBtn" class="action-btn approve" style="padding:6px 14px;font-size:11px" onclick="connectTikTok()">Conectar</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:10px">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#e1306c" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="#e1306c" stroke="none"/></svg>
+              <div>
+                <div style="font-size:13px;font-weight:600;color:var(--text)">Instagram</div>
+                <div style="font-size:11px;color:var(--text-dim)">${window.FULLPRO_CONFIG?.IG_ACCESS_TOKEN ? 'Conectado via config.js' : 'Não configurado'}</div>
+              </div>
+            </div>
+            <span style="font-size:11px;color:var(--text-dim);padding:6px 14px">config.js</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:10px">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="red"><path d="M23.5 6.19a3.02 3.02 0 00-2.12-2.14C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.38.55A3.02 3.02 0 00.5 6.19 31.6 31.6 0 000 12a31.6 31.6 0 00.5 5.81 3.02 3.02 0 002.12 2.14c1.88.55 9.38.55 9.38.55s7.5 0 9.38-.55a3.02 3.02 0 002.12-2.14A31.6 31.6 0 0024 12a31.6 31.6 0 00-.5-5.81z"/><path d="M9.75 15.02l6.25-3.02-6.25-3.02v6.04z" fill="#fff"/></svg>
+              <div>
+                <div style="font-size:13px;font-weight:600;color:var(--text)">YouTube</div>
+                <div style="font-size:11px;color:var(--text-dim)">${window.FULLPRO_CONFIG?.YOUTUBE_API_KEY ? 'Conectado via config.js' : 'Não configurado'}</div>
+              </div>
+            </div>
+            <span style="font-size:11px;color:var(--text-dim);padding:6px 14px">config.js</span>
+          </div>
+        </div>
       </div>
     </div>
   </main>
@@ -2782,6 +2817,27 @@ function loadProfile() {
   document.getElementById('profPixName').value = pix.name || '';
   document.getElementById('profPixCity').value = pix.city || '';
   renderProfileNotifications();
+
+  // Update TikTok connection status
+  const tkStatus = document.getElementById('tkStatusText');
+  const tkBtn = document.getElementById('tkConnectBtn');
+  if (tkStatus && tkBtn) {
+    if (isTKConnected()) {
+      tkStatus.textContent = 'Conectado';
+      tkStatus.style.color = 'var(--success)';
+      tkBtn.textContent = 'Desconectar';
+      tkBtn.className = 'action-btn deny';
+      tkBtn.style.cssText = 'padding:6px 14px;font-size:11px';
+      tkBtn.onclick = function() { clearTKTokens(); loadProfile(); };
+    } else {
+      tkStatus.textContent = 'Não conectado';
+      tkStatus.style.color = 'var(--text-dim)';
+      tkBtn.textContent = 'Conectar';
+      tkBtn.className = 'action-btn approve';
+      tkBtn.style.cssText = 'padding:6px 14px;font-size:11px';
+      tkBtn.onclick = connectTikTok;
+    }
+  }
 }
 
 async function saveProfile() {
@@ -5408,6 +5464,7 @@ function buildPostCard(dest, data) {
     // Filled state: embed + engagement + actions
     const ytId = extractYouTubeId(data.link);
     const igShortcode = extractIGShortcode(data.link);
+    const tkVideoId = extractTKVideoId(data.link);
     let embedHtml = '';
 
     if (ytId) {
@@ -5496,6 +5553,10 @@ function buildPostCard(dest, data) {
           <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
           Atualizar dados
         </button>` : ''}
+        ${tkVideoId && !tkVideoId.startsWith('short_') ? `<button class="post-action-btn" onclick="refreshTKStats('${dest}','${tkVideoId}')" id="tkRefresh_${dest}">
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+          Atualizar dados
+        </button>` : ''}
         <button class="post-action-btn" onclick="editPostLink('${dest}')">
           <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           Editar postagem
@@ -5569,6 +5630,17 @@ async function savePostSingle(dest) {
       p.posts[dest].likes = stats.likes;
       p.posts[dest].comments = stats.comments;
       if (stats.thumb) p.posts[dest]._igThumb = stats.thumb;
+    }
+  }
+
+  // TikTok auto-fetch
+  const tkVideoId = extractTKVideoId(link);
+  if (tkVideoId && !tkVideoId.startsWith('short_')) {
+    const stats = await fetchTKStats(tkVideoId);
+    if (stats) {
+      p.posts[dest].views = stats.views;
+      p.posts[dest].likes = stats.likes;
+      p.posts[dest].comments = stats.comments;
     }
   }
 
@@ -5762,6 +5834,244 @@ async function refreshIGStats(dest, shortcode) {
   if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
 }
 
+/* ── TikTok API v2 helpers ── */
+function extractTKVideoId(url) {
+  if (!url) return null;
+  const m = url.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)/);
+  if (m) return m[1];
+  // Short URL format (vm.tiktok.com/xxx) — can't extract ID directly, store for matching
+  const s = url.match(/(?:vm\.tiktok\.com|vt\.tiktok\.com)\/([A-Za-z0-9]+)/);
+  return s ? 'short_' + s[1] : null;
+}
+
+// TikTok OAuth token management
+let tkAccessToken = null;
+let tkRefreshToken = null;
+let tkOpenId = null;
+let tkTokenExpiry = 0;
+let tkVideoCache = null;
+let tkVideoCacheTime = 0;
+
+function loadTKTokens() {
+  try {
+    const saved = localStorage.getItem('tk_tokens');
+    if (saved) {
+      const t = JSON.parse(saved);
+      tkAccessToken = t.access_token || null;
+      tkRefreshToken = t.refresh_token || null;
+      tkOpenId = t.open_id || null;
+      tkTokenExpiry = t.expiry || 0;
+    }
+  } catch(e) { /* ignore */ }
+}
+
+function saveTKTokens() {
+  try {
+    localStorage.setItem('tk_tokens', JSON.stringify({
+      access_token: tkAccessToken,
+      refresh_token: tkRefreshToken,
+      open_id: tkOpenId,
+      expiry: tkTokenExpiry
+    }));
+  } catch(e) { /* ignore */ }
+}
+
+function clearTKTokens() {
+  tkAccessToken = null;
+  tkRefreshToken = null;
+  tkOpenId = null;
+  tkTokenExpiry = 0;
+  tkVideoCache = null;
+  tkVideoCacheTime = 0;
+  localStorage.removeItem('tk_tokens');
+}
+
+// Start TikTok OAuth flow
+function connectTikTok() {
+  const clientKey = window.FULLPRO_CONFIG?.TK_CLIENT_KEY;
+  if (!clientKey) { alert('Configure TK_CLIENT_KEY no config.js'); return; }
+  const redirectUri = encodeURIComponent(window.location.origin + '/admin');
+  const scope = encodeURIComponent('user.info.basic,user.info.stats,video.list');
+  const csrfState = 'fp_' + Math.random().toString(36).substr(2, 10);
+  sessionStorage.setItem('tk_csrf', csrfState);
+  const authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&scope=${scope}&response_type=code&redirect_uri=${redirectUri}&state=${csrfState}`;
+  window.location.href = authUrl;
+}
+
+// Handle TikTok OAuth callback (called on page load)
+async function handleTKCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const state = params.get('state');
+  const error = params.get('error');
+
+  if (!code || error) return false;
+
+  // Verify CSRF state
+  const savedState = sessionStorage.getItem('tk_csrf');
+  if (state && savedState && state !== savedState) {
+    console.warn('TikTok CSRF mismatch');
+    return false;
+  }
+  sessionStorage.removeItem('tk_csrf');
+
+  // Exchange code for token
+  const clientKey = window.FULLPRO_CONFIG?.TK_CLIENT_KEY;
+  const clientSecret = window.FULLPRO_CONFIG?.TK_CLIENT_SECRET;
+  if (!clientKey || !clientSecret) return false;
+
+  try {
+    const res = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_key: clientKey,
+        client_secret: clientSecret,
+        code: code,
+        grant_type: 'authorization_code',
+        redirect_uri: window.location.origin + '/admin'
+      })
+    });
+    const json = await res.json();
+    if (json.access_token) {
+      tkAccessToken = json.access_token;
+      tkRefreshToken = json.refresh_token || null;
+      tkOpenId = json.open_id || null;
+      tkTokenExpiry = Date.now() + ((json.expires_in || 86400) * 1000);
+      saveTKTokens();
+      // Clean URL params
+      window.history.replaceState({}, '', window.location.pathname);
+      console.log('TikTok connected successfully');
+      return true;
+    } else {
+      console.warn('TikTok token error:', json);
+    }
+  } catch(e) { console.warn('TikTok token exchange error:', e); }
+  return false;
+}
+
+// Refresh TikTok access token
+async function refreshTKAccessToken() {
+  if (!tkRefreshToken) return false;
+  const clientKey = window.FULLPRO_CONFIG?.TK_CLIENT_KEY;
+  const clientSecret = window.FULLPRO_CONFIG?.TK_CLIENT_SECRET;
+  if (!clientKey || !clientSecret) return false;
+
+  try {
+    const res = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_key: clientKey,
+        client_secret: clientSecret,
+        grant_type: 'refresh_token',
+        refresh_token: tkRefreshToken
+      })
+    });
+    const json = await res.json();
+    if (json.access_token) {
+      tkAccessToken = json.access_token;
+      tkRefreshToken = json.refresh_token || tkRefreshToken;
+      tkOpenId = json.open_id || tkOpenId;
+      tkTokenExpiry = Date.now() + ((json.expires_in || 86400) * 1000);
+      saveTKTokens();
+      return true;
+    }
+  } catch(e) { console.warn('TikTok refresh error:', e); }
+  clearTKTokens();
+  return false;
+}
+
+// Ensure valid token
+async function ensureTKToken() {
+  loadTKTokens();
+  if (tkAccessToken && Date.now() < tkTokenExpiry - 300000) return true; // Valid with 5min buffer
+  if (tkRefreshToken) return await refreshTKAccessToken();
+  return false;
+}
+
+// Fetch TikTok video stats by matching video ID from the user's video list
+async function fetchTKStats(videoId) {
+  if (!videoId || videoId.startsWith('short_')) return null;
+  const hasToken = await ensureTKToken();
+  if (!hasToken) return null;
+
+  try {
+    // Use cache if less than 5 min old
+    const now = Date.now();
+    if (!tkVideoCache || now - tkVideoCacheTime > 300000) {
+      const res = await fetch('https://open.tiktokapis.com/v2/video/list/?fields=id,title,video_description,like_count,comment_count,share_count,view_count,create_time', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + tkAccessToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ max_count: 20 })
+      });
+      const json = await res.json();
+      if (json.error?.code === 'access_token_invalid') {
+        // Try refresh
+        const refreshed = await refreshTKAccessToken();
+        if (refreshed) return await fetchTKStats(videoId); // Retry once
+        return null;
+      }
+      if (json.data?.videos) {
+        tkVideoCache = json.data.videos;
+        tkVideoCacheTime = now;
+      } else {
+        return null;
+      }
+    }
+
+    // Find the video by ID
+    const video = tkVideoCache.find(v => String(v.id) === String(videoId));
+    if (!video) return null;
+
+    return {
+      views: parseInt(video.view_count) || 0,
+      likes: parseInt(video.like_count) || 0,
+      comments: parseInt(video.comment_count) || 0,
+      shares: parseInt(video.share_count) || 0
+    };
+  } catch(e) { console.warn('TikTok API error:', e); }
+  return null;
+}
+
+async function refreshTKStats(dest, videoId) {
+  const btn = document.getElementById('tkRefresh_' + dest);
+  if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
+
+  const hasToken = await ensureTKToken();
+  if (!hasToken) {
+    alert('TikTok não conectado. Clique em "Conectar TikTok" nas configurações para autenticar.');
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    return;
+  }
+
+  const stats = await fetchTKStats(videoId);
+  if (!stats) {
+    alert('Não foi possível atualizar os dados do TikTok.');
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    return;
+  }
+
+  const p = PROJECTS.find(x => x.id === projDetailId);
+  if (!p || !p.posts?.[dest]) return;
+
+  p.posts[dest].views = stats.views;
+  p.posts[dest].likes = stats.likes;
+  p.posts[dest].comments = stats.comments;
+
+  await sb.from('projects').update({ posts: p.posts }).eq('id', projDetailId);
+  renderProjTabPostagem(p);
+  if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+}
+
+function isTKConnected() {
+  loadTKTokens();
+  return !!(tkAccessToken && Date.now() < tkTokenExpiry);
+}
+
 /* ── Auto-refresh engagement every 60 min ── */
 let engagementInterval = null;
 
@@ -5790,12 +6100,14 @@ async function autoRefreshEngagement() {
     const ytId = extractYouTubeId(post.link);
     const igShortcode = extractIGShortcode(post.link);
 
+    const tkVideoId = extractTKVideoId(post.link);
     if (ytId && apiKey) {
       stats = await fetchYTStats(ytId);
     } else if (igShortcode) {
       stats = await fetchIGStats(igShortcode, post.link);
+    } else if (tkVideoId && !tkVideoId.startsWith('short_')) {
+      stats = await fetchTKStats(tkVideoId);
     }
-    // Future: add TikTok API fetching here
 
     if (stats) {
       const changed = post.views !== stats.views || post.likes !== stats.likes || post.comments !== stats.comments || (stats.thumb && post._igThumb !== stats.thumb);
@@ -7671,6 +7983,10 @@ async function markBonusPaid(id) {
 
 /* INIT */
 async function initApp() {
+  // Handle TikTok OAuth callback if present
+  loadTKTokens();
+  await handleTKCallback();
+
   await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects(), loadPerfPosts(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses(), loadNotifications()]);
   renderDashboard();
   renderRequests();
