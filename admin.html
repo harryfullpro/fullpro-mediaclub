@@ -5996,16 +5996,18 @@ async function fetchIGViaDiscovery(shortcode, igUrl) {
   return null;
 }
 
-/* Fetch IG stats for a specific post from an external influencer via Business Discovery */
-async function fetchIGStatsViaDiscovery(igHandle, shortcode) {
-  if (!igHandle || !shortcode) return null;
+/* Fetch IG stats for a specific post from an external influencer via Business Discovery.
+ * Since shortcode/permalink are NOT supported fields in business_discovery.media,
+ * we match by publication date (timestamp) instead. */
+async function fetchIGStatsViaDiscovery(igHandle, dataPub) {
+  if (!igHandle) return null;
   const handle = igHandle.replace(/^@/, '').trim();
   const igToken = window.FULLPRO_CONFIG?.IG_ACCESS_TOKEN;
   const igUserId = window.FULLPRO_CONFIG?.IG_USER_ID;
   if (!igToken || !igUserId || !handle) return null;
 
   try {
-    const inner = 'media.limit(50){shortcode,permalink,like_count,comments_count,media_type,thumbnail_url}';
+    const inner = 'media.limit(50){like_count,comments_count,media_type,timestamp,caption}';
     const url = 'https://graph.facebook.com/v21.0/' + igUserId
       + '?fields=business_discovery.username(' + handle + ')%7B' + inner + '%7D'
       + '&access_token=' + igToken;
@@ -6014,21 +6016,37 @@ async function fetchIGStatsViaDiscovery(igHandle, shortcode) {
     if (!res.ok) { console.warn('[IG] business_discovery media failed for @' + handle); return null; }
     const data = await res.json();
     const mediaItems = data.business_discovery?.media?.data || [];
+    if (mediaItems.length === 0) return null;
 
-    const found = mediaItems.find(m =>
-      m.shortcode === shortcode || (m.permalink && m.permalink.includes(shortcode))
-    );
-    if (!found) { console.warn('[IG] shortcode ' + shortcode + ' not found in @' + handle + ' recent 50 posts'); return null; }
+    let found = null;
 
-    // Views not available via business_discovery — estimate from likes
+    // Strategy 1: match by publication date if provided
+    if (dataPub) {
+      const targetDate = dataPub.substring(0, 10); // YYYY-MM-DD
+      const dateMatches = mediaItems.filter(m => m.timestamp && m.timestamp.startsWith(targetDate));
+      if (dateMatches.length === 1) {
+        found = dateMatches[0];
+      } else if (dateMatches.length > 1) {
+        // Multiple posts same day — prefer VIDEO (Reel)
+        found = dateMatches.find(m => m.media_type === 'VIDEO') || dateMatches[0];
+      }
+    }
+
+    // Strategy 2: if no date match, use the most recent post (first item)
+    if (!found) {
+      found = mediaItems[0];
+      console.log('[IG] No date match, using most recent post from @' + handle);
+    }
+
     const estViews = (found.like_count || 0) * 15;
+    const cap = (found.caption || '').substring(0, 50);
 
-    console.log(`[IG] @${handle} post ${shortcode}: ${found.like_count} likes, ${found.comments_count} comments (est ${estViews} views)`);
+    console.log(`[IG] @${handle} matched: ${found.like_count} likes, ${found.comments_count} comments, est ${estViews} views, "${cap}..."`);
     return {
       views: estViews,
       likes: parseInt(found.like_count) || 0,
       comments: parseInt(found.comments_count) || 0,
-      thumb: found.thumbnail_url || ''
+      thumb: ''
     };
   } catch (e) {
     console.warn('[IG] fetchIGStatsViaDiscovery error:', e.message);
@@ -8829,7 +8847,7 @@ async function saveInfConteudo() {
         const inf = PERF_INFLUENCERS.find(i => i.id === infId);
         if (inf?.instagram) {
           console.log('[IG] Fallback: buscando via business_discovery de @' + inf.instagram);
-          stats = await fetchIGStatsViaDiscovery(inf.instagram, shortcode);
+          stats = await fetchIGStatsViaDiscovery(inf.instagram, payload.data_pub);
         }
       }
       if (stats) {
