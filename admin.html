@@ -8251,11 +8251,17 @@ function renderInfConteudo(active) {
     const inf = PERF_INFLUENCERS.find(i => i.id === c.influencer_id);
     const name = inf ? inf.name : 'Desconhecido';
     const tipoLabel = {reels:'Reels/Short',video:'Vídeo',story:'Story',post:'Post/Foto'}[c.tipo] || c.tipo;
+    const hasMetrics = (c.views||0) > 0 || (c.likes||0) > 0;
     return `<div class="inf-content-card">
       ${platformIcon(c.platform)}
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;font-size:13px;color:var(--text)">${escHtml(name)} <span style="font-size:11px;color:var(--text-muted);font-weight:400">· ${tipoLabel}</span></div>
-        <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${escHtml(c.descricao||c.link||'')}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${escHtml(c.descricao||'')}</div>
+        ${hasMetrics ? `<div style="display:flex;gap:12px;margin-top:6px;font-size:11px">
+          <span style="color:var(--text-dim)">👁 ${formatNum(c.views||0)}</span>
+          <span style="color:var(--text-dim)">❤ ${formatNum(c.likes||0)}</span>
+          <span style="color:var(--text-dim)">💬 ${c.comments||0}</span>
+        </div>` : '<div style="font-size:10px;color:var(--warning);margin-top:4px">Métricas não disponíveis</div>'}
       </div>
       <div style="text-align:right;flex-shrink:0">
         <div style="font-size:11px;color:var(--text-muted)">${c.data_pub ? new Date(c.data_pub+'T12:00').toLocaleDateString('pt-BR') : (c.created_at ? new Date(c.created_at).toLocaleDateString('pt-BR') : '—')}</div>
@@ -8762,28 +8768,101 @@ async function saveInfConteudo() {
   const link = document.getElementById('conteudoLink').value.trim();
   if (!infId || !link) { alert('Preencha influenciador e link.'); return; }
 
+  const platform = document.getElementById('conteudoPlatform').value;
   const payload = {
     influencer_id: infId,
-    platform: document.getElementById('conteudoPlatform').value,
+    platform,
     tipo: document.getElementById('conteudoTipo').value,
     link,
     descricao: document.getElementById('conteudoDesc').value.trim(),
-    data_pub: document.getElementById('conteudoDate').value || null
+    data_pub: document.getElementById('conteudoDate').value || null,
+    views: 0, likes: 0, comments: 0
   };
+
+  // Auto-fetch metrics from Instagram
+  if (platform === 'instagram') {
+    const shortcode = extractIGShortcode(link);
+    if (shortcode) {
+      const stats = await fetchIGStats(shortcode, link);
+      if (stats) {
+        payload.views = stats.views || 0;
+        payload.likes = stats.likes || 0;
+        payload.comments = stats.comments || 0;
+      }
+    }
+  }
+  // Auto-fetch metrics from YouTube
+  if (platform === 'youtube') {
+    const ytId = extractYouTubeId(link);
+    if (ytId) {
+      const stats = await fetchYTStats(ytId);
+      if (stats) {
+        payload.views = stats.views || 0;
+        payload.likes = stats.likes || 0;
+        payload.comments = stats.comments || 0;
+      }
+    }
+  }
+  // Auto-fetch metrics from TikTok
+  if (platform === 'tiktok') {
+    const tkId = extractTKVideoId(link);
+    if (tkId && !tkId.startsWith('short_')) {
+      const stats = await fetchTKStats(tkId);
+      if (stats) {
+        payload.views = stats.views || 0;
+        payload.likes = stats.likes || 0;
+        payload.comments = stats.comments || 0;
+      }
+    }
+  }
 
   const { error, data } = await sb.from('influencer_conteudos').insert([payload]).select().single();
   if (error) { alert('Erro: ' + error.message); return; }
   INF_CONTEUDOS.unshift(data);
   closeInfConteudoModal();
+
+  // Recalculate FullPro stats for this influencer
+  await recalcInfFullproStats(infId);
+
   renderInfHub();
-  alert('Conteúdo registrado!');
+  const metricsMsg = payload.views > 0 ? ` (${formatNum(payload.views)} views, ${formatNum(payload.likes)} likes)` : ' (métricas em breve)';
+  alert('Conteúdo registrado!' + metricsMsg);
+}
+
+/* Recalculate FullPro stats from all conteúdos of an influencer */
+async function recalcInfFullproStats(infId) {
+  const inf = PERF_INFLUENCERS.find(i => i.id === infId);
+  if (!inf) return;
+
+  const conteudos = INF_CONTEUDOS.filter(c => c.influencer_id === infId);
+  const totalViews = conteudos.reduce((s,c) => s + (c.views||0), 0);
+  const totalLikes = conteudos.reduce((s,c) => s + (c.likes||0), 0);
+  const totalComments = conteudos.reduce((s,c) => s + (c.comments||0), 0);
+  const totalPosts = conteudos.length;
+
+  const followers = inf.followers || 1;
+  const avgInteractions = totalPosts > 0 ? (totalLikes + totalComments) / totalPosts : 0;
+  const engFullpro = Math.round((avgInteractions / followers) * 1000) / 10;
+
+  const changes = {
+    views_fullpro: totalViews,
+    posts_fullpro: totalPosts,
+    engagement_fullpro: engFullpro
+  };
+
+  const { error } = await sb.from('performance_influencers').update(changes).eq('id', infId);
+  if (!error) Object.assign(inf, changes);
 }
 
 async function deleteInfConteudo(id) {
   if (!confirm('Remover este conteúdo?')) return;
+  const conteudo = INF_CONTEUDOS.find(c => c.id === id);
+  const infId = conteudo?.influencer_id;
   const { error } = await sb.from('influencer_conteudos').delete().eq('id', id);
   if (error) { alert('Erro: ' + error.message); return; }
   INF_CONTEUDOS = INF_CONTEUDOS.filter(c => c.id !== id);
+  // Recalculate FullPro stats after deletion
+  if (infId) await recalcInfFullproStats(infId);
   renderInfHub();
 }
 
