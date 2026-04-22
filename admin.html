@@ -4190,6 +4190,9 @@ async function quickDetailStatus(status) {
   const p = PROJECTS.find(x => x.id === projDetailId);
   if (p) p.status = status;
   document.getElementById('projDetailStatus').className = 'proj-status-select ' + status;
+  // Sync hidden input so saveProject() picks up the new status
+  const hiddenStatus = document.getElementById('projStatus');
+  if (hiddenStatus) hiddenStatus.value = status;
   renderProjects();
 }
 
