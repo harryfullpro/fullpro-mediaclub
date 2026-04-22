@@ -2097,7 +2097,10 @@
       <div class="inf-tab-content active" id="infTabVisao">
         <div class="inf-stat-grid" id="infOverviewStats"></div>
         <div class="cal-card" style="margin-bottom:16px">
-          <h3 style="font-size:14px;font-weight:700;margin-bottom:14px">Ranking de Influenciadores</h3>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <h3 style="font-size:14px;font-weight:700;margin:0">Ranking de Influenciadores</h3>
+            <span id="infLastRefresh" style="font-size:10px;color:var(--text-muted)"></span>
+          </div>
           <div id="infRanking"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" id="infOverviewCards"></div>
@@ -7745,6 +7748,140 @@ async function loadInfExtras() {
   INF_CONTEUDOS = conteudos || [];
 }
 
+/* ═══════════════════════════════════════════════
+   AUTO-REFRESH SEGUIDORES (24h)
+   Instagram: business_discovery endpoint
+   TikTok:    user.info.stats (requer OAuth por influenciador)
+   ═══════════════════════════════════════════════ */
+let INF_REFRESH_RUNNING = false;
+
+async function autoRefreshInfFollowers() {
+  if (INF_REFRESH_RUNNING) return;
+  const active = PERF_INFLUENCERS.filter(i => i.status === 'ativo' || !i.status);
+  if (active.length === 0) return;
+
+  const now = Date.now();
+  const TWENTY_FOUR_H = 24 * 60 * 60 * 1000;
+
+  // Check if any influencer needs refresh
+  const needsRefresh = active.filter(inf => {
+    if (!inf.followers_updated_at) return true;
+    return (now - new Date(inf.followers_updated_at).getTime()) > TWENTY_FOUR_H;
+  });
+
+  if (needsRefresh.length === 0) {
+    console.log('[InfRefresh] Todos atualizados nas últimas 24h.');
+    return;
+  }
+
+  INF_REFRESH_RUNNING = true;
+  console.log(`[InfRefresh] Atualizando seguidores de ${needsRefresh.length} influenciador(es)...`);
+
+  // Show subtle refresh indicator
+  const sub = document.getElementById('infSubtitle');
+  const origText = sub ? sub.textContent : '';
+  if (sub) sub.innerHTML = `<span style="color:var(--primary)">⟳</span> Atualizando seguidores...`;
+
+  let updated = 0;
+
+  for (const inf of needsRefresh) {
+    try {
+      const changes = {};
+      let changed = false;
+
+      // ── Instagram: business_discovery ──
+      if (inf.instagram) {
+        const igHandle = inf.instagram.replace(/^@/, '').trim();
+        const igToken = window.FULLPRO_CONFIG?.IG_ACCESS_TOKEN;
+        const igUserId = window.FULLPRO_CONFIG?.IG_USER_ID;
+        if (igToken && igUserId && igHandle) {
+          try {
+            const res = await fetch(
+              `https://graph.facebook.com/v21.0/${igUserId}?fields=business_discovery.fields(followers_count,media_count){username=${igHandle}}&access_token=${igToken}`
+            );
+            if (res.ok) {
+              const data = await res.json();
+              const bd = data.business_discovery;
+              if (bd && bd.followers_count !== undefined) {
+                changes.followers = bd.followers_count;
+                changed = true;
+                console.log(`[InfRefresh] IG @${igHandle}: ${bd.followers_count} seguidores`);
+              }
+            } else {
+              const err = await res.json().catch(() => ({}));
+              console.warn(`[InfRefresh] IG @${igHandle} falhou:`, err.error?.message || res.status);
+            }
+          } catch (e) {
+            console.warn(`[InfRefresh] IG @${igHandle} erro:`, e.message);
+          }
+        }
+      }
+
+      // ── TikTok: user.info.stats (requer token OAuth do influenciador) ──
+      if (inf.tiktok && inf.tk_access_token) {
+        try {
+          const res = await fetch(
+            'https://open.tiktokapis.com/v2/user/info/?fields=follower_count,following_count,likes_count,video_count',
+            { headers: { 'Authorization': 'Bearer ' + inf.tk_access_token } }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            const user = data.data?.user;
+            if (user && user.follower_count !== undefined) {
+              changes.tk_followers = user.follower_count;
+              changed = true;
+              console.log(`[InfRefresh] TK @${inf.tiktok}: ${user.follower_count} seguidores`);
+            }
+          } else {
+            console.warn(`[InfRefresh] TK @${inf.tiktok} falhou: token expirado ou inválido`);
+          }
+        } catch (e) {
+          console.warn(`[InfRefresh] TK @${inf.tiktok} erro:`, e.message);
+        }
+      }
+
+      // ── Auto-detect category based on new follower count ──
+      if (changed && changes.followers !== undefined && !inf.category) {
+        const f = changes.followers;
+        changes.category = f > 100000 ? 'macro' : f > 10000 ? 'micro' : 'nano';
+      }
+
+      // ── Save to Supabase ──
+      changes.followers_updated_at = new Date().toISOString();
+      const { error } = await sb.from('performance_influencers').update(changes).eq('id', inf.id);
+      if (!error) {
+        Object.assign(inf, changes);
+        updated++;
+      } else {
+        console.warn(`[InfRefresh] Erro ao salvar ${inf.name}:`, error.message);
+      }
+
+      // Small delay to avoid rate-limiting
+      await new Promise(r => setTimeout(r, 300));
+
+    } catch (e) {
+      console.warn(`[InfRefresh] Erro geral ${inf.name}:`, e.message);
+    }
+  }
+
+  INF_REFRESH_RUNNING = false;
+  console.log(`[InfRefresh] Concluído: ${updated}/${needsRefresh.length} atualizados.`);
+
+  // Re-render with updated data
+  if (updated > 0) renderInfHub();
+
+  // Restore subtitle
+  if (sub) {
+    const activeCount = PERF_INFLUENCERS.filter(i => i.status === 'ativo' || !i.status).length;
+    sub.textContent = `${activeCount} influenciadores ativos · Hub de gestão FullPro`;
+    // Flash success briefly
+    sub.innerHTML = `<span style="color:var(--success)">✓</span> ${updated} influenciador(es) atualizado(s) · ${activeCount} ativos`;
+    setTimeout(() => {
+      if (sub) sub.textContent = `${activeCount} influenciadores ativos · Hub de gestão FullPro`;
+    }, 4000);
+  }
+}
+
 function renderPerfInfluencers() { renderInfHub(); }
 
 function renderInfHub() {
@@ -7817,6 +7954,21 @@ function renderInfVisaoGeral(active) {
       </div>
     </div>
   `;
+
+  // Last refresh indicator
+  const refreshEl = document.getElementById('infLastRefresh');
+  if (refreshEl && active.length > 0) {
+    const lastUpdates = active.map(i => i.followers_updated_at).filter(Boolean).map(d => new Date(d).getTime());
+    if (lastUpdates.length > 0) {
+      const oldest = Math.min(...lastUpdates);
+      const ago = Math.round((Date.now() - oldest) / 3600000);
+      refreshEl.textContent = ago < 1 ? 'Seguidores atualizados agora' : `Seguidores atualizados há ${ago}h`;
+      refreshEl.style.color = ago > 24 ? 'var(--warning)' : 'var(--text-muted)';
+    } else {
+      refreshEl.textContent = 'Seguidores nunca atualizados';
+      refreshEl.style.color = 'var(--warning)';
+    }
+  }
 
   // Ranking
   const rankEl = document.getElementById('infRanking');
@@ -8625,6 +8777,9 @@ async function initApp() {
   renderEditingView();
   renderPerformance();
   loadProfile();
+
+  // Auto-refresh seguidores (non-blocking, runs in background)
+  autoRefreshInfFollowers().catch(e => console.warn('[InfRefresh] falhou:', e.message));
 }
 
 checkAuth();
