@@ -396,6 +396,7 @@
   }
   .block-field input:focus, .block-field select:focus { outline: none; border-color: var(--primary); }
   .block-field input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
   .chip-reason { font-size: 10px; color: var(--text-muted); margin-left: 2px; }
   .cal-card {
     background: var(--bg-card);
@@ -1123,6 +1124,7 @@
   [data-theme="light"] .rot-check-box { background: #fff; border-color: #d4d4d8; }
   /* Date picker icon: no invert on light */
   [data-theme="light"] .block-field input[type="date"]::-webkit-calendar-picker-indicator { filter: none; }
+    [data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator { filter: none; }
   /* PDF embed background on light */
   [data-theme="light"] .edit-pdf-embed { background: #f0f0f2; }
   /* Popover shadow lighter */
