@@ -529,6 +529,13 @@
     box-shadow: 0 20px 60px rgba(255, 45, 45, .25), 0 0 40px rgba(255, 45, 45, .1);
   }
   .benefit:hover::before { opacity: 1; }
+  .benefit:hover .benefit-body { background: rgba(255,45,45,.85); }
+  .benefit:hover .benefit-body h3,
+  .benefit:hover .benefit-body p,
+  .benefit:hover .benefit-tag,
+  .benefit:hover .benefit-value .value-price,
+  .benefit:hover .benefit-value .value-label { color: #fff; }
+  .benefit:hover .benefit-value { border-top-color: rgba(255,255,255,.25); }
   .benefit-badge {
     position: absolute;
     top: 16px;
