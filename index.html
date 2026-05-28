@@ -259,52 +259,120 @@
     height: 100%;
     border: 0;
   }
-  .hero-visual-overlay {
-    position: absolute;
-    top: 16px; left: 16px;
-    z-index: 2;
-    pointer-events: none;
+  /* YouTube-style thumbnail player */
+  .yt-thumb-wrap {
+    position: relative;
+    width: 100%;
+    height: 100%;
   }
-  .hero-visual-tag {
+  .yt-thumb-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .yt-play-btn {
     position: absolute;
-    left: 16px; right: 16px; bottom: 16px;
-    z-index: 2;
+    inset: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding: 14px 18px;
-    background: linear-gradient(180deg, rgba(12,12,16,.0) 0%, rgba(12,12,16,.92) 100%);
-    border-radius: 14px;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: rgba(0,0,0,.25);
     text-decoration: none;
     color: #fff;
-    backdrop-filter: blur(2px);
-    transition: transform .2s ease;
+    transition: background .3s;
+    cursor: pointer;
+    z-index: 2;
   }
-  .hero-visual-tag:hover { transform: translateY(-2px); }
-  .hero-visual-tag span {
-    font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
-    color: var(--primary-hi);
+  .yt-play-btn:hover { background: rgba(0,0,0,.45); }
+  .yt-play-icon {
+    width: 72px;
+    height: 72px;
+    background: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(255,45,45,.5);
+    transition: transform .3s, box-shadow .3s;
   }
-  .hero-visual-tag strong {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px; letter-spacing: 1px; font-weight: 400; color: #fff;
+  .yt-play-btn:hover .yt-play-icon {
+    transform: scale(1.12);
+    box-shadow: 0 12px 48px rgba(255,45,45,.65);
   }
-  .studio-label {
+  .yt-play-icon svg { width: 30px; height: 30px; margin-left: 3px; }
+  .yt-play-label {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(8px);
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.15);
+  }
+  /* YouTube-style bottom bar */
+  .yt-bottom-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    z-index: 3;
+    background: linear-gradient(to top, rgba(0,0,0,.85), transparent);
+    padding: 40px 16px 14px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+  .yt-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.3;
+  }
+  .yt-channel {
+    font-size: 12px;
+    color: rgba(255,255,255,.65);
+    margin-top: 2px;
+  }
+  /* Info bar below video */
+  .hero-visual-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .hero-visual-info .studio-tag {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    background: rgba(0,0,0,.6);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    font-size: 11px;
+    gap: 6px;
+    font-size: 12px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #fff;
+    color: var(--text-dim);
+    letter-spacing: .5px;
   }
-  .rec-dot { width: 8px; height: 8px; background: var(--primary); border-radius: 50%; animation: pulse 1s infinite; }
+  .hero-visual-info .studio-tag .rec-dot {
+    width: 6px; height: 6px;
+    background: var(--primary);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+    box-shadow: 0 0 6px var(--primary);
+  }
+  .hero-visual-info .ig-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary-hi);
+    text-decoration: none;
+    transition: color .2s;
+  }
+  .hero-visual-info .ig-link:hover { color: var(--primary); }
+  .hero-visual-info .ig-link svg { width: 14px; height: 14px; }
 
   /* SECTION */
   section { padding: 80px 0; position: relative; }
@@ -1722,20 +1790,31 @@
       </div>
     </div>
 
-    <div class="hero-visual reveal-right">
-      <iframe
-        src="https://www.youtube-nocookie.com/embed/ElWDrP58x44?rel=0&modestbranding=1&playsinline=1"
-        title="FullPro — Produção em destaque"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        referrerpolicy="strict-origin-when-cross-origin"
-        allowfullscreen></iframe>
-      <div class="hero-visual-overlay">
-        <span class="studio-label"><span class="rec-dot"></span>ESTÚDIO FULLPRO</span>
+    <div class="reveal-right">
+      <div class="hero-visual" id="heroVideo">
+        <div class="yt-thumb-wrap">
+          <img src="https://img.youtube.com/vi/ElWDrP58x44/maxresdefault.jpg" alt="FullPro — Africa Twin com Escape Esportivo" />
+          <a class="yt-play-btn" href="https://www.youtube.com/watch?v=ElWDrP58x44" target="_blank" rel="noopener" id="ytPlayBtn">
+            <span class="yt-play-icon">
+              <svg viewBox="0 0 24 24" fill="white"><polygon points="8,5 20,12 8,19"/></svg>
+            </span>
+            <span class="yt-play-label">Ver no YouTube</span>
+          </a>
+          <div class="yt-bottom-bar">
+            <div>
+              <div class="yt-title">Africa Twin com Escape Esportivo — Produção FullPro</div>
+              <div class="yt-channel">FullPro Peças para Motos</div>
+            </div>
+          </div>
+        </div>
       </div>
-      <a class="hero-visual-tag" href="https://www.instagram.com/fullprobr/" target="_blank" rel="noopener">
-        <span>Produção em destaque</span>
-        <strong>Nossa referência em conteúdo</strong>
-      </a>
+      <div class="hero-visual-info">
+        <span class="studio-tag"><span class="rec-dot"></span>Estúdio FullPro</span>
+        <a class="ig-link" href="https://www.instagram.com/fullprobr/" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg>
+          @fullprobr
+        </a>
+      </div>
     </div>
   </div>
 </section>
@@ -2278,6 +2357,21 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script>
+/* =============== YOUTUBE THUMBNAIL LAZY LOAD =============== */
+document.getElementById('ytPlayBtn').addEventListener('click', function(e) {
+  e.preventDefault();
+  const container = document.getElementById('heroVideo');
+  const iframe = document.createElement('iframe');
+  iframe.src = 'https://www.youtube-nocookie.com/embed/ElWDrP58x44?rel=0&modestbranding=1&playsinline=1&autoplay=1';
+  iframe.title = 'FullPro — Africa Twin com Escape Esportivo';
+  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+  iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+  iframe.allowFullscreen = true;
+  iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;z-index:4;';
+  container.innerHTML = '';
+  container.appendChild(iframe);
+});
+
 /* =============== TERMS FULLSCREEN =============== */
 function openTerms() {
   const ov = document.getElementById('termsOverlay');
