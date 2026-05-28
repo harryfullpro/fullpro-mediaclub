@@ -1348,36 +1348,190 @@
     gap: 10px;
   }
 
-  /* Responsive */
+  /* ===== SCROLL REVEAL ANIMATIONS ===== */
+  .reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1);
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .reveal-left {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1);
+  }
+  .reveal-left.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .reveal-right {
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1);
+  }
+  .reveal-right.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .reveal-scale {
+    opacity: 0;
+    transform: scale(.92);
+    transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1);
+  }
+  .reveal-scale.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+  /* Stagger children */
+  .stagger > * { transition-delay: calc(var(--i, 0) * 100ms); }
+
+  /* ===== ENHANCED HOVER & MICRO-INTERACTIONS ===== */
+  .step { will-change: transform; }
+  .step:hover { box-shadow: 0 20px 50px rgba(255,45,45,.12); }
+  .benefit { will-change: transform; }
+  .benefit:hover { box-shadow: 0 20px 50px rgba(0,0,0,.3); }
+  .trust-item { transition: transform .3s cubic-bezier(.16,1,.3,1); }
+  .trust-item:hover { transform: translateY(-3px); }
+  .faq-item { transition: border-color .2s, box-shadow .2s; }
+  .faq-item:hover { border-color: var(--border-hi); }
+  .faq-item.open { border-color: var(--primary); box-shadow: 0 8px 30px rgba(255,45,45,.08); }
+
+  /* Smooth gradient line on section tops */
+  section::before {
+    content: '';
+    display: block;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-hi), transparent);
+    margin-bottom: 0;
+  }
+  .hero::before, footer::before { display: none; }
+
+  /* Animated counter pulse on stats */
+  .stat-num, .trust-num { transition: color .3s; }
+
+  /* Nav glass morphism enhancement */
+  .nav { transition: background .3s; }
+  .nav.scrolled { background: rgba(10, 10, 11, .92); box-shadow: 0 4px 30px rgba(0,0,0,.3); }
+
+  /* Floating CTA glow */
+  .btn-primary { position: relative; overflow: hidden; }
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.15), transparent 60%);
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .btn-primary:hover::after { opacity: 1; }
+
+  /* Better gift cards hover */
+  .gift-option { transition: all .3s cubic-bezier(.16,1,.3,1); }
+  .gift-option:hover { box-shadow: 0 12px 30px rgba(0,0,0,.2); }
+
+  /* Calendar day hover glow */
+  .cal-day:hover:not(.disabled):not(.booked) { box-shadow: 0 0 12px rgba(255,45,45,.15); }
+
+  /* ===== IMPROVED SPACING ===== */
+  section { padding: 70px 0; }
+  .section-title { margin-bottom: 48px; }
+  .hero { padding: 60px 0 70px; }
+  .gmap-section { margin-top: 48px; }
+
+  /* ===== RESPONSIVE — TABLET (max 1024px) ===== */
+  @media (max-width: 1024px) {
+    .hero-grid { gap: 40px; }
+    .ig-grid { grid-template-columns: repeat(2, 1fr); }
+    .ig-embed, .ig-seemore { min-height: 420px; }
+    .ig-embed iframe { min-height: 420px; }
+  }
+
+  /* ===== RESPONSIVE — MOBILE LANDSCAPE / SMALL TABLET (max 900px) ===== */
   @media (max-width: 900px) {
     .hero-grid, .schedule-wrap, .featured-video { grid-template-columns: 1fr; }
-    .hero-visual { max-width: 340px; margin: 20px auto 0; }
-    .featured-video .vid-body { padding: 30px; }
-    .steps, .benefits { grid-template-columns: 1fr; }
+    .hero-visual { max-width: 100%; margin: 30px auto 0; aspect-ratio: 16/9; }
+    .featured-video .vid-body { padding: 28px; }
+    .steps { grid-template-columns: 1fr; gap: 24px; }
+    .benefits { grid-template-columns: 1fr; }
     .trust-bar { grid-template-columns: repeat(2, 1fr); gap: 20px; }
     .trust-item { border-right: none; padding-right: 0; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
     .trust-item:nth-last-child(-n+2) { border-bottom: none; padding-bottom: 0; }
     .gmap-wrap { grid-template-columns: 1fr; }
     .gmap-frame { min-height: 240px; }
     .gmap-info { padding: 24px 20px; }
-    .ig-grid { grid-template-columns: repeat(2, 1fr); }
     .hero-stats { grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
     .form-grid-2 { grid-template-columns: 1fr; }
-    .gift-grid { grid-template-columns: 1fr; }
+    .gift-grid { grid-template-columns: repeat(3, 1fr); }
     .footer-inner { grid-template-columns: 1fr; gap: 24px; }
     .terms-footer { flex-direction: column; align-items: stretch; }
     .terms-footer-buttons { flex-direction: column-reverse; width: 100%; }
     .terms-footer-buttons .btn { width: 100%; justify-content: center; }
     .nav-social { display: none; }
+    section { padding: 56px 0; }
+    .section-title { margin-bottom: 36px; }
   }
-  @media (max-width: 520px) {
-    section { padding: 60px 0; }
-    .hero { padding: 50px 0 60px; }
-    .card { padding: 22px; }
-    .terms-header { padding: 16px 20px; }
-    .terms-body { padding: 30px 20px; }
-    .terms-content h1 { font-size: 28px; }
-    .terms-footer { padding: 16px 20px; }
+
+  /* ===== RESPONSIVE — MOBILE (max 640px) ===== */
+  @media (max-width: 640px) {
+    .container { padding: 0 18px; }
+    .hero { padding: 40px 0 50px; }
+    h1 { font-size: clamp(36px, 8vw, 52px); margin-bottom: 16px; }
+    .hero p.lead { font-size: 15px; margin-bottom: 24px; }
+    .hero-cta { flex-direction: column; gap: 10px; }
+    .hero-cta .btn { width: 100%; justify-content: center; text-align: center; }
+    .hero-stats { gap: 12px; }
+    .stat-num { font-size: 28px; }
+    .stat-label { font-size: 11px; }
+    .steps { gap: 20px; }
+    .step { padding: 28px 24px; }
+    .benefit-body { padding: 20px; }
+    .benefit-body h3 { font-size: 18px; }
+    .trust-bar { padding: 28px 20px; grid-template-columns: 1fr 1fr; }
+    .trust-num { font-size: 28px; }
+    .ig-grid { grid-template-columns: 1fr; }
+    .ig-embed, .ig-seemore { min-height: 480px; }
+    .ig-embed iframe { min-height: 480px; }
+    .schedule-wrap { gap: 20px; }
+    .card { padding: 24px 18px; }
+    .section-title h2 { font-size: clamp(28px, 6vw, 40px); }
+    .section-title p { font-size: 14px; }
+    .faq-q { font-size: 14px; padding: 16px 18px; }
+    .footer-inner { gap: 20px; }
+    .footer-bottom { flex-direction: column; text-align: center; gap: 6px; }
+  }
+
+  /* ===== RESPONSIVE — SMALL MOBILE (max 400px) ===== */
+  @media (max-width: 400px) {
+    .container { padding: 0 14px; }
+    .hero { padding: 32px 0 40px; }
+    h1 { font-size: 32px; }
+    .badge { font-size: 12px; padding: 6px 12px; }
+    .hero-stats { grid-template-columns: 1fr; gap: 10px; }
+    .stat { display: flex; align-items: center; gap: 10px; border-left: 2px solid var(--primary); padding: 8px 0 8px 12px; }
+    .stat-num { font-size: 24px; }
+    .gift-grid { grid-template-columns: 1fr; }
+    .trust-bar { grid-template-columns: 1fr; }
+    .trust-item { border-bottom: 1px solid var(--border); padding-bottom: 14px; }
+    .trust-item:last-child { border-bottom: none; }
+    .nav-inner { padding: 10px 0; }
+    .nav-cta { padding: 8px 14px; font-size: 13px; }
+    .logo-img { height: 30px; }
+    .terms-header { padding: 14px 16px; }
+    .terms-body { padding: 24px 16px; }
+    .terms-content h1 { font-size: 24px; }
+    .terms-footer { padding: 14px 16px; }
+    .cal-day { font-size: 12px; border-radius: 8px; }
+    .cal-grid { gap: 4px; }
+  }
+
+  /* ===== PREFERS REDUCED MOTION ===== */
+  @media (prefers-reduced-motion: reduce) {
+    .reveal, .reveal-left, .reveal-right, .reveal-scale { transition: none; opacity: 1; transform: none; }
+    .step, .benefit, .gift-option, .trust-item, .ig-embed, .ig-seemore { transition: none; }
+    .badge-dot, .rec-dot, .scroll-icon { animation: none; }
   }
 </style>
 </head>
@@ -1412,19 +1566,19 @@
 <section class="hero">
   <div class="container hero-grid">
     <div>
-      <div class="badge">
+      <div class="badge reveal">
         <span class="badge-dot"></span>
         FullPro Media Club
       </div>
-      <h1>Empreste sua moto<br/>por um dia. <span>Leve recompensa.</span></h1>
-      <p class="lead">
+      <h1 class="reveal">Empreste sua moto<br/>por um dia. <span>Leve recompensa.</span></h1>
+      <p class="lead reveal">
         A FullPro está produzindo conteúdo de marketing com motos variadas em seu novo estúdio de gravação e fotografia. Participe do Media Club, tenha sua moto protagonista do nosso conteúdo e ganhe um presente FullPro de sua escolha.
       </p>
-      <div class="hero-cta">
+      <div class="hero-cta reveal">
         <a href="#agendar" class="btn btn-primary">Agendar minha moto →</a>
         <a href="#como-funciona" class="btn btn-ghost">Como funciona</a>
       </div>
-      <div class="hero-stats">
+      <div class="hero-stats reveal">
         <div class="stat">
           <div class="stat-num">+100k</div>
           <div class="stat-label">Clientes atendidos</div>
@@ -1440,7 +1594,7 @@
       </div>
     </div>
 
-    <div class="hero-visual">
+    <div class="hero-visual reveal-right">
       <iframe
         src="https://www.youtube-nocookie.com/embed/ElWDrP58x44?rel=0&modestbranding=1&playsinline=1"
         title="FullPro — Produção em destaque"
@@ -1461,12 +1615,12 @@
 <!-- HOW IT WORKS -->
 <section id="como-funciona">
   <div class="container">
-    <div class="section-title">
+    <div class="section-title reveal">
       <small>Processo simples</small>
       <h2>Como funciona</h2>
       <p>Três passos e sua moto vira estrela por um dia no estúdio FullPro.</p>
     </div>
-    <div class="steps">
+    <div class="steps stagger reveal">
       <div class="step">
         <div class="step-num">1</div>
         <h3>📅 Escolha a data</h3>
@@ -1489,12 +1643,12 @@
 <!-- BENEFITS with product photos -->
 <section>
   <div class="container">
-    <div class="section-title">
+    <div class="section-title reveal">
       <small>Bonificação</small>
       <h2>Escolha seu presente FullPro</h2>
       <p>Ao participar, você leva para casa uma das três bonificações exclusivas — por conta da FullPro.</p>
     </div>
-    <div class="benefits">
+    <div class="benefits stagger reveal">
       <div class="benefit">
         <div class="benefit-media">
           <span class="fallback">🛞</span>
@@ -1535,13 +1689,13 @@
 <!-- TRUST -->
 <section id="confianca">
   <div class="container">
-    <div class="section-title">
+    <div class="section-title reveal">
       <small>Confiança comprovada</small>
       <h2>Você está em boas mãos</h2>
       <p>Mais de 10 anos distribuindo peças para motos em todo o Brasil. Reputação validada pelo mercado.</p>
     </div>
 
-    <div class="trust-bar">
+    <div class="trust-bar stagger reveal-scale">
       <div class="trust-item">
         <div class="trust-stars">★★★★★</div>
         <div class="trust-num">4.9</div>
@@ -1569,7 +1723,7 @@
     </div>
 
     <!-- Google Maps + Business info -->
-    <div class="gmap-section">
+    <div class="gmap-section reveal">
       <div class="gmap-wrap">
         <div class="gmap-frame">
           <iframe src="https://maps.google.com/maps?q=FullPro+Rua+Florianópolis+2486+Joinville+SC&t=&z=16&ie=UTF8&iwloc=B&output=embed" loading="lazy" allowfullscreen="" referrerpolicy="no-referrer-when-downgrade"></iframe>
@@ -1603,7 +1757,7 @@
     </div>
 
     <!-- Instagram feed -->
-    <div style="margin-top: 60px; text-align:center">
+    <div class="reveal" style="margin-top: 48px; text-align:center">
       <div style="display:inline-flex; align-items:center; gap:10px; margin-bottom:8px">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--primary)"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.2 0 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.3 1 .4 2.2.1 1.2.1 1.6.1 4.8s0 3.6-.1 4.8c0 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1 .3-2.2.4-1.2.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.2 0-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.3-1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c0-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1-.3 2.2-.4C8.4 2.2 8.8 2.2 12 2.2z"/></svg>
         <span style="font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--primary)">@fullprobr</span>
@@ -1611,7 +1765,7 @@
       <h3 style="font-family:'Bebas Neue', sans-serif; font-size:32px; letter-spacing:1px; margin-bottom:8px">Acompanhe nossas produções</h3>
       <p style="color:var(--text-dim); font-size:15px">Conteúdo novo toda semana no Instagram.</p>
     </div>
-    <div class="ig-grid">
+    <div class="ig-grid stagger reveal">
       <div class="ig-embed">
         <iframe src="https://www.instagram.com/p/DU8NuaokTLX/embed/" loading="lazy" allow="encrypted-media" allowtransparency="true" scrolling="no"></iframe>
       </div>
@@ -1646,13 +1800,13 @@
 <!-- SCHEDULE & FORM -->
 <section id="agendar">
   <div class="container">
-    <div class="section-title">
+    <div class="section-title reveal">
       <small>Agendamento</small>
       <h2>Reserve sua data</h2>
       <p>Preencha o formulário abaixo. Em até 24h entraremos em contato via WhatsApp para confirmar seu agendamento.</p>
     </div>
 
-    <div class="schedule-wrap">
+    <div class="schedule-wrap reveal">
       <!-- Calendar -->
       <div class="card">
         <h3>1. Escolha a data</h3>
@@ -1806,11 +1960,11 @@
 <!-- FAQ -->
 <section>
   <div class="container">
-    <div class="section-title">
+    <div class="section-title reveal">
       <small>Dúvidas</small>
       <h2>Perguntas frequentes</h2>
     </div>
-    <div class="faq">
+    <div class="faq reveal">
       <div class="faq-item">
         <div class="faq-q">Minha moto corre algum risco?</div>
         <div class="faq-a"><p>A condução é feita por profissionais qualificados, em rotas monitoradas. Qualquer dano (improvável, mas possível) é 100% coberto pela FullPro conforme o Termo de Cessão.</p></div>
@@ -2222,6 +2376,67 @@ document.querySelectorAll('.faq-item').forEach(item => {
     item.classList.toggle('open');
   });
 });
+
+/* =============== SCROLL REVEAL =============== */
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      // Set stagger delays
+      if (entry.target.classList.contains('stagger')) {
+        Array.from(entry.target.children).forEach((ch, i) => {
+          ch.style.setProperty('--i', i);
+        });
+      }
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale').forEach(el => {
+  revealObserver.observe(el);
+});
+
+/* =============== NAV SCROLL EFFECT =============== */
+let lastScroll = 0;
+window.addEventListener('scroll', () => {
+  const nav = document.querySelector('.nav');
+  if (window.scrollY > 60) nav.classList.add('scrolled');
+  else nav.classList.remove('scrolled');
+  lastScroll = window.scrollY;
+}, { passive: true });
+
+/* =============== ANIMATED COUNTERS =============== */
+function animateCounter(el, target, suffix) {
+  const dur = 1600;
+  const start = performance.now();
+  const isFloat = target % 1 !== 0;
+  function step(now) {
+    const p = Math.min((now - start) / dur, 1);
+    const ease = 1 - Math.pow(1 - p, 4);
+    const val = isFloat ? (target * ease).toFixed(1) : Math.floor(target * ease);
+    el.textContent = (target >= 100 ? '+' : '') + val + suffix;
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const nums = entry.target.querySelectorAll('.stat-num');
+      nums.forEach(n => {
+        const text = n.textContent.trim();
+        if (text.includes('100k')) animateCounter(n, 100, 'k');
+        else if (text.includes('4.9')) animateCounter(n, 4.9, '★');
+        else if (text.includes('10')) animateCounter(n, 10, ' anos');
+      });
+      counterObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('.hero-stats').forEach(el => counterObserver.observe(el));
 </script>
 </body>
 </html>
