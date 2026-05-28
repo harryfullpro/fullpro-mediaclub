@@ -143,7 +143,7 @@
 
   /* HERO */
   .hero {
-    padding: 70px 0 90px;
+    padding: 50px 0 40px;
     position: relative;
   }
   .hero-grid {
@@ -182,7 +182,7 @@
     margin-bottom: 20px;
   }
   h1 span {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hi) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -375,10 +375,10 @@
   .hero-visual-info .ig-link svg { width: 14px; height: 14px; }
 
   /* SECTION */
-  section { padding: 80px 0; position: relative; }
+  section { padding: 36px 0; position: relative; }
   .section-title {
     text-align: center;
-    margin-bottom: 60px;
+    margin-bottom: 28px;
   }
   .section-title small {
     display: inline-block;
@@ -439,7 +439,7 @@
 
   /* GIFTS SHOWCASE — high emphasis */
   .gifts-showcase {
-    padding: 80px 0 60px;
+    padding: 36px 0 32px;
     position: relative;
     overflow: hidden;
   }
@@ -458,7 +458,7 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: linear-gradient(135deg, rgba(255,45,45,.15), rgba(255,207,51,.1));
+    background: rgba(255,45,45,.1);
     border: 1px solid rgba(255,45,45,.3);
     padding: 8px 20px;
     border-radius: 50px;
@@ -466,7 +466,7 @@
     font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: var(--accent);
+    color: var(--primary-hi);
     margin-bottom: 20px;
   }
   .gifts-headline h2 {
@@ -479,7 +479,7 @@
   }
   .gifts-headline h2 em {
     font-style: normal;
-    background: linear-gradient(135deg, var(--primary), var(--accent));
+    background: linear-gradient(135deg, var(--primary), var(--primary-hi));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -495,7 +495,7 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
-    margin-top: 40px;
+    margin-top: 24px;
   }
   .benefit {
     background: linear-gradient(180deg, var(--bg-card), var(--bg-elev));
@@ -512,8 +512,8 @@
     position: absolute;
     inset: -2px;
     border-radius: var(--radius-lg);
-    background: linear-gradient(135deg, var(--primary), var(--accent), var(--primary));
-    background-size: 200% 200%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-hi), var(--primary-dark), var(--primary));
+    background-size: 300% 300%;
     z-index: -1;
     opacity: 0;
     transition: opacity .4s;
@@ -534,7 +534,7 @@
     top: 16px;
     right: 16px;
     z-index: 5;
-    background: linear-gradient(135deg, var(--primary), #ff6b35);
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
     font-weight: 800;
     font-size: 13px;
@@ -618,7 +618,7 @@
   .benefit-value .value-price {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 28px;
-    color: var(--accent);
+    color: var(--primary-hi);
     letter-spacing: 1px;
   }
   .benefit-value .value-label {
@@ -628,7 +628,7 @@
   }
   .gifts-cta-wrap {
     text-align: center;
-    margin-top: 48px;
+    margin-top: 28px;
   }
   .gifts-cta-wrap .btn-primary {
     font-size: 18px;
@@ -637,8 +637,8 @@
     animation: ctaGlow 2.5s ease-in-out infinite;
   }
   @keyframes ctaGlow {
-    0%, 100% { box-shadow: 0 8px 40px rgba(255, 45, 45, .4); }
-    50% { box-shadow: 0 12px 60px rgba(255, 45, 45, .6), 0 0 20px rgba(255, 45, 45, .2); }
+    0%, 100% { box-shadow: 0 6px 30px rgba(255, 45, 45, .35); }
+    50% { box-shadow: 0 10px 50px rgba(255, 45, 45, .55), 0 0 16px rgba(255, 45, 45, .15); }
   }
   .gifts-cta-wrap .cta-hint {
     display: block;
@@ -1626,11 +1626,11 @@
   /* Calendar day hover glow */
   .cal-day:hover:not(.disabled):not(.booked) { box-shadow: 0 0 12px rgba(255,45,45,.15); }
 
-  /* ===== IMPROVED SPACING ===== */
-  section { padding: 70px 0; }
-  .section-title { margin-bottom: 48px; }
-  .hero { padding: 60px 0 70px; }
-  .gmap-section { margin-top: 48px; }
+  /* ===== COMPACT SPACING ===== */
+  section { padding: 36px 0; }
+  .section-title { margin-bottom: 24px; }
+  .hero { padding: 40px 0 32px; }
+  .gmap-section { margin-top: 24px; }
 
   /* ===== RESPONSIVE — TABLET (max 1024px) ===== */
   @media (max-width: 1024px) {
@@ -1647,7 +1647,7 @@
     .featured-video .vid-body { padding: 28px; }
     .steps { grid-template-columns: 1fr; gap: 24px; }
     .benefits { grid-template-columns: 1fr; }
-    .gifts-showcase { padding: 56px 0 40px; }
+    .gifts-showcase { padding: 28px 0 24px; }
     .gifts-headline h2 { font-size: 36px; }
     .trust-bar { grid-template-columns: repeat(2, 1fr); gap: 20px; }
     .trust-item { border-right: none; padding-right: 0; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
@@ -1663,8 +1663,8 @@
     .terms-footer-buttons { flex-direction: column-reverse; width: 100%; }
     .terms-footer-buttons .btn { width: 100%; justify-content: center; }
     .nav-social { display: none; }
-    section { padding: 56px 0; }
-    .section-title { margin-bottom: 36px; }
+    section { padding: 28px 0; }
+    .section-title { margin-bottom: 20px; }
   }
 
   /* ===== RESPONSIVE — MOBILE (max 640px) ===== */
