@@ -369,18 +369,72 @@
   .step h3 { font-size: 18px; margin-bottom: 10px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
   .step p { color: var(--text-dim); font-size: 14px; }
 
-  /* BENEFITS with real photos */
+  /* GIFTS SHOWCASE — high emphasis */
+  .gifts-showcase {
+    padding: 80px 0 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .gifts-showcase::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(800px 400px at 50% 0%, rgba(255, 45, 45, .12), transparent 70%);
+    pointer-events: none;
+  }
+  .gifts-headline {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .gifts-headline .gift-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(255,45,45,.15), rgba(255,207,51,.1));
+    border: 1px solid rgba(255,45,45,.3);
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+  .gifts-headline h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(36px, 6vw, 56px);
+    letter-spacing: 2px;
+    line-height: 1.05;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .gifts-headline h2 em {
+    font-style: normal;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .gifts-headline .gifts-sub {
+    font-size: 17px;
+    color: var(--text-dim);
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
   .benefits {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    gap: 24px;
+    margin-top: 40px;
   }
   .benefit {
     background: linear-gradient(180deg, var(--bg-card), var(--bg-elev));
-    border: 1px solid var(--border);
+    border: 2px solid var(--border);
     border-radius: var(--radius-lg);
     overflow: hidden;
-    transition: all .3s;
+    transition: all .4s cubic-bezier(.16,1,.3,1);
     position: relative;
     display: flex;
     flex-direction: column;
@@ -388,15 +442,45 @@
   .benefit::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    inset: -2px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, var(--primary), var(--accent), var(--primary));
+    background-size: 200% 200%;
+    z-index: -1;
     opacity: 0;
-    transition: opacity .3s;
-    z-index: 2;
+    transition: opacity .4s;
+    animation: gradientShift 3s ease infinite;
   }
-  .benefit:hover { border-color: var(--primary); transform: translateY(-4px); }
+  @keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  .benefit:hover {
+    border-color: transparent;
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 60px rgba(255, 45, 45, .25), 0 0 40px rgba(255, 45, 45, .1);
+  }
   .benefit:hover::before { opacity: 1; }
+  .benefit-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 5;
+    background: linear-gradient(135deg, var(--primary), #ff6b35);
+    color: white;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    padding: 6px 16px;
+    border-radius: 50px;
+    box-shadow: 0 4px 20px rgba(255, 45, 45, .5);
+    animation: badgePulse 2s ease-in-out infinite;
+    text-transform: uppercase;
+  }
+  @keyframes badgePulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 4px 20px rgba(255, 45, 45, .5); }
+    50% { transform: scale(1.08); box-shadow: 0 6px 30px rgba(255, 45, 45, .7); }
+  }
   .benefit-media {
     aspect-ratio: 1;
     background: #ffffff;
@@ -410,7 +494,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform .4s;
+    transition: transform .5s cubic-bezier(.16,1,.3,1);
   }
   .benefit-media.no-img::before {
     content: attr(data-fallback);
@@ -421,7 +505,7 @@
     justify-content: center;
     font-size: 64px;
   }
-  .benefit:hover .benefit-media img { transform: scale(1.05); }
+  .benefit:hover .benefit-media img { transform: scale(1.1); }
   .benefit-media .fallback {
     position: absolute;
     inset: 0;
@@ -440,9 +524,9 @@
     background: linear-gradient(to top, rgba(0,0,0,.12), transparent);
     pointer-events: none;
   }
-  .benefit-body { padding: 24px 28px 28px; }
-  .benefit-body h3 { font-size: 20px; margin-bottom: 10px; font-weight: 700; }
-  .benefit-body p { color: var(--text-dim); font-size: 14px; }
+  .benefit-body { padding: 24px 28px 28px; flex: 1; }
+  .benefit-body h3 { font-size: 22px; margin-bottom: 10px; font-weight: 800; }
+  .benefit-body p { color: var(--text-dim); font-size: 14px; line-height: 1.6; }
   .benefit-tag {
     display: inline-block;
     padding: 4px 10px;
@@ -454,6 +538,45 @@
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 10px;
+  }
+  .benefit-value {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .benefit-value .value-price {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+  .benefit-value .value-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.3;
+  }
+  .gifts-cta-wrap {
+    text-align: center;
+    margin-top: 48px;
+  }
+  .gifts-cta-wrap .btn-primary {
+    font-size: 18px;
+    padding: 18px 48px;
+    box-shadow: 0 8px 40px rgba(255, 45, 45, .4);
+    animation: ctaGlow 2.5s ease-in-out infinite;
+  }
+  @keyframes ctaGlow {
+    0%, 100% { box-shadow: 0 8px 40px rgba(255, 45, 45, .4); }
+    50% { box-shadow: 0 12px 60px rgba(255, 45, 45, .6), 0 0 20px rgba(255, 45, 45, .2); }
+  }
+  .gifts-cta-wrap .cta-hint {
+    display: block;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--text-muted);
   }
 
   /* TRUST */
@@ -1456,6 +1579,8 @@
     .featured-video .vid-body { padding: 28px; }
     .steps { grid-template-columns: 1fr; gap: 24px; }
     .benefits { grid-template-columns: 1fr; }
+    .gifts-showcase { padding: 56px 0 40px; }
+    .gifts-headline h2 { font-size: 36px; }
     .trust-bar { grid-template-columns: repeat(2, 1fr); gap: 20px; }
     .trust-item { border-right: none; padding-right: 0; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
     .trust-item:nth-last-child(-n+2) { border-bottom: none; padding-bottom: 0; }
@@ -1489,6 +1614,9 @@
     .step { padding: 28px 24px; }
     .benefit-body { padding: 20px; }
     .benefit-body h3 { font-size: 18px; }
+    .benefit-badge { font-size: 11px; padding: 5px 12px; top: 12px; right: 12px; }
+    .benefit-value .value-price { font-size: 24px; }
+    .gifts-cta-wrap .btn-primary { font-size: 16px; padding: 16px 32px; }
     .trust-bar { padding: 28px 20px; grid-template-columns: 1fr 1fr; }
     .trust-num { font-size: 28px; }
     .ig-grid { grid-template-columns: 1fr; }
@@ -1572,7 +1700,7 @@
       </div>
       <h1 class="reveal">Empreste sua moto<br/>por um dia. <span>Leve recompensa.</span></h1>
       <p class="lead reveal">
-        A FullPro está produzindo conteúdo de marketing com motos variadas em seu novo estúdio de gravação e fotografia. Participe do Media Club, tenha sua moto protagonista do nosso conteúdo e ganhe um presente FullPro de sua escolha.
+        A FullPro está produzindo conteúdo de marketing com motos variadas em seu novo estúdio de gravação e fotografia. Participe do FullPro Media Club, tenha sua moto protagonista do nosso conteúdo e ganhe um presente FullPro de sua escolha.
       </p>
       <div class="hero-cta reveal">
         <a href="#agendar" class="btn btn-primary">Agendar minha moto →</a>
@@ -1612,6 +1740,71 @@
   </div>
 </section>
 
+<!-- GIFTS SHOWCASE — right after hero for maximum impact -->
+<section class="gifts-showcase" id="presentes">
+  <div class="container">
+    <div class="gifts-headline reveal">
+      <div class="gift-eyebrow">🎁 Presente garantido</div>
+      <h2>Participe e <em>ganhe grátis</em></h2>
+      <p class="gifts-sub">Empreste sua moto por um dia e leve para casa um produto FullPro original, sem custo nenhum. Escolha o seu:</p>
+    </div>
+    <div class="benefits stagger reveal">
+      <div class="benefit">
+        <span class="benefit-badge">Grátis</span>
+        <div class="benefit-media">
+          <span class="fallback">🛞</span>
+          <img src="assets/pastilhas.png" alt="Jogo de Pastilhas FullPro" onerror="this.onerror=null;this.src='assets/pastilhas.jpg';this.onerror=function(){this.style.display='none';this.closest('.benefit-media').classList.add('no-img');}" />
+        </div>
+        <div class="benefit-body">
+          <span class="benefit-tag">Opção 1</span>
+          <h3>Jogo de Pastilhas</h3>
+          <p>Pastilhas de freio FullPro (sinterizada, semi-metálica ou orgânica) adequadas ao modelo da sua moto.</p>
+          <div class="benefit-value">
+            <span class="value-price">R$0</span>
+            <span class="value-label">Você não<br/>paga nada</span>
+          </div>
+        </div>
+      </div>
+      <div class="benefit">
+        <span class="benefit-badge">Grátis</span>
+        <div class="benefit-media">
+          <span class="fallback">🎒</span>
+          <img src="assets/mochila.png" alt="Mochila Backpack FullPro" onerror="this.onerror=null;this.src='assets/mochila.jpg';this.onerror=function(){this.style.display='none';this.closest('.benefit-media').classList.add('no-img');}" />
+        </div>
+        <div class="benefit-body">
+          <span class="benefit-tag">Opção 2</span>
+          <h3>Mochila Backpack</h3>
+          <p>Mochila FullPro resistente, ideal para o dia a dia, trilhas e uso profissional.</p>
+          <div class="benefit-value">
+            <span class="value-price">R$0</span>
+            <span class="value-label">Você não<br/>paga nada</span>
+          </div>
+        </div>
+      </div>
+      <div class="benefit">
+        <span class="benefit-badge">Grátis</span>
+        <div class="benefit-media">
+          <span class="fallback">🧥</span>
+          <img src="assets/capa-chuva.png" alt="Capa de Chuva FullPro" onerror="this.onerror=null;this.src='assets/capa-chuva.jpg';this.onerror=function(){this.style.display='none';this.closest('.benefit-media').classList.add('no-img');}" />
+        </div>
+        <div class="benefit-body">
+          <span class="benefit-tag">Opção 3</span>
+          <h3>Capa de Chuva</h3>
+          <p>Capa de chuva FullPro impermeável, com acabamento premium e bolsa de transporte.</p>
+          <div class="benefit-value">
+            <span class="value-price">R$0</span>
+            <span class="value-label">Você não<br/>paga nada</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="gifts-cta-wrap reveal">
+      <a href="#agendar" class="btn btn-primary">Quero meu presente — Agendar agora →</a>
+      <span class="cta-hint">Sem compromisso. Agende e escolha seu presente no dia.</span>
+    </div>
+  </div>
+</section>
+
 <!-- HOW IT WORKS -->
 <section id="como-funciona">
   <div class="container">
@@ -1635,52 +1828,6 @@
         <div class="step-num">3</div>
         <h3>🎁 Receba sua bonificação</h3>
         <p>Ao fim do dia, você recebe sua moto de volta e o brinde FullPro que escolheu.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- BENEFITS with product photos -->
-<section>
-  <div class="container">
-    <div class="section-title reveal">
-      <small>Bonificação</small>
-      <h2>Escolha seu presente FullPro</h2>
-      <p>Ao participar, você leva para casa uma das três bonificações exclusivas — por conta da FullPro.</p>
-    </div>
-    <div class="benefits stagger reveal">
-      <div class="benefit">
-        <div class="benefit-media">
-          <span class="fallback">🛞</span>
-          <img src="assets/pastilhas.png" alt="Jogo de Pastilhas FullPro" onerror="this.onerror=null;this.src='assets/pastilhas.jpg';this.onerror=function(){this.style.display='none';this.closest('.benefit-media').classList.add('no-img');}" />
-        </div>
-        <div class="benefit-body">
-          <span class="benefit-tag">Opção 1</span>
-          <h3>Jogo de Pastilhas</h3>
-          <p>Pastilhas de freio FullPro (sinterizada, semi-metálica ou orgânica) adequadas ao modelo da sua moto.</p>
-        </div>
-      </div>
-      <div class="benefit">
-        <div class="benefit-media">
-          <span class="fallback">🎒</span>
-          <img src="assets/mochila.png" alt="Mochila Backpack FullPro" onerror="this.onerror=null;this.src='assets/mochila.jpg';this.onerror=function(){this.style.display='none';this.closest('.benefit-media').classList.add('no-img');}" />
-        </div>
-        <div class="benefit-body">
-          <span class="benefit-tag">Opção 2</span>
-          <h3>Mochila Backpack</h3>
-          <p>Mochila FullPro resistente, ideal para o dia a dia, trilhas e uso profissional.</p>
-        </div>
-      </div>
-      <div class="benefit">
-        <div class="benefit-media">
-          <span class="fallback">🧥</span>
-          <img src="assets/capa-chuva.png" alt="Capa de Chuva FullPro" onerror="this.onerror=null;this.src='assets/capa-chuva.jpg';this.onerror=function(){this.style.display='none';this.closest('.benefit-media').classList.add('no-img');}" />
-        </div>
-        <div class="benefit-body">
-          <span class="benefit-tag">Opção 3</span>
-          <h3>Capa de Chuva</h3>
-          <p>Capa de chuva FullPro impermeável, com acabamento premium e bolsa de transporte.</p>
-        </div>
       </div>
     </div>
   </div>
