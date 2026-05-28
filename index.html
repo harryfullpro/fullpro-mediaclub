@@ -766,8 +766,8 @@
   /* Instagram feed */
   .ig-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
     margin-top: 40px;
   }
   .ig-embed {
@@ -791,80 +791,6 @@
     border: 0;
     display: block;
   }
-  .ig-seemore {
-    position: relative;
-    border-radius: var(--radius);
-    overflow: hidden;
-    border: 1px solid var(--border);
-    min-height: 540px;
-    background:
-      radial-gradient(circle at 30% 20%, rgba(255,45,45,.22), transparent 55%),
-      radial-gradient(circle at 75% 85%, rgba(255,207,51,.12), transparent 55%),
-      linear-gradient(135deg, #15151a 0%, #0c0c10 100%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 32px 20px;
-    text-decoration: none;
-    color: var(--text);
-    transition: transform .3s, border-color .3s, box-shadow .3s;
-  }
-  .ig-seemore:hover {
-    transform: translateY(-3px);
-    border-color: var(--primary);
-    box-shadow: 0 12px 32px rgba(255,45,45,.18);
-  }
-  .ig-seemore .sm-logo {
-    width: 68px;
-    height: 68px;
-    border-radius: 20px;
-    background: linear-gradient(135deg, #feda75 0%, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 18px;
-    box-shadow: 0 8px 24px rgba(214,41,118,.3);
-  }
-  .ig-seemore .sm-logo svg { width: 34px; height: 34px; color: #fff; }
-  .ig-seemore .sm-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 26px;
-    letter-spacing: 1px;
-    line-height: 1.05;
-    margin-bottom: 6px;
-  }
-  .ig-seemore .sm-handle {
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--primary);
-    margin-bottom: 16px;
-  }
-  .ig-seemore .sm-desc {
-    font-size: 13px;
-    color: var(--text-dim);
-    line-height: 1.55;
-    margin-bottom: 22px;
-    max-width: 220px;
-  }
-  .ig-seemore .sm-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 18px;
-    background: var(--primary);
-    color: #fff;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: .3px;
-    transition: background .2s;
-  }
-  .ig-seemore:hover .sm-btn { background: #ff4545; }
-  .ig-seemore .sm-btn svg { width: 14px; height: 14px; }
   .ig-cta {
     text-align: center;
     margin-top: 28px;
@@ -872,18 +798,19 @@
   .ig-cta a {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
+    gap: 10px;
+    padding: 13px 28px;
     background: transparent;
-    border: 1px solid var(--border-hi);
-    color: var(--text);
-    border-radius: 10px;
+    border: 1.5px solid var(--primary);
+    color: var(--primary);
+    border-radius: 12px;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     text-decoration: none;
-    transition: all .2s;
+    letter-spacing: .3px;
+    transition: all .25s;
   }
-  .ig-cta a:hover { border-color: var(--primary); color: var(--primary); }
+  .ig-cta a:hover { background: var(--primary); color: #fff; box-shadow: 0 8px 24px rgba(255,45,45,.25); }
 
   /* Featured video section */
   .featured-video {
@@ -1646,7 +1573,7 @@
   @media (max-width: 1024px) {
     .hero-grid { gap: 40px; }
     .ig-grid { grid-template-columns: repeat(2, 1fr); }
-    .ig-embed, .ig-seemore { min-height: 420px; }
+    .ig-embed { min-height: 420px; }
     .ig-embed iframe { min-height: 420px; }
   }
 
@@ -1698,7 +1625,7 @@
     .trust-bar { padding: 28px 20px; grid-template-columns: 1fr 1fr; }
     .trust-num { font-size: 28px; }
     .ig-grid { grid-template-columns: 1fr; }
-    .ig-embed, .ig-seemore { min-height: 480px; }
+    .ig-embed { min-height: 480px; }
     .ig-embed iframe { min-height: 480px; }
     .schedule-wrap { gap: 20px; }
     .card { padding: 24px 18px; }
@@ -1736,7 +1663,7 @@
   /* ===== PREFERS REDUCED MOTION ===== */
   @media (prefers-reduced-motion: reduce) {
     .reveal, .reveal-left, .reveal-right, .reveal-scale { transition: none; opacity: 1; transform: none; }
-    .step, .benefit, .gift-option, .trust-item, .ig-embed, .ig-seemore { transition: none; }
+    .step, .benefit, .gift-option, .trust-item, .ig-embed { transition: none; }
     .badge-dot, .rec-dot, .scroll-icon { animation: none; }
   }
 </style>
@@ -2011,18 +1938,6 @@
       <div class="ig-embed">
         <iframe src="https://www.instagram.com/p/DJo3pOCAD0b/embed/" loading="lazy" allow="encrypted-media" allowtransparency="true" scrolling="no"></iframe>
       </div>
-      <a href="https://instagram.com/fullprobr" target="_blank" rel="noopener" class="ig-seemore">
-        <span class="sm-logo">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.2 0 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.3 1 .4 2.2.1 1.2.1 1.6.1 4.8s0 3.6-.1 4.8c0 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1 .3-2.2.4-1.2.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.2 0-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.3-1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c0-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1-.3 2.2-.4C8.4 2.2 8.8 2.2 12 2.2zm0 1.8c-3.15 0-3.52 0-4.75.1-1.1 0-1.7.2-2.1.3-.5.2-.9.4-1.3.8-.4.4-.6.8-.8 1.3-.1.4-.3 1-.3 2.1-.1 1.23-.1 1.6-.1 4.75s0 3.52.1 4.75c0 1.1.2 1.7.3 2.1.2.5.4.9.8 1.3.4.4.8.6 1.3.8.4.1 1 .3 2.1.3 1.23.1 1.6.1 4.75.1s3.52 0 4.75-.1c1.1 0 1.7-.2 2.1-.3.5-.2.9-.4 1.3-.8.4-.4.6-.8.8-1.3.1-.4.3-1 .3-2.1.1-1.23.1-1.6.1-4.75s0-3.52-.1-4.75c0-1.1-.2-1.7-.3-2.1-.2-.5-.4-.9-.8-1.3-.4-.4-.8-.6-1.3-.8-.4-.1-1-.3-2.1-.3C15.52 4 15.15 4 12 4zm0 3.06a4.94 4.94 0 1 1 0 9.88 4.94 4.94 0 0 1 0-9.88zm0 1.8a3.14 3.14 0 1 0 0 6.28 3.14 3.14 0 0 0 0-6.28zm5.17-3.18a1.17 1.17 0 1 1 0 2.34 1.17 1.17 0 0 1 0-2.34z"/></svg>
-        </span>
-        <div class="sm-title">Siga no Instagram</div>
-        <div class="sm-handle">@fullprobr</div>
-        <p class="sm-desc">Produções novas toda semana: reviews, bastidores e lançamentos FullPro.</p>
-        <span class="sm-btn">
-          Ver mais posts
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-        </span>
-      </a>
     </div>
     <div class="ig-cta">
       <a href="https://instagram.com/fullprobr" target="_blank" rel="noopener">
