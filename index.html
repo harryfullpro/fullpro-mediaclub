@@ -512,16 +512,19 @@
     position: absolute;
     inset: -2px;
     border-radius: var(--radius-lg);
-    background: linear-gradient(135deg, var(--primary), var(--primary-hi), var(--primary-dark), var(--primary));
-    background-size: 300% 300%;
+    background: linear-gradient(135deg, #8b0000, #cc1d1d, #ff2d2d, #ff5252, #ff2d2d, #e01515, #8b0000);
+    background-size: 400% 400%;
     z-index: -1;
     opacity: 0;
-    transition: opacity .4s;
-    animation: gradientShift 3s ease infinite;
+    transition: opacity .6s;
+    animation: gradientShift 8s ease infinite;
   }
   @keyframes gradientShift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
+    0% { background-position: 0% 0%; }
+    25% { background-position: 100% 50%; }
+    50% { background-position: 50% 100%; }
+    75% { background-position: 0% 50%; }
+    100% { background-position: 0% 0%; }
   }
   .benefit:hover {
     border-color: transparent;
