@@ -220,6 +220,7 @@
   }
   .btn-ghost:hover { background: rgba(255,255,255,.08); }
   .cta-short { display: none; }
+  .lead-short { display: none; }
   .hero-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1579,7 +1580,8 @@
     .hero-visual { max-width: 100%; margin: 30px auto 0; aspect-ratio: 16/9; }
     .featured-video .vid-body { padding: 28px; }
     .steps { grid-template-columns: 1fr; gap: 24px; }
-    .benefits { grid-template-columns: 1fr; }
+    .benefits { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .benefit-body p { font-size: 12px; }
     .gifts-showcase { padding: 28px 0 24px; }
     .gifts-headline h2 { font-size: 36px; }
     .trust-bar { grid-template-columns: repeat(2, 1fr); gap: 20px; }
@@ -1646,6 +1648,8 @@
     .hero p.lead { font-size: 15px; margin-bottom: 24px; }
     .hero-cta { flex-direction: column; gap: 10px; }
     .hero-cta .btn { width: 100%; justify-content: center; text-align: center; }
+    .lead-full { display: none !important; }
+    .lead-short { display: block !important; }
     .hero-cta .btn-primary .cta-full { display: none; }
     .hero-cta .btn-primary .cta-short { display: inline; }
     .hero-stats { gap: 12px; }
@@ -1692,11 +1696,25 @@
     @keyframes stepSlideIn {
       to { opacity: 1; transform: translateX(0); }
     }
-    .benefit-body { padding: 20px; }
-    .benefit-body h3 { font-size: 18px; }
-    .benefit-badge { font-size: 11px; padding: 5px 12px; top: 12px; right: 12px; }
-    .benefit-value .value-price { font-size: 24px; }
-    .gifts-cta-wrap .btn-primary { font-size: 16px; padding: 16px 32px; }
+    /* Compact benefit cards — 3 across on mobile */
+    .benefits { grid-template-columns: repeat(3, 1fr) !important; gap: 10px; margin-top: 16px; }
+    .benefit { border-width: 1.5px; border-radius: 14px; }
+    .benefit-badge { font-size: 9px; padding: 3px 8px; top: 8px; right: 8px; letter-spacing: .8px; }
+    .benefit-media { aspect-ratio: 1; }
+    .benefit-body { padding: 12px 10px 14px; }
+    .benefit-body h3 { font-size: 13px; margin-bottom: 4px; }
+    .benefit-body p { display: none; }
+    .benefit-tag { font-size: 9px; padding: 3px 7px; margin-bottom: 6px; }
+    .benefit-value { flex-wrap: wrap; gap: 4px; margin-top: 8px; padding-top: 8px; }
+    .benefit-value .value-original { font-size: 18px; }
+    .benefit-value .value-price { font-size: 16px; }
+    .benefit-value .value-label { font-size: 9px; width: 100%; }
+    .benefit-link { font-size: 11px; margin-top: 8px; }
+    .benefit-link svg { width: 11px; height: 11px; }
+    .gifts-headline h2 { font-size: 28px !important; }
+    .gifts-sub { font-size: 13px; }
+    .gifts-showcase { padding: 20px 0 16px; }
+    .gifts-cta-wrap .btn-primary { font-size: 15px; padding: 14px 28px; }
     .gifts-cta-wrap .btn-primary .cta-full { display: none; }
     .gifts-cta-wrap .btn-primary .cta-short { display: inline; }
     .trust-bar { padding: 28px 20px; grid-template-columns: 1fr 1fr; }
@@ -1731,6 +1749,15 @@
     .stat { display: flex; align-items: center; gap: 10px; border-left: 2px solid var(--primary); padding: 8px 0 8px 12px; }
     .stat-num { font-size: 24px; }
     .gift-grid { grid-template-columns: 1fr; }
+    .benefits { gap: 6px !important; }
+    .benefit-body { padding: 8px 6px 10px; }
+    .benefit-body h3 { font-size: 11px; }
+    .benefit-tag { font-size: 8px; padding: 2px 5px; margin-bottom: 4px; }
+    .benefit-value .value-original { font-size: 15px; }
+    .benefit-value .value-price { font-size: 14px; }
+    .benefit-value .value-label { font-size: 8px; }
+    .benefit-link { font-size: 10px; }
+    .benefit-badge { font-size: 8px; padding: 2px 6px; top: 6px; right: 6px; }
     .trust-bar { grid-template-columns: 1fr; }
     .trust-item { border-bottom: 1px solid var(--border); padding-bottom: 14px; }
     .trust-item:last-child { border-bottom: none; }
@@ -1786,8 +1813,11 @@
         FullPro Media Club
       </div>
       <h1 class="reveal">Empreste sua moto<br/>por um dia. <span>Leve recompensa.</span></h1>
-      <p class="lead reveal">
+      <p class="lead lead-full reveal">
         A FullPro está produzindo conteúdo de marketing com motos variadas em seu novo estúdio de gravação e fotografia. Participe do FullPro Media Club, tenha sua moto protagonista do nosso conteúdo e ganhe um presente FullPro de sua escolha.
+      </p>
+      <p class="lead lead-short reveal">
+        Sua moto protagonista do nosso conteúdo — e você leva um presente FullPro grátis.
       </p>
       <div class="hero-cta reveal">
         <a href="#agendar" class="btn btn-primary">Agendar minha moto →</a>
