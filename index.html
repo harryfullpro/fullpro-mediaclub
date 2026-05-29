@@ -29,7 +29,6 @@
     --shadow: 0 10px 40px rgba(0,0,0,.45);
     --shadow-red: 0 10px 40px rgba(255, 45, 45, .25);
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
   body {
@@ -40,7 +39,6 @@
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
-
   body::before {
     content: '';
     position: fixed;
@@ -52,7 +50,6 @@
     pointer-events: none;
     z-index: 0;
   }
-
   .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -60,7 +57,6 @@
     position: relative;
     z-index: 1;
   }
-
   /* NAV */
   .nav {
     position: sticky;
@@ -140,7 +136,6 @@
     transition: all .2s;
   }
   .nav-cta:hover { background: var(--primary-hi); transform: translateY(-1px); }
-
   /* HERO */
   .hero {
     padding: 50px 0 40px;
@@ -173,7 +168,6 @@
     animation: pulse 2s infinite;
   }
   @keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:.5;} }
-
   h1 {
     font-family: 'Bebas Neue', sans-serif;
     font-size: clamp(44px, 6vw, 72px);
@@ -225,7 +219,6 @@
     border: 1px solid var(--border-hi);
   }
   .btn-ghost:hover { background: rgba(255,255,255,.08); }
-
   .hero-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -240,7 +233,6 @@
     line-height: 1;
   }
   .stat-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
-
   /* Hero video */
   .hero-visual {
     position: relative;
@@ -373,7 +365,6 @@
   }
   .hero-visual-info .ig-link:hover { color: var(--primary); }
   .hero-visual-info .ig-link svg { width: 14px; height: 14px; }
-
   /* SECTION */
   section { padding: 36px 0; position: relative; }
   .section-title {
@@ -402,7 +393,6 @@
     margin: 0 auto;
     font-size: 16px;
   }
-
   /* HOW IT WORKS */
   .steps {
     display: grid;
@@ -436,7 +426,6 @@
   .step-icon { display: none; }
   .step h3 { font-size: 18px; margin-bottom: 10px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
   .step p { color: var(--text-dim); font-size: 14px; }
-
   /* GIFTS SHOWCASE — high emphasis */
   .gifts-showcase {
     padding: 36px 0 32px;
@@ -682,7 +671,6 @@
     font-size: 13px;
     color: var(--text-muted);
   }
-
   /* TRUST */
   .trust-bar {
     background: var(--bg-card);
@@ -705,7 +693,6 @@
   }
   .trust-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
   .trust-source { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
-
   /* Google Maps section */
   .gmap-section { margin-top: 60px; }
   .gmap-wrap {
@@ -788,7 +775,6 @@
     margin-top: 4px;
   }
   .gmap-btn:hover { border-color: #4285F4; color: #4285F4; }
-
   /* Instagram feed */
   .ig-grid {
     display: grid;
@@ -837,7 +823,6 @@
     transition: all .25s;
   }
   .ig-cta a:hover { background: var(--primary); color: #fff; box-shadow: 0 8px 24px rgba(255,45,45,.25); }
-
   /* Featured video section */
   .featured-video {
     background: var(--bg-card);
@@ -889,11 +874,10 @@
     font-size: 12px;
     color: var(--text-muted);
   }
-
   /* SCHEDULE */
   .schedule-wrap {
     display: grid;
-    grid-template-columns: 1.1fr .9fr;
+    grid-template-columns: .75fr 1.25fr;
     gap: 30px;
     align-items: start;
   }
@@ -910,7 +894,6 @@
     margin-bottom: 6px;
   }
   .card .sub { color: var(--text-dim); font-size: 14px; margin-bottom: 24px; }
-
   /* Calendar */
   .cal-header {
     display: flex;
@@ -1011,7 +994,6 @@
   .cal-legend .i-free { background: var(--bg-elev); border: 1px solid var(--border-hi); }
   .cal-legend .i-booked { background: rgba(255,45,45,.2); }
   .cal-legend .i-selected { background: var(--primary); }
-
   /* Form */
   .form-group { margin-bottom: 18px; }
   .form-label {
@@ -1040,7 +1022,6 @@
   }
   .form-textarea { resize: vertical; min-height: 80px; }
   .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-
   .radio-group { display: grid; gap: 10px; }
   .radio-option {
     padding: 16px;
@@ -1061,7 +1042,6 @@
   .radio-option input { margin-top: 3px; accent-color: var(--primary); }
   .radio-option .ro-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
   .radio-option .ro-desc { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
-
   .gift-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1127,7 +1107,6 @@
   }
   .gift-option .g-check svg { width: 14px; height: 14px; }
   .gift-option.active .g-check { display: flex; }
-
   /* Terms button */
   .terms-trigger {
     display: flex;
@@ -1170,7 +1149,6 @@
   }
   .terms-trigger.accepted .tt-status { color: var(--success); font-weight: 600; }
   .terms-trigger .tt-arrow { color: var(--text-muted); font-size: 18px; }
-
   .submit-area {
     margin-top: 24px;
     display: flex;
@@ -1189,7 +1167,6 @@
     cursor: not-allowed;
     box-shadow: none;
   }
-
   /* Success */
   .success-state {
     text-align: center;
@@ -1210,7 +1187,6 @@
   }
   .success-state h3 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; margin-bottom: 10px; }
   .success-state p { color: var(--text-dim); max-width: 400px; margin: 0 auto 20px; }
-
   /* TERMS FULLSCREEN */
   .terms-overlay {
     position: fixed;
@@ -1264,7 +1240,6 @@
     transition: all .2s;
   }
   .terms-close:hover { color: var(--text); border-color: var(--border-hi); }
-
   .terms-progress {
     height: 3px;
     background: var(--bg-elev);
@@ -1276,7 +1251,6 @@
     width: 0%;
     transition: width .15s ease-out;
   }
-
   .terms-body {
     flex: 1;
     overflow-y: auto;
@@ -1358,7 +1332,6 @@
     border-top: 1px dashed var(--border);
     margin-top: 40px;
   }
-
   .terms-footer {
     padding: 20px 30px;
     border-top: 1px solid var(--border);
@@ -1411,7 +1384,6 @@
     color: var(--text);
   }
   .btn-decline:hover { background: var(--bg-elev); }
-
   /* FAQ */
   .faq {
     max-width: 760px;
@@ -1444,7 +1416,6 @@
     padding: 0 22px;
   }
   .faq-item.open .faq-a { max-height: 300px; padding: 0 22px 20px; }
-
   /* FOOTER */
   footer {
     border-top: 1px solid var(--border);
@@ -1501,7 +1472,6 @@
     flex-wrap: wrap;
     gap: 10px;
   }
-
   /* ===== SCROLL REVEAL ANIMATIONS ===== */
   .reveal {
     opacity: 0;
@@ -1541,7 +1511,6 @@
   }
   /* Stagger children */
   .stagger > * { transition-delay: calc(var(--i, 0) * 100ms); }
-
   /* ===== ENHANCED HOVER & MICRO-INTERACTIONS ===== */
   .step { will-change: transform; }
   .step:hover { box-shadow: 0 20px 50px rgba(255,45,45,.12); }
@@ -1552,7 +1521,6 @@
   .faq-item { transition: border-color .2s, box-shadow .2s; }
   .faq-item:hover { border-color: var(--border-hi); }
   .faq-item.open { border-color: var(--primary); box-shadow: 0 8px 30px rgba(255,45,45,.08); }
-
   /* Smooth gradient line on section tops */
   section::before {
     content: '';
@@ -1562,14 +1530,11 @@
     margin-bottom: 0;
   }
   .hero::before, footer::before { display: none; }
-
   /* Animated counter pulse on stats */
   .stat-num, .trust-num { transition: color .3s; }
-
   /* Nav glass morphism enhancement */
   .nav { transition: background .3s; }
   .nav.scrolled { background: rgba(10, 10, 11, .92); box-shadow: 0 4px 30px rgba(0,0,0,.3); }
-
   /* Floating CTA glow */
   .btn-primary { position: relative; overflow: hidden; }
   .btn-primary::after {
@@ -1581,20 +1546,16 @@
     transition: opacity .3s;
   }
   .btn-primary:hover::after { opacity: 1; }
-
   /* Better gift cards hover */
   .gift-option { transition: all .3s cubic-bezier(.16,1,.3,1); }
   .gift-option:hover { box-shadow: 0 12px 30px rgba(0,0,0,.2); }
-
   /* Calendar day hover glow */
   .cal-day:hover:not(.disabled):not(.booked) { box-shadow: 0 0 12px rgba(255,45,45,.15); }
-
   /* ===== COMPACT SPACING ===== */
   section { padding: 36px 0; }
   .section-title { margin-bottom: 24px; }
   .hero { padding: 40px 0 32px; }
   .gmap-section { margin-top: 24px; }
-
   /* ===== RESPONSIVE — TABLET (max 1024px) ===== */
   @media (max-width: 1024px) {
     .hero-grid { gap: 40px; }
@@ -1602,7 +1563,6 @@
     .ig-embed { min-height: 420px; }
     .ig-embed iframe { min-height: 420px; }
   }
-
   /* ===== RESPONSIVE — MOBILE LANDSCAPE / SMALL TABLET (max 900px) ===== */
   @media (max-width: 900px) {
     .hero-grid, .schedule-wrap, .featured-video { grid-template-columns: 1fr; }
@@ -1629,7 +1589,6 @@
     section { padding: 28px 0; }
     .section-title { margin-bottom: 20px; }
   }
-
   /* ===== RESPONSIVE — MOBILE (max 640px) ===== */
   @media (max-width: 640px) {
     .container { padding: 0 18px; }
@@ -1661,7 +1620,6 @@
     .footer-inner { gap: 20px; }
     .footer-bottom { flex-direction: column; text-align: center; gap: 6px; }
   }
-
   /* ===== RESPONSIVE — SMALL MOBILE (max 400px) ===== */
   @media (max-width: 400px) {
     .container { padding: 0 14px; }
@@ -1685,7 +1643,6 @@
     .cal-day { font-size: 12px; border-radius: 8px; }
     .cal-grid { gap: 4px; }
   }
-
   /* ===== PREFERS REDUCED MOTION ===== */
   @media (prefers-reduced-motion: reduce) {
     .reveal, .reveal-left, .reveal-right, .reveal-scale { transition: none; opacity: 1; transform: none; }
@@ -1695,7 +1652,6 @@
 </style>
 </head>
 <body>
-
 <!-- NAV -->
 <header class="nav">
   <div class="container nav-inner">
@@ -1720,7 +1676,6 @@
     </div>
   </div>
 </header>
-
 <!-- HERO -->
 <section class="hero">
   <div class="container hero-grid">
@@ -1752,7 +1707,6 @@
         </div>
       </div>
     </div>
-
     <div class="reveal-right">
       <div class="hero-visual" id="heroVideo">
         <div class="yt-thumb-wrap">
@@ -1781,7 +1735,6 @@
     </div>
   </div>
 </section>
-
 <!-- GIFTS SHOWCASE — right after hero for maximum impact -->
 <section class="gifts-showcase" id="presentes">
   <div class="container">
@@ -1852,7 +1805,6 @@
     </div>
   </div>
 </section>
-
 <!-- HOW IT WORKS -->
 <section id="como-funciona">
   <div class="container">
@@ -1880,7 +1832,6 @@
     </div>
   </div>
 </section>
-
 <!-- TRUST -->
 <section id="confianca">
   <div class="container">
@@ -1889,7 +1840,6 @@
       <h2>Você está em boas mãos</h2>
       <p>Mais de 10 anos distribuindo peças para motos em todo o Brasil. Reputação validada pelo mercado.</p>
     </div>
-
     <div class="trust-bar stagger reveal-scale">
       <div class="trust-item">
         <div class="trust-stars">★★★★★</div>
@@ -1916,7 +1866,6 @@
         <div class="trust-source">Desde 2016</div>
       </div>
     </div>
-
     <!-- Google Maps + Business info -->
     <div class="gmap-section reveal">
       <div class="gmap-wrap">
@@ -1950,7 +1899,6 @@
         </div>
       </div>
     </div>
-
     <!-- Instagram feed -->
     <div class="reveal" style="margin-top: 48px; text-align:center">
       <div style="display:inline-flex; align-items:center; gap:10px; margin-bottom:8px">
@@ -1979,7 +1927,6 @@
     </div>
   </div>
 </section>
-
 <!-- SCHEDULE & FORM -->
 <section id="agendar">
   <div class="container">
@@ -1988,13 +1935,11 @@
       <h2>Reserve sua data</h2>
       <p>Preencha o formulário abaixo. Em até 24h entraremos em contato via WhatsApp para confirmar seu agendamento.</p>
     </div>
-
     <div class="schedule-wrap reveal">
       <!-- Calendar -->
       <div class="card">
         <h3>1. Escolha a data</h3>
         <p class="sub">As datas em cinza já estão ocupadas. Seleção disponível a partir de 2 dias úteis.</p>
-
         <div class="cal-header">
           <div class="cal-month" id="calMonth">—</div>
           <div class="cal-nav">
@@ -2009,13 +1954,11 @@
           <span><i class="i-selected"></i>Selecionada</span>
         </div>
       </div>
-
       <!-- Form -->
       <div class="card">
         <div id="formView">
           <h3>2. Seus dados</h3>
           <p class="sub">Vamos usar esses dados apenas para confirmar o agendamento.</p>
-
           <form id="reservaForm">
             <div class="form-grid-2">
               <div class="form-group">
@@ -2041,7 +1984,6 @@
                 <input class="form-input" name="placa" placeholder="ABC-1D23" required />
               </div>
             </div>
-
             <div class="form-group">
               <label class="form-label">Modalidade <span class="req">*</span></label>
               <div class="radio-group">
@@ -2061,12 +2003,10 @@
                 </label>
               </div>
             </div>
-
             <div class="form-group" id="enderecoGroup" style="display:none">
               <label class="form-label">Endereço para retirada <span class="req">*</span></label>
               <input class="form-input" name="endereco" placeholder="Rua, número, bairro, cidade" />
             </div>
-
             <div class="form-group">
               <label class="form-label">Brinde desejado <span class="req">*</span></label>
               <div class="gift-grid">
@@ -2097,12 +2037,10 @@
               </div>
               <input type="hidden" name="brinde" value="pastilhas" />
             </div>
-
             <div class="form-group">
               <label class="form-label">Observações</label>
               <textarea class="form-textarea" name="obs" placeholder="Alguma informação que devemos saber sobre sua moto?"></textarea>
             </div>
-
             <!-- TERMOS TRIGGER -->
             <div class="form-group">
               <label class="form-label">3. Termo de Cessão Temporária <span class="req">*</span></label>
@@ -2118,7 +2056,6 @@
               </div>
               <input type="hidden" name="aceiteTermo" id="aceiteTermoInput" value="" required />
             </div>
-
             <div class="submit-area">
               <button type="submit" class="btn btn-primary submit-btn" id="submitBtn">
                 Solicitar agendamento →
@@ -2127,7 +2064,6 @@
             </div>
           </form>
         </div>
-
         <!-- Success -->
         <div class="success-state" id="successView">
           <div class="success-icon">✓</div>
@@ -2139,7 +2075,6 @@
     </div>
   </div>
 </section>
-
 <!-- FAQ -->
 <section>
   <div class="container">
@@ -2171,7 +2106,6 @@
     </div>
   </div>
 </section>
-
 <footer>
   <div class="container">
     <div class="footer-inner">
@@ -2216,7 +2150,6 @@
     </div>
   </div>
 </footer>
-
 <!-- TERMS FULLSCREEN OVERLAY -->
 <div class="terms-overlay" id="termsOverlay">
   <div class="terms-header">
@@ -2233,11 +2166,9 @@
   <div class="terms-body" id="termsBody">
     <div class="terms-content">
       <h1>TERMO DE CESSÃO TEMPORÁRIA DE MOTOCICLETA E AUTORIZAÇÃO DE USO DE IMAGEM</h1>
-
       <div class="preamble">
         Por este instrumento particular, o(a) <strong>CEDENTE</strong> (participante do FullPro Media Club devidamente identificado no formulário digital de agendamento) e a <strong>CESSIONÁRIA</strong> (FullPro Comércio de Peças para Motos LTDA), doravante simplesmente denominadas em conjunto como "Partes", têm entre si, justa e acordada, a celebração do presente Termo de Cessão Temporária, nas seguintes cláusulas e condições:
       </div>
-
       <div class="company-block">
         <strong>CESSIONÁRIA (FullPro):</strong><br/>
         Razão Social: <strong>FULLPRO COMERCIO DE PECAS PARA MOTOS LTDA</strong><br/>
@@ -2245,47 +2176,36 @@
         Endereço: Rua Florianópolis, 2486 — Bairro Itaum, Joinville/SC, CEP 89.210-795<br/>
         Contato: contato@fullpro.parts · (47) 3466-6977
       </div>
-
       <h3><span class="num">1</span> Do Objeto</h3>
       <p>O(a) CEDENTE cede, em caráter temporário e gratuito, a motocicleta identificada no formulário digital de agendamento (marca, modelo, ano e placa nele informados), com a finalidade <strong>exclusiva</strong> de produção de conteúdo de marketing, testes, validação de compatibilidade de produtos e sessões de gravação/fotografia profissional desenvolvidas pela CESSIONÁRIA em seu estúdio FullPro.</p>
-
       <h3><span class="num">2</span> Do Prazo</h3>
       <p>A cessão ocorrerá <strong>em um único dia útil</strong>, na data escolhida pelo(a) CEDENTE no formulário, com início às 8h e devolução da motocicleta até as 18h do mesmo dia, em estado igual ou superior ao de recebimento.</p>
-
       <h3><span class="num">3</span> Das Modalidades</h3>
       <p>O(a) CEDENTE poderá optar por: <strong>(a)</strong> entregar pessoalmente a motocicleta no endereço da CESSIONÁRIA às 8h; ou <strong>(b)</strong> receber em seu endereço, por parte de funcionário credenciado da CESSIONÁRIA, a retirada da sua motocicleta e a disponibilização de uma <strong>motocicleta reserva</strong> para seu uso durante todo o período de cessão, com troca reversa ao fim do dia.</p>
-
       <h3><span class="num">4</span> Do Ambiente de Testes e Documentação</h3>
       <p>A motocicleta será utilizada tanto em <strong>ambiente controlado (estúdio)</strong> quanto em <strong>ambiente externo</strong> (vias públicas, em rota previamente definida e monitorada).</p>
       <div class="highlight">Por haver condução em via pública, é <strong>obrigatório</strong> que o(a) CEDENTE entregue, no momento da cessão, o <strong>Certificado de Registro e Licenciamento de Veículo (CRLV)</strong> em dia, a ser portado pelo piloto durante toda a atividade externa. A motocicleta deverá estar em condições regulares de circulação, com itens de segurança e documentação em ordem.</div>
-
       <h3><span class="num">5</span> Das Responsabilidades da CESSIONÁRIA</h3>
       <p>A FullPro compromete-se a:</p>
       <p>• <strong>Arcar integralmente com todos os custos operacionais</strong> do dia, incluindo combustível, lubrificantes, insumos e transporte, não cabendo ao(à) CEDENTE qualquer desembolso.</p>
       <p>• Garantir que a motocicleta seja conduzida <strong>exclusivamente por profissionais qualificados, com experiência comprovada em pilotagem</strong> e treinamento específico para as atividades desenvolvidas no Media Club.</p>
       <p>• <strong>Assumir integralmente o custo de reparo e restauração</strong> em caso de qualquer dano, avaria, desgaste anormal ou sinistro ocorrido com a motocicleta durante o período de cessão, restabelecendo o bem ao estado anterior ou indenizando o(a) CEDENTE pelo valor equivalente, conforme orçamento em concessionária ou oficina especializada, à escolha do(a) CEDENTE.</p>
       <p>• Tratar a motocicleta com o mais alto padrão de cuidado técnico, respeitando seus limites mecânicos, e realizando todas as operações em ambiente seguro.</p>
-
       <h3><span class="num">6</span> Das Declarações e Responsabilidades do(a) CEDENTE</h3>
       <p>O(a) CEDENTE declara, sob as penas da lei, que:</p>
       <p>• É o(a) legítimo(a) proprietário(a) e/ou possuidor(a) direto(a) da motocicleta cedida, com plenos poderes para firmar o presente termo;</p>
       <p>• A motocicleta encontra-se em condições regulares de circulação, com documentação (CRLV) em dia e eventual seguro vigente (quando aplicável);</p>
       <p>• As informações prestadas no formulário digital são verdadeiras e completas;</p>
       <p>• Está ciente e de acordo com todos os termos aqui estabelecidos.</p>
-
       <h3><span class="num">7</span> Da Autorização de Uso de Imagem</h3>
       <p>O(a) CEDENTE autoriza, de forma <strong>gratuita, irrevogável, em caráter não exclusivo, sem limitação de território ou prazo</strong>, o uso da imagem da motocicleta cedida — incluindo, mas não se limitando a, fotografias, vídeos, gravações, stories e materiais publicitários — em qualquer peça de comunicação, mídia on-line ou off-line, produzida pela CESSIONÁRIA ou por terceiros por ela contratados, para fins institucionais, comerciais e promocionais.</p>
-
       <h3><span class="num">8</span> Da Bonificação</h3>
       <p>Como bonificação pela participação no FullPro Media Club, o(a) CEDENTE terá o direito de receber, sem custo, <strong>um (01) dos três brindes</strong> oferecidos pela CESSIONÁRIA: jogo de pastilhas de freio FullPro, mochila backpack FullPro ou capa de chuva FullPro, conforme opção selecionada no formulário, a ser entregue no momento da devolução da motocicleta ou em data subsequente ajustada entre as Partes.</p>
-
       <h3><span class="num">9</span> Das Disposições Gerais</h3>
       <p>O presente Termo é firmado em caráter particular, por meio da aceitação digital pelo(a) CEDENTE através do formulário do FullPro Media Club, tendo plena validade jurídica, nos termos da Lei nº 14.063/2020 e do Código Civil Brasileiro.</p>
       <p>Qualquer alteração ou cancelamento deverá ser comunicada às Partes com, no mínimo, <strong>24 horas de antecedência</strong> da data agendada, preferencialmente via WhatsApp para o número de contato informado.</p>
-
       <h3><span class="num">10</span> Do Foro</h3>
       <p>Fica eleito o foro da Comarca de <strong>Joinville/SC</strong>, com renúncia a qualquer outro, por mais privilegiado que seja, para dirimir eventuais controvérsias oriundas deste instrumento.</p>
-
       <div class="end-marker" id="termsEndMarker">
         ✓ Você leu todo o documento. Confirme seu aceite abaixo.
       </div>
@@ -2309,7 +2229,6 @@
     </div>
   </div>
 </div>
-
 <script async src="https://www.instagram.com/embed.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
@@ -2328,7 +2247,6 @@ document.getElementById('ytPlayBtn').addEventListener('click', function(e) {
   container.innerHTML = '';
   container.appendChild(iframe);
 });
-
 /* =============== TERMS FULLSCREEN =============== */
 function openTerms() {
   const ov = document.getElementById('termsOverlay');
@@ -2370,29 +2288,24 @@ document.getElementById('termsBody').addEventListener('scroll', updateProgress);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeTerms();
 });
-
 /* =============== SUPABASE CLIENT =============== */
 const sb = supabase.createClient(
   window.FULLPRO_CONFIG.SUPABASE_URL,
   window.FULLPRO_CONFIG.SUPABASE_ANON_KEY
 );
-
 /* =============== CALENDÁRIO =============== */
 let currentMonth = new Date();
 currentMonth.setDate(1);
 let selectedDate = null;
 let bookedSet = new Set();
-
 async function loadBookedDates() {
   const { data, error } = await sb.from('public_blocked_dates').select('date');
   if (error) { console.error('Supabase (blocked dates):', error); return; }
   bookedSet = new Set((data || []).map(r => r.date));
 }
-
 function getBookedDates() {
   return bookedSet;
 }
-
 function fmtDate(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth()+1).padStart(2,'0');
@@ -2403,41 +2316,34 @@ function prettyDate(iso) {
   const [y,m,d] = iso.split('-');
   return `${d}/${m}/${y}`;
 }
-
 function renderCalendar() {
   const grid = document.getElementById('calGrid');
   const monthLabel = document.getElementById('calMonth');
   const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   monthLabel.textContent = `${months[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
-
   grid.innerHTML = '';
   ['D','S','T','Q','Q','S','S'].forEach(d => {
     const el = document.createElement('div');
     el.className = 'cal-dow'; el.textContent = d;
     grid.appendChild(el);
   });
-
   const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth()+1, 0).getDate();
-
   for (let i = 0; i < firstDay; i++) {
     const el = document.createElement('div');
     el.className = 'cal-day empty';
     grid.appendChild(el);
   }
-
   const today = new Date(); today.setHours(0,0,0,0);
   const minDate = new Date(today); minDate.setDate(minDate.getDate() + 2);
   const maxDate = new Date(today); maxDate.setDate(maxDate.getDate() + 15);
   const booked = getBookedDates();
-
   for (let d = 1; d <= daysInMonth; d++) {
     const el = document.createElement('div');
     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d);
     const iso = fmtDate(date);
     el.className = 'cal-day';
     el.textContent = d;
-
     const dayOfWeek = date.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     if (date.getTime() === today.getTime()) el.classList.add('today');
@@ -2454,7 +2360,6 @@ function renderCalendar() {
     grid.appendChild(el);
   }
 }
-
 document.getElementById('calPrev').onclick = () => {
   currentMonth.setMonth(currentMonth.getMonth()-1);
   const now = new Date(); now.setDate(1); now.setHours(0,0,0,0);
@@ -2465,13 +2370,11 @@ document.getElementById('calNext').onclick = () => {
   currentMonth.setMonth(currentMonth.getMonth()+1);
   renderCalendar();
 };
-
 // carrega datas bloqueadas do Supabase e renderiza
 (async () => {
   await loadBookedDates();
   renderCalendar();
 })();
-
 /* =============== FORM INTERACTION =============== */
 document.querySelectorAll('.radio-option').forEach(opt => {
   opt.addEventListener('click', () => {
@@ -2489,7 +2392,6 @@ document.querySelectorAll('.radio-option').forEach(opt => {
     }
   });
 });
-
 document.querySelectorAll('.gift-option').forEach(g => {
   g.addEventListener('click', () => {
     document.querySelectorAll('.gift-option').forEach(o => o.classList.remove('active'));
@@ -2497,7 +2399,6 @@ document.querySelectorAll('.gift-option').forEach(g => {
     document.querySelector('input[name="brinde"]').value = g.dataset.brinde;
   });
 });
-
 /* Máscara WhatsApp */
 document.querySelector('input[name="whatsapp"]').addEventListener('input', e => {
   let v = e.target.value.replace(/\D/g,'').slice(0,11);
@@ -2505,11 +2406,9 @@ document.querySelector('input[name="whatsapp"]').addEventListener('input', e => 
   else if (v.length > 2) v = `(${v.slice(0,2)}) ${v.slice(2)}`;
   e.target.value = v;
 });
-
 document.querySelector('input[name="placa"]').addEventListener('input', e => {
   e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,8);
 });
-
 /* =============== FORM SUBMIT =============== */
 document.getElementById('reservaForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -2530,12 +2429,10 @@ document.getElementById('reservaForm').addEventListener('submit', async e => {
     openTerms();
     return;
   }
-
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
   const originalLabel = btn.textContent;
   btn.textContent = 'Enviando…';
-
   const fd = new FormData(e.target);
   const payload = {
     date: selectedDate,
@@ -2552,9 +2449,7 @@ document.getElementById('reservaForm').addEventListener('submit', async e => {
     aceite_imagem: true,
     status: 'pending'
   };
-
   const { error } = await sb.from('requests').insert(payload);
-
   if (error) {
     console.error('Supabase (insert request):', error);
     alert('Não foi possível enviar sua solicitação agora. Tente novamente em instantes ou fale com a gente pelo WhatsApp.');
@@ -2562,19 +2457,16 @@ document.getElementById('reservaForm').addEventListener('submit', async e => {
     btn.textContent = originalLabel;
     return;
   }
-
   document.getElementById('formView').style.display = 'none';
   document.getElementById('successView').classList.add('show');
   document.getElementById('successView').scrollIntoView({behavior:'smooth', block:'center'});
 });
-
 /* =============== FAQ =============== */
 document.querySelectorAll('.faq-item').forEach(item => {
   item.querySelector('.faq-q').addEventListener('click', () => {
     item.classList.toggle('open');
   });
 });
-
 /* =============== SCROLL REVEAL =============== */
 const revealObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
@@ -2590,11 +2482,9 @@ const revealObserver = new IntersectionObserver((entries) => {
     }
   });
 }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-
 document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale').forEach(el => {
   revealObserver.observe(el);
 });
-
 /* =============== NAV SCROLL EFFECT =============== */
 let lastScroll = 0;
 window.addEventListener('scroll', () => {
@@ -2603,7 +2493,6 @@ window.addEventListener('scroll', () => {
   else nav.classList.remove('scrolled');
   lastScroll = window.scrollY;
 }, { passive: true });
-
 /* =============== ANIMATED COUNTERS =============== */
 function animateCounter(el, target, suffix) {
   const dur = 1600;
@@ -2618,7 +2507,6 @@ function animateCounter(el, target, suffix) {
   }
   requestAnimationFrame(step);
 }
-
 const counterObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
@@ -2633,7 +2521,6 @@ const counterObserver = new IntersectionObserver((entries) => {
     }
   });
 }, { threshold: 0.5 });
-
 document.querySelectorAll('.hero-stats').forEach(el => counterObserver.observe(el));
 </script>
 </body>
