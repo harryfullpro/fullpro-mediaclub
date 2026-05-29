@@ -898,26 +898,35 @@
   .cal-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 16px;
     margin-bottom: 16px;
   }
   .cal-month {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 22px;
     letter-spacing: 1px;
+    min-width: 160px;
+    text-align: center;
   }
-  .cal-nav { display: flex; gap: 6px; }
-  .cal-nav button {
-    width: 36px; height: 36px;
+  .cal-nav-btn {
+    width: 40px; height: 40px;
     background: var(--bg-elev);
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border-hi);
     color: var(--text);
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 20px;
+    font-weight: 700;
     transition: all .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
-  .cal-nav button:hover { background: var(--primary); border-color: var(--primary); }
+  .cal-nav-btn:hover { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .cal-nav-btn:disabled { opacity: .3; cursor: not-allowed; }
+  .cal-nav-btn:disabled:hover { background: var(--bg-elev); border-color: var(--border-hi); color: var(--text); }
   .cal-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -1941,11 +1950,9 @@
         <h3>1. Escolha a data</h3>
         <p class="sub">As datas em cinza já estão ocupadas. Seleção disponível a partir de 2 dias úteis.</p>
         <div class="cal-header">
+          <button class="cal-nav-btn" id="calPrev" aria-label="Mês anterior">‹</button>
           <div class="cal-month" id="calMonth">—</div>
-          <div class="cal-nav">
-            <button id="calPrev" aria-label="Mês anterior">‹</button>
-            <button id="calNext" aria-label="Próximo mês">›</button>
-          </div>
+          <button class="cal-nav-btn" id="calNext" aria-label="Próximo mês">›</button>
         </div>
         <div class="cal-grid" id="calGrid"></div>
         <div class="cal-legend">
@@ -2316,11 +2323,40 @@ function prettyDate(iso) {
   const [y,m,d] = iso.split('-');
   return `${d}/${m}/${y}`;
 }
+function monthHasAvailableDates(year, month) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const minDate = new Date(today); minDate.setDate(minDate.getDate() + 2);
+  const maxDate = new Date(today); maxDate.setDate(maxDate.getDate() + 15);
+  const booked = getBookedDates();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(year, month, d);
+    const iso = fmtDate(date);
+    const dayOfWeek = date.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    if (date >= minDate && date <= maxDate && !isWeekend && !booked.has(iso)) return true;
+  }
+  return false;
+}
+function autoAdvanceToAvailable() {
+  const now = new Date();
+  for (let i = 0; i < 3; i++) {
+    const y = currentMonth.getFullYear();
+    const m = currentMonth.getMonth();
+    if (monthHasAvailableDates(y, m)) return;
+    currentMonth.setMonth(currentMonth.getMonth() + 1);
+  }
+}
 function renderCalendar() {
   const grid = document.getElementById('calGrid');
   const monthLabel = document.getElementById('calMonth');
+  const prevBtn = document.getElementById('calPrev');
   const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   monthLabel.textContent = `${months[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
+  // Disable prev button if at current month
+  const nowMonth = new Date(); nowMonth.setDate(1); nowMonth.setHours(0,0,0,0);
+  const curMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+  prevBtn.disabled = curMonth <= nowMonth;
   grid.innerHTML = '';
   ['D','S','T','Q','Q','S','S'].forEach(d => {
     const el = document.createElement('div');
@@ -2373,6 +2409,7 @@ document.getElementById('calNext').onclick = () => {
 // carrega datas bloqueadas do Supabase e renderiza
 (async () => {
   await loadBookedDates();
+  autoAdvanceToAvailable();
   renderCalendar();
 })();
 /* =============== FORM INTERACTION =============== */
