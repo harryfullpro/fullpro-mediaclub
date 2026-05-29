@@ -1668,7 +1668,7 @@
     .gifts-showcase { padding: 10px 0 14px !important; }
     section.gifts-showcase::before { display: none; }
     .gifts-headline { margin-bottom: 10px; }
-    .gifts-headline .gift-eyebrow { font-size: 10px; padding: 4px 10px; margin-bottom: 6px; }
+    .gifts-headline .gift-eyebrow { display: none !important; }
     .gifts-headline { text-align: left; }
     .gifts-sub { display: block !important; font-size: 14px !important; margin-bottom: 12px !important; line-height: 1.5; color: var(--text-dim); max-width: none; }
     .stat-num { font-size: 28px; }
@@ -1735,29 +1735,84 @@
     .gifts-cta-wrap .btn-primary .cta-full { display: none; }
     .gifts-cta-wrap .btn-primary .cta-short { display: inline; }
     section { padding: 20px 0; }
-    .section-title { margin-bottom: 14px; }
+    /* Section titles — left aligned, compact, "como funciona" style */
+    .section-title { margin-bottom: 14px; text-align: left; }
     .section-title small { font-size: 10px; }
-    .section-title h2 { font-size: clamp(24px, 6vw, 36px); }
-    .section-title p { font-size: 13px; }
-    .trust-bar { padding: 20px 16px; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .trust-num { font-size: 24px; }
-    .ig-grid { grid-template-columns: 1fr; }
-    .ig-embed { min-height: 480px; }
-    .ig-embed iframe { min-height: 480px; }
+    .section-title h2 { font-size: 24px; }
+    .section-title p { font-size: 13px; max-width: none; }
+    /* Trust — 2x2 grid, no card bg, cleaner */
+    .trust-bar {
+      padding: 0 !important;
+      background: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 12px !important;
+    }
+    .trust-item {
+      border-right: none !important;
+      padding-right: 0 !important;
+      border-bottom: none !important;
+      padding-bottom: 0 !important;
+      background: var(--bg-card);
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+      padding: 14px 12px !important;
+      text-align: left;
+    }
+    .trust-stars { font-size: 14px; margin-bottom: 4px; }
+    .trust-num { font-size: 22px !important; }
+    .trust-label { font-size: 11px; }
+    .trust-source { font-size: 10px; margin-top: 2px; }
+    /* Instagram — horizontal slider */
+    #confianca .reveal[style*="margin-top: 48px"] {
+      text-align: left !important;
+      margin-top: 24px !important;
+    }
+    #confianca .reveal[style*="margin-top: 48px"] h3 {
+      font-size: 22px !important;
+    }
+    #confianca .reveal[style*="margin-top: 48px"] p {
+      font-size: 13px !important;
+    }
+    .ig-grid {
+      grid-template-columns: repeat(3, 80vw) !important;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 8px;
+      gap: 12px !important;
+      scrollbar-width: none;
+    }
+    .ig-grid::-webkit-scrollbar { display: none; }
+    .ig-embed {
+      scroll-snap-align: start;
+      min-height: 420px !important;
+      flex-shrink: 0;
+    }
+    .ig-embed iframe { min-height: 420px !important; }
+    .ig-cta { margin-top: 12px; }
+    .ig-cta a { font-size: 12px; padding: 10px 20px; }
+    /* Schedule / Form */
     .schedule-wrap { gap: 16px; }
-    .card { padding: 20px 16px; }
+    .card { padding: 18px 14px; }
+    .card h3 { font-size: 16px; }
+    .card .sub { font-size: 12px; }
+    /* FAQ — clean left-aligned, compact */
     .faq-q { font-size: 13px; padding: 14px 16px; }
+    .faq-a p { font-size: 13px; }
     .footer-inner { gap: 16px; }
     .footer-bottom { flex-direction: column; text-align: center; gap: 6px; }
-    /* Gift options compact on mobile */
-    .gift-grid { grid-template-columns: 1fr !important; gap: 8px; }
-    .gift-option { display: grid; grid-template-columns: 64px 1fr 28px; align-items: center; border-radius: 12px; }
-    .gift-option .g-img { aspect-ratio: 1; width: 64px; height: 64px; border-radius: 10px; margin: 8px; }
-    .gift-option .g-img img { padding: 4px; }
-    .gift-option .g-body { padding: 10px 0; text-align: left; }
-    .gift-option .g-title { font-size: 14px; }
-    .gift-option .g-sub { font-size: 12px; }
-    .gift-option .g-check { position: relative; top: auto; right: auto; width: 22px; height: 22px; margin-right: 10px; justify-self: end; }
+    /* Gift options in form — horizontal compact rows */
+    .gift-grid { grid-template-columns: 1fr !important; gap: 6px; }
+    .gift-option { display: grid; grid-template-columns: 52px 1fr 24px; align-items: center; border-radius: 10px; }
+    .gift-option .g-img { aspect-ratio: 1; width: 52px; height: 52px; border-radius: 8px; margin: 6px; }
+    .gift-option .g-img img { padding: 3px; }
+    .gift-option .g-body { padding: 8px 0; text-align: left; }
+    .gift-option .g-title { font-size: 13px; }
+    .gift-option .g-sub { font-size: 11px; }
+    .gift-option .g-check { position: relative; top: auto; right: auto; width: 20px; height: 20px; margin-right: 8px; justify-self: end; }
+    .gift-option .g-check svg { width: 12px; height: 12px; }
   }
   /* ===== RESPONSIVE — SMALL MOBILE (max 400px) ===== */
   @media (max-width: 400px) {
@@ -1778,9 +1833,6 @@
     .benefit-value .value-label { font-size: 8px; }
     .benefit-link { font-size: 10px; }
     .benefit-badge { font-size: 8px; padding: 2px 6px; top: 6px; right: 6px; }
-    .trust-bar { grid-template-columns: 1fr; }
-    .trust-item { border-bottom: 1px solid var(--border); padding-bottom: 14px; }
-    .trust-item:last-child { border-bottom: none; }
     .nav-inner { padding: 10px 0; }
     .nav-cta { padding: 8px 14px; font-size: 13px; }
     .logo-img { height: 30px; }
