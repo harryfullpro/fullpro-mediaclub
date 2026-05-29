@@ -1642,25 +1642,34 @@
   }
   /* ===== RESPONSIVE — MOBILE (max 640px) ===== */
   @media (max-width: 640px) {
-    .container { padding: 0 18px; }
-    .hero { padding: 40px 0 50px; }
-    h1 { font-size: clamp(36px, 8vw, 52px); margin-bottom: 16px; }
-    .hero p.lead { font-size: 15px; margin-bottom: 24px; }
-    .hero-cta { flex-direction: column; gap: 10px; }
-    .hero-cta .btn { width: 100%; justify-content: center; text-align: center; }
+    .container { padding: 0 16px; }
+    /* Nav compact */
+    .nav-inner { padding: 8px 0; }
+    .logo-img { height: 28px; }
+    .nav-cta { padding: 7px 14px; font-size: 12px; border-radius: 8px; }
+    /* Hero ultra-compact */
+    .hero { padding: 14px 0 10px !important; }
+    .hero-visual { display: none; }
+    .hero-grid > .reveal-right { display: none; }
+    .hero-grid { gap: 0; }
+    .hero-stats { display: none !important; }
     .lead-full { display: none !important; }
-    .lead-short { display: block !important; }
+    .lead-short { display: block !important; font-size: 13px !important; margin-bottom: 12px !important; line-height: 1.5; }
+    /* Badge small, no border */
+    .badge { padding: 0; background: none; border: none; font-size: 11px; margin-bottom: 10px; gap: 6px; }
+    .badge-dot { width: 6px; height: 6px; }
+    h1 { font-size: 32px !important; margin-bottom: 8px !important; line-height: .95; }
+    /* CTAs side by side, compact */
+    .hero-cta { flex-direction: row !important; gap: 8px; margin-bottom: 0 !important; }
+    .hero-cta .btn { width: auto; flex: 1; justify-content: center; text-align: center; padding: 11px 12px; font-size: 13px; border-radius: 10px; }
     .hero-cta .btn-primary .cta-full { display: none; }
     .hero-cta .btn-primary .cta-short { display: inline; }
-    .hero-stats { display: none !important; }
-    .hero { padding: 24px 0 12px !important; }
-    .hero-visual { display: none; }
-    h1 { margin-bottom: 10px; }
-    .hero p.lead { margin-bottom: 16px; font-size: 14px; }
-    .hero-cta { gap: 8px; }
-    .gifts-showcase { padding: 12px 0 16px !important; }
-    .gifts-headline { margin-bottom: 12px; }
-    .gifts-sub { margin-bottom: 0; }
+    /* Gifts right after hero */
+    .gifts-showcase { padding: 10px 0 14px !important; }
+    section.gifts-showcase::before { display: none; }
+    .gifts-headline { margin-bottom: 10px; }
+    .gifts-headline .gift-eyebrow { font-size: 10px; padding: 4px 10px; margin-bottom: 6px; }
+    .gifts-sub { font-size: 12px; margin-bottom: 0; }
     .stat-num { font-size: 28px; }
     .stat-label { font-size: 11px; }
     /* Steps timeline mobile */
@@ -1719,23 +1728,25 @@
     .benefit-value .value-label { font-size: 9px; width: 100%; }
     .benefit-link { font-size: 11px; margin-top: 8px; }
     .benefit-link svg { width: 11px; height: 11px; }
-    .gifts-headline h2 { font-size: 28px !important; }
-    .gifts-sub { font-size: 13px; }
-    .gifts-showcase { padding: 20px 0 16px; }
-    .gifts-cta-wrap .btn-primary { font-size: 15px; padding: 14px 28px; }
+    .gifts-headline h2 { font-size: 24px !important; }
+    .gifts-cta-wrap { margin-top: 14px; }
+    .gifts-cta-wrap .btn-primary { font-size: 14px; padding: 12px 24px; }
     .gifts-cta-wrap .btn-primary .cta-full { display: none; }
     .gifts-cta-wrap .btn-primary .cta-short { display: inline; }
-    .trust-bar { padding: 28px 20px; grid-template-columns: 1fr 1fr; }
-    .trust-num { font-size: 28px; }
+    section { padding: 20px 0; }
+    .section-title { margin-bottom: 14px; }
+    .section-title small { font-size: 10px; }
+    .section-title h2 { font-size: clamp(24px, 6vw, 36px); }
+    .section-title p { font-size: 13px; }
+    .trust-bar { padding: 20px 16px; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .trust-num { font-size: 24px; }
     .ig-grid { grid-template-columns: 1fr; }
     .ig-embed { min-height: 480px; }
     .ig-embed iframe { min-height: 480px; }
-    .schedule-wrap { gap: 20px; }
-    .card { padding: 24px 18px; }
-    .section-title h2 { font-size: clamp(28px, 6vw, 40px); }
-    .section-title p { font-size: 14px; }
-    .faq-q { font-size: 14px; padding: 16px 18px; }
-    .footer-inner { gap: 20px; }
+    .schedule-wrap { gap: 16px; }
+    .card { padding: 20px 16px; }
+    .faq-q { font-size: 13px; padding: 14px 16px; }
+    .footer-inner { gap: 16px; }
     .footer-bottom { flex-direction: column; text-align: center; gap: 6px; }
     /* Gift options compact on mobile */
     .gift-grid { grid-template-columns: 1fr !important; gap: 8px; }
