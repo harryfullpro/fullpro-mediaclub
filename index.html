@@ -1735,32 +1735,34 @@
     .gifts-cta-wrap .btn-primary .cta-full { display: none; }
     .gifts-cta-wrap .btn-primary .cta-short { display: inline; }
     section { padding: 20px 0; }
+    section::before { display: none !important; }
     /* Section titles — left aligned, compact, "como funciona" style */
     .section-title { margin-bottom: 14px; text-align: left; }
     .section-title small { font-size: 10px; }
     .section-title h2 { font-size: 24px; }
     .section-title p { font-size: 13px; max-width: none; }
-    /* Trust — 2x2 grid, no card bg, cleaner */
+    /* Trust — 2x2 grid, clean no-card style */
     .trust-bar {
       padding: 0 !important;
       background: transparent !important;
       border: none !important;
       border-radius: 0 !important;
       grid-template-columns: 1fr 1fr !important;
-      gap: 12px !important;
+      gap: 16px 20px !important;
+      margin-bottom: 20px !important;
     }
     .trust-item {
       border-right: none !important;
-      padding-right: 0 !important;
       border-bottom: none !important;
-      padding-bottom: 0 !important;
-      background: var(--bg-card);
-      border: 1px solid var(--border) !important;
-      border-radius: 12px;
-      padding: 14px 12px !important;
+      padding: 0 !important;
+      background: transparent;
+      border: none !important;
+      border-radius: 0;
       text-align: left;
+      border-left: 2px solid var(--primary) !important;
+      padding-left: 12px !important;
     }
-    .trust-stars { font-size: 14px; margin-bottom: 4px; }
+    .trust-stars { font-size: 13px; margin-bottom: 2px; }
     .trust-num { font-size: 22px !important; }
     .trust-label { font-size: 11px; }
     .trust-source { font-size: 10px; margin-top: 2px; }
@@ -1791,16 +1793,35 @@
       flex-shrink: 0;
     }
     .ig-embed iframe { min-height: 420px !important; }
+    .ig-embed {
+      background: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
+    }
     .ig-cta { margin-top: 12px; }
-    .ig-cta a { font-size: 12px; padding: 10px 20px; }
-    /* Schedule / Form */
+    .ig-cta a { font-size: 12px; padding: 10px 20px; border: none; background: transparent; color: var(--primary); text-decoration: underline; }
+    /* Schedule / Form — clean, no card bg */
     .schedule-wrap { gap: 16px; }
-    .card { padding: 18px 14px; }
+    .card {
+      padding: 0 !important;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
     .card h3 { font-size: 16px; }
-    .card .sub { font-size: 12px; }
-    /* FAQ — clean left-aligned, compact */
-    .faq-q { font-size: 13px; padding: 14px 16px; }
+    .card .sub { font-size: 12px; margin-bottom: 14px; }
+    /* FAQ — clean, no card borders */
+    .faq-item {
+      background: transparent !important;
+      border: none !important;
+      border-bottom: 1px solid var(--border) !important;
+      border-radius: 0 !important;
+    }
+    .faq-item:last-child { border-bottom: none !important; }
+    .faq-q { font-size: 13px; padding: 12px 0; }
+    .faq-a { padding-left: 0; padding-right: 0; }
     .faq-a p { font-size: 13px; }
+    .faq-item.open { box-shadow: none !important; }
     .footer-inner { gap: 16px; }
     .footer-bottom { flex-direction: column; text-align: center; gap: 6px; }
     /* Gift options in form — horizontal compact rows */
