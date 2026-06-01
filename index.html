@@ -1825,15 +1825,45 @@
     .footer-inner { gap: 16px; }
     .footer-bottom { flex-direction: column; text-align: center; gap: 6px; }
     /* Gift options in form — horizontal compact rows */
-    .gift-grid { grid-template-columns: 1fr !important; gap: 6px; }
-    .gift-option { display: grid; grid-template-columns: 52px 1fr 24px; align-items: center; border-radius: 10px; }
-    .gift-option .g-img { aspect-ratio: 1; width: 52px; height: 52px; border-radius: 8px; margin: 6px; }
-    .gift-option .g-img img { padding: 3px; }
-    .gift-option .g-body { padding: 8px 0; text-align: left; }
-    .gift-option .g-title { font-size: 13px; }
-    .gift-option .g-sub { font-size: 11px; }
-    .gift-option .g-check { position: relative; top: auto; right: auto; width: 20px; height: 20px; margin-right: 8px; justify-self: end; }
-    .gift-option .g-check svg { width: 12px; height: 12px; }
+    .gift-grid { grid-template-columns: 1fr !important; gap: 6px !important; }
+    .gift-option {
+      display: grid !important;
+      grid-template-columns: 52px 1fr 28px !important;
+      align-items: center !important;
+      border-radius: 10px !important;
+      overflow: visible !important;
+      text-align: left !important;
+    }
+    .gift-option.active { box-shadow: 0 0 0 2px rgba(255,45,45,.2) !important; }
+    .gift-option .g-img {
+      width: 52px !important;
+      height: 52px !important;
+      min-width: 52px !important;
+      aspect-ratio: auto !important;
+      border-radius: 8px !important;
+      margin: 6px !important;
+    }
+    .gift-option .g-img img { padding: 3px !important; }
+    .gift-option .g-body { padding: 8px 0 !important; text-align: left !important; }
+    .gift-option .g-title { font-size: 13px !important; }
+    .gift-option .g-sub { font-size: 11px !important; }
+    .gift-option .g-check {
+      position: relative !important;
+      top: auto !important;
+      right: auto !important;
+      width: 20px !important;
+      height: 20px !important;
+      margin-right: 8px !important;
+      justify-self: end !important;
+    }
+    .gift-option .g-check svg { width: 12px !important; height: 12px !important; }
+    /* Radio options compact */
+    .radio-option { padding: 12px !important; gap: 10px; }
+    .radio-option .ro-title { font-size: 13px; }
+    .radio-option .ro-desc { font-size: 12px; }
+    /* Form inputs compact */
+    .form-input, .form-textarea { font-size: 14px; padding: 10px 12px; }
+    .form-label { font-size: 12px; }
   }
   /* ===== RESPONSIVE — SMALL MOBILE (max 400px) ===== */
   @media (max-width: 400px) {
@@ -1844,7 +1874,6 @@
     .hero-stats { grid-template-columns: 1fr; gap: 10px; }
     .stat { display: flex; align-items: center; gap: 10px; border-left: 2px solid var(--primary); padding: 8px 0 8px 12px; }
     .stat-num { font-size: 24px; }
-    .gift-grid { grid-template-columns: 1fr; }
     .benefits { gap: 6px !important; }
     .benefit-body { padding: 8px 6px 10px; }
     .benefit-body h3 { font-size: 11px; }
