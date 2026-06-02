@@ -227,22 +227,26 @@
   .mobile-video-section { display: none; }
   .moto-marquee-wrap {
     margin-bottom: 20px;
-    background: linear-gradient(135deg, rgba(255,45,45,.1), rgba(255,45,45,.05));
-    border-radius: 10px;
-    padding: 10px 0;
+    background: linear-gradient(135deg, rgba(255,45,45,.08), rgba(255,45,45,.03));
+    border-radius: 12px;
+    padding: 14px 0;
     overflow: hidden;
     position: relative;
     max-width: 100%;
   }
   .moto-marquee-label {
-    display: block;
-    text-align: center;
-    font-size: 10px;
+    position: absolute;
+    top: 0;
+    right: 20px;
+    font-size: 9px;
     font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--primary);
-    margin-bottom: 6px;
+    background: linear-gradient(135deg, rgba(255,45,45,.15), rgba(255,45,45,.08));
+    padding: 4px 12px;
+    border-radius: 0 0 8px 8px;
+    z-index: 2;
   }
   .moto-marquee {
     overflow: hidden;
