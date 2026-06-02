@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>FullPro Media Club — Empreste sua moto, ganhe recompensa</title>
 <meta name="description" content="Participe do FullPro Media Club: empreste sua moto por um dia para o estúdio de conteúdo da FullPro e ganhe pastilhas, mochila ou capa de chuva." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,6 +30,7 @@
     --shadow-red: 0 10px 40px rgba(255, 45, 45, .25);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { max-width: 100vw; overflow-x: hidden; touch-action: pan-x pan-y; }
   html { scroll-behavior: smooth; }
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -221,6 +222,8 @@
   .btn-ghost:hover { background: rgba(255,255,255,.08); }
   .cta-short { display: none; }
   .lead-short { display: none; }
+  .cta-txt-mob { display: none; }
+  .nav-cta-icon { display: none; }
   .hero-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1644,9 +1647,20 @@
   @media (max-width: 640px) {
     .container { padding: 0 16px; }
     /* Nav compact */
-    .nav-inner { padding: 8px 0; }
-    .logo-img { height: 28px; }
-    .nav-cta { padding: 7px 14px; font-size: 12px; border-radius: 8px; }
+    .nav-inner { padding: 6px 0; }
+    .logo-img { height: 20px; }
+    .nav-cta {
+      padding: 0 !important;
+      background: transparent !important;
+      color: var(--primary) !important;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .nav-cta-icon { display: inline-block !important; }
     /* Hero ultra-compact */
     .hero { padding: 14px 0 10px !important; }
     .hero-visual { display: none; }
@@ -1664,6 +1678,8 @@
     .hero-cta .btn { width: auto; flex: 1; justify-content: center; text-align: center; padding: 11px 12px; font-size: 13px; border-radius: 10px; }
     .hero-cta .btn-primary .cta-full { display: none; }
     .hero-cta .btn-primary .cta-short { display: inline; }
+    .cta-txt-desk { display: none !important; }
+    .cta-txt-mob { display: inline-flex !important; align-items: center; gap: 6px; }
     /* Gifts right after hero */
     .gifts-showcase { padding: 10px 0 14px !important; }
     section.gifts-showcase::before { display: none; }
@@ -1715,20 +1731,20 @@
       to { opacity: 1; transform: translateX(0); }
     }
     /* Compact benefit cards — 3 across on mobile */
-    .benefits { grid-template-columns: repeat(3, 1fr) !important; gap: 10px; margin-top: 16px; }
-    .benefit { border-width: 1.5px; border-radius: 14px; }
-    .benefit-badge { font-size: 9px; padding: 3px 8px; top: 8px; right: 8px; letter-spacing: .8px; }
+    .benefits { grid-template-columns: repeat(3, 1fr) !important; gap: 6px; margin-top: 10px; }
+    .benefit { border-width: 1px; border-radius: 10px; }
+    .benefit-badge { font-size: 8px; padding: 2px 6px; top: 6px; right: 6px; letter-spacing: .5px; }
     .benefit-media { aspect-ratio: 1; }
-    .benefit-body { padding: 12px 10px 14px; }
-    .benefit-body h3 { font-size: 13px; margin-bottom: 4px; }
+    .benefit-body { padding: 8px 6px 10px; }
+    .benefit-body h3 { font-size: 12px; margin-bottom: 2px; }
     .benefit-body p { display: none; }
-    .benefit-tag { font-size: 9px; padding: 3px 7px; margin-bottom: 6px; }
-    .benefit-value { flex-wrap: wrap; gap: 4px; margin-top: 8px; padding-top: 8px; }
-    .benefit-value .value-original { font-size: 18px; }
-    .benefit-value .value-price { font-size: 16px; }
-    .benefit-value .value-label { font-size: 9px; width: 100%; }
-    .benefit-link { font-size: 11px; margin-top: 8px; }
-    .benefit-link svg { width: 11px; height: 11px; }
+    .benefit-tag { display: none !important; }
+    .benefit-value { flex-wrap: wrap; gap: 2px; margin-top: 6px; padding-top: 6px; }
+    .benefit-value .value-original { font-size: 16px; }
+    .benefit-value .value-price { font-size: 14px; }
+    .benefit-value .value-label { font-size: 8px; width: 100%; }
+    .benefit-link { font-size: 10px; margin-top: 6px; }
+    .benefit-link svg { width: 10px; height: 10px; }
     .gifts-headline h2 { font-size: 24px !important; }
     .gifts-cta-wrap { margin-top: 14px; }
     .gifts-cta-wrap .btn-primary { font-size: 14px; padding: 12px 24px; }
@@ -1778,8 +1794,8 @@
       font-size: 13px !important;
     }
     .ig-grid {
-      grid-template-columns: repeat(3, 80vw) !important;
-      overflow-x: auto;
+      display: flex !important;
+      overflow-x: auto !important;
       scroll-snap-type: x mandatory;
       -webkit-overflow-scrolling: touch;
       padding-bottom: 8px;
@@ -1789,27 +1805,73 @@
     .ig-grid::-webkit-scrollbar { display: none; }
     .ig-embed {
       scroll-snap-align: start;
-      min-height: 420px !important;
-      flex-shrink: 0;
+      min-width: 82vw !important;
+      max-width: 82vw !important;
+      min-height: 520px !important;
+      flex-shrink: 0 !important;
     }
-    .ig-embed iframe { min-height: 420px !important; }
+    .ig-embed iframe { min-height: 520px !important; }
     .ig-embed {
-      background: transparent !important;
+      background: #fff !important;
       border: none !important;
-      border-radius: 0 !important;
+      border-radius: 14px !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,.3) !important;
+    }
+    /* Peek animation — show edge of next slide */
+    .ig-grid::after {
+      content: '';
+      display: block;
+      min-width: 20px;
+      flex-shrink: 0;
     }
     .ig-cta { margin-top: 12px; }
     .ig-cta a { font-size: 12px; padding: 10px 20px; border: none; background: transparent; color: var(--primary); text-decoration: underline; }
+    /* Google Maps — clean, no card, red lines */
+    .gmap-section { margin-top: 20px !important; }
+    .gmap-wrap {
+      grid-template-columns: 1fr !important;
+      background: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
+      gap: 16px !important;
+    }
+    .gmap-frame { min-height: 200px !important; border-radius: 12px; overflow: hidden; }
+    .gmap-info {
+      padding: 0 !important;
+      background: transparent !important;
+      gap: 0 !important;
+    }
+    .gmap-info > * {
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .gmap-info > *:first-child { padding-top: 0; }
+    .gmap-info > *:last-child { border-bottom: none; }
+    .gmap-badge { border-left: 2px solid var(--primary); padding-left: 10px !important; }
+    .gmap-name { font-size: 20px !important; border-left: 2px solid var(--primary); padding-left: 10px !important; }
+    .gmap-rating { border-left: 2px solid var(--primary); padding-left: 10px !important; }
+    .gmap-address { border-left: 2px solid var(--primary); padding-left: 10px !important; }
+    .gmap-address p { font-size: 13px; }
+    .gmap-contact { border-left: 2px solid var(--primary); padding-left: 10px !important; font-size: 13px; }
+    .gmap-btn { font-size: 12px; padding: 8px 14px; }
     /* Schedule / Form — clean, no card bg */
-    .schedule-wrap { gap: 16px; }
+    .schedule-wrap { gap: 14px; }
     .card {
       padding: 0 !important;
       background: transparent !important;
       border: none !important;
       box-shadow: none !important;
     }
-    .card h3 { font-size: 16px; }
-    .card .sub { font-size: 12px; margin-bottom: 14px; }
+    .card h3 { font-size: 15px; margin-bottom: 4px; }
+    .card .sub { font-size: 12px; margin-bottom: 10px; }
+    .form-group { margin-bottom: 10px; }
+    .form-label { font-size: 12px; margin-bottom: 4px; }
+    .form-input, .form-textarea { padding: 10px 12px; font-size: 13px; }
+    .form-grid-2 { gap: 10px; }
+    .radio-group { gap: 8px; }
+    .radio-option { padding: 10px 12px !important; border-radius: 10px; }
+    .radio-option .ro-title { font-size: 13px !important; margin-bottom: 2px; }
+    .radio-option .ro-desc { font-size: 11px !important; line-height: 1.4; }
     /* FAQ — clean, no card borders */
     .faq-item {
       background: transparent !important;
@@ -1825,45 +1887,47 @@
     .footer-inner { gap: 16px; }
     .footer-bottom { flex-direction: column; text-align: center; gap: 6px; }
     /* Gift options in form — horizontal compact rows */
-    .gift-grid { grid-template-columns: 1fr !important; gap: 6px !important; }
+    .gift-grid {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 6px !important;
+    }
     .gift-option {
-      display: grid !important;
-      grid-template-columns: 52px 1fr 28px !important;
+      display: flex !important;
+      flex-direction: row !important;
       align-items: center !important;
       border-radius: 10px !important;
-      overflow: visible !important;
+      overflow: hidden !important;
       text-align: left !important;
+      padding: 0 !important;
+      gap: 0 !important;
     }
-    .gift-option.active { box-shadow: 0 0 0 2px rgba(255,45,45,.2) !important; }
+    .gift-option.active { box-shadow: 0 0 0 2px rgba(255,45,45,.15) !important; }
     .gift-option .g-img {
-      width: 52px !important;
-      height: 52px !important;
-      min-width: 52px !important;
+      width: 48px !important;
+      height: 48px !important;
+      min-width: 48px !important;
+      max-width: 48px !important;
       aspect-ratio: auto !important;
       border-radius: 8px !important;
       margin: 6px !important;
+      flex-shrink: 0 !important;
     }
-    .gift-option .g-img img { padding: 3px !important; }
-    .gift-option .g-body { padding: 8px 0 !important; text-align: left !important; }
-    .gift-option .g-title { font-size: 13px !important; }
-    .gift-option .g-sub { font-size: 11px !important; }
+    .gift-option .g-img img { padding: 2px !important; width: 100% !important; height: 100% !important; }
+    .gift-option .g-body { padding: 8px 0 !important; text-align: left !important; flex: 1; min-width: 0; }
+    .gift-option .g-title { font-size: 13px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .gift-option .g-sub { font-size: 11px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .gift-option .g-check {
       position: relative !important;
       top: auto !important;
       right: auto !important;
       width: 20px !important;
       height: 20px !important;
-      margin-right: 8px !important;
-      justify-self: end !important;
+      min-width: 20px !important;
+      margin: 0 10px !important;
+      flex-shrink: 0 !important;
     }
     .gift-option .g-check svg { width: 12px !important; height: 12px !important; }
-    /* Radio options compact */
-    .radio-option { padding: 12px !important; gap: 10px; }
-    .radio-option .ro-title { font-size: 13px; }
-    .radio-option .ro-desc { font-size: 12px; }
-    /* Form inputs compact */
-    .form-input, .form-textarea { font-size: 14px; padding: 10px 12px; }
-    .form-label { font-size: 12px; }
   }
   /* ===== RESPONSIVE — SMALL MOBILE (max 400px) ===== */
   @media (max-width: 400px) {
@@ -1922,7 +1986,7 @@
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2c-.3-1-1.1-1.8-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6c-1 .3-1.8 1.1-2.1 2.1C0 8.1 0 12 0 12s0 3.9.5 5.8c.3 1 1.1 1.8 2.1 2.1C4.5 20.5 12 20.5 12 20.5s7.5 0 9.4-.6c1-.3 1.8-1.1 2.1-2.1.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8zM9.6 15.6V8.4l6.2 3.6-6.2 3.6z"/></svg>
         </a>
       </div>
-      <a href="#agendar" class="nav-cta">Quero participar</a>
+      <a href="#agendar" class="nav-cta">Quero participar <svg class="nav-cta-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg></a>
     </div>
   </div>
 </header>
@@ -1942,7 +2006,7 @@
         Sua moto protagonista do nosso conteúdo — e você leva um presente FullPro grátis.
       </p>
       <div class="hero-cta reveal">
-        <a href="#agendar" class="btn btn-primary">Agendar minha moto →</a>
+        <a href="#agendar" class="btn btn-primary"><span class="cta-txt-desk">Agendar minha moto →</span><span class="cta-txt-mob">Agendar minha moto <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></a>
         <a href="#como-funciona" class="btn btn-ghost">Como funciona</a>
       </div>
       <div class="hero-stats reveal">
