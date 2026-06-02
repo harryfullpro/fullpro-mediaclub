@@ -1649,7 +1649,7 @@
   @media (max-width: 640px) {
     .container { padding: 0 16px; }
     /* Nav compact */
-    .nav-inner { padding: 6px 0; }
+    .nav-inner { padding: 6px 16px; }
     .logo-img { height: 18px; }
     .nav-cta {
       padding: 0 !important;
@@ -1727,6 +1727,30 @@
       height: 100%;
       border: 0;
     }
+    .mobile-video-endscreen {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+      animation: fadeIn .4s ease;
+    }
+    .mobile-video-endscreen a {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      padding: 14px 24px;
+      border: 2px solid var(--primary);
+      border-radius: 12px;
+      transition: all .2s;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     /* Gifts right after hero */
     .gifts-showcase { padding: 10px 0 14px !important; }
     section.gifts-showcase::before { display: none; }
@@ -2004,7 +2028,7 @@
     .benefit-value .value-label { font-size: 8px; }
     .benefit-link { font-size: 10px; }
     .benefit-badge { font-size: 8px; padding: 2px 6px; top: 6px; right: 6px; }
-    .nav-inner { padding: 10px 0; }
+    .nav-inner { padding: 10px 14px; }
     .nav-cta { padding: 8px 14px; font-size: 13px; }
     .logo-img { height: 18px; }
     .terms-header { padding: 14px 16px; }
@@ -2950,11 +2974,21 @@ document.querySelectorAll('.hero-stats').forEach(el => counterObserver.observe(e
     if (played) return;
     played = true;
     const iframe = document.createElement('iframe');
-    iframe.src = 'https://www.youtube-nocookie.com/embed/ElWDrP58x44?rel=0&modestbranding=1&playsinline=1&autoplay=1&mute=1';
+    iframe.id = 'mobileYTFrame';
+    iframe.src = 'https://www.youtube-nocookie.com/embed/ElWDrP58x44?rel=0&modestbranding=1&playsinline=1&autoplay=1&enablejsapi=1&start=0';
     iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
     iframe.allowFullscreen = true;
     wrap.innerHTML = '';
     wrap.appendChild(iframe);
+    // After 30s, show "Ver completo" overlay
+    setTimeout(() => {
+      // Pause video via postMessage
+      iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+      const overlay = document.createElement('div');
+      overlay.className = 'mobile-video-endscreen';
+      overlay.innerHTML = '<a href="https://www.youtube.com/watch?v=ElWDrP58x44" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Ver completo no YouTube</a>';
+      wrap.appendChild(overlay);
+    }, 30000);
   }
   // Click to play
   const playBtn = document.getElementById('mobileVideoPlay');
