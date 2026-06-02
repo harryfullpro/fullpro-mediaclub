@@ -81,7 +81,7 @@
     color: var(--text);
   }
   .logo-img {
-    height: 36px;
+    height: 25px;
     width: auto;
     object-fit: contain;
     filter: brightness(1.1);
@@ -224,6 +224,7 @@
   .lead-short { display: none; }
   .cta-txt-mob { display: none; }
   .nav-cta-icon { display: none; }
+  .mobile-video-section { display: none; }
   .hero-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -763,6 +764,7 @@
   }
   .gmap-contact a:hover { color: var(--primary); }
   .gmap-sep { color: var(--text-muted); }
+  .gmap-link-inline { display: none; }
   .gmap-btn {
     display: inline-flex;
     align-items: center;
@@ -1648,7 +1650,7 @@
     .container { padding: 0 16px; }
     /* Nav compact */
     .nav-inner { padding: 6px 0; }
-    .logo-img { height: 20px; }
+    .logo-img { height: 18px; }
     .nav-cta {
       padding: 0 !important;
       background: transparent !important;
@@ -1680,6 +1682,51 @@
     .hero-cta .btn-primary .cta-short { display: inline; }
     .cta-txt-desk { display: none !important; }
     .cta-txt-mob { display: inline-flex !important; align-items: center; gap: 6px; }
+    /* Mobile video below Como funciona */
+    .mobile-video-section {
+      display: block !important;
+      margin-top: 20px;
+    }
+    .mobile-video-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+    .mobile-video-wrap {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      aspect-ratio: 16/9;
+      background: #000;
+    }
+    .mobile-video-thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .mobile-video-play {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,.35);
+      cursor: pointer;
+    }
+    .mobile-video-wrap iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
     /* Gifts right after hero */
     .gifts-showcase { padding: 10px 0 14px !important; }
     section.gifts-showcase::before { display: none; }
@@ -1853,7 +1900,17 @@
     .gmap-address { border-left: 2px solid var(--primary); padding-left: 10px !important; }
     .gmap-address p { font-size: 13px; }
     .gmap-contact { border-left: 2px solid var(--primary); padding-left: 10px !important; font-size: 13px; }
-    .gmap-btn { font-size: 12px; padding: 8px 14px; }
+    .gmap-btn-desktop { display: none !important; }
+    .gmap-link-inline {
+      display: inline-flex !important;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--primary);
+      text-decoration: none;
+      margin-left: auto;
+    }
     /* Schedule / Form — clean, no card bg */
     .schedule-wrap { gap: 14px; }
     .card {
@@ -1949,7 +2006,7 @@
     .benefit-badge { font-size: 8px; padding: 2px 6px; top: 6px; right: 6px; }
     .nav-inner { padding: 10px 0; }
     .nav-cta { padding: 8px 14px; font-size: 13px; }
-    .logo-img { height: 30px; }
+    .logo-img { height: 18px; }
     .terms-header { padding: 14px 16px; }
     .terms-body { padding: 24px 16px; }
     .terms-content h1 { font-size: 24px; }
@@ -2147,6 +2204,19 @@
         <p>Ao fim do dia, você recebe sua moto de volta e o brinde FullPro que escolheu.</p>
       </div>
     </div>
+    <!-- Mobile-only video -->
+    <div class="mobile-video-section reveal">
+      <div class="mobile-video-label">
+        <span class="rec-dot"></span>
+        Confira nossa última produção
+      </div>
+      <div class="mobile-video-wrap" id="mobileVideoWrap">
+        <img src="https://img.youtube.com/vi/ElWDrP58x44/maxresdefault.jpg" alt="FullPro — Africa Twin" class="mobile-video-thumb" id="mobileVideoThumb" />
+        <div class="mobile-video-play" id="mobileVideoPlay">
+          <svg viewBox="0 0 24 24" fill="white" width="36" height="36"><polygon points="8,5 20,12 8,19"/></svg>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 <!-- TRUST -->
@@ -2191,8 +2261,9 @@
         </div>
         <div class="gmap-info">
           <div class="gmap-badge">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="#4285F4"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="#4285F4"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
             <span>Google Business</span>
+            <a href="https://maps.google.com/maps?q=FullPro+Rua+Florianópolis+2486+Joinville+SC" target="_blank" rel="noopener" class="gmap-link-inline">Ver no Google Maps <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg></a>
           </div>
           <div class="gmap-name">FullPro Comércio de Peças para Motos</div>
           <div class="gmap-rating">
@@ -2209,7 +2280,7 @@
             <span class="gmap-sep">·</span>
             <a href="https://fullpro.parts" target="_blank" rel="noopener">www.fullpro.parts</a>
           </div>
-          <a href="https://maps.google.com/maps?q=FullPro+Rua+Florianópolis+2486+Joinville+SC" target="_blank" rel="noopener" class="gmap-btn">
+          <a href="https://maps.google.com/maps?q=FullPro+Rua+Florianópolis+2486+Joinville+SC" target="_blank" rel="noopener" class="gmap-btn gmap-btn-desktop">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             Ver no Google Maps
           </a>
@@ -2870,6 +2941,35 @@ const counterObserver = new IntersectionObserver((entries) => {
   });
 }, { threshold: 0.5 });
 document.querySelectorAll('.hero-stats').forEach(el => counterObserver.observe(el));
+/* =============== MOBILE VIDEO AUTOPLAY ON SCROLL =============== */
+(function() {
+  const wrap = document.getElementById('mobileVideoWrap');
+  if (!wrap) return;
+  let played = false;
+  function loadVideo() {
+    if (played) return;
+    played = true;
+    const iframe = document.createElement('iframe');
+    iframe.src = 'https://www.youtube-nocookie.com/embed/ElWDrP58x44?rel=0&modestbranding=1&playsinline=1&autoplay=1&mute=1';
+    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+    iframe.allowFullscreen = true;
+    wrap.innerHTML = '';
+    wrap.appendChild(iframe);
+  }
+  // Click to play
+  const playBtn = document.getElementById('mobileVideoPlay');
+  if (playBtn) playBtn.addEventListener('click', loadVideo);
+  // Autoplay on scroll into view
+  const videoObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !played) {
+        loadVideo();
+        videoObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  videoObserver.observe(wrap);
+})();
 </script>
 </body>
 </html>
