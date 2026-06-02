@@ -235,18 +235,14 @@
     max-width: 560px;
   }
   .moto-marquee-label {
-    position: absolute;
-    top: 0;
-    right: 20px;
+    display: block;
+    text-align: center;
     font-size: 9px;
     font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--primary);
-    background: linear-gradient(135deg, rgba(255,45,45,.15), rgba(255,45,45,.08));
-    padding: 4px 12px;
-    border-radius: 0 0 8px 8px;
-    z-index: 2;
+    margin-bottom: 6px;
   }
   .moto-marquee {
     overflow: hidden;
@@ -2742,19 +2738,44 @@
 if (window.location.hash) { history.replaceState(null, '', window.location.pathname); }
 window.scrollTo(0, 0);
 /* =============== YOUTUBE THUMBNAIL LAZY LOAD =============== */
-document.getElementById('ytPlayBtn').addEventListener('click', function(e) {
-  e.preventDefault();
+/* Desktop hero video — autoplay on scroll + click fallback */
+(function() {
+  const btn = document.getElementById('ytPlayBtn');
   const container = document.getElementById('heroVideo');
-  const iframe = document.createElement('iframe');
-  iframe.src = 'https://www.youtube-nocookie.com/embed/ElWDrP58x44?rel=0&modestbranding=1&playsinline=1&autoplay=1';
-  iframe.title = 'FullPro — Africa Twin com Escape Esportivo';
-  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-  iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-  iframe.allowFullscreen = true;
-  iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;z-index:4;';
-  container.innerHTML = '';
-  container.appendChild(iframe);
-});
+  if (!btn || !container) return;
+  let desktopPlayed = false;
+  function playDesktopVideo() {
+    if (desktopPlayed) return;
+    desktopPlayed = true;
+    const iframe = document.createElement('iframe');
+    iframe.src = 'https://www.youtube-nocookie.com/embed/ElWDrP58x44?rel=0&modestbranding=1&playsinline=1&autoplay=1&mute=1&enablejsapi=1';
+    iframe.title = 'FullPro — Africa Twin com Escape Esportivo';
+    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    iframe.allowFullscreen = true;
+    iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;z-index:4;';
+    container.innerHTML = '';
+    container.appendChild(iframe);
+    // Unmute after a short delay (user gesture not needed for muted autoplay)
+    setTimeout(() => {
+      iframe.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', '*');
+    }, 1500);
+  }
+  btn.addEventListener('click', function(e) {
+    e.preventDefault();
+    playDesktopVideo();
+  });
+  // Autoplay when hero video scrolls into view
+  const heroObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !desktopPlayed) {
+        playDesktopVideo();
+        heroObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.4 });
+  heroObserver.observe(container);
+})();
 /* =============== TERMS FULLSCREEN =============== */
 function openTerms() {
   const ov = document.getElementById('termsOverlay');
