@@ -225,22 +225,47 @@
   .cta-txt-mob { display: none; }
   .nav-cta-icon { display: none; }
   .mobile-video-section { display: none; }
-  .moto-types {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+  .moto-marquee-wrap {
     margin-bottom: 20px;
+    background: linear-gradient(135deg, rgba(255,45,45,.1), rgba(255,45,45,.05));
+    border-radius: 10px;
+    padding: 10px 0;
+    overflow: hidden;
+    position: relative;
   }
-  .moto-types span {
-    display: inline-block;
-    padding: 4px 10px;
-    background: rgba(255,45,45,.08);
-    border: 1px solid rgba(255,45,45,.15);
-    border-radius: 6px;
-    font-size: 11px;
+  .moto-marquee-label {
+    display: block;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 6px;
+  }
+  .moto-marquee {
+    overflow: hidden;
+    width: 100%;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  }
+  .moto-marquee-track {
+    display: flex;
+    gap: 0;
+    width: max-content;
+    animation: marqueeScroll 20s linear infinite;
+  }
+  .moto-marquee-track span {
+    white-space: nowrap;
+    font-size: 13px;
     font-weight: 600;
-    color: var(--text-dim);
+    color: rgba(255,255,255,.7);
+    padding: 0 8px;
     letter-spacing: .3px;
+  }
+  @keyframes marqueeScroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
   }
   .hero-stats {
     display: grid;
@@ -1692,8 +1717,9 @@
     .badge { padding: 0; background: none; border: none; font-size: 11px; margin-bottom: 10px; gap: 6px; }
     .badge-dot { width: 6px; height: 6px; }
     h1 { font-size: 32px !important; margin-bottom: 8px !important; line-height: .95; }
-    .moto-types { gap: 4px; margin-bottom: 12px; }
-    .moto-types span { padding: 3px 8px; font-size: 10px; }
+    .moto-marquee-wrap { margin-bottom: 12px; padding: 8px 0; border-radius: 8px; }
+    .moto-marquee-label { font-size: 9px; margin-bottom: 4px; }
+    .moto-marquee-track span { font-size: 12px; padding: 0 6px; }
     /* CTAs side by side, compact */
     .hero-cta { flex-direction: row !important; gap: 8px; margin-bottom: 0 !important; }
     .hero-cta .btn { width: auto; flex: 1; justify-content: center; text-align: center; padding: 11px 12px; font-size: 13px; border-radius: 10px; }
@@ -2125,8 +2151,14 @@
       <p class="lead lead-short reveal">
         Sua moto protagonista do nosso conteúdo — e você leva um presente FullPro grátis.
       </p>
-      <div class="moto-types reveal">
-        <span>Trail</span><span>Big Trail</span><span>Esportiva</span><span>Custom</span><span>Off-road</span><span>Naked</span><span>Baixa cc</span><span>+ mais</span>
+      <div class="moto-marquee-wrap reveal">
+        <span class="moto-marquee-label">Aceitamos motos</span>
+        <div class="moto-marquee">
+          <div class="moto-marquee-track">
+            <span>Trail</span><span>·</span><span>Big Trail</span><span>·</span><span>Esportiva</span><span>·</span><span>Naked</span><span>·</span><span>Custom</span><span>·</span><span>Off-road</span><span>·</span><span>Baixa CC</span><span>·</span><span>Scooter</span><span>·</span><span>Street</span><span>·</span><span>Touring</span><span>·</span>
+            <span>Trail</span><span>·</span><span>Big Trail</span><span>·</span><span>Esportiva</span><span>·</span><span>Naked</span><span>·</span><span>Custom</span><span>·</span><span>Off-road</span><span>·</span><span>Baixa CC</span><span>·</span><span>Scooter</span><span>·</span><span>Street</span><span>·</span><span>Touring</span><span>·</span>
+          </div>
+        </div>
       </div>
       <div class="hero-cta reveal">
         <a href="#agendar" class="btn btn-primary"><span class="cta-txt-desk">Agendar minha moto →</span><span class="cta-txt-mob">Agendar minha moto <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></a>
