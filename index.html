@@ -232,6 +232,7 @@
     padding: 10px 0;
     overflow: hidden;
     position: relative;
+    max-width: 100%;
   }
   .moto-marquee-label {
     display: block;
@@ -1717,9 +1718,11 @@
     .badge { padding: 0; background: none; border: none; font-size: 11px; margin-bottom: 10px; gap: 6px; }
     .badge-dot { width: 6px; height: 6px; }
     h1 { font-size: 32px !important; margin-bottom: 8px !important; line-height: .95; }
-    .moto-marquee-wrap { margin-bottom: 12px; padding: 8px 0; border-radius: 8px; }
+    .moto-marquee-wrap { margin-bottom: 12px; padding: 8px 0; border-radius: 8px; max-width: 100%; overflow: hidden; }
     .moto-marquee-label { font-size: 9px; margin-bottom: 4px; }
     .moto-marquee-track span { font-size: 12px; padding: 0 6px; }
+    /* Fix CTA buttons not wrapping */
+    .hero-cta .btn { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     /* CTAs side by side, compact */
     .hero-cta { flex-direction: row !important; gap: 8px; margin-bottom: 0 !important; }
     .hero-cta .btn { width: auto; flex: 1; justify-content: center; text-align: center; padding: 11px 12px; font-size: 13px; border-radius: 10px; }
