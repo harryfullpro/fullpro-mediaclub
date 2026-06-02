@@ -2565,9 +2565,12 @@
         <input type="text" id="bEndereco" placeholder="Endereço completo" />
         <label>Brinde *</label>
         <select id="bBrinde">
-          <option value="pastilhas">Pastilhas HH</option>
+          <option value="pastilhas">Pastilha de freio</option>
           <option value="mochila">Mochila</option>
           <option value="capa">Capa de chuva</option>
+          <option value="capa_moto">Capa para motos</option>
+          <option value="ponteira">Ponteira</option>
+          <option value="outros">Outros</option>
         </select>
         <label>Observações</label>
         <textarea id="bObs" placeholder="Notas internas..."></textarea>
@@ -2609,7 +2612,7 @@
         <label>Endereço (se retirada)</label>
         <input type="text" id="ebEndereco" placeholder="Endereço completo"/>
         <label>Brinde *</label>
-        <select id="ebBrinde"><option value="pastilhas">Pastilhas HH</option><option value="mochila">Mochila</option><option value="capa">Capa de chuva</option></select>
+        <select id="ebBrinde"><option value="pastilhas">Pastilha de freio</option><option value="mochila">Mochila</option><option value="capa">Capa de chuva</option><option value="capa_moto">Capa para motos</option><option value="ponteira">Ponteira</option><option value="outros">Outros</option></select>
         <label>Status</label>
         <select id="ebStatus"><option value="pending">Pendente</option><option value="approved">Aprovada</option><option value="rejected">Rejeitada</option></select>
         <label>Observações</label>
@@ -3550,7 +3553,8 @@ function renderDateViewer(iso) {
 
   container.innerHTML = bookings.map(r => {
     const statusLabel = r.status === 'pending' ? 'Pendente' : r.status === 'approved' ? 'Aprovada' : 'Rejeitada';
-    const brindeName = r.brinde === 'pastilhas' ? 'Pastilhas HH' : r.brinde === 'mochila' ? 'Mochila' : 'Capa de chuva';
+    const brindeMap = {pastilhas:'Pastilha de freio',mochila:'Mochila',capa:'Capa de chuva',capa_moto:'Capa para motos',ponteira:'Ponteira',outros:'Outros'};
+    const brindeName = brindeMap[r.brinde] || r.brinde;
     const modalLabel = r.modalidade === 'estudio' ? 'Leva até o estúdio' : 'Retirada no endereço';
     return `<div class="dv-booking-full">
       <div class="dv-row">
@@ -6861,7 +6865,8 @@ function resolveTemplate(body, r) {
   const op = getOperator();
   const first = r.nome.split(' ')[0];
   const dateStr = prettyDate(r.date);
-  const brindeName = r.brinde === 'pastilhas' ? 'Jogo de Pastilhas HH' : r.brinde === 'mochila' ? 'Mochila FullPro' : 'Capa de Chuva FullPro';
+  const brindeMap2 = {pastilhas:'Pastilha de Freio FullPro',mochila:'Mochila FullPro',capa:'Capa de Chuva FullPro',capa_moto:'Capa para Motos FullPro',ponteira:'Ponteira FullPro',outros:'Outro brinde'};
+  const brindeName = brindeMap2[r.brinde] || r.brinde;
 
   return body
     .replace(/\{nome\}/g, first)
