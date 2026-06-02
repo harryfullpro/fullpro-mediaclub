@@ -225,6 +225,23 @@
   .cta-txt-mob { display: none; }
   .nav-cta-icon { display: none; }
   .mobile-video-section { display: none; }
+  .moto-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  .moto-types span {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(255,45,45,.08);
+    border: 1px solid rgba(255,45,45,.15);
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: .3px;
+  }
   .hero-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1675,6 +1692,8 @@
     .badge { padding: 0; background: none; border: none; font-size: 11px; margin-bottom: 10px; gap: 6px; }
     .badge-dot { width: 6px; height: 6px; }
     h1 { font-size: 32px !important; margin-bottom: 8px !important; line-height: .95; }
+    .moto-types { gap: 4px; margin-bottom: 12px; }
+    .moto-types span { padding: 3px 8px; font-size: 10px; }
     /* CTAs side by side, compact */
     .hero-cta { flex-direction: row !important; gap: 8px; margin-bottom: 0 !important; }
     .hero-cta .btn { width: auto; flex: 1; justify-content: center; text-align: center; padding: 11px 12px; font-size: 13px; border-radius: 10px; }
@@ -1726,6 +1745,26 @@
       width: 100%;
       height: 100%;
       border: 0;
+    }
+    .mobile-video-unmute {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      z-index: 5;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: rgba(0,0,0,.7);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      animation: fadeIn .3s ease;
     }
     .mobile-video-endscreen {
       position: absolute;
@@ -2081,11 +2120,14 @@
       </div>
       <h1 class="reveal">Empreste sua moto<br/>por um dia. <span>Leve recompensa.</span></h1>
       <p class="lead lead-full reveal">
-        A FullPro está produzindo conteúdo de marketing com motos variadas em seu novo estúdio de gravação e fotografia. Participe do FullPro Media Club, tenha sua moto protagonista do nosso conteúdo e ganhe um presente FullPro de sua escolha.
+        A FullPro está produzindo conteúdo de marketing com motos de todos os tipos em seu novo estúdio de gravação e fotografia. Participe do FullPro Media Club, tenha sua moto protagonista do nosso conteúdo e ganhe um presente FullPro de sua escolha.
       </p>
       <p class="lead lead-short reveal">
         Sua moto protagonista do nosso conteúdo — e você leva um presente FullPro grátis.
       </p>
+      <div class="moto-types reveal">
+        <span>Trail</span><span>Big Trail</span><span>Esportiva</span><span>Custom</span><span>Off-road</span><span>Naked</span><span>Baixa cc</span><span>+ mais</span>
+      </div>
       <div class="hero-cta reveal">
         <a href="#agendar" class="btn btn-primary"><span class="cta-txt-desk">Agendar minha moto →</span><span class="cta-txt-mob">Agendar minha moto <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></a>
         <a href="#como-funciona" class="btn btn-ghost">Como funciona</a>
@@ -2513,6 +2555,14 @@
         <div class="faq-q">Quais documentos preciso levar/entregar?</div>
         <div class="faq-a"><p>No momento da retirada ou entrega da moto, nosso mecânico vai combinar com você os detalhes sobre a documentação necessária para que possamos transitar legalmente durante as gravações externas. Fique tranquilo, é bem simples!</p></div>
       </div>
+      <div class="faq-item">
+        <div class="faq-q">Qualquer tipo de moto pode participar?</div>
+        <div class="faq-a"><p>Sim! Aceitamos todos os tipos: trail, big trail, esportiva, naked, custom, off-road, baixa cilindrada e mais. Após o agendamento, nossa equipe analisa a solicitação e retorna em até 24h confirmando a participação conforme a demanda e o planejamento de conteúdo da empresa naquele momento.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Minha solicitação pode ser recusada?</div>
+        <div class="faq-a"><p>Em alguns casos, sim. A aprovação depende de fatores como o planejamento de conteúdo vigente, se já gravamos recentemente com o mesmo modelo, disponibilidade de produtos compatíveis com a moto e a agenda do estúdio. Mas fique tranquilo — respondemos todas as solicitações com transparência.</p></div>
+      </div>
     </div>
   </div>
 </section>
@@ -2588,6 +2638,7 @@
       </div>
       <h3><span class="num">1</span> Do Objeto</h3>
       <p>O(a) CEDENTE cede, em caráter temporário e gratuito, a motocicleta identificada no formulário digital de agendamento (marca, modelo, ano e placa nele informados), com a finalidade <strong>exclusiva</strong> de produção de conteúdo de marketing, testes, validação de compatibilidade de produtos e sessões de gravação/fotografia profissional desenvolvidas pela CESSIONÁRIA em seu estúdio FullPro.</p>
+      <p>O programa aceita <strong>todos os tipos de motocicleta</strong> (trail, big trail, esportiva, naked, custom, off-road, baixa cilindrada, entre outras). No entanto, a confirmação da participação está sujeita à análise da CESSIONÁRIA, que poderá aprovar ou declinar a solicitação com base no planejamento de conteúdo vigente, na disponibilidade de produtos compatíveis com o modelo, na eventual duplicidade recente de gravações com o mesmo modelo ou em critérios editoriais e operacionais internos. A CESSIONÁRIA se compromete a responder todas as solicitações em até 24 horas, com total transparência.</p>
       <h3><span class="num">2</span> Do Prazo</h3>
       <p>A cessão ocorrerá <strong>em um único dia útil</strong>, na data escolhida pelo(a) CEDENTE no formulário, com início às 8h e devolução da motocicleta até as 18h do mesmo dia, em estado igual ou superior ao de recebimento.</p>
       <h3><span class="num">3</span> Das Modalidades</h3>
@@ -2975,20 +3026,28 @@ document.querySelectorAll('.hero-stats').forEach(el => counterObserver.observe(e
     played = true;
     const iframe = document.createElement('iframe');
     iframe.id = 'mobileYTFrame';
-    iframe.src = 'https://www.youtube-nocookie.com/embed/ElWDrP58x44?rel=0&modestbranding=1&playsinline=1&autoplay=1&enablejsapi=1&start=0';
+    iframe.src = 'https://www.youtube-nocookie.com/embed/ElWDrP58x44?rel=0&modestbranding=1&playsinline=1&autoplay=1&mute=1&enablejsapi=1&start=0';
     iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
     iframe.allowFullscreen = true;
     wrap.innerHTML = '';
     wrap.appendChild(iframe);
-    // After 30s, show "Ver completo" overlay
+    // Add unmute button
+    const unmute = document.createElement('button');
+    unmute.className = 'mobile-video-unmute';
+    unmute.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M16.5 12A4.5 4.5 0 0 0 14 8v8a4.47 4.47 0 0 0 2.5-4zM19 12a7 7 0 0 0-5-6.71v1.55A5.49 5.49 0 0 1 17.5 12 5.49 5.49 0 0 1 14 17.16v1.55A7 7 0 0 0 19 12zM4.5 10A1.5 1.5 0 0 0 3 11.5v1A1.5 1.5 0 0 0 4.5 14H5l4 4V6L5 10H4.5z"/><line x1="1" y1="1" x2="23" y2="23" stroke="white" stroke-width="2"/></svg> Ativar som';
+    unmute.onclick = function() {
+      iframe.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', '*');
+      unmute.remove();
+    };
+    wrap.appendChild(unmute);
+    // After 40s, show "Ver completo" overlay
     setTimeout(() => {
-      // Pause video via postMessage
       iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
       const overlay = document.createElement('div');
       overlay.className = 'mobile-video-endscreen';
       overlay.innerHTML = '<a href="https://www.youtube.com/watch?v=ElWDrP58x44" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Ver completo no YouTube</a>';
       wrap.appendChild(overlay);
-    }, 30000);
+    }, 40000);
   }
   // Click to play
   const playBtn = document.getElementById('mobileVideoPlay');
