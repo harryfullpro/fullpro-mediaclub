@@ -592,13 +592,14 @@
   .rot-mode-btn:hover { border-color: var(--border-hi); color: var(--text-dim); }
   .rot-mode-btn.active { background: rgba(139,156,247,.15); border-color: rgba(139,156,247,.5); color: #8b9cf7; }
   .rot-scene {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-    margin-bottom: 8px; overflow: visible; transition: border-color .15s;
+    background: var(--bg-card); border: 1px solid var(--border-hi); border-radius: 12px;
+    margin-bottom: 10px; overflow: visible; transition: border-color .15s;
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
   }
-  .rot-scene:hover { border-color: var(--border-hi); }
+  .rot-scene:hover { border-color: rgba(139,156,247,.3); }
   .rot-scene-head {
-    display: flex; align-items: center; gap: 8px; padding: 12px 14px;
-    cursor: pointer; user-select: none;
+    display: flex; align-items: center; gap: 8px; padding: 14px 16px;
+    cursor: pointer; user-select: none; background: rgba(255,255,255,.02); border-radius: 12px 12px 0 0;
   }
   .rot-chevron { transition: transform .15s; flex-shrink: 0; color: var(--text-muted); }
   .rot-chevron.open { transform: rotate(90deg); }
@@ -608,22 +609,23 @@
   }
   .rot-drag-handle:hover { opacity: 1; }
   .rot-scene-title {
-    font-weight: 600; font-size: 14px; color: var(--text); outline: none;
-    border-bottom: 1px solid transparent; transition: border-color .15s; min-width: 80px;
+    font-weight: 700; font-size: 15px; color: #fff; outline: none;
+    border-bottom: 1.5px solid rgba(255,255,255,.1); transition: all .15s; min-width: 80px;
+    padding: 2px 4px;
   }
-  .rot-scene-title:empty:not(:focus)::before { content: attr(data-placeholder); color: var(--text-muted); opacity: .5; }
-  .rot-scene-title:focus { border-color: #8b9cf7; }
+  .rot-scene-title:empty:not(:focus)::before { content: attr(data-placeholder); color: var(--text-muted); opacity: .6; }
+  .rot-scene-title:focus { border-color: #8b9cf7; background: rgba(139,156,247,.06); border-radius: 4px; }
   .rot-scene-location {
-    font-size: 12px; color: var(--text-muted); outline: none; min-width: 80px; padding: 2px 8px;
-    border-bottom: 1px solid transparent; transition: border-color .15s; margin-left: 4px;
-    border-radius: 4px; background: rgba(255,255,255,.03);
+    font-size: 12px; color: var(--text-dim); outline: none; min-width: 90px; padding: 4px 10px;
+    border: 1px solid var(--border); transition: all .15s; margin-left: 6px;
+    border-radius: 6px; background: rgba(255,255,255,.04);
   }
   .rot-scene-location:empty:not(:focus)::before { content: attr(data-placeholder); color: var(--text-muted); opacity: .5; }
-  .rot-scene-location:focus { border-color: #8b9cf7; }
+  .rot-scene-location:focus { border-color: #8b9cf7; background: rgba(139,156,247,.06); }
   .rot-duration { font-size: 12px; }
   .rot-icon-btn {
-    width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
-    background: none; color: var(--text-muted); cursor: pointer; display: flex;
+    width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border-hi);
+    background: rgba(255,255,255,.02); color: var(--text-dim); cursor: pointer; display: flex;
     align-items: center; justify-content: center; transition: all .15s; padding: 0;
   }
   .rot-icon-btn:hover { border-color: #8b9cf7; color: #8b9cf7; background: rgba(139,156,247,.08); }
@@ -643,14 +645,15 @@
   }
   .rot-icon-btn:hover .rot-tip { display: block; }
   .rot-shot {
-    display: flex; align-items: center; gap: 8px; padding: 8px 14px 8px 48px;
-    border-top: 1px solid var(--border); transition: background .1s; min-height: 42px;
+    display: flex; align-items: center; gap: 8px; padding: 10px 16px 10px 48px;
+    border-top: 1px solid rgba(255,255,255,.06); transition: background .1s; min-height: 44px;
+    background: rgba(255,255,255,.01);
   }
-  .rot-shot:hover { background: rgba(139,156,247,.03); }
+  .rot-shot:hover { background: rgba(139,156,247,.05); }
   .rot-check { display: flex; align-items: center; cursor: pointer; flex-shrink: 0; }
   .rot-check input { display: none; }
   .rot-check-box {
-    width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--border);
+    width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--border-hi);
     display: flex; align-items: center; justify-content: center; transition: all .15s;
     background: var(--bg-elev);
   }
@@ -661,12 +664,12 @@
     content: '✓'; color: #fff; font-size: 12px; font-weight: 700;
   }
   .rot-shot-title {
-    font-size: 12px; color: var(--text-dim); outline: none; flex: 1; min-width: 60px;
-    border-bottom: 1px solid transparent; transition: border-color .15s;
+    font-size: 13px; color: var(--text); outline: none; flex: 1; min-width: 60px;
+    border-bottom: 1px dashed rgba(255,255,255,.08); transition: all .15s; padding: 2px 4px;
   }
-  .rot-shot-title:focus { border-color: #8b9cf7; color: var(--text); }
+  .rot-shot-title:focus { border-color: #8b9cf7; color: #fff; background: rgba(139,156,247,.06); border-radius: 4px; border-style: solid; }
   .rot-shot-title.done { text-decoration: line-through; color: var(--text-muted); }
-  .rot-shot-title:empty:not(:focus)::before { content: attr(data-placeholder); color: var(--text-muted); opacity: .4; }
+  .rot-shot-title:empty:not(:focus)::before { content: attr(data-placeholder); color: var(--text-muted); opacity: .5; }
   .rot-dur-input {
     width: 40px; text-align: center; padding: 3px 4px; border-radius: 6px; font-size: 11px;
     font-family: inherit; background: var(--bg-elev); border: 1px solid var(--border);
@@ -691,17 +694,17 @@
 
   /* Shot head selectors (camera + shot type) */
   .rot-shot-head {
-    display: flex; align-items: center; gap: 6px; padding: 4px 14px 0 48px;
-    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px; padding: 8px 16px 4px 48px;
+    border-top: 1px solid rgba(139,156,247,.12); background: rgba(139,156,247,.03);
   }
   .rot-shot-select {
-    padding: 3px 6px; font-size: 10px; font-weight: 600; font-family: inherit;
-    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 5px;
-    color: var(--text-dim); cursor: pointer; outline: none; letter-spacing: .3px;
+    padding: 4px 8px; font-size: 11px; font-weight: 600; font-family: inherit;
+    background: var(--bg-elev); border: 1px solid var(--border-hi); border-radius: 6px;
+    color: var(--text); cursor: pointer; outline: none; letter-spacing: .3px;
   }
-  .rot-shot-select:focus { border-color: #8b9cf7; }
+  .rot-shot-select:focus { border-color: #8b9cf7; box-shadow: 0 0 0 2px rgba(139,156,247,.15); }
   .rot-shot-select option { background: var(--bg-card); color: var(--text); }
-  .rot-shot-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+  .rot-shot-label { font-size: 9px; color: rgba(139,156,247,.6); text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; }
   /* Shot type help tooltip */
   .rot-help-btn {
     width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border);
