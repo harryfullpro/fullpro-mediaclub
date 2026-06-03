@@ -4773,11 +4773,13 @@ function renderProjTabRoteiro(p) {
   el.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
       <div style="display:flex;gap:4px;position:relative">
-        <button class="rot-mode-btn active" id="rotBtnClaquete" onclick="switchRoteiroView('claquete')" onmouseenter="showRotTooltip(this,'Roteiro — organize as cenas e planos do vídeo')" onmouseleave="hideRotTooltip()">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a1 1 0 001-1V7H3v12a1 1 0 001 1z"/><path d="M3 7l2.5-4h13L21 7"/><path d="M7 3l2 4"/><path d="M12 3l2 4"/><path d="M17 3l2 4"/></svg>
+        <button class="rot-mode-btn active" id="rotBtnClaquete" onclick="switchRoteiroView('claquete')" onmouseenter="showRotTooltip(this,'Organize as cenas e planos do vídeo')" onmouseleave="hideRotTooltip()">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a1 1 0 001-1V7H3v12a1 1 0 001 1z"/><path d="M3 7l2.5-4h13L21 7"/><path d="M7 3l2 4"/><path d="M12 3l2 4"/><path d="M17 3l2 4"/></svg>
+          <span style="font-size:11px;font-weight:600;letter-spacing:.3px">Roteiro</span>
         </button>
-        <button class="rot-mode-btn" id="rotBtnCamera" onclick="switchRoteiroView('camera')" onmouseenter="showRotTooltip(this,'Ordem de gravação — arraste para reordenar a sequência de filmagem')" onmouseleave="hideRotTooltip()">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        <button class="rot-mode-btn" id="rotBtnCamera" onclick="switchRoteiroView('camera')" onmouseenter="showRotTooltip(this,'Arraste para reordenar a sequência de filmagem (somente leitura)')" onmouseleave="hideRotTooltip()">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          <span style="font-size:11px;font-weight:600;letter-spacing:.3px">Ordem de filmagem</span>
         </button>
         <div id="rotTooltip" style="display:none;position:absolute;top:100%;left:0;margin-top:6px;padding:6px 10px;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-dim);white-space:nowrap;z-index:10;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.3)"></div>
       </div>
@@ -4878,32 +4880,44 @@ function renderClaqueteView(container) {
   container.innerHTML = html;
 }
 
+function renderShotsReadOnly(shots) {
+  if (shots.length === 0) return '<div style="padding:12px 12px 12px 48px;font-size:12px;color:var(--text-muted)">Nenhum plano nesta cena</div>';
+  return shots.map(shot => {
+    const cam = shot.camera || '—';
+    const sType = shot.shotType || '—';
+    return `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 48px;border-top:1px solid rgba(255,255,255,.06);min-height:38px">
+      <span style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(139,156,247,.5);min-width:50px">${escHtml(cam)}</span>
+      <span style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(245,158,11,.5);min-width:70px">${escHtml(sType)}</span>
+      <span style="font-size:13px;color:${shot.done?'var(--text-muted)':'var(--text)'};${shot.done?'text-decoration:line-through;':''}">${escHtml(shot.title || '(sem descrição)')}</span>
+    </div>`;
+  }).join('');
+}
+
 function renderCameraView(container) {
   if (!roteiroShootOrder) {
-    // Build default shoot order from scene order
     roteiroShootOrder = [];
     roteiroScenes.forEach((scene, si) => {
       roteiroShootOrder.push({ sceneIdx: si, type: 'scene' });
     });
   }
-  let html = '';
+  let html = '<div style="padding:8px 0 12px;font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg> Somente leitura — arraste as cenas para reordenar a sequência de filmagem.</div>';
   roteiroShootOrder.forEach((ref, oi) => {
     const scene = roteiroScenes[ref.sceneIdx];
     if (!scene) return;
-    const totalDur = (scene.shots || []).reduce((s, sh) => s + (sh.duration || 0), 0);
     const doneCount = (scene.shots || []).filter(sh => sh.done).length;
     const expanded = scene._camExpanded !== false;
     html += `<div class="rot-scene" draggable="true" ondragstart="rotDragStart(event,'cam',${oi})" ondragover="rotDragOver(event)" ondrop="rotDrop(event,'cam',${oi})" data-oi="${oi}">
-      <div class="rot-scene-head" onclick="if(event.target===this||event.target.classList.contains('rot-chevron')||event.target.closest('.rot-chevron')||event.target.classList.contains('rot-drag-handle'))toggleCamExpand(${ref.sceneIdx})">
+      <div class="rot-scene-head" onclick="toggleCamExpand(${ref.sceneIdx})" style="cursor:grab">
         <svg class="rot-chevron ${expanded?'open':''}" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-        <span class="rot-drag-handle" onclick="event.stopPropagation()" title="Arrastar">⠿</span>
-        <span style="font-weight:600;font-size:14px;color:var(--text)">${escHtml(scene.title || 'Nova Cena')}</span>
-        <span style="font-size:12px;color:var(--text-muted);margin-left:4px">${escHtml(scene.location || '')}</span>
+        <span class="rot-drag-handle" onclick="event.stopPropagation()" title="Arrastar para reordenar">⠿</span>
+        <span style="font-weight:700;font-size:14px;color:#fff">${escHtml(scene.title || '(sem título)')}</span>
+        <span style="font-size:12px;color:var(--text-dim);margin-left:6px;padding:2px 8px;background:rgba(255,255,255,.04);border-radius:4px">${escHtml(scene.location || '')}</span>
         <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0">
-          <span style="font-size:11px;color:var(--text-muted)">${doneCount}/${(scene.shots||[]).length}</span>
+          <span style="font-size:11px;color:var(--text-muted)">${doneCount}/${(scene.shots||[]).length} planos</span>
         </div>
       </div>
-      ${expanded ? renderShots(scene.shots || [], ref.sceneIdx) : ''}
+      ${expanded ? renderShotsReadOnly(scene.shots || []) : ''}
     </div>`;
   });
   container.innerHTML = html;
