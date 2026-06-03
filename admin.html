@@ -593,7 +593,7 @@
   .rot-mode-btn.active { background: rgba(139,156,247,.15); border-color: rgba(139,156,247,.5); color: #8b9cf7; }
   .rot-scene {
     background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-    margin-bottom: 8px; overflow: hidden; transition: border-color .15s;
+    margin-bottom: 8px; overflow: visible; transition: border-color .15s;
   }
   .rot-scene:hover { border-color: var(--border-hi); }
   .rot-scene-head {
@@ -609,12 +609,14 @@
   .rot-drag-handle:hover { opacity: 1; }
   .rot-scene-title {
     font-weight: 600; font-size: 14px; color: var(--text); outline: none;
-    border-bottom: 1px solid transparent; transition: border-color .15s; min-width: 40px;
+    border-bottom: 1px solid transparent; transition: border-color .15s; min-width: 80px;
   }
+  .rot-scene-title:empty:not(:focus)::before { content: attr(data-placeholder); color: var(--text-muted); opacity: .5; }
   .rot-scene-title:focus { border-color: #8b9cf7; }
   .rot-scene-location {
-    font-size: 12px; color: var(--text-muted); outline: none; min-width: 30px;
+    font-size: 12px; color: var(--text-muted); outline: none; min-width: 80px; padding: 2px 8px;
     border-bottom: 1px solid transparent; transition: border-color .15s; margin-left: 4px;
+    border-radius: 4px; background: rgba(255,255,255,.03);
   }
   .rot-scene-location:empty:not(:focus)::before { content: attr(data-placeholder); color: var(--text-muted); opacity: .5; }
   .rot-scene-location:focus { border-color: #8b9cf7; }
@@ -686,6 +688,38 @@
   .rot-speech .rot-note-label { color: #f59e0b; }
   .rot-note span[contenteditable]:empty:not(:focus)::before,
   .rot-shot-note span[contenteditable]:empty:not(:focus)::before { content: attr(data-placeholder); color: var(--text-muted); opacity: .4; }
+
+  /* Shot head selectors (camera + shot type) */
+  .rot-shot-head {
+    display: flex; align-items: center; gap: 6px; padding: 4px 14px 0 48px;
+    border-top: 1px solid var(--border);
+  }
+  .rot-shot-select {
+    padding: 3px 6px; font-size: 10px; font-weight: 600; font-family: inherit;
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 5px;
+    color: var(--text-dim); cursor: pointer; outline: none; letter-spacing: .3px;
+  }
+  .rot-shot-select:focus { border-color: #8b9cf7; }
+  .rot-shot-select option { background: var(--bg-card); color: var(--text); }
+  .rot-shot-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+  /* Shot type help tooltip */
+  .rot-help-btn {
+    width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border);
+    background: none; color: var(--text-muted); font-size: 10px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    position: relative; margin-left: auto; font-family: inherit;
+  }
+  .rot-help-btn:hover { border-color: #8b9cf7; color: #8b9cf7; }
+  .rot-help-popup {
+    display: none; position: absolute; bottom: calc(100% + 8px); right: -8px;
+    width: 260px; padding: 12px; background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.4); z-index: 50;
+    font-size: 11px; color: var(--text-dim); line-height: 1.5;
+  }
+  .rot-help-popup dt { font-weight: 700; color: var(--text); margin-top: 6px; }
+  .rot-help-popup dt:first-child { margin-top: 0; }
+  .rot-help-popup dd { margin: 0 0 2px 0; }
+  .rot-help-btn:hover .rot-help-popup { display: block; }
 
   /* Agenda layout: calendar | details (wider) | block (compact) */
   .cal-top { display: grid; grid-template-columns: 340px 1fr 260px; gap: 14px; align-items: start; }
@@ -4815,10 +4849,9 @@ function renderClaqueteView(container) {
       <div class="rot-scene-head" onclick="toggleSceneExpand(${si})">
         <svg class="rot-chevron ${expanded?'open':''}" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         <span class="rot-drag-handle" onclick="event.stopPropagation()" title="Arrastar">⠿</span>
-        <span class="rot-scene-title" contenteditable="true" onclick="event.stopPropagation()" onblur="updateSceneTitle(${si},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">${escHtml(scene.title || 'Nova Cena')}</span>
+        <span class="rot-scene-title" contenteditable="true" data-placeholder="Nome da cena" onclick="event.stopPropagation()" onblur="updateSceneTitle(${si},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">${escHtml(scene.title || '')}</span>
         <span class="rot-scene-location" contenteditable="true" onclick="event.stopPropagation()" onblur="updateSceneLocation(${si},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" data-placeholder="Local">${escHtml(scene.location || '')}</span>
         <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0">
-          <span class="rot-duration">${formatDuration(totalDur)}</span>
           <span style="font-size:11px;color:var(--text-muted)">${doneCount}/${totalShots}</span>
           <button class="rot-icon-btn" onclick="event.stopPropagation();addRoteiroShot(${si})">
             <span class="rot-tip">Adicionar plano</span>
@@ -4863,7 +4896,6 @@ function renderCameraView(container) {
         <span style="font-weight:600;font-size:14px;color:var(--text)">${escHtml(scene.title || 'Nova Cena')}</span>
         <span style="font-size:12px;color:var(--text-muted);margin-left:4px">${escHtml(scene.location || '')}</span>
         <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0">
-          <span class="rot-duration">${formatDuration(totalDur)}</span>
           <span style="font-size:11px;color:var(--text-muted)">${doneCount}/${(scene.shots||[]).length}</span>
         </div>
       </div>
@@ -4875,7 +4907,34 @@ function renderCameraView(container) {
 
 function renderShots(shots, si) {
   if (shots.length === 0) return '<div style="padding:12px 12px 12px 48px;font-size:12px;color:var(--text-muted)">Nenhum plano — clique + para adicionar</div>';
+  const camOpts = ['','Action','Pocket','360','iPhone','Foto','Outro'];
+  const shotTypeOpts = ['','Plano aberto','Plano fechado','Close up','POV','Capacete','Peitoral','Timelapse','B-roll'];
   return shots.map((shot, pi) => `
+    <div class="rot-shot-head">
+      <span class="rot-shot-label">Câmera</span>
+      <select class="rot-shot-select" onchange="updateShotCamera(${si},${pi},this.value)" title="Câmera utilizada">
+        ${camOpts.map(o => `<option value="${o}" ${(shot.camera||'')=== o?'selected':''}>${o || '—'}</option>`).join('')}
+      </select>
+      <span class="rot-shot-label" style="margin-left:8px">Plano</span>
+      <select class="rot-shot-select" onchange="updateShotType(${si},${pi},this.value)" title="Tipo de plano">
+        ${shotTypeOpts.map(o => `<option value="${o}" ${(shot.shotType||'')=== o?'selected':''}>${o || '—'}</option>`).join('')}
+      </select>
+      <button class="rot-help-btn" title="Guia de planos">?
+        <div class="rot-help-popup">
+          <strong style="color:var(--primary);font-size:10px;letter-spacing:1px;text-transform:uppercase">Guia de planos</strong>
+          <dl style="margin-top:8px">
+            <dt>Plano aberto</dt><dd>Enquadramento amplo, mostra o cenário completo</dd>
+            <dt>Plano fechado</dt><dd>Foco no objeto/moto, pouco fundo visível</dd>
+            <dt>Close up</dt><dd>Detalhe extremo (peça, mão, painel)</dd>
+            <dt>POV</dt><dd>Perspectiva do piloto, câmera no capacete/guidão</dd>
+            <dt>Capacete</dt><dd>Câmera fixada no capacete do piloto</dd>
+            <dt>Peitoral</dt><dd>Câmera no peito, mostra mãos e moto</dd>
+            <dt>Timelapse</dt><dd>Sequência acelerada (montagem, trajeto)</dd>
+            <dt>B-roll</dt><dd>Material de apoio, takes de contexto</dd>
+          </dl>
+        </div>
+      </button>
+    </div>
     <div class="rot-shot" draggable="true" ondragstart="rotDragStart(event,'shot',${si},${pi})" ondragover="rotDragOver(event)" ondrop="rotDrop(event,'shot',${si},${pi})" data-si="${si}" data-pi="${pi}">
       <label class="rot-check" onclick="event.stopPropagation()">
         <input type="checkbox" ${shot.done?'checked':''} onchange="toggleShotDone(${si},${pi},this.checked)"/>
@@ -4883,7 +4942,6 @@ function renderShots(shots, si) {
       </label>
       <span class="rot-shot-title ${shot.done?'done':''}" contenteditable="true" onblur="updateShotTitle(${si},${pi},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" data-placeholder="Descrição do plano">${escHtml(shot.title || '')}</span>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0">
-        <input type="text" class="rot-dur-input" value="${shot.duration||0}" onblur="updateShotDuration(${si},${pi},this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" title="Duração em segundos"/> <span style="font-size:10px;color:var(--text-muted)">s</span>
         ${shot.note !== undefined && shot.note !== null ? '' : `<button class="rot-icon-btn" onclick="addShotNote(${si},${pi})"><span class="rot-tip">Nota ao editor</span><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button>`}
         ${shot.speech !== undefined && shot.speech !== null ? '' : `<button class="rot-icon-btn rot-speech-btn" onclick="addShotSpeech(${si},${pi})"><span class="rot-tip">Fala do apresentador</span><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></button>`}
         <button class="rot-icon-btn rot-delete" onclick="deleteShot(${si},${pi})"><span class="rot-tip">Excluir plano</span>
@@ -4905,7 +4963,7 @@ function formatDuration(s) {
 
 /* ── Scene CRUD ── */
 function addRoteiroScene() {
-  roteiroScenes.push({ title: 'Nova Cena', location: '', shots: [], note: null, _expanded: true });
+  roteiroScenes.push({ title: '', location: '', shots: [], note: null, _expanded: true });
   if (roteiroShootOrder) roteiroShootOrder.push({ sceneIdx: roteiroScenes.length - 1, type: 'scene' });
   renderRoteiroContent();
   autoSaveRoteiro();
@@ -4952,6 +5010,14 @@ function updateShotTitle(si, pi, val) { roteiroScenes[si].shots[pi].title = val.
 function updateShotDuration(si, pi, val) {
   roteiroScenes[si].shots[pi].duration = parseInt(val) || 0;
   renderRoteiroContent();
+  autoSaveRoteiro();
+}
+function updateShotCamera(si, pi, val) {
+  roteiroScenes[si].shots[pi].camera = val;
+  autoSaveRoteiro();
+}
+function updateShotType(si, pi, val) {
+  roteiroScenes[si].shots[pi].shotType = val;
   autoSaveRoteiro();
 }
 function addShotNote(si, pi) { roteiroScenes[si].shots[pi].note = ''; renderRoteiroContent(); }
