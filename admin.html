@@ -3058,7 +3058,7 @@ async function hashPw(pw) {
 async function checkAuth() {
   const sid = localStorage.getItem('fp_session');
   if (!sid) return;
-  const { data, error } = await sb.from('admin_users').select('*').eq('id', sid).single();
+  const { data, error } = await sb.from('mc_admin_users').select('*').eq('id', sid).single();
   if (error || !data) { localStorage.removeItem('fp_session'); return; }
   CURRENT_USER = data;
   document.getElementById('login').style.display = 'none';
@@ -3074,7 +3074,7 @@ document.getElementById('loginBtn').onclick = async () => {
   if (!username || !pw) { errEl.textContent = 'Preencha usuário e senha.'; return; }
 
   const pwHash = await hashPw(pw);
-  const { data, error } = await sb.from('admin_users').select('*').eq('username', username).eq('password_hash', pwHash).single();
+  const { data, error } = await sb.from('mc_admin_users').select('*').eq('username', username).eq('password_hash', pwHash).single();
   if (error || !data) {
     errEl.textContent = 'Usuário ou senha inválidos.';
     return;
@@ -3157,7 +3157,7 @@ async function saveProfile() {
     city: document.getElementById('profPixCity').value.trim()
   };
 
-  const { error } = await sb.from('admin_users').update({ name, phone, role, pix }).eq('id', CURRENT_USER.id);
+  const { error } = await sb.from('mc_admin_users').update({ name, phone, role, pix }).eq('id', CURRENT_USER.id);
   if (error) { alert('Erro ao salvar: ' + error.message); return; }
   CURRENT_USER.name = name;
   CURRENT_USER.phone = phone;
@@ -3174,7 +3174,7 @@ async function changePassword() {
   if (pw1 !== pw2) { alert('As senhas não conferem.'); return; }
 
   const pwHash = await hashPw(pw1);
-  const { error } = await sb.from('admin_users').update({ password_hash: pwHash }).eq('id', CURRENT_USER.id);
+  const { error } = await sb.from('mc_admin_users').update({ password_hash: pwHash }).eq('id', CURRENT_USER.id);
   if (error) { alert('Erro ao alterar senha: ' + error.message); return; }
   document.getElementById('profNewPw').value = '';
   document.getElementById('profConfirmPw').value = '';
@@ -3183,7 +3183,7 @@ async function changePassword() {
 
 /* USERS */
 async function loadUsers() {
-  const { data, error } = await sb.from('admin_users').select('id, username, name, phone, role, created_at').order('created_at', { ascending: true });
+  const { data, error } = await sb.from('mc_admin_users').select('id, username, name, phone, role, created_at').order('created_at', { ascending: true });
   if (error) { console.warn('loadUsers:', error.message); return; }
   renderUsers(data || []);
 }
@@ -3219,7 +3219,7 @@ async function createUser() {
   if (!/^[a-z0-9._-]+$/.test(username)) { alert('O usuário deve conter apenas letras minúsculas, números, ponto, hífen ou underline.'); return; }
 
   const pwHash = await hashPw(pw);
-  const { error } = await sb.from('admin_users').insert({ username, password_hash: pwHash, name, phone, role });
+  const { error } = await sb.from('mc_admin_users').insert({ username, password_hash: pwHash, name, phone, role });
   if (error) {
     if (error.message.includes('duplicate') || error.message.includes('unique')) {
       alert('Este nome de usuário já está em uso.');
@@ -3240,7 +3240,7 @@ async function createUser() {
 async function deleteUser(id, username) {
   if (getUserRole() !== 'admin') { alert('Apenas administradores podem remover usuários.'); return; }
   if (!confirm('Remover o usuário "' + username + '"? Esta ação é irreversível.')) return;
-  const { error } = await sb.from('admin_users').delete().eq('id', id);
+  const { error } = await sb.from('mc_admin_users').delete().eq('id', id);
   if (error) { alert('Erro ao remover: ' + error.message); return; }
   alert('Usuário removido.');
   loadUsers();
@@ -3252,7 +3252,7 @@ function getOperator() {
 
 /* DATA — Supabase */
 async function loadRequests() {
-  const { data, error } = await sb.from('requests')
+  const { data, error } = await sb.from('mc_requests')
     .select('*')
     .order('created_at', { ascending: false });
   if (error) { console.error('loadRequests:', error); return; }
@@ -3276,9 +3276,9 @@ async function loadRequests() {
 }
 async function loadBlocked() {
   // Try with reason column first; fall back to date-only if column doesn't exist yet
-  let { data, error } = await sb.from('blocked_dates').select('date,reason').order('date');
+  let { data, error } = await sb.from('mc_blocked_dates').select('date,reason').order('date');
   if (error && error.message && error.message.includes('reason')) {
-    const fallback = await sb.from('blocked_dates').select('date').order('date');
+    const fallback = await sb.from('mc_blocked_dates').select('date').order('date');
     data = fallback.data;
     error = fallback.error;
   }
@@ -3395,7 +3395,7 @@ function renderRequests() {
 }
 
 async function updateStatus(id, status) {
-  const { error } = await sb.from('requests').update({ status }).eq('id', id);
+  const { error } = await sb.from('mc_requests').update({ status }).eq('id', id);
   if (error) { alert('Erro ao atualizar: ' + error.message); return; }
   const r = REQUESTS.find(x => x.id === id);
   if (r) r.status = status;
@@ -3595,17 +3595,17 @@ function renderDateViewer(iso) {
 async function toggleBlock(iso, reason) {
   const already = BLOCKED.includes(iso);
   if (already) {
-    const { error } = await sb.from('blocked_dates').delete().eq('date', iso);
+    const { error } = await sb.from('mc_blocked_dates').delete().eq('date', iso);
     if (error) { alert('Erro ao desbloquear: ' + error.message); return; }
     BLOCKED = BLOCKED.filter(d => d !== iso);
     BLOCKED_DATA = BLOCKED_DATA.filter(d => d.date !== iso);
   } else {
     const payload = { date: iso };
     if (reason) payload.reason = reason;
-    let { error } = await sb.from('blocked_dates').insert(payload);
+    let { error } = await sb.from('mc_blocked_dates').insert(payload);
     // If reason column doesn't exist yet, retry without it
     if (error && error.message && error.message.includes('reason')) {
-      const retry = await sb.from('blocked_dates').insert({ date: iso });
+      const retry = await sb.from('mc_blocked_dates').insert({ date: iso });
       error = retry.error;
     }
     if (error) { alert('Erro ao bloquear: ' + error.message); return; }
@@ -3617,7 +3617,7 @@ async function toggleBlock(iso, reason) {
 
 async function deleteBooking(id) {
   if (!confirm('Tem certeza que deseja remover este agendamento? Esta ação não pode ser desfeita.')) return;
-  const { error } = await sb.from('requests').delete().eq('id', id);
+  const { error } = await sb.from('mc_requests').delete().eq('id', id);
   if (error) { alert('Erro ao remover: ' + error.message); return; }
   REQUESTS = REQUESTS.filter(r => r.id !== id);
   renderCalendar();
@@ -3800,7 +3800,7 @@ async function submitEditBooking() {
   if (!payload.date || !payload.nome || !payload.whatsapp || !payload.moto || !payload.placa) {
     alert('Preencha os campos obrigatórios.'); return;
   }
-  const { error } = await sb.from('requests').update(payload).eq('id', id);
+  const { error } = await sb.from('mc_requests').update(payload).eq('id', id);
   if (error) { alert('Erro: ' + error.message); return; }
   closeEditBooking();
   await loadRequests();
@@ -3927,7 +3927,7 @@ function renderCiView() {
 /* Check-out storage */
 let CHECKOUTS = {};
 async function loadCheckouts() {
-  const { data, error } = await sb.from('checkouts').select('*');
+  const { data, error } = await sb.from('mc_checkouts').select('*');
   if (error) { console.warn('loadCheckouts:', error.message); return; }
   CHECKOUTS = {};
   (data || []).forEach(c => { CHECKOUTS[c.request_id] = c; });
@@ -3997,7 +3997,7 @@ async function saveCiForm(prefix, rid) {
   const newStatus = prefix === 'ci' ? 'producao' : 'edicao';
   const linkedProjects = PROJECTS.filter(p => p.request_id === rid && p.status !== 'concluido');
   for (const lp of linkedProjects) {
-    await sb.from('projects').update({ status: newStatus }).eq('id', lp.id);
+    await sb.from('mc_projects').update({ status: newStatus }).eq('id', lp.id);
     lp.status = newStatus;
   }
   if (linkedProjects.length) { renderProjects(); renderEditingView(); }
@@ -4015,7 +4015,7 @@ let projDetailId = null;
 let tempEvalRatings = {};
 
 async function loadProjects() {
-  const { data, error } = await sb.from('projects').select('*').order('created_at', { ascending: false });
+  const { data, error } = await sb.from('mc_projects').select('*').order('created_at', { ascending: false });
   if (error) { console.warn('loadProjects:', error.message); return; }
   PROJECTS = data || [];
 }
@@ -4262,7 +4262,7 @@ function formatBRL(val) {
 async function saveProjCostsToDb() {
   const editId = document.getElementById('projEditId').value;
   if (!editId) return;
-  const { error } = await sb.from('projects').update({ costs: projCosts }).eq('id', editId);
+  const { error } = await sb.from('mc_projects').update({ costs: projCosts }).eq('id', editId);
   if (error) { console.warn('Erro ao salvar custos:', error.message); return; }
   const p = PROJECTS.find(x => x.id === editId);
   if (p) p.costs = [...projCosts];
@@ -4420,9 +4420,9 @@ async function saveProject() {
 
   let result;
   if (editId) {
-    result = await sb.from('projects').update(payload).eq('id', editId);
+    result = await sb.from('mc_projects').update(payload).eq('id', editId);
   } else {
-    result = await sb.from('projects').insert(payload);
+    result = await sb.from('mc_projects').insert(payload);
   }
   if (result.error) {
     alert('Erro ao salvar projeto: ' + result.error.message + '\n\nVocê já criou a tabela "projects" no Supabase?');
@@ -4450,7 +4450,7 @@ async function quickUpdateProjectStatus(id, status) {
     const p = PROJECTS.find(x => x.id === id);
     if (!p?.publish_link) { openPublishLinkModal(id, 'board'); return; }
   }
-  const { error } = await sb.from('projects').update({ status }).eq('id', id);
+  const { error } = await sb.from('mc_projects').update({ status }).eq('id', id);
   if (error) { alert('Erro ao atualizar status: ' + error.message); return; }
   const p = PROJECTS.find(x => x.id === id);
   if (p) p.status = status;
@@ -4468,7 +4468,7 @@ async function setProjectRating(id, value) {
   const p = PROJECTS.find(x => x.id === id);
   // Clicou na mesma estrela = remove rating
   const newVal = (p && p.rating === value) ? 0 : value;
-  const { error } = await sb.from('projects').update({ rating: newVal }).eq('id', id);
+  const { error } = await sb.from('mc_projects').update({ rating: newVal }).eq('id', id);
   if (error) { alert('Erro ao salvar avaliação: ' + error.message); return; }
   if (p) p.rating = newVal;
   renderProjects();
@@ -4559,7 +4559,7 @@ async function quickDetailStatus(status) {
     const p = PROJECTS.find(x => x.id === projDetailId);
     if (!p?.publish_link) { openPublishLinkModal(projDetailId, 'detail'); return; }
   }
-  const { error } = await sb.from('projects').update({ status }).eq('id', projDetailId);
+  const { error } = await sb.from('mc_projects').update({ status }).eq('id', projDetailId);
   if (error) { alert('Erro: ' + error.message); return; }
   const p = PROJECTS.find(x => x.id === projDetailId);
   if (p) p.status = status;
@@ -5018,7 +5018,7 @@ function autoSaveRoteiro() {
       title: s.title, location: s.location, note: s.note,
       shots: (s.shots || []).map(sh => ({ title: sh.title, duration: sh.duration, done: sh.done, note: sh.note, speech: sh.speech }))
     }));
-    const { error } = await sb.from('projects').update({
+    const { error } = await sb.from('mc_projects').update({
       script_scenes: cleanScenes,
       shoot_order: roteiroShootOrder
     }).eq('id', projDetailId);
@@ -5707,7 +5707,7 @@ async function saveEvaluation() {
     evaluation.clips[d].rating = (tempEvalRatings.clips && tempEvalRatings.clips[d]?.rating) || 0;
   });
 
-  const { error } = await sb.from('projects').update({ evaluation }).eq('id', projDetailId);
+  const { error } = await sb.from('mc_projects').update({ evaluation }).eq('id', projDetailId);
   if (error) { alert('Erro: ' + error.message); return; }
   p.evaluation = evaluation;
 
@@ -5974,7 +5974,7 @@ async function savePostSingle(dest) {
     }
   }
 
-  const { error } = await sb.from('projects').update({ posts: p.posts }).eq('id', projDetailId);
+  const { error } = await sb.from('mc_projects').update({ posts: p.posts }).eq('id', projDetailId);
   if (error) { alert('Erro: ' + error.message); return; }
 
   renderProjTabPostagem(p);
@@ -5995,7 +5995,7 @@ async function refreshYTStats(dest, ytId) {
   p.posts[dest].likes = stats.likes;
   p.posts[dest].comments = stats.comments;
 
-  await sb.from('projects').update({ posts: p.posts }).eq('id', projDetailId);
+  await sb.from('mc_projects').update({ posts: p.posts }).eq('id', projDetailId);
   renderProjTabPostagem(p);
 }
 
@@ -6218,7 +6218,7 @@ async function refreshIGStats(dest, shortcode) {
   p.posts[dest].comments = stats.comments;
   if (stats.thumb) p.posts[dest]._igThumb = stats.thumb;
 
-  await sb.from('projects').update({ posts: p.posts }).eq('id', projDetailId);
+  await sb.from('mc_projects').update({ posts: p.posts }).eq('id', projDetailId);
   renderProjTabPostagem(p);
   if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
 }
@@ -6453,7 +6453,7 @@ async function refreshTKStats(dest, videoId) {
   p.posts[dest].comments = stats.comments;
   if (stats.thumb) p.posts[dest]._tkThumb = stats.thumb;
 
-  await sb.from('projects').update({ posts: p.posts }).eq('id', projDetailId);
+  await sb.from('mc_projects').update({ posts: p.posts }).eq('id', projDetailId);
   renderProjTabPostagem(p);
   if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
 }
@@ -6517,7 +6517,7 @@ async function autoRefreshEngagement() {
   }
 
   if (updated) {
-    await sb.from('projects').update({ posts: p.posts }).eq('id', projDetailId);
+    await sb.from('mc_projects').update({ posts: p.posts }).eq('id', projDetailId);
     // Only re-render if the postagem tab is active (avoid disrupting other tabs)
     if (currentDetailTab === 'postagem') {
       renderProjTabPostagem(p);
@@ -6531,14 +6531,14 @@ async function savePosts() {
   const p = PROJECTS.find(x => x.id === projDetailId);
   if (!p) return;
   // Just re-save current posts state
-  const { error } = await sb.from('projects').update({ posts: p.posts || {} }).eq('id', projDetailId);
+  const { error } = await sb.from('mc_projects').update({ posts: p.posts || {} }).eq('id', projDetailId);
   if (error) { alert('Erro: ' + error.message); return; }
   alert('Postagens salvas!');
 }
 
 async function sendEvalNotifications(project) {
   // Get all users except current
-  const { data: users } = await sb.from('admin_users').select('id, name, role');
+  const { data: users } = await sb.from('mc_admin_users').select('id, name, role');
   if (!users) return;
   const others = users.filter(u => u.id !== CURRENT_USER.id);
   const notifs = others.map(u => ({
@@ -6549,7 +6549,7 @@ async function sendEvalNotifications(project) {
     read: false
   }));
   if (notifs.length) {
-    await sb.from('notifications').insert(notifs);
+    await sb.from('mc_notifications').insert(notifs);
   }
   // Reload notifications for current user
   await loadNotifications();
@@ -6557,7 +6557,7 @@ async function sendEvalNotifications(project) {
 
 async function loadNotifications() {
   if (!CURRENT_USER) return;
-  const { data } = await sb.from('notifications').select('*').eq('user_id', CURRENT_USER.id).eq('read', false).order('created_at', { ascending: false });
+  const { data } = await sb.from('mc_notifications').select('*').eq('user_id', CURRENT_USER.id).eq('read', false).order('created_at', { ascending: false });
   NOTIFICATIONS = data || [];
   renderNotifBadge();
 }
@@ -6596,7 +6596,7 @@ function renderProfileNotifications() {
 }
 
 async function dismissNotif(id) {
-  await sb.from('notifications').update({ read: true }).eq('id', id);
+  await sb.from('mc_notifications').update({ read: true }).eq('id', id);
   NOTIFICATIONS = NOTIFICATIONS.filter(n => n.id !== id);
   renderNotifBadge();
   renderProfileNotifications();
@@ -6605,7 +6605,7 @@ async function dismissNotif(id) {
 
 async function deleteProject(id) {
   if (!confirm('Excluir este projeto? Ação irreversível.')) return;
-  const { error } = await sb.from('projects').delete().eq('id', id);
+  const { error } = await sb.from('mc_projects').delete().eq('id', id);
   if (error) { alert('Erro: ' + error.message); return; }
   await loadProjects();
   renderProjects();
@@ -6630,8 +6630,8 @@ function exportCSV() {
 async function clearData() {
   const typed = prompt('Isso apagará TODAS as solicitações e bloqueios. Ação irreversível.\n\nDigite APAGAR para confirmar:');
   if (typed !== 'APAGAR') return;
-  const r1 = await sb.from('requests').delete().not('id', 'is', null);
-  const r2 = await sb.from('blocked_dates').delete().not('date', 'is', null);
+  const r1 = await sb.from('mc_requests').delete().not('id', 'is', null);
+  const r2 = await sb.from('mc_blocked_dates').delete().not('date', 'is', null);
   if (r1.error || r2.error) {
     alert('Erro ao limpar: ' + (r1.error?.message || r2.error?.message));
     return;
@@ -6692,7 +6692,7 @@ async function submitBooking() {
     status: 'approved'
   };
 
-  const { error } = await sb.from('requests').insert(payload);
+  const { error } = await sb.from('mc_requests').insert(payload);
   if (error) { alert('Erro ao salvar: ' + error.message); return; }
 
   closeBookModal();
@@ -6926,7 +6926,7 @@ document.getElementById('waModal').addEventListener('click', e => {
 let CHECKINS = {};
 
 async function loadCheckins() {
-  const { data, error } = await sb.from('checkins').select('*');
+  const { data, error } = await sb.from('mc_checkins').select('*');
   if (error) { console.warn('loadCheckins:', error.message); return; }
   CHECKINS = {};
   (data || []).forEach(c => { CHECKINS[c.request_id] = c; });
@@ -7151,7 +7151,7 @@ async function editingUpdateStatus(id, status) {
     const p = PROJECTS.find(x => x.id === id);
     if (!p?.publish_link) { openPublishLinkModal(id, 'editing'); return; }
   }
-  const { error } = await sb.from('projects').update({ status }).eq('id', id);
+  const { error } = await sb.from('mc_projects').update({ status }).eq('id', id);
   if (error) { alert('Erro ao atualizar status: ' + error.message); return; }
   const proj = PROJECTS.find(p => p.id === id);
   if (proj) proj.status = status;
@@ -7200,7 +7200,7 @@ async function savePublishLink() {
   if (!link) { alert('Insira o link do arquivo para continuar.'); return; }
   const isEditOnly = origin === 'edit';
   const updateData = isEditOnly ? { publish_link: link } : { publish_link: link, status: 'a_publicar' };
-  const { error } = await sb.from('projects').update(updateData).eq('id', projId);
+  const { error } = await sb.from('mc_projects').update(updateData).eq('id', projId);
   if (error) { alert('Erro ao salvar: ' + error.message); return; }
   const p = PROJECTS.find(x => x.id === projId);
   if (p) {
@@ -7536,7 +7536,7 @@ let PERF_CURRENT_TAB = 'metas';
 let PERF_POST_FILTER = 'todos';
 
 async function loadPerfPosts() {
-  const { data, error } = await sb.from('performance_posts').select('*').order('created_at', { ascending: false });
+  const { data, error } = await sb.from('mc_performance_posts').select('*').order('created_at', { ascending: false });
   if (error) { console.warn('loadPerfPosts:', error.message); return; }
   PERF_POSTS = data || [];
 }
@@ -7544,19 +7544,19 @@ async function loadPerfPosts() {
 async function loadPerfGoals() {
   const now = new Date();
   const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const { data, error } = await sb.from('performance_goals').select('*').eq('month', monthStr).single();
+  const { data, error } = await sb.from('mc_performance_goals').select('*').eq('month', monthStr).single();
   if (error && error.code !== 'PGRST116') { console.warn('loadPerfGoals:', error.message); return; }
   PERF_GOALS = data || { volume_long_target: 0, volume_short_target: 0, views_target: 0, clicks_target: 0, pool_per_goal: 500, dist_gravador: 40, dist_editor: 35, dist_mecanico: 25 };
 }
 
 async function loadPerfInfluencers() {
-  const { data, error } = await sb.from('performance_influencers').select('*').order('created_at', { ascending: false });
+  const { data, error } = await sb.from('mc_performance_influencers').select('*').order('created_at', { ascending: false });
   if (error) { console.warn('loadPerfInfluencers:', error.message); return; }
   PERF_INFLUENCERS = data || [];
 }
 
 async function loadPerfBonuses() {
-  const { data, error } = await sb.from('performance_bonuses').select('*').order('created_at', { ascending: false });
+  const { data, error } = await sb.from('mc_performance_bonuses').select('*').order('created_at', { ascending: false });
   if (error) { console.warn('loadPerfBonuses:', error.message); return; }
   PERF_BONUSES = data || [];
 }
@@ -7944,9 +7944,9 @@ function switchInfTab(tab) {
 }
 
 async function loadInfExtras() {
-  const { data: envios } = await sb.from('influencer_envios').select('*').order('created_at',{ascending:false});
+  const { data: envios } = await sb.from('mc_influencer_envios').select('*').order('created_at',{ascending:false});
   INF_ENVIOS = envios || [];
-  const { data: conteudos } = await sb.from('influencer_conteudos').select('*').order('created_at',{ascending:false});
+  const { data: conteudos } = await sb.from('mc_influencer_conteudos').select('*').order('created_at',{ascending:false});
   INF_CONTEUDOS = conteudos || [];
 }
 
@@ -8094,7 +8094,7 @@ async function autoRefreshInfFollowers() {
       // ── Save to Supabase (only mark updated if we got data) ──
       if (changed) changes.followers_updated_at = new Date().toISOString();
       if (!changed) continue; // skip if no API returned data
-      const { error } = await sb.from('performance_influencers').update(changes).eq('id', inf.id);
+      const { error } = await sb.from('mc_performance_influencers').update(changes).eq('id', inf.id);
       if (!error) {
         Object.assign(inf, changes);
         updated++;
@@ -8813,9 +8813,9 @@ async function savePerfGoals() {
 
   let result;
   if (PERF_GOALS?.id) {
-    result = await sb.from('performance_goals').update(payload).eq('id', PERF_GOALS.id);
+    result = await sb.from('mc_performance_goals').update(payload).eq('id', PERF_GOALS.id);
   } else {
-    result = await sb.from('performance_goals').insert([payload]).select().single();
+    result = await sb.from('mc_performance_goals').insert([payload]).select().single();
   }
 
   if (result.error) { alert('Erro ao salvar: ' + result.error.message); return; }
@@ -8862,7 +8862,7 @@ async function savePerfPost() {
     created_by: CURRENT_USER?.id || null
   };
 
-  const { error, data } = await sb.from('performance_posts').insert([payload]).select().single();
+  const { error, data } = await sb.from('mc_performance_posts').insert([payload]).select().single();
   if (error) { alert('Erro ao salvar: ' + error.message); return; }
 
   PERF_POSTS.unshift(data);
@@ -8913,12 +8913,12 @@ async function saveInfluencer() {
   const editId = document.getElementById('infEditId').value;
   let result;
   if (editId) {
-    result = await sb.from('performance_influencers').update(payload).eq('id', editId).select().single();
+    result = await sb.from('mc_performance_influencers').update(payload).eq('id', editId).select().single();
     if (result.error) { alert('Erro ao atualizar: ' + result.error.message); return; }
     const idx = PERF_INFLUENCERS.findIndex(i => i.id === editId);
     if (idx >= 0) PERF_INFLUENCERS[idx] = { ...PERF_INFLUENCERS[idx], ...result.data };
   } else {
-    result = await sb.from('performance_influencers').insert([payload]).select().single();
+    result = await sb.from('mc_performance_influencers').insert([payload]).select().single();
     if (result.error) { alert('Erro ao salvar: ' + result.error.message); return; }
     PERF_INFLUENCERS.unshift(result.data);
   }
@@ -8949,7 +8949,7 @@ async function refreshSingleInfluencer(infId) {
   }
 
   const changes = { ...igData, followers_updated_at: new Date().toISOString() };
-  const { error } = await sb.from('performance_influencers').update(changes).eq('id', infId);
+  const { error } = await sb.from('mc_performance_influencers').update(changes).eq('id', infId);
   if (!error) {
     Object.assign(inf, changes);
     renderInfHub();
@@ -8967,7 +8967,7 @@ async function toggleInfStatus(id) {
   const inf = PERF_INFLUENCERS.find(i => i.id === id);
   if (!inf) return;
   const newStatus = (inf.status === 'ativo' || !inf.status) ? 'inativo' : 'ativo';
-  const { error } = await sb.from('performance_influencers').update({ status: newStatus }).eq('id', id);
+  const { error } = await sb.from('mc_performance_influencers').update({ status: newStatus }).eq('id', id);
   if (error) { alert('Erro: ' + error.message); return; }
   inf.status = newStatus;
   renderPerformance();
@@ -8988,7 +8988,7 @@ async function saveInfEnvio() {
     notas: document.getElementById('envioNotas').value.trim()
   };
 
-  const { error, data } = await sb.from('influencer_envios').insert([payload]).select().single();
+  const { error, data } = await sb.from('mc_influencer_envios').insert([payload]).select().single();
   if (error) { alert('Erro: ' + error.message); return; }
   INF_ENVIOS.unshift(data);
   closeInfEnvioModal();
@@ -9057,7 +9057,7 @@ async function saveInfConteudo() {
     }
   }
 
-  const { error, data } = await sb.from('influencer_conteudos').insert([payload]).select().single();
+  const { error, data } = await sb.from('mc_influencer_conteudos').insert([payload]).select().single();
   if (error) { alert('Erro: ' + error.message); return; }
   INF_CONTEUDOS.unshift(data);
   closeInfConteudoModal();
@@ -9091,7 +9091,7 @@ async function recalcInfFullproStats(infId) {
     engagement_fullpro: engFullpro
   };
 
-  const { error } = await sb.from('performance_influencers').update(changes).eq('id', infId);
+  const { error } = await sb.from('mc_performance_influencers').update(changes).eq('id', infId);
   if (!error) Object.assign(inf, changes);
 }
 
@@ -9099,7 +9099,7 @@ async function deleteInfConteudo(id) {
   if (!confirm('Remover este conteúdo?')) return;
   const conteudo = INF_CONTEUDOS.find(c => c.id === id);
   const infId = conteudo?.influencer_id;
-  const { error } = await sb.from('influencer_conteudos').delete().eq('id', id);
+  const { error } = await sb.from('mc_influencer_conteudos').delete().eq('id', id);
   if (error) { alert('Erro: ' + error.message); return; }
   INF_CONTEUDOS = INF_CONTEUDOS.filter(c => c.id !== id);
   // Recalculate FullPro stats after deletion
@@ -9118,11 +9118,11 @@ async function savePerfBonusConfig() {
 
   let result;
   if (PERF_GOALS?.id) {
-    result = await sb.from('performance_goals').update(payload).eq('id', PERF_GOALS.id);
+    result = await sb.from('mc_performance_goals').update(payload).eq('id', PERF_GOALS.id);
   } else {
     const now = new Date();
     const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    result = await sb.from('performance_goals').insert([{ ...payload, month }]).select().single();
+    result = await sb.from('mc_performance_goals').insert([{ ...payload, month }]).select().single();
   }
 
   if (result.error) { alert('Erro ao salvar: ' + result.error.message); return; }
@@ -9135,7 +9135,7 @@ async function savePerfBonusConfig() {
 }
 
 async function updatePostRating(id, rating) {
-  const { error } = await sb.from('performance_posts').update({ rating }).eq('id', id);
+  const { error } = await sb.from('mc_performance_posts').update({ rating }).eq('id', id);
   if (error) { alert('Erro: ' + error.message); return; }
   const p = PERF_POSTS.find(x => x.id === id);
   if (p) p.rating = rating;
@@ -9144,7 +9144,7 @@ async function updatePostRating(id, rating) {
 
 async function deletePerfPost(id) {
   if (!confirm('Remover este post?')) return;
-  const { error } = await sb.from('performance_posts').delete().eq('id', id);
+  const { error } = await sb.from('mc_performance_posts').delete().eq('id', id);
   if (error) { alert('Erro: ' + error.message); return; }
   PERF_POSTS = PERF_POSTS.filter(p => p.id !== id);
   renderPerformance();
@@ -9152,7 +9152,7 @@ async function deletePerfPost(id) {
 
 async function deleteInfluencer(id) {
   if (!confirm('Remover este influenciador permanentemente?')) return;
-  const { error } = await sb.from('performance_influencers').delete().eq('id', id);
+  const { error } = await sb.from('mc_performance_influencers').delete().eq('id', id);
   if (error) { alert('Erro: ' + error.message); return; }
   PERF_INFLUENCERS = PERF_INFLUENCERS.filter(i => i.id !== id);
   renderPerformance();
@@ -9161,7 +9161,7 @@ async function deleteInfluencer(id) {
 async function markBonusPaid(id) {
   if (getUserRole() !== 'admin') { alert('Apenas administradores podem marcar pagamentos.'); return; }
   const now = new Date().toISOString();
-  const { error } = await sb.from('performance_bonuses').update({ paid: true, paid_at: now }).eq('id', id);
+  const { error } = await sb.from('mc_performance_bonuses').update({ paid: true, paid_at: now }).eq('id', id);
   if (error) { alert('Erro: ' + error.message); return; }
   const b = PERF_BONUSES.find(x => x.id === id);
   if (b) { b.paid = true; b.paid_at = now; }

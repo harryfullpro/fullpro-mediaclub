@@ -2834,7 +2834,7 @@ currentMonth.setDate(1);
 let selectedDate = null;
 let bookedSet = new Set();
 async function loadBookedDates() {
-  const { data, error } = await sb.from('public_blocked_dates').select('date');
+  const { data, error } = await sb.from('mc_public_blocked_dates').select('date');
   if (error) { console.error('Supabase (blocked dates):', error); return; }
   bookedSet = new Set((data || []).map(r => r.date));
 }
@@ -3014,7 +3014,7 @@ document.getElementById('reservaForm').addEventListener('submit', async e => {
     aceite_imagem: true,
     status: 'pending'
   };
-  const { error } = await sb.from('requests').insert(payload);
+  const { error } = await sb.from('mc_requests').insert(payload);
   if (error) {
     console.error('Supabase (insert request):', error);
     alert('Não foi possível enviar sua solicitação agora. Tente novamente em instantes ou fale com a gente pelo WhatsApp.');
