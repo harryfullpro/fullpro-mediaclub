@@ -4944,7 +4944,7 @@ function renderShots(shots, si) {
         <input type="checkbox" ${shot.done?'checked':''} onchange="toggleShotDone(${si},${pi},this.checked)"/>
         <span class="rot-check-box"></span>
       </label>
-      <span class="rot-shot-title ${shot.done?'done':''}" contenteditable="true" onblur="updateShotTitle(${si},${pi},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" data-placeholder="Descrição do plano">${escHtml(shot.title || '')}</span>
+      <span class="rot-shot-title ${shot.done?'done':''}" contenteditable="true" onmousedown="event.stopPropagation();this.focus();" onclick="event.stopPropagation()" onblur="updateShotTitle(${si},${pi},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" data-placeholder="Descrição do plano">${escHtml(shot.title || '')}</span>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0">
         ${shot.note !== undefined && shot.note !== null ? '' : `<button class="rot-icon-btn" onclick="addShotNote(${si},${pi})"><span class="rot-tip">Nota ao editor</span><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button>`}
         ${shot.speech !== undefined && shot.speech !== null ? '' : `<button class="rot-icon-btn rot-speech-btn" onclick="addShotSpeech(${si},${pi})"><span class="rot-tip">Fala do apresentador</span><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></button>`}
