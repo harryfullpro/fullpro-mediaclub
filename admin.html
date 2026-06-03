@@ -707,19 +707,20 @@
   .rot-shot-label { font-size: 9px; color: rgba(139,156,247,.6); text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; }
   /* Shot type help tooltip */
   .rot-help-btn {
-    width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border);
-    background: none; color: var(--text-muted); font-size: 10px; font-weight: 700;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    position: relative; margin-left: auto; font-family: inherit;
+    width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(245,158,11,.4);
+    background: none; color: #f59e0b; font-size: 9px; font-weight: 700;
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    position: relative; font-family: inherit; margin-left: 2px; vertical-align: middle;
+    flex-shrink: 0;
   }
-  .rot-help-btn:hover { border-color: #8b9cf7; color: #8b9cf7; }
+  .rot-help-btn:hover { border-color: #f59e0b; background: rgba(245,158,11,.1); }
   .rot-help-popup {
-    display: none; position: absolute; bottom: calc(100% + 8px); right: -8px;
-    width: 260px; padding: 12px; background: var(--bg-elev); border: 1px solid var(--border);
-    border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.4); z-index: 50;
+    display: none; position: absolute; top: calc(100% + 8px); left: 0;
+    width: 280px; padding: 14px; background: var(--bg-elev); border: 1px solid rgba(245,158,11,.25);
+    border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.5); z-index: 100;
     font-size: 11px; color: var(--text-dim); line-height: 1.5;
   }
-  .rot-help-popup dt { font-weight: 700; color: var(--text); margin-top: 6px; }
+  .rot-help-popup dt { font-weight: 700; color: #f59e0b; margin-top: 6px; font-size: 11px; }
   .rot-help-popup dt:first-child { margin-top: 0; }
   .rot-help-popup dd { margin: 0 0 2px 0; }
   .rot-help-btn:hover .rot-help-popup { display: block; }
@@ -4919,12 +4920,9 @@ function renderShots(shots, si) {
         ${camOpts.map(o => `<option value="${o}" ${(shot.camera||'')=== o?'selected':''}>${o || '—'}</option>`).join('')}
       </select>
       <span class="rot-shot-label" style="margin-left:8px">Plano</span>
-      <select class="rot-shot-select" onchange="updateShotType(${si},${pi},this.value)" title="Tipo de plano">
-        ${shotTypeOpts.map(o => `<option value="${o}" ${(shot.shotType||'')=== o?'selected':''}>${o || '—'}</option>`).join('')}
-      </select>
       <button class="rot-help-btn" title="Guia de planos">?
         <div class="rot-help-popup">
-          <strong style="color:var(--primary);font-size:10px;letter-spacing:1px;text-transform:uppercase">Guia de planos</strong>
+          <strong style="color:#f59e0b;font-size:10px;letter-spacing:1px;text-transform:uppercase">Guia de planos</strong>
           <dl style="margin-top:8px">
             <dt>Plano aberto</dt><dd>Enquadramento amplo, mostra o cenário completo</dd>
             <dt>Plano fechado</dt><dd>Foco no objeto/moto, pouco fundo visível</dd>
@@ -4937,6 +4935,9 @@ function renderShots(shots, si) {
           </dl>
         </div>
       </button>
+      <select class="rot-shot-select" onchange="updateShotType(${si},${pi},this.value)" title="Tipo de plano">
+        ${shotTypeOpts.map(o => `<option value="${o}" ${(shot.shotType||'')=== o?'selected':''}>${o || '—'}</option>`).join('')}
+      </select>
     </div>
     <div class="rot-shot" draggable="true" ondragstart="rotDragStart(event,'shot',${si},${pi})" ondragover="rotDragOver(event)" ondrop="rotDrop(event,'shot',${si},${pi})" data-si="${si}" data-pi="${pi}">
       <label class="rot-check" onclick="event.stopPropagation()">
