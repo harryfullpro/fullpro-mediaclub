@@ -9185,7 +9185,7 @@ function applyRolePermissions() {
   // Views accessible per role
   const access = {
     admin: ['dashboard','requests','calendar','checkin','projects','editing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'],
-    filmmaker: ['dashboard','requests','calendar','projects','editing','perf-posts','profile'],
+    filmmaker: ['dashboard','requests','calendar','checkin','projects','editing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','profile'],
     mecanico: ['dashboard','calendar','checkin','profile'],
     viewer: ['dashboard','profile']
   };
@@ -9220,10 +9220,26 @@ function applyRolePermissions() {
   const sidebarFoot = document.querySelector('.sidebar-foot');
   if (sidebarFoot) sidebarFoot.parentNode.insertBefore(badge, sidebarFoot);
 
-  // Disable edit actions for non-admins on performance pages
+  // Non-admins: read-only view on metas & bonificação
   if (role !== 'admin') {
-    document.querySelectorAll('#view-perf-metas button, #view-perf-metas input, #view-perf-metas select, #view-perf-bonificacao button, #view-perf-bonificacao input').forEach(el => {
-      if (!el.closest('.filter-btn-group')) { el.disabled = true; el.style.opacity = '.4'; el.style.cursor = 'not-allowed'; }
+    // Hide all edit/save buttons and modal triggers in metas and bonificação
+    document.querySelectorAll('#view-perf-metas .action-btn, #view-perf-metas button[onclick*="save"], #view-perf-metas button[onclick*="open"], #view-perf-metas button[onclick*="modal"], #view-perf-bonificacao .action-btn, #view-perf-bonificacao button[onclick*="save"], #view-perf-bonificacao button[onclick*="open"], #view-perf-bonificacao button[onclick*="modal"], #view-perf-bonificacao button[onclick*="mark"], #view-perf-bonificacao button[onclick*="config"]').forEach(el => {
+      el.style.display = 'none';
+    });
+    // Disable all remaining inputs/selects
+    document.querySelectorAll('#view-perf-metas input, #view-perf-metas select, #view-perf-metas textarea, #view-perf-bonificacao input, #view-perf-bonificacao select, #view-perf-bonificacao textarea').forEach(el => {
+      el.disabled = true;
+      el.style.opacity = '.5';
+      el.style.cursor = 'default';
+    });
+    // Add "somente leitura" badge
+    ['view-perf-metas','view-perf-bonificacao'].forEach(viewId => {
+      const view = document.getElementById(viewId);
+      if (!view) return;
+      const badge = document.createElement('div');
+      badge.style.cssText = 'padding:8px 16px;background:rgba(255,207,51,.08);border:1px solid rgba(255,207,51,.2);border-radius:8px;font-size:12px;color:#ffcf33;margin-bottom:16px;display:flex;align-items:center;gap:8px;';
+      badge.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Visualização somente leitura — apenas administradores podem editar.';
+      view.insertBefore(badge, view.firstChild);
     });
   }
 }
