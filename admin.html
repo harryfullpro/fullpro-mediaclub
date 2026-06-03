@@ -585,9 +585,11 @@
 
   /* ── Roteiro tool ── */
   .rot-mode-btn {
-    width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--border);
+    height: 36px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--border);
     background: var(--bg-elev); color: var(--text-muted); cursor: pointer;
-    display: flex; align-items: center; justify-content: center; transition: all .15s;
+    display: inline-flex; align-items: center; gap: 7px; transition: all .15s;
+    font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+    font-family: inherit; white-space: nowrap;
   }
   .rot-mode-btn:hover { border-color: var(--border-hi); color: var(--text-dim); }
   .rot-mode-btn.active { background: rgba(139,156,247,.15); border-color: rgba(139,156,247,.5); color: #8b9cf7; }
@@ -4774,12 +4776,12 @@ function renderProjTabRoteiro(p) {
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
       <div style="display:flex;gap:4px;position:relative">
         <button class="rot-mode-btn active" id="rotBtnClaquete" onclick="switchRoteiroView('claquete')" onmouseenter="showRotTooltip(this,'Organize as cenas e planos do vídeo')" onmouseleave="hideRotTooltip()">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a1 1 0 001-1V7H3v12a1 1 0 001 1z"/><path d="M3 7l2.5-4h13L21 7"/><path d="M7 3l2 4"/><path d="M12 3l2 4"/><path d="M17 3l2 4"/></svg>
-          <span style="font-size:11px;font-weight:600;letter-spacing:.3px">Roteiro</span>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a1 1 0 001-1V7H3v12a1 1 0 001 1z"/><path d="M3 7l2.5-4h13L21 7"/><path d="M7 3l2 4"/><path d="M12 3l2 4"/><path d="M17 3l2 4"/></svg>
+          ROTEIRO
         </button>
         <button class="rot-mode-btn" id="rotBtnCamera" onclick="switchRoteiroView('camera')" onmouseenter="showRotTooltip(this,'Arraste para reordenar a sequência de filmagem (somente leitura)')" onmouseleave="hideRotTooltip()">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-          <span style="font-size:11px;font-weight:600;letter-spacing:.3px">Ordem de filmagem</span>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          ORDEM DE FILMAGEM
         </button>
         <div id="rotTooltip" style="display:none;position:absolute;top:100%;left:0;margin-top:6px;padding:6px 10px;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text-dim);white-space:nowrap;z-index:10;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.3)"></div>
       </div>
