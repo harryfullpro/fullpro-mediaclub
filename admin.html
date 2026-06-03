@@ -4846,11 +4846,11 @@ function renderClaqueteView(container) {
     const doneCount = (scene.shots || []).filter(sh => sh.done).length;
     const totalShots = (scene.shots || []).length;
     html += `<div class="rot-scene" draggable="true" ondragstart="rotDragStart(event,'scene',${si})" ondragover="rotDragOver(event)" ondrop="rotDrop(event,'scene',${si})" data-si="${si}">
-      <div class="rot-scene-head" onclick="toggleSceneExpand(${si})">
+      <div class="rot-scene-head" onclick="if(event.target===this||event.target.classList.contains('rot-chevron')||event.target.closest('.rot-chevron')||event.target.classList.contains('rot-drag-handle'))toggleSceneExpand(${si})">
         <svg class="rot-chevron ${expanded?'open':''}" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         <span class="rot-drag-handle" onclick="event.stopPropagation()" title="Arrastar">⠿</span>
-        <span class="rot-scene-title" contenteditable="true" data-placeholder="Nome da cena" onclick="event.stopPropagation()" onblur="updateSceneTitle(${si},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">${escHtml(scene.title || '')}</span>
-        <span class="rot-scene-location" contenteditable="true" onclick="event.stopPropagation()" onblur="updateSceneLocation(${si},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" data-placeholder="Local">${escHtml(scene.location || '')}</span>
+        <span class="rot-scene-title" contenteditable="true" data-placeholder="Nome da cena" onmousedown="event.stopPropagation();this.focus();" onclick="event.stopPropagation()" onblur="updateSceneTitle(${si},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">${escHtml(scene.title || '')}</span>
+        <span class="rot-scene-location" contenteditable="true" onmousedown="event.stopPropagation();this.focus();" onclick="event.stopPropagation()" onblur="updateSceneLocation(${si},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" data-placeholder="Local">${escHtml(scene.location || '')}</span>
         <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0">
           <span style="font-size:11px;color:var(--text-muted)">${doneCount}/${totalShots}</span>
           <button class="rot-icon-btn" onclick="event.stopPropagation();addRoteiroShot(${si})">
@@ -4890,7 +4890,7 @@ function renderCameraView(container) {
     const doneCount = (scene.shots || []).filter(sh => sh.done).length;
     const expanded = scene._camExpanded !== false;
     html += `<div class="rot-scene" draggable="true" ondragstart="rotDragStart(event,'cam',${oi})" ondragover="rotDragOver(event)" ondrop="rotDrop(event,'cam',${oi})" data-oi="${oi}">
-      <div class="rot-scene-head" onclick="toggleCamExpand(${ref.sceneIdx})">
+      <div class="rot-scene-head" onclick="if(event.target===this||event.target.classList.contains('rot-chevron')||event.target.closest('.rot-chevron')||event.target.classList.contains('rot-drag-handle'))toggleCamExpand(${ref.sceneIdx})">
         <svg class="rot-chevron ${expanded?'open':''}" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         <span class="rot-drag-handle" onclick="event.stopPropagation()" title="Arrastar">⠿</span>
         <span style="font-weight:600;font-size:14px;color:var(--text)">${escHtml(scene.title || 'Nova Cena')}</span>
