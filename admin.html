@@ -4882,13 +4882,17 @@ function renderClaqueteView(container) {
   container.innerHTML = html;
 }
 
-function renderShotsReadOnly(shots) {
+function renderShotsReadOnly(shots, si) {
   if (shots.length === 0) return '<div style="padding:12px 12px 12px 48px;font-size:12px;color:var(--text-muted)">Nenhum plano nesta cena</div>';
-  return shots.map(shot => {
+  return shots.map((shot, pi) => {
     const cam = shot.camera || '—';
     const sType = shot.shotType || '—';
     return `
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 48px;border-top:1px solid rgba(255,255,255,.06);min-height:38px">
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 36px;border-top:1px solid rgba(255,255,255,.06);min-height:38px">
+      <label class="rot-check" onclick="event.stopPropagation()">
+        <input type="checkbox" ${shot.done?'checked':''} onchange="toggleShotDone(${si},${pi},this.checked)"/>
+        <span class="rot-check-box"></span>
+      </label>
       <span style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(139,156,247,.5);min-width:50px">${escHtml(cam)}</span>
       <span style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(245,158,11,.5);min-width:70px">${escHtml(sType)}</span>
       <span style="font-size:13px;color:${shot.done?'var(--text-muted)':'var(--text)'};${shot.done?'text-decoration:line-through;':''}">${escHtml(shot.title || '(sem descrição)')}</span>
@@ -4919,7 +4923,7 @@ function renderCameraView(container) {
           <span style="font-size:11px;color:var(--text-muted)">${doneCount}/${(scene.shots||[]).length} planos</span>
         </div>
       </div>
-      ${expanded ? renderShotsReadOnly(scene.shots || []) : ''}
+      ${expanded ? renderShotsReadOnly(scene.shots || [], ref.sceneIdx) : ''}
     </div>`;
   });
   container.innerHTML = html;
