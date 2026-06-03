@@ -4452,7 +4452,7 @@ async function saveProject() {
     costs: projCosts,
     script_scenes: roteiroScenes.map(s => ({
       title: s.title, location: s.location, note: s.note,
-      shots: (s.shots || []).map(sh => ({ title: sh.title, duration: sh.duration, done: sh.done, note: sh.note, speech: sh.speech }))
+      shots: (s.shots || []).map(sh => ({ title: sh.title, duration: sh.duration, done: sh.done, note: sh.note, speech: sh.speech, camera: sh.camera, shotType: sh.shotType }))
     })),
     shoot_order: roteiroShootOrder,
     created_by: CURRENT_USER?.id || null
@@ -4857,8 +4857,8 @@ function renderClaqueteView(container) {
       <div class="rot-scene-head" onclick="if(event.target===this||event.target.classList.contains('rot-chevron')||event.target.closest('.rot-chevron')||event.target.classList.contains('rot-drag-handle'))toggleSceneExpand(${si})">
         <svg class="rot-chevron ${expanded?'open':''}" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         <span class="rot-drag-handle" onclick="event.stopPropagation()" title="Arrastar">⠿</span>
-        <span class="rot-scene-title" contenteditable="true" data-placeholder="Nome da cena" onmousedown="event.stopPropagation();this.focus();" onclick="event.stopPropagation()" onblur="updateSceneTitle(${si},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">${escHtml(scene.title || '')}</span>
-        <span class="rot-scene-location" contenteditable="true" onmousedown="event.stopPropagation();this.focus();" onclick="event.stopPropagation()" onblur="updateSceneLocation(${si},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" data-placeholder="Local">${escHtml(scene.location || '')}</span>
+        <span class="rot-scene-title" contenteditable="true" data-placeholder="Nome da cena" onmousedown="event.stopPropagation();this.focus();" onclick="event.stopPropagation()" oninput="updateSceneTitle(${si},this.textContent)" onblur="updateSceneTitle(${si},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">${escHtml(scene.title || '')}</span>
+        <span class="rot-scene-location" contenteditable="true" onmousedown="event.stopPropagation();this.focus();" onclick="event.stopPropagation()" oninput="updateSceneLocation(${si},this.textContent)" onblur="updateSceneLocation(${si},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" data-placeholder="Local">${escHtml(scene.location || '')}</span>
         <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0">
           <span style="font-size:11px;color:var(--text-muted)">${doneCount}/${totalShots}</span>
           <button class="rot-icon-btn" onclick="event.stopPropagation();addRoteiroShot(${si})">
@@ -4875,7 +4875,7 @@ function renderClaqueteView(container) {
           </button>
         </div>
       </div>
-      ${scene.note !== undefined && scene.note !== null ? `<div class="rot-note"><span class="rot-note-label">Nota:</span> <span contenteditable="true" onblur="updateSceneNote(${si},this.textContent)" data-placeholder="Notas ao editor">${escHtml(scene.note)}</span><button class="rot-note-rm" onclick="removeSceneNote(${si})">×</button></div>` : ''}
+      ${scene.note !== undefined && scene.note !== null ? `<div class="rot-note"><span class="rot-note-label">Nota:</span> <span contenteditable="true" oninput="updateSceneNote(${si},this.textContent)" onblur="updateSceneNote(${si},this.textContent)" data-placeholder="Notas ao editor">${escHtml(scene.note)}</span><button class="rot-note-rm" onclick="removeSceneNote(${si})">×</button></div>` : ''}
       ${expanded ? renderShots(scene.shots || [], si) : ''}
     </div>`;
   });
@@ -4964,7 +4964,7 @@ function renderShots(shots, si) {
         <input type="checkbox" ${shot.done?'checked':''} onchange="toggleShotDone(${si},${pi},this.checked)"/>
         <span class="rot-check-box"></span>
       </label>
-      <span class="rot-shot-title ${shot.done?'done':''}" contenteditable="true" onmousedown="event.stopPropagation();this.focus();" onclick="event.stopPropagation()" onblur="updateShotTitle(${si},${pi},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" data-placeholder="Descrição do plano">${escHtml(shot.title || '')}</span>
+      <span class="rot-shot-title ${shot.done?'done':''}" contenteditable="true" onmousedown="event.stopPropagation();this.focus();" onclick="event.stopPropagation()" oninput="updateShotTitle(${si},${pi},this.textContent)" onblur="updateShotTitle(${si},${pi},this.textContent)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}" data-placeholder="Descrição do plano">${escHtml(shot.title || '')}</span>
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0">
         ${shot.note !== undefined && shot.note !== null ? '' : `<button class="rot-icon-btn" onclick="addShotNote(${si},${pi})"><span class="rot-tip">Nota ao editor</span><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button>`}
         ${shot.speech !== undefined && shot.speech !== null ? '' : `<button class="rot-icon-btn rot-speech-btn" onclick="addShotSpeech(${si},${pi})"><span class="rot-tip">Fala do apresentador</span><svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></button>`}
@@ -4973,8 +4973,8 @@ function renderShots(shots, si) {
         </button>
       </div>
     </div>
-    ${shot.note !== undefined && shot.note !== null ? `<div class="rot-shot-note"><span class="rot-note-label">Nota:</span> <span contenteditable="true" onblur="updateShotNote(${si},${pi},this.textContent)" data-placeholder="Notas ao editor">${escHtml(shot.note)}</span><button class="rot-note-rm" onclick="removeShotNote(${si},${pi})">×</button></div>` : ''}
-    ${shot.speech !== undefined && shot.speech !== null ? `<div class="rot-shot-note rot-speech"><span class="rot-note-label">Fala:</span> <span contenteditable="true" onblur="updateShotSpeech(${si},${pi},this.textContent)" data-placeholder="Texto do apresentador">${escHtml(shot.speech)}</span><button class="rot-note-rm" onclick="removeShotSpeech(${si},${pi})">×</button></div>` : ''}
+    ${shot.note !== undefined && shot.note !== null ? `<div class="rot-shot-note"><span class="rot-note-label">Nota:</span> <span contenteditable="true" oninput="updateShotNote(${si},${pi},this.textContent)" onblur="updateShotNote(${si},${pi},this.textContent)" data-placeholder="Notas ao editor">${escHtml(shot.note)}</span><button class="rot-note-rm" onclick="removeShotNote(${si},${pi})">×</button></div>` : ''}
+    ${shot.speech !== undefined && shot.speech !== null ? `<div class="rot-shot-note rot-speech"><span class="rot-note-label">Fala:</span> <span contenteditable="true" oninput="updateShotSpeech(${si},${pi},this.textContent)" onblur="updateShotSpeech(${si},${pi},this.textContent)" data-placeholder="Texto do apresentador">${escHtml(shot.speech)}</span><button class="rot-note-rm" onclick="removeShotSpeech(${si},${pi})">×</button></div>` : ''}
   `).join('');
 }
 
@@ -5106,7 +5106,7 @@ function autoSaveRoteiro() {
     // Strip internal props for storage
     const cleanScenes = roteiroScenes.map(s => ({
       title: s.title, location: s.location, note: s.note,
-      shots: (s.shots || []).map(sh => ({ title: sh.title, duration: sh.duration, done: sh.done, note: sh.note, speech: sh.speech }))
+      shots: (s.shots || []).map(sh => ({ title: sh.title, duration: sh.duration, done: sh.done, note: sh.note, speech: sh.speech, camera: sh.camera, shotType: sh.shotType }))
     }));
     const { error } = await sb.from('mc_projects').update({
       script_scenes: cleanScenes,
