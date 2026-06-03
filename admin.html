@@ -3104,6 +3104,11 @@ function loadProfile() {
   document.getElementById('profUsername').value = CURRENT_USER.username || '';
   document.getElementById('profPhone').value = CURRENT_USER.phone || '';
   document.getElementById('profRole').value = CURRENT_USER.role || '';
+  // Non-admins cannot change their own role
+  if (getUserRole() !== 'admin') {
+    document.getElementById('profRole').disabled = true;
+    document.getElementById('profRole').style.opacity = '.5';
+  }
   const pix = CURRENT_USER.pix || {};
   document.getElementById('profPixType').value = pix.type || '';
   document.getElementById('profPixKey').value = pix.key || '';
@@ -3233,6 +3238,7 @@ async function createUser() {
 }
 
 async function deleteUser(id, username) {
+  if (getUserRole() !== 'admin') { alert('Apenas administradores podem remover usuários.'); return; }
   if (!confirm('Remover o usuário "' + username + '"? Esta ação é irreversível.')) return;
   const { error } = await sb.from('admin_users').delete().eq('id', id);
   if (error) { alert('Erro ao remover: ' + error.message); return; }
@@ -8791,6 +8797,7 @@ function closePerfBonusConfigModal() { document.getElementById('perfBonusConfigM
 
 /* Save functions */
 async function savePerfGoals() {
+  if (getUserRole() !== 'admin') { alert('Apenas administradores podem editar metas.'); return; }
   const month = document.getElementById('goalMonth').value;
   const payload = {
     month,
@@ -9101,6 +9108,7 @@ async function deleteInfConteudo(id) {
 }
 
 async function savePerfBonusConfig() {
+  if (getUserRole() !== 'admin') { alert('Apenas administradores podem editar bonificações.'); return; }
   const payload = {
     pool_per_goal: parseCurrency(document.getElementById('bonusPoolValue').value),
     dist_gravador: parseInt(document.getElementById('bonusDistGravador').value) || 40,
@@ -9151,6 +9159,7 @@ async function deleteInfluencer(id) {
 }
 
 async function markBonusPaid(id) {
+  if (getUserRole() !== 'admin') { alert('Apenas administradores podem marcar pagamentos.'); return; }
   const now = new Date().toISOString();
   const { error } = await sb.from('performance_bonuses').update({ paid: true, paid_at: now }).eq('id', id);
   if (error) { alert('Erro: ' + error.message); return; }
@@ -9161,6 +9170,64 @@ async function markBonusPaid(id) {
 }
 
 /* INIT */
+/* =============== ROLE-BASED ACCESS CONTROL =============== */
+function getUserRole() {
+  const r = (CURRENT_USER?.role || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  if (r === 'admin' || r === 'administrador' || r.startsWith('admin')) return 'admin';
+  if (r.includes('filmmaker') || r.includes('gestor')) return 'filmmaker';
+  if (r.includes('mecanico') || r.includes('apresentador')) return 'mecanico';
+  return 'viewer';
+}
+
+function applyRolePermissions() {
+  const role = getUserRole();
+
+  // Views accessible per role
+  const access = {
+    admin: ['dashboard','requests','calendar','checkin','projects','editing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'],
+    filmmaker: ['dashboard','requests','calendar','projects','editing','perf-posts','profile'],
+    mecanico: ['dashboard','calendar','checkin','profile'],
+    viewer: ['dashboard','profile']
+  };
+
+  const allowed = access[role] || access.viewer;
+
+  // Show/hide nav items
+  document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
+    const view = btn.dataset.view;
+    btn.style.display = allowed.includes(view) ? '' : 'none';
+  });
+
+  // Show/hide nav section headers if all children are hidden
+  document.querySelectorAll('.nav-section').forEach(sec => {
+    let next = sec.nextElementSibling;
+    let hasVisible = false;
+    while (next && !next.classList.contains('nav-section')) {
+      if (next.classList.contains('nav-item') && next.style.display !== 'none') hasVisible = true;
+      next = next.nextElementSibling;
+    }
+    sec.style.display = hasVisible ? '' : 'none';
+  });
+
+  // Show role badge in sidebar
+  const roleLabels = { admin: 'Administrador', filmmaker: 'Filmmaker/Gestor', mecanico: 'Mecânico/Apresentador', viewer: 'Visualizador' };
+  const existingBadge = document.getElementById('roleBadge');
+  if (existingBadge) existingBadge.remove();
+  const badge = document.createElement('div');
+  badge.id = 'roleBadge';
+  badge.style.cssText = 'text-align:center;padding:6px 12px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--primary);opacity:.6;';
+  badge.textContent = roleLabels[role] || CURRENT_USER?.role || '';
+  const sidebarFoot = document.querySelector('.sidebar-foot');
+  if (sidebarFoot) sidebarFoot.parentNode.insertBefore(badge, sidebarFoot);
+
+  // Disable edit actions for non-admins on performance pages
+  if (role !== 'admin') {
+    document.querySelectorAll('#view-perf-metas button, #view-perf-metas input, #view-perf-metas select, #view-perf-bonificacao button, #view-perf-bonificacao input').forEach(el => {
+      if (!el.closest('.filter-btn-group')) { el.disabled = true; el.style.opacity = '.4'; el.style.cursor = 'not-allowed'; }
+    });
+  }
+}
+
 async function initApp() {
   // Handle TikTok OAuth callback if present
   loadTKTokens();
@@ -9176,6 +9243,9 @@ async function initApp() {
   renderEditingView();
   renderPerformance();
   loadProfile();
+
+  // Apply role-based permissions
+  applyRolePermissions();
 
   // Auto-refresh seguidores (non-blocking, runs in background)
   autoRefreshInfFollowers().catch(e => console.warn('[InfRefresh] falhou:', e.message));
