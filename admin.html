@@ -976,6 +976,96 @@
   .proj-eval-status:focus { outline: none; border-color: var(--primary); }
   .proj-eval-status:disabled { opacity: 0.6; cursor: not-allowed; }
 
+  /* Forum-style reviews */
+  .review-forum { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+  .review-avg-bar {
+    display: flex; align-items: center; gap: 16px; padding: 16px 20px;
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px;
+  }
+  .review-avg-score {
+    font-size: 32px; font-weight: 800; color: #f59e0b; line-height: 1;
+  }
+  .review-avg-stars { display: flex; gap: 2px; font-size: 18px; color: var(--border-hi); }
+  .review-avg-stars .active { color: #f59e0b; }
+  .review-avg-count { font-size: 12px; color: var(--text-muted); }
+
+  .review-compose {
+    padding: 16px; border: 1px solid var(--border); border-radius: 12px;
+    background: var(--bg-elev); display: flex; flex-direction: column; gap: 12px;
+  }
+  .review-compose-header { display: flex; align-items: center; gap: 10px; }
+  .review-avatar {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; color: #fff;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  }
+  .review-avatar.small { width: 28px; height: 28px; font-size: 11px; }
+  .review-compose textarea {
+    width: 100%; min-height: 60px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg-card); color: var(--text); font-family: inherit; font-size: 13px;
+    padding: 10px 12px; resize: vertical; transition: border-color .15s;
+  }
+  .review-compose textarea:focus { outline: none; border-color: var(--primary); }
+  .review-compose-actions { display: flex; align-items: center; justify-content: space-between; }
+
+  .review-thread { display: flex; flex-direction: column; gap: 0; }
+  .review-item {
+    padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px;
+    background: var(--bg-elev); transition: border-color .15s;
+  }
+  .review-item:hover { border-color: var(--border-hi); }
+  .review-item-head {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+  }
+  .review-item-meta { flex: 1; min-width: 0; }
+  .review-item-name { font-size: 13px; font-weight: 700; color: var(--text); }
+  .review-item-role {
+    font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
+    padding: 2px 6px; border-radius: 4px; background: rgba(168,85,247,.12); color: #a855f7;
+    display: inline-block; margin-left: 6px;
+  }
+  .review-item-date { font-size: 11px; color: var(--text-muted); }
+  .review-item-stars { font-size: 14px; display: flex; gap: 1px; margin-bottom: 6px; }
+  .review-item-stars .star { color: var(--border-hi); }
+  .review-item-stars .star.active { color: #f59e0b; }
+  .review-item-content { font-size: 13px; line-height: 1.6; color: var(--text-dim); white-space: pre-wrap; word-break: break-word; }
+  .review-item-actions {
+    display: flex; gap: 12px; margin-top: 8px; padding-top: 8px;
+  }
+  .review-action-btn {
+    background: none; border: none; font-family: inherit; font-size: 11px;
+    color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center;
+    gap: 4px; padding: 0; transition: color .15s;
+  }
+  .review-action-btn:hover { color: var(--primary); }
+
+  .review-replies {
+    margin-left: 24px; padding-left: 16px; border-left: 2px solid var(--border);
+    display: flex; flex-direction: column; gap: 10px; margin-top: 10px;
+  }
+  .review-replies .review-item { border-radius: 10px; padding: 12px 14px; }
+  .review-replies .review-replies { margin-left: 20px; padding-left: 14px; }
+
+  .review-reply-compose {
+    margin-left: 24px; padding-left: 16px; border-left: 2px solid var(--primary);
+    margin-top: 10px; padding: 12px; background: var(--bg-card); border-radius: 0 10px 10px 0;
+    border: 1px solid var(--border); border-left: none;
+  }
+  .review-reply-compose textarea {
+    width: 100%; min-height: 50px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg-elev); color: var(--text); font-family: inherit; font-size: 12px;
+    padding: 8px 10px; resize: vertical; margin-bottom: 8px;
+  }
+  .review-reply-compose textarea:focus { outline: none; border-color: var(--primary); }
+  .review-reply-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+  .review-empty {
+    text-align: center; padding: 40px 20px; color: var(--text-muted);
+  }
+  .review-empty svg { margin-bottom: 12px; opacity: .5; }
+  .review-empty p { font-size: 13px; margin: 0; }
+
   /* Posting grid container */
   .post-grid {
     display: grid;
@@ -4589,7 +4679,7 @@ function switchDetailTab(tab) {
 function saveCurrentTab() {
   if (currentDetailTab === 'producao') saveProject();
   else if (currentDetailTab === 'roteiro') saveProject();
-  else if (currentDetailTab === 'avaliacao') saveEvaluation();
+  else if (currentDetailTab === 'avaliacao') { /* Reviews são salvas individualmente */ return; }
   else if (currentDetailTab === 'postagem') savePosts();
 }
 
@@ -5666,146 +5756,309 @@ async function downloadRoteiroPDF() {
   URL.revokeObjectURL(dlUrl);
 }
 
-function renderProjTabAvaliacao(p) {
-  const el = document.getElementById('projTabAvaliacao');
-  if (!el) return;
-  if (!p) { el.innerHTML = '<div style="padding:24px;color:var(--text-muted);text-align:center">Salve o projeto primeiro para poder avaliar.</div>'; return; }
+/* ====== FORUM-STYLE REVIEW SYSTEM ====== */
+let PROJECT_REVIEWS = [];
+let reviewReplyingTo = null; // ID of review being replied to
+let reviewNewRating = 0; // rating for new review compose
 
-  const evaluation = p.evaluation || {};
-  const adm = isUserAdmin();
-  const dests = p.destinations || [];
-  const posts = p.posts || {};
-  const destNames = { youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads' };
-  const destIcons = {
-    youtube: '<svg viewBox="0 0 24 24" width="22" height="22" fill="#ff0000"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z"/><path d="M9.545 15.568V8.432L15.818 12l-6.273 3.568z" fill="#fff"/></svg>',
-    shorts: '<img src="yt_shorts.png" width="22" height="22" style="object-fit:contain">',
-    tiktok: '<img src="tiktok_2.png" width="22" height="22" style="object-fit:contain">',
-    reels: '<img src="Instagram.png" width="22" height="22" style="object-fit:contain;border-radius:5px">',
-    clips: '<img src="mercado_livre_2.png" width="22" height="22" style="object-fit:contain">',
-    site: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#0284c7" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>',
-    ads: '<img src="ads_2.png" width="22" height="22" style="object-fit:contain">'
-  };
+function getInitials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return parts[0].substring(0, 2).toUpperCase();
+}
 
-  // Filter only destinations that have a published post (link saved)
-  const publishedDests = dests.filter(d => posts[d] && posts[d].link && posts[d].link.trim());
-  const unpublishedDests = dests.filter(d => !posts[d] || !posts[d].link || !posts[d].link.trim());
+function getAvatarColor(name) {
+  const colors = ['#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#f97316'];
+  let hash = 0;
+  for (let i = 0; i < (name || '').length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
 
-  let html = '<div style="padding:24px;display:flex;flex-direction:column;gap:20px">';
+function timeAgo(dateStr) {
+  const now = new Date();
+  const d = new Date(dateStr);
+  const diff = Math.floor((now - d) / 1000);
+  if (diff < 60) return 'agora';
+  if (diff < 3600) return `${Math.floor(diff / 60)}min`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
 
-  // Main video evaluation
-  html += `<div class="proj-eval-card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <h4 style="font-size:14px;font-weight:600">Observações Gerais do Projeto</h4>
-      <div class="star-rating" ${adm ? `onmouseleave="starHoverOut(this)"` : ''}>
-        ${[1,2,3,4,5].map(n => `<span class="star ${(tempEvalRatings.main_rating||evaluation.main_rating||0)>=n?'active':''}" ${adm?`data-value="${n}" onclick="setEvalRating('main',${n})" onmouseenter="starHoverIn(this,${n})"`:'style="cursor:default"'}>★</span>`).join('')}
+async function loadProjectReviews(projectId) {
+  if (!projectId) return [];
+  const { data, error } = await sb.from('mc_project_reviews')
+    .select('*, mc_admin_users(id, name, role)')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: true });
+  if (error) { console.error('loadProjectReviews error:', error); return []; }
+  return data || [];
+}
+
+function buildReviewTree(reviews) {
+  const map = {};
+  const roots = [];
+  reviews.forEach(r => { map[r.id] = { ...r, children: [] }; });
+  reviews.forEach(r => {
+    if (r.parent_id && map[r.parent_id]) {
+      map[r.parent_id].children.push(map[r.id]);
+    } else {
+      roots.push(map[r.id]);
+    }
+  });
+  return roots;
+}
+
+function renderReviewStars(rating, interactive, prefix) {
+  if (!interactive) {
+    return [1,2,3,4,5].map(n =>
+      `<span class="star ${(rating||0)>=n?'active':''}">★</span>`
+    ).join('');
+  }
+  return [1,2,3,4,5].map(n =>
+    `<span class="star ${(prefix==='new'?reviewNewRating:(rating||0))>=n?'active':''}" style="cursor:pointer" onclick="setReviewComposeRating('${prefix}',${n})" onmouseenter="reviewStarHover(this,${n})" onmouseleave="reviewStarOut(this)">★</span>`
+  ).join('');
+}
+
+function reviewStarHover(el, val) {
+  const wrap = el.parentElement;
+  wrap.querySelectorAll('.star').forEach((s, i) => {
+    s.classList.toggle('active', i < val);
+  });
+}
+function reviewStarOut(el) {
+  const wrap = el.parentElement;
+  const prefix = wrap.dataset.prefix || 'new';
+  const rating = prefix === 'new' ? reviewNewRating : 0;
+  wrap.querySelectorAll('.star').forEach((s, i) => {
+    s.classList.toggle('active', i < rating);
+  });
+}
+
+function setReviewComposeRating(prefix, val) {
+  if (prefix === 'new') {
+    reviewNewRating = reviewNewRating === val ? 0 : val;
+  }
+  // Re-render stars
+  const wrap = document.querySelector(`.review-compose .review-item-stars[data-prefix="${prefix}"]`);
+  if (wrap) {
+    wrap.querySelectorAll('.star').forEach((s, i) => {
+      s.classList.toggle('active', i < reviewNewRating);
+    });
+  }
+}
+
+function renderReviewItem(r, depth) {
+  const user = r.mc_admin_users || {};
+  const name = user.name || 'Usuário';
+  const role = user.role || '';
+  const initials = getInitials(name);
+  const color = getAvatarColor(name);
+  const isOwn = CURRENT_USER && r.user_id === CURRENT_USER.id;
+  const maxDepth = 5;
+
+  let html = `<div class="review-item" data-review-id="${r.id}">
+    <div class="review-item-head">
+      <div class="review-avatar${depth > 0 ? ' small' : ''}" style="background:${color}">${initials}</div>
+      <div class="review-item-meta">
+        <span class="review-item-name">${escHtml(name)}</span>
+        ${role ? `<span class="review-item-role">${escHtml(role)}</span>` : ''}
+        <div class="review-item-date">${timeAgo(r.created_at)}</div>
       </div>
+      ${isOwn ? `<button class="review-action-btn" onclick="deleteReview('${r.id}')" title="Excluir">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+      </button>` : ''}
+    </div>`;
+
+  // Stars only for root reviews
+  if (!r.parent_id && r.rating) {
+    html += `<div class="review-item-stars">${renderReviewStars(r.rating, false, '')}</div>`;
+  }
+
+  html += `<div class="review-item-content">${escHtml(r.content)}</div>
+    <div class="review-item-actions">
+      ${depth < maxDepth ? `<button class="review-action-btn" onclick="toggleReviewReply('${r.id}')">
+        <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Responder
+      </button>` : ''}
+    </div>`;
+
+  // Reply compose box (hidden by default)
+  html += `<div id="replyBox_${r.id}" style="display:none" class="review-reply-compose">
+    <textarea id="replyText_${r.id}" placeholder="Escreva sua resposta..."></textarea>
+    <div class="review-reply-actions">
+      <button class="action-btn" style="padding:6px 14px;font-size:11px;background:var(--bg-card);color:var(--text-dim)" onclick="toggleReviewReply('${r.id}')">Cancelar</button>
+      <button class="action-btn approve" style="padding:6px 14px;font-size:11px" onclick="postReviewReply('${r.id}')">Responder</button>
     </div>
-    <textarea class="checkin-textarea" id="evalMainObs" style="min-height:80px" placeholder="Observações gerais do vídeo..." ${adm?'':'disabled'}>${escHtml(tempEvalRatings.main_obs||evaluation.main_obs||'')}</textarea>
   </div>`;
 
-  // Published destinations grid
-  if (publishedDests.length > 0) {
-    html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">PUBLICAÇÕES</div>';
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">';
-    const clipEvals = evaluation.clips || {};
-    publishedDests.forEach(d => {
-      const tempClip = (tempEvalRatings.clips && tempEvalRatings.clips[d]) || clipEvals[d] || {};
-      const ce = { ...clipEvals[d], ...tempClip };
-      const postData = posts[d] || {};
-      const link = postData.link || '';
+  html += '</div>';
 
-      html += `<div class="proj-eval-card" style="margin-bottom:0">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-          <div style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            ${destIcons[d] || ''}
-          </div>
-          <div style="flex:1;min-width:0">
-            <h4 style="font-size:13px;font-weight:700;margin:0">${destNames[d]||d}</h4>
-            <a href="${escHtml(link)}" target="_blank" rel="noopener" style="font-size:11px;color:#a78bfa;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:opacity .15s" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
-              <svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" fill="none" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-              ver publicação
-            </a>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div class="star-rating" style="font-size:16px" ${adm?`onmouseleave="starHoverOut(this)"`:''}>
-            ${[1,2,3,4,5].map(n => `<span class="star ${(ce.rating||0)>=n?'active':''}" ${adm?`data-value="${n}" onclick="setEvalRating('${d}',${n})" onmouseenter="starHoverIn(this,${n})"`:'style="cursor:default"'}>★</span>`).join('')}
-          </div>
-        </div>
-        <textarea class="checkin-textarea" id="evalClipObs_${d}" style="min-height:50px;font-size:11px" placeholder="Observações de ${destNames[d]||d}..." ${adm?'':'disabled'}>${escHtml(ce.obs||'')}</textarea>
-        <input type="hidden" id="evalClipStatus_${d}" value="${escHtml(ce.status || 'Finalizado')}">
-      </div>`;
+  // Render children recursively
+  if (r.children && r.children.length > 0) {
+    html += `<div class="review-replies">`;
+    r.children.forEach(child => {
+      html += renderReviewItem(child, depth + 1);
     });
     html += '</div>';
   }
 
-  // Unpublished destinations (greyed out)
-  if (unpublishedDests.length > 0) {
-    html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-top:4px">AGUARDANDO PUBLICAÇÃO</div>';
-    html += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
-    unpublishedDests.forEach(d => {
-      html += `<div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border);opacity:0.5">
-        <div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${destIcons[d] || ''}</div>
-        <span style="font-size:11px;font-weight:600;color:var(--text-muted)">${destNames[d]||d}</span>
-      </div>`;
-    });
-    html += '</div>';
+  return html;
+}
+
+function toggleReviewReply(reviewId) {
+  const box = document.getElementById('replyBox_' + reviewId);
+  if (!box) return;
+  const isVisible = box.style.display !== 'none';
+  // Close all open reply boxes first
+  document.querySelectorAll('.review-reply-compose').forEach(b => b.style.display = 'none');
+  if (!isVisible) {
+    box.style.display = 'block';
+    box.querySelector('textarea').focus();
+  }
+}
+
+async function postReview() {
+  if (!CURRENT_USER || !projDetailId) return;
+  const textarea = document.getElementById('reviewComposeText');
+  const content = textarea?.value?.trim();
+  if (!content) { alert('Escreva algo na avaliação.'); return; }
+
+  const payload = {
+    project_id: projDetailId,
+    user_id: CURRENT_USER.id,
+    rating: reviewNewRating || null,
+    content: content,
+    parent_id: null
+  };
+
+  const { error } = await sb.from('mc_project_reviews').insert(payload);
+  if (error) { alert('Erro: ' + error.message); return; }
+
+  reviewNewRating = 0;
+  textarea.value = '';
+  await refreshReviewForum();
+}
+
+async function postReviewReply(parentId) {
+  if (!CURRENT_USER || !projDetailId) return;
+  const textarea = document.getElementById('replyText_' + parentId);
+  const content = textarea?.value?.trim();
+  if (!content) { alert('Escreva algo na resposta.'); return; }
+
+  const payload = {
+    project_id: projDetailId,
+    user_id: CURRENT_USER.id,
+    rating: null,
+    content: content,
+    parent_id: parentId
+  };
+
+  const { error } = await sb.from('mc_project_reviews').insert(payload);
+  if (error) { alert('Erro: ' + error.message); return; }
+
+  textarea.value = '';
+  await refreshReviewForum();
+}
+
+async function deleteReview(reviewId) {
+  if (!confirm('Excluir esta avaliação e todas as respostas?')) return;
+  const { error } = await sb.from('mc_project_reviews').delete().eq('id', reviewId);
+  if (error) { alert('Erro: ' + error.message); return; }
+  await refreshReviewForum();
+}
+
+async function refreshReviewForum() {
+  PROJECT_REVIEWS = await loadProjectReviews(projDetailId);
+  const p = PROJECTS.find(x => x.id === projDetailId);
+  renderProjTabAvaliacao(p);
+}
+
+async function renderProjTabAvaliacao(p) {
+  const el = document.getElementById('projTabAvaliacao');
+  if (!el) return;
+  if (!p) {
+    el.innerHTML = '<div style="padding:24px;color:var(--text-muted);text-align:center">Salve o projeto primeiro para poder avaliar.</div>';
+    return;
   }
 
-  // Empty state
-  if (dests.length === 0) {
-    html += '<div style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:12px">Nenhum destino selecionado na aba Produção.</div>';
+  // Load reviews if not loaded for this project
+  if (!PROJECT_REVIEWS.length || (PROJECT_REVIEWS[0] && PROJECT_REVIEWS[0].project_id !== p.id)) {
+    PROJECT_REVIEWS = await loadProjectReviews(p.id);
+  }
+
+  const rootReviews = PROJECT_REVIEWS.filter(r => !r.parent_id);
+  const ratings = rootReviews.filter(r => r.rating && r.rating > 0);
+  const avgRating = ratings.length > 0 ? (ratings.reduce((s, r) => s + r.rating, 0) / ratings.length) : 0;
+  const tree = buildReviewTree(PROJECT_REVIEWS);
+
+  const userName = CURRENT_USER?.name || 'Usuário';
+  const userInitials = getInitials(userName);
+  const userColor = getAvatarColor(userName);
+
+  let html = '<div class="review-forum">';
+
+  // Average rating bar
+  html += `<div class="review-avg-bar">
+    <div class="review-avg-score">${avgRating > 0 ? avgRating.toFixed(1) : '—'}</div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <div class="review-avg-stars">
+        ${[1,2,3,4,5].map(n => `<span class="${Math.round(avgRating)>=n?'active':''}">★</span>`).join('')}
+      </div>
+      <div class="review-avg-count">${ratings.length} avaliação${ratings.length !== 1 ? 'ões' : ''} · ${PROJECT_REVIEWS.length} comentário${PROJECT_REVIEWS.length !== 1 ? 's' : ''}</div>
+    </div>
+  </div>`;
+
+  // Compose new review
+  html += `<div class="review-compose">
+    <div class="review-compose-header">
+      <div class="review-avatar" style="background:${userColor}">${userInitials}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${escHtml(userName)}</div>
+        <div style="font-size:11px;color:var(--text-muted)">Nova avaliação</div>
+      </div>
+    </div>
+    <div class="review-item-stars" data-prefix="new" style="font-size:18px;display:flex;gap:2px">
+      ${renderReviewStars(0, true, 'new')}
+    </div>
+    <textarea id="reviewComposeText" placeholder="Compartilhe sua opinião sobre este projeto..."></textarea>
+    <div class="review-compose-actions">
+      <div style="font-size:11px;color:var(--text-muted)">A avaliação fica visível para toda a equipe</div>
+      <button class="action-btn approve" style="padding:8px 20px;font-size:12px" onclick="postReview()">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="margin-right:4px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Publicar
+      </button>
+    </div>
+  </div>`;
+
+  // Reviews list
+  if (tree.length > 0) {
+    html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">AVALIAÇÕES DA EQUIPE</div>';
+    html += '<div class="review-thread">';
+    tree.forEach(r => {
+      html += renderReviewItem(r, 0);
+    });
+    html += '</div>';
+  } else {
+    html += `<div class="review-empty">
+      <svg viewBox="0 0 24 24" width="40" height="40" stroke="currentColor" fill="none" stroke-width="1.5">
+        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        <line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="13" y2="13"/>
+      </svg>
+      <p>Nenhuma avaliação ainda.<br>Seja o primeiro a avaliar este projeto!</p>
+    </div>`;
   }
 
   html += '</div>';
   el.innerHTML = html;
 }
 
-function setEvalRating(key, val) {
-  if (!isUserAdmin()) return;
-  // Toggle: clicking the same rating again unsets it
-  const oldVal = key === 'main' ? (tempEvalRatings.main_rating || 0) : ((tempEvalRatings.clips && tempEvalRatings.clips[key] && tempEvalRatings.clips[key].rating) || 0);
-  const newVal = oldVal === val ? 0 : val;
-
-  if (key === 'main') {
-    tempEvalRatings.main_rating = newVal;
-  } else {
-    if (!tempEvalRatings.clips) tempEvalRatings.clips = {};
-    if (!tempEvalRatings.clips[key]) tempEvalRatings.clips[key] = {};
-    tempEvalRatings.clips[key].rating = newVal;
-  }
-
-  // Re-render the avaliacao tab to show the updated ratings
-  const p = PROJECTS.find(x => x.id === projDetailId);
-  if (p) renderProjTabAvaliacao(p);
-}
-
+/* Legacy saveEvaluation — now handled by postReview */
 async function saveEvaluation() {
-  if (!isUserAdmin() || !projDetailId) return;
-  const p = PROJECTS.find(x => x.id === projDetailId);
-  if (!p) return;
-
-  const evaluation = {};
-  evaluation.main_rating = tempEvalRatings.main_rating || 0;
-  evaluation.main_obs = document.getElementById('evalMainObs')?.value || '';
-
-  (p.destinations || []).forEach(d => {
-    if (!evaluation.clips) evaluation.clips = {};
-    if (!evaluation.clips[d]) evaluation.clips[d] = {};
-    evaluation.clips[d].obs = document.getElementById('evalClipObs_' + d)?.value || '';
-    evaluation.clips[d].status = document.getElementById('evalClipStatus_' + d)?.value || '';
-    evaluation.clips[d].rating = (tempEvalRatings.clips && tempEvalRatings.clips[d]?.rating) || 0;
-  });
-
-  const { error } = await sb.from('mc_projects').update({ evaluation }).eq('id', projDetailId);
-  if (error) { alert('Erro: ' + error.message); return; }
-  p.evaluation = evaluation;
-
-  // Send notifications to team members
-  await sendEvalNotifications(p);
-
-  alert('Avaliação salva!');
-  renderProjects();
+  // Forum reviews are saved individually via postReview/postReviewReply
+  // This function is kept for compatibility with the save button
+  if (currentDetailTab === 'avaliacao') return;
 }
 
 /* === POSTAGEM TAB === */
