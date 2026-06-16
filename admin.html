@@ -3968,23 +3968,46 @@ function setCiTab(tab) {
 function renderCiView() {
   const wrap = document.getElementById('ciFormWrap');
   const today = fmtDate(new Date());
-  const todayBookings = getRequests().filter(r => r.date === today && r.status === 'approved');
+  const upcomingBookings = getRequests()
+    .filter(r => r.date >= today && r.status === 'approved')
+    .sort((a, b) => a.date.localeCompare(b.date));
 
-  if (todayBookings.length === 0) {
-    wrap.innerHTML = '<div class="dv-empty"><p>Nenhum agendamento para hoje.</p></div>';
+  if (upcomingBookings.length === 0) {
+    wrap.innerHTML = '<div class="dv-empty"><p>Nenhum agendamento a partir de hoje.</p></div>';
     return;
   }
 
   const prefix = ciTab === 'checkin' ? 'ci' : 'co';
   const label = ciTab === 'checkin' ? 'check-in' : 'check-out';
 
-  wrap.innerHTML = todayBookings.map(r => {
+  // Group bookings by date
+  const grouped = {};
+  upcomingBookings.forEach(r => {
+    if (!grouped[r.date]) grouped[r.date] = [];
+    grouped[r.date].push(r);
+  });
+
+  let allHtml = '';
+  const sortedDates = Object.keys(grouped).sort();
+
+  sortedDates.forEach((date, idx) => {
+    const isToday = date === today;
+    const dateLabel = isToday ? 'Hoje' : new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
+    const dateBadgeColor = isToday ? 'background:var(--primary);color:#fff' : 'background:var(--bg-card);color:var(--text-dim);border:1px solid var(--border)';
+
+    allHtml += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;${idx > 0 ? 'margin-top:24px;padding-top:16px;border-top:1px solid var(--border);' : ''}">
+      <span style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;${dateBadgeColor}">${dateLabel}</span>
+      <span style="font-size:11px;color:var(--text-muted)">${date}</span>
+      <span style="font-size:11px;color:var(--text-muted)">· ${grouped[date].length} moto${grouped[date].length > 1 ? 's' : ''}</span>
+    </div>`;
+
+    grouped[date].forEach(r => {
     const ci = (prefix === 'ci' ? CHECKINS : CHECKOUTS)[r.id] || { fuel_level: 0, mileage: '', observations: '', photos: [] };
     const photos = ci.photos || [];
     const hasSaved = !!ci.id;
     const rid = r.id;
 
-    return `<div class="cal-card" style="margin-bottom:14px">
+    allHtml += `<div class="cal-card" style="margin-bottom:14px">
       <div class="dv-row" style="margin-bottom:12px">
         <span class="dv-name">${r.nome} — ${r.moto} (${r.placa})</span>
         ${hasSaved ? '<span class="badge approved">Salvo</span>' : '<span class="badge pending">Pendente</span>'}
@@ -4060,9 +4083,12 @@ function renderCiView() {
         </div>
       </div>
     </div>`;
-  }).join('');
+    });
+  });
 
-  todayBookings.forEach(r => {
+  wrap.innerHTML = allHtml;
+
+  upcomingBookings.forEach(r => {
     const ci = (prefix === 'ci' ? CHECKINS : CHECKOUTS)[r.id] || { fuel_level: 0 };
     updateFuelGauge(prefix + '_' + r.id, ci.fuel_level);
     initFuelGaugeDrag(prefix + '_' + r.id);
