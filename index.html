@@ -1649,6 +1649,7 @@
     .gmap-info { padding: 24px 20px; }
     .hero-stats { grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
     .form-grid-2 { grid-template-columns: 1fr; }
+    .form-grid-3 { grid-template-columns: 1fr 1fr .7fr !important; }
     .gift-grid { grid-template-columns: repeat(3, 1fr); }
     .footer-inner { grid-template-columns: 1fr; gap: 24px; }
     .terms-footer { flex-direction: column; align-items: stretch; }
@@ -1700,6 +1701,8 @@
   /* ===== RESPONSIVE — MOBILE (max 640px) ===== */
   @media (max-width: 640px) {
     .container { padding: 0 16px; }
+    .form-grid-3 { grid-template-columns: 1fr 1fr !important; }
+    .form-grid-3 select:last-child { grid-column: 1 / -1; }
     /* Nav compact */
     .nav-inner { padding: 6px 16px; }
     .logo-img { height: 18px; }
@@ -2472,11 +2475,16 @@
               <label class="form-label">E-mail</label>
               <input class="form-input" type="email" name="email" />
             </div>
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label class="form-label">Moto (marca/modelo/ano) <span class="req">*</span></label>
-                <input class="form-input" name="moto" placeholder="Ex: Honda CB 650R 2023" required />
+            <div class="form-group">
+              <label class="form-label">Moto <span class="req">*</span></label>
+              <div class="form-grid-3" style="display:grid;grid-template-columns:1fr 1fr .7fr;gap:8px">
+                <select class="form-input" id="motoMarca" required><option value="">Marca</option></select>
+                <select class="form-input" id="motoModelo" disabled><option value="">Modelo</option></select>
+                <select class="form-input" id="motoAno" disabled><option value="">Ano</option></select>
               </div>
+              <input type="hidden" name="moto" id="motoHidden" required/>
+            </div>
+            <div class="form-grid-2">
               <div class="form-group">
                 <label class="form-label">Placa <span class="req">*</span></label>
                 <input class="form-input" name="placa" placeholder="ABC-1D23" required />
@@ -2739,6 +2747,7 @@
 <script async src="https://www.instagram.com/embed.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
+<script src="moto-catalog.js"></script>
 <script>
 /* =============== FORCE SCROLL TO TOP ON LOAD =============== */
 if (window.location.hash) { history.replaceState(null, '', window.location.pathname); }
@@ -2974,9 +2983,19 @@ document.querySelector('input[name="whatsapp"]').addEventListener('input', e => 
 document.querySelector('input[name="placa"]').addEventListener('input', e => {
   e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,8);
 });
+/* =============== MOTO SELECTS =============== */
+if (window.initMotoSelects) {
+  initMotoSelects('motoMarca', 'motoModelo', 'motoAno', 'motoHidden');
+}
+
 /* =============== FORM SUBMIT =============== */
 document.getElementById('reservaForm').addEventListener('submit', async e => {
   e.preventDefault();
+  if (!document.getElementById('motoHidden').value) {
+    alert('Por favor, selecione a marca, modelo e ano da sua moto.');
+    document.getElementById('motoMarca').focus();
+    return;
+  }
   if (!selectedDate) {
     alert('Por favor, selecione uma data no calendário.');
     document.getElementById('agendar').scrollIntoView({behavior:'smooth'});
