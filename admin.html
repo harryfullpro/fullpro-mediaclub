@@ -6489,15 +6489,13 @@ async function savePostSingle(dest) {
 
   // TikTok auto-fetch
   let tkVideoId = extractTKVideoId(link);
-  if (tkVideoId) {
-    if (tkVideoId.startsWith('short_')) {
-      // Try to resolve short URL
+  const isTKLink = link.includes('tiktok.com');
+  if (tkVideoId || isTKLink) {
+    if (!tkVideoId || tkVideoId.startsWith('short_')) {
+      // Short URL or unrecognized TikTok link — try resolve
       const resolved = await resolveTKVideoFromShortUrl(link);
       if (resolved) {
-        if (resolved.fullUrl) {
-          // Replace the short URL with the full URL
-          p.posts[dest].link = resolved.fullUrl;
-        }
+        if (resolved.fullUrl) p.posts[dest].link = resolved.fullUrl;
         if (resolved.stats) {
           p.posts[dest].views = resolved.stats.views;
           p.posts[dest].likes = resolved.stats.likes;
@@ -6506,17 +6504,24 @@ async function savePostSingle(dest) {
         } else if (resolved.thumb) {
           p.posts[dest]._tkThumb = resolved.thumb;
         }
-        if (resolved.videoId) {
-          p.posts[dest]._tkVideoId = resolved.videoId; // Store for future refresh
-        }
+        if (resolved.videoId) p.posts[dest]._tkVideoId = resolved.videoId;
+      } else {
+        // At minimum try oEmbed for thumbnail
+        const oembed = await fetchTKOembed(link);
+        if (oembed?.thumb) p.posts[dest]._tkThumb = oembed.thumb;
       }
     } else {
+      // Full TikTok URL with video ID
       const stats = await fetchTKStats(tkVideoId);
       if (stats) {
         p.posts[dest].views = stats.views;
         p.posts[dest].likes = stats.likes;
         p.posts[dest].comments = stats.comments;
         if (stats.thumb) p.posts[dest]._tkThumb = stats.thumb;
+      } else {
+        // OAuth might not be connected — at least get thumbnail via oEmbed
+        const oembed = await fetchTKOembed(link);
+        if (oembed?.thumb) p.posts[dest]._tkThumb = oembed.thumb;
       }
     }
   }
@@ -6783,53 +6788,51 @@ function extractTKVideoId(url) {
   return s ? 'short_' + s[1] : null;
 }
 
-// Resolve TikTok short URL to full URL using oEmbed API
-async function resolveTKShortUrl(shortUrl) {
+// Fetch TikTok oEmbed data (public, no auth needed, works with any TikTok URL)
+async function fetchTKOembed(url) {
   try {
-    const res = await fetch('https://www.tiktok.com/oembed?url=' + encodeURIComponent(shortUrl));
+    const res = await fetch('https://www.tiktok.com/oembed?url=' + encodeURIComponent(url));
     if (!res.ok) return null;
     const json = await res.json();
-    // oEmbed doesn't directly return the full URL, but we can try another approach
-    // Use the author_url + title to find the video in the video list
-    if (json.author_url && json.title) {
-      return { authorUrl: json.author_url, title: json.title, thumb: json.thumbnail_url || null };
-    }
-    return null;
+    return {
+      title: json.title || '',
+      authorName: json.author_name || '',
+      authorUrl: json.author_url || '',
+      thumb: json.thumbnail_url || null,
+      thumbWidth: json.thumbnail_width || 0,
+      thumbHeight: json.thumbnail_height || 0
+    };
   } catch(e) { console.warn('TK oEmbed error:', e); return null; }
 }
 
-// Resolve TikTok short URL by matching against user's video list
+// Resolve TikTok short URL by matching against user's video list (needs OAuth)
 async function resolveTKVideoFromShortUrl(shortUrl) {
+  // First always try oEmbed (works without auth)
+  const oembed = await fetchTKOembed(shortUrl);
+
+  // Try OAuth video list if available
   const hasToken = await ensureTKToken();
-  if (!hasToken) return null;
-
-  // First, get oEmbed info for matching
-  const oembed = await resolveTKShortUrl(shortUrl);
-
-  // Fetch user's video list
-  try {
-    const now = Date.now();
-    if (!tkVideoCache || now - tkVideoCacheTime > 300000) {
-      const res = await fetch('https://open.tiktokapis.com/v2/video/list/?fields=id,title,video_description,like_count,comment_count,share_count,view_count,create_time,cover_image_url,share_url', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + tkAccessToken, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ max_count: 20 })
-      });
-      const json = await res.json();
-      if (json.data?.videos) {
-        tkVideoCache = json.data.videos;
-        tkVideoCacheTime = now;
-      } else {
-        return null;
+  if (hasToken) {
+    try {
+      const now = Date.now();
+      if (!tkVideoCache || now - tkVideoCacheTime > 300000) {
+        const res = await fetch('https://open.tiktokapis.com/v2/video/list/?fields=id,title,video_description,like_count,comment_count,share_count,view_count,create_time,cover_image_url,share_url', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + tkAccessToken, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ max_count: 20 })
+        });
+        const json = await res.json();
+        if (json.data?.videos) {
+          tkVideoCache = json.data.videos;
+          tkVideoCacheTime = now;
+        }
       }
-    }
 
-    // Try to match by share_url containing the same short code
-    if (tkVideoCache && tkVideoCache.length > 0) {
-      // If we have oEmbed title, match by title
-      if (oembed?.title) {
+      if (tkVideoCache && tkVideoCache.length > 0 && oembed?.title) {
+        // Match by title similarity
+        const searchTitle = oembed.title.substring(0, 30).toLowerCase();
         const match = tkVideoCache.find(v =>
-          (v.title || v.video_description || '').includes(oembed.title.substring(0, 20))
+          (v.title || v.video_description || '').toLowerCase().includes(searchTitle)
         );
         if (match) return {
           videoId: String(match.id),
@@ -6843,14 +6846,13 @@ async function resolveTKVideoFromShortUrl(shortUrl) {
           }
         };
       }
+    } catch(e) { console.warn('TK resolve error:', e); }
+  }
 
-      // If only 1 video or recent video, try most recent as fallback
-      // Otherwise just return the thumb from oEmbed at least
-      if (oembed?.thumb) {
-        return { videoId: null, fullUrl: null, stats: null, thumb: oembed.thumb };
-      }
-    }
-  } catch(e) { console.warn('TK resolve error:', e); }
+  // Fallback: return at least the oEmbed thumbnail (no OAuth needed)
+  if (oembed?.thumb) {
+    return { videoId: null, fullUrl: null, stats: null, thumb: oembed.thumb };
+  }
   return null;
 }
 
@@ -7081,24 +7083,18 @@ async function refreshTKStats(dest, videoId) {
 
 async function manualResolveTK(dest) {
   const btn = document.getElementById('tkResolve_' + dest);
-  if (btn) { btn.disabled = true; btn.textContent = 'Buscando...'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span style="opacity:.7">Buscando...</span>'; }
 
   const p = PROJECTS.find(x => x.id === projDetailId);
   if (!p || !p.posts?.[dest]) { if (btn) { btn.disabled = false; } return; }
 
   const link = p.posts[dest].link;
 
-  // Step 1: Try to ensure TK token
-  const hasToken = await ensureTKToken();
-  if (!hasToken) {
-    alert('TikTok não conectado. Clique em "Conectar TikTok" no seu perfil para autenticar via OAuth.');
-    if (btn) { btn.disabled = false; btn.textContent = 'Vincular métricas TikTok'; }
-    return;
-  }
-
-  // Step 2: Try to resolve short URL
+  // Step 1: Try to resolve (uses oEmbed + OAuth if available)
   const resolved = await resolveTKVideoFromShortUrl(link);
+
   if (resolved && resolved.videoId && resolved.stats) {
+    // Full resolution with stats
     if (resolved.fullUrl) p.posts[dest].link = resolved.fullUrl;
     p.posts[dest].views = resolved.stats.views;
     p.posts[dest].likes = resolved.stats.likes;
@@ -7111,13 +7107,20 @@ async function manualResolveTK(dest) {
     return;
   }
 
-  // Step 3: If resolve didn't work, show video picker from user's list
-  if (tkVideoCache && tkVideoCache.length > 0) {
+  // Step 2: If we got at least a thumbnail from oEmbed, save it
+  if (resolved && resolved.thumb) {
+    p.posts[dest]._tkThumb = resolved.thumb;
+    await sb.from('mc_projects').update({ posts: p.posts }).eq('id', projDetailId);
+  }
+
+  // Step 3: Try video picker if we have OAuth + cached videos
+  const hasToken = await ensureTKToken();
+  if (hasToken && tkVideoCache && tkVideoCache.length > 0) {
     const list = tkVideoCache.map((v, i) =>
       `${i + 1}. ${(v.title || v.video_description || 'Sem título').substring(0, 50)} — ${parseInt(v.view_count || 0).toLocaleString()} views`
     ).join('\n');
 
-    const choice = prompt(`Não foi possível identificar automaticamente. Selecione o número do vídeo:\n\n${list}\n\nDigite o número:`);
+    const choice = prompt(`Selecione o vídeo correspondente:\n\n${list}\n\nDigite o número:`);
     if (choice) {
       const idx = parseInt(choice) - 1;
       if (idx >= 0 && idx < tkVideoCache.length) {
@@ -7134,11 +7137,23 @@ async function manualResolveTK(dest) {
         return;
       }
     }
-  } else {
-    alert('Não foi possível buscar os vídeos do TikTok. Verifique se a conta está conectada e tente novamente.');
+  } else if (!hasToken) {
+    // No OAuth — tell user what to do
+    alert(
+      'Para vincular métricas do TikTok automaticamente, você precisa conectar sua conta TikTok.\n\n' +
+      'Passo a passo:\n' +
+      '1. Acesse developers.tiktok.com → seu app → Login Kit\n' +
+      '2. Adicione o redirect URI: ' + window.location.origin + '/admin\n' +
+      '3. Depois clique em "Conectar TikTok" nas configurações do admin.\n\n' +
+      'A thumbnail foi salva via oEmbed (se disponível).'
+    );
   }
 
-  if (btn) { btn.disabled = false; btn.textContent = 'Vincular métricas TikTok'; }
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg> Vincular métricas TikTok`;
+  }
+  renderProjTabPostagem(p);
 }
 
 function isTKConnected() {
