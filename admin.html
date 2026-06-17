@@ -6401,10 +6401,16 @@ function buildPostCard(dest, data) {
           <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
           Atualizar dados
         </button>` : ''}
-        ${tkVideoId && !tkVideoId.startsWith('short_') ? `<button class="post-action-btn" onclick="refreshTKStats('${dest}','${tkVideoId}')" id="tkRefresh_${dest}">
+        ${(() => {
+          const resolvedTkId = data._tkVideoId || (tkVideoId && !tkVideoId.startsWith('short_') ? tkVideoId : null);
+          return resolvedTkId ? `<button class="post-action-btn" onclick="refreshTKStats('${dest}','${resolvedTkId}')" id="tkRefresh_${dest}">
           <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
           Atualizar dados
-        </button>` : ''}
+        </button>` : (tkVideoId && tkVideoId.startsWith('short_') ? `<button class="post-action-btn" onclick="manualResolveTK('${dest}')" id="tkResolve_${dest}">
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          Vincular métricas TikTok
+        </button>` : '');
+        })()}
         <button class="post-action-btn" onclick="editPostLink('${dest}')">
           <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           Editar postagem
@@ -6482,14 +6488,36 @@ async function savePostSingle(dest) {
   }
 
   // TikTok auto-fetch
-  const tkVideoId = extractTKVideoId(link);
-  if (tkVideoId && !tkVideoId.startsWith('short_')) {
-    const stats = await fetchTKStats(tkVideoId);
-    if (stats) {
-      p.posts[dest].views = stats.views;
-      p.posts[dest].likes = stats.likes;
-      p.posts[dest].comments = stats.comments;
-      if (stats.thumb) p.posts[dest]._tkThumb = stats.thumb;
+  let tkVideoId = extractTKVideoId(link);
+  if (tkVideoId) {
+    if (tkVideoId.startsWith('short_')) {
+      // Try to resolve short URL
+      const resolved = await resolveTKVideoFromShortUrl(link);
+      if (resolved) {
+        if (resolved.fullUrl) {
+          // Replace the short URL with the full URL
+          p.posts[dest].link = resolved.fullUrl;
+        }
+        if (resolved.stats) {
+          p.posts[dest].views = resolved.stats.views;
+          p.posts[dest].likes = resolved.stats.likes;
+          p.posts[dest].comments = resolved.stats.comments;
+          if (resolved.stats.thumb) p.posts[dest]._tkThumb = resolved.stats.thumb;
+        } else if (resolved.thumb) {
+          p.posts[dest]._tkThumb = resolved.thumb;
+        }
+        if (resolved.videoId) {
+          p.posts[dest]._tkVideoId = resolved.videoId; // Store for future refresh
+        }
+      }
+    } else {
+      const stats = await fetchTKStats(tkVideoId);
+      if (stats) {
+        p.posts[dest].views = stats.views;
+        p.posts[dest].likes = stats.likes;
+        p.posts[dest].comments = stats.comments;
+        if (stats.thumb) p.posts[dest]._tkThumb = stats.thumb;
+      }
     }
   }
 
@@ -6747,9 +6775,83 @@ function extractTKVideoId(url) {
   if (!url) return null;
   const m = url.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)/);
   if (m) return m[1];
-  // Short URL format (vm.tiktok.com/xxx) — can't extract ID directly, store for matching
+  // Also try /photo/ format
+  const mp = url.match(/tiktok\.com\/@[^\/]+\/photo\/(\d+)/);
+  if (mp) return mp[1];
+  // Short URL format (vm.tiktok.com/xxx) — can't extract ID directly
   const s = url.match(/(?:vm\.tiktok\.com|vt\.tiktok\.com)\/([A-Za-z0-9]+)/);
   return s ? 'short_' + s[1] : null;
+}
+
+// Resolve TikTok short URL to full URL using oEmbed API
+async function resolveTKShortUrl(shortUrl) {
+  try {
+    const res = await fetch('https://www.tiktok.com/oembed?url=' + encodeURIComponent(shortUrl));
+    if (!res.ok) return null;
+    const json = await res.json();
+    // oEmbed doesn't directly return the full URL, but we can try another approach
+    // Use the author_url + title to find the video in the video list
+    if (json.author_url && json.title) {
+      return { authorUrl: json.author_url, title: json.title, thumb: json.thumbnail_url || null };
+    }
+    return null;
+  } catch(e) { console.warn('TK oEmbed error:', e); return null; }
+}
+
+// Resolve TikTok short URL by matching against user's video list
+async function resolveTKVideoFromShortUrl(shortUrl) {
+  const hasToken = await ensureTKToken();
+  if (!hasToken) return null;
+
+  // First, get oEmbed info for matching
+  const oembed = await resolveTKShortUrl(shortUrl);
+
+  // Fetch user's video list
+  try {
+    const now = Date.now();
+    if (!tkVideoCache || now - tkVideoCacheTime > 300000) {
+      const res = await fetch('https://open.tiktokapis.com/v2/video/list/?fields=id,title,video_description,like_count,comment_count,share_count,view_count,create_time,cover_image_url,share_url', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + tkAccessToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ max_count: 20 })
+      });
+      const json = await res.json();
+      if (json.data?.videos) {
+        tkVideoCache = json.data.videos;
+        tkVideoCacheTime = now;
+      } else {
+        return null;
+      }
+    }
+
+    // Try to match by share_url containing the same short code
+    if (tkVideoCache && tkVideoCache.length > 0) {
+      // If we have oEmbed title, match by title
+      if (oembed?.title) {
+        const match = tkVideoCache.find(v =>
+          (v.title || v.video_description || '').includes(oembed.title.substring(0, 20))
+        );
+        if (match) return {
+          videoId: String(match.id),
+          fullUrl: match.share_url || null,
+          stats: {
+            views: parseInt(match.view_count) || 0,
+            likes: parseInt(match.like_count) || 0,
+            comments: parseInt(match.comment_count) || 0,
+            shares: parseInt(match.share_count) || 0,
+            thumb: match.cover_image_url || oembed?.thumb || null
+          }
+        };
+      }
+
+      // If only 1 video or recent video, try most recent as fallback
+      // Otherwise just return the thumb from oEmbed at least
+      if (oembed?.thumb) {
+        return { videoId: null, fullUrl: null, stats: null, thumb: oembed.thumb };
+      }
+    }
+  } catch(e) { console.warn('TK resolve error:', e); }
+  return null;
 }
 
 // TikTok OAuth token management
@@ -6908,7 +7010,7 @@ async function fetchTKStats(videoId) {
     // Use cache if less than 5 min old
     const now = Date.now();
     if (!tkVideoCache || now - tkVideoCacheTime > 300000) {
-      const res = await fetch('https://open.tiktokapis.com/v2/video/list/?fields=id,title,video_description,like_count,comment_count,share_count,view_count,create_time,cover_image_url', {
+      const res = await fetch('https://open.tiktokapis.com/v2/video/list/?fields=id,title,video_description,like_count,comment_count,share_count,view_count,create_time,cover_image_url,share_url', {
         method: 'POST',
         headers: {
           'Authorization': 'Bearer ' + tkAccessToken,
@@ -6977,6 +7079,68 @@ async function refreshTKStats(dest, videoId) {
   if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
 }
 
+async function manualResolveTK(dest) {
+  const btn = document.getElementById('tkResolve_' + dest);
+  if (btn) { btn.disabled = true; btn.textContent = 'Buscando...'; }
+
+  const p = PROJECTS.find(x => x.id === projDetailId);
+  if (!p || !p.posts?.[dest]) { if (btn) { btn.disabled = false; } return; }
+
+  const link = p.posts[dest].link;
+
+  // Step 1: Try to ensure TK token
+  const hasToken = await ensureTKToken();
+  if (!hasToken) {
+    alert('TikTok não conectado. Clique em "Conectar TikTok" no seu perfil para autenticar via OAuth.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Vincular métricas TikTok'; }
+    return;
+  }
+
+  // Step 2: Try to resolve short URL
+  const resolved = await resolveTKVideoFromShortUrl(link);
+  if (resolved && resolved.videoId && resolved.stats) {
+    if (resolved.fullUrl) p.posts[dest].link = resolved.fullUrl;
+    p.posts[dest].views = resolved.stats.views;
+    p.posts[dest].likes = resolved.stats.likes;
+    p.posts[dest].comments = resolved.stats.comments;
+    if (resolved.stats.thumb) p.posts[dest]._tkThumb = resolved.stats.thumb;
+    p.posts[dest]._tkVideoId = resolved.videoId;
+
+    await sb.from('mc_projects').update({ posts: p.posts }).eq('id', projDetailId);
+    renderProjTabPostagem(p);
+    return;
+  }
+
+  // Step 3: If resolve didn't work, show video picker from user's list
+  if (tkVideoCache && tkVideoCache.length > 0) {
+    const list = tkVideoCache.map((v, i) =>
+      `${i + 1}. ${(v.title || v.video_description || 'Sem título').substring(0, 50)} — ${parseInt(v.view_count || 0).toLocaleString()} views`
+    ).join('\n');
+
+    const choice = prompt(`Não foi possível identificar automaticamente. Selecione o número do vídeo:\n\n${list}\n\nDigite o número:`);
+    if (choice) {
+      const idx = parseInt(choice) - 1;
+      if (idx >= 0 && idx < tkVideoCache.length) {
+        const video = tkVideoCache[idx];
+        p.posts[dest].views = parseInt(video.view_count) || 0;
+        p.posts[dest].likes = parseInt(video.like_count) || 0;
+        p.posts[dest].comments = parseInt(video.comment_count) || 0;
+        if (video.cover_image_url) p.posts[dest]._tkThumb = video.cover_image_url;
+        if (video.share_url) p.posts[dest].link = video.share_url;
+        p.posts[dest]._tkVideoId = String(video.id);
+
+        await sb.from('mc_projects').update({ posts: p.posts }).eq('id', projDetailId);
+        renderProjTabPostagem(p);
+        return;
+      }
+    }
+  } else {
+    alert('Não foi possível buscar os vídeos do TikTok. Verifique se a conta está conectada e tente novamente.');
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Vincular métricas TikTok'; }
+}
+
 function isTKConnected() {
   loadTKTokens();
   return !!(tkAccessToken && Date.now() < tkTokenExpiry);
@@ -7010,7 +7174,7 @@ async function autoRefreshEngagement() {
     const ytId = extractYouTubeId(post.link);
     const igShortcode = extractIGShortcode(post.link);
 
-    const tkVideoId = extractTKVideoId(post.link);
+    const tkVideoId = post._tkVideoId || extractTKVideoId(post.link);
     if (ytId && apiKey) {
       stats = await fetchYTStats(ytId);
     } else if (igShortcode) {
