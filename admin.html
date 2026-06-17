@@ -7574,6 +7574,24 @@ async function blingFindCompatible(motoModel) {
 
   const normalize = s => (s || '').toLowerCase().replace(/[\s\-_]/g, '');
 
+  // Generate slug variations to handle Bling naming inconsistencies
+  // e.g. CBR500R → ["cbr500r", "cbr500", "cbr 500r", "cbr 500"]
+  function slugVariations(slug) {
+    const base = normalize(slug);
+    const variations = new Set([base]);
+    // Without trailing letter suffix (R, F, X, S, L)
+    // e.g. "cbr500r" → "cbr500", "cb650r" → "cb650"
+    const noSuffix = base.replace(/([0-9])[a-z]$/, '$1');
+    if (noSuffix !== base) variations.add(noSuffix);
+    // With space between letters and numbers for Bling search
+    // e.g. "cbr500" matches "CBR 500" in Bling product names
+    const spaced = base.replace(/([a-z])(\d)/, '$1 $2').replace(/(\d)([a-z])/g, '$1$2');
+    if (spaced !== base) variations.add(normalize(spaced));
+    const spacedNoSuffix = noSuffix.replace(/([a-z])(\d)/, '$1 $2');
+    if (spacedNoSuffix !== noSuffix) variations.add(normalize(spacedNoSuffix));
+    return [...variations];
+  }
+
   // Try to find the moto in our catalog for precise matching
   const catalogInfo = window.getMotoSlug ? window.getMotoSlug(motoModel) : null;
   const motoYear = window.getMotoYear ? window.getMotoYear(motoModel) : null;
@@ -7581,32 +7599,35 @@ async function blingFindCompatible(motoModel) {
   // Build search tokens from catalog slug or fallback to model parsing
   let searchTokens = [];
   if (catalogInfo) {
-    // Use the slug as the primary search token (e.g. "CBR500R", "MT07", "R1300GS")
-    searchTokens.push(normalize(catalogInfo.slug));
-    // Also add the model name normalized (e.g. "cb500r", "mt07")
-    searchTokens.push(normalize(catalogInfo.modelo));
+    // Generate all slug variations
+    slugVariations(catalogInfo.slug).forEach(v => searchTokens.push(v));
+    // Also add normalized model name variations
+    // e.g. "CBR 500R" → "cbr500r", "cbr500"
+    slugVariations(catalogInfo.modelo.replace(/\s+/g, '')).forEach(v => {
+      if (!searchTokens.includes(v)) searchTokens.push(v);
+    });
   } else {
     // Fallback: parse "Honda CB 650R 2023" → extract model identifier
     const parts = motoModel.trim().split(/\s+/);
-    // Remove brand (first word) and year (last word if 4 digits)
     const filtered = parts.filter((p, i) => {
-      if (i === 0 && /^[A-Z][a-z]/.test(p)) return false; // likely brand
-      if (/^\d{4}$/.test(p)) return false; // year
+      if (i === 0 && /^[A-Z][a-z]/.test(p)) return false;
+      if (/^\d{4}$/.test(p)) return false;
       return true;
     });
     if (filtered.length > 0) {
-      // Join as single token (e.g. "CB 650R" → "cb650r")
-      searchTokens.push(normalize(filtered.join('')));
-      // Also add individual parts 4+ chars
-      filtered.forEach(w => { if (w.length >= 4) searchTokens.push(normalize(w)); });
+      const joined = filtered.join('');
+      slugVariations(joined).forEach(v => searchTokens.push(v));
     }
   }
 
   if (searchTokens.length === 0) return [];
 
+  // Also include brand for combined matching
+  const brand = catalogInfo ? normalize(catalogInfo.marca) : null;
+
   // Extract year range from product names: e.g. "(19-23)" means 2019-2023
   function prodMatchesYear(prodName, year) {
-    if (!year) return true; // no year filter = show all
+    if (!year) return true;
     const rangeMatch = prodName.match(/\((\d{2,4})[-–](\d{2,4})\)/);
     if (rangeMatch) {
       let from = parseInt(rangeMatch[1]);
@@ -7615,28 +7636,35 @@ async function blingFindCompatible(motoModel) {
       if (to < 100) to += 2000;
       return year >= from && year <= to;
     }
-    // Single year: e.g. "(2024)"
     const singleMatch = prodName.match(/\((\d{4})\)/);
     if (singleMatch) return year === parseInt(singleMatch[1]);
-    // No year in product name = assume compatible
     return true;
   }
 
   return allProds.filter(p => {
     const pName = normalize(p.nome);
-    // Product must contain at least one of the search tokens
-    return searchTokens.some(token => pName.includes(token));
+    // Product must contain at least one search token
+    // AND if we have the brand, the product should also contain the brand
+    const tokenMatch = searchTokens.some(token => pName.includes(token));
+    if (!tokenMatch) return false;
+    // Brand check: if we know the brand, product must contain it too
+    // This avoids e.g. a Yamaha product matching a Honda search token
+    if (brand && !pName.includes(brand)) return false;
+    return true;
   }).filter(p => {
-    // Year filter
     return prodMatchesYear(p.nome, motoYear);
   }).filter(p => {
-    // Only show products with stock > 0
     return (p.estoque?.saldoVirtualTotal || 0) > 0;
   }).sort((a, b) => {
-    // Sort by relevance (slug match scores highest)
-    const slug = catalogInfo ? normalize(catalogInfo.slug) : searchTokens[0];
-    const scoreA = normalize(a.nome).includes(slug) ? 10 : 0;
-    const scoreB = normalize(b.nome).includes(slug) ? 10 : 0;
+    const aName = normalize(a.nome);
+    const bName = normalize(b.nome);
+    // Exact slug match scores highest, then variations
+    let scoreA = 0, scoreB = 0;
+    for (let i = 0; i < searchTokens.length; i++) {
+      const weight = searchTokens.length - i; // first token = highest weight
+      if (aName.includes(searchTokens[i])) scoreA += weight;
+      if (bName.includes(searchTokens[i])) scoreB += weight;
+    }
     return scoreB - scoreA || (a.nome || '').localeCompare(b.nome || '');
   });
 }
