@@ -27,6 +27,10 @@ window.FULLPRO_CONFIG = {
    * 3. Configure redirect URI: https://mediaclub.fullpro.com.br/admin
    * 4. Use Sandbox mode para desenvolvimento (até 20 test users)
    * 5. Clique "Conectar TikTok" no admin para autenticar via OAuth */
-  TK_CLIENT_KEY:     'sbawuf3rne01g5gm3m'
+  TK_CLIENT_KEY:     'sbawuf3rne01g5gm3m',
   /* TK_CLIENT_SECRET removido — agora protegido no Supabase Edge Function (tiktok-proxy) */
+  /* Bling ERP API v3 — gerenciamento de estoque e produtos
+   * App: WEB-MEDIACLUB (ID 338188)
+   * Client secret protegido no Supabase Edge Function (bling-proxy) */
+  BLING_CLIENT_ID:   'e4293dc4fef816f0a2b886ceb81e3d10fdd64e82'
 };
