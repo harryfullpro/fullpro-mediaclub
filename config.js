@@ -24,9 +24,9 @@ window.FULLPRO_CONFIG = {
   /* TikTok API v2 (requer app no TikTok for Developers)
    * 1. Crie um App em: https://developers.tiktok.com
    * 2. Adicione Login Kit + scopes: user.info.basic, user.info.stats, video.list
-   * 3. Configure redirect URI: https://fullpro-mediaclub.vercel.app/admin
+   * 3. Configure redirect URI: https://mediaclub.fullpro.com.br/admin
    * 4. Use Sandbox mode para desenvolvimento (até 20 test users)
    * 5. Clique "Conectar TikTok" no admin para autenticar via OAuth */
-  TK_CLIENT_KEY:     'sbawuf3rne01g5gm3m',
-  TK_CLIENT_SECRET:  'YEtvCowh33RpjHaHPPByby2XZRhD0Rz3'
+  TK_CLIENT_KEY:     'sbawuf3rne01g5gm3m'
+  /* TK_CLIENT_SECRET removido — agora protegido no Supabase Edge Function (tiktok-proxy) */
 };

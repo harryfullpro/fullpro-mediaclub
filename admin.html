@@ -6816,9 +6816,9 @@ async function resolveTKVideoFromShortUrl(shortUrl) {
     try {
       const now = Date.now();
       if (!tkVideoCache || now - tkVideoCacheTime > 300000) {
-        const res = await fetch('https://open.tiktokapis.com/v2/video/list/?fields=id,title,video_description,like_count,comment_count,share_count,view_count,create_time,cover_image_url,share_url', {
+        const res = await fetch(TK_PROXY_URL + '?action=videos', {
           method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + tkAccessToken, 'Content-Type': 'application/json' },
+          headers: { 'x-tk-token': tkAccessToken, 'Content-Type': 'application/json' },
           body: JSON.stringify({ max_count: 20 })
         });
         const json = await res.json();
@@ -6855,6 +6855,9 @@ async function resolveTKVideoFromShortUrl(shortUrl) {
   }
   return null;
 }
+
+// TikTok proxy URL (Supabase Edge Function)
+const TK_PROXY_URL = 'https://xgaaocnuqgcwttrljqep.supabase.co/functions/v1/tiktok-proxy';
 
 // TikTok OAuth token management
 let tkAccessToken = null;
@@ -6927,20 +6930,13 @@ async function handleTKCallback() {
   }
   sessionStorage.removeItem('tk_csrf');
 
-  // Exchange code for token
-  const clientKey = window.FULLPRO_CONFIG?.TK_CLIENT_KEY;
-  const clientSecret = window.FULLPRO_CONFIG?.TK_CLIENT_SECRET;
-  if (!clientKey || !clientSecret) return false;
-
+  // Exchange code for token via Supabase Edge Function proxy
   try {
-    const res = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
+    const res = await fetch(TK_PROXY_URL + '?action=token', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_key: clientKey,
-        client_secret: clientSecret,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         code: code,
-        grant_type: 'authorization_code',
         redirect_uri: window.location.origin + '/admin'
       })
     });
@@ -6962,23 +6958,15 @@ async function handleTKCallback() {
   return false;
 }
 
-// Refresh TikTok access token
+// Refresh TikTok access token via proxy
 async function refreshTKAccessToken() {
   if (!tkRefreshToken) return false;
-  const clientKey = window.FULLPRO_CONFIG?.TK_CLIENT_KEY;
-  const clientSecret = window.FULLPRO_CONFIG?.TK_CLIENT_SECRET;
-  if (!clientKey || !clientSecret) return false;
 
   try {
-    const res = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
+    const res = await fetch(TK_PROXY_URL + '?action=refresh', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_key: clientKey,
-        client_secret: clientSecret,
-        grant_type: 'refresh_token',
-        refresh_token: tkRefreshToken
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: tkRefreshToken })
     });
     const json = await res.json();
     if (json.access_token) {
@@ -7012,10 +7000,10 @@ async function fetchTKStats(videoId) {
     // Use cache if less than 5 min old
     const now = Date.now();
     if (!tkVideoCache || now - tkVideoCacheTime > 300000) {
-      const res = await fetch('https://open.tiktokapis.com/v2/video/list/?fields=id,title,video_description,like_count,comment_count,share_count,view_count,create_time,cover_image_url,share_url', {
+      const res = await fetch(TK_PROXY_URL + '?action=videos', {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer ' + tkAccessToken,
+          'x-tk-token': tkAccessToken,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ max_count: 20 })
@@ -8762,8 +8750,8 @@ async function autoRefreshInfFollowers() {
       if (inf.tiktok && inf.tk_access_token) {
         try {
           const res = await fetch(
-            'https://open.tiktokapis.com/v2/user/info/?fields=follower_count,following_count,likes_count,video_count',
-            { headers: { 'Authorization': 'Bearer ' + inf.tk_access_token } }
+            TK_PROXY_URL + '?action=user-info',
+            { headers: { 'x-tk-token': inf.tk_access_token } }
           );
           if (res.ok) {
             const data = await res.json();
