@@ -1131,6 +1131,8 @@
     cursor: pointer; transition: all .15s; flex: 1; justify-content: center;
   }
   .post-action-btn:hover { border-color: var(--text-muted); color: var(--text); }
+  .post-action-btn--danger { color: #e74c3c; border-color: rgba(231,76,60,.25); }
+  .post-action-btn--danger:hover { color: #ff6b6b; border-color: #e74c3c; background: rgba(231,76,60,.08); }
   .post-link-input-wrap {
     display: flex; flex-direction: column; gap: 8px;
   }
@@ -6415,6 +6417,10 @@ function buildPostCard(dest, data) {
           <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           Editar postagem
         </button>
+        <button class="post-action-btn post-action-btn--danger" onclick="deletePost('${dest}')">
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+          Excluir postagem
+        </button>
       </div>
     </div>`;
   }
@@ -6444,6 +6450,21 @@ function copyPostLink(dest) {
     document.execCommand('copy'); document.body.removeChild(t);
     alert('Link copiado!');
   });
+}
+
+async function deletePost(dest) {
+  const p = PROJECTS.find(x => x.id === projDetailId);
+  if (!p || !p.posts?.[dest]) return;
+
+  const plat = dest.replace(/_\d+$/, '').toUpperCase();
+  if (!confirm(`Tem certeza que deseja excluir a postagem ${plat}?\n\nEssa ação não pode ser desfeita.`)) return;
+
+  delete p.posts[dest];
+
+  const { error } = await sb.from('mc_projects').update({ posts: p.posts }).eq('id', projDetailId);
+  if (error) { alert('Erro ao excluir: ' + error.message); return; }
+
+  renderProjTabPostagem(p);
 }
 
 function editPostLink(dest) {
