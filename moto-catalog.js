@@ -301,7 +301,6 @@ window.getMotoSlug = function(motoStr) {
   for (const brand of MOTO_CATALOG) {
     const bNorm = norm(brand.marca);
     if (!input.includes(bNorm)) continue;
-    // Sort models by name length DESC so longer (more specific) names match first
     const sorted = [...brand.modelos].sort((a, b) => b.nome.length - a.nome.length);
     for (const model of sorted) {
       const mNorm = norm(model.nome);
