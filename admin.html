@@ -7641,13 +7641,13 @@ async function blingFindCompatible(motoModel) {
     // Also just the model part for broader search
     searchQueries.add(core); // "CBR 500"
   } else {
-    // Fallback: extract model from moto string
-    const parts = motoModel.trim().split(/\s+/);
-    const filtered = parts.filter((p, i) => {
-      if (i === 0 && /^[A-Z][a-z]/.test(p)) return false;
-      if (/^\d{4}$/.test(p)) return false;
-      return true;
-    });
+      const knownBrands = MOTO_CATALOG.map(b => b.marca.toLowerCase());
+      const parts = motoModel.trim().split(/\s+/);
+      const filtered = parts.filter((p, i) => {
+        if (i === 0 && knownBrands.includes(p.toLowerCase())) return false;
+        if (/^\d{4}$/.test(p)) return false;
+        return true;
+      });
     if (filtered.length > 0) {
       searchQueries.add(filtered.join(' '));
     }
