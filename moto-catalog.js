@@ -295,9 +295,17 @@ window.initMotoSelects = function(marcaId, modeloId, anoId, hiddenId) {
 /* ── Helper: get slug for a moto string ── */
 window.getMotoSlug = function(motoStr) {
   if (!motoStr) return null;
+  const norm = s => (s || '').toLowerCase().replace(/[\s\-_]/g, '');
+  const input = norm(motoStr);
   for (const brand of MOTO_CATALOG) {
-    for (const model of brand.modelos) {
-      if (motoStr.includes(brand.marca) && motoStr.includes(model.nome)) {
+    const bNorm = norm(brand.marca);
+    if (!input.includes(bNorm)) continue;
+    // Sort models by name length DESC so longer (more specific) names match first
+    const sorted = [...brand.modelos].sort((a, b) => b.nome.length - a.nome.length);
+    for (const model of sorted) {
+      const mNorm = norm(model.nome);
+      const sNorm = norm(model.slug);
+      if (input.includes(mNorm) || input.includes(sNorm)) {
         return { marca: brand.marca, modelo: model.nome, slug: model.slug, anos: model.anos };
       }
     }
