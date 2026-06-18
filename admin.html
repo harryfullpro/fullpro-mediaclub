@@ -7567,147 +7567,83 @@ async function blingGetCompany() {
 }
 
 // Find products compatible with a motorcycle model
+// v2 - uses blingGetAllProducts + local filtering (blingSearchProducts returns 0)
 async function blingFindCompatible(motoModel) {
   if (!motoModel) return [];
+  const allProds = await blingGetAllProducts();
+  if (!allProds.length) return [];
 
   const normalize = s => (s || '').toLowerCase().replace(/[\s\-_]/g, '');
 
-  // Generate slug variations to handle Bling naming inconsistencies
-  // e.g. CBR500R → ["cbr500r", "cbr500", "cbr 500r", "cbr 500"]
   function slugVariations(slug) {
     const base = normalize(slug);
     const variations = new Set([base]);
-    // Without trailing letter suffix (R, F, X, S, L)
-    // e.g. "cbr500r" → "cbr500", "cb650r" → "cb650"
     const noSuffix = base.replace(/([0-9])[a-z]$/, '$1');
     if (noSuffix !== base) variations.add(noSuffix);
-    // With space between letters and numbers for Bling search
-    // e.g. "cbr500" matches "CBR 500" in Bling product names
-    const spaced = base.replace(/([a-z])(\d)/, '$1 $2').replace(/(\d)([a-z])/g, '$1$2');
-    if (spaced !== base) variations.add(normalize(spaced));
-    const spacedNoSuffix = noSuffix.replace(/([a-z])(\d)/, '$1 $2');
-    if (spacedNoSuffix !== noSuffix) variations.add(normalize(spacedNoSuffix));
+    const bases = [base];
+    if (noSuffix !== base) bases.push(noSuffix);
+    for (const b of bases) {
+      const withSpace = b.replace(/([a-z])(\d)/g, '$1 $2').replace(/(\d)([a-z])/g, '$1 $2');
+      const withHyphen = b.replace(/([a-z])(\d)/g, '$1-$2').replace(/(\d)([a-z])/g, '$1-$2');
+      if (withSpace !== b) variations.add(withSpace);
+      if (withHyphen !== b) variations.add(withHyphen);
+    }
     return [...variations];
   }
 
-  // Try to find the moto in our catalog for precise matching
   const catalogInfo = window.getMotoSlug ? window.getMotoSlug(motoModel) : null;
   const motoYear = window.getMotoYear ? window.getMotoYear(motoModel) : null;
 
-  // Build search tokens from catalog slug or fallback to model parsing
   let searchTokens = [];
   if (catalogInfo) {
-    // Generate all slug variations
     slugVariations(catalogInfo.slug).forEach(v => searchTokens.push(v));
-    // Also add normalized model name variations
-    // e.g. "CBR 500R" → "cbr500r", "cbr500"
     slugVariations(catalogInfo.modelo.replace(/\s+/g, '')).forEach(v => {
       if (!searchTokens.includes(v)) searchTokens.push(v);
     });
   } else {
-    // Fallback: parse "Honda CB 650R 2023" → extract model identifier
+    const knownBrands = (typeof MOTO_CATALOG !== 'undefined' ? MOTO_CATALOG : []).map(b => b.marca.toLowerCase());
     const parts = motoModel.trim().split(/\s+/);
     const filtered = parts.filter((p, i) => {
-      if (i === 0 && /^[A-Z][a-z]/.test(p)) return false;
+      if (i === 0 && knownBrands.includes(p.toLowerCase())) return false;
       if (/^\d{4}$/.test(p)) return false;
       return true;
     });
     if (filtered.length > 0) {
-      const joined = filtered.join('');
-      slugVariations(joined).forEach(v => searchTokens.push(v));
+      slugVariations(filtered.join('')).forEach(v => searchTokens.push(v));
     }
   }
 
   if (searchTokens.length === 0) return [];
-
-  // Build search queries to send to Bling API (search by name)
-  // Use the most specific terms, e.g. for CBR500R → search "CBR 500"
-  let searchQueries = new Set();
-  if (catalogInfo) {
-    // Add brand + model core (numbers only)
-    // e.g. "CBR 500R" → search "CBR 500", also "CBR500"
-    const modelName = catalogInfo.modelo; // "CBR 500R"
-    // Extract core: letters + numbers without trailing letter
-    const core = modelName.replace(/\s*[A-Za-z]$/, '').trim(); // "CBR 500"
-    searchQueries.add(catalogInfo.marca + ' ' + core); // "Honda CBR 500"
-    searchQueries.add(catalogInfo.marca + ' ' + modelName); // "Honda CBR 500R"
-    // Also just the model part for broader search
-    searchQueries.add(core); // "CBR 500"
-  } else {
-    // Fallback: extract model from moto string
-    const parts = motoModel.trim().split(/\s+/);
-    const filtered = parts.filter((p, i) => {
-      if (i === 0 && /^[A-Z][a-z]/.test(p)) return false;
-      if (/^\d{4}$/.test(p)) return false;
-      return true;
-    });
-    if (filtered.length > 0) {
-      searchQueries.add(filtered.join(' '));
-    }
-  }
-
-  if (searchQueries.size === 0) return [];
-
-  // Search Bling API for each query and merge results
-  let allResults = [];
-  const seen = new Set();
-  for (const query of searchQueries) {
-    const results = await blingSearchProducts(query);
-    results.forEach(p => {
-      if (!seen.has(p.id)) { seen.add(p.id); allResults.push(p); }
-    });
-    if (allResults.length >= 10) break; // enough results
-  }
-
-  // Also try with just the model slug variations as search
-  if (allResults.length < 3) {
-    for (const token of searchTokens) {
-      if (token.length >= 4) {
-        const results = await blingSearchProducts(token);
-        results.forEach(p => {
-          if (!seen.has(p.id)) { seen.add(p.id); allResults.push(p); }
-        });
-        if (allResults.length >= 10) break;
-      }
-    }
-  }
-
   const brand = catalogInfo ? normalize(catalogInfo.marca) : null;
 
-  // Extract year range from product names: e.g. "(19-23)" means 2019-2023
   function prodMatchesYear(prodName, year) {
     if (!year) return true;
-    const rangeMatch = prodName.match(/\((\d{2,4})[-–](\d{2,4})\)/);
-    if (rangeMatch) {
-      let from = parseInt(rangeMatch[1]);
-      let to = parseInt(rangeMatch[2]);
-      if (from < 100) from += 2000;
-      if (to < 100) to += 2000;
-      return year >= from && year <= to;
-    }
-    // No year info in product name = compatible with all years
+    const rm = prodName.match(/\((\d{2,4})[\-\u2013](\d{2,4})\)/);
+    if (rm) { let f=parseInt(rm[1]),t=parseInt(rm[2]); if(f<100)f+=2000;if(t<100)t+=2000; return year>=f&&year<=t; }
+    const sm = prodName.match(/\((\d{4})\)/);
+    if (sm) return year === parseInt(sm[1]);
     return true;
   }
 
-  return allResults.filter(p => {
-    const pName = normalize(p.nome);
-    // Must match at least one search token (slug-based)
-    const tokenMatch = searchTokens.some(token => pName.includes(token));
+  return allProds.filter(p => {
+    const pNorm = normalize(p.nome);
+    const pLower = (p.nome || '').toLowerCase();
+    const tokenMatch = searchTokens.some(token => pNorm.includes(token) || pLower.includes(token));
     if (!tokenMatch) return false;
-    // Year compatibility check
-    if (!prodMatchesYear(p.nome, motoYear)) return false;
-    // Stock check: if estoque info is available, filter by stock > 0
-    // If estoque is undefined (API didn't return it), still show the product
-    if (p.estoque && typeof p.estoque.saldoVirtualTotal === 'number' && p.estoque.saldoVirtualTotal <= 0) return false;
+    if (brand && !pNorm.includes(brand) && !pLower.includes(brand)) return false;
     return true;
-  }).sort((a, b) => {
-    const aName = normalize(a.nome);
-    const bName = normalize(b.nome);
+  }).filter(p => prodMatchesYear(p.nome, motoYear)
+  ).filter(p => (p.estoque?.saldoVirtualTotal || 0) > 0
+  ).sort((a, b) => {
+    const aNorm = normalize(a.nome);
+    const bNorm = normalize(b.nome);
+    const aLower = (a.nome || '').toLowerCase();
+    const bLower = (b.nome || '').toLowerCase();
     let scoreA = 0, scoreB = 0;
     for (let i = 0; i < searchTokens.length; i++) {
-      const weight = searchTokens.length - i;
-      if (aName.includes(searchTokens[i])) scoreA += weight;
-      if (bName.includes(searchTokens[i])) scoreB += weight;
+      const w = searchTokens.length - i;
+      if (aNorm.includes(searchTokens[i]) || aLower.includes(searchTokens[i])) scoreA += w;
+      if (bNorm.includes(searchTokens[i]) || bLower.includes(searchTokens[i])) scoreB += w;
     }
     return scoreB - scoreA || (a.nome || '').localeCompare(b.nome || '');
   });
