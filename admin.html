@@ -7475,30 +7475,36 @@ async function blingSearchBySku(sku) {
   return [];
 }
 
-// Get all products (cached 10 min)
-async function blingGetAllProducts() {
-  if (blingProducts.length > 0 && Date.now() - blingProductsTime < 600000) return blingProducts;
-  if (!await ensureBlingToken()) return [];
-  try {
-    let allProducts = [];
-    let pagina = 1;
-    let hasMore = true;
-    while (hasMore && pagina <= 5) {
-      const res = await fetch(BLING_PROXY_URL + `?action=products&pagina=${pagina}&limite=100`, {
-        headers: { 'x-bling-token': blingAccessToken }
-      });
-      const json = await res.json();
-      const items = json.data || [];
-      allProducts = allProducts.concat(items);
-      hasMore = items.length === 100;
-      pagina++;
+// Get all products (cached 10 min, with dedup to prevent concurrent fetches)
+    let _blingFetchPromise = null;
+    async function blingGetAllProducts() {
+      if (blingProducts.length > 0 && Date.now() - blingProductsTime < 600000) return blingProducts;
+      if (_blingFetchPromise) return _blingFetchPromise;
+      _blingFetchPromise = (async () => {
+        if (!await ensureBlingToken()) return [];
+        try {
+          let allProducts = [];
+          let pagina = 1;
+          let hasMore = true;
+          while (hasMore && pagina <= 5) {
+            const res = await fetch(BLING_PROXY_URL + `?action=products&pagina=${pagina}&limite=100`, {
+              headers: { 'x-bling-token': blingAccessToken }
+            });
+            if (!res.ok) { console.warn('Bling products HTTP', res.status); break; }
+            const json = await res.json();
+            const items = json.data || [];
+            allProducts = allProducts.concat(items);
+            hasMore = items.length === 100;
+            pagina++;
+          }
+          blingProducts = allProducts;
+          blingProductsTime = Date.now();
+          return blingProducts;
+        } catch(e) { console.warn('Bling all products error:', e); }
+        return [];
+      })();
+      try { return await _blingFetchPromise; } finally { _blingFetchPromise = null; }
     }
-    blingProducts = allProducts;
-    blingProductsTime = Date.now();
-    return blingProducts;
-  } catch(e) { console.warn('Bling all products error:', e); }
-  return [];
-}
 
 // Get single product with full details (weight, dimensions)
 async function blingGetProduct(id) {
@@ -7575,20 +7581,20 @@ async function blingFindCompatible(motoModel) {
   // Generate slug variations to handle Bling naming inconsistencies
   // e.g. CBR500R → ["cbr500r", "cbr500", "cbr 500r", "cbr 500"]
   function slugVariations(slug) {
-    const base = normalize(slug);
-    const variations = new Set([base]);
-    // Without trailing letter suffix (R, F, X, S, L)
-    // e.g. "cbr500r" → "cbr500", "cb650r" → "cb650"
-    const noSuffix = base.replace(/([0-9])[a-z]$/, '$1');
-    if (noSuffix !== base) variations.add(noSuffix);
-    // With space between letters and numbers for Bling search
-    // e.g. "cbr500" matches "CBR 500" in Bling product names
-    const spaced = base.replace(/([a-z])(\d)/, '$1 $2').replace(/(\d)([a-z])/g, '$1$2');
-    if (spaced !== base) variations.add(normalize(spaced));
-    const spacedNoSuffix = noSuffix.replace(/([a-z])(\d)/, '$1 $2');
-    if (spacedNoSuffix !== noSuffix) variations.add(normalize(spacedNoSuffix));
-    return [...variations];
-  }
+      const base = normalize(slug);
+      const variations = new Set([base]);
+      const noSuffix = base.replace(/([0-9])[a-z]$/, '$1');
+      if (noSuffix !== base) variations.add(noSuffix);
+      const bases = [base];
+      if (noSuffix !== base) bases.push(noSuffix);
+      for (const b of bases) {
+        const withSpace = b.replace(/([a-z])(\d)/g, '$1 $2').replace(/(\d)([a-z])/g, '$1 $2');
+        const withHyphen = b.replace(/([a-z])(\d)/g, '$1-$2').replace(/(\d)([a-z])/g, '$1-$2');
+        if (withSpace !== b) variations.add(withSpace);
+        if (withHyphen !== b) variations.add(withHyphen);
+      }
+      return [...variations];
+    }
 
   // Try to find the moto in our catalog for precise matching
   const catalogInfo = window.getMotoSlug ? window.getMotoSlug(motoModel) : null;
@@ -7605,13 +7611,14 @@ async function blingFindCompatible(motoModel) {
       if (!searchTokens.includes(v)) searchTokens.push(v);
     });
   } else {
-    // Fallback: parse "Honda CB 650R 2023" → extract model identifier
-    const parts = motoModel.trim().split(/\s+/);
-    const filtered = parts.filter((p, i) => {
-      if (i === 0 && /^[A-Z][a-z]/.test(p)) return false;
-      if (/^\d{4}$/.test(p)) return false;
-      return true;
-    });
+      // Fallback: parse "Honda CB 650R 2023" - extract model identifier
+      const knownBrands = MOTO_CATALOG.map(b => b.marca.toLowerCase());
+      const parts = motoModel.trim().split(/\s+/);
+      const filtered = parts.filter((p, i) => {
+        if (i === 0 && knownBrands.includes(p.toLowerCase())) return false;
+        if (/^\d{4}$/.test(p)) return false;
+        return true;
+      });
     if (filtered.length > 0) {
       const joined = filtered.join('');
       slugVariations(joined).forEach(v => searchTokens.push(v));
@@ -7690,24 +7697,26 @@ async function blingFindCompatible(motoModel) {
   }
 
   return allResults.filter(p => {
-    const pName = normalize(p.nome);
-    // Must match at least one search token (slug-based)
-    const tokenMatch = searchTokens.some(token => pName.includes(token));
+    const pNorm = normalize(p.nome);
+    const pLower = (p.nome || '').toLowerCase();
+    const tokenMatch = searchTokens.some(token => pNorm.includes(token) || pLower.includes(token));
     if (!tokenMatch) return false;
-    // Year compatibility check
-    if (!prodMatchesYear(p.nome, motoYear)) return false;
-    // Stock check: if estoque info is available, filter by stock > 0
-    // If estoque is undefined (API didn't return it), still show the product
-    if (p.estoque && typeof p.estoque.saldoVirtualTotal === 'number' && p.estoque.saldoVirtualTotal <= 0) return false;
+    if (brand && !pNorm.includes(brand) && !pLower.includes(brand)) return false;
     return true;
+  }).filter(p => {
+    return prodMatchesYear(p.nome, motoYear);
+  }).filter(p => {
+    return (p.estoque?.saldoVirtualTotal || 0) > 0;
   }).sort((a, b) => {
-    const aName = normalize(a.nome);
-    const bName = normalize(b.nome);
+    const aNorm = normalize(a.nome);
+    const bNorm = normalize(b.nome);
+    const aLower = (a.nome || '').toLowerCase();
+    const bLower = (b.nome || '').toLowerCase();
     let scoreA = 0, scoreB = 0;
     for (let i = 0; i < searchTokens.length; i++) {
       const weight = searchTokens.length - i;
-      if (aName.includes(searchTokens[i])) scoreA += weight;
-      if (bName.includes(searchTokens[i])) scoreB += weight;
+      if (aNorm.includes(searchTokens[i]) || aLower.includes(searchTokens[i])) scoreA += weight;
+      if (bNorm.includes(searchTokens[i]) || bLower.includes(searchTokens[i])) scoreB += weight;
     }
     return scoreB - scoreA || (a.nome || '').localeCompare(b.nome || '');
   });
