@@ -4433,7 +4433,7 @@ function renderProjects() {
         const el = document.getElementById(cId);
         if (el) {
           el.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:4px 0"><svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align:-1px;margin-right:4px;animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="30 70"/></svg>Buscando produtos…</div>';
-          blingFindCompatible(p.moto).then(prods => renderCompatibleProducts(prods, cId));
+          blingFindCompatible(p.moto).then(prods => renderCompatibleProductsCollapsed(prods, cId));
         }
       }
     });
@@ -7639,9 +7639,11 @@ async function blingFindCompatible(motoModel) {
     if (!tokenMatch) return false;
     if (brand && !pNorm.includes(brand) && !pLower.includes(brand)) return false;
     return true;
-  }).filter(p => prodMatchesYear(p.nome, motoYear)
-  ).filter(p => (p.estoque?.saldoVirtualTotal || 0) > 0
+  }).filter(p => (p.estoque?.saldoVirtualTotal || 0) > 0
   ).sort((a, b) => {
+    const aYear = prodMatchesYear(a.nome, motoYear) ? 1 : 0;
+    const bYear = prodMatchesYear(b.nome, motoYear) ? 1 : 0;
+    if (bYear !== aYear) return bYear - aYear;
     const aNorm = normalize(a.nome);
     const bNorm = normalize(b.nome);
     const aLower = (a.nome || '').toLowerCase();
@@ -7689,6 +7691,55 @@ function renderCompatibleProducts(products, containerId) {
     </div>
   `;
 }
+
+// Collapsed variant for project cards - products hidden behind expander button
+function renderCompatibleProductsCollapsed(products, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (!products || products.length === 0) { container.innerHTML = ''; return; }
+  const html = renderCompatibleProductsHTML(products);
+  const n = products.length;
+  const btnId = containerId + '_btn';
+  const wrapId = containerId + '_wrap';
+  container.innerHTML = `<button id="${btnId}" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg-elev);color:var(--text-dim);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;margin-top:4px"
+    onmouseover="this.style.borderColor='var(--border-hi)';this.style.color='var(--text)'"
+    onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+    <span>Ver produtos compatíveis (${n})</span>
+  </button>
+  <div id="${wrapId}" style="display:none;margin-top:6px">${html}</div>`;
+  document.getElementById(btnId).onclick = function() {
+    const w = document.getElementById(wrapId);
+    const open = w.style.display !== 'none';
+    w.style.display = open ? 'none' : 'block';
+    this.querySelector('span').textContent = open ? `Ver produtos compatíveis (${n})` : `Ocultar produtos (${n})`;
+    this.querySelector('svg').style.transform = open ? '' : 'rotate(180deg)';
+  };
+}
+
+function renderCompatibleProductsHTML(products) {
+  return `<div style="max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border-hi) transparent"><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px" class="bling-prod-grid">` +
+    products.map(p => {
+      const img = p.imagemURL
+        ? `<img src="${escHtml(p.imagemURL)}" width="32" height="32" style="border-radius:4px;object-fit:cover"/>`
+        : `<div style="width:32px;height:32px;border-radius:4px;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--text-dim)" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4M4 7l8 4M4 7v10l8 4m0-10v10"/></svg></div>`;
+      const stk = p.estoque?.saldoVirtualTotal ?? '?';
+      const stkColor = typeof stk === 'number' ? (stk > 3 ? 'var(--success)' : 'var(--warning)') : 'var(--text-dim)';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:6px;background:var(--bg-card);border:1px solid var(--border);min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">${img}
+          <div style="min-width:0">
+            <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.nome)}</div>
+            <div style="font-size:10px;color:var(--text-dim)">SKU: ${escHtml(p.codigo || '—')} · R$ ${(p.preco || 0).toFixed(2)}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          <span style="font-size:12px;font-weight:700;color:${stkColor}">${stk}</span>
+          <span style="font-size:10px;color:var(--text-dim)">un</span>
+        </div>
+      </div>`;
+    }).join('') + `</div></div>`;
+}
+
 function updateBlingStatus() {
   const statusEl = document.getElementById('blingStatusText');
   const btnEl = document.getElementById('blingConnectBtn');
