@@ -7476,28 +7476,34 @@ async function blingSearchBySku(sku) {
 }
 
 // Get all products (cached 10 min)
+let _blingFetchPromise = null;
 async function blingGetAllProducts() {
   if (blingProducts.length > 0 && Date.now() - blingProductsTime < 600000) return blingProducts;
-  if (!await ensureBlingToken()) return [];
-  try {
-    let allProducts = [];
-    let pagina = 1;
-    let hasMore = true;
-    while (hasMore && pagina <= 5) {
-      const res = await fetch(BLING_PROXY_URL + `?action=products&pagina=${pagina}&limite=100`, {
-        headers: { 'x-bling-token': blingAccessToken }
-      });
-      const json = await res.json();
-      const items = json.data || [];
-      allProducts = allProducts.concat(items);
-      hasMore = items.length === 100;
-      pagina++;
-    }
-    blingProducts = allProducts;
-    blingProductsTime = Date.now();
-    return blingProducts;
-  } catch(e) { console.warn('Bling all products error:', e); }
-  return [];
+  if (_blingFetchPromise) return _blingFetchPromise;
+  _blingFetchPromise = (async () => {
+    if (!await ensureBlingToken()) return [];
+    try {
+      let allProducts = [];
+      let pagina = 1;
+      let hasMore = true;
+      while (hasMore && pagina <= 20) {
+        const res = await fetch(BLING_PROXY_URL + `?action=products&pagina=${pagina}&limite=100`, {
+          headers: { 'x-bling-token': blingAccessToken }
+        });
+        if (!res.ok) { console.warn('Bling page', pagina, 'status:', res.status); break; }
+        const json = await res.json();
+        const items = json.data || [];
+        allProducts = allProducts.concat(items);
+        hasMore = items.length === 100;
+        pagina++;
+      }
+      blingProducts = allProducts;
+      blingProductsTime = Date.now();
+      return blingProducts;
+    } catch(e) { console.warn('Bling all products error:', e); }
+    return [];
+  })();
+  try { return await _blingFetchPromise; } finally { _blingFetchPromise = null; }
 }
 
 // Get single product with full details (weight, dimensions)
