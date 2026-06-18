@@ -7659,6 +7659,26 @@ async function blingFindCompatible(motoModel) {
   const allResults = await blingGetAllProducts();
   if (!allResults.length) return [];
 
+  
+  // Also include brand for combined matching
+  const brand = catalogInfo ? normalize(catalogInfo.marca) : null;
+
+  // Extract year range from product names
+  function prodMatchesYear(prodName, year) {
+    if (!year) return true;
+    const rangeMatch = prodName.match(/\((\d{2,4})[-–](\d{2,4})\)/);
+    if (rangeMatch) {
+      let from = parseInt(rangeMatch[1]);
+      let to = parseInt(rangeMatch[2]);
+      if (from < 100) from += 2000;
+      if (to < 100) to += 2000;
+      return year >= from && year <= to;
+    }
+    const singleMatch = prodName.match(/\((\d{4})\)/);
+    if (singleMatch) return year === parseInt(singleMatch[1]);
+    return true;
+  }
+
   return allResults.filter(p => {
     const pNorm = normalize(p.nome);
     const pLower = (p.nome || '').toLowerCase();
