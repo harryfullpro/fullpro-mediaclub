@@ -7656,45 +7656,8 @@ async function blingFindCompatible(motoModel) {
   if (searchQueries.size === 0) return [];
 
   // Search Bling API for each query and merge results
-  let allResults = [];
-  const seen = new Set();
-  for (const query of searchQueries) {
-    const results = await blingSearchProducts(query);
-    results.forEach(p => {
-      if (!seen.has(p.id)) { seen.add(p.id); allResults.push(p); }
-    });
-    if (allResults.length >= 10) break; // enough results
-  }
-
-  // Also try with just the model slug variations as search
-  if (allResults.length < 3) {
-    for (const token of searchTokens) {
-      if (token.length >= 4) {
-        const results = await blingSearchProducts(token);
-        results.forEach(p => {
-          if (!seen.has(p.id)) { seen.add(p.id); allResults.push(p); }
-        });
-        if (allResults.length >= 10) break;
-      }
-    }
-  }
-
-  const brand = catalogInfo ? normalize(catalogInfo.marca) : null;
-
-  // Extract year range from product names: e.g. "(19-23)" means 2019-2023
-  function prodMatchesYear(prodName, year) {
-    if (!year) return true;
-    const rangeMatch = prodName.match(/\((\d{2,4})[-–](\d{2,4})\)/);
-    if (rangeMatch) {
-      let from = parseInt(rangeMatch[1]);
-      let to = parseInt(rangeMatch[2]);
-      if (from < 100) from += 2000;
-      if (to < 100) to += 2000;
-      return year >= from && year <= to;
-    }
-    // No year info in product name = compatible with all years
-    return true;
-  }
+  const allResults = await blingGetAllProducts();
+  if (!allResults.length) return [];
 
   return allResults.filter(p => {
     const pNorm = normalize(p.nome);
