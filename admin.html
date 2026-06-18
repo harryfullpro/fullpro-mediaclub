@@ -1564,6 +1564,7 @@
   }
   @media (max-width: 768px) {
     .posts-grid { grid-template-columns: 1fr; }
+    .bling-prod-grid { grid-template-columns: 1fr !important; }
   }
 
   /* ── Influencer Hub Stat Cards ── */
@@ -7667,24 +7668,27 @@ function renderCompatibleProducts(products, containerId) {
     <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">
       Produtos compatíveis em estoque (${products.length})
     </div>
-    ${products.map(p => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:6px;background:var(--bg-card);border:1px solid var(--border);margin-bottom:4px">
-        <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
-          ${p.imagemURL ? `<img src="${p.imagemURL}" width="32" height="32" style="border-radius:4px;object-fit:cover"/>` : '<div style="width:32px;height:32px;border-radius:4px;background:var(--border);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--text-dim)" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4M4 7l8 4M4 7v10l8 4m0-10v10"/></svg></div>'}
-          <div style="min-width:0">
-            <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.nome)}</div>
-            <div style="font-size:10px;color:var(--text-dim)">SKU: ${escHtml(p.codigo || '—')} · R$ ${(p.preco || 0).toFixed(2)}</div>
+    <div style="max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border-hi) transparent">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px" class="bling-prod-grid">
+        ${products.map(p => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:6px;background:var(--bg-card);border:1px solid var(--border);min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+              ${p.imagemURL ? `<img src="${p.imagemURL}" width="32" height="32" style="border-radius:4px;object-fit:cover"/>` : '<div style="width:32px;height:32px;border-radius:4px;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--text-dim)" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4M4 7l8 4M4 7v10l8 4m0-10v10"/></svg></div>'}
+              <div style="min-width:0">
+                <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.nome)}</div>
+                <div style="font-size:10px;color:var(--text-dim)">SKU: ${escHtml(p.codigo || '—')} · R$ ${(p.preco || 0).toFixed(2)}</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+              <span style="font-size:12px;font-weight:700;color:${p.estoque?.saldoVirtualTotal != null ? ((p.estoque.saldoVirtualTotal > 3) ? 'var(--success)' : 'var(--warning)') : 'var(--text-dim)'}">${p.estoque?.saldoVirtualTotal != null ? p.estoque.saldoVirtualTotal : '?'}</span>
+              <span style="font-size:10px;color:var(--text-dim)">un</span>
+            </div>
           </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-          <span style="font-size:12px;font-weight:700;color:${p.estoque?.saldoVirtualTotal != null ? ((p.estoque.saldoVirtualTotal > 3) ? 'var(--success)' : 'var(--warning)') : 'var(--text-dim)'}">${p.estoque?.saldoVirtualTotal != null ? p.estoque.saldoVirtualTotal : '?'}</span>
-          <span style="font-size:10px;color:var(--text-dim)">un</span>
-        </div>
+        `).join('')}
       </div>
-    `).join('')}
+    </div>
   `;
 }
-
 function updateBlingStatus() {
   const statusEl = document.getElementById('blingStatusText');
   const btnEl = document.getElementById('blingConnectBtn');
