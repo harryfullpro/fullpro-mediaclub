@@ -12267,10 +12267,10 @@ function applyRolePermissions() {
 
   // Views accessible per role
   const access = {
-    admin: ['dashboard','requests','calendar','checkin','projects','editing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'],
-    filmmaker: ['dashboard','requests','calendar','checkin','projects','editing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','profile'],
-    mecanico: ['dashboard','requests','calendar','checkin','projects','editing','perf-metas','perf-posts','perf-bonificacao','templates','profile'],
-    viewer: ['dashboard','profile']
+    admin: ['dashboard','requests','calendar','checkin','projects','editing','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'],
+    filmmaker: ['dashboard','requests','calendar','checkin','projects','editing','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','profile'],
+    mecanico: ['dashboard','requests','calendar','checkin','projects','editing','debriefing','perf-metas','perf-posts','perf-bonificacao','templates','profile'],
+    viewer: ['dashboard','debriefing','profile']
   };
 
   const allowed = access[role] || access.viewer;
