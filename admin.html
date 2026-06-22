@@ -4302,6 +4302,8 @@ async function updateStatus(id, status) {
   if (r) r.status = status;
   renderRequests();
   renderCalendar();
+  renderCiView();
+  renderDashboard();
   closeModal();
 }
 
@@ -12366,6 +12368,149 @@ async function initApp() {
   // Auto-refresh seguidores (non-blocking, runs in background)
   autoRefreshInfFollowers().catch(e => console.warn('[InfRefresh] falhou:', e.message));
 }
+
+/* =====================================================================
+   PATCH: Hash-based routing + data refresh on view switch
+   Injected at the END of the <script> block, before closing </script>
+   ===================================================================== */
+
+(function patchNavigation() {
+  'use strict';
+
+  /* ------------------------------------------------------------------
+     1. VIEW LIST (must match the forEach arrays in the codebase)
+     ------------------------------------------------------------------ */
+  const ALL_VIEWS = [
+    'dashboard','requests','calendar','checkin','projects','project-detail',
+    'editing','debriefing','perf-metas','perf-posts','perf-influencers',
+    'perf-bonificacao','templates','export','users','profile'
+  ];
+
+  /* ------------------------------------------------------------------
+     2. HELPER: switch to a view by name
+     ------------------------------------------------------------------ */
+  function switchToView(viewName, pushHistory) {
+    if (!viewName || !ALL_VIEWS.includes(viewName)) viewName = 'dashboard';
+
+    // Hide all views
+    ALL_VIEWS.forEach(v => {
+      const el = document.getElementById('view-' + v);
+      if (el) el.style.display = 'none';
+    });
+
+    // Show target view
+    const target = document.getElementById('view-' + viewName);
+    if (target) target.style.display = 'block';
+
+    // Update active nav button
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    const activeBtn = document.querySelector(`.nav-item[data-view="${viewName}"]`);
+    if (activeBtn) activeBtn.classList.add('active');
+
+    // Push to browser history (unless we're restoring from popstate)
+    if (pushHistory !== false) {
+      const newHash = '#' + viewName;
+      if (window.location.hash !== newHash) {
+        history.pushState({ view: viewName }, '', newHash);
+      }
+    }
+
+    // Refresh data for the target view
+    refreshViewData(viewName);
+  }
+
+  /* ------------------------------------------------------------------
+     3. DATA REFRESH per view
+     Reloads relevant data from Supabase then re-renders the view.
+     ------------------------------------------------------------------ */
+  async function refreshViewData(viewName) {
+    try {
+      switch (viewName) {
+        case 'dashboard':
+          await Promise.all([loadRequests(), loadCheckins(), loadCheckouts(), loadProjects()]);
+          renderDashboard();
+          break;
+        case 'requests':
+          await loadRequests();
+          renderRequests();
+          break;
+        case 'calendar':
+          await loadRequests();
+          renderCalendar();
+          break;
+        case 'checkin':
+          await Promise.all([loadRequests(), loadCheckins(), loadCheckouts()]);
+          renderCiView();
+          break;
+        case 'projects':
+          await loadProjects();
+          renderProjects();
+          break;
+        case 'editing':
+          await loadProjects();
+          if (typeof renderEditingView === 'function') renderEditingView();
+          break;
+        case 'debriefing':
+          if (typeof renderDebriefing === 'function') renderDebriefing();
+          break;
+        case 'perf-metas':
+        case 'perf-posts':
+        case 'perf-influencers':
+        case 'perf-bonificacao':
+          await Promise.all([loadPerfPosts(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses()]);
+          if (typeof renderPerformance === 'function') renderPerformance();
+          break;
+        case 'templates':
+          if (typeof renderTemplates === 'function') renderTemplates();
+          break;
+        case 'users':
+          await loadUsers();
+          if (typeof renderUsers === 'function') renderUsers();
+          break;
+        // 'profile', 'export', 'project-detail' — no special refresh needed
+      }
+    } catch (err) {
+      console.warn('refreshViewData error for', viewName, err);
+    }
+  }
+
+  /* ------------------------------------------------------------------
+     4. OVERRIDE existing nav-item click handlers
+     ------------------------------------------------------------------ */
+  document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
+    // Clone and replace to remove old listeners
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+
+    newBtn.addEventListener('click', () => {
+      switchToView(newBtn.dataset.view, true);
+    });
+  });
+
+  /* ------------------------------------------------------------------
+     5. POPSTATE: handle browser back/forward
+     ------------------------------------------------------------------ */
+  window.addEventListener('popstate', (e) => {
+    const view = (e.state && e.state.view)
+      ? e.state.view
+      : (window.location.hash ? window.location.hash.slice(1) : 'dashboard');
+    switchToView(view, false);
+  });
+
+  /* ------------------------------------------------------------------
+     6. ON PAGE LOAD: restore view from hash
+     ------------------------------------------------------------------ */
+  const hashView = window.location.hash ? window.location.hash.slice(1) : '';
+  if (hashView && ALL_VIEWS.includes(hashView) && hashView !== 'dashboard') {
+    // Replace initial state so back button works correctly
+    history.replaceState({ view: hashView }, '', '#' + hashView);
+    switchToView(hashView, false);
+  } else {
+    history.replaceState({ view: 'dashboard' }, '', '#dashboard');
+  }
+
+  console.log('[NAV PATCH] Hash-based routing + data refresh active');
+})();
 
 checkAuth();
 </script>
