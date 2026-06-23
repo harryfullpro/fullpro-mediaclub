@@ -2633,6 +2633,87 @@
   [data-theme="light"] .ai-chat-send-btn { background: linear-gradient(135deg, #d97706, #b45309); }
   @media (max-width: 480px) { #aiChatPanel { width: 100%; right: -100%; } }
 
+
+/* ── Post Modal Custom Controls ── */
+.post-type-group { display: flex; gap: 10px; margin-bottom: 4px; }
+.post-type-option {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 16px; border-radius: 10px; cursor: pointer;
+  border: 1.5px solid var(--border-hi); background: var(--bg-elev);
+  color: var(--text-dim); font-size: 13px; font-weight: 600;
+  transition: all .15s; font-family: inherit;
+}
+.post-type-option:hover { border-color: var(--border-hi); background: rgba(255,255,255,.04); }
+.post-type-option.active {
+  border-color: var(--primary); background: rgba(255,45,45,.08); color: var(--text);
+}
+.post-type-option input[type="radio"] { display: none; }
+.post-type-dot {
+  width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border-hi);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: all .15s;
+}
+.post-type-option.active .post-type-dot {
+  border-color: var(--primary); background: var(--primary);
+}
+.post-type-option.active .post-type-dot::after {
+  content: ''; width: 6px; height: 6px; border-radius: 50%; background: #fff;
+}
+
+.post-platforms-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+.post-platform-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: 8px; cursor: pointer;
+  border: 1.5px solid var(--border); background: var(--bg-elev);
+  color: var(--text-dim); font-size: 12px; font-weight: 600;
+  transition: all .15s; font-family: inherit; text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.post-platform-chip:hover { border-color: var(--border-hi); }
+.post-platform-chip.checked {
+  border-color: var(--primary); background: rgba(255,45,45,.08); color: var(--text);
+}
+.post-platform-chip input[type="checkbox"] { display: none; }
+.post-platform-check {
+  width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--border-hi);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: all .15s;
+}
+.post-platform-chip.checked .post-platform-check {
+  border-color: var(--primary); background: var(--primary);
+}
+.post-platform-chip.checked .post-platform-check::after {
+  content: ''; width: 8px; height: 5px;
+  border-left: 2px solid #fff; border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) translateY(-1px);
+}
+
+.post-stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.post-stats-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.post-stat-field label { display: block; margin-bottom: 6px; }
+
+.post-rating-stars { display: flex; gap: 4px; margin-bottom: 4px; }
+.post-rating-star {
+  width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg-elev); cursor: pointer; display: flex; align-items: center;
+  justify-content: center; transition: all .15s; color: var(--text-muted);
+}
+.post-rating-star:hover { border-color: #f59e0b; color: #f59e0b; }
+.post-rating-star.active { border-color: #f59e0b; background: rgba(245,158,11,.12); color: #f59e0b; }
+
+[data-theme="light"] .post-type-option.active {
+  border-color: #d97706; background: rgba(217,119,6,.08);
+}
+[data-theme="light"] .post-platform-chip.checked {
+  border-color: #d97706; background: rgba(217,119,6,.08);
+}
+[data-theme="light"] .post-type-option.active .post-type-dot {
+  border-color: #d97706; background: #d97706;
+}
+[data-theme="light"] .post-platform-chip.checked .post-platform-check {
+  border-color: #d97706; background: #d97706;
+}
+
 </style>
 </head>
 <body>
@@ -3727,71 +3808,101 @@
 </div>
 
 <!-- Modal Adicionar Post -->
+<!-- Modal Adicionar Post -->
 <div class="modal" id="perfAddPostModal">
   <div class="modal-content" style="max-width:560px">
     <div class="modal-head">
       <h3>Adicionar novo post</h3>
-      <button class="modal-close" onclick="closePerfAddPostModal()">×</button>
+      <button class="modal-close" onclick="closePerfAddPostModal()">&times;</button>
     </div>
     <div class="modal-body">
       <div class="book-form">
-        <label>Título do post *</label>
+
+        <label>T&iacute;tulo do post *</label>
         <input type="text" id="postTitle" placeholder="Ex: Review Honda CB 500"/>
 
         <label>Link do post</label>
         <input type="url" id="postLink" placeholder="https://youtube.com/watch?v=... ou https://instagram.com/reel/..." oninput="autoDetectPostPlatform(this.value)"/>
 
-        <label>Tipo de conteúdo *</label>
-        <div style="display:flex;gap:8px;margin-bottom:14px">
-          <label style="flex:1">
-            <input type="radio" name="postType" value="longo" checked style="margin-right:6px"/>
-            Vídeo longo
+        <label>Tipo de conte&uacute;do *</label>
+        <div class="post-type-group">
+          <label class="post-type-option active" onclick="selectPostType(this,'longo')">
+            <input type="radio" name="postType" value="longo" checked/>
+            <span class="post-type-dot"></span>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            V&iacute;deo longo
           </label>
-          <label style="flex:1">
-            <input type="radio" name="postType" value="short" style="margin-right:6px"/>
+          <label class="post-type-option" onclick="selectPostType(this,'short')">
+            <input type="radio" name="postType" value="short"/>
+            <span class="post-type-dot"></span>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
             Short
           </label>
         </div>
 
         <label>Plataformas *</label>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
-          <label><input type="checkbox" class="postPlatform" value="yt" style="margin-right:6px"/>YouTube</label>
-          <label><input type="checkbox" class="postPlatform" value="yts" style="margin-right:6px"/>YT Shorts</label>
-          <label><input type="checkbox" class="postPlatform" value="ig" style="margin-right:6px"/>Instagram</label>
-          <label><input type="checkbox" class="postPlatform" value="tt" style="margin-right:6px"/>TikTok</label>
+        <div class="post-platforms-grid">
+          <label class="post-platform-chip" onclick="togglePostPlatform(this)">
+            <input type="checkbox" class="postPlatform" value="yt"/>
+            <span class="post-platform-check"></span>
+            YouTube
+          </label>
+          <label class="post-platform-chip" onclick="togglePostPlatform(this)">
+            <input type="checkbox" class="postPlatform" value="yts"/>
+            <span class="post-platform-check"></span>
+            YT Shorts
+          </label>
+          <label class="post-platform-chip" onclick="togglePostPlatform(this)">
+            <input type="checkbox" class="postPlatform" value="ig"/>
+            <span class="post-platform-check"></span>
+            Instagram
+          </label>
+          <label class="post-platform-chip" onclick="togglePostPlatform(this)">
+            <input type="checkbox" class="postPlatform" value="tt"/>
+            <span class="post-platform-check"></span>
+            TikTok
+          </label>
         </div>
 
-        <div class="book-row" style="grid-template-columns:1fr 1fr 1fr">
-          <div>
+        <div class="post-stats-grid">
+          <div class="post-stat-field">
             <label>Views</label>
             <input type="number" id="postViews" min="0" placeholder="0"/>
           </div>
-          <div>
+          <div class="post-stat-field">
             <label>Likes</label>
             <input type="number" id="postLikes" min="0" placeholder="0"/>
           </div>
-          <div>
+          <div class="post-stat-field">
             <label>Comments</label>
             <input type="number" id="postComments" min="0" placeholder="0"/>
           </div>
         </div>
 
-        <div class="book-row">
-          <div>
-            <label>Retenção média (%)</label>
+        <div class="post-stats-grid-2">
+          <div class="post-stat-field">
+            <label>Reten&ccedil;&atilde;o m&eacute;dia (%)</label>
             <input type="number" id="postRetention" min="0" max="100" placeholder="0"/>
           </div>
-          <div>
+          <div class="post-stat-field">
             <label>Cliques pro site</label>
             <input type="number" id="postClicks" min="0" placeholder="0"/>
           </div>
         </div>
 
-        <label>Avaliação (1-5)</label>
-        <input type="number" id="postRating" min="1" max="5" placeholder="5"/>
+        <label>Avalia&ccedil;&atilde;o</label>
+        <div class="post-rating-stars" id="postRatingStars">
+          <div class="post-rating-star active" onclick="setPostRating(1)" data-val="1"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+          <div class="post-rating-star active" onclick="setPostRating(2)" data-val="2"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+          <div class="post-rating-star active" onclick="setPostRating(3)" data-val="3"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+          <div class="post-rating-star active" onclick="setPostRating(4)" data-val="4"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+          <div class="post-rating-star active" onclick="setPostRating(5)" data-val="5"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        </div>
+        <input type="hidden" id="postRating" value="5"/>
 
         <label>Notas / Insights</label>
-        <textarea style="width:100%;min-height:60px;padding:10px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:12px;font-family:inherit;resize:vertical" id="postNotes" placeholder="Observações sobre performance..."></textarea>
+        <textarea id="postNotes" placeholder="Observa&ccedil;&otilde;es sobre performance..." style="width:100%;min-height:60px;padding:10px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:13px;font-family:inherit;resize:vertical"></textarea>
+
       </div>
     </div>
     <div class="modal-foot">
@@ -11570,6 +11681,10 @@ function openAddPostModal() {
   document.querySelectorAll('.postPlatform').forEach(cb => cb.checked = false);
   document.querySelector('input[name="postType"][value="longo"]').checked = true;
   document.getElementById('perfAddPostModal').classList.add('show');
+  // Reset custom visual controls
+  document.querySelectorAll('.post-type-option').forEach((o, i) => o.classList.toggle('active', i === 0));
+  document.querySelectorAll('.post-platform-chip').forEach(c => c.classList.remove('checked'));
+  setPostRating(5);
 }
 
 /* Auto-detect platform from post link */
@@ -11594,8 +11709,35 @@ function autoDetectPostPlatform(url) {
     if (cb) cb.checked = true;
     document.querySelector('input[name="postType"][value="short"]').checked = true;
   }
+  // Sync visual chip states
+  document.querySelectorAll('.post-platform-chip').forEach(chip => {
+    const cb = chip.querySelector('input[type="checkbox"]');
+    if (cb) chip.classList.toggle('checked', cb.checked);
+  });
 }
 function closePerfAddPostModal() { document.getElementById('perfAddPostModal').classList.remove('show'); }
+
+// ── Post Modal Custom Controls ──
+function selectPostType(el, val) {
+  document.querySelectorAll('.post-type-option').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  el.querySelector('input[type="radio"]').checked = true;
+}
+
+function togglePostPlatform(el) {
+  const cb = el.querySelector('input[type="checkbox"]');
+  cb.checked = !cb.checked;
+  el.classList.toggle('checked', cb.checked);
+}
+
+function setPostRating(val) {
+  document.getElementById('postRating').value = val;
+  document.querySelectorAll('.post-rating-star').forEach(s => {
+    const sv = parseInt(s.getAttribute('data-val'));
+    s.classList.toggle('active', sv <= val);
+  });
+}
+
 
 /* ═══ Influencer Modal (Create / Edit) ═══ */
 function openInfModal(id) {
