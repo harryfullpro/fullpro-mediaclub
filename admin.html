@@ -12569,13 +12569,13 @@ async function initApp() {
       const apiMessages = aiChatMessages
         .filter(m => m.role === 'user' || m.role === 'assistant')
         .map(m => ({ role: m.role, content: m.content }));
-      const sess = sb.auth.session ? sb.auth.session() : null;
-      const token = sess ? sess.access_token : (sb.auth.currentSession ? sb.auth.currentSession.access_token : '');
+      const { data: { session: sess } } = await sb.auth.getSession();
+      const token = sess?.access_token || '';
       const res = await fetch(
-        SUPABASE_URL + '/functions/v1/ai-roteiro',
+        window.FULLPRO_CONFIG.SUPABASE_URL + '/functions/v1/ai-roteiro',
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_KEY },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': window.FULLPRO_CONFIG.SUPABASE_ANON_KEY },
           body: JSON.stringify({ messages: apiMessages, projectContext })
         }
       );
