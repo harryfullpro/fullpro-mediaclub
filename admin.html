@@ -11,7 +11,7 @@
   :root, [data-theme="dark"] {
     --bg: #0a0a0b;
     --bg-soft: #111114;
-    --bg-card: #16161a;
+    --bg-card: #16161a
     --bg-elev: #1c1c22;
     --border: #26262e;
     --border-hi: #34343e;
@@ -10872,7 +10872,39 @@ function renderPerfPosts() {
   const el = document.getElementById('perfPostsList');
   if (!el) return;
 
-  let allPosts = getAllProjectPosts();
+  // Merge project posts + standalone posts from mc_performance_posts
+  const projectPosts = getAllProjectPosts();
+  const standalonePosts = (PERF_POSTS || []).map(p => {
+    const plats = Array.isArray(p.platforms) ? p.platforms : [];
+    const mainPlat = plats[0] || 'yt';
+    let thumb = p.thumbnail || '';
+    if (!thumb && p.link) {
+      const ytId = extractYouTubeId(p.link);
+      if (ytId) thumb = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+    }
+    const platLabels = { yt: 'YouTube', yts: 'YT Shorts', ig: 'Instagram', tt: 'TikTok' };
+    return {
+      id: p.id,
+      projectId: null,
+      title: p.title || 'Sem título',
+      label: platLabels[mainPlat] || mainPlat,
+      platform: mainPlat,
+      type: p.type || 'short',
+      link: p.link || '',
+      thumbnail: thumb,
+      views: p.views || 0,
+      likes: p.likes || 0,
+      comments: p.comments || 0,
+      rating: p.rating || 0,
+      status: '',
+      created_at: p.created_at
+    };
+  });
+  // Deduplicate: remove standalone posts whose link already exists in project posts
+  const projLinks = new Set(projectPosts.map(p => p.link).filter(Boolean));
+  const uniqueStandalone = standalonePosts.filter(p => !p.link || !projLinks.has(p.link));
+  let allPosts = [...projectPosts, ...uniqueStandalone];
+  allPosts.sort((a, b) => (b.views - a.views) || (new Date(b.created_at) - new Date(a.created_at)));
   let posts = [...allPosts];
 
   // Apply filter
