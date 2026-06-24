@@ -2074,6 +2074,11 @@
   .inf-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
   .inf-tab-content { display:none; }
   .inf-tab-content.active { display:block; }
+  .kpi-card { background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;transition:transform .15s,box-shadow .15s }
+  .kpi-card:hover { transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15) }
+  .kpi-icon { width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0 }
+  .kpi-label { font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600 }
+  .kpi-value { font-size:22px;font-weight:800;color:var(--text);line-height:1 }
 
   /* ── Posts Grid (Instagram-style) ── */
   .posts-grid {
@@ -3322,8 +3327,21 @@
 
       <!-- TAB: Envios & Produtos -->
       <div class="inf-tab-content" id="infTabEnvios">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <div></div>
+        <!-- KPI Cards -->
+        <div id="envioKpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px"></div>
+        <!-- Toolbar -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <select id="envioFilterStatus" onchange="renderInfEnvios()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-elev);color:var(--text);font-size:11px">
+              <option value="">Todos os status</option>
+              <option value="preparando">Preparando</option>
+              <option value="enviado">Enviado</option>
+              <option value="entregue">Entregue</option>
+            </select>
+            <select id="envioFilterInf" onchange="renderInfEnvios()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-elev);color:var(--text);font-size:11px">
+              <option value="">Todos os influenciadores</option>
+            </select>
+          </div>
           <button class="action-btn view" style="padding:8px 14px;font-size:12px" onclick="openInfEnvioModal()">+ Novo Envio</button>
         </div>
         <div class="cal-card">
@@ -4028,51 +4046,72 @@
 
 <!-- Modal Envio de Produto -->
 <div class="modal" id="infEnvioModal">
-  <div class="modal-content" style="max-width:640px">
+  <div class="modal-content" style="max-width:680px">
     <div class="modal-head">
-      <h3>Registrar Envio</h3>
+      <h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;margin-right:6px"><path d="M16 16h6v6h-6z"/><path d="M2 2h6v6H2z"/><path d="M5 8v3a4 4 0 004 4h2"/><path d="M19 8V5a4 4 0 00-4-4h-2"/></svg>Registrar Envio</h3>
       <button class="modal-close" onclick="closeInfEnvioModal()">×</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
       <div class="book-form">
-        <label>Influenciador *</label>
-        <select id="envioInfId"></select>
-
-        <label>Buscar produto (SKU ou nome)</label>
-        <div style="position:relative">
-          <input type="text" id="envioProdBusca" placeholder="Digite SKU ou nome do produto…" autocomplete="off" oninput="debounceBlingSearch(this.value)"/>
-          <div id="envioProdResults" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:var(--bg-card);border:1px solid var(--border);border-radius:0 0 8px 8px;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.2)"></div>
+        <!-- Seção 1: Destinatário -->
+        <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Destinatário</div>
+          <label>Influenciador *</label>
+          <select id="envioInfId" onchange="onEnvioInfChange()"></select>
+          <div id="envioInfAddress" style="display:none;margin-top:8px;padding:8px 10px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text-dim);line-height:1.5"></div>
         </div>
 
-        <label style="margin-top:8px">Produtos selecionados</label>
-        <div id="envioSelectedProducts" style="min-height:40px;padding:6px;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev)">
-          <div style="color:var(--text-muted);font-size:11px;text-align:center;padding:10px 0" id="envioNoProds">Nenhum produto adicionado</div>
+        <!-- Seção 2: Produtos -->
+        <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Produtos do Bling</div>
+          <div style="position:relative">
+            <input type="text" id="envioProdBusca" placeholder="Buscar por SKU ou nome do produto…" autocomplete="off" oninput="debounceBlingSearch(this.value)" style="padding-left:32px"/>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--text-muted)" stroke-width="2" style="position:absolute;left:10px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <div id="envioProdResults" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:220px;overflow-y:auto;background:var(--bg-card);border:1px solid var(--border);border-radius:0 0 8px 8px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.3)"></div>
+          </div>
+          <div id="envioSelectedProducts" style="min-height:40px;padding:6px;margin-top:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card)">
+            <div style="color:var(--text-muted);font-size:11px;text-align:center;padding:10px 0" id="envioNoProds">Nenhum produto adicionado</div>
+          </div>
         </div>
 
-        <label>Método de envio *</label>
-        <select id="envioMetodo">
-          <option value="pac">Correios PAC</option>
-          <option value="sedex">Correios SEDEX</option>
-          <option value="outro">Outro</option>
-        </select>
-
-        <label>Código de rastreio</label>
-        <input type="text" id="envioTracking" placeholder="Código dos Correios / transportadora"/>
-        <label>Status</label>
-        <select id="envioStatus">
-          <option value="preparando">Preparando</option>
-          <option value="enviado">Enviado</option>
-          <option value="entregue">Entregue</option>
-        </select>
-        <label>Notas</label>
-        <textarea style="width:100%;min-height:50px;padding:10px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:12px;font-family:inherit;resize:vertical" id="envioNotas" placeholder="Observações..."></textarea>
+        <!-- Seção 3: Envio -->
+        <div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Detalhes do Envio</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label>Método de envio *</label>
+              <select id="envioMetodo">
+                <option value="pac">Correios PAC</option>
+                <option value="sedex">Correios SEDEX</option>
+                <option value="transportadora">Transportadora</option>
+                <option value="motoboy">Motoboy</option>
+                <option value="outro">Outro</option>
+              </select>
+            </div>
+            <div>
+              <label>Status</label>
+              <select id="envioStatus">
+                <option value="preparando">Preparando</option>
+                <option value="enviado">Enviado</option>
+                <option value="entregue">Entregue</option>
+              </select>
+            </div>
+          </div>
+          <label style="margin-top:8px">Código de rastreio</label>
+          <input type="text" id="envioTracking" placeholder="Ex: NX123456789BR"/>
+          <label>Observações</label>
+          <textarea style="width:100%;min-height:50px;padding:10px;background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:12px;font-family:inherit;resize:vertical" id="envioNotas" placeholder="Notas internas sobre o envio..."></textarea>
+        </div>
       </div>
     </div>
     <div class="modal-foot">
       <button class="action-btn" onclick="closeInfEnvioModal()">Cancelar</button>
-      <button class="action-btn approve" onclick="saveInfEnvio()">Salvar Envio</button>
+      <button class="action-btn approve" onclick="saveInfEnvio()">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;margin-right:4px"><path d="M5 12l5 5L20 7"/></svg>
+        Salvar Envio
+      </button>
     </div>
-  </div>
+  </div></div>
 </div>
 
 <!-- Modal Conteúdo -->
@@ -11443,40 +11482,69 @@ function renderInfCupons(active) {
 }
 
 /* ── TAB: Envios & Produtos ── */
+function renderEnvioKpis() {
+  const el = document.getElementById('envioKpis');
+  if (!el) return;
+  const total = INF_ENVIOS.length;
+  const preparando = INF_ENVIOS.filter(e => e.status === 'preparando').length;
+  const enviado = INF_ENVIOS.filter(e => e.status === 'enviado').length;
+  const entregue = INF_ENVIOS.filter(e => e.status === 'entregue').length;
+  el.innerHTML = `
+    <div class="kpi-card" style="border-left:3px solid var(--primary)"><div class="kpi-icon" style="background:var(--primary)22;color:var(--primary)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><div><div class="kpi-label">Total de Envios</div><div class="kpi-value">${total}</div></div></div>
+    <div class="kpi-card" style="border-left:3px solid var(--warning)"><div class="kpi-icon" style="background:var(--warning)22;color:var(--warning)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="kpi-label">Preparando</div><div class="kpi-value">${preparando}</div></div></div>
+    <div class="kpi-card" style="border-left:3px solid #3b82f6"><div class="kpi-icon" style="background:#3b82f622;color:#3b82f6"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div><div><div class="kpi-label">Em Trânsito</div><div class="kpi-value">${enviado}</div></div></div>
+    <div class="kpi-card" style="border-left:3px solid var(--success)"><div class="kpi-icon" style="background:var(--success)22;color:var(--success)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div><div class="kpi-label">Entregues</div><div class="kpi-value">${entregue}</div></div></div>`;
+}
+
+function populateEnvioFilters() {
+  const sel = document.getElementById('envioFilterInf');
+  if (!sel) return;
+  const current = sel.value;
+  const infIds = [...new Set(INF_ENVIOS.map(e => e.influencer_id))];
+  sel.innerHTML = '<option value="">Todos os influenciadores</option>' + infIds.map(id => {
+    const inf = PERF_INFLUENCERS.find(i => i.id === id);
+    return inf ? `<option value="${id}"${id === current ? ' selected' : ''}>${escHtml(inf.name)}</option>` : '';
+  }).join('');
+}
+
 function renderInfEnvios(active) {
   const el = document.getElementById('infEnviosList');
   if (!el) return;
+  renderEnvioKpis();
+  populateEnvioFilters();
+  const filterStatus = document.getElementById('envioFilterStatus')?.value || '';
+  const filterInf = document.getElementById('envioFilterInf')?.value || '';
+  let envios = [...INF_ENVIOS];
+  if (filterStatus) envios = envios.filter(e => e.status === filterStatus);
+  if (filterInf) envios = envios.filter(e => e.influencer_id === filterInf);
 
-  if (INF_ENVIOS.length === 0) {
-    el.innerHTML = '<p style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px 0">Nenhum envio registrado ainda.</p>';
+  if (envios.length === 0) {
+    el.innerHTML = '<p style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px 0">Nenhum envio encontrado.</p>';
     return;
   }
 
-  const statusBadge = s => {
-    const m = {preparando:['var(--warning)','Preparando'],enviado:['#3b82f6','Enviado'],entregue:['var(--success)','Entregue']};
-    const [c,l] = m[s] || ['var(--text-muted)',s];
-    return `<span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;background:${c}22;color:${c}">${l}</span>`;
-  };
-
   el.innerHTML = `<table class="inf-list-table">
-    <thead><tr><th>Influenciador</th><th>Produto</th><th>Qtd</th><th>Valor</th><th>Rastreio</th><th>Status</th><th>Data</th><th style="text-align:right">Ações</th></tr></thead>
-    <tbody>${INF_ENVIOS.map(e => {
+    <thead><tr><th>Influenciador</th><th>Produtos</th><th>Qtd</th><th>Valor</th><th>Rastreio</th><th>Status</th><th>Data</th><th style="text-align:right">Ações</th></tr></thead>
+    <tbody>${envios.map(e => {
       const inf = PERF_INFLUENCERS.find(i => i.id === e.influencer_id);
       const name = inf ? inf.name : 'Desconhecido';
+      const items = e.items || [];
+      const produtoDisplay = items.length > 0
+        ? items.map(it => `<span style="display:inline-block;padding:1px 6px;background:var(--bg-elev);border:1px solid var(--border);border-radius:4px;font-size:10px;margin:1px 2px">${escHtml((it.nome||'').substring(0,30)||(it.codigo||''))}</span>`).join('')
+        : `<span style="font-size:11px;color:var(--text-dim)">${escHtml(e.produto||'Sem detalhe')}</span>`;
       return `<tr>
         <td style="font-weight:600;color:var(--text);font-size:12px">${escHtml(name)}</td>
-        <td style="color:var(--text-dim)">${escHtml(e.produto||'')}</td>
-        <td style="text-align:center">${e.qtd||1}</td>
+        <td style="max-width:200px">${produtoDisplay}</td>
+        <td style="text-align:center;font-weight:600">${e.qtd||1}</td>
         <td style="color:var(--primary);font-weight:600">R$ ${formatBRL(e.valor||0)}</td>
-        <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim)">${e.tracking ? escHtml(e.tracking) : '—'}</td>
-        <td>${statusBadge(e.status||'preparando')}</td>
+        <td><input type="text" value="${escHtml(e.tracking||'')}" placeholder="Rastreio…" style="width:130px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-elev);color:var(--text);font-size:11px;font-family:'JetBrains Mono',monospace" onchange="updateEnvioField('${e.id}','tracking',this.value)"/></td>
+        <td><select onchange="updateEnvioField('${e.id}','status',this.value)" style="padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-elev);color:var(--text);font-size:10px;font-weight:600">${['preparando','enviado','entregue'].map(s => `<option value="${s}"${e.status===s?' selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}</select></td>
         <td style="font-size:11px;color:var(--text-muted)">${e.created_at ? new Date(e.created_at).toLocaleDateString('pt-BR') : '—'}</td>
-        <td style="text-align:right">
-          <button class="action-btn view" style="padding:3px 8px;font-size:10px" onclick="gerarEtiquetaEnvio('${e.id}')">
-            <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-            Etiqueta
-          </button>
-        </td>
+        <td style="text-align:right"><div style="display:flex;gap:4px;justify-content:flex-end">
+          <button class="action-btn view" style="padding:3px 8px;font-size:10px" onclick="gerarEtiquetaEnvio('${e.id}')" title="Imprimir"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimir</button>
+          <button class="action-btn view" style="padding:3px 8px;font-size:10px" onclick="gerarPdfEnvio('${e.id}')" title="Baixar PDF"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF</button>
+          <button class="action-btn" style="padding:3px 6px;font-size:10px;color:var(--danger)" onclick="deleteInfEnvio('${e.id}')" title="Excluir"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+        </div></td>
       </tr>`;
     }).join('')}</tbody>
   </table>`;
@@ -11865,6 +11933,7 @@ function openInfEnvioModal() {
   document.getElementById('envioMetodo').value = 'pac';
   document.getElementById('envioNotas').value = '';
   document.getElementById('infEnvioModal').classList.add('show');
+  onEnvioInfChange();
 }
 function closeInfEnvioModal() { document.getElementById('infEnvioModal').classList.remove('show'); }
 
@@ -12395,6 +12464,192 @@ async function gerarEtiquetaEnvio(envioId) {
 </body></html>`);
   printWin.document.close();
   setTimeout(() => printWin.print(), 500);
+}
+
+/* Show influencer address when selected in envio modal */
+function onEnvioInfChange() {
+  const infId = document.getElementById('envioInfId').value;
+  const addrEl = document.getElementById('envioInfAddress');
+  if (!addrEl) return;
+  const inf = PERF_INFLUENCERS.find(i => i.id === infId);
+  if (inf && inf.endereco_rua) {
+    addrEl.style.display = 'block';
+    addrEl.innerHTML = '<strong>' + escHtml(inf.name) + '</strong><br/>' + escHtml(inf.endereco_rua) + (inf.endereco_complemento ? ', ' + escHtml(inf.endereco_complemento) : '') + '<br/>' + escHtml(inf.endereco_bairro||'') + ' — ' + escHtml(inf.endereco_cidade||'') + '/' + escHtml(inf.endereco_uf||'') + '<br/>CEP: ' + escHtml(inf.endereco_cep||'');
+  } else {
+    addrEl.style.display = 'block';
+    addrEl.innerHTML = '<span style="color:var(--warning)">Endereço não cadastrado — preencha na aba Configurações do influenciador</span>';
+  }
+}
+
+/* Update envio field inline */
+async function updateEnvioField(envioId, field, value) {
+  const { error } = await sb.from('mc_influencer_envios').update({ [field]: value }).eq('id', envioId);
+  if (error) { alert('Erro ao atualizar: ' + error.message); return; }
+  const envio = INF_ENVIOS.find(e => e.id === envioId);
+  if (envio) envio[field] = value;
+  renderEnvioKpis();
+}
+
+/* Delete envio */
+async function deleteInfEnvio(envioId) {
+  if (!confirm('Tem certeza que deseja excluir este envio? A baixa de estoque no Bling NÃO será revertida.')) return;
+  const { error } = await sb.from('mc_influencer_envios').delete().eq('id', envioId);
+  if (error) { alert('Erro ao excluir: ' + error.message); return; }
+  INF_ENVIOS = INF_ENVIOS.filter(e => e.id !== envioId);
+  renderInfEnvios();
+  renderInfHub();
+}
+
+/* Generate PDF with jsPDF + barcode */
+async function gerarPdfEnvio(envioId) {
+  const envio = INF_ENVIOS.find(e => e.id === envioId);
+  if (!envio) { alert('Envio não encontrado.'); return; }
+  const inf = PERF_INFLUENCERS.find(i => i.id === envio.influencer_id);
+  if (!inf) { alert('Influenciador não encontrado.'); return; }
+  if (!inf.endereco_rua || !inf.endereco_cidade || !inf.endereco_cep) {
+    alert('O influenciador não tem endereço completo cadastrado.');
+    return;
+  }
+  // Load jsPDF
+  if (typeof window.jspdf === 'undefined') {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    document.head.appendChild(s);
+    await new Promise(r => { s.onload = r; });
+  }
+  // Load JsBarcode
+  if (typeof window.JsBarcode === 'undefined') {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js';
+    document.head.appendChild(s);
+    await new Promise(r => { s.onload = r; });
+  }
+  const { jsPDF } = window.jspdf;
+  let sender = { nome: 'FullPro Comércio de Peças Para Motos LTDA', cnpj: '05.286.815/0001-00', rua: 'Rua Florianópolis, 2486', cidade: 'Joinville', uf: 'SC', cep: '89210-795' };
+  if (isBlingConnected()) {
+    const company = await blingGetCompany();
+    if (company) {
+      sender.nome = company.nome || sender.nome;
+      sender.cnpj = company.cnpj || sender.cnpj;
+      if (company.endereco) {
+        sender.rua = company.endereco.endereco || sender.rua;
+        sender.cidade = company.endereco.municipio || sender.cidade;
+        sender.uf = company.endereco.uf || sender.uf;
+        sender.cep = company.endereco.cep || sender.cep;
+      }
+    }
+  }
+  const items = envio.items || [];
+  let totalWeight = 0;
+  if (isBlingConnected() && items.length > 0) {
+    for (const item of items) {
+      const detail = await blingGetProduct(item.blingId);
+      if (detail) {
+        item.peso = detail.pesoBruto || detail.pesoLiquido || 0;
+        totalWeight += (item.peso * (item.qtd || 1));
+      }
+    }
+  }
+  const metodoLabel = { pac:'PAC', sedex:'SEDEX', transportadora:'TRANSPORTADORA', motoboy:'MOTOBOY' }[envio.metodo_envio] || (envio.metodo_envio||'PAC').toUpperCase();
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const totalValor = items.reduce((s, p) => s + ((p.preco||0) * (p.qtd||1)), 0);
+  const destCep = (inf.endereco_cep || '').replace(/\D/g, '');
+
+  // PAGE 1: ETIQUETA 10x15cm
+  const doc2 = new jsPDF({ orientation: 'landscape', unit: 'mm', format: [100, 150] });
+  const m = 5;
+  let y = m;
+  doc2.setFont('helvetica', 'bold'); doc2.setFontSize(14);
+  doc2.text('ETIQUETA DE ENVIO', 75, y+5, { align: 'center' }); y += 8;
+  doc2.setFillColor(0,0,0); doc2.roundedRect(60, y, 30, 6, 1, 1, 'F');
+  doc2.setTextColor(255,255,255); doc2.setFontSize(9);
+  doc2.text(metodoLabel, 75, y+4.2, { align: 'center' });
+  doc2.setTextColor(0,0,0); y += 10;
+  doc2.setDrawColor(0); doc2.setLineWidth(0.5); doc2.line(m, y, 145, y); y += 4;
+  doc2.setFontSize(7); doc2.setFont('helvetica','bold'); doc2.setTextColor(100);
+  doc2.text('DESTINATÁRIO', m, y); y += 4;
+  doc2.setTextColor(0); doc2.setFontSize(12); doc2.setFont('helvetica','bold');
+  doc2.text((inf.name||'').toUpperCase(), m, y); y += 5;
+  doc2.setFont('helvetica','normal'); doc2.setFontSize(9);
+  doc2.text(inf.endereco_rua + (inf.endereco_complemento ? ', ' + inf.endereco_complemento : ''), m, y); y += 4;
+  doc2.text(inf.endereco_bairro || '', m, y); y += 4;
+  doc2.setFont('helvetica','bold');
+  doc2.text('CEP: ' + (inf.endereco_cep||'') + '  —  ' + (inf.endereco_cidade||'') + '/' + (inf.endereco_uf||''), m, y); y += 6;
+  doc2.setDrawColor(150); doc2.setLineWidth(0.3);
+  doc2.setLineDashPattern([2,1],0); doc2.line(m, y, 145, y); doc2.setLineDashPattern([],0); y += 4;
+  doc2.setFontSize(7); doc2.setFont('helvetica','bold'); doc2.setTextColor(100);
+  doc2.text('REMETENTE', m, y); y += 3.5;
+  doc2.setTextColor(0); doc2.setFontSize(8); doc2.setFont('helvetica','bold');
+  doc2.text(sender.nome, m, y); y += 3.5;
+  doc2.setFont('helvetica','normal'); doc2.setFontSize(8);
+  doc2.text('CNPJ: ' + sender.cnpj, m, y); y += 3;
+  doc2.text(sender.rua + ' — ' + sender.cidade + '/' + sender.uf + ' — CEP: ' + sender.cep, m, y); y += 5;
+  doc2.setDrawColor(150); doc2.setLineDashPattern([2,1],0); doc2.line(m, y, 145, y); doc2.setLineDashPattern([],0); y += 4;
+  doc2.setFontSize(8);
+  const addRow = (label, value) => { doc2.setFont('helvetica','normal'); doc2.setTextColor(100); doc2.text(label, m, y); doc2.setFont('helvetica','bold'); doc2.setTextColor(0); doc2.text(value, 50, y); y += 3.5; };
+  addRow('Peso total:', totalWeight > 0 ? totalWeight.toFixed(3)+' kg' : '—');
+  addRow('Itens:', (envio.qtd || items.reduce((s,p)=>s+(p.qtd||1),0)) + ' un');
+  addRow('Data:', hoje); y += 2;
+  if (destCep.length >= 8) {
+    try {
+      const canvas = document.createElement('canvas');
+      JsBarcode(canvas, destCep, { format:'CODE128', width:2, height:30, displayValue:true, fontSize:10, margin:5 });
+      doc2.addImage(canvas.toDataURL('image/png'), 'PNG', 45, y, 60, 15);
+    } catch(e) { console.warn('Barcode error:', e); }
+  } else if (envio.tracking) {
+    doc2.setFontSize(11); doc2.setFont('courier','bold');
+    doc2.text(envio.tracking, 75, y+5, { align: 'center' });
+  }
+
+  // PAGE 2: DECLARAÇÃO
+  doc2.addPage([100,150], 'landscape'); y = m;
+  doc2.setFont('helvetica','bold'); doc2.setFontSize(11); doc2.setTextColor(0);
+  doc2.text('DECLARAÇÃO DE CONTEÚDO', 75, y+5, { align:'center' }); y += 8;
+  doc2.setLineWidth(0.5); doc2.line(m, y, 145, y); y += 4;
+  doc2.setFontSize(7); doc2.setFont('helvetica','bold'); doc2.setTextColor(100);
+  doc2.text('REMETENTE', m, y); y += 3;
+  doc2.setTextColor(0); doc2.setFontSize(7.5); doc2.setFont('helvetica','bold');
+  doc2.text(sender.nome + ' — CNPJ: ' + sender.cnpj, m, y); y += 3;
+  doc2.setFont('helvetica','normal');
+  doc2.text(sender.rua + ', ' + sender.cidade + '/' + sender.uf + ' — CEP: ' + sender.cep, m, y); y += 5;
+  doc2.setFontSize(7); doc2.setFont('helvetica','bold'); doc2.setTextColor(100);
+  doc2.text('DESTINATÁRIO', m, y); y += 3;
+  doc2.setTextColor(0); doc2.setFontSize(7.5); doc2.setFont('helvetica','bold');
+  doc2.text(inf.name, m, y); y += 3;
+  doc2.setFont('helvetica','normal');
+  doc2.text((inf.endereco_rua||'') + ', ' + (inf.endereco_bairro||'') + ', ' + (inf.endereco_cidade||'') + '/' + (inf.endereco_uf||'') + ' — CEP: ' + (inf.endereco_cep||''), m, y); y += 5;
+  // Product table
+  const pw = 140;
+  const colW = [70, 15, 20, 30];
+  doc2.setFillColor(230,230,230); doc2.rect(m, y, pw, 5, 'F');
+  doc2.setFontSize(6.5); doc2.setFont('helvetica','bold');
+  let cx = m;
+  ['Descrição','Qtd','Peso (kg)','Valor (R$)'].forEach((h,i) => { doc2.text(h, cx+1.5, y+3.5); cx += colW[i]; });
+  doc2.line(m, y, m+pw, y); doc2.line(m, y+5, m+pw, y+5); y += 5;
+  doc2.setFont('helvetica','normal'); doc2.setFontSize(6.5);
+  if (items.length > 0) {
+    items.forEach(it => {
+      cx = m;
+      doc2.text((it.nome||'').substring(0,40), cx+1.5, y+3.5); cx += colW[0];
+      doc2.text(String(it.qtd||1), cx+1.5, y+3.5); cx += colW[1];
+      doc2.text(it.peso ? (it.peso*(it.qtd||1)).toFixed(3) : '—', cx+1.5, y+3.5); cx += colW[2];
+      doc2.text(((it.preco||0)*(it.qtd||1)).toFixed(2), cx+1.5, y+3.5);
+      y += 4.5; doc2.line(m, y, m+pw, y);
+    });
+  } else { doc2.text('Sem detalhes', m+1.5, y+3.5); y += 4.5; }
+  y += 3;
+  doc2.setFont('helvetica','bold'); doc2.setFontSize(9);
+  doc2.text('Total: R$ ' + totalValor.toFixed(2), 145, y, { align:'right' }); y += 5;
+  doc2.setFontSize(8);
+  addRow('Peso total:', totalWeight > 0 ? totalWeight.toFixed(3)+' kg' : '—');
+  addRow('Método:', metodoLabel); addRow('Data:', hoje); y += 3;
+  doc2.setFont('helvetica','normal'); doc2.setFontSize(5.5); doc2.setTextColor(100);
+  const legal = doc2.splitTextToSize('Declaro que não me enquadro no conceito de contribuinte previsto no art. 4º da LC 87/96. Declaro que os itens acima não constituem objeto de comércio, nos termos da Lei 8.137/90.', pw);
+  doc2.text(legal, m, y); y += legal.length * 2.5 + 4;
+  doc2.setDrawColor(0); doc2.setLineWidth(0.3); doc2.line(45, y, 105, y);
+  doc2.setTextColor(0); doc2.setFontSize(6);
+  doc2.text('Assinatura do declarante', 75, y+3, { align:'center' });
+  doc2.save('Etiqueta_Declaracao_' + (inf.name||'envio').split(' ')[0] + '.pdf');
 }
 
 async function saveInfConteudo() {
