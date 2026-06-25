@@ -4033,21 +4033,6 @@
           </div>
         </fieldset>
 
-        <!-- Stats Geral vs FullPro -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-          <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px">
-            <legend style="padding:0 8px;color:var(--text-muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Estatísticas Geral</legend>
-            <label>Views (total)</label><input type="number" id="infViewsGeral" min="0" placeholder="0"/>
-            <label>Posts (total)</label><input type="number" id="infPostsGeral" min="0" placeholder="0"/>
-            <label>Engajamento (%)</label><input type="number" id="infEngagementGeral" min="0" max="100" step="0.1" placeholder="0"/>
-          </fieldset>
-          <fieldset style="border:1px solid var(--border);border-radius:8px;padding:16px">
-            <legend style="padding:0 8px;color:var(--text-muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Estatísticas FullPro</legend>
-            <label>Views (patrocinado)</label><input type="number" id="infViewsFullpro" min="0" placeholder="0"/>
-            <label>Posts (FullPro)</label><input type="number" id="infPostsFullpro" min="0" placeholder="0"/>
-            <label>Engajamento (%)</label><input type="number" id="infEngagementFullpro" min="0" max="100" step="0.1" placeholder="0"/>
-          </fieldset>
-        </div>
       </div>
     </div>
     <div class="modal-foot">
@@ -11925,14 +11910,8 @@ function openInfModal(id) {
     document.getElementById('infCouponCode').value = inf.coupon_code || '';
     document.getElementById('infCouponDiscount').value = inf.coupon_discount || '';
     document.getElementById('infCouponLink').value = inf.coupon_link || '';
-    document.getElementById('infViewsGeral').value = inf.views_geral || '';
-    document.getElementById('infPostsGeral').value = inf.posts_geral || '';
-    document.getElementById('infEngagementGeral').value = inf.engagement_geral || '';
-    document.getElementById('infViewsFullpro').value = inf.views_fullpro || '';
-    document.getElementById('infPostsFullpro').value = inf.posts_fullpro || '';
-    document.getElementById('infEngagementFullpro').value = inf.engagement_fullpro || '';
   } else {
-    ['infName','infCpf','infEmail','infWhatsapp','infNotes','infRua','infComplemento','infBairro','infCidade','infUf','infCep','infInstagram','infFollowers','infYoutube','infYtSubs','infTiktok','infTkFollowers','infCouponCode','infCouponDiscount','infCouponLink','infViewsGeral','infPostsGeral','infEngagementGeral','infViewsFullpro','infPostsFullpro','infEngagementFullpro'].forEach(id => {
+    ['infName','infCpf','infEmail','infWhatsapp','infNotes','infRua','infComplemento','infBairro','infCidade','infUf','infCep','infInstagram','infFollowers','infYoutube','infYtSubs','infTiktok','infTkFollowers','infCouponCode','infCouponDiscount','infCouponLink'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
@@ -12207,12 +12186,6 @@ async function saveInfluencer() {
     coupon_code: document.getElementById('infCouponCode').value.trim().toUpperCase(),
     coupon_discount: parseInt(document.getElementById('infCouponDiscount').value) || 0,
     coupon_link: document.getElementById('infCouponLink').value.trim(),
-    views_geral: parseInt(document.getElementById('infViewsGeral').value) || 0,
-    posts_geral: parseInt(document.getElementById('infPostsGeral').value) || 0,
-    engagement_geral: parseFloat(document.getElementById('infEngagementGeral').value) || 0,
-    views_fullpro: parseInt(document.getElementById('infViewsFullpro').value) || 0,
-    posts_fullpro: parseInt(document.getElementById('infPostsFullpro').value) || 0,
-    engagement_fullpro: parseFloat(document.getElementById('infEngagementFullpro').value) || 0,
     status: 'ativo'
   };
 
