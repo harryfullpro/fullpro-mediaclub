@@ -12192,13 +12192,15 @@ async function saveInfluencer() {
   const editId = document.getElementById('infEditId').value;
   let result;
   if (editId) {
-    result = await sb.from('mc_performance_influencers').update(payload).eq('id', editId).select().single();
+    result = await sb.from('mc_performance_influencers').update(payload).eq('id', editId).select();
     if (result.error) { alert('Erro ao atualizar: ' + result.error.message); return; }
+    result.data = Array.isArray(result.data) ? result.data[0] : result.data;
     const idx = PERF_INFLUENCERS.findIndex(i => i.id === editId);
     if (idx >= 0) PERF_INFLUENCERS[idx] = { ...PERF_INFLUENCERS[idx], ...result.data };
   } else {
-    result = await sb.from('mc_performance_influencers').insert([payload]).select().single();
+    result = await sb.from('mc_performance_influencers').insert([payload]).select();
     if (result.error) { alert('Erro ao salvar: ' + result.error.message); return; }
+    result.data = Array.isArray(result.data) ? result.data[0] : result.data;
     PERF_INFLUENCERS.unshift(result.data);
   }
 
