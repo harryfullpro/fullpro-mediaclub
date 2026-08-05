@@ -11,7 +11,7 @@
   :root, [data-theme="dark"] {
     --bg: #0a0a0b;
     --bg-soft: #111114;
-    --bg-card: #16161a
+    --bg-card: #16161a;
     --bg-elev: #1c1c22;
     --border: #26262e;
     --border-hi: #34343e;
@@ -45,6 +45,7 @@
     --logo-filter: brightness(0.2);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* Dropdowns legíveis no Windows + Mac */ select option, select optgroup { background-color: var(--bg-card); color: var(--text); }
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg);
