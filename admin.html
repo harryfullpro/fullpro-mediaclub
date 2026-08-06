@@ -6162,6 +6162,44 @@ function renderShotsReadOnly(shots, si) {
   }).join('');
 }
 
+  /* === FP PATCH: Ordem de Filmagem — botões "Ver fala" / "Ver notas" === */
+  function fpToggleShotDetail(id, btn, showLabel, hideLabel){
+      const p = document.getElementById(id);
+      if (!p) return;
+      const open = (p.style.display === 'none' || !p.style.display);
+      p.style.display = open ? 'block' : 'none';
+      if (btn) btn.textContent = open ? hideLabel : showLabel;
+  }
+  renderShotsReadOnly = function(shots, si){
+      if (!shots || shots.length === 0) return '<div style="padding:12px 12px 12px 48px;font-size:12px;color:var(--text-muted)">Nenhum plano nesta cena</div>';
+    return shots.map((shot, pi) => {
+          const cam = shot.camera || '—';
+          const sType = shot.shotType || '—';
+              const speech = (shot.speech || '').trim();
+          const note = (shot.note || '').trim();
+          const btnStyle = 'padding:2px 9px;font-size:10px;font-weight:600;border:1px solid var(--border);background:var(--bg-elev);color:var(--text-dim);border-radius:5px;cursor:pointer;white-space:nowrap';
+          const panelStyle = 'padding:6px 16px 10px 96px;font-size:12px;line-height:1.5;border-top:1px solid rgba(255,255,255,.04)';
+          const labelStyle = 'font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-right:8px';
+          return `
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 36px;border-top:1px solid rgba(255,255,255,.06);min-height:38px">
+                    <label class="rot-check" onclick="event.stopPropagation()">
+                            <input type="checkbox" ${shot.done?'checked':''} onchange="toggleShotDone(${si},${pi},this.checked)"/>
+                                    <span class="rot-check-box"></span>
+                                          </label>
+                                                <span style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(139,156,247,.5);min-width:50px">${escHtml(cam)}</span>
+                                                      <span style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(245,158,11,.5);min-width:70px">${escHtml(sType)}</span>
+                                                            <span style="font-size:13px;color:${shot.done?'var(--text-muted)':'var(--text)'};${shot.done?'text-decoration:line-through;':''}">${escHtml(shot.title || '(sem descrição)')}</span>
+        <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0">
+                ${speech ? `<button style="${btnStyle}" onclick="event.stopPropagation();fpToggleShotDetail('fpfala_${si}_${pi}',this,'Ver fala','Ocultar fala')">Ver fala</button>` : ''}
+                        ${note ? `<button style="${btnStyle}" onclick="event.stopPropagation();fpToggleShotDetail('fpnota_${si}_${pi}',this,'Ver notas','Ocultar notas')">Ver notas</button>` : ''}
+                              </div>
+      </div>
+          ${speech ? `<div id="fpfala_${si}_${pi}" style="display:none;${panelStyle}"><span style="${labelStyle};color:rgba(139,156,247,.85)">Fala</span><span style="color:var(--text)">${escHtml(speech)}</span></div>` : ''}
+              ${note ? `<div id="fpnota_${si}_${pi}" style="display:none;${panelStyle}"><span style="${labelStyle};color:rgba(245,158,11,.85)">Nota</span><span style="color:var(--text-dim)">${escHtml(note)}</span></div>` : ''}
+                  `;
+    }).join('');
+  };
+  /* === FIM FP PATCH ordem-filmagem === */
 function renderCameraView(container) {
   if (!roteiroShootOrder) {
     roteiroShootOrder = [];
