@@ -6200,6 +6200,189 @@ function renderShotsReadOnly(shots, si) {
     }).join('');
   };
   /* === FIM FP PATCH ordem-filmagem === */
+
+/* =============== PERMISSÕES POR USUÁRIO (FP-USER-MODULES) =============== */
+(function(){
+  'use strict';
+
+  const FP_MODULE_GROUPS = [
+    { sec: 'Geral', items: [['dashboard','Dashboard'],['requests','Solicitações'],['calendar','Agenda'],['checkin','Check-in / Check-out'],['projects','Projetos'],['editing','Edição']] },
+    { sec: 'Pós-produção', items: [['debriefing','Debriefing']] },
+    { sec: 'Performance', items: [['perf-metas','Metas'],['perf-posts','Meus Posts'],['perf-influencers','Influenciadores'],['perf-bonificacao','Bonificação']] },
+    { sec: 'Configurações', items: [['templates','Templates WhatsApp'],['export','Exportar'],['users','Usuários']] }
+  ];
+  const FP_ALL_VIEWS = ['dashboard','requests','calendar','checkin','projects','project-detail','editing','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'];
+  const FP_ALWAYS_ON = ['profile','project-detail'];
+  const FP_NAV_ORDER = ['dashboard','requests','calendar','checkin','projects','editing','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'];
+
+  function fpRoleKey(roleStr){
+    const r = (roleStr || '').toLowerCase();
+    return (r === 'admin' || r.startsWith('admin')) ? 'admin' : 'other';
+  }
+  function fpIsAdmin(){
+    if (typeof getUserRole === 'function') return getUserRole() === 'admin';
+    return fpRoleKey(CURRENT_USER && CURRENT_USER.role) === 'admin';
+  }
+  function fpAllowedSet(){
+    if (fpIsAdmin()) return null;
+    const mods = (CURRENT_USER && Array.isArray(CURRENT_USER.modules)) ? CURRENT_USER.modules : [];
+    return new Set(mods.concat(FP_ALWAYS_ON));
+  }
+
+  function fpShowView(view){
+    FP_ALL_VIEWS.forEach(function(v){ const el = document.getElementById('view-'+v); if (el) el.style.display = 'none'; });
+    const t = document.getElementById('view-'+view); if (t) t.style.display = 'block';
+    document.querySelectorAll('.nav-item').forEach(function(b){ b.classList.remove('active'); });
+    const ab = document.querySelector('.nav-item[data-view="'+view+'"]'); if (ab) ab.classList.add('active');
+    try { if (location.hash !== '#'+view) history.replaceState({ view: view }, '', '#'+view); } catch(e){}
+  }
+  function fpGuardView(){
+    const allowed = fpAllowedSet();
+    if (allowed === null) return;
+    const current = (location.hash ? location.hash.slice(1) : '') || 'dashboard';
+    if (!allowed.has(current)) {
+      const target = FP_NAV_ORDER.find(function(k){ return allowed.has(k); }) || 'profile';
+      fpShowView(target);
+    }
+  }
+  function fpApplyUserModules(){
+    const allowed = fpAllowedSet();
+    if (allowed === null) return;
+    document.querySelectorAll('.nav-item[data-view]').forEach(function(btn){
+      btn.style.display = allowed.has(btn.dataset.view) ? '' : 'none';
+    });
+    document.querySelectorAll('.nav-section').forEach(function(sec){
+      let next = sec.nextElementSibling, hasVisible = false;
+      while (next && !next.classList.contains('nav-section')) {
+        if (next.classList.contains('nav-item') && next.style.display !== 'none') hasVisible = true;
+        next = next.nextElementSibling;
+      }
+      sec.style.display = hasVisible ? '' : 'none';
+    });
+    fpGuardView();
+  }
+
+  let fpModalBuilt = false;
+  let fpEditingId = null;
+  function fpCloseModal(){ const ov = document.getElementById('fpPermOverlay'); if (ov) ov.classList.remove('open'); }
+  function fpBuildModal(){
+    if (fpModalBuilt) return;
+    fpModalBuilt = true;
+    const style = document.createElement('style');
+    style.textContent = '#fpPermOverlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}'
+      + '#fpPermOverlay.open{display:flex}'
+      + '#fpPermBox{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;max-width:520px;width:100%;max-height:85vh;overflow:auto;padding:22px;color:var(--text)}'
+      + '#fpPermBox h3{font-size:16px;margin:0 0 4px}'
+      + '#fpPermBox .fp-sub{font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.5}'
+      + '#fpPermBox .fp-grp{margin-bottom:14px}'
+      + '#fpPermBox .fp-grp-t{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}'
+      + '#fpPermBox label{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;font-size:13px;cursor:pointer}'
+      + '#fpPermBox label:hover{background:var(--bg-elev)}'
+      + '#fpPermBox input[type=checkbox]{width:16px;height:16px;accent-color:var(--primary)}'
+      + '#fpPermBox .fp-actions{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:18px;flex-wrap:wrap}'
+      + '#fpPermBox .fp-btn{padding:6px 14px;font-size:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-elev);color:var(--text);cursor:pointer}'
+      + '#fpPermBox .fp-btn.mini{padding:4px 10px;font-size:11px}'
+      + '#fpPermBox .fp-btn.primary{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}';
+    document.head.appendChild(style);
+    const ov = document.createElement('div');
+    ov.id = 'fpPermOverlay';
+    ov.innerHTML = '<div id="fpPermBox">'
+      + '<h3>Permissões de acesso</h3>'
+      + '<div class="fp-sub" id="fpPermUser"></div>'
+      + '<div id="fpPermGroups"></div>'
+      + '<div class="fp-actions">'
+      + '<div><button type="button" class="fp-btn mini" id="fpPermAll">Marcar todos</button> '
+      + '<button type="button" class="fp-btn mini" id="fpPermNone">Limpar</button></div>'
+      + '<div><button type="button" class="fp-btn" id="fpPermCancel">Cancelar</button> '
+      + '<button type="button" class="fp-btn primary" id="fpPermSave">Salvar</button></div>'
+      + '</div></div>';
+    document.body.appendChild(ov);
+    let html = '';
+    FP_MODULE_GROUPS.forEach(function(g){
+      html += '<div class="fp-grp"><div class="fp-grp-t">' + g.sec + '</div>';
+      g.items.forEach(function(it){
+        html += '<label><input type="checkbox" value="' + it[0] + '"> ' + it[1] + '</label>';
+      });
+      html += '</div>';
+    });
+    document.getElementById('fpPermGroups').innerHTML = html;
+    ov.addEventListener('click', function(e){ if (e.target === ov) fpCloseModal(); });
+    document.getElementById('fpPermCancel').onclick = fpCloseModal;
+    document.getElementById('fpPermAll').onclick = function(){ ov.querySelectorAll('#fpPermGroups input').forEach(function(c){ c.checked = true; }); };
+    document.getElementById('fpPermNone').onclick = function(){ ov.querySelectorAll('#fpPermGroups input').forEach(function(c){ c.checked = false; }); };
+  }
+  async function fpOpenPermModal(userId, username){
+    fpBuildModal();
+    fpEditingId = userId;
+    document.getElementById('fpPermUser').textContent = 'Usuário: ' + username + ' — marque os módulos que ele pode acessar. "Meu perfil" fica sempre disponível.';
+    const ov = document.getElementById('fpPermOverlay');
+    ov.querySelectorAll('#fpPermGroups input').forEach(function(c){ c.checked = false; });
+    ov.classList.add('open');
+    try {
+      const res = await sb.from('mc_admin_users').select('modules').eq('id', userId).single();
+      if (!res.error && res.data && Array.isArray(res.data.modules)) {
+        res.data.modules.forEach(function(m){ const c = ov.querySelector('#fpPermGroups input[value="' + m + '"]'); if (c) c.checked = true; });
+      }
+    } catch(e){ console.warn('fpOpenPermModal load', e); }
+    const saveBtn = document.getElementById('fpPermSave');
+    saveBtn.onclick = async function(){
+      const selected = Array.from(ov.querySelectorAll('#fpPermGroups input:checked')).map(function(c){ return c.value; });
+      saveBtn.disabled = true; saveBtn.textContent = 'Salvando...';
+      const upd = await sb.from('mc_admin_users').update({ modules: selected }).eq('id', fpEditingId);
+      saveBtn.disabled = false; saveBtn.textContent = 'Salvar';
+      if (upd.error) { alert('Erro ao salvar permissões: ' + upd.error.message); return; }
+      if (CURRENT_USER && fpEditingId === CURRENT_USER.id) { CURRENT_USER.modules = selected; if (typeof applyRolePermissions === 'function') applyRolePermissions(); }
+      fpCloseModal();
+      if (typeof loadUsers === 'function') loadUsers();
+    };
+  }
+  window.fpOpenPermModal = fpOpenPermModal;
+
+  function fpInjectPermUI(users){
+    if (!fpIsAdmin()) return;
+    const tbody = document.querySelector('#usersList table tbody');
+    if (!tbody) return;
+    const rows = tbody.querySelectorAll('tr');
+    users.forEach(function(u, i){
+      const row = rows[i]; if (!row) return;
+      const cell = row.lastElementChild; if (!cell) return;
+      if (cell.querySelector('.fp-perm-added')) return;
+      if (fpRoleKey(u.role) === 'admin') {
+        const s = document.createElement('span');
+        s.className = 'fp-perm-added';
+        s.style.cssText = 'font-size:11px;color:var(--text-muted);margin-left:8px';
+        s.textContent = 'Acesso total';
+        cell.appendChild(s);
+      } else {
+        const b = document.createElement('button');
+        b.className = 'action-btn fp-perm-added';
+        b.style.cssText = 'padding:4px 10px;font-size:11px;margin-left:8px;border:1px solid var(--border);background:var(--bg-elev);color:var(--text);border-radius:6px;cursor:pointer';
+        b.textContent = 'Permissões';
+        b.onclick = function(){ fpOpenPermModal(u.id, u.username); };
+        cell.appendChild(b);
+      }
+    });
+  }
+
+  if (typeof applyRolePermissions === 'function') {
+    const _origARP = applyRolePermissions;
+    applyRolePermissions = function(){
+      _origARP.apply(this, arguments);
+      try { fpApplyUserModules(); } catch(e){ console.warn('fpApplyUserModules', e); }
+    };
+  }
+  if (typeof renderUsers === 'function') {
+    const _origRU = renderUsers;
+    renderUsers = function(users){
+      try { _origRU.apply(this, arguments); } catch(e){ if (Array.isArray(users)) console.warn('renderUsers', e); }
+      if (Array.isArray(users)) { try { fpInjectPermUI(users); } catch(e){ console.warn('fpInjectPermUI', e); } }
+    };
+  }
+  window.addEventListener('hashchange', function(){ try { fpGuardView(); } catch(e){} });
+  window.addEventListener('popstate', function(){ setTimeout(function(){ try { fpGuardView(); } catch(e){} }, 0); });
+})();
+/* =============== FIM FP-USER-MODULES =============== */
+
 function renderCameraView(container) {
   if (!roteiroShootOrder) {
     roteiroShootOrder = [];
