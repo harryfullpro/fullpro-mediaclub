@@ -6383,6 +6383,152 @@ function renderShotsReadOnly(shots, si) {
 })();
 /* =============== FIM FP-USER-MODULES =============== */
 
+/* === FP PATCH: Edicao — previa do roteiro estruturado + modal "Ver roteiro completo" com Editar === */
+(function(){
+  'use strict';
+
+  function fpScenesOf(p){ return (p && Array.isArray(p.script_scenes)) ? p.script_scenes : []; }
+  function fpEsc(s){ return (typeof escHtml === 'function') ? escHtml(s == null ? '' : s) : String(s == null ? '' : s); }
+
+  // ---- Previa compacta no card ----
+  function fpRoteiroPreviewHtml(p){
+    const scenes = fpScenesOf(p);
+    if (!scenes.length) return '';
+    const totalShots = scenes.reduce(function(n,s){ return n + ((s.shots && s.shots.length) || 0); }, 0);
+    let items = '', shown = 0;
+    const MAX = 4;
+    for (const sc of scenes){
+      if (shown >= MAX) break;
+      items += '<div style="margin-bottom:6px"><div style="font-size:12px;font-weight:700;color:var(--text)">' + fpEsc(sc.title || 'Cena') + '</div>';
+      for (const sh of (sc.shots || [])){
+        if (shown >= MAX) break;
+        items += '<div style="font-size:12px;color:var(--text-dim);padding:1px 0 1px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">&bull; ' + fpEsc(sh.title || '(plano)') + '</div>';
+        shown++;
+      }
+      items += '</div>';
+    }
+    const remaining = totalShots - shown;
+    return '<div class="edit-script-section fp-roteiro-prev" style="padding:14px 16px">'
+      + '<div class="section-label" style="display:flex;align-items:center;gap:6px;margin-bottom:8px">'
+      +   '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
+      +   ' Roteiro &mdash; ' + scenes.length + ' cena' + (scenes.length !== 1 ? 's' : '') + ' &middot; ' + totalShots + ' plano' + (totalShots !== 1 ? 's' : '')
+      + '</div>'
+      + items
+      + (remaining > 0 ? '<div style="font-size:11px;color:var(--text-muted);padding-left:12px;margin-top:2px">+' + remaining + ' plano' + (remaining !== 1 ? 's' : '') + '&hellip;</div>' : '')
+      + '<div style="margin-top:12px"><button class="action-btn view" style="padding:6px 14px;font-size:12px" onclick="fpOpenRoteiroModal(\'' + p.id + '\')">'
+      +   '<svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Ver roteiro completo</button></div>'
+      + '</div>';
+  }
+
+  // ---- Render read-only completo (mesmo estilo do modal existente) ----
+  function fpRoteiroFullHtml(p){
+    const scenes = fpScenesOf(p);
+    if (!scenes.length) return '<div style="text-align:center;padding:48px 20px;color:var(--text-muted);font-size:13px">Nenhuma cena criada neste projeto.</div>';
+    let html = '<div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px">';
+    scenes.forEach(function(scene, si){
+      const shots = scene.shots || [];
+      const doneCount = shots.filter(function(sh){ return sh.done; }).length;
+      html += '<div style="background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;overflow:hidden">'
+        + '<div style="padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)">'
+        +   '<span style="width:28px;height:28px;border-radius:50%;background:#a855f7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">' + (si+1) + '</span>'
+        +   '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px;color:var(--text)">' + fpEsc(scene.title || ('Cena ' + (si+1))) + '</div>'
+        +     (scene.location ? '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">' + fpEsc(scene.location) + '</div>' : '') + '</div>'
+        +   '<span style="font-size:11px;color:var(--text-muted);flex-shrink:0">' + doneCount + '/' + shots.length + ' planos</span>'
+        + '</div>';
+      if (scene.note) html += '<div style="padding:8px 16px;background:rgba(96,165,250,.06);border-bottom:1px solid var(--border);font-size:12px;color:#60a5fa"><span style="font-weight:600;margin-right:4px">Nota:</span>' + fpEsc(scene.note) + '</div>';
+      if (shots.length){
+        html += '<div style="padding:8px 12px;display:flex;flex-direction:column;gap:4px">';
+        shots.forEach(function(shot, pi){
+          const cam = shot.camera ? '<span style="font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:rgba(139,156,247,.7);margin-right:6px">' + fpEsc(shot.camera) + '</span>' : '';
+          const st = shot.shotType ? '<span style="font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:rgba(245,158,11,.7);margin-right:6px">' + fpEsc(shot.shotType) + '</span>' : '';
+          html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:' + (shot.done ? 'rgba(34,197,94,.06)' : 'transparent') + '">'
+            + '<div style="width:18px;height:18px;border-radius:4px;border:2px solid ' + (shot.done ? '#22c55e' : 'var(--border)') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0">' + (shot.done ? '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#22c55e" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : '') + '</div>'
+            + '<span style="flex:1;font-size:13px;color:' + (shot.done ? 'var(--text-muted)' : 'var(--text)') + ';' + (shot.done ? 'text-decoration:line-through;opacity:.7' : '') + '">' + cam + st + fpEsc(shot.title || ('Plano ' + (pi+1))) + '</span>'
+            + '</div>';
+          if (shot.speech) html += '<div style="margin-left:34px;font-size:11px;color:#d4a843;padding:2px 0"><span style="font-weight:600">Fala:</span> ' + fpEsc(shot.speech) + '</div>';
+          if (shot.note) html += '<div style="margin-left:34px;font-size:11px;color:#60a5fa;padding:2px 0"><span style="font-weight:600">Nota:</span> ' + fpEsc(shot.note) + '</div>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  // ---- Modal ----
+  let fpRMBuilt = false, fpRMId = null;
+  function fpCloseRoteiroModal(){ const o = document.getElementById('fpRoteiroOverlay'); if (o) o.classList.remove('open'); }
+  function fpEditRoteiro(id){
+    if (typeof openProjectDetail === 'function'){ openProjectDetail(id); if (typeof switchDetailTab === 'function') switchDetailTab('roteiro'); }
+  }
+  function fpBuildRoteiroModal(){
+    if (fpRMBuilt) return; fpRMBuilt = true;
+    const style = document.createElement('style');
+    style.textContent = '#fpRoteiroOverlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:10000;display:none;align-items:center;justify-content:center;padding:24px}'
+      + '#fpRoteiroOverlay.open{display:flex}'
+      + '#fpRoteiroBox{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;max-width:720px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden}'
+      + '#fpRoteiroHead{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0}'
+      + '#fpRoteiroHead h3{font-size:15px;margin:0;flex:1;min-width:0;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+      + '#fpRoteiroBody{overflow-y:auto}'
+      + '.fp-rm-btn{padding:6px 14px;font-size:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-elev);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}'
+      + '.fp-rm-btn.edit{border-color:rgba(167,139,250,.4);color:#a78bfa}'
+      + '.fp-rm-btn.edit:hover{background:rgba(167,139,250,.1)}'
+      + '.fp-rm-btn.x{padding:6px 10px;font-size:14px;line-height:1}';
+    document.head.appendChild(style);
+    const ov = document.createElement('div'); ov.id = 'fpRoteiroOverlay';
+    ov.innerHTML = '<div id="fpRoteiroBox">'
+      + '<div id="fpRoteiroHead"><h3 id="fpRoteiroTitle">Roteiro</h3>'
+      +   '<button type="button" class="fp-rm-btn edit" id="fpRoteiroEdit"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editar</button>'
+      +   '<button type="button" class="fp-rm-btn x" id="fpRoteiroClose" title="Fechar">&times;</button>'
+      + '</div><div id="fpRoteiroBody"></div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function(e){ if (e.target === ov) fpCloseRoteiroModal(); });
+    document.getElementById('fpRoteiroClose').onclick = fpCloseRoteiroModal;
+    document.getElementById('fpRoteiroEdit').onclick = function(){ const id = fpRMId; fpCloseRoteiroModal(); fpEditRoteiro(id); };
+  }
+  function fpOpenRoteiroModal(id){
+    fpBuildRoteiroModal();
+    const p = (typeof PROJECTS !== 'undefined' && PROJECTS) ? PROJECTS.find(function(x){ return x.id === id; }) : null;
+    fpRMId = id;
+    document.getElementById('fpRoteiroTitle').textContent = 'Roteiro — ' + (p && p.title ? p.title : 'Projeto');
+    document.getElementById('fpRoteiroBody').innerHTML = fpRoteiroFullHtml(p || {});
+    document.getElementById('fpRoteiroOverlay').classList.add('open');
+  }
+  window.fpOpenRoteiroModal = fpOpenRoteiroModal;
+
+  // ---- Injeta a previa nos cards de Edicao (pos-render) ----
+  function fpInjectRoteiroPreviews(){
+    if (typeof PROJECTS === 'undefined' || !PROJECTS) return;
+    const projs = PROJECTS.filter(function(p){ return p.status === 'edicao' || p.status === 'a_publicar'; });
+    const cards = document.querySelectorAll('#editingList .edit-card');
+    cards.forEach(function(card, i){
+      const p = projs[i]; if (!p) return;
+      if (!fpScenesOf(p).length) return;
+      // Repoint the existing "Ver roteiro" (openEditRoteiro) button to the new modal
+      card.querySelectorAll('button[onclick]').forEach(function(b){
+        if ((b.getAttribute('onclick') || '').indexOf('openEditRoteiro') !== -1){ b.onclick = function(e){ if(e) e.stopPropagation(); fpOpenRoteiroModal(p.id); }; }
+      });
+      if (card.querySelector('.fp-roteiro-prev')) return; // already injected
+      const sec = card.querySelector('.edit-script-section');
+      const isPlaceholder = sec && (sec.textContent || '').indexOf('Nenhum roteiro adicionado') !== -1;
+      const prev = fpRoteiroPreviewHtml(p);
+      if (!prev) return;
+      if (isPlaceholder && sec){ sec.outerHTML = prev; }
+      else if (sec){ const d = document.createElement('div'); d.innerHTML = prev; if (d.firstChild) sec.parentNode.insertBefore(d.firstChild, sec.nextSibling); }
+    });
+  }
+  if (typeof renderEditingView === 'function'){
+    const _origREV = renderEditingView;
+    renderEditingView = function(){
+      _origREV.apply(this, arguments);
+      try { fpInjectRoteiroPreviews(); } catch(e){ console.warn('fpInjectRoteiroPreviews', e); }
+    };
+  }
+})();
+/* === FIM FP PATCH edicao-roteiro === */
+
+
 function renderCameraView(container) {
   if (!roteiroShootOrder) {
     roteiroShootOrder = [];
