@@ -319,3 +319,142 @@ window.getMotoYear = function(motoStr) {
   const m = motoStr.match(/(\d{4})\s*$/);
   return m ? parseInt(m[1]) : null;
 };
+
+/* === FP PATCH: Ibex 450 na CF Moto + opção "Outro" (marca/modelo/ano livres) === */
+(function(){
+    try {
+          var cf = (window.MOTO_CATALOG || []).find(function(m){ return m.marca === 'CF Moto'; });
+          if (cf && !cf.modelos.some(function(m){ return m.nome === 'Ibex 450'; })) {
+                  cf.modelos.push({ nome: 'Ibex 450', slug: 'Ibex450', anos: [2023,2024,2025,2026] });
+          }
+    } catch(e){ console.warn('FP patch catalog', e); }
+})();
+window.initMotoSelects = function(marcaId, modeloId, anoId, hiddenId) {
+    const marcaSel = document.getElementById(marcaId);
+    const modeloSel = document.getElementById(modeloId);
+    const anoSel = document.getElementById(anoId);
+    const hidden = hiddenId ? document.getElementById(hiddenId) : null;
+    if (!marcaSel || !modeloSel || !anoSel) return;
+    const OUTRO = '__outro__';
+    marcaSel.innerHTML = '<option value="">Selecione a marca</option>' +
+          MOTO_CATALOG.map(m => `<option value="${m.marca}">${m.marca}</option>`).join('') +
+          `<option value="${OUTRO}">Outro (não listada)</option>`;
+    modeloSel.innerHTML = '<option value="">Selecione o modelo</option>';
+    modeloSel.disabled = true;
+    anoSel.innerHTML = '<option value="">Ano/Modelo</option>';
+    anoSel.disabled = true;
+    const custom = document.createElement('div');
+    custom.className = 'moto-custom-fields';
+    custom.style.cssText = 'display:none;flex:0 0 100%;grid-column:1 / -1;width:100%;gap:8px;margin-top:8px;flex-wrap:wrap';
+    const mkInput = (ph) => {
+          const i = document.createElement('input');
+          i.type = 'text'; i.placeholder = ph; i.autocomplete = 'off';
+          i.style.cssText = 'flex:1;min-width:120px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev);color:var(--text);font-family:inherit;font-size:14px';
+          return i;
+    };
+    const inMarca = mkInput('Montadora');
+    const inModelo = mkInput('Modelo');
+    const inAno = mkInput('Ano/Modelo'); inAno.inputMode = 'numeric';
+    custom.appendChild(inMarca); custom.appendChild(inModelo); custom.appendChild(inAno);
+    anoSel.insertAdjacentElement('afterend', custom);
+    function showCustom(show) {
+          custom.style.display = show ? 'flex' : 'none';
+          modeloSel.style.display = show ? 'none' : '';
+          anoSel.style.display = show ? 'none' : '';
+    }
+    function isCustom() { return marcaSel.value === OUTRO || modeloSel.value === OUTRO; }
+    function updateHidden() {
+          if (!hidden) return;
+          if (isCustom()) {
+                  const marca = (marcaSel.value === OUTRO ? inMarca.value : marcaSel.value).trim();
+                  const modelo = inModelo.value.trim();
+                  const ano = inAno.value.trim();
+                  hidden.value = [marca, modelo, ano].filter(Boolean).join(' ');
+          } else {
+                  const marca = marcaSel.value, modelo = modeloSel.value, ano = anoSel.value;
+                  hidden.value = (marca && modelo && ano) ? `${marca} ${modelo} ${ano}` : '';
+          }
+    }
+    marcaSel.addEventListener('change', function() {
+          if (this.value === OUTRO) {
+                  modeloSel.innerHTML = '<option value="">Selecione o modelo</option>';
+                  modeloSel.disabled = true;
+                  anoSel.innerHTML = '<option value="">Ano/Modelo</option>';
+                  anoSel.disabled = true;
+                  inMarca.value = ''; inModelo.value = ''; inAno.value = '';
+                  showCustom(true); inMarca.focus(); updateHidden();
+                  return;
+          }
+          const brand = MOTO_CATALOG.find(m => m.marca === this.value);
+          modeloSel.innerHTML = '<option value="">Selecione o modelo</option>';
+          anoSel.innerHTML = '<option value="">Ano/Modelo</option>';
+          anoSel.disabled = true;
+          showCustom(false);
+          if (brand) {
+                  modeloSel.innerHTML += brand.modelos.map(m => `<option value="${m.nome}" data-slug="${m.slug}">${m.nome}</option>`).join('');
+                  modeloSel.innerHTML += `<option value="${OUTRO}">Outro (não listado)</option>`;
+                  modeloSel.disabled = false;
+          } else {
+                  modeloSel.disabled = true;
+          }
+          updateHidden();
+    });
+    modeloSel.addEventListener('change', function() {
+          if (this.value === OUTRO) {
+                  anoSel.innerHTML = '<option value="">Ano/Modelo</option>';
+                  anoSel.disabled = true;
+                  inMarca.value = marcaSel.value; inModelo.value = ''; inAno.value = '';
+                  showCustom(true); inModelo.focus(); updateHidden();
+                  return;
+          }
+          showCustom(false);
+          const brand = MOTO_CATALOG.find(m => m.marca === marcaSel.value);
+          const model = brand?.modelos.find(m => m.nome === this.value);
+          anoSel.innerHTML = '<option value="">Ano/Modelo</option>';
+          if (model) {
+                  const sortedYears = [...model.anos].sort((a, b) => b - a);
+                  anoSel.innerHTML += sortedYears.map(y => `<option value="${y}">${y}</option>`).join('');
+                  anoSel.disabled = false;
+          } else {
+                  anoSel.disabled = true;
+          }
+          updateHidden();
+    });
+    anoSel.addEventListener('change', updateHidden);
+    [inMarca, inModelo, inAno].forEach(i => i.addEventListener('input', updateHidden));
+    return function setMotoValue(motoStr) {
+          if (!motoStr) return;
+          const parts = motoStr.trim();
+          let matched = false;
+          for (const brand of MOTO_CATALOG) {
+                  for (const model of brand.modelos) {
+                            const prefix = brand.marca + ' ' + model.nome;
+                            if (parts.startsWith(prefix)) {
+                                        marcaSel.value = brand.marca;
+                                        marcaSel.dispatchEvent(new Event('change'));
+                                        modeloSel.value = model.nome;
+                                        modeloSel.dispatchEvent(new Event('change'));
+                                        const rest = parts.substring(prefix.length).trim();
+                                        const yearMatch = rest.match(/(\d{4})/);
+                                        if (yearMatch && model.anos.includes(parseInt(yearMatch[1]))) {
+                                                      anoSel.value = yearMatch[1];
+                                                      anoSel.dispatchEvent(new Event('change'));
+                                        }
+                                        matched = true; break;
+                            }
+                  }
+                  if (matched) break;
+          }
+          if (!matched) {
+                  marcaSel.value = OUTRO;
+                  modeloSel.disabled = true; anoSel.disabled = true;
+                  showCustom(true);
+                  const ym = parts.match(/(\d{4})\s*$/);
+                  if (ym) { inAno.value = ym[1]; inModelo.value = parts.slice(0, ym.index).trim(); }
+                  else { inModelo.value = parts; }
+                  inMarca.value = '';
+                  if (hidden) hidden.value = motoStr;
+          }
+    };
+};
+/* === FIM FP PATCH === */
