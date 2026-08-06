@@ -2784,6 +2784,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/><path d="M2 20h4M22 20H10"/></svg>
       <span class="nav-label">Edição</span>
     </button>
+    <button class="nav-item" data-view="clips">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 8h20M7 4l-2 4M12 4l-2 4M17 4l-2 4"/></svg>
+      <span class="nav-label">Clips</span>
+    </button>
     <div class="nav-section">Pós-produção</div>
     <button class="nav-item" data-view="debriefing">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><path d="M8 9h.01M12 9h.01M16 9h.01"/></svg>
@@ -3398,6 +3402,16 @@
     </div>
 
     <!-- EDITING VIEW -->
+    <div id="view-clips" style="display:none">
+      <div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div><h1>Clips</h1><p>Vídeos de produtos para o Mercado Livre.</p></div>
+        <button onclick="fpOpenClipCreate()" style="padding:9px 18px;font-size:13px;background:var(--primary);border:1px solid var(--primary);color:#fff;font-weight:600;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo clip
+        </button>
+      </div>
+      <div id="clipsList"></div>
+    </div>
+
     <div id="view-editing" style="display:none">
       <div class="page-head">
         <div>
@@ -4497,7 +4511,7 @@ document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['dashboard','requests','calendar','checkin','projects','project-detail','editing','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'].forEach(v => {
+    ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'].forEach(v => {
       document.getElementById('view-' + v).style.display = 'none';
     });
     document.getElementById('view-' + btn.dataset.view).style.display = 'block';
@@ -5808,7 +5822,7 @@ function openProjectDetail(id) {
   switchDetailTab('producao');
 
   // Hide all views, show project-detail
-  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'].forEach(v => {
+  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'].forEach(v => {
     document.getElementById('view-' + v).style.display = 'none';
   });
   document.getElementById('view-project-detail').style.display = 'block';
@@ -5829,7 +5843,7 @@ function openProjectDetail(id) {
 function backToProjects() {
   stopEngagementAutoRefresh();
   projDetailId = null;
-  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'].forEach(v => {
+  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'].forEach(v => {
     document.getElementById('view-' + v).style.display = 'none';
   });
   document.getElementById('view-projects').style.display = 'block';
@@ -6206,14 +6220,14 @@ function renderShotsReadOnly(shots, si) {
   'use strict';
 
   const FP_MODULE_GROUPS = [
-    { sec: 'Geral', items: [['dashboard','Dashboard'],['requests','Solicitações'],['calendar','Agenda'],['checkin','Check-in / Check-out'],['projects','Projetos'],['editing','Edição']] },
+    { sec: 'Geral', items: [['dashboard','Dashboard'],['requests','Solicitações'],['calendar','Agenda'],['checkin','Check-in / Check-out'],['projects','Projetos'],['editing','Edição'],['clips','Clips']] },
     { sec: 'Pós-produção', items: [['debriefing','Debriefing']] },
     { sec: 'Performance', items: [['perf-metas','Metas'],['perf-posts','Meus Posts'],['perf-influencers','Influenciadores'],['perf-bonificacao','Bonificação']] },
     { sec: 'Configurações', items: [['templates','Templates WhatsApp'],['export','Exportar'],['users','Usuários']] }
   ];
-  const FP_ALL_VIEWS = ['dashboard','requests','calendar','checkin','projects','project-detail','editing','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'];
+  const FP_ALL_VIEWS = ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'];
   const FP_ALWAYS_ON = ['profile','project-detail'];
-  const FP_NAV_ORDER = ['dashboard','requests','calendar','checkin','projects','editing','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'];
+  const FP_NAV_ORDER = ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'];
 
   function fpRoleKey(roleStr){
     const r = (roleStr || '').toLowerCase();
@@ -6527,6 +6541,291 @@ function renderShotsReadOnly(shots, si) {
   }
 })();
 /* === FIM FP PATCH edicao-roteiro === */
+
+/* === FP MODULO CLIPS (Mercado Livre) === */
+(function(){
+  'use strict';
+
+  window.CLIPS = window.CLIPS || [];
+  const CLIP_STATUS = { planejamento:'Planejamento', edicao:'Edição', a_publicar:'A publicar', concluido:'Concluído' };
+  const CLIP_STATUS_KEYS = ['planejamento','edicao','a_publicar','concluido'];
+
+  function esc(s){ return (typeof escHtml==='function') ? escHtml(s==null?'':s) : String(s==null?'':s); }
+  function brl(n){ return (typeof formatBRL==='function') ? formatBRL(n||0) : Number(n||0).toFixed(2).replace('.',','); }
+  function jsStr(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+  // ---------- Data ----------
+  async function loadClips(){
+    if (typeof sb === 'undefined' || !sb) return;
+    const res = await sb.from('mc_clips').select('*').order('created_at', { ascending:false });
+    if (res.error){ console.warn('loadClips:', res.error.message); return; }
+    window.CLIPS = res.data || [];
+    renderClips();
+    fpRefreshClipsBling();
+  }
+  window.loadClips = loadClips;
+
+  async function fpSaveClip(id, patch){
+    const res = await sb.from('mc_clips').update(patch).eq('id', id);
+    if (res.error){ alert('Erro ao salvar: ' + res.error.message); return false; }
+    const c = (window.CLIPS||[]).find(function(x){ return x.id === id; });
+    if (c) Object.assign(c, patch);
+    return true;
+  }
+
+  window.fpDeleteClip = async function(id){
+    if (!confirm('Excluir este clip?')) return;
+    const res = await sb.from('mc_clips').delete().eq('id', id);
+    if (res.error){ alert('Erro ao excluir: ' + res.error.message); return; }
+    fpCloseClipDetail();
+    loadClips();
+  };
+
+  window.fpClipStatusChange = async function(id, status, fromDetail){
+    const c = (window.CLIPS||[]).find(function(x){ return x.id === id; });
+    if (!c) return;
+    const patch = { status: status };
+    if (status === 'concluido' && !c.recorded_at) patch.recorded_at = new Date().toISOString();
+    await fpSaveClip(id, patch);
+    renderClips();
+    if (document.getElementById('fpClipOverlay') && document.getElementById('fpClipOverlay').classList.contains('open') && fpClipDetailId === id){ fpRenderClipDetail(id); }
+  };
+
+  // ---------- Helpers de UI ----------
+  function recordedTag(c){
+    if (c.status !== 'concluido' || !c.recorded_at) return '';
+    const d = new Date(c.recorded_at);
+    const p2 = function(n){ return String(n).padStart(2,'0'); };
+    const txt = 'Gravado em ' + p2(d.getDate()) + '/' + p2(d.getMonth()+1) + '/' + d.getFullYear() + ' - ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+    return '<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:6px;background:rgba(31,210,122,.12);border:1px solid rgba(31,210,122,.3);color:var(--success);font-size:10px;font-weight:600;white-space:nowrap"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 7 12 12 15 15"/></svg>' + txt + '</span>';
+  }
+  function statusSelect(c, fromDetail){
+    let opts = '';
+    CLIP_STATUS_KEYS.forEach(function(k){ opts += '<option value="' + k + '"' + (c.status === k ? ' selected' : '') + '>' + CLIP_STATUS[k] + '</option>'; });
+    return '<select class="proj-status-select ' + esc(c.status||'planejamento') + '" style="min-width:120px" onchange="fpClipStatusChange(\'' + c.id + '\',this.value,' + (fromDetail?'true':'false') + ')">' + opts + '</select>';
+  }
+  function mlLinkEl(c){
+    if (c.ml_link && String(c.ml_link).trim()){
+      return '<a href="' + esc(c.ml_link) + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:7px;background:rgba(255,230,0,.12);border:1px solid rgba(255,230,0,.35);color:#c9a500;font-size:11px;font-weight:600;text-decoration:none">'
+        + '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Ver anúncio no Mercado Livre</a>';
+    }
+    return '';
+  }
+  function productLine(c){
+    const img = c.product_image
+      ? '<img src="' + esc(c.product_image) + '" width="46" height="46" style="border-radius:8px;object-fit:cover;flex-shrink:0"/>'
+      : '<div style="width:46px;height:46px;border-radius:8px;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--text-dim)" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4M4 7l8 4M4 7v10l8 4m0-10v10"/></svg></div>';
+    const price = c.product_price != null ? 'R$ ' + brl(c.product_price) : '—';
+    const stock = c.product_stock != null ? c.product_stock : '—';
+    const stkColor = (typeof c.product_stock === 'number') ? (c.product_stock > 3 ? 'var(--success)' : 'var(--warning)') : 'var(--text-dim)';
+    return '<div style="display:flex;align-items:center;gap:12px">' + img
+      + '<div style="min-width:0;flex:1">'
+      +   '<div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(c.product_name || 'Produto') + '</div>'
+      +   '<div style="font-size:11px;color:var(--text-dim);margin-top:2px">SKU: ' + esc(c.sku || '—')
+      +     ' &middot; <span id="clipPrice_' + c.id + '">' + price + '</span>'
+      +     ' &middot; Estoque: <span id="clipStk_' + c.id + '" style="font-weight:700;color:' + stkColor + '">' + stock + '</span> un</div>'
+      + '</div></div>';
+  }
+
+  // ---------- Lista ----------
+  function renderClips(){
+    const el = document.getElementById('clipsList'); if (!el) return;
+    const clips = window.CLIPS || [];
+    if (!clips.length){
+      el.innerHTML = '<div style="background:var(--bg-elev);border:1px dashed var(--border);border-radius:14px;padding:40px 20px;text-align:center;color:var(--text-muted)">'
+        + '<svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.3" style="opacity:.5;margin-bottom:10px"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></svg>'
+        + '<div style="font-size:13px">Nenhum clip ainda. Clique em <strong>+ Novo clip</strong> para vincular um produto.</div></div>';
+      return;
+    }
+    el.innerHTML = clips.map(function(c){
+      const obs = (c.observations || '').trim();
+      return '<div class="edit-card" style="margin-bottom:14px">'
+        + '<div class="edit-card-head">'
+        +   '<div style="min-width:0"><h4 style="margin:0">' + esc(c.title || c.product_name || 'Clip') + '</h4>'
+        +     '<div style="display:flex;gap:8px;margin-top:6px;align-items:center;flex-wrap:wrap">' + (recordedTag(c) || (mlLinkEl(c) ? '' : '')) + mlLinkEl(c) + '</div></div>'
+        +   '<div class="edit-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+        +     statusSelect(c, false)
+        +     '<button class="action-btn view" style="padding:4px 12px;font-size:11px" onclick="fpOpenClipDetail(\'' + c.id + '\')">'
+        +       '<svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Abrir</button>'
+        +   '</div>'
+        + '</div>'
+        + '<div style="margin:12px 0 4px;padding:12px 14px;background:var(--bg-elev);border:1px solid var(--border);border-radius:10px">' + productLine(c) + '</div>'
+        + '<div style="margin-top:10px">'
+        +   '<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">Observações para o vídeo</div>'
+        +   (obs
+            ? '<div style="font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.55;max-height:110px;overflow:hidden">' + esc(obs) + '</div>'
+            : '<div style="font-size:12px;color:var(--text-muted);font-style:italic">Sem observações. Clique em "Abrir" para adicionar tópicos.</div>')
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+  window.renderClips = renderClips;
+
+  // ---------- Bling: preço/estoque ao vivo ----------
+  async function fpRefreshClipsBling(){
+    try {
+      if (typeof isBlingConnected !== 'function' || !isBlingConnected()) return;
+      if (typeof blingGetAllProducts !== 'function') return;
+      const prods = await blingGetAllProducts();
+      if (!prods || !prods.length) return;
+      const byId = {}, byCode = {};
+      prods.forEach(function(p){ if (p.id != null) byId[String(p.id)] = p; if (p.codigo) byCode[String(p.codigo)] = p; });
+      (window.CLIPS||[]).forEach(function(c){
+        const p = (c.bling_product_id && byId[String(c.bling_product_id)]) || (c.sku && byCode[String(c.sku)]);
+        if (!p) return;
+        const newPrice = (p.preco != null ? Number(p.preco) : c.product_price);
+        const newStock = (p.estoque && p.estoque.saldoVirtualTotal != null) ? p.estoque.saldoVirtualTotal : c.product_stock;
+        const changed = (newPrice !== c.product_price) || (newStock !== c.product_stock);
+        c.product_price = newPrice; c.product_stock = newStock;
+        const pe = document.getElementById('clipPrice_' + c.id); if (pe) pe.textContent = (newPrice != null ? 'R$ ' + brl(newPrice) : '—');
+        const se = document.getElementById('clipStk_' + c.id);
+        if (se){ se.textContent = (newStock != null ? newStock : '—'); se.style.color = (typeof newStock === 'number') ? (newStock > 3 ? 'var(--success)' : 'var(--warning)') : 'var(--text-dim)'; }
+        if (changed){ sb.from('mc_clips').update({ product_price: newPrice, product_stock: newStock, product_name: p.nome || c.product_name, product_image: p.imagemURL || c.product_image }).eq('id', c.id).then(function(){}, function(){}); }
+      });
+    } catch(e){ console.warn('fpRefreshClipsBling', e); }
+  }
+
+  // ---------- CSS ----------
+  function fpInjectClipsCss(){
+    if (document.getElementById('fpClipsCss')) return;
+    const st = document.createElement('style'); st.id = 'fpClipsCss';
+    st.textContent = '#fpClipOverlay,#fpClipNewOverlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:10000;display:none;align-items:center;justify-content:center;padding:24px}'
+      + '#fpClipOverlay.open,#fpClipNewOverlay.open{display:flex}'
+      + '.fp-clip-box{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;max-width:600px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden}'
+      + '.fp-clip-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0}'
+      + '.fp-clip-head h3{font-size:15px;margin:0;flex:1;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+      + '.fp-clip-body{overflow-y:auto;padding:16px 18px}'
+      + '.fp-clip-lbl{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin:14px 0 5px}'
+      + '.fp-clip-inp{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev);color:var(--text);font-family:inherit;font-size:14px}'
+      + '.fp-clip-ta{width:100%;min-height:150px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev);color:var(--text);font-family:inherit;font-size:14px;line-height:1.55;resize:vertical}'
+      + '.fp-clip-btn{padding:8px 16px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:var(--bg-elev);color:var(--text);cursor:pointer}'
+      + '.fp-clip-btn.primary{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}'
+      + '.fp-clip-btn.x{padding:6px 10px;font-size:14px}'
+      + '.fp-clip-res{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev);cursor:pointer;margin-bottom:6px}'
+      + '.fp-clip-res:hover{border-color:var(--primary)}';
+    document.head.appendChild(st);
+  }
+
+  // ---------- Modal: novo clip (busca SKU no Bling) ----------
+  let fpClipNewBuilt = false;
+  function fpCloseClipCreate(){ const o = document.getElementById('fpClipNewOverlay'); if (o) o.classList.remove('open'); }
+  window.fpCloseClipCreate = fpCloseClipCreate;
+  function fpBuildClipCreate(){
+    if (fpClipNewBuilt) return; fpClipNewBuilt = true; fpInjectClipsCss();
+    const ov = document.createElement('div'); ov.id = 'fpClipNewOverlay';
+    ov.innerHTML = '<div class="fp-clip-box" style="max-width:520px">'
+      + '<div class="fp-clip-head"><h3>Novo clip &mdash; vincular produto</h3><button type="button" class="fp-clip-btn x" id="fpClipNewClose" title="Fechar">&times;</button></div>'
+      + '<div class="fp-clip-body">'
+      +   '<div class="fp-clip-lbl" style="margin-top:0">Buscar produto por SKU ou nome (Bling)</div>'
+      +   '<input class="fp-clip-inp" id="fpClipSearch" placeholder="Ex.: escape, ponteira, SKU..." autocomplete="off"/>'
+      +   '<div id="fpClipSearchInfo" style="font-size:11px;color:var(--text-muted);margin-top:6px"></div>'
+      +   '<div id="fpClipResults" style="margin-top:10px"></div>'
+      + '</div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function(e){ if (e.target === ov) fpCloseClipCreate(); });
+    document.getElementById('fpClipNewClose').onclick = fpCloseClipCreate;
+    const inp = document.getElementById('fpClipSearch');
+    let tmr = null;
+    inp.addEventListener('input', function(){ clearTimeout(tmr); tmr = setTimeout(fpRunClipSearch, 380); });
+    inp.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ clearTimeout(tmr); fpRunClipSearch(); } });
+  }
+  async function fpRunClipSearch(){
+    const q = (document.getElementById('fpClipSearch').value || '').trim();
+    const info = document.getElementById('fpClipSearchInfo');
+    const box = document.getElementById('fpClipResults');
+    box.innerHTML = '';
+    if (q.length < 2){ info.textContent = 'Digite ao menos 2 caracteres.'; return; }
+    if (typeof isBlingConnected !== 'function' || !isBlingConnected()){ info.innerHTML = 'Bling não conectado. Conecte em <strong>Meu perfil &rarr; Integrações</strong>.'; return; }
+    info.textContent = 'Buscando...';
+    let list = [];
+    try {
+      if (typeof blingSearchBySku === 'function') list = await blingSearchBySku(q);
+      if ((!list || !list.length) && typeof blingSearchProducts === 'function') list = await blingSearchProducts(q);
+    } catch(e){ console.warn(e); }
+    if (!list || !list.length){ info.textContent = 'Nenhum produto encontrado.'; return; }
+    info.textContent = list.length + ' produto(s):';
+    box.innerHTML = list.slice(0, 25).map(function(p){
+      const stk = (p.estoque && p.estoque.saldoVirtualTotal != null) ? p.estoque.saldoVirtualTotal : '?';
+      const img = p.imagemURL ? '<img src="' + esc(p.imagemURL) + '" width="36" height="36" style="border-radius:6px;object-fit:cover;flex-shrink:0"/>' : '<div style="width:36px;height:36px;border-radius:6px;background:var(--border);flex-shrink:0"></div>';
+      return '<div class="fp-clip-res" data-pid="' + esc(String(p.id)) + '">' + img
+        + '<div style="min-width:0;flex:1"><div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(p.nome) + '</div>'
+        + '<div style="font-size:11px;color:var(--text-dim)">SKU: ' + esc(p.codigo || '—') + ' &middot; R$ ' + brl(p.preco) + ' &middot; ' + stk + ' un</div></div>'
+        + '<span style="font-size:11px;color:var(--primary);font-weight:600;flex-shrink:0">Vincular &rarr;</span></div>';
+    }).join('');
+    box.querySelectorAll('.fp-clip-res').forEach(function(row){
+      row.onclick = function(){ const p = list.find(function(x){ return String(x.id) === row.getAttribute('data-pid'); }); if (p) fpCreateClip(p); };
+    });
+  }
+  async function fpCreateClip(prod){
+    const row = {
+      title: (prod.nome || 'Clip'),
+      bling_product_id: (prod.id != null ? String(prod.id) : null),
+      sku: prod.codigo || null,
+      product_name: prod.nome || null,
+      product_price: (prod.preco != null ? Number(prod.preco) : null),
+      product_image: prod.imagemURL || null,
+      product_stock: (prod.estoque && prod.estoque.saldoVirtualTotal != null) ? prod.estoque.saldoVirtualTotal : null,
+      status: 'planejamento'
+    };
+    const res = await sb.from('mc_clips').insert(row).select().single();
+    if (res.error){ alert('Erro ao criar clip: ' + res.error.message); return; }
+    fpCloseClipCreate();
+    await loadClips();
+    if (res.data && res.data.id) fpOpenClipDetail(res.data.id);
+  }
+  window.fpOpenClipCreate = function(){ fpBuildClipCreate(); const s = document.getElementById('fpClipSearch'); if (s){ s.value=''; } document.getElementById('fpClipResults').innerHTML=''; document.getElementById('fpClipSearchInfo').textContent=''; document.getElementById('fpClipNewOverlay').classList.add('open'); if (s) setTimeout(function(){ s.focus(); }, 50); };
+
+  // ---------- Modal: detalhe/editar clip ----------
+  let fpClipBuilt = false, fpClipDetailId = null;
+  function fpCloseClipDetail(){ const o = document.getElementById('fpClipOverlay'); if (o) o.classList.remove('open'); }
+  window.fpCloseClipDetail = fpCloseClipDetail;
+  function fpBuildClipDetail(){
+    if (fpClipBuilt) return; fpClipBuilt = true; fpInjectClipsCss();
+    const ov = document.createElement('div'); ov.id = 'fpClipOverlay';
+    ov.innerHTML = '<div class="fp-clip-box">'
+      + '<div class="fp-clip-head"><h3 id="fpClipDetTitle">Clip</h3>'
+      +   '<button type="button" class="fp-clip-btn x" id="fpClipDetClose" title="Fechar">&times;</button></div>'
+      + '<div class="fp-clip-body" id="fpClipDetBody"></div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function(e){ if (e.target === ov) fpCloseClipDetail(); });
+    document.getElementById('fpClipDetClose').onclick = fpCloseClipDetail;
+  }
+  function fpRenderClipDetail(id){
+    const c = (window.CLIPS||[]).find(function(x){ return x.id === id; }); if (!c) return;
+    document.getElementById('fpClipDetTitle').textContent = c.title || c.product_name || 'Clip';
+    const body = document.getElementById('fpClipDetBody');
+    body.innerHTML =
+        '<div style="padding:12px 14px;background:var(--bg-elev);border:1px solid var(--border);border-radius:10px">' + productLine(c) + '</div>'
+      + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px">' + statusSelect(c, true) + recordedTag(c) + '</div>'
+      + '<div class="fp-clip-lbl">Título do clip</div>'
+      + '<input class="fp-clip-inp" id="fpClipTitle" value="' + esc(c.title || '') + '" placeholder="Nome do clip"/>'
+      + '<div class="fp-clip-lbl">Link do anúncio no Mercado Livre</div>'
+      + '<input class="fp-clip-inp" id="fpClipMl" value="' + esc(c.ml_link || '') + '" placeholder="https://... (cole a URL do anúncio)"/>'
+      + (c.ml_link && String(c.ml_link).trim() ? '<div style="margin-top:8px">' + mlLinkEl(c) + '</div>' : '')
+      + '<div class="fp-clip-lbl">Observações para o vídeo (tópicos)</div>'
+      + '<textarea class="fp-clip-ta" id="fpClipObs" placeholder="Ex.:\n- Destacar o ganho de desempenho\n- Falar do material e acabamento\n- Mencionar compatibilidade e garantia">' + esc(c.observations || '') + '</textarea>'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:18px">'
+      +   '<button type="button" class="fp-clip-btn" style="border-color:rgba(255,77,77,.4);color:var(--danger)" onclick="fpDeleteClip(\'' + c.id + '\')">Excluir</button>'
+      +   '<div style="display:flex;gap:8px"><button type="button" class="fp-clip-btn" onclick="fpCloseClipDetail()">Fechar</button>'
+      +     '<button type="button" class="fp-clip-btn primary" id="fpClipSave">Salvar</button></div>'
+      + '</div>';
+    document.getElementById('fpClipSave').onclick = async function(){
+      const btn = this; btn.disabled = true; btn.textContent = 'Salvando...';
+      const patch = {
+        title: (document.getElementById('fpClipTitle').value || '').trim() || c.product_name || 'Clip',
+        ml_link: (document.getElementById('fpClipMl').value || '').trim() || null,
+        observations: document.getElementById('fpClipObs').value
+      };
+      const ok = await fpSaveClip(id, patch);
+      btn.disabled = false; btn.textContent = 'Salvar';
+      if (ok){ renderClips(); fpRenderClipDetail(id); }
+    };
+  }
+  window.fpOpenClipDetail = function(id){ fpBuildClipDetail(); fpClipDetailId = id; fpRenderClipDetail(id); document.getElementById('fpClipOverlay').classList.add('open'); };
+
+})();
+/* === FIM FP MODULO CLIPS === */
+
 
 
 function renderCameraView(container) {
@@ -13237,9 +13536,9 @@ function applyRolePermissions() {
 
   // Views accessible per role
   const access = {
-    admin: ['dashboard','requests','calendar','checkin','projects','editing','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'],
-    filmmaker: ['dashboard','requests','calendar','checkin','projects','editing','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','profile'],
-    mecanico: ['dashboard','requests','calendar','checkin','projects','editing','debriefing','perf-metas','perf-posts','perf-bonificacao','templates','profile'],
+    admin: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','profile'],
+    filmmaker: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','profile'],
+    mecanico: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-bonificacao','templates','profile'],
     viewer: ['dashboard','debriefing','profile']
   };
 
@@ -13523,7 +13822,7 @@ async function initApp() {
      ------------------------------------------------------------------ */
   const ALL_VIEWS = [
     'dashboard','requests','calendar','checkin','projects','project-detail',
-    'editing','debriefing','perf-metas','perf-posts','perf-influencers',
+    'editing','clips','debriefing','perf-metas','perf-posts','perf-influencers',
     'perf-bonificacao','templates','export','users','profile'
   ];
 
@@ -13590,6 +13889,9 @@ async function initApp() {
         case 'editing':
           await loadProjects();
           if (typeof renderEditingView === 'function') renderEditingView();
+          break;
+        case 'clips':
+          if (typeof loadClips === 'function') await loadClips();
           break;
         case 'debriefing':
           if (typeof renderDebriefing === 'function') renderDebriefing();
