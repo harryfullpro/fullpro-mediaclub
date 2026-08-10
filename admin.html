@@ -729,7 +729,13 @@
   .rot-help-btn:hover .rot-help-popup { display: block; }
 
   /* Agenda layout: calendar | details (wider) | block (compact) */
-  .cal-top { display: grid; grid-template-columns: 340px 1fr 260px; gap: 14px; align-items: start; }
+  .cal-top { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  .cal-top > .cal-card:first-child { flex: 0 0 340px; max-width: 340px; }
+  #dateViewer { flex: 1 1 400px; min-width: 300px; max-width: 600px; }
+  @media (min-width: 1280px) { #dateViewer { max-width: 680px; } }
+  @media (min-width: 1600px) { #dateViewer { max-width: 820px; } }
+  @media (min-width: 1920px) { #dateViewer { max-width: 960px; } }
+  @media (max-width: 720px) { .cal-top > .cal-card:first-child { flex: 1 1 100%; max-width: none; } #dateViewer { flex: 1 1 100%; max-width: none; } }
 
   /* Modal */
   .modal {
@@ -2941,7 +2947,10 @@
           <h1>Agenda</h1>
           <p>Gerencie agendamentos e bloqueios de datas.</p>
         </div>
-        <button class="action-btn view" style="padding:12px 20px; font-size:14px" onclick="openBookingModal()">+ Novo agendamento</button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button class="action-btn" style="padding:12px 18px;font-size:14px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);border-radius:9px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px" onclick="fpOpenBlockModal()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="5.6" y1="5.6" x2="18.4" y2="18.4"/></svg>Bloquear data</button>
+          <button class="action-btn view" style="padding:12px 20px; font-size:14px" onclick="openBookingModal()">+ Novo agendamento</button>
+        </div>
       </div>
 
       <div class="cal-admin">
@@ -2974,9 +2983,15 @@
             </div>
           </div>
 
-          <!-- Block panel -->
-          <div class="cal-card block-compact">
-            <h3>Bloquear data</h3>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Bloquear data (popup) -->
+    <div id="fpBlockOverlay" class="fp-block-overlay">
+          <div class="cal-card block-compact fp-block-box">
+            <div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0;flex:1">Bloquear data</h3><button type="button" onclick="fpCloseBlockModal()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 11px;color:var(--text);cursor:pointer;font-size:16px;line-height:1">&times;</button></div>
             <p class="sub">Feriados, manutenção, indisponibilidade do estúdio, etc.</p>
             <div class="block-field">
               <label>Data</label>
@@ -3002,8 +3017,6 @@
               <div class="list-blocked" id="blockedList"></div>
             </div>
           </div>
-        </div>
-      </div>
     </div>
 
     <!-- CHECK-IN / CHECK-OUT VIEW -->
@@ -6825,6 +6838,19 @@ function renderShotsReadOnly(shots, si) {
 
 })();
 /* === FIM FP MODULO CLIPS === */
+
+/* === FP AGENDA: popup Bloquear data === */
+(function(){
+  'use strict';
+  var st=document.createElement('style');
+  st.textContent='.fp-block-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;display:none;align-items:flex-start;justify-content:center;padding:48px 20px;overflow:auto}.fp-block-overlay.open{display:flex}.fp-block-box{max-width:420px;width:100%;max-height:calc(100vh - 96px);overflow:auto}';
+  document.head.appendChild(st);
+  window.fpOpenBlockModal=function(){var o=document.getElementById('fpBlockOverlay');if(o)o.classList.add('open');};
+  window.fpCloseBlockModal=function(){var o=document.getElementById('fpBlockOverlay');if(o)o.classList.remove('open');};
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')window.fpCloseBlockModal();});
+  document.addEventListener('click',function(e){var o=document.getElementById('fpBlockOverlay');if(o&&e.target===o)o.classList.remove('open');});
+})();
+/* === FIM FP AGENDA === */
 
 
 
