@@ -6565,12 +6565,18 @@ function renderShotsReadOnly(shots, si) {
   let CLIP_FILTER = 'todos';
   window.fpSetClipFilter = function(k){ CLIP_FILTER = k; if (typeof renderClips === 'function') renderClips(); };
   function fpClipFilterBar(all){
-    const defs = [['todos','Todos'],['planejamento','Planejamento'],['edicao','Edição'],['concluido','Concluído']];
+    const defs = [['todos','Todos','',''],['planejamento','Planejamento','#3b82f6','59,130,246'],['edicao','Edição','#a855f7','168,85,247'],['concluido','Concluído','#1fd27a','31,210,122']];
     return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">' + defs.map(function(d){
-      const k = d[0];
+      const k = d[0], col = d[2], rgb = d[3];
       const cnt = (k === 'todos') ? all.length : all.filter(function(c){ return c.status === k; }).length;
       const active = (CLIP_FILTER === k);
-      return '<button onclick="fpSetClipFilter(\'' + k + '\')" style="padding:7px 14px;font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;font-family:inherit;border:1px solid ' + (active?'var(--primary)':'var(--border)') + ';background:' + (active?'var(--primary)':'var(--bg-elev)') + ';color:' + (active?'#fff':'var(--text-dim)') + '">' + d[1] + ' <span style="opacity:.75">(' + cnt + ')</span></button>';
+      let style;
+      if (k === 'todos') {
+        style = active ? 'border:1px solid var(--primary);background:var(--primary);color:#fff' : 'border:1px solid var(--border);background:var(--bg-elev);color:var(--text-dim)';
+      } else {
+        style = active ? ('border:1px solid ' + col + ';background:' + col + ';color:#fff') : ('border:1px solid rgba(' + rgb + ',.45);background:rgba(' + rgb + ',.12);color:' + col);
+      }
+      return '<button onclick="fpSetClipFilter(\'' + k + '\')" style="padding:7px 14px;font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;font-family:inherit;' + style + '">' + d[1] + ' <span style="opacity:.75">(' + cnt + ')</span></button>';
     }).join('') + '</div>';
   }
 
