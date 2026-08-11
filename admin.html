@@ -1936,6 +1936,45 @@
   .proj-filter-chip[data-pfilter="concluido"] { border-color: rgba(31,210,122,.3); color: rgba(31,210,122,.6); }
   .proj-filter-chip[data-pfilter="concluido"]:hover { background: rgba(31,210,122,.06); }
   .proj-filter-chip[data-pfilter="concluido"].active { background: rgba(31,210,122,.15); border-color: var(--success); color: var(--success); }
+  /* ── Filtros por DESTINO (mesmas cores das tags .proj-dest-tag) ── */
+  .proj-filter-chip[data-dfilter="todos"] { border-color: rgba(255,255,255,.2); color: rgba(255,255,255,.45); }
+  .proj-filter-chip[data-dfilter="todos"]:hover { background: rgba(255,255,255,.04); }
+  .proj-filter-chip[data-dfilter="todos"].active { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); color: #fff; }
+  [data-theme="light"] .proj-filter-chip[data-dfilter="todos"] { border-color: rgba(0,0,0,.15); color: rgba(0,0,0,.35); }
+  [data-theme="light"] .proj-filter-chip[data-dfilter="todos"]:hover { background: rgba(0,0,0,.03); }
+  [data-theme="light"] .proj-filter-chip[data-dfilter="todos"].active { background: rgba(0,0,0,.08); border-color: rgba(0,0,0,.3); color: #222; }
+  /* YouTube — vermelho */
+  .proj-filter-chip[data-dfilter="youtube"] { border-color: rgba(255,68,68,.3); color: rgba(255,68,68,.65); }
+  .proj-filter-chip[data-dfilter="youtube"]:hover { background: rgba(255,68,68,.06); }
+  .proj-filter-chip[data-dfilter="youtube"].active { background: rgba(255,68,68,.15); border-color: #ff4444; color: #ff4444; }
+  /* Shorts — vermelho */
+  .proj-filter-chip[data-dfilter="shorts"] { border-color: rgba(255,68,68,.3); color: rgba(255,68,68,.65); }
+  .proj-filter-chip[data-dfilter="shorts"]:hover { background: rgba(255,68,68,.06); }
+  .proj-filter-chip[data-dfilter="shorts"].active { background: rgba(255,68,68,.15); border-color: #ff4444; color: #ff4444; }
+  /* TikTok — roxo */
+  .proj-filter-chip[data-dfilter="tiktok"] { border-color: rgba(168,85,247,.3); color: rgba(168,85,247,.6); }
+  .proj-filter-chip[data-dfilter="tiktok"]:hover { background: rgba(168,85,247,.06); }
+  .proj-filter-chip[data-dfilter="tiktok"].active { background: rgba(168,85,247,.15); border-color: #a855f7; color: #a855f7; }
+  /* Reels (Instagram) — rosa */
+  .proj-filter-chip[data-dfilter="reels"] { border-color: rgba(225,48,108,.3); color: rgba(225,48,108,.62); }
+  .proj-filter-chip[data-dfilter="reels"]:hover { background: rgba(225,48,108,.06); }
+  .proj-filter-chip[data-dfilter="reels"].active { background: rgba(225,48,108,.15); border-color: #e1306c; color: #e1306c; }
+  /* Clips — amarelo */
+  .proj-filter-chip[data-dfilter="clips"] { border-color: rgba(250,204,21,.3); color: rgba(250,204,21,.7); }
+  .proj-filter-chip[data-dfilter="clips"]:hover { background: rgba(250,204,21,.06); }
+  .proj-filter-chip[data-dfilter="clips"].active { background: rgba(250,204,21,.15); border-color: #facc15; color: #facc15; }
+  [data-theme="light"] .proj-filter-chip[data-dfilter="clips"] { color: #a16207; }
+  [data-theme="light"] .proj-filter-chip[data-dfilter="clips"].active { background: rgba(234,179,8,.12); border-color: #eab308; color: #a16207; }
+  /* Site — neutro */
+  .proj-filter-chip[data-dfilter="site"] { border-color: rgba(255,255,255,.2); color: rgba(224,224,224,.55); }
+  .proj-filter-chip[data-dfilter="site"]:hover { background: rgba(255,255,255,.04); }
+  .proj-filter-chip[data-dfilter="site"].active { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.55); color: #e0e0e0; }
+  [data-theme="light"] .proj-filter-chip[data-dfilter="site"] { border-color: rgba(0,0,0,.15); color: rgba(0,0,0,.4); }
+  [data-theme="light"] .proj-filter-chip[data-dfilter="site"].active { background: rgba(0,0,0,.08); border-color: rgba(0,0,0,.35); color: #444; }
+  /* Ads — azul */
+  .proj-filter-chip[data-dfilter="ads"] { border-color: rgba(59,130,246,.3); color: rgba(59,130,246,.6); }
+  .proj-filter-chip[data-dfilter="ads"]:hover { background: rgba(59,130,246,.06); }
+  .proj-filter-chip[data-dfilter="ads"].active { background: rgba(59,130,246,.15); border-color: #3b82f6; color: #3b82f6; }
   .proj-sort-select {
     padding: 6px 12px;
     border-radius: 8px;
@@ -3228,6 +3267,18 @@
         </select>
       </div>
 
+      <!-- Project destination filters -->
+      <div class="proj-filters proj-dest-filters">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--text-muted)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        <button class="proj-filter-chip active" data-dfilter="todos" onclick="toggleProjDestFilter('todos')">TODOS</button>
+        <button class="proj-filter-chip active" data-dfilter="youtube" onclick="toggleProjDestFilter('youtube')">YOUTUBE</button>
+        <button class="proj-filter-chip active" data-dfilter="shorts" onclick="toggleProjDestFilter('shorts')">SHORTS</button>
+        <button class="proj-filter-chip active" data-dfilter="tiktok" onclick="toggleProjDestFilter('tiktok')">TIKTOK</button>
+        <button class="proj-filter-chip active" data-dfilter="reels" onclick="toggleProjDestFilter('reels')">REELS</button>
+        <button class="proj-filter-chip active" data-dfilter="clips" onclick="toggleProjDestFilter('clips')">CLIPS</button>
+        <button class="proj-filter-chip active" data-dfilter="site" onclick="toggleProjDestFilter('site')">SITE</button>
+        <button class="proj-filter-chip active" data-dfilter="ads" onclick="toggleProjDestFilter('ads')">ADS</button>
+      </div>
 
       <!-- Project list -->
       <div id="projectsList"></div>
@@ -5325,6 +5376,8 @@ async function loadProjects() {
 
 const ALL_PROJ_STATUSES = ['planejamento','producao','edicao','a_publicar','concluido'];
 let projActiveFilters = new Set(['planejamento', 'producao']);
+const ALL_PROJ_DESTS = ['youtube','shorts','tiktok','reels','clips','site','ads'];
+let projActiveDests = new Set(ALL_PROJ_DESTS);
 function toggleProjFilter(f) {
   if (f === 'todos') {
     // Toggle all: if all are active, deselect all; otherwise select all
@@ -5351,11 +5404,36 @@ function toggleProjFilter(f) {
   renderProjects();
 }
 
+function toggleProjDestFilter(d) {
+  if (d === 'todos') {
+    const allActive = ALL_PROJ_DESTS.every(x => projActiveDests.has(x));
+    if (allActive) projActiveDests.clear();
+    else ALL_PROJ_DESTS.forEach(x => projActiveDests.add(x));
+  } else {
+    if (projActiveDests.has(d)) projActiveDests.delete(d);
+    else projActiveDests.add(d);
+  }
+  const allActive = ALL_PROJ_DESTS.every(x => projActiveDests.has(x));
+  document.querySelectorAll('.proj-dest-filters .proj-filter-chip[data-dfilter]').forEach(c => {
+    const key = c.dataset.dfilter;
+    if (key === 'todos') c.classList.toggle('active', allActive);
+    else c.classList.toggle('active', projActiveDests.has(key));
+  });
+  renderProjects();
+}
+
 function getFilteredProjects() {
   let list = [...PROJECTS];
 
   // Filter by active status tags
   list = list.filter(p => projActiveFilters.has(p.status));
+
+  // Filter by active destinations (só filtra quando NÃO estão todos ativos,
+  // assim projetos sem destino ainda aparecem no modo "TODOS")
+  const allDestsActive = ALL_PROJ_DESTS.every(d => projActiveDests.has(d));
+  if (!allDestsActive) {
+    list = list.filter(p => (p.destinations || []).some(d => projActiveDests.has(d)));
+  }
 
   // Sort
   const sortSel = document.getElementById('projSortSelect');
