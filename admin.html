@@ -1885,8 +1885,8 @@
   [data-theme="light"] .filter-btn.active { background: #d97706; border-color: #d97706; color: #fff; }
   [data-theme="light"] .filter-btn[data-cifilter="checkout"].active { background: #b45309; border-color: #b45309; }
   /* Action button "view" variant */
-  [data-theme="light"] .action-btn.view { background: rgba(217,119,6,.1); border-color: rgba(217,119,6,.35); color: #b45309; }
-  [data-theme="light"] .action-btn.view:hover { background: rgba(217,119,6,.18); border-color: #d97706; }
+  [data-theme="light"] .action-btn.view { background: #d97706; border-color: #d97706; color: #fff; }
+  [data-theme="light"] .action-btn.view:hover { background: #b45309; border-color: #b45309; color: #fff; }
   /* Form inputs focus */
   [data-theme="light"] .checkin-input:focus,
   [data-theme="light"] .checkin-textarea:focus { border-color: #d97706; }
@@ -2031,6 +2031,10 @@
   [data-theme="light"] .proj-status-select.edicao       { background-color: #a855f7; border-color: #a855f7; color: #fff; }
   [data-theme="light"] .proj-status-select.a_publicar   { background-color: #ec4899; border-color: #ec4899; color: #fff; }
   [data-theme="light"] .proj-status-select.concluido    { background-color: #16a34a; border-color: #16a34a; color: #fff; }
+  /* Botões inline dos cards de projeto (Arquivo / editar link / excluir) */
+  [data-theme="light"] .fp-arquivo-link { background: #ec4899 !important; border-color: #ec4899 !important; color: #fff !important; }
+  [data-theme="light"] .fp-arquivo-edit { background: #ec4899 !important; border-color: #ec4899 !important; color: #fff !important; }
+  [data-theme="light"] .fp-del-btn { background: #ef4444 !important; border-color: #ef4444 !important; color: #fff !important; }
 
   /* ── Botão recolhível do filtro por destino ── */
   .proj-dest-wrap { margin-bottom: 16px; }
@@ -5613,18 +5617,18 @@ function renderProjects() {
             <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             Editar
           </button>
-          <button style="background:none;border:1px solid rgba(255,77,77,.25);border-radius:6px;padding:4px 6px;cursor:pointer;color:var(--danger);transition:all .15s;display:inline-flex;align-items:center" onclick="deleteProject('${p.id}')" onmouseover="this.style.background='rgba(255,77,77,.12)';this.style.borderColor='var(--danger)'" onmouseout="this.style.background='none';this.style.borderColor='rgba(255,77,77,.25)'" title="Excluir projeto">
+          <button class="fp-del-btn" style="background:none;border:1px solid rgba(255,77,77,.25);border-radius:6px;padding:4px 6px;cursor:pointer;color:var(--danger);transition:all .15s;display:inline-flex;align-items:center" onclick="deleteProject('${p.id}')" onmouseover="this.style.background='rgba(255,77,77,.12)';this.style.borderColor='var(--danger)'" onmouseout="this.style.background='none';this.style.borderColor='rgba(255,77,77,.25)'" title="Excluir projeto">
             <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
           </button>
         </div>
       </div>
       ${p.publish_link ? `<div style="margin-bottom:8px;display:flex;align-items:center;gap:6px">
         ${dests || '<span style="font-size:11px;color:var(--text-muted)">Sem destino definido</span>'}
-        <a href="${escHtml(p.publish_link)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;margin-left:auto;padding:3px 10px;border-radius:6px;background:rgba(236,72,153,.12);border:1px solid rgba(236,72,153,.3);color:#ec4899;font-size:11px;font-weight:600;text-decoration:none;transition:all .15s;white-space:nowrap" onmouseover="this.style.background='rgba(236,72,153,.22)'" onmouseout="this.style.background='rgba(236,72,153,.12)'">
+        <a class="fp-arquivo-link" href="${escHtml(p.publish_link)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;margin-left:auto;padding:3px 10px;border-radius:6px;background:rgba(236,72,153,.12);border:1px solid rgba(236,72,153,.3);color:#ec4899;font-size:11px;font-weight:600;text-decoration:none;transition:all .15s;white-space:nowrap" onmouseover="this.style.background='rgba(236,72,153,.22)'" onmouseout="this.style.background='rgba(236,72,153,.12)'">
           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           Arquivo
         </a>
-        <button onclick="event.stopPropagation();editPublishLink('${p.id}')" style="background:none;border:1px solid rgba(236,72,153,.25);border-radius:5px;padding:3px 5px;cursor:pointer;color:#ec4899;display:inline-flex;align-items:center;transition:all .15s" onmouseover="this.style.background='rgba(236,72,153,.12)'" onmouseout="this.style.background='none'" title="Editar link">
+        <button class="fp-arquivo-edit" onclick="event.stopPropagation();editPublishLink('${p.id}')" style="background:none;border:1px solid rgba(236,72,153,.25);border-radius:5px;padding:3px 5px;cursor:pointer;color:#ec4899;display:inline-flex;align-items:center;transition:all .15s" onmouseover="this.style.background='rgba(236,72,153,.12)'" onmouseout="this.style.background='none'" title="Editar link">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
       </div>` : `<div style="margin-bottom:8px">${dests || '<span style="font-size:11px;color:var(--text-muted)">Sem destino definido</span>'}</div>`}
@@ -11335,7 +11339,7 @@ function renderEditingView() {
         <div>
           <h4>${escHtml(p.title || 'Sem título')}</h4>
           <div style="display:flex;gap:6px;margin-top:4px;align-items:center;flex-wrap:wrap">${dests || '<span style="font-size:11px;color:var(--text-muted)">Sem destino</span>'}
-            ${p.publish_link ? `<a href="${escHtml(p.publish_link)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:5px;background:rgba(236,72,153,.12);border:1px solid rgba(236,72,153,.3);color:#ec4899;font-size:10px;font-weight:600;text-decoration:none;transition:all .15s" onmouseover="this.style.background='rgba(236,72,153,.22)'" onmouseout="this.style.background='rgba(236,72,153,.12)'"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Arquivo</a><button onclick="event.stopPropagation();editPublishLink('${p.id}')" style="background:none;border:1px solid rgba(236,72,153,.2);border-radius:4px;padding:2px 4px;cursor:pointer;color:#ec4899;display:inline-flex;align-items:center;transition:all .15s" onmouseover="this.style.background='rgba(236,72,153,.1)'" onmouseout="this.style.background='none'" title="Editar link"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : ''}
+            ${p.publish_link ? `<a class="fp-arquivo-link" href="${escHtml(p.publish_link)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:5px;background:rgba(236,72,153,.12);border:1px solid rgba(236,72,153,.3);color:#ec4899;font-size:10px;font-weight:600;text-decoration:none;transition:all .15s" onmouseover="this.style.background='rgba(236,72,153,.22)'" onmouseout="this.style.background='rgba(236,72,153,.12)'"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Arquivo</a><button class="fp-arquivo-edit" onclick="event.stopPropagation();editPublishLink('${p.id}')" style="background:none;border:1px solid rgba(236,72,153,.2);border-radius:4px;padding:2px 4px;cursor:pointer;color:#ec4899;display:inline-flex;align-items:center;transition:all .15s" onmouseover="this.style.background='rgba(236,72,153,.1)'" onmouseout="this.style.background='none'" title="Editar link"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : ''}
           </div>
         </div>
         <div class="edit-actions">
