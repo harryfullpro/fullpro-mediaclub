@@ -5728,10 +5728,10 @@ function renderProjects() {
     </div>`;
   }).join('');
 
-  // Load compatible Bling products for each project
+  // Load compatible Bling products for each project (não em status Edição — só relevante no Planejamento)
   if (isBlingConnected()) {
     filtered.forEach(p => {
-      if (p.moto) {
+      if (p.moto && p.status !== 'edicao') {
         const cId = 'projBlingProds_' + p.id;
         const el = document.getElementById(cId);
         if (el) {
