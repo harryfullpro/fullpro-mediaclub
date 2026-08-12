@@ -4847,6 +4847,7 @@ function renderRequests() {
       <td>
         <div class="actions">
           <button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Ver" onclick="openDetails('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+          <button class="fp-icon-btn fp-ib-green fp-tip-left" data-tip="WhatsApp" onclick="openWhatsApp('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></button>
           ${r.status === 'pending' ? `
             <button class="fp-icon-btn fp-ib-green fp-tip-left" data-tip="Aprovar" onclick="updateStatus('${r.id}','approved')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg></button>
             <button class="fp-icon-btn fp-ib-danger fp-tip-left" data-tip="Rejeitar" onclick="updateStatus('${r.id}','rejected')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
@@ -11311,19 +11312,25 @@ const DEFAULT_TEMPLATES = [
     body: 'Olá, {nome}! Aqui é {operador}, da FullPro.\n\nMuito obrigado por participar do Media Club! Foi um prazer trabalhar com a sua *{moto}* no estúdio hoje.\n\nEm breve compartilharemos o conteúdo produzido em nossas redes (@fullprobr). Fique de olho!\n\nEsperamos que tenha curtido a experiência e o brinde. Se puder, nos avalie no Google — ajuda muito!\n\nhttps://g.page/r/fullpro/review\n\nGrande abraço,\n{operador} — FullPro Media Club'
   },
   {
+    name: 'Rejeição / sem demanda no momento',
+    body: 'Olá, {nome}! Tudo bem? Aqui é {operador}, da FullPro Media Club.\n\nAgradecemos muito o seu interesse em participar do nosso programa de conteúdo com a *{moto}*!\n\nNo momento não temos demanda de conteúdos para esse modelo, então não vamos conseguir seguir com a gravação agora. Mas queremos deixar registrado: vamos guardar o seu contato aqui e, assim que surgir uma oportunidade de gravar algo com a *{moto}*, entraremos em contato com você.\n\nObrigado pela compreensão e pelo interesse na FullPro!\n\nAbraço,\n{operador} — FullPro Media Club'
+  },
+  {
     name: 'Reagendar / data indisponível',
     body: 'Olá, {nome}! Aqui é {operador}, da FullPro Media Club.\n\nInfelizmente a data *{data}* que você escolheu não está mais disponível para gravação.\n\nMas gostaríamos muito de manter sua participação! Temos disponibilidade nas próximas semanas. Podemos encontrar uma nova data juntos?\n\nAguardo seu retorno!\n{operador} — FullPro'
   }
 ];
 
 function loadTemplates() {
+  let tpls = null;
   const stored = localStorage.getItem('fp_wa_templates');
-  if (stored) {
-    try { return JSON.parse(stored); } catch(e) { /* fall through */ }
-  }
-  // First run → seed with defaults
-  localStorage.setItem('fp_wa_templates', JSON.stringify(DEFAULT_TEMPLATES));
-  return DEFAULT_TEMPLATES.slice();
+  if (stored) { try { tpls = JSON.parse(stored); } catch(e) { tpls = null; } }
+  if (!Array.isArray(tpls)) tpls = DEFAULT_TEMPLATES.slice();
+  // Garante que templates padrão novos apareçam também p/ quem já tinha a lista salva
+  let changed = false;
+  DEFAULT_TEMPLATES.forEach(d => { if (!tpls.some(t => t.name === d.name)) { tpls.push(d); changed = true; } });
+  if (changed || !stored) localStorage.setItem('fp_wa_templates', JSON.stringify(tpls));
+  return tpls;
 }
 
 function saveTemplates(tpls) {
