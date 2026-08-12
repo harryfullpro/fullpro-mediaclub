@@ -912,6 +912,34 @@
   .proj-meta-item { font-size: 12px; }
   .proj-meta-item .k { color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: .5px; }
   .proj-meta-item .v { color: var(--text); margin-top: 2px; }
+  /* Botões de ação só-ícone (sem caixa) + tooltip */
+  .fp-icon-btn {
+    position: relative; display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; padding: 0; border: none; background: none;
+    color: var(--text-muted); cursor: pointer; border-radius: 9px; transition: background .15s, color .15s;
+  }
+  .fp-icon-btn:hover { background: var(--bg-elev); color: var(--text); }
+  .fp-icon-btn svg { width: 18px; height: 18px; }
+  .fp-icon-btn.fp-ib-pink { color: #ec4899; }
+  .fp-icon-btn.fp-ib-pink:hover { background: rgba(236,72,153,.14); color: #ec4899; }
+  .fp-icon-btn.fp-ib-danger { color: var(--danger); }
+  .fp-icon-btn.fp-ib-danger:hover { background: rgba(255,77,77,.14); color: var(--danger); }
+  .fp-icon-btn::after {
+    content: attr(data-tip); position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%);
+    background: var(--bg-card); color: var(--text); border: 1px solid var(--border);
+    font-size: 11px; font-weight: 600; white-space: nowrap; padding: 4px 8px; border-radius: 6px;
+    opacity: 0; pointer-events: none; transition: opacity .12s; z-index: 200; box-shadow: 0 4px 14px rgba(0,0,0,.3);
+  }
+  .fp-icon-btn:hover::after { opacity: 1; }
+  /* Estrelas de avaliação no card (A publicar) */
+  .proj-rating-inline { display: flex; align-items: center; gap: 6px; margin: -2px 0 10px; }
+  .proj-rating-stars { display: inline-flex; gap: 1px; font-size: 15px; line-height: 1; }
+  .prj-star { color: var(--border-hi); }
+  .prj-star.on { color: var(--accent); }
+  .proj-rating-num { font-size: 12px; font-weight: 700; color: var(--text); }
+  .proj-rating-count { font-size: 11px; color: var(--text-muted); }
+  .proj-rating-btn { background: none; border: none; color: var(--primary); font-size: 12px; font-weight: 600; cursor: pointer; padding: 0 2px; text-decoration: underline; }
+  .proj-rating-btn:hover { opacity: .8; }
 
   /* Star Rating */
   .star-rating { display: inline-flex; gap: 2px; }
@@ -5605,38 +5633,29 @@ function renderProjects() {
     return `<div class="proj-card">
       <div class="proj-card-head">
         <h4>${escHtml(p.title || 'Sem título')}</h4>
-        <div style="display:flex;align-items:center;gap:8px">
-          <select class="proj-status-select ${p.status}" onchange="quickUpdateProjectStatus('${p.id}',this.value)">
+        <div style="display:flex;align-items:center;gap:2px">
+          <button class="fp-icon-btn" data-tip="Ver" onclick="openProjectDetail('${p.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button class="fp-icon-btn" data-tip="Editar" onclick="openProjectDetail('${p.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          ${p.publish_link ? `<a class="fp-icon-btn fp-ib-pink" data-tip="Abrir arquivo" href="${escHtml(p.publish_link)}" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>` : ''}
+          <button class="fp-icon-btn fp-ib-danger" data-tip="Excluir" onclick="deleteProject('${p.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </button>
+          <select class="proj-status-select ${p.status}" style="margin-left:4px" onchange="quickUpdateProjectStatus('${p.id}',this.value)">
             ${['planejamento','producao','edicao','a_publicar','concluido'].map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${statusMap[s]}</option>`).join('')}
           </select>
-          <button class="action-btn view" style="padding:4px 10px;font-size:11px" onclick="openProjectDetail('${p.id}')">
-            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            Ver
-          </button>
-          <button class="action-btn view" style="padding:4px 10px;font-size:11px" onclick="openProjectDetail('${p.id}')">
-            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            Editar
-          </button>
-          <button class="fp-del-btn" style="background:none;border:1px solid rgba(255,77,77,.25);border-radius:6px;padding:4px 6px;cursor:pointer;color:var(--danger);transition:all .15s;display:inline-flex;align-items:center" onclick="deleteProject('${p.id}')" onmouseover="this.style.background='rgba(255,77,77,.12)';this.style.borderColor='var(--danger)'" onmouseout="this.style.background='none';this.style.borderColor='rgba(255,77,77,.25)'" title="Excluir projeto">
-            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-          </button>
         </div>
       </div>
-      ${p.publish_link ? `<div style="margin-bottom:8px;display:flex;align-items:center;gap:6px">
-        ${dests || '<span style="font-size:11px;color:var(--text-muted)">Sem destino definido</span>'}
-        <a class="fp-arquivo-link" href="${escHtml(p.publish_link)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;margin-left:auto;padding:3px 10px;border-radius:6px;background:rgba(236,72,153,.12);border:1px solid rgba(236,72,153,.3);color:#ec4899;font-size:11px;font-weight:600;text-decoration:none;transition:all .15s;white-space:nowrap" onmouseover="this.style.background='rgba(236,72,153,.22)'" onmouseout="this.style.background='rgba(236,72,153,.12)'">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          Arquivo
-        </a>
-        <button class="fp-arquivo-edit" onclick="event.stopPropagation();editPublishLink('${p.id}')" style="background:none;border:1px solid rgba(236,72,153,.25);border-radius:5px;padding:3px 5px;cursor:pointer;color:#ec4899;display:inline-flex;align-items:center;transition:all .15s" onmouseover="this.style.background='rgba(236,72,153,.12)'" onmouseout="this.style.background='none'" title="Editar link">
-          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        </button>
-      </div>` : `<div style="margin-bottom:8px">${dests || '<span style="font-size:11px;color:var(--text-muted)">Sem destino definido</span>'}</div>`}
+      ${p.status === 'a_publicar' ? `<div class="proj-rating" id="projRating_${p.id}">${projRatingHtml(p.id, [])}</div>` : ''}
+      <div style="margin-bottom:8px">${dests || '<span style="font-size:11px;color:var(--text-muted)">Sem destino definido</span>'}</div>
       <div class="proj-meta">
         <div class="proj-meta-item"><div class="k">Moto / Produto</div><div class="v">${escHtml(p.moto || '—')}</div></div>
         <div class="proj-meta-item"><div class="k">Data</div><div class="v">${p.production_date ? prettyDate(p.production_date) : '—'}</div></div>
-        <div class="proj-meta-item"><div class="k">Links</div><div class="v">${linkCount} referência${linkCount !== 1 ? 's' : ''}</div></div>
-        <div class="proj-meta-item"><div class="k">Fotos</div><div class="v">${photoCount} imagem${photoCount !== 1 ? 'ns' : ''}</div></div>
         <div class="proj-meta-item"><div class="k">Custos</div><div class="v" style="${totalCost > 0 ? 'color:#f59e0b;font-weight:600' : ''}">R$ ${formatBRL(totalCost)}</div></div>
       </div>
       <div id="projBlingProds_${p.id}" style="margin-top:6px"></div>
@@ -5657,6 +5676,39 @@ function renderProjects() {
       }
     });
   }
+  fillProjectRatings(filtered);
+}
+
+// Média de estrelas dos projetos "A publicar" (avaliado por 1+ pessoas)
+async function fillProjectRatings(projects) {
+  const aPub = (projects || []).filter(p => p.status === 'a_publicar');
+  if (!aPub.length) return;
+  const ids = aPub.map(p => p.id);
+  let rows = [];
+  try {
+    const { data } = await sb.from('mc_project_reviews').select('project_id, rating').in('project_id', ids).not('rating', 'is', null);
+    rows = data || [];
+  } catch (e) { console.warn('fillProjectRatings', e); return; }
+  const agg = {};
+  rows.forEach(r => { if (r.rating) (agg[r.project_id] = agg[r.project_id] || []).push(r.rating); });
+  aPub.forEach(p => {
+    const el = document.getElementById('projRating_' + p.id);
+    if (el) el.innerHTML = projRatingHtml(p.id, agg[p.id] || []);
+  });
+}
+
+function projRatingHtml(projectId, arr) {
+  arr = arr || [];
+  if (!arr.length) {
+    const empty = [1,2,3,4,5].map(() => '<span class="prj-star">\u2605</span>').join('');
+    return '<div class="proj-rating-inline"><div class="proj-rating-stars">' + empty +
+      '</div><button class="proj-rating-btn" onclick="event.stopPropagation();openProjectDetail(\'' + projectId + '\',\'avaliacao\')">avaliar</button></div>';
+  }
+  const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
+  const rounded = Math.round(avg);
+  const stars = [1,2,3,4,5].map(n => '<span class="prj-star' + (n <= rounded ? ' on' : '') + '">\u2605</span>').join('');
+  return '<div class="proj-rating-inline"><div class="proj-rating-stars">' + stars +
+    '</div><span class="proj-rating-num">' + avg.toFixed(1) + '</span><span class="proj-rating-count">(' + arr.length + ')</span></div>';
 }
 
 function openProjectForm(projectId) {
@@ -6001,7 +6053,7 @@ function viewProject(id) { openProjectDetail(id); }
 
 // Project detail page functions
 
-function openProjectDetail(id) {
+function openProjectDetail(id, tab) {
   projDetailId = id || null;
   const p = id ? PROJECTS.find(x => x.id === id) : null;
 
@@ -6020,8 +6072,8 @@ function openProjectDetail(id) {
   renderProjTabAvaliacao(p);
   renderProjTabPostagem(p);
 
-  // Switch to producao tab
-  switchDetailTab('producao');
+  // Switch to requested tab (default producao)
+  switchDetailTab(tab || 'producao');
 
   // Hide all views, show project-detail
   ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','integracoes','profile'].forEach(v => {
