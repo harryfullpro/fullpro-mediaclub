@@ -931,6 +931,7 @@
     opacity: 0; pointer-events: none; transition: opacity .12s; z-index: 200; box-shadow: 0 4px 14px rgba(0,0,0,.3);
   }
   .fp-icon-btn:hover::after { opacity: 1; }
+  .fp-icon-btn.fp-tip-left::after { left: auto; right: 0; transform: none; }
   .fp-icon-btn.fp-ib-blue { color: #8b9cf7; }
   .fp-icon-btn.fp-ib-blue:hover { background: rgba(139,156,247,.15); color: #8b9cf7; }
   [data-theme="light"] .fp-icon-btn.fp-ib-blue { color: #3b82f6; }
@@ -4783,14 +4784,14 @@ function renderRequests() {
       <td><span class="badge ${r.status}">${r.status === 'pending' ? 'Pendente' : r.status === 'approved' ? 'Aprovada' : 'Rejeitada'}</span></td>
       <td>
         <div class="actions">
-          <button class="action-btn view" onclick="openDetails('${r.id}')">Ver</button>
+          <button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Ver" onclick="openDetails('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
           ${r.status === 'pending' ? `
-            <button class="action-btn approve" onclick="updateStatus('${r.id}','approved')">✓</button>
-            <button class="action-btn reject" onclick="updateStatus('${r.id}','rejected')">✕</button>
+            <button class="fp-icon-btn fp-ib-green fp-tip-left" data-tip="Aprovar" onclick="updateStatus('${r.id}','approved')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg></button>
+            <button class="fp-icon-btn fp-ib-danger fp-tip-left" data-tip="Rejeitar" onclick="updateStatus('${r.id}','rejected')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
           ` : r.status === 'approved' ? `
-            <button class="action-btn reject" onclick="updateStatus('${r.id}','rejected')">Rejeitar</button>
+            <button class="fp-icon-btn fp-ib-danger fp-tip-left" data-tip="Rejeitar" onclick="updateStatus('${r.id}','rejected')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
           ` : `
-            <button class="action-btn approve" onclick="updateStatus('${r.id}','approved')">Aprovar</button>
+            <button class="fp-icon-btn fp-ib-green fp-tip-left" data-tip="Aprovar" onclick="updateStatus('${r.id}','approved')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg></button>
           `}
         </div>
       </td>
