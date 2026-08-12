@@ -950,6 +950,9 @@
   .proj-rating-count { font-size: 11px; color: var(--text-muted); }
   .proj-rating-btn { background: none; border: none; color: var(--accent); font-size: 12px; font-weight: 600; cursor: pointer; padding: 0 2px; text-decoration: underline; }
   .proj-rating-btn:hover { opacity: .8; }
+  .edit-obs-section { margin: 10px 0; padding: 12px 14px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; }
+  .fp-textlink-btn { background: none; border: none; color: var(--primary); font-size: 12px; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline; }
+  .fp-textlink-btn:hover { opacity: .8; }
 
   /* Star Rating */
   .star-rating { display: inline-flex; gap: 2px; }
@@ -6693,8 +6696,6 @@ function renderShotsReadOnly(shots, si) {
       + '</div>'
       + items
       + (remaining > 0 ? '<div style="font-size:11px;color:var(--text-muted);padding-left:12px;margin-top:2px">+' + remaining + ' plano' + (remaining !== 1 ? 's' : '') + '&hellip;</div>' : '')
-      + '<div style="margin-top:12px"><button class="action-btn view" style="padding:6px 14px;font-size:12px" onclick="fpOpenRoteiroModal(\'' + p.id + '\')">'
-      +   '<svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Ver roteiro completo</button></div>'
       + '</div>';
   }
 
@@ -11395,29 +11396,29 @@ function renderEditingView() {
     const photos = p.photos || [];
     const hasPdf = p.script_file && p.script_file.data && p.script_file.name && p.script_file.name.toLowerCase().endsWith('.pdf');
     const hasScript = p.script_text && p.script_text.trim().length > 0;
+    const hasScenes = Array.isArray(p.script_scenes) && p.script_scenes.length > 0;
 
     return `<div class="edit-card">
       <div class="edit-card-head">
         <div>
           <h4>${escHtml(p.title || 'Sem título')}</h4>
-          <div style="display:flex;gap:6px;margin-top:4px;align-items:center;flex-wrap:wrap">${dests || '<span style="font-size:11px;color:var(--text-muted)">Sem destino</span>'}
-            ${p.publish_link ? `<a class="fp-arquivo-link" href="${escHtml(p.publish_link)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:5px;background:rgba(236,72,153,.12);border:1px solid rgba(236,72,153,.3);color:#ec4899;font-size:10px;font-weight:600;text-decoration:none;transition:all .15s" onmouseover="this.style.background='rgba(236,72,153,.22)'" onmouseout="this.style.background='rgba(236,72,153,.12)'"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Arquivo</a><button class="fp-arquivo-edit" onclick="event.stopPropagation();editPublishLink('${p.id}')" style="background:none;border:1px solid rgba(236,72,153,.2);border-radius:4px;padding:2px 4px;cursor:pointer;color:#ec4899;display:inline-flex;align-items:center;transition:all .15s" onmouseover="this.style.background='rgba(236,72,153,.1)'" onmouseout="this.style.background='none'" title="Editar link"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : ''}
-          </div>
+          <div style="display:flex;gap:6px;margin-top:4px;align-items:center;flex-wrap:wrap">${dests || '<span style="font-size:11px;color:var(--text-muted)">Sem destino</span>'}</div>
         </div>
         <div class="edit-actions">
-          <select class="proj-status-select ${p.status}" onchange="editingUpdateStatus('${p.id}',this.value)" style="min-width:120px">
+          <button class="fp-icon-btn fp-ib-blue" data-tip="Ver roteiro" onclick="openEditRoteiro('${p.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </button>
+          ${p.publish_link ? `<a class="fp-icon-btn fp-ib-pink" data-tip="Abrir arquivo" href="${escHtml(p.publish_link)}" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>` : ''}
+          <button class="fp-icon-btn fp-ib-blue" data-tip="Ver completo" onclick="openProjectDetail('${p.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <select class="proj-status-select ${p.status}" onchange="editingUpdateStatus('${p.id}',this.value)" style="min-width:120px;margin-left:4px">
             <option value="edicao" ${p.status === 'edicao' ? 'selected' : ''}>Edição</option>
             <option value="a_publicar" ${p.status === 'a_publicar' ? 'selected' : ''}>A publicar</option>
             <option value="concluido" ${p.status === 'concluido' ? 'selected' : ''}>Concluído</option>
           </select>
-          <button style="padding:4px 10px;font-size:11px;background:none;border:1px solid rgba(167,139,250,.3);color:#a78bfa;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .15s" onmouseover="this.style.background='rgba(167,139,250,.1)';this.style.borderColor='#a78bfa'" onmouseout="this.style.background='none';this.style.borderColor='rgba(167,139,250,.3)'" onclick="openEditRoteiro('${p.id}')">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            Ver roteiro
-          </button>
-          <button class="action-btn view" style="padding:4px 10px;font-size:11px" onclick="openProjectDetail('${p.id}')">
-            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            Ver completo
-          </button>
         </div>
       </div>
 
@@ -11425,10 +11426,19 @@ function renderEditingView() {
         <div class="edit-meta-item"><div class="k">Moto / Produto</div><div class="v">${escHtml(p.moto || '—')}</div></div>
         <div class="edit-meta-item"><div class="k">Data</div><div class="v">${p.production_date ? prettyDate(p.production_date) : '—'}</div></div>
         <div class="edit-meta-item"><div class="k">Links</div><div class="v">${links.length} referência${links.length !== 1 ? 's' : ''}</div></div>
-        <div class="edit-meta-item"><div class="k">Fotos</div><div class="v">${photos.length} imagem${photos.length !== 1 ? 'ns' : ''}</div></div>
-        <div class="edit-meta-item"><div class="k">Custos</div><div class="v" style="${(p.costs||[]).reduce((s,c)=>s+(c.value||0),0) > 0 ? 'color:#f59e0b;font-weight:600' : ''}">R$ ${formatBRL((p.costs||[]).reduce((s,c)=>s+(c.value||0),0))}</div></div>
       </div>
       <div id="editBlingProds_${p.id}" style="margin-top:6px"></div>
+
+      <div class="edit-obs-section">
+        <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          Observações
+          ${p.observations ? `<button class="fp-icon-btn" data-tip="Editar observação" onclick="openObsModal('${p.id}')" style="width:24px;height:24px;margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : ''}
+        </div>
+        ${p.observations
+          ? `<div style="font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.55">${escHtml(p.observations)}</div>`
+          : `<button class="fp-textlink-btn" onclick="openObsModal('${p.id}')">+ Adicionar observação</button>`}
+      </div>
 
       ${hasPdf ? `
       <div class="edit-script-section">
@@ -11450,10 +11460,14 @@ function renderEditingView() {
           Roteiro
         </div>
         <div style="font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.6;max-height:250px;overflow-y:auto">${escHtml(p.script_text)}</div>
-      </div>` : `
+      </div>` : hasScenes ? `
       <div class="edit-script-section" style="text-align:center;padding:24px">
         <svg viewBox="0 0 24 24" width="24" height="24" stroke="var(--text-muted)" fill="none" stroke-width="1.5" style="margin-bottom:6px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         <div style="font-size:12px;color:var(--text-muted)">Nenhum roteiro adicionado a este projeto.</div>
+      </div>` : `
+      <div style="display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);font-size:11px;margin:2px 0 4px">
+        <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Sem roteiro
       </div>`}
 
       ${links.length ? `
@@ -11475,8 +11489,6 @@ function renderEditingView() {
         </div>
       </div>` : ''}
 
-      ${p.observations ? `
-      <div style="font-size:12px;color:var(--text-dim);margin-top:10px;border-top:1px solid var(--border);padding-top:8px">${escHtml(p.observations).substring(0, 200)}${p.observations.length > 200 ? '...' : ''}</div>` : ''}
     </div>`;
   }).join('');
 
@@ -11493,6 +11505,49 @@ function renderEditingView() {
       }
     });
   }
+}
+
+let _obsModalBuilt = false, _obsModalId = null;
+function buildObsModal() {
+  if (_obsModalBuilt) return; _obsModalBuilt = true;
+  const st = document.createElement('style');
+  st.textContent = '#fpObsOverlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;display:none;align-items:center;justify-content:center;padding:20px}'
+    + '#fpObsOverlay.open{display:flex}'
+    + '#fpObsBox{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;max-width:520px;width:100%;padding:20px;color:var(--text)}'
+    + '#fpObsBox h3{font-size:16px;margin:0 0 2px}'
+    + '#fpObsBox textarea{width:100%;min-height:120px;margin-top:12px;border:1px solid var(--border);border-radius:10px;background:var(--bg-elev);color:var(--text);font-family:inherit;font-size:13px;padding:10px 12px;resize:vertical;box-sizing:border-box}'
+    + '#fpObsBox textarea:focus{outline:none;border-color:var(--primary)}'
+    + '.fp-obs-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}';
+  document.head.appendChild(st);
+  const ov = document.createElement('div'); ov.id = 'fpObsOverlay';
+  ov.innerHTML = '<div id="fpObsBox"><h3>Observação do projeto</h3>'
+    + '<div id="fpObsProj" style="font-size:12px;color:var(--text-muted)"></div>'
+    + '<textarea id="fpObsText" placeholder="Escreva uma observação sobre este projeto..."></textarea>'
+    + '<div class="fp-obs-actions"><button class="action-btn" style="background:var(--bg-elev)" onclick="closeObsModal()">Cancelar</button>'
+    + '<button class="action-btn approve" onclick="saveObs()">Salvar</button></div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click', e => { if (e.target === ov) closeObsModal(); });
+}
+function openObsModal(id) {
+  buildObsModal();
+  _obsModalId = id;
+  const p = (PROJECTS || []).find(x => x.id === id);
+  document.getElementById('fpObsProj').textContent = p ? (p.title || 'Projeto') : '';
+  document.getElementById('fpObsText').value = (p && p.observations) || '';
+  document.getElementById('fpObsOverlay').classList.add('open');
+  setTimeout(() => { const t = document.getElementById('fpObsText'); if (t) t.focus(); }, 100);
+}
+function closeObsModal() { const o = document.getElementById('fpObsOverlay'); if (o) o.classList.remove('open'); }
+async function saveObs() {
+  if (!_obsModalId) return;
+  const txt = (document.getElementById('fpObsText').value || '').trim();
+  const { error } = await sb.from('mc_projects').update({ observations: txt }).eq('id', _obsModalId);
+  if (error) { alert('Erro ao salvar observação: ' + error.message); return; }
+  const p = (PROJECTS || []).find(x => x.id === _obsModalId);
+  if (p) p.observations = txt;
+  closeObsModal();
+  if (typeof renderEditingView === 'function') renderEditingView();
+  if (typeof renderProjects === 'function') renderProjects();
 }
 
 async function editingUpdateStatus(id, status) {
