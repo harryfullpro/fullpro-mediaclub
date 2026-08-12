@@ -11427,8 +11427,6 @@ function renderEditingView() {
         <div class="edit-meta-item"><div class="k">Data</div><div class="v">${p.production_date ? prettyDate(p.production_date) : '—'}</div></div>
         <div class="edit-meta-item"><div class="k">Links</div><div class="v">${links.length} referência${links.length !== 1 ? 's' : ''}</div></div>
       </div>
-      <div id="editBlingProds_${p.id}" style="margin-top:6px"></div>
-
       <div class="edit-obs-section">
         <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">
           <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
@@ -11491,20 +11489,6 @@ function renderEditingView() {
 
     </div>`;
   }).join('');
-
-  // Load compatible Bling products for editing view
-  if (isBlingConnected()) {
-    editProjects.forEach(p => {
-      if (p.moto) {
-        const cId = 'editBlingProds_' + p.id;
-        const el = document.getElementById(cId);
-        if (el) {
-          el.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:4px 0"><svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align:-1px;margin-right:4px;animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="30 70"/></svg>Buscando produtos…</div>';
-          blingFindCompatible(p.moto).then(prods => renderCompatibleProducts(prods, cId));
-        }
-      }
-    });
-  }
 }
 
 let _obsModalBuilt = false, _obsModalId = null;
