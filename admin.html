@@ -946,6 +946,8 @@
   .fp-new-btn.ghost:hover { background: var(--bg-card); color: var(--text); border-color: var(--text-muted); }
   .fp-icon-btn.fp-ib-green { color: var(--success); }
   .fp-icon-btn.fp-ib-green:hover { background: rgba(31,210,122,.14); color: var(--success); }
+  .fp-icon-btn.fp-ib-gold { color: #eab308; }
+  .fp-icon-btn.fp-ib-gold:hover { background: rgba(234,179,8,.15); color: #eab308; }
   /* Estrelas de avaliação no card (A publicar) */
   .proj-rating-inline { display: flex; align-items: center; gap: 6px; margin: -2px 0 10px; }
   .proj-rating-stars { display: inline-flex; gap: 1px; font-size: 15px; line-height: 1; }
@@ -3605,8 +3607,8 @@
     <div id="view-clips" style="display:none">
       <div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
         <div><h1>Clips</h1><p>Vídeos de produtos para o Mercado Livre.</p></div>
-        <button onclick="fpOpenClipCreate()" style="padding:9px 18px;font-size:13px;background:var(--primary);border:1px solid var(--primary);color:#fff;font-weight:600;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo clip
+        <button class="fp-new-btn" data-tip="Novo clip" aria-label="Novo clip" onclick="fpOpenClipCreate()">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
       </div>
       <div id="clipsList"></div>
@@ -7029,8 +7031,8 @@ function renderShotsReadOnly(shots, si) {
   }
   function mlLinkEl(c){
     if (c.ml_link && String(c.ml_link).trim()){
-      return '<a href="' + esc(c.ml_link) + '" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:7px;background:rgba(255,230,0,.12);border:1px solid rgba(255,230,0,.35);color:#c9a500;font-size:11px;font-weight:600;text-decoration:none">'
-        + '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Ver anúncio no Mercado Livre</a>';
+      return '<a class="fp-icon-btn fp-ib-gold" data-tip="Ver anúncio no Mercado Livre" href="' + esc(c.ml_link) + '" target="_blank" rel="noopener">'
+        + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>';
     }
     return '';
   }
@@ -7069,9 +7071,9 @@ function renderShotsReadOnly(shots, si) {
         +   '<div style="min-width:0"><h4 style="margin:0">' + esc(c.title || c.product_name || 'Clip') + '</h4>'
         +     '<div style="display:flex;gap:8px;margin-top:6px;align-items:center;flex-wrap:wrap">' + (recordedTag(c) || (mlLinkEl(c) ? '' : '')) + mlLinkEl(c) + '</div></div>'
         +   '<div class="edit-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+        +     '<button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Abrir" onclick="fpOpenClipDetail(\'' + c.id + '\')">'
+        +       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
         +     statusSelect(c, false)
-        +     '<button class="action-btn view" style="padding:4px 12px;font-size:11px" onclick="fpOpenClipDetail(\'' + c.id + '\')">'
-        +       '<svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Abrir</button>'
         +   '</div>'
         + '</div>'
         + '<div style="margin:12px 0 4px;padding:12px 14px;background:var(--bg-elev);border:1px solid var(--border);border-radius:10px">' + productLine(c) + '</div>'
