@@ -1008,6 +1008,13 @@
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   }
   .review-avatar.small { width: 28px; height: 28px; font-size: 11px; }
+  .profile-avatar-preview {
+    width: 72px; height: 72px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    font-weight: 700; font-size: 24px; color: #fff;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  }
+  .profile-avatar-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .review-compose textarea {
     width: 100%; min-height: 60px; border: 1px solid var(--border); border-radius: 8px;
     background: var(--bg-card); color: var(--text); font-family: inherit; font-size: 13px;
@@ -3684,6 +3691,20 @@
       <div class="cal-card" style="max-width:480px">
         <h3>Informações do operador</h3>
         <p class="sub">Seus dados são usados nas mensagens e no registro de atividades.</p>
+        <div style="display:flex;align-items:center;gap:16px;margin:4px 0 18px">
+          <div id="profileAvatarPreview" class="profile-avatar-preview">?</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="font-size:11px;color:var(--text-muted)">Foto exibida nos comentários do debriefing.</div>
+            <div style="display:flex;gap:8px">
+              <input type="file" id="profileAvatarFile" accept="image/*" style="display:none" onchange="onProfileAvatarPick(this)"/>
+              <button type="button" class="action-btn view" style="padding:7px 14px;font-size:12px" onclick="document.getElementById('profileAvatarFile').click()">
+                <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                Alterar foto
+              </button>
+              <button type="button" id="profileAvatarRemove" style="display:none;padding:7px 14px;font-size:12px;border-radius:8px;background:none;border:1px solid rgba(255,77,77,.3);color:var(--danger);cursor:pointer" onclick="removeProfileAvatar()">Remover</button>
+            </div>
+          </div>
+        </div>
         <div style="display:flex;flex-direction:column;gap:10px">
           <div class="block-field">
             <label>Nome completo</label>
@@ -4443,6 +4464,7 @@ function loadProfile() {
   document.getElementById('profPixName').value = pix.name || '';
   document.getElementById('profPixCity').value = pix.city || '';
   renderProfileNotifications();
+  updateProfileAvatarUI();
   // Integrações foram movidas para o módulo próprio "Integrações" (renderIntegracoes)
 }
 
@@ -7791,6 +7813,77 @@ function getAvatarColor(name) {
   return colors[Math.abs(hash) % colors.length];
 }
 
+// Avatar de usuário: usa a foto (data URI em mc_admin_users.avatar) se houver, senão iniciais coloridas
+function userAvatarHtml(user, extraClass, baseClass) {
+  baseClass = baseClass || 'review-avatar';
+  const cls = baseClass + (extraClass ? ' ' + extraClass : '');
+  const name = (user && user.name) || 'Usuário';
+  const av = user && user.avatar;
+  if (av) {
+    return `<div class="${cls}" style="background:transparent;overflow:hidden;padding:0"><img src="${escHtml(av)}" alt="${escHtml(name)}" style="width:100%;height:100%;object-fit:cover;display:block"/></div>`;
+  }
+  return `<div class="${cls}" style="background:${getAvatarColor(name)}">${getInitials(name)}</div>`;
+}
+
+/* ---- Foto de perfil (Meu perfil) ---- */
+function updateProfileAvatarUI() {
+  const prev = document.getElementById('profileAvatarPreview');
+  if (!prev) return;
+  const name = (CURRENT_USER && CURRENT_USER.name) || 'Usuário';
+  const av = CURRENT_USER && CURRENT_USER.avatar;
+  const rm = document.getElementById('profileAvatarRemove');
+  if (av) {
+    prev.innerHTML = `<img src="${escHtml(av)}" alt="${escHtml(name)}"/>`;
+    prev.style.background = 'transparent';
+    if (rm) rm.style.display = '';
+  } else {
+    prev.textContent = getInitials(name);
+    prev.style.background = getAvatarColor(name);
+    if (rm) rm.style.display = 'none';
+  }
+}
+
+function onProfileAvatarPick(input) {
+  const file = input && input.files && input.files[0];
+  if (!file) return;
+  if (!/^image\//.test(file.type)) { alert('Selecione um arquivo de imagem.'); input.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const out = 256;
+      const srcSize = Math.min(img.width, img.height);
+      const sx = (img.width - srcSize) / 2;
+      const sy = (img.height - srcSize) / 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = out; canvas.height = out;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, sx, sy, srcSize, srcSize, 0, 0, out, out);
+      let dataUri;
+      try { dataUri = canvas.toDataURL('image/jpeg', 0.85); }
+      catch (e) { alert('Não foi possível processar a imagem.'); return; }
+      saveProfileAvatar(dataUri);
+    };
+    img.onerror = () => alert('Imagem inválida.');
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+async function saveProfileAvatar(dataUri) {
+  if (!CURRENT_USER) return;
+  const { error } = await sb.from('mc_admin_users').update({ avatar: dataUri }).eq('id', CURRENT_USER.id);
+  if (error) { alert('Erro ao salvar a foto: ' + error.message); return; }
+  CURRENT_USER.avatar = dataUri || null;
+  updateProfileAvatarUI();
+}
+
+function removeProfileAvatar() {
+  if (!confirm('Remover sua foto de perfil?')) return;
+  saveProfileAvatar(null);
+}
+
 function timeAgo(dateStr) {
   const now = new Date();
   const d = new Date(dateStr);
@@ -7805,7 +7898,7 @@ function timeAgo(dateStr) {
 async function loadProjectReviews(projectId) {
   if (!projectId) return [];
   const { data, error } = await sb.from('mc_project_reviews')
-    .select('*, mc_admin_users(id, name, role)')
+    .select('*, mc_admin_users(id, name, role, avatar)')
     .eq('project_id', projectId)
     .order('created_at', { ascending: true });
   if (error) { console.error('loadProjectReviews error:', error); return []; }
@@ -7884,7 +7977,7 @@ function renderReviewItem(r, depth) {
 
   let html = `<div class="review-item" data-review-id="${r.id}">
     <div class="review-item-head">
-      <div class="review-avatar${depth > 0 ? ' small' : ''}" style="background:${color}">${initials}</div>
+      ${userAvatarHtml(user, depth > 0 ? 'small' : '', 'review-avatar')}
       <div class="review-item-meta">
         <span class="review-item-name">${escHtml(name)}</span>
         ${role ? `<span class="review-item-role">${escHtml(role)}</span>` : ''}
@@ -8124,7 +8217,7 @@ async function loadDebriefingReviews(year, month) {
   // Query reviews (with author info) filtered by project list and date range
   const { data, error } = await sb
     .from('mc_project_reviews')
-    .select('*, mc_admin_users(id, name, role, username, phone)')
+    .select('*, mc_admin_users(id, name, role, username, phone, avatar)')
     .in('project_id', eligibleIds)
     .gte('created_at', from)
     .lte('created_at', to)
@@ -8304,7 +8397,7 @@ function debriefingRenderReviewItem(r, depth, projectId) {
 
   let html = `<div class="debriefing-review-item" data-review-id="${r.id}">
     <div class="debriefing-review-head">
-      <div class="debriefing-review-avatar${depth > 0 ? ' small' : ''}" style="background:${color}">${initials}</div>
+      ${userAvatarHtml(user, depth > 0 ? 'small' : '', 'debriefing-review-avatar')}
       <div class="debriefing-review-meta" style="flex:1">
         <span class="debriefing-review-name">${escHtml(name)}</span>
         ${role ? `<span class="debriefing-review-role">${escHtml(role)}</span>` : ''}
@@ -8931,7 +9024,7 @@ async function renderProjTabAvaliacao(p) {
   if (!userHasReview) {
     html += `<div class="review-compose">
       <div class="review-compose-header">
-        <div class="review-avatar" style="background:${userColor}">${userInitials}</div>
+        ${userAvatarHtml(CURRENT_USER, '', 'review-avatar')}
         <div style="flex:1">
           <div style="font-size:13px;font-weight:600;color:var(--text)">${escHtml(userName)}</div>
           <div style="font-size:11px;color:var(--text-muted)">Nova avaliação</div>
@@ -8951,7 +9044,7 @@ async function renderProjTabAvaliacao(p) {
     </div>`;
   } else {
     html += `<div style="padding:12px 16px;border:1px solid var(--border);border-radius:10px;background:var(--bg-elev);display:flex;align-items:center;gap:10px">
-      <div class="review-avatar" style="background:${userColor}">${userInitials}</div>
+      ${userAvatarHtml(CURRENT_USER, '', 'review-avatar')}
       <div style="flex:1">
         <div style="font-size:12px;color:var(--text-muted)">Você já avaliou este projeto. Use o botão <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> na sua avaliação para editar.</div>
       </div>
