@@ -931,14 +931,24 @@
     opacity: 0; pointer-events: none; transition: opacity .12s; z-index: 200; box-shadow: 0 4px 14px rgba(0,0,0,.3);
   }
   .fp-icon-btn:hover::after { opacity: 1; }
+  .fp-icon-btn.fp-ib-blue { color: #8b9cf7; }
+  .fp-icon-btn.fp-ib-blue:hover { background: rgba(139,156,247,.15); color: #8b9cf7; }
+  [data-theme="light"] .fp-icon-btn.fp-ib-blue { color: #3b82f6; }
+  [data-theme="light"] .fp-icon-btn.fp-ib-blue:hover { background: rgba(59,130,246,.12); color: #3b82f6; }
+  /* Botão "novo projeto" — só ícone, azul, com tooltip */
+  .fp-new-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 11px; border: none; cursor: pointer; background: #3b82f6; color: #fff; transition: background .15s; }
+  .fp-new-btn:hover { background: #2563eb; }
+  .fp-new-btn svg { width: 20px; height: 20px; }
+  .fp-new-btn::after { content: attr(data-tip); position: absolute; top: calc(100% + 8px); right: 0; background: var(--bg-card); color: var(--text); border: 1px solid var(--border); font-size: 11px; font-weight: 600; white-space: nowrap; padding: 5px 9px; border-radius: 6px; opacity: 0; pointer-events: none; transition: opacity .12s; z-index: 200; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
+  .fp-new-btn:hover::after { opacity: 1; }
   /* Estrelas de avaliação no card (A publicar) */
   .proj-rating-inline { display: flex; align-items: center; gap: 6px; margin: -2px 0 10px; }
   .proj-rating-stars { display: inline-flex; gap: 1px; font-size: 15px; line-height: 1; }
-  .prj-star { color: var(--border-hi); }
-  .prj-star.on { color: var(--accent); }
+  .prj-star { color: transparent; -webkit-text-stroke: 1px var(--accent); }
+  .prj-star.on { color: var(--accent); -webkit-text-stroke: 0; }
   .proj-rating-num { font-size: 12px; font-weight: 700; color: var(--text); }
   .proj-rating-count { font-size: 11px; color: var(--text-muted); }
-  .proj-rating-btn { background: none; border: none; color: var(--primary); font-size: 12px; font-weight: 600; cursor: pointer; padding: 0 2px; text-decoration: underline; }
+  .proj-rating-btn { background: none; border: none; color: var(--accent); font-size: 12px; font-weight: 600; cursor: pointer; padding: 0 2px; text-decoration: underline; }
   .proj-rating-btn:hover { opacity: .8; }
 
   /* Star Rating */
@@ -3352,7 +3362,7 @@
           <h1>Projetos</h1>
           <p>Planeje roteiros, destinos e referências para cada produção.</p>
         </div>
-        <button class="action-btn view" style="padding:12px 20px; font-size:14px" onclick="openProjectDetail()">+ Novo projeto</button>
+        <button class="fp-new-btn" data-tip="Criar novo projeto" aria-label="Criar novo projeto" onclick="openProjectDetail()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
       </div>
 
       <!-- Project filters -->
@@ -5634,10 +5644,10 @@ function renderProjects() {
       <div class="proj-card-head">
         <h4>${escHtml(p.title || 'Sem título')}</h4>
         <div style="display:flex;align-items:center;gap:2px">
-          <button class="fp-icon-btn" data-tip="Ver" onclick="openProjectDetail('${p.id}')">
+          <button class="fp-icon-btn fp-ib-blue" data-tip="Ver" onclick="openProjectDetail('${p.id}')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
-          <button class="fp-icon-btn" data-tip="Editar" onclick="openProjectDetail('${p.id}')">
+          <button class="fp-icon-btn fp-ib-blue" data-tip="Editar" onclick="openProjectDetail('${p.id}')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
           ${p.publish_link ? `<a class="fp-icon-btn fp-ib-pink" data-tip="Abrir arquivo" href="${escHtml(p.publish_link)}" target="_blank" rel="noopener">
