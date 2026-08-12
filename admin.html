@@ -1681,7 +1681,7 @@
   .dbf-like-count { font-size: 12px; }
   .dbf-replies { border-left: 1.5px solid var(--border); padding-left: 14px; margin-top: 4px; }
   .dbf-reply-compose { position: relative; margin-top: 8px; }
-  .dbf-reply-compose textarea { width: 100%; min-height: 0; height: 40px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elev); color: var(--text); font-family: inherit; font-size: 13px; line-height: 1.4; padding: 9px 48px 9px 13px; resize: none; overflow-y: hidden; box-sizing: border-box; }
+  .dbf-reply-compose textarea { display: block; width: 100%; min-height: 0; height: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elev); color: var(--text); font-family: inherit; font-size: 13px; line-height: 1.4; padding: 8px 48px 8px 13px; resize: none; overflow-y: hidden; box-sizing: border-box; }
   .dbf-reply-compose textarea:focus { outline: none; border-color: var(--primary); }
   .dbf-reply-send { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 3; width: 32px; height: 32px; border-radius: 8px; background: none; border: none; color: var(--primary); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; transition: all .15s; }
   .dbf-reply-send:hover { background: rgba(255,77,77,.12); }
@@ -8692,7 +8692,7 @@ function debriefingRenderReviewItem(r, depth, projectId) {
         </button>` : ''}
       </div>
       <div id="debriefingReplyBox_${r.id}" style="display:none" class="dbf-reply-compose">
-        <textarea id="debriefingReplyText_${r.id}" placeholder="Responder... Use @ para mencionar alguém"
+        <textarea id="debriefingReplyText_${r.id}" rows="1" placeholder="Responder... Use @ para mencionar alguém"
           oninput="mentionHandleInput(this);dbfAutoGrow(this)" onkeydown="mentionHandleKeydown(event, this)"></textarea>
         <button class="dbf-reply-send" onclick="postDebriefingComment('${projectId}', '${r.id}')" title="Enviar resposta"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
       </div>
