@@ -1680,10 +1680,13 @@
   .dbf-act-btn.like.liked { color: #ec4899; }
   .dbf-like-count { font-size: 12px; }
   .dbf-replies { border-left: 1.5px solid var(--border); padding-left: 14px; margin-top: 4px; }
-  .dbf-reply-compose { margin-top: 8px; }
-  .dbf-reply-compose textarea { width: 100%; min-height: 56px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-elev); color: var(--text); font-family: inherit; font-size: 13px; padding: 9px 11px; resize: vertical; box-sizing: border-box; }
+  .dbf-reply-compose { position: relative; margin-top: 8px; }
+  .dbf-reply-compose textarea { width: 100%; min-height: 72px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elev); color: var(--text); font-family: inherit; font-size: 13px; padding: 10px 48px 10px 12px; resize: vertical; box-sizing: border-box; }
   .dbf-reply-compose textarea:focus { outline: none; border-color: var(--primary); }
-  .dbf-reply-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+  .dbf-reply-x { position: absolute; top: 7px; right: 8px; z-index: 3; width: 24px; height: 24px; border-radius: 6px; background: none; border: none; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; transition: all .15s; }
+  .dbf-reply-x:hover { background: var(--bg-card); color: var(--text); }
+  .dbf-reply-send { position: absolute; right: 8px; bottom: 12px; z-index: 3; width: 32px; height: 32px; border-radius: 8px; background: var(--primary); border: none; color: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; transition: opacity .15s; }
+  .dbf-reply-send:hover { opacity: .88; }
   .dbf-cancel-btn { background: none; border: 1px solid var(--border); color: var(--text-dim); border-radius: 8px; padding: 6px 14px; font-size: 12px; cursor: pointer; font-family: inherit; }
   .dbf-cancel-btn:hover { border-color: var(--text-muted); color: var(--text); }
   .dbf-send-btn { background: var(--primary); border: 1px solid var(--primary); color: #fff; border-radius: 8px; padding: 6px 16px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
@@ -8692,12 +8695,10 @@ function debriefingRenderReviewItem(r, depth, projectId) {
         </button>` : ''}
       </div>
       <div id="debriefingReplyBox_${r.id}" style="display:none" class="dbf-reply-compose">
+        <button class="dbf-reply-x" onclick="debriefingToggleReply('${r.id}', '${projectId}')" title="Cancelar"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         <textarea id="debriefingReplyText_${r.id}" placeholder="Responder... Use @ para mencionar alguém"
           oninput="mentionHandleInput(this)" onkeydown="mentionHandleKeydown(event, this)"></textarea>
-        <div class="dbf-reply-actions">
-          <button class="dbf-cancel-btn" onclick="debriefingToggleReply('${r.id}', '${projectId}')">Cancelar</button>
-          <button class="dbf-send-btn" onclick="postDebriefingComment('${projectId}', '${r.id}')">Responder</button>
-        </div>
+        <button class="dbf-reply-send" onclick="postDebriefingComment('${projectId}', '${r.id}')" title="Enviar resposta"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
       </div>
       ${repliesHtml}
     </div>
