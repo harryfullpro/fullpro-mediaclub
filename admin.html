@@ -6779,7 +6779,7 @@ function renderShotsReadOnly(shots, si) {
   // ---- Injeta a previa nos cards de Edicao (pos-render) ----
   function fpInjectRoteiroPreviews(){
     if (typeof PROJECTS === 'undefined' || !PROJECTS) return;
-    const projs = PROJECTS.filter(function(p){ return p.status === 'edicao' || p.status === 'a_publicar'; });
+    const projs = PROJECTS.filter(function(p){ return p.status === 'edicao'; });
     const cards = document.querySelectorAll('#editingList .edit-card');
     cards.forEach(function(card, i){
       const p = projs[i]; if (!p) return;
@@ -11365,7 +11365,7 @@ function openLightbox(src) {
 
 /* EDITING MODULE */
 function renderEditingView() {
-  const editProjects = PROJECTS.filter(p => p.status === 'edicao' || p.status === 'a_publicar');
+  const editProjects = PROJECTS.filter(p => p.status === 'edicao');
   const el = document.getElementById('editingList');
   if (!el) return;
 
