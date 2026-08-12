@@ -1683,7 +1683,7 @@
   .dbf-reply-compose { position: relative; margin-top: 8px; }
   .dbf-reply-compose textarea { width: 100%; min-height: 72px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elev); color: var(--text); font-family: inherit; font-size: 13px; padding: 10px 48px 10px 12px; resize: vertical; box-sizing: border-box; }
   .dbf-reply-compose textarea:focus { outline: none; border-color: var(--primary); }
-  .dbf-reply-send { position: absolute; right: 6px; bottom: 8px; z-index: 3; width: 32px; height: 32px; border-radius: 8px; background: none; border: none; color: var(--primary); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; transition: all .15s; }
+  .dbf-reply-send { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 3; width: 32px; height: 32px; border-radius: 8px; background: none; border: none; color: var(--primary); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; transition: all .15s; }
   .dbf-reply-send:hover { background: rgba(255,77,77,.12); }
   .dbf-cancel-btn { background: none; border: 1px solid var(--border); color: var(--text-dim); border-radius: 8px; padding: 6px 14px; font-size: 12px; cursor: pointer; font-family: inherit; }
   .dbf-cancel-btn:hover { border-color: var(--text-muted); color: var(--text); }
@@ -8687,9 +8687,8 @@ function debriefingRenderReviewItem(r, depth, projectId) {
           <svg viewBox="0 0 24 24" width="15" height="15" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
           <span class="dbf-like-count">${likes.length > 0 ? likes.length : ''}</span>
         </button>
-        ${depth < maxDepth ? `<button class="dbf-act-btn" onclick="debriefingToggleReply('${r.id}', '${projectId}')">
+        ${depth < maxDepth ? `<button class="dbf-act-btn" onclick="debriefingToggleReply('${r.id}', '${projectId}')" title="Responder">
           <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-          Responder
         </button>` : ''}
       </div>
       <div id="debriefingReplyBox_${r.id}" style="display:none" class="dbf-reply-compose">
@@ -8898,9 +8897,9 @@ async function renderDebriefing() {
         <span class="debriefing-project-count">${projReviews.length} interação${projReviews.length !== 1 ? 'ões' : ''}</span>
       </div>
       <div class="debriefing-project-body">
-        ${reviewsHtml}
         <button class="dbf-compose-trigger" id="dbfComposeTrigger_${proj.id}" onclick="debriefingToggleCompose('${proj.id}')"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adicionar avaliação / comentário</button>
         ${composeHtml}
+        ${reviewsHtml}
       </div>
     </div>`;
   }).join('');
