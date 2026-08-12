@@ -5730,21 +5730,85 @@ function summaryHtml(p) {
   const scenes = Array.isArray(p.script_scenes) ? p.script_scenes : [];
   const totalShots = scenes.reduce((n,sc)=>n+((sc.shots&&sc.shots.length)||0),0);
   const links = p.links||[]; const photos = p.photos||[];
-  const cost = (p.costs||[]).reduce((a,c)=>a+(c.value||0),0);
-  let h = '';
-  h += '<div><div class="fp-sum-sec-label">Destinos</div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+dests+'</div></div>';
-  if (p.status === 'a_publicar') h += '<div><div class="fp-sum-sec-label">Avaliação</div><div id="fpSumRating">'+projRatingHtml(p.id, [])+'</div></div>';
-  h += '<div class="fp-sum-grid">'
-    + '<div class="fp-sum-item"><div class="k">Moto / Produto</div><div class="v">'+escHtml(p.moto||'—')+'</div></div>'
-    + '<div class="fp-sum-item"><div class="k">Data produção</div><div class="v">'+(p.production_date?prettyDate(p.production_date):'—')+'</div></div>'
-    + '<div class="fp-sum-item"><div class="k">Custos</div><div class="v">R$ '+formatBRL(cost)+'</div></div>'
-    + '<div class="fp-sum-item"><div class="k">Links</div><div class="v">'+links.length+' referência'+(links.length!==1?'s':'')+'</div></div>'
-    + '<div class="fp-sum-item"><div class="k">Fotos</div><div class="v">'+photos.length+' imagem'+(photos.length!==1?'ns':'')+'</div></div>'
-    + '<div class="fp-sum-item"><div class="k">Roteiro</div><div class="v">'+(scenes.length?(scenes.length+' cena'+(scenes.length!==1?'s':'')+' · '+totalShots+' plano'+(totalShots!==1?'s':'')):'Sem roteiro')+'</div></div>'
+  const costs = p.costs||[]; const cost = costs.reduce((a,c)=>a+(c.value||0),0);
+  const posts = p.posts||{};
+  const hasPdf = p.script_file && p.script_file.data && p.script_file.name && /\.pdf$/i.test(p.script_file.name);
+  const sec = (label, inner) => '<div class="fp-sum-block"><div class="fp-sum-tab">'+label+'</div>'+inner+'</div>';
+  const field = (k,v) => '<div class="fp-sum-item"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>';
+  const subLabel = t => '<div class="fp-sum-sec-label" style="margin-top:12px">'+t+'</div>';
+
+  /* ---- PRODUÇÃO ---- */
+  let prod = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'+dests+'</div>';
+  prod += '<div class="fp-sum-grid">'
+    + field('Moto / Produto', escHtml(p.moto||'—'))
+    + field('Data produção', p.production_date?prettyDate(p.production_date):'—')
+    + field('Custos', 'R$ '+formatBRL(cost))
     + '</div>';
-  if (p.publish_link) h += '<div><div class="fp-sum-sec-label">Arquivo para publicação</div><a href="'+escHtml(p.publish_link)+'" target="_blank" rel="noopener" style="color:#ec4899;font-size:12px;word-break:break-all">'+escHtml(p.publish_link)+'</a></div>';
-  if (links.length) h += '<div><div class="fp-sum-sec-label">Links de referência</div><div style="display:flex;flex-direction:column;gap:4px">'+links.map((l,i)=>'<a href="'+escHtml(l)+'" target="_blank" rel="noopener" style="color:#8b9cf7;font-size:12px;word-break:break-all">Link '+(i+1)+'</a>').join('')+'</div></div>';
-  if (p.observations) h += '<div><div class="fp-sum-sec-label">Observações</div><div style="font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.5">'+escHtml(p.observations)+'</div></div>';
+  if (p.description) prod += subLabel('Descrição')+'<div style="font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.5">'+escHtml(p.description)+'</div>';
+  if (costs.length) prod += subLabel('Custos ('+costs.length+')')+costs.map(c=>'<div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;padding:2px 0"><span style="color:var(--text-dim)">'+escHtml(c.reason||'—')+'</span><span style="color:#f59e0b;font-weight:600;white-space:nowrap">R$ '+formatBRL(c.value||0)+'</span></div>').join('');
+  if (links.length) prod += subLabel('Links de referência')+'<div style="display:flex;flex-direction:column;gap:3px">'+links.map((l,i)=>'<a href="'+escHtml(l)+'" target="_blank" rel="noopener" style="color:#8b9cf7;font-size:12px;word-break:break-all">Link '+(i+1)+'</a>').join('')+'</div>';
+  if (photos.length) prod += subLabel('Fotos ('+photos.length+')')+'<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px">'+photos.map(ph=>'<img src="'+ph+'" loading="lazy" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--border);flex-shrink:0"/>').join('')+'</div>';
+  if (hasPdf) prod += subLabel('Roteiro (arquivo)')+'<div style="font-size:12px;color:var(--text-dim)">'+escHtml(p.script_file.name)+'</div>';
+  if (p.observations) prod += subLabel('Observações')+'<div style="font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.5">'+escHtml(p.observations)+'</div>';
+
+  /* ---- ROTEIRO ---- */
+  let rot;
+  if (scenes.length) {
+    rot = '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">'+scenes.length+' cena'+(scenes.length!==1?'s':'')+' · '+totalShots+' plano'+(totalShots!==1?'s':'')+'</div>';
+    rot += scenes.map((sc,si)=>{
+      const shots = sc.shots||[];
+      let x = '<div style="margin-bottom:8px"><div style="font-size:13px;font-weight:700;color:var(--text)">'+(si+1)+'. '+escHtml(sc.title||'Cena')+(sc.location?' <span style="font-weight:400;color:var(--text-muted);font-size:11px">· '+escHtml(sc.location)+'</span>':'')+'</div>';
+      if (sc.note) x += '<div style="font-size:11px;color:#60a5fa;padding-left:14px">Nota: '+escHtml(sc.note)+'</div>';
+      x += shots.map(sh=>'<div style="font-size:12px;color:var(--text-dim);padding:1px 0 1px 14px">• '+(sh.done?'<span style="color:#22c55e">✓ </span>':'')+escHtml(sh.title||'(plano)')+(sh.speech?' <span style="color:#d4a843;font-size:11px">— fala</span>':'')+'</div>').join('');
+      return x+'</div>';
+    }).join('');
+  } else if (p.script_text && p.script_text.trim()) {
+    rot = '<div style="font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.5;max-height:220px;overflow-y:auto">'+escHtml(p.script_text)+'</div>';
+  } else rot = '<div style="font-size:12px;color:var(--text-muted)">Sem roteiro.</div>';
+
+  /* ---- POSTAGEM ---- */
+  let post = '';
+  if (p.publish_link) post += '<div style="margin-bottom:10px"><div class="fp-sum-sec-label">Arquivo para publicação</div><a href="'+escHtml(p.publish_link)+'" target="_blank" rel="noopener" style="color:#ec4899;font-size:12px;word-break:break-all">'+escHtml(p.publish_link)+'</a></div>';
+  const postDests = (p.destinations||[]).filter(d=>posts[d]&&posts[d].link&&posts[d].link.trim());
+  if (postDests.length) {
+    post += postDests.map(d=>{
+      const pd = posts[d];
+      return '<div style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;flex-wrap:wrap"><span class="proj-dest-tag '+d+'">'+(destNames[d]||d)+'</span><a href="'+escHtml(pd.link)+'" target="_blank" rel="noopener" style="color:#8b9cf7;font-size:11px;word-break:break-all">'+escHtml(pd.link)+'</a></div>'
+        + '<div style="font-size:11px;color:var(--text-muted);padding-left:2px">'+(pd.views||0)+' views · '+(pd.likes||0)+' curtidas · '+(pd.comments||0)+' coment.</div></div>';
+    }).join('');
+  }
+  if (!p.publish_link && !postDests.length) post = '<div style="font-size:12px;color:var(--text-muted)">Nada publicado ainda.</div>';
+
+  /* ---- AVALIAÇÃO (carrega async em #fpSumReviews) ---- */
+  const aval = '<div id="fpSumReviews"><div style="font-size:12px;color:var(--text-muted)">Carregando avaliações…</div></div>';
+
+  return sec('Produção', prod) + sec('Roteiro', rot) + sec('Postagem', post) + sec('Avaliação', aval);
+}
+
+function sumReviewsHtml(reviews) {
+  if (!reviews || !reviews.length) return '<div style="font-size:12px;color:var(--text-muted)">Nenhuma avaliação ainda.</div>';
+  const roots = reviews.filter(r => !r.parent_id);
+  const ratings = roots.filter(r => r.rating);
+  let h = '';
+  if (ratings.length) {
+    const avg = ratings.reduce((s,r)=>s+r.rating,0)/ratings.length;
+    const rnd = Math.round(avg);
+    h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px"><span style="display:inline-flex;gap:1px;font-size:15px">'
+      + [1,2,3,4,5].map(n=>'<span class="prj-star'+(n<=rnd?' on':'')+'">★</span>').join('')
+      + '</span><span style="font-size:13px;font-weight:700;color:var(--text)">'+avg.toFixed(1)+'</span>'
+      + '<span style="font-size:11px;color:var(--text-muted)">('+ratings.length+' avaliação'+(ratings.length!==1?'ões':'')+' · '+reviews.length+' comentário'+(reviews.length!==1?'s':'')+')</span></div>';
+  }
+  const tree = (typeof buildReviewTree === 'function') ? buildReviewTree(reviews) : roots.map(r=>Object.assign({children:[]},r));
+  const renderR = (r, depth) => {
+    const u = r.mc_admin_users || {}; const nm = u.name || 'Usuário';
+    const starTxt = (r.rating && !r.parent_id) ? ('<span style="font-size:12px;color:var(--accent);margin-left:6px">'+'★'.repeat(r.rating)+'</span>') : '';
+    let x = '<div style="'+(depth?'margin:6px 0 0 14px;padding-left:10px;border-left:2px solid var(--border)':'margin-bottom:10px')+'">'
+      + '<div style="font-size:12px;font-weight:700;color:var(--text)">'+escHtml(nm)+starTxt+'</div>'
+      + '<div style="font-size:12px;color:var(--text-dim);white-space:pre-wrap;line-height:1.45;margin-top:2px">'+escHtml(r.content||'')+'</div>';
+    (r.children||[]).forEach(ch => { x += renderR(ch, depth+1); });
+    return x + '</div>';
+  };
+  h += tree.map(r => renderR(r, 0)).join('');
   return h;
 }
 
@@ -5763,6 +5827,7 @@ function buildSummaryModal() {
     + '.fp-sum-item .k{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)}'
     + '.fp-sum-item .v{font-size:13px;color:var(--text);margin-top:2px}'
     + '.fp-sum-sec-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-weight:700;margin-bottom:6px}'
+    + '.fp-sum-tab{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--primary);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}'
     + '.fp-sum-close{background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);cursor:pointer;padding:5px 11px;font-size:15px;line-height:1}';
   document.head.appendChild(st);
   const ov = document.createElement('div'); ov.id = 'fpSumOverlay';
@@ -5785,13 +5850,13 @@ async function openProjectSummary(id) {
   document.getElementById('fpSumBody').innerHTML = summaryHtml(p);
   document.getElementById('fpSumEdit').onclick = function(){ closeProjectSummary(); openProjectDetail(id); };
   document.getElementById('fpSumOverlay').classList.add('open');
-  if (p.status === 'a_publicar') {
-    try {
-      const { data } = await sb.from('mc_project_reviews').select('rating').eq('project_id', id).not('rating', 'is', null);
-      const arr = (data||[]).map(r => r.rating).filter(Boolean);
-      const el = document.getElementById('fpSumRating');
-      if (el) el.innerHTML = projRatingHtml(id, arr);
-    } catch(e) {}
+  try {
+    const reviews = await loadProjectReviews(id);
+    const el = document.getElementById('fpSumReviews');
+    if (el) el.innerHTML = sumReviewsHtml(reviews);
+  } catch(e) {
+    const el = document.getElementById('fpSumReviews');
+    if (el) el.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">Erro ao carregar avaliações.</div>';
   }
 }
 
