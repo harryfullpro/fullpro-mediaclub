@@ -2160,6 +2160,12 @@
     margin-left: auto;
   }
   .proj-sort-select:focus { outline: none; border-color: var(--primary); }
+  .perf-dash { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .perf-dash-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 15px 18px; }
+  .perf-dash-card .pd-label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; font-weight: 600; }
+  .perf-dash-card .pd-label svg { width: 14px; height: 14px; }
+  .perf-dash-card .pd-value { font-size: 28px; font-weight: 800; color: var(--text); margin-top: 6px; line-height: 1; }
+  .fp-icon-btn.spinning svg { animation: spin 1s linear infinite; }
   .proj-filter-separator {
     width: 1px;
     height: 20px;
@@ -3509,8 +3515,18 @@
           <h1>Meus Posts</h1>
           <p id="perfPostsSubtitle">Registre e acompanhe a performance de cada publicacao.</p>
         </div>
-        <button class="action-btn view" style="padding:10px 16px;font-size:13px" onclick="openAddPostModal()">+ Novo post</button>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select id="perfPostPeriod" class="proj-sort-select" style="margin:0" onchange="setPerfPostPeriod(this.value)">
+            <option value="all">Todo o período</option>
+            <option value="7">Últimos 7 dias</option>
+            <option value="30">Últimos 30 dias</option>
+            <option value="90">Últimos 90 dias</option>
+          </select>
+          <button class="fp-icon-btn fp-ib-blue" id="perfRefreshBtn" data-tip="Atualizar métricas" onclick="refreshAllPerfMetrics()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg></button>
+          <button class="fp-new-btn" data-tip="Novo post" aria-label="Novo post" onclick="openAddPostModal()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        </div>
       </div>
+      <div class="perf-dash" id="perfPostsDash"></div>
       <div class="proj-filters" style="margin-bottom:16px">
         <button class="proj-filter-chip active" data-post-filter="todos" onclick="setPerfPostFilter('todos')" style="text-transform:uppercase">Todos</button>
         <button class="proj-filter-chip" data-post-filter="longo" onclick="setPerfPostFilter('longo')" style="text-transform:uppercase">Longos</button>
@@ -12164,6 +12180,7 @@ let PERF_INFLUENCERS = [];
 let PERF_BONUSES = [];
 let PERF_CURRENT_TAB = 'metas';
 let PERF_POST_FILTER = 'todos';
+let PERF_POST_PERIOD = 'all';
 
 async function loadPerfPosts() {
   const { data, error } = await sb.from('mc_performance_posts').select('*').order('created_at', { ascending: false });
@@ -12479,6 +12496,68 @@ function fmtKPosts(v) {
   return v.toLocaleString('pt-BR');
 }
 
+function setPerfPostPeriod(v) { PERF_POST_PERIOD = v; renderPerfPosts(); }
+
+function renderPerfDash(posts) {
+  const el = document.getElementById('perfPostsDash'); if (!el) return;
+  const v = posts.reduce((s,p)=>s+(p.views||0),0);
+  const l = posts.reduce((s,p)=>s+(p.likes||0),0);
+  const c = posts.reduce((s,p)=>s+(p.comments||0),0);
+  const eng = v > 0 ? (((l + c) / v) * 100) : 0;
+  const eye = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const heart = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+  const chat = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>';
+  const grid = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>';
+  const spark = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>';
+  const card = (label, val, icon, color) => '<div class="perf-dash-card"><div class="pd-label"><span style="color:'+color+'">'+icon+'</span>'+label+'</div><div class="pd-value">'+val+'</div></div>';
+  el.innerHTML = card('Posts', posts.length, grid, 'var(--text-muted)')
+    + card('Views', fmtKPosts(v), eye, '#3b82f6')
+    + card('Likes', fmtKPosts(l), heart, '#ec4899')
+    + card('Comentários', fmtKPosts(c), chat, '#a855f7')
+    + card('Engajamento', eng.toFixed(1) + '%', spark, '#1fd27a');
+}
+
+// Re-busca métricas de cada post (YT/IG/TikTok) e salva no banco
+async function fetchStatsForLink(link) {
+  if (!link) return null;
+  try {
+    const ytId = extractYouTubeId(link);
+    if (ytId) return await fetchYTStats(ytId);
+    if (/instagram\.com/i.test(link)) { const sc = extractIGShortcode(link); if (sc) return await fetchIGStats(sc, link); }
+    if (/tiktok\.com/i.test(link)) { const tk = extractTKVideoId(link); if (tk && !String(tk).startsWith('short_')) return await fetchTKStats(tk); }
+  } catch (e) { console.warn('fetchStatsForLink', e); }
+  return null;
+}
+async function refreshAllPerfMetrics() {
+  const btn = document.getElementById('perfRefreshBtn');
+  if (btn && btn.dataset.busy === '1') return;
+  if (btn) { btn.dataset.busy = '1'; btn.classList.add('spinning'); btn.setAttribute('data-tip', 'Atualizando…'); }
+  let updated = 0, failed = 0;
+  try {
+    const projPosts = getAllProjectPosts().filter(p => p.link && p.projectId);
+    for (const pp of projPosts) {
+      const stats = await fetchStatsForLink(pp.link);
+      if (!stats) { failed++; continue; }
+      const proj = (PROJECTS || []).find(x => x.id === pp.projectId);
+      const key = pp.id.slice(pp.projectId.length + 1);
+      if (proj && proj.posts && proj.posts[key]) {
+        proj.posts[key].views = stats.views || 0; proj.posts[key].likes = stats.likes || 0; proj.posts[key].comments = stats.comments || 0;
+        try { await sb.from('mc_projects').update({ posts: proj.posts }).eq('id', proj.id); updated++; } catch (e) { failed++; }
+      }
+    }
+    for (const sp of (PERF_POSTS || [])) {
+      if (!sp.link) continue;
+      const stats = await fetchStatsForLink(sp.link);
+      if (!stats) { failed++; continue; }
+      sp.views = stats.views || 0; sp.likes = stats.likes || 0; sp.comments = stats.comments || 0;
+      try { await sb.from('mc_performance_posts').update({ views: sp.views, likes: sp.likes, comments: sp.comments }).eq('id', sp.id); updated++; } catch (e) { failed++; }
+    }
+  } catch (e) { console.warn('refreshAllPerfMetrics', e); }
+  if (btn) { btn.dataset.busy = '0'; btn.classList.remove('spinning'); btn.setAttribute('data-tip', 'Atualizar métricas'); }
+  renderPerfPosts();
+  alert('Métricas atualizadas: ' + updated + (failed ? ' · ' + failed + ' sem dados (API não conectada ou link não suportado)' : ''));
+}
+
 function renderPerfPosts() {
   const el = document.getElementById('perfPostsList');
   if (!el) return;
@@ -12516,7 +12595,16 @@ function renderPerfPosts() {
   const uniqueStandalone = standalonePosts.filter(p => !p.link || !projLinks.has(p.link));
   let allPosts = [...projectPosts, ...uniqueStandalone];
   allPosts.sort((a, b) => (b.views - a.views) || (new Date(b.created_at) - new Date(a.created_at)));
-  let posts = [...allPosts];
+
+  // Filtro por período (created_at)
+  let scoped = allPosts;
+  const _period = PERF_POST_PERIOD || 'all';
+  if (_period !== 'all') {
+    const _cut = Date.now() - parseInt(_period, 10) * 86400000;
+    scoped = allPosts.filter(p => { const t = p.created_at ? new Date(p.created_at).getTime() : 0; return t >= _cut; });
+  }
+  renderPerfDash(scoped);
+  let posts = [...scoped];
 
   // Apply filter
   if (PERF_POST_FILTER !== 'todos') {
@@ -12528,10 +12616,10 @@ function renderPerfPosts() {
   // Update subtitle with totals
   const subEl = document.getElementById('perfPostsSubtitle');
   if (subEl) {
-    const totalViews = allPosts.reduce((s, p) => s + (p.views || 0), 0);
-    const totalLikes = allPosts.reduce((s, p) => s + (p.likes || 0), 0);
-    const totalComments = allPosts.reduce((s, p) => s + (p.comments || 0), 0);
-    subEl.textContent = `${allPosts.length} posts · ${fmtKPosts(totalViews)} views · ${fmtKPosts(totalLikes)} likes · ${fmtKPosts(totalComments)} comments`;
+    const totalViews = scoped.reduce((s, p) => s + (p.views || 0), 0);
+    const totalLikes = scoped.reduce((s, p) => s + (p.likes || 0), 0);
+    const totalComments = scoped.reduce((s, p) => s + (p.comments || 0), 0);
+    subEl.textContent = `${scoped.length} posts · ${fmtKPosts(totalViews)} views · ${fmtKPosts(totalLikes)} likes · ${fmtKPosts(totalComments)} comments`;
   }
 
   const platIcons = {
