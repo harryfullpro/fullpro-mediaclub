@@ -9151,6 +9151,10 @@ function buildPublishLinkCard(p) {
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         Editar
       </button>
+      <button onclick="removePublishLink('${p.id}')" title="Remover link do arquivo" style="flex-shrink:0;display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border-radius:8px;background:none;border:1px solid rgba(255,77,77,.3);color:var(--danger);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(255,77,77,.12)'" onmouseout="this.style.background='none'">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+        Excluir
+      </button>
     </div>`;
   } else {
     bodyInner = `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -9162,6 +9166,18 @@ function buildPublishLinkCard(p) {
     </div>`;
   }
   return `<div style="background:var(--bg-card);border:1px solid rgba(236,72,153,.22);border-radius:12px;padding:16px 18px;margin-bottom:16px">${head}${bodyInner}</div>`;
+}
+
+async function removePublishLink(id) {
+  const p = PROJECTS.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm('Remover o link do arquivo para publicação deste projeto?')) return;
+  const { error } = await sb.from('mc_projects').update({ publish_link: null }).eq('id', id);
+  if (error) { alert('Erro ao remover: ' + error.message); return; }
+  p.publish_link = null;
+  renderProjects();
+  if (typeof renderEditingView === 'function') renderEditingView();
+  if (projDetailId === id) renderProjTabPostagem(p);
 }
 
 function copyPublishLink(id, ev) {
