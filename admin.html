@@ -5725,6 +5725,7 @@ function renderProjects() {
           <button class="fp-icon-btn fp-ib-blue" data-tip="Editar" onclick="openProjectDetail('${p.id}')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
+          ${p.drive_link ? `<a class="fp-icon-btn" data-tip="Arquivos brutos (Drive)" href="${escHtml(p.drive_link)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.15 4.3 4.25 16.2" stroke="#FFBA00"/><path d="M12.85 4.3 19.75 16.2" stroke="#00AC47"/><path d="M5.55 17.9h12.9" stroke="#0066DA"/></svg></a>` : ''}
           ${p.publish_link ? `<a class="fp-icon-btn fp-ib-pink" data-tip="Abrir arquivo" href="${escHtml(p.publish_link)}" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </a>` : ''}
@@ -5840,6 +5841,7 @@ function summaryHtml(p) {
 
   /* ---- POSTAGEM ---- */
   let post = '';
+  if (p.drive_link) prod += subLabel('Arquivos brutos (Google Drive)') + '<a href="' + escHtml(p.drive_link) + '" target="_blank" rel="noopener" style="color:#00AC47;font-size:12px;word-break:break-all">' + escHtml(p.drive_link) + '</a>';
   if (p.publish_link) post += '<div style="margin-bottom:10px"><div class="fp-sum-sec-label">Arquivo para publicação</div><a href="'+escHtml(p.publish_link)+'" target="_blank" rel="noopener" style="color:#ec4899;font-size:12px;word-break:break-all">'+escHtml(p.publish_link)+'</a></div>';
   const postDests = (p.destinations||[]).filter(d=>posts[d]&&posts[d].link&&posts[d].link.trim());
   if (postDests.length) {
@@ -5930,6 +5932,14 @@ async function openProjectSummary(id) {
     const el = document.getElementById('fpSumReviews');
     if (el) el.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">Erro ao carregar avaliações.</div>';
   }
+}
+
+// Abre no Drive o link digitado no campo (aba Produção)
+function openProjDriveInput() {
+  const el = document.getElementById('projDriveLink');
+  const url = (el && el.value || '').trim();
+  if (!url) { alert('Cole o link da pasta do Google Drive primeiro.'); if (el) el.focus(); return; }
+  window.open(/^https?:\/\//i.test(url) ? url : 'https://' + url, '_blank', 'noopener');
 }
 
 function openProjectForm(projectId) {
@@ -6191,6 +6201,7 @@ async function saveProject() {
     destinations,
     status: document.getElementById('projStatus').value,
     description: descEl ? descEl.value.trim() : '',
+    drive_link: (document.getElementById('projDriveLink')?.value || '').trim() || null,
     script_text: scriptEl ? scriptEl.value.trim() : '',
     script_file: projScriptFileData,
     links: projLinks,
@@ -6390,6 +6401,11 @@ function renderProjTabProducao(p) {
       <div class="block-field" style="display:flex;flex-direction:column">
         <label>Descrição do projeto</label>
         <textarea class="checkin-textarea" id="projDescription" style="min-height:140px;flex:1" placeholder="Descreva o objetivo, escopo e detalhes do projeto..."></textarea>
+        <label style="margin-top:12px">Arquivos brutos (Google Drive)</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="text" class="login-input" id="projDriveLink" style="margin:0;flex:1" placeholder="https://drive.google.com/drive/folders/..."/>
+          <button type="button" class="fp-icon-btn fp-tip-left" data-tip="Abrir no Drive" onclick="openProjDriveInput()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.15 4.3 4.25 16.2" stroke="#FFBA00"/><path d="M12.85 4.3 19.75 16.2" stroke="#00AC47"/><path d="M5.55 17.9h12.9" stroke="#0066DA"/></svg></button>
+        </div>
       </div>
       <div class="block-field" style="grid-column:1/-1">
         <label>Destino do conteúdo</label>
@@ -6463,6 +6479,7 @@ function renderProjTabProducao(p) {
   if (p && projDetailId) {
     document.getElementById('projTitle').value = p.title || '';
     document.getElementById('projDescription').value = p.description || '';
+    const _dl = document.getElementById('projDriveLink'); if (_dl) _dl.value = p.drive_link || '';
     document.getElementById('projObs').value = p.observations || '';
     projLinks = [...(p.links || [])];
     projPhotos = [...(p.photos || [])];
