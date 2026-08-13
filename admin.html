@@ -3384,12 +3384,21 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   /* Os filtros ficam direto sobre o fundo da tela: a caixa em volta so
      roubava altura para desenhar uma borda. Os tres seletores — status,
      destino e ordenacao — dividem uma linha so. */
-  .proj-filters {
+  /* So a barra de Projetos: ela tem tres seletores. As outras telas usam
+     .proj-filters com chips, que precisam rolar em vez de vazar. */
+  #view-projects .proj-filters {
     display: flex; flex-wrap: nowrap; gap: 6px;
     padding: 0; margin-bottom: 12px;
     background: none; border: none; border-radius: 0;
   }
-  .proj-filters .proj-sort-select {
+  /* demais barras de chips (Meus Posts, por exemplo): rolam na horizontal */
+  .proj-filters:not(#view-projects .proj-filters) {
+    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; padding: 10px 12px;
+  }
+  .proj-filters:not(#view-projects .proj-filters)::-webkit-scrollbar { display: none; }
+  .proj-filters:not(#view-projects .proj-filters) > * { flex: 0 0 auto; }
+  #view-projects .proj-filters .proj-sort-select {
     flex: 1 1 0; min-width: 0; width: auto !important; margin: 0 !important;
     padding: 8px 22px 8px 10px;
     font-size: 12px;
