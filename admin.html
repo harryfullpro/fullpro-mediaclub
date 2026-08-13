@@ -3552,6 +3552,8 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   #view-clips .fp-clip-prod { margin: 8px 0 0; padding: 8px 10px; }
   #view-clips .fp-clip-obs { margin-top: 8px; }
   #view-clips .fp-obs-cortada { max-height: 60px; }   /* 3 linhas em vez de 5 */
+  /* o degrade de 40px comia duas das tres linhas; 22px apaga so o pe da ultima */
+  #view-clips .fp-obs-cortada::after { height: 22px; }
 
   /* chips de filtro: estavam desproporcionais em tela pequena */
   .proj-filter-chip, .fp-chips-linha > button { padding: 7px 12px !important; font-size: 11px !important; }
