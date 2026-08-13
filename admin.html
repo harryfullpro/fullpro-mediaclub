@@ -8,6 +8,8 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#0a0a0b">
 <meta name="color-scheme" content="dark light">
+<!-- o padrao atual; a versao com prefixo apple- continua para iOS mais antigo -->
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Media Club">
@@ -3185,11 +3187,24 @@ body.fp-sem-scroll { overflow: hidden; }
 
 /* --- ergonomia de toque (o painel e usado no patio, no celular) --------- */
 @media (pointer: coarse), (max-width: 900px) {
-  .nav-item { min-height: var(--toque); }
   .action-btn, .fp-icon-btn, .filter-btn, .proj-filter-chip, .photo-add, .fp-filter-clear {
     min-height: var(--toque);
   }
   .fp-icon-btn { min-width: var(--toque); }
+
+  /* O menu lateral e a excecao: 17 itens a 44px dariam 748px e nao caberiam
+     na tela. Aqui o alvo de toque e a linha inteira — largura toda, sem
+     vizinho ao lado para errar — entao 36px de altura sao seguros e cabem
+     todos os modulos sem rolar. */
+  .nav-item { min-height: 36px; padding: 6px 12px; }
+  .nav-section {
+    height: auto; padding: 10px 12px 3px;
+    font-size: 10px; letter-spacing: 1.2px;
+  }
+  .sidebar-nav { gap: 0; padding: 0 10px; }
+  .sidebar-brand, .sidebar > a:first-child { padding: 12px; }
+  .theme-toggle { margin-bottom: 2px; padding: 5px 12px; }
+  .sidebar-foot .nav-item, .sidebar > .nav-item { min-height: 36px; }
 }
 
 /* --- link real dentro de textos ----------------------------------------- */
@@ -14155,7 +14170,9 @@ async function loadPerfPosts() {
 async function loadPerfGoals() {
   const now = new Date();
   const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const { data, error } = await sb.from('mc_performance_goals').select('*').eq('month', monthStr).single();
+  // maybeSingle: quando o mes ainda nao tem metas cadastradas, single()
+  // devolve 406 (PGRST116) e sujava o console toda vez que a tela abria.
+  const { data, error } = await sb.from('mc_performance_goals').select('*').eq('month', monthStr).maybeSingle();
   if (error && error.code !== 'PGRST116') { console.warn('loadPerfGoals:', error.message); return; }
   PERF_GOALS = data || { volume_long_target: 0, volume_short_target: 0, views_target: 0, clicks_target: 0, pool_per_goal: 500, dist_gravador: 40, dist_editor: 35, dist_mecanico: 25 };
 }
