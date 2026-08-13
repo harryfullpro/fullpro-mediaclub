@@ -3262,6 +3262,151 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
 /* a coluna "Recebida" e contexto, nao o dado principal */
 #reqTable td.sub { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; }
 
+/* ==========================================================================
+   MOBILE — bloco consolidado (2026-08-13)
+
+   O CSS mobile do painel tinha crescido pontualmente: 12 breakpoints
+   diferentes e 66 classes muito usadas sem nenhuma regra para tela pequena.
+   O resultado, visto no celular: cabecalho de card com o titulo em 3 linhas e
+   os botoes desalinhados ao lado, chips de filtro ocupando duas fileiras,
+   tags de plataforma empilhadas uma embaixo da outra e blocos de meta com uma
+   unica coluna gastando a tela inteira para mostrar um travessao.
+
+   Este bloco vem por ultimo de proposito: corrige sem precisar desmontar as
+   regras antigas, que continuam valendo onde ja funcionavam.
+
+   Dois pontos de corte:
+     <= 900px  tablet em pe e celular deitado
+     <= 600px  celular em pe (o caso real de uso no patio)
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  /* --- cabecalho de card: titulo em cima, acoes embaixo ------------------ */
+  .edit-card-head {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .edit-card-head > div:first-child { flex: 1 1 100%; min-width: 0; }
+  .edit-actions {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+  /* o select de status nao precisa da largura toda, mas tambem nao pode
+     espremer os icones ao lado */
+  .edit-actions .proj-status-select { flex: 0 1 auto; min-width: 132px; }
+
+  /* --- tags de plataforma em linha, nao empilhadas ----------------------- */
+  .proj-dest-tag { margin-right: 0; }
+  .edit-card-head .proj-dest-tag,
+  .proj-card .proj-dest-tag { display: inline-block; }
+
+  /* --- meta do projeto: 2 colunas em vez de 1 --------------------------- */
+  .proj-meta { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .proj-meta-item:only-child { grid-column: 1 / -1; }
+
+  /* --- modais ocupam a tela ---------------------------------------------- */
+  .modal { padding: 0; align-items: flex-end; }
+  .modal-content {
+    max-width: 100% !important;
+    width: 100%;
+    max-height: 92vh !important;
+    margin: 0;
+    border-radius: 16px 16px 0 0;
+  }
+  .modal-head { position: sticky; top: 0; z-index: 2; background: var(--bg-card); }
+  .modal-foot {
+    position: sticky; bottom: 0; z-index: 2;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  .modal-foot .action-btn { flex: 1 1 auto; justify-content: center; }
+
+  /* --- cards de estatistica do influenciador ---------------------------- */
+  .inf-stat-card { padding: 12px; }
+  .inf-stat-value { font-size: 20px; }
+  .inf-tab-content { padding: 0; }
+}
+
+@media (max-width: 600px) {
+  /* --- respiro geral ----------------------------------------------------- */
+  main { padding: 14px 12px 32px; }
+  .cal-card, .edit-card, .proj-card { padding: 14px; }
+
+  /* --- fileiras de chips: rolam na horizontal em vez de empilhar ---------
+     Quatro filtros com contagem viravam duas fileiras e empurravam o conteudo
+     para baixo. Rolando, o primeiro filtro fica sempre no lugar esperado. */
+  .fp-chips-linha, .filter-bar, .proj-filters {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+    margin-left: -12px;
+    margin-right: -12px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .fp-chips-linha::-webkit-scrollbar,
+  .filter-bar::-webkit-scrollbar,
+  .proj-filters::-webkit-scrollbar { display: none; }
+  .fp-chips-linha > *, .filter-bar > *, .proj-filters > * { flex: 0 0 auto; }
+  /* a busca nao rola junto: fica na linha de baixo, inteira */
+  .filter-bar .fp-busca { flex: 1 0 100%; max-width: none; order: 10; margin-top: 8px; }
+  .filter-bar .fp-lista-contagem { order: 11; margin: 6px 0 0 auto; }
+
+  /* --- titulo do card: pode usar 2 linhas, sem espremer o icone ---------- */
+  .edit-card-head h4 {
+    font-size: 14.5px;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* --- cabecalho da pagina ---------------------------------------------- */
+  .page-head { flex-wrap: wrap; gap: 10px; }
+  .page-head h1 { font-size: 26px; }
+  .page-head p { font-size: 13px; }
+
+  /* --- botao "novo" nao empurra o titulo --------------------------------- */
+  .fp-new-btn { position: absolute; right: 12px; top: 12px; }
+  .page-head { position: relative; padding-right: 56px; }
+
+  /* --- check-in: campos em coluna unica, alvos maiores ------------------- */
+  .checkin-grid { grid-template-columns: 1fr; gap: 14px; }
+  .checkin-input, .checkin-textarea { font-size: 16px; }  /* 16px evita o zoom automatico do iOS */
+  .photo-add { min-width: 84px; min-height: 84px; }
+  .fuel-svg { max-width: 260px; margin: 0 auto; display: block; }
+
+  /* --- qualquer input: 16px, senao o iOS da zoom ao focar ---------------- */
+  input, select, textarea { font-size: 16px; }
+  .fp-busca input { font-size: 16px; }
+
+  /* --- tabelas: o cabecalho fixo atrapalha em tela curta ----------------- */
+  .table-wrap { margin-left: -12px; margin-right: -12px; }
+  .table-wrap table { min-width: 640px; }
+
+  /* --- lightbox ocupa a tela -------------------------------------------- */
+  .photo-lightbox img { max-width: 96vw; max-height: 86vh; }
+
+  /* --- confirmacao e toast rentes as bordas ------------------------------ */
+  .fp-confirm { width: 100%; }
+  .fp-toast-host { bottom: max(12px, env(safe-area-inset-bottom)); }
+}
+
+/* --- observacao longa: deixa claro que ha mais texto ---------------------- */
+.fp-obs-cortada { position: relative; max-height: 96px; overflow: hidden; }
+.fp-obs-cortada::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 40px;
+  background: linear-gradient(transparent, var(--bg-card));
+  pointer-events: none;
+}
+
 /* --- indicador offline -------------------------------------------------- */
 .fp-offline {
   position: fixed; left: 50%; transform: translateX(-50%);
@@ -8143,7 +8288,7 @@ function renderShotsReadOnly(shots, si) {
   window.fpSetClipFilter = function(k){ CLIP_FILTER = k; if (typeof renderClips === 'function') renderClips(); };
   function fpClipFilterBar(all){
     const defs = [['todos','Todos','',''],['planejamento','Planejamento','#3b82f6','59,130,246'],['edicao','Edição','#a855f7','168,85,247'],['concluido','Concluído','#1fd27a','31,210,122']];
-    return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">' + defs.map(function(d){
+    return '<div class="fp-chips-linha" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">' + defs.map(function(d){
       const k = d[0], col = d[2], rgb = d[3];
       const cnt = (k === 'todos') ? all.length : all.filter(function(c){ return c.status === k; }).length;
       const active = (CLIP_FILTER === k);
@@ -8287,7 +8432,7 @@ function renderShotsReadOnly(shots, si) {
         + '<div style="margin-top:10px">'
         +   '<div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">Observações para o vídeo</div>'
         +   (obs
-            ? '<div style="font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.55;max-height:110px;overflow:hidden">' + fpLinkify(esc(obs)) + '</div>'
+            ? '<div class="fp-obs-cortada" style="font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.55">' + fpLinkify(esc(obs)) + '</div>'
             : '<div style="font-size:12px;color:var(--text-muted);font-style:italic">Sem observações. Clique em "Abrir" para adicionar tópicos.</div>')
         + '</div>'
         + '</div>';
@@ -12855,19 +13000,29 @@ function fpDriveAplicar(raiz) {
     if (!FP_DRIVE_MAPA.get(sku)) return;
     el.dataset.driveFeito = '1';
 
+    // Guarda o que ja estava no lugar (foto do Bling ou icone de caixa). Antes
+    // o conteudo era apagado antes de saber se a imagem do Drive carregava: se
+    // falhasse, sobrava um quadrado cinza vazio — visto no celular, onde a rede
+    // e mais lenta e a falha e mais provavel.
+    const original = el.innerHTML;
+
     const img = document.createElement('img');
-    img.src = fpDriveImgUrl(sku, false);
     img.alt = 'Foto do produto ' + sku;
-    img.loading = 'lazy';
     img.decoding = 'async';
     img.title = 'Foto do Drive — clique para ampliar';
     img.style.cssText = 'width:100%;height:100%;border-radius:inherit;object-fit:cover;cursor:zoom-in;display:block';
     img.onclick = (ev) => { ev.stopPropagation(); openLightbox(fpDriveImgUrl(sku, true)); };
-    // se a imagem falhar, deixa o que ja estava no lugar
-    img.onerror = () => { el.dataset.driveFeito = ''; img.remove(); };
 
-    el.innerHTML = '';
-    el.appendChild(img);
+    img.onload = () => {
+      el.innerHTML = '';
+      el.appendChild(img);
+    };
+    img.onerror = () => {
+      el.dataset.driveFeito = '';
+      if (!el.innerHTML.trim()) el.innerHTML = original;
+    };
+    // so troca depois que carregar; ate la o que existia continua na tela
+    img.src = fpDriveImgUrl(sku, false);
   });
 }
 
