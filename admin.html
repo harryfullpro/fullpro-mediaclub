@@ -2063,6 +2063,32 @@
   }
   .fp-filter-clear:hover { color: var(--text); border-color: var(--text-muted); background: var(--bg-elev); }
   .fp-filter-clear[hidden] { display: none; }
+  .proj-filter-chip[data-pfilter="todos"] { border-color: rgba(255,255,255,.2); color: rgba(255,255,255,.45); }
+  .proj-filter-chip[data-pfilter="todos"]:hover { background: rgba(255,255,255,.04); }
+  .proj-filter-chip[data-pfilter="todos"].active { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); color: #fff; }
+  [data-theme="light"] .proj-filter-chip[data-pfilter="todos"] { border-color: rgba(0,0,0,.15); color: rgba(0,0,0,.35); }
+  [data-theme="light"] .proj-filter-chip[data-pfilter="todos"]:hover { background: rgba(0,0,0,.03); }
+  [data-theme="light"] .proj-filter-chip[data-pfilter="todos"].active { background: rgba(0,0,0,.08); border-color: rgba(0,0,0,.3); color: #222; }
+  .proj-filter-chip[data-pfilter="planejamento"] { border-color: rgba(59,130,246,.3); color: rgba(59,130,246,.6); }
+  .proj-filter-chip[data-pfilter="planejamento"]:hover { background: rgba(59,130,246,.06); }
+  .proj-filter-chip[data-pfilter="planejamento"].active { background: #3b82f6; border-color: #3b82f6; color: #06172e; }
+  .proj-filter-chip[data-pfilter="producao"] { border-color: rgba(245,158,11,.3); color: rgba(245,158,11,.6); }
+  .proj-filter-chip[data-pfilter="producao"]:hover { background: rgba(245,158,11,.06); }
+  .proj-filter-chip[data-pfilter="producao"].active { background: #f59e0b; border-color: #f59e0b; color: #2a1a00; }
+  .proj-filter-chip[data-pfilter="edicao"] { border-color: rgba(168,85,247,.3); color: rgba(168,85,247,.6); }
+  .proj-filter-chip[data-pfilter="edicao"]:hover { background: rgba(168,85,247,.06); }
+  .proj-filter-chip[data-pfilter="edicao"].active { background: #a855f7; border-color: #a855f7; color: #1b0630; }
+  .proj-filter-chip[data-pfilter="a_publicar"] { border-color: rgba(236,72,153,.3); color: rgba(236,72,153,.6); }
+  .proj-filter-chip[data-pfilter="a_publicar"]:hover { background: rgba(236,72,153,.06); }
+  .proj-filter-chip[data-pfilter="a_publicar"].active { background: #ec4899; border-color: #ec4899; color: #2c0416; }
+  .proj-filter-chip[data-pfilter="concluido"] { border-color: rgba(31,210,122,.3); color: rgba(31,210,122,.6); }
+  .proj-filter-chip[data-pfilter="concluido"]:hover { background: rgba(31,210,122,.06); }
+  .proj-filter-chip[data-pfilter="concluido"].active { background: #1fd27a; border-color: #1fd27a; color: #042414; }
+  [data-theme="light"] .proj-filter-chip[data-pfilter="planejamento"].active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+  [data-theme="light"] .proj-filter-chip[data-pfilter="producao"].active     { background: #f59e0b; border-color: #f59e0b; color: #4a2c00; }
+  [data-theme="light"] .proj-filter-chip[data-pfilter="edicao"].active        { background: #a855f7; border-color: #a855f7; color: #fff; }
+  [data-theme="light"] .proj-filter-chip[data-pfilter="a_publicar"].active    { background: #ec4899; border-color: #ec4899; color: #fff; }
+  [data-theme="light"] .proj-filter-chip[data-pfilter="concluido"].active     { background: #16a34a; border-color: #16a34a; color: #fff; }
   /* ── Filtros por DESTINO (mesmas cores das tags .proj-dest-tag) ── */
   .proj-filter-chip[data-dfilter="todos"] { border-color: rgba(255,255,255,.2); color: rgba(255,255,255,.45); }
   .proj-filter-chip[data-dfilter="todos"]:hover { background: rgba(255,255,255,.04); }
@@ -3445,82 +3471,19 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   .fp-toast-host { bottom: max(12px, env(safe-area-inset-bottom)); }
 }
 
-/* --- filtro de status em caixa suspensa ---------------------------------
-   Substitui a fileira de 6 chips, que ocupava a largura toda no celular. */
-.fp-filtro-btn {
-  display: inline-flex; align-items: center; gap: 7px;
-  min-height: 34px; padding: 0 10px;
-  background: var(--bg-soft); border: 1px solid var(--border);
-  border-radius: var(--raio-md); color: var(--text-dim);
-  font-size: 12.5px; font-weight: 600; font-family: inherit;
-  cursor: pointer; white-space: nowrap;
-  transition: border-color .15s, color .15s;
-}
-.fp-filtro-btn:hover { border-color: var(--border-hi); color: var(--text); }
-.fp-filtro-btn[aria-expanded="true"] { border-color: var(--text-muted); color: var(--text); }
-/* filtrado: fica evidente sem precisar abrir */
-.fp-filtro-btn.ativo {
-  border-color: var(--accent); color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-}
-.fp-filtro-seta { opacity: .6; margin-left: 1px; }
+/* ==========================================================================
+   DUAS INTERFACES, UMA POR LARGURA
 
-.fp-filtro-limpar {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; padding: 0;
-  background: none; border: 1px solid var(--border);
-  border-radius: var(--raio-md); color: var(--text-muted); cursor: pointer;
-}
-.fp-filtro-limpar:hover { color: var(--perigo); border-color: var(--perigo); }
-.fp-filtro-limpar[hidden] { display: none; }
-
-.fp-filtro-painel {
-  position: fixed; z-index: 100500;
-  width: 248px; max-width: calc(100vw - 16px);
-  padding: 6px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-hi);
-  border-radius: 10px;
-  box-shadow: 0 12px 34px rgba(0,0,0,.42);
-}
-.fp-filtro-topo {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 6px 8px 8px; margin-bottom: 2px;
-  border-bottom: 1px solid var(--border);
-  font-size: 11px; font-weight: 700; letter-spacing: .08em;
-  text-transform: uppercase; color: var(--text-muted);
-}
-.fp-filtro-todos {
-  background: none; border: none; cursor: pointer; padding: 2px 4px;
-  color: var(--accent); font-size: 11px; font-weight: 700;
-  font-family: inherit; letter-spacing: .02em; text-transform: none;
-}
-.fp-filtro-todos:hover { text-decoration: underline; }
-
-.fp-filtro-item {
-  display: flex; align-items: center; gap: 9px;
-  padding: 9px 8px; border-radius: 7px; cursor: pointer;
-  font-size: 13.5px; color: var(--text);
-}
-.fp-filtro-item:hover { background: var(--bg-elev); }
-.fp-filtro-item input { width: 16px; height: 16px; accent-color: var(--accent); flex-shrink: 0; margin: 0; }
-.fp-filtro-ponto { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.fp-filtro-nome { flex: 1; min-width: 0; }
-.fp-filtro-qtd {
-  font-size: 11.5px; color: var(--text-muted); font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-@media (max-width: 600px) {
-  /* folha na base, como o menu de ações */
-  .fp-filtro-painel {
-    left: 8px !important; right: 8px !important;
-    top: auto !important; bottom: max(8px, env(safe-area-inset-bottom)) !important;
-    width: auto; max-width: none; padding: 8px; border-radius: 14px;
-  }
-  .fp-filtro-item { padding: 13px 10px; font-size: 15px; }
-  .fp-filtro-item input { width: 20px; height: 20px; }
-  .fp-filtro-btn { min-height: 38px; }
+   O computador tinha uma tela boa e nao havia motivo para mudar: chips
+   coloridos de filtro e botoes de acao a vista. O que aperta e o celular.
+   Entao os dois convivem no HTML e a largura decide qual aparece — sem JS
+   de redimensionamento, funciona ao girar o aparelho.
+   ========================================================================== */
+.fp-so-mobile { display: none !important; }
+@media (max-width: 900px) {
+  .fp-so-desktop { display: none !important; }
+  .fp-so-mobile  { display: inline-flex !important; }
+  select.fp-so-mobile { display: block !important; }
 }
 
 /* O fundo do botao "…" ficava preso depois do toque: :hover no celular so
@@ -4142,16 +4105,25 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
 
       <!-- Project filters -->
       <div class="proj-filters">
-        <button type="button" class="fp-filtro-btn" id="projStatusBtn"
-                aria-haspopup="dialog" aria-expanded="false"
-                onclick="fpFiltroStatusAbrir(event)">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-          <span id="projStatusBtnLabel">Todos os status</span>
-          <svg class="fp-filtro-seta" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
-        <button type="button" class="fp-filtro-limpar" id="projFilterClear" hidden onclick="clearProjFilters()" data-tip="Mostrar todos os status" aria-label="Limpar filtro de status">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
+        <!-- DESKTOP: os chips coloridos, como sempre foram -->
+        <span class="fp-so-desktop" style="display:contents">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--text-muted)" fill="none" stroke-width="2" style="flex-shrink:0"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          <button class="proj-filter-chip active" data-pfilter="todos" onclick="toggleProjFilter('todos')" style="text-transform:uppercase">TODOS</button>
+          <button class="proj-filter-chip active" data-pfilter="planejamento" onclick="toggleProjFilter('planejamento')" style="text-transform:uppercase">PLANEJAMENTO</button>
+          <button class="proj-filter-chip active" data-pfilter="producao" onclick="toggleProjFilter('producao')" style="text-transform:uppercase">EM PRODUÇÃO</button>
+          <button class="proj-filter-chip active" data-pfilter="edicao" onclick="toggleProjFilter('edicao')" style="text-transform:uppercase">EDIÇÃO</button>
+          <button class="proj-filter-chip active" data-pfilter="a_publicar" onclick="toggleProjFilter('a_publicar')" style="text-transform:uppercase">A PUBLICAR</button>
+          <button class="proj-filter-chip active" data-pfilter="concluido" onclick="toggleProjFilter('concluido')" style="text-transform:uppercase">CONCLUÍDO</button>
+          <button type="button" class="fp-filter-clear" id="projFilterClear" hidden onclick="clearProjFilters()">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <span id="projFilterClearLabel">Mostrar todos</span>
+          </button>
+        </span>
+        <!-- CELULAR: seletor do proprio sistema, uma escolha por vez -->
+        <select class="proj-sort-select fp-so-mobile" id="projStatusSelect"
+                aria-label="Filtrar por status" onchange="fpFiltroStatusMudou(this.value)">
+          <option value="__todos">Todos os status</option>
+        </select>
         <select class="proj-sort-select" id="projSortSelect" onchange="renderProjects()">
           <option value="newest">Mais recentes</option>
           <option value="oldest">Mais antigos</option>
@@ -6251,13 +6223,25 @@ function renderRequests() {
       <td><span class="badge ${r.status}">${r.status === 'pending' ? 'Pendente' : r.status === 'approved' ? 'Aprovada' : 'Rejeitada'}</span></td>
       <td>
         <div class="actions">
-          ${fpMenuHtml([
+          <span class="fp-so-desktop" style="display:contents">
+            <button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Ver" onclick="openDetails('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+          <button class="fp-icon-btn fp-ib-green fp-tip-left" data-tip="WhatsApp" onclick="openWhatsApp('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></button>
+          ${r.status === 'pending' ? `
+            <button class="fp-icon-btn fp-ib-green fp-tip-left" data-tip="Aprovar" onclick="updateStatus('${r.id}','approved')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg></button>
+            <button class="fp-icon-btn fp-ib-danger fp-tip-left" data-tip="Rejeitar" onclick="updateStatus('${r.id}','rejected')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          ` : r.status === 'approved' ? `
+            <button class="fp-icon-btn fp-ib-danger fp-tip-left" data-tip="Rejeitar" onclick="updateStatus('${r.id}','rejected')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          ` : `
+            <button class="fp-icon-btn fp-ib-green fp-tip-left" data-tip="Aprovar" onclick="updateStatus('${r.id}','approved')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg></button>
+          `}
+          </span>
+          <span class="fp-so-mobile">${fpMenuHtml([
             { rotulo: 'Ver detalhes', icone: 'ver', acao: () => openDetails(r.id) },
             { rotulo: 'Falar no WhatsApp', icone: 'whatsapp', acao: () => openWhatsApp(r.id) },
             { sep: true },
             r.status !== 'approved' ? { rotulo: 'Aprovar', icone: 'aprovar', acao: () => updateStatus(r.id, 'approved') } : null,
             r.status !== 'rejected' ? { rotulo: 'Rejeitar', icone: 'rejeitar', perigo: true, acao: () => updateStatus(r.id, 'rejected') } : null,
-          ], { rotulo: 'Ações da solicitação' })}
+          ], { rotulo: 'Ações da solicitação' })}</span>
         </div>
       </td>
     </tr>
@@ -7049,22 +7033,91 @@ let projActiveFilters = new Set(ALL_PROJ_STATUSES);
 const ALL_PROJ_DESTS = ['youtube','shorts','tiktok','reels','clips','site','ads'];
 let projActiveDests = new Set(); // vazio = sem filtro de destino (mostra todos)
 /* Deixa visivel que ha filtro ligado e oferece a saida em um clique. */
+function toggleProjFilter(f) {
+  if (f === 'todos') {
+    // Toggle all: if all are active, deselect all; otherwise select all
+    const allActive = ALL_PROJ_STATUSES.every(s => projActiveFilters.has(s));
+    if (allActive) {
+      projActiveFilters.clear();
+    } else {
+      ALL_PROJ_STATUSES.forEach(s => projActiveFilters.add(s));
+    }
+  } else {
+    if (projActiveFilters.has(f)) {
+      projActiveFilters.delete(f);
+    } else {
+      projActiveFilters.add(f);
+    }
+  }
+  // Sync UI
+  syncProjFilterUI();
+  renderProjects();
+}
+
+/* Duas interfaces para o mesmo filtro, alternadas por largura de tela:
+   no computador os chips coloridos (multipla escolha, como sempre foi) e no
+   celular o seletor do proprio sistema (uma escolha por vez, porque
+   <select multiple> no iOS nao abre o seletor nativo). Esta funcao mantem as
+   duas em dia a partir do mesmo estado. */
 function syncProjFilterUI(){
   const todos = ALL_PROJ_STATUSES.every(s => projActiveFilters.has(s));
 
-  // O botao mostra o que esta filtrado sem precisar abrir a caixa.
-  const btn = document.getElementById('projStatusBtn');
-  const lbl = document.getElementById('projStatusBtnLabel');
-  if (lbl) lbl.textContent = fpFiltroStatusRotulo();
-  if (btn) btn.classList.toggle('ativo', !todos);
-
-  // O "x" so aparece quando ha algo filtrado — status ou destino.
+  // --- chips (computador) ---
+  document.querySelectorAll('.proj-filters .proj-filter-chip[data-pfilter]').forEach(c => {
+    const key = c.dataset.pfilter;
+    const on = (key === 'todos') ? todos : projActiveFilters.has(key);
+    c.classList.toggle('active', on);
+    c.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  const limparLbl = document.getElementById('projFilterClearLabel');
   const limpar = document.getElementById('projFilterClear');
   if (limpar) {
     const nDest = (typeof projActiveDests !== 'undefined') ? projActiveDests.size : 0;
     limpar.hidden = todos && nDest === 0;
+    if (limparLbl) {
+      const partes = [];
+      if (!todos) partes.push(projActiveFilters.size + ' status');
+      if (nDest > 0) partes.push(nDest + (nDest === 1 ? ' destino' : ' destinos'));
+      limparLbl.textContent = partes.length
+        ? 'Filtrando por ' + partes.join(' e ') + ' — mostrar todos'
+        : 'Mostrar todos';
+    }
   }
+
+  // --- seletor (celular) ---
+  fpFiltroStatusPreencher();
 }
+
+/* Preenche o seletor com as contagens atuais e marca a opcao vigente. */
+function fpFiltroStatusPreencher(){
+  const sel = document.getElementById('projStatusSelect');
+  if (!sel) return;
+  const lista = PROJECTS || [];
+  const atual = (projActiveFilters.size === 1) ? [...projActiveFilters][0] : '__todos';
+  sel.innerHTML = '<option value="__todos">Todos os status (' + lista.length + ')</option>'
+    + ALL_PROJ_STATUSES.map(function(k){
+        const n = lista.filter(x => x.status === k).length;
+        return '<option value="' + k + '">' + (FP_STATUS_ROTULOS[k] || k) + ' (' + n + ')</option>';
+      }).join('');
+  sel.value = atual;
+}
+
+function fpFiltroStatusMudou(valor){
+  projActiveFilters.clear();
+  if (valor === '__todos') ALL_PROJ_STATUSES.forEach(s => projActiveFilters.add(s));
+  else projActiveFilters.add(valor);
+  syncProjFilterUI();
+  renderProjects();
+}
+window.fpFiltroStatusMudou = fpFiltroStatusMudou;
+
+const FP_STATUS_ROTULOS = {
+  planejamento: 'Planejamento',
+  producao:     'Em produção',
+  edicao:       'Edição',
+  a_publicar:   'A publicar',
+  concluido:    'Concluído',
+};
 
 function clearProjFilters(){
   ALL_PROJ_STATUSES.forEach(s => projActiveFilters.add(s));
@@ -7177,14 +7230,29 @@ function renderProjects() {
       <div class="proj-card-head">
         <h4>${escHtml(p.title || 'Sem título')}</h4>
         <div style="display:flex;align-items:center;gap:2px">
-          ${fpMenuHtml([
+          <span class="fp-so-desktop" style="display:contents">
+            <button class="fp-icon-btn fp-ib-blue" data-tip="Ver" onclick="openProjectSummary('${p.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button class="fp-icon-btn fp-ib-blue" data-tip="Editar" onclick="openProjectDetail('${p.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          ${p.drive_link ? `<a class="fp-icon-btn" data-tip="Arquivos brutos (Drive)" href="${escHtml(p.drive_link)}" target="_blank" rel="noopener"><svg viewBox="0 0 800 741.37"><mask id="fpdrvA" width="168" height="154" x="12" y="18" maskUnits="userSpaceOnUse"><path fill="#fff" d="M63.09 37c14.626-25.333 51.193-25.334 65.819 0l45.033 78c14.626 25.334-3.657 57.001-32.91 57.001H50.967c-29.253 0-47.536-31.667-32.91-57.001Z"/></mask><g mask="url(#fpdrvA)" transform="matrix(4.8140532,0,0,4.8140532,-62.146701,-86.652356)"><path fill="url(#fpdrvB)" d="M206.905 172.02h-91.888l-19.015-32.934 45.944-79.578Z"/><path fill="url(#fpdrvC)" d="M-14.919 172.006 50.04 59.494v.002L31.032 92.422h38.02L115 172.004l-129.918.001Z"/><path fill="url(#fpdrvD)" d="M96.007-20.085 141.954 59.5l-19.011 32.928H31.048Z"/></g><defs><linearGradient id="fpdrvB" x1="193.6" x2="103.09" y1="165.6" y2="111.21" gradientUnits="userSpaceOnUse"><stop offset=".09" stop-color="#ffe921"/><stop offset="1" stop-color="#fec700"/></linearGradient><linearGradient id="fpdrvC" x1="114.4" x2="15.53" y1="181.61" y2="121.8" gradientUnits="userSpaceOnUse"><stop offset=".15" stop-color="#a9a8ff"/><stop offset=".33" stop-color="#6d97ff"/><stop offset=".48" stop-color="#3186ff"/></linearGradient><linearGradient id="fpdrvD" x1="128.88" x2="28.7" y1="37.88" y2="84.64" gradientUnits="userSpaceOnUse"><stop offset=".55" stop-color="#0ebc5f"/><stop offset=".85" stop-color="#78c9ff"/></linearGradient></defs></svg></a>` : ''}
+          ${p.publish_link ? `<a class="fp-icon-btn fp-ib-pink" data-tip="Abrir arquivo" href="${escHtml(p.publish_link)}" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>` : ''}
+          <button class="fp-icon-btn fp-ib-danger" data-tip="Excluir" onclick="deleteProject('${p.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </button>
+          </span>
+          <span class="fp-so-mobile">${fpMenuHtml([
             { rotulo: 'Ver resumo', icone: 'ver', acao: () => openProjectSummary(p.id) },
             { rotulo: 'Abrir / editar', icone: 'editar', acao: () => openProjectDetail(p.id) },
             p.drive_link ? { rotulo: 'Arquivos brutos no Drive', icone: 'pasta', href: p.drive_link } : null,
             p.publish_link ? { rotulo: 'Abrir arquivo para publicação', icone: 'link', href: p.publish_link } : null,
             { sep: true },
             { rotulo: 'Excluir projeto', icone: 'excluir', perigo: true, acao: () => deleteProject(p.id) },
-          ], { rotulo: 'Ações do projeto' })}
+          ], { rotulo: 'Ações do projeto' })}</span>
           <select class="proj-status-select ${p.status}" style="margin-left:4px" onchange="quickUpdateProjectStatus('${p.id}',this.value)">
             ${['planejamento','producao','edicao','a_publicar','concluido'].map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${statusMap[s]}</option>`).join('')}
           </select>
@@ -12869,11 +12937,15 @@ function renderTemplates() {
         <h4>${escHtml(t.name)}</h4>
         <div class="tpl-actions">
           <button class="fp-icon-btn fp-ib-blue fp-tip-left tpl-ver-btn" data-tip="Ver template" onclick="toggleTplCard(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-          ${fpMenuHtml([
+          <span class="fp-so-desktop" style="display:contents">
+            <button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Editar" onclick="editTpl(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="fp-icon-btn fp-ib-danger fp-tip-left" data-tip="Excluir" onclick="deleteTpl(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+          </span>
+          <span class="fp-so-mobile">${fpMenuHtml([
             { rotulo: 'Editar template', icone: 'editar', acao: () => editTpl(i) },
             { sep: true },
             { rotulo: 'Excluir template', icone: 'excluir', perigo: true, acao: () => deleteTpl(i) },
-          ], { rotulo: 'Ações do template' })}
+          ], { rotulo: 'Ações do template' })}</span>
         </div>
       </div>
       <div class="tpl-collapse">
@@ -13152,135 +13224,6 @@ function openLightbox(src) {
   document.addEventListener('keydown', onKey);
 }
 
-/* ==========================================================================
-   FILTRO DE STATUS EM CAIXA SUSPENSA
-
-   Antes eram 6 chips numa fileira, que no celular ocupavam a largura toda e
-   ainda precisavam rolar. Agora e uma caixa estreita que abre a lista com
-   caixas de marcacao — o filtro e de multipla escolha.
-   ========================================================================== */
-const FP_STATUS_ROTULOS = {
-  planejamento: 'Planejamento',
-  producao:     'Em produção',
-  edicao:       'Edição',
-  a_publicar:   'A publicar',
-  concluido:    'Concluído',
-};
-const FP_STATUS_CORES = {
-  planejamento: '#3b82f6',
-  producao:     '#f59e0b',
-  edicao:       '#a855f7',
-  a_publicar:   '#ec4899',
-  concluido:    '#1fd27a',
-};
-let fpFiltroPainel = null;
-
-/** Texto do botao: diz o que esta filtrado sem precisar abrir. */
-function fpFiltroStatusRotulo() {
-  const total = ALL_PROJ_STATUSES.length;
-  const n = projActiveFilters.size;
-  if (n === total || n === 0) return 'Todos os status';
-  if (n === 1) return FP_STATUS_ROTULOS[[...projActiveFilters][0]] || '1 status';
-  return n + ' status';
-}
-
-function fpFiltroStatusFechar(devolverFoco) {
-  if (!fpFiltroPainel) return;
-  const botao = document.getElementById('projStatusBtn');
-  fpFiltroPainel.remove();
-  fpFiltroPainel = null;
-  if (botao) {
-    botao.setAttribute('aria-expanded', 'false');
-    if (devolverFoco) { try { botao.focus(); } catch(e){} }
-  }
-  document.removeEventListener('keydown', fpFiltroTecla, true);
-}
-
-function fpFiltroTecla(e) {
-  if (!fpFiltroPainel) return;
-  if (e.key === 'Escape') { e.preventDefault(); fpFiltroStatusFechar(true); return; }
-  if (e.key !== 'Tab') return;
-  const f = fpFiltroPainel.querySelectorAll('button, input');
-  if (!f.length) return;
-  const pri = f[0], ult = f[f.length - 1];
-  if (e.shiftKey && document.activeElement === pri) { e.preventDefault(); ult.focus(); }
-  else if (!e.shiftKey && document.activeElement === ult) { e.preventDefault(); pri.focus(); }
-}
-
-function fpFiltroStatusAbrir(ev) {
-  ev && ev.stopPropagation();
-  if (fpFiltroPainel) { fpFiltroStatusFechar(true); return; }
-
-  const botao = document.getElementById('projStatusBtn');
-  if (!botao) return;
-
-  const p = document.createElement('div');
-  p.className = 'fp-filtro-painel';
-  p.setAttribute('role', 'dialog');
-  p.setAttribute('aria-label', 'Filtrar por status');
-
-  const todosMarcados = ALL_PROJ_STATUSES.every(s => projActiveFilters.has(s));
-  p.innerHTML =
-    '<div class="fp-filtro-topo">'
-    + '<span>Status</span>'
-    + '<button type="button" class="fp-filtro-todos">' + (todosMarcados ? 'Limpar' : 'Marcar todos') + '</button>'
-    + '</div>'
-    + ALL_PROJ_STATUSES.map(function (s) {
-        const on = projActiveFilters.has(s);
-        return '<label class="fp-filtro-item">'
-          + '<input type="checkbox" value="' + s + '"' + (on ? ' checked' : '') + '>'
-          + '<span class="fp-filtro-ponto" style="background:' + FP_STATUS_CORES[s] + '"></span>'
-          + '<span class="fp-filtro-nome">' + FP_STATUS_ROTULOS[s] + '</span>'
-          + '<span class="fp-filtro-qtd">' + (PROJECTS || []).filter(x => x.status === s).length + '</span>'
-          + '</label>';
-      }).join('');
-
-  document.body.appendChild(p);
-  botao.setAttribute('aria-expanded', 'true');
-  fpFiltroPainel = p;
-
-  p.addEventListener('click', function (e) { e.stopPropagation(); });
-  p.querySelector('.fp-filtro-todos').addEventListener('click', function () {
-    const marcarTudo = !ALL_PROJ_STATUSES.every(s => projActiveFilters.has(s));
-    projActiveFilters.clear();
-    if (marcarTudo) ALL_PROJ_STATUSES.forEach(s => projActiveFilters.add(s));
-    p.querySelectorAll('input[type=checkbox]').forEach(c => { c.checked = marcarTudo; });
-    this.textContent = marcarTudo ? 'Limpar' : 'Marcar todos';
-    fpFiltroAplicar();
-  });
-  p.querySelectorAll('input[type=checkbox]').forEach(function (c) {
-    c.addEventListener('change', function () {
-      if (this.checked) projActiveFilters.add(this.value);
-      else projActiveFilters.delete(this.value);
-      const t = p.querySelector('.fp-filtro-todos');
-      t.textContent = ALL_PROJ_STATUSES.every(s => projActiveFilters.has(s)) ? 'Limpar' : 'Marcar todos';
-      fpFiltroAplicar();
-    });
-  });
-
-  // ancora no botao; vira para cima ou encosta na borda quando nao cabe
-  const r = botao.getBoundingClientRect();
-  const pr = p.getBoundingClientRect();
-  let topo = r.bottom + 6;
-  if (topo + pr.height > innerHeight - 8) topo = Math.max(8, r.top - pr.height - 6);
-  let esq = r.left;
-  if (esq + pr.width > innerWidth - 8) esq = Math.max(8, innerWidth - pr.width - 8);
-  p.style.top = Math.round(topo) + 'px';
-  p.style.left = Math.round(esq) + 'px';
-
-  document.addEventListener('keydown', fpFiltroTecla, true);
-  const primeiro = p.querySelector('input');
-  if (primeiro) setTimeout(function(){ try { primeiro.focus(); } catch(e){} }, 20);
-}
-window.fpFiltroStatusAbrir = fpFiltroStatusAbrir;
-
-function fpFiltroAplicar() {
-  syncProjFilterUI();
-  renderProjects();
-}
-
-document.addEventListener('click', function () { if (fpFiltroPainel) fpFiltroStatusFechar(false); });
-window.addEventListener('resize', function () { if (fpFiltroPainel) fpFiltroStatusFechar(false); });
 
 /* ==========================================================================
    MENU DE AÇÕES ("…") das listagens
@@ -13618,11 +13561,22 @@ function renderEditingView() {
           <div style="display:flex;gap:6px;margin-top:4px;align-items:center;flex-wrap:wrap">${dests || '<span style="font-size:11px;color:var(--text-muted)">Sem destino</span>'}</div>
         </div>
         <div class="edit-actions">
-          ${fpMenuHtml([
+          <span class="fp-so-desktop" style="display:contents">
+            <button class="fp-icon-btn fp-ib-blue" data-tip="Ver roteiro" onclick="openEditRoteiro('${p.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </button>
+          ${p.publish_link ? `<a class="fp-icon-btn fp-ib-pink" data-tip="Abrir arquivo" href="${escHtml(p.publish_link)}" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>` : ''}
+          <button class="fp-icon-btn fp-ib-blue" data-tip="Ver completo" onclick="openProjectDetail('${p.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          </span>
+          <span class="fp-so-mobile">${fpMenuHtml([
             { rotulo: 'Ver roteiro', icone: 'roteiro', acao: () => openEditRoteiro(p.id) },
             { rotulo: 'Abrir projeto completo', icone: 'ver', acao: () => openProjectDetail(p.id) },
             p.publish_link ? { rotulo: 'Abrir arquivo para publicação', icone: 'link', href: p.publish_link } : null,
-          ], { rotulo: 'Ações do projeto' })}
+          ], { rotulo: 'Ações do projeto' })}</span>
           <select class="proj-status-select ${p.status}" onchange="editingUpdateStatus('${p.id}',this.value)" style="min-width:120px;margin-left:4px">
             <option value="edicao" ${p.status === 'edicao' ? 'selected' : ''}>Edição</option>
             <option value="a_publicar" ${p.status === 'a_publicar' ? 'selected' : ''}>A publicar</option>
