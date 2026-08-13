@@ -59,7 +59,8 @@ não abre o seletor nativo do iOS. No computador segue múltipla escolha pelos c
 
 ### Ações das listagens
 - Consolidadas num **menu "…"** por item — mas **só no celular**
-- O "…" fica no **canto superior direito do card**
+- O "…" fica no **canto superior direito do card**, estreito (26px)
+- O menu abre **a partir da posição do botão**, nunca como folha na base da tela
 - No computador, os botões de ícone continuam à vista
 
 ### Botão "novo" (+)
@@ -73,6 +74,8 @@ não abre o seletor nativo do iOS. No computador segue múltipla escolha pelos c
 ### Cards das listagens
 - Devem ser o **mais compactos possível** — "otimizar espaço de tela" é pedido recorrente
 - Informação organizada, não empilhada em linhas soltas
+- **Título de projeto sempre em maiúsculas**
+- Status **centralizado com o título**, com uma ou duas linhas
 
 ### Menu lateral
 - Espaçamento entre itens deve ser **bem reduzido**, para economizar tela

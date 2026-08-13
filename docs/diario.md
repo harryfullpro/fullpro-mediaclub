@@ -4,6 +4,22 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 13/08/2026 — Menu ancorado no botão e mais aperto no card
+
+Quatro pedidos do dono, todos no celular:
+
+- **O menu "…" abre colado ao botão**, não mais como folha na base da tela. O JS já
+  calculava a posição ancorada e virava para cima quando não cabia — o CSS mobile é que
+  jogava tudo para a base com `!important`. Bastou tirar o override. Conferido: no
+  primeiro card abre 6px abaixo do botão; no último da lista vira para cima e continua
+  inteiro dentro da tela.
+- **Botão "…" de 44px para 26px de largura.** A altura do alvo continua 44px, mas com
+  `margin: -9px 0` para não esticar a linha do título. Card de título curto: −18px.
+- **Títulos de projeto sempre em maiúsculas**, na listagem de Projetos e na de Edição.
+- **Status centralizado com o título.** Era `align-items: flex-start`; virou `center`, e
+  agora título, status e "…" compartilham o mesmo centro vertical com título de uma ou
+  de duas linhas (medido: 214,8px nos três).
+
 ## 13/08/2026 — Botão "novo" no padrão do iPhone e card de projeto compacto
 
 **Pedido do dono:** o + no canto superior direito, "parecendo mais com o sistema padrão

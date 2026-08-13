@@ -104,8 +104,14 @@ ${fpMenuHtml([
 ```
 
 As ações ficam no registro `FP_MENUS`, não viram string dentro de `onclick` — nome com
-aspas não quebra nada. Ícones em `FP_ICONES`. Já traz teclado completo, reposicionamento
-quando não cabe, folha na base no celular e coleta do registro acima de 400 entradas.
+aspas não quebra nada. Ícones em `FP_ICONES`. Já traz teclado completo, coleta do
+registro acima de 400 entradas e **posicionamento ancorado no botão**, virando para cima
+ou para a esquerda quando não cabe.
+
+> O painel abre **colado ao botão em qualquer largura**. Houve uma versão que o
+> transformava em folha na base da tela no celular, com `!important` por cima do cálculo
+> do JS — o dono pediu para tirar: obrigava a atravessar a tela com o polegar e escondia
+> justamente o card que estava sendo editado.
 
 **Cuidado:** dentro da interpolação `${fpMenuHtml([...])}` você já está em contexto JS —
 usar `${i}` ali é erro de sintaxe, vai `i` direto.
@@ -145,7 +151,8 @@ para encolher, senão o + cai sozinho numa segunda linha.
 Alvo: o mínimo de linhas sem esconder informação. O card de projeto é a referência
 (188px → 136px).
 
-1. Título, status e o menu "…" **numa linha só**. O "…" por último, com `order`.
+1. Título, status e o menu "…" **numa linha só**, com `align-items: center` para o status
+   ficar na altura do meio do título. O "…" por último, com `order`.
 2. Fileira de chips logo abaixo.
 3. Meta com rótulo e valor **na mesma linha**, em flex — não em grid de colunas iguais.
    O campo de texto longo pega `flex: 1 1 100%`; os curtos dividem a fileira seguinte.
