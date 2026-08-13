@@ -3376,6 +3376,36 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   }
   .inf-tabs::-webkit-scrollbar { display: none; }
   .inf-tab { flex: 0 0 auto; white-space: nowrap; }
+
+  /* --- botao "novo" no padrao do iPhone ---------------------------------
+     No iOS o botao de adicionar da barra e o simbolo + em azul, sem caixa,
+     no canto superior direito — nao um quadrado preenchido.
+     Sem position:absolute de proposito: na Agenda sao DOIS botoes nesse
+     mesmo canto e tirar do fluxo empilharia um sobre o outro. */
+  /* !important: a tela de Clips traz flex-wrap no style= do elemento */
+  .page-head { flex-wrap: nowrap !important; align-items: flex-start; }
+  .page-head > div:first-child { min-width: 0; }   /* titulo quebra em vez de vazar */
+  .page-head > :last-child:not(:first-child) { margin-left: auto; flex: 0 0 auto; }
+
+  .fp-new-btn, .fp-new-btn.ghost,
+  .fp-new-btn:hover, .fp-new-btn.ghost:hover {
+    width: 44px; height: 44px;     /* alvo de toque; o desenho e so o glifo */
+    margin: -9px 0 0;              /* centra o glifo na linha do titulo */
+    background: none; border: none; border-radius: 50%;
+    color: #0A84FF;                /* azul de sistema do iOS */
+  }
+  [data-theme="light"] .fp-new-btn,
+  [data-theme="light"] .fp-new-btn.ghost { color: #007AFF; }
+
+  /* -8px = metade da folga entre o glifo e a borda do alvo. Alinha o + com a
+     margem do conteudo, em vez de deixar o alvo encostado na borda da tela. */
+  .page-head > .fp-new-btn:last-child,
+  .page-head > :last-child > .fp-new-btn:last-child { margin-right: -8px; }
+
+  .fp-new-btn svg { width: 27px; height: 27px; stroke-width: 2; }
+  .fp-new-btn.ghost svg { width: 22px; height: 22px; }
+  .fp-new-btn:active { opacity: .35; }
+  .fp-new-btn::after { display: none; }   /* dica de hover nao existe no toque */
 }
 
 @media (max-width: 600px) {
@@ -3477,7 +3507,9 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   .fp-menu-btn { -webkit-tap-highlight-color: transparent; }
 
   /* --- cabecalho da pagina ---------------------------------------------- */
-  .page-head { flex-wrap: wrap; gap: 10px; }
+  /* sem flex-wrap aqui: o botao "novo" fica na mesma linha do titulo,
+     encostado no canto superior direito (regra no bloco de 900px) */
+  .page-head { gap: 10px; }
   .page-head h1 { font-size: 26px; }
   .page-head p { font-size: 13px; }
 
