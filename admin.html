@@ -3341,7 +3341,7 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   /* --- fileiras de chips: rolam na horizontal em vez de empilhar ---------
      Quatro filtros com contagem viravam duas fileiras e empurravam o conteudo
      para baixo. Rolando, o primeiro filtro fica sempre no lugar esperado. */
-  .fp-chips-linha, .filter-bar, .proj-filters {
+  .fp-chips-linha, .filter-bar {
     flex-wrap: nowrap !important;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -3353,9 +3353,12 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
     padding-right: 12px;
   }
   .fp-chips-linha::-webkit-scrollbar,
-  .filter-bar::-webkit-scrollbar,
-  .proj-filters::-webkit-scrollbar { display: none; }
-  .fp-chips-linha > *, .filter-bar > *, .proj-filters > * { flex: 0 0 auto; }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .fp-chips-linha > *, .filter-bar > * { flex: 0 0 auto; }
+  /* a barra de projetos agora tem so 3 controles pequenos: quebra a linha em
+     vez de rolar, e o seletor de ordenacao deixa de esticar ate vazar */
+  .proj-filters { flex-wrap: wrap; gap: 8px; }
+  .proj-filters .proj-sort-select { width: auto !important; margin: 0 !important; max-width: 100%; }
   /* a busca nao rola junto: fica na linha de baixo, inteira */
   .filter-bar .fp-busca { flex: 1 0 100%; max-width: none; order: 10; margin-top: 8px; }
   .filter-bar .fp-lista-contagem { order: 11; margin: 6px 0 0 auto; }
