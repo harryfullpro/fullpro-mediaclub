@@ -3403,6 +3403,56 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   .fp-toast-host { bottom: max(12px, env(safe-area-inset-bottom)); }
 }
 
+/* --- menu de ações "…" das listagens ------------------------------------- */
+.fp-menu-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; flex-shrink: 0; padding: 0;
+  border: none; background: none; color: var(--text-muted);
+  border-radius: 9px; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.fp-menu-btn:hover, .fp-menu-btn[aria-expanded="true"] {
+  background: var(--bg-elev); color: var(--text);
+}
+.fp-menu-btn svg { width: 18px; height: 18px; }
+
+.fp-menu {
+  position: fixed; z-index: 100500;
+  min-width: 208px; max-width: min(280px, calc(100vw - 16px));
+  padding: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-hi);
+  border-radius: 10px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.42);
+  display: flex; flex-direction: column; gap: 1px;
+}
+.fp-menu-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 9px 10px;
+  background: none; border: none; border-radius: 7px;
+  color: var(--text); font-size: 13.5px; font-family: inherit; font-weight: 500;
+  text-align: left; text-decoration: none; cursor: pointer; line-height: 1.3;
+}
+.fp-menu-item svg { width: 16px; height: 16px; flex-shrink: 0; opacity: .8; }
+.fp-menu-item:hover, .fp-menu-item:focus-visible { background: var(--bg-elev); }
+.fp-menu-item.perigo { color: var(--perigo); }
+.fp-menu-item.perigo:hover, .fp-menu-item.perigo:focus-visible { background: var(--perigo-bg); }
+.fp-menu-sep { height: 1px; background: var(--border); margin: 5px 2px; }
+
+@media (max-width: 600px) {
+  /* No celular o menu vira folha na base: alvo maior e sem risco de abrir
+     fora da tela. O posicionamento do JS e ignorado aqui de proposito. */
+  .fp-menu {
+    left: 8px !important; right: 8px !important;
+    top: auto !important; bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    min-width: 0; max-width: none; width: auto;
+    padding: 8px; border-radius: 14px;
+  }
+  .fp-menu-item { padding: 14px 12px; font-size: 15px; }
+  .fp-menu-item svg { width: 18px; height: 18px; }
+  .fp-menu-btn { width: var(--toque); height: var(--toque); }
+}
+
 /* --- area segura do aparelho (notch e barra inferior do iPhone) ---------- */
 @media (max-width: 900px) {
   .mobile-header {
@@ -6069,16 +6119,13 @@ function renderRequests() {
       <td><span class="badge ${r.status}">${r.status === 'pending' ? 'Pendente' : r.status === 'approved' ? 'Aprovada' : 'Rejeitada'}</span></td>
       <td>
         <div class="actions">
-          <button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Ver" onclick="openDetails('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-          <button class="fp-icon-btn fp-ib-green fp-tip-left" data-tip="WhatsApp" onclick="openWhatsApp('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></button>
-          ${r.status === 'pending' ? `
-            <button class="fp-icon-btn fp-ib-green fp-tip-left" data-tip="Aprovar" onclick="updateStatus('${r.id}','approved')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg></button>
-            <button class="fp-icon-btn fp-ib-danger fp-tip-left" data-tip="Rejeitar" onclick="updateStatus('${r.id}','rejected')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-          ` : r.status === 'approved' ? `
-            <button class="fp-icon-btn fp-ib-danger fp-tip-left" data-tip="Rejeitar" onclick="updateStatus('${r.id}','rejected')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-          ` : `
-            <button class="fp-icon-btn fp-ib-green fp-tip-left" data-tip="Aprovar" onclick="updateStatus('${r.id}','approved')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg></button>
-          `}
+          ${fpMenuHtml([
+            { rotulo: 'Ver detalhes', icone: 'ver', acao: () => openDetails(r.id) },
+            { rotulo: 'Falar no WhatsApp', icone: 'whatsapp', acao: () => openWhatsApp(r.id) },
+            { sep: true },
+            r.status !== 'approved' ? { rotulo: 'Aprovar', icone: 'aprovar', acao: () => updateStatus(r.id, 'approved') } : null,
+            r.status !== 'rejected' ? { rotulo: 'Rejeitar', icone: 'rejeitar', perigo: true, acao: () => updateStatus(r.id, 'rejected') } : null,
+          ], { rotulo: 'Ações da solicitação' })}
         </div>
       </td>
     </tr>
@@ -7026,19 +7073,14 @@ function renderProjects() {
       <div class="proj-card-head">
         <h4>${escHtml(p.title || 'Sem título')}</h4>
         <div style="display:flex;align-items:center;gap:2px">
-          <button class="fp-icon-btn fp-ib-blue" data-tip="Ver" onclick="openProjectSummary('${p.id}')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-          <button class="fp-icon-btn fp-ib-blue" data-tip="Editar" onclick="openProjectDetail('${p.id}')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
-          ${p.drive_link ? `<a class="fp-icon-btn" data-tip="Arquivos brutos (Drive)" href="${escHtml(p.drive_link)}" target="_blank" rel="noopener"><svg viewBox="0 0 800 741.37"><mask id="fpdrvA" width="168" height="154" x="12" y="18" maskUnits="userSpaceOnUse"><path fill="#fff" d="M63.09 37c14.626-25.333 51.193-25.334 65.819 0l45.033 78c14.626 25.334-3.657 57.001-32.91 57.001H50.967c-29.253 0-47.536-31.667-32.91-57.001Z"/></mask><g mask="url(#fpdrvA)" transform="matrix(4.8140532,0,0,4.8140532,-62.146701,-86.652356)"><path fill="url(#fpdrvB)" d="M206.905 172.02h-91.888l-19.015-32.934 45.944-79.578Z"/><path fill="url(#fpdrvC)" d="M-14.919 172.006 50.04 59.494v.002L31.032 92.422h38.02L115 172.004l-129.918.001Z"/><path fill="url(#fpdrvD)" d="M96.007-20.085 141.954 59.5l-19.011 32.928H31.048Z"/></g><defs><linearGradient id="fpdrvB" x1="193.6" x2="103.09" y1="165.6" y2="111.21" gradientUnits="userSpaceOnUse"><stop offset=".09" stop-color="#ffe921"/><stop offset="1" stop-color="#fec700"/></linearGradient><linearGradient id="fpdrvC" x1="114.4" x2="15.53" y1="181.61" y2="121.8" gradientUnits="userSpaceOnUse"><stop offset=".15" stop-color="#a9a8ff"/><stop offset=".33" stop-color="#6d97ff"/><stop offset=".48" stop-color="#3186ff"/></linearGradient><linearGradient id="fpdrvD" x1="128.88" x2="28.7" y1="37.88" y2="84.64" gradientUnits="userSpaceOnUse"><stop offset=".55" stop-color="#0ebc5f"/><stop offset=".85" stop-color="#78c9ff"/></linearGradient></defs></svg></a>` : ''}
-          ${p.publish_link ? `<a class="fp-icon-btn fp-ib-pink" data-tip="Abrir arquivo" href="${escHtml(p.publish_link)}" target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          </a>` : ''}
-          <button class="fp-icon-btn fp-ib-danger" data-tip="Excluir" onclick="deleteProject('${p.id}')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-          </button>
+          ${fpMenuHtml([
+            { rotulo: 'Ver resumo', icone: 'ver', acao: () => openProjectSummary(p.id) },
+            { rotulo: 'Abrir / editar', icone: 'editar', acao: () => openProjectDetail(p.id) },
+            p.drive_link ? { rotulo: 'Arquivos brutos no Drive', icone: 'pasta', href: p.drive_link } : null,
+            p.publish_link ? { rotulo: 'Abrir arquivo para publicação', icone: 'link', href: p.publish_link } : null,
+            { sep: true },
+            { rotulo: 'Excluir projeto', icone: 'excluir', perigo: true, acao: () => deleteProject(p.id) },
+          ], { rotulo: 'Ações do projeto' })}
           <select class="proj-status-select ${p.status}" style="margin-left:4px" onchange="quickUpdateProjectStatus('${p.id}',this.value)">
             ${['planejamento','producao','edicao','a_publicar','concluido'].map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${statusMap[s]}</option>`).join('')}
           </select>
@@ -12723,8 +12765,11 @@ function renderTemplates() {
         <h4>${escHtml(t.name)}</h4>
         <div class="tpl-actions">
           <button class="fp-icon-btn fp-ib-blue fp-tip-left tpl-ver-btn" data-tip="Ver template" onclick="toggleTplCard(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-          <button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Editar" onclick="editTpl(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-          <button class="fp-icon-btn fp-ib-danger fp-tip-left" data-tip="Excluir" onclick="deleteTpl(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+          ${fpMenuHtml([
+            { rotulo: 'Editar template', icone: 'editar', acao: () => editTpl(i) },
+            { sep: true },
+            { rotulo: 'Excluir template', icone: 'excluir', perigo: true, acao: () => deleteTpl(i) },
+          ], { rotulo: 'Ações do template' })}
         </div>
       </div>
       <div class="tpl-collapse">
@@ -13004,6 +13049,165 @@ function openLightbox(src) {
 }
 
 /* ==========================================================================
+   MENU DE AÇÕES ("…") das listagens
+
+   Cada item de lista tinha de 3 a 5 botoes de icone lado a lado. No celular
+   isso quebrava o cabecalho do card; no desktop, obrigava a decorar o
+   desenho de cada icone. Agora as acoes moram num menu, com nome escrito.
+
+   As acoes ficam num registro em memoria em vez de virar string dentro de um
+   onclick: nada de escapar aspas em nome de projeto, e a funcao chega como
+   funcao mesmo.
+   ========================================================================== */
+const FP_MENUS = new Map();
+let fpMenuSeq = 0;
+let fpMenuAberto = null;
+
+const FP_ICONES = {
+  ver:      '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+  editar:   '<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>',
+  excluir:  '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>',
+  link:     '<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>',
+  pasta:    '<path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>',
+  whatsapp: '<path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8z"/>',
+  aprovar:  '<polyline points="20 6 9 17 4 12"/>',
+  rejeitar: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="6"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  roteiro:  '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+  foto:     '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
+};
+
+/* Cada render cria ids novos e as acoes sao closures que seguram o objeto do
+   item. Sem limpeza, o registro cresceria a cada re-render da lista. Quando
+   passa do teto, descarta o que ja nao tem botao correspondente na tela. */
+function fpMenuColetar() {
+  if (FP_MENUS.size < 400) return;
+  FP_MENUS.forEach(function (_, id) {
+    if (!document.getElementById(id)) FP_MENUS.delete(id);
+  });
+}
+
+/** Monta o HTML do botao "…". itens = [{rotulo, icone, acao, perigo, sep, href}] */
+function fpMenuHtml(itens, opcoes) {
+  opcoes = opcoes || {};
+  fpMenuColetar();
+  const id = 'fpmenu' + (++fpMenuSeq);
+  FP_MENUS.set(id, itens.filter(Boolean));
+  return '<button type="button" class="fp-menu-btn" id="' + id + '"'
+    + ' aria-haspopup="menu" aria-expanded="false"'
+    + ' aria-label="' + escHtml(opcoes.rotulo || 'Mais ações') + '"'
+    + ' data-tip="' + escHtml(opcoes.rotulo || 'Mais ações') + '"'
+    + ' onclick="fpMenuAbrir(event, \'' + id + '\')">'
+    + '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+    + '<circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>'
+    + '</button>';
+}
+window.fpMenuHtml = fpMenuHtml;
+
+function fpMenuFechar() {
+  if (!fpMenuAberto) return;
+  const { painel, botao } = fpMenuAberto;
+  painel.remove();
+  if (botao) {
+    botao.setAttribute('aria-expanded', 'false');
+    if (fpMenuAberto.devolverFoco) { try { botao.focus(); } catch(e){} }
+  }
+  fpMenuAberto = null;
+  document.removeEventListener('keydown', fpMenuTecla, true);
+}
+window.fpMenuFechar = fpMenuFechar;
+
+function fpMenuTecla(e) {
+  if (!fpMenuAberto) return;
+  const itens = Array.from(fpMenuAberto.painel.querySelectorAll('[role="menuitem"]:not([disabled])'));
+  const i = itens.indexOf(document.activeElement);
+  if (e.key === 'Escape') { e.preventDefault(); fpMenuAberto.devolverFoco = true; fpMenuFechar(); }
+  else if (e.key === 'ArrowDown') { e.preventDefault(); (itens[i + 1] || itens[0]).focus(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); (itens[i - 1] || itens[itens.length - 1]).focus(); }
+  else if (e.key === 'Home') { e.preventDefault(); itens[0] && itens[0].focus(); }
+  else if (e.key === 'End') { e.preventDefault(); itens[itens.length - 1] && itens[itens.length - 1].focus(); }
+  else if (e.key === 'Tab') { fpMenuAberto.devolverFoco = false; fpMenuFechar(); }
+}
+
+function fpMenuAbrir(ev, id) {
+  ev.preventDefault();
+  ev.stopPropagation();
+  const jaEstava = fpMenuAberto && fpMenuAberto.id === id;
+  fpMenuFechar();
+  if (jaEstava) return;
+
+  const itens = FP_MENUS.get(id) || [];
+  const botao = document.getElementById(id);
+  if (!botao || !itens.length) return;
+
+  const painel = document.createElement('div');
+  painel.className = 'fp-menu';
+  painel.setAttribute('role', 'menu');
+
+  itens.forEach(function (it, idx) {
+    if (it.sep) {
+      const hr = document.createElement('div');
+      hr.className = 'fp-menu-sep';
+      painel.appendChild(hr);
+      return;
+    }
+    const el = document.createElement(it.href ? 'a' : 'button');
+    el.className = 'fp-menu-item' + (it.perigo ? ' perigo' : '');
+    el.setAttribute('role', 'menuitem');
+    el.tabIndex = -1;
+    if (it.href) { el.href = it.href; el.target = '_blank'; el.rel = 'noopener noreferrer'; }
+    else { el.type = 'button'; }
+    el.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+      + (FP_ICONES[it.icone] || FP_ICONES.ver) + '</svg><span></span>';
+    el.querySelector('span').textContent = it.rotulo;
+    el.addEventListener('click', function (e) {
+      e.stopPropagation();
+      fpMenuAberto && (fpMenuAberto.devolverFoco = false);
+      fpMenuFechar();
+      if (typeof it.acao === 'function') setTimeout(it.acao, 0);
+    });
+    painel.appendChild(el);
+    if (idx === 0) setTimeout(function () { try { el.focus(); } catch (e) {} }, 20);
+  });
+
+  document.body.appendChild(painel);
+  botao.setAttribute('aria-expanded', 'true');
+  fpMenuAberto = { id: id, painel: painel, botao: botao, devolverFoco: true };
+
+  // Posiciona colado ao botao, virando para cima ou para a esquerda quando
+  // nao couber — em card no fim da lista o menu abriria fora da tela.
+  const r = botao.getBoundingClientRect();
+  const pr = painel.getBoundingClientRect();
+  const margem = 8;
+  let topo = r.bottom + 6;
+  if (topo + pr.height > innerHeight - margem) {
+    topo = Math.max(margem, r.top - pr.height - 6);
+  }
+  let esq = r.right - pr.width;
+  if (esq < margem) esq = margem;
+  if (esq + pr.width > innerWidth - margem) esq = Math.max(margem, innerWidth - pr.width - margem);
+  painel.style.top = Math.round(topo) + 'px';
+  painel.style.left = Math.round(esq) + 'px';
+
+  document.addEventListener('keydown', fpMenuTecla, true);
+}
+window.fpMenuAbrir = fpMenuAbrir;
+
+document.addEventListener('click', function (e) {
+  if (fpMenuAberto && !fpMenuAberto.painel.contains(e.target)) {
+    fpMenuAberto.devolverFoco = false;
+    fpMenuFechar();
+  }
+});
+// rolar com o menu aberto deixaria o painel solto no meio da tela
+window.addEventListener('scroll', function () {
+  if (fpMenuAberto) { fpMenuAberto.devolverFoco = false; fpMenuFechar(); }
+}, true);
+window.addEventListener('resize', function () {
+  if (fpMenuAberto) { fpMenuAberto.devolverFoco = false; fpMenuFechar(); }
+});
+
+/* ==========================================================================
    GOOGLE DRIVE — foto do produto pela pasta com o nome do SKU
 
    A pasta e privada; quem le e uma conta de servico dentro da edge function
@@ -13180,15 +13384,11 @@ function renderEditingView() {
           <div style="display:flex;gap:6px;margin-top:4px;align-items:center;flex-wrap:wrap">${dests || '<span style="font-size:11px;color:var(--text-muted)">Sem destino</span>'}</div>
         </div>
         <div class="edit-actions">
-          <button class="fp-icon-btn fp-ib-blue" data-tip="Ver roteiro" onclick="openEditRoteiro('${p.id}')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          </button>
-          ${p.publish_link ? `<a class="fp-icon-btn fp-ib-pink" data-tip="Abrir arquivo" href="${escHtml(p.publish_link)}" target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          </a>` : ''}
-          <button class="fp-icon-btn fp-ib-blue" data-tip="Ver completo" onclick="openProjectDetail('${p.id}')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
+          ${fpMenuHtml([
+            { rotulo: 'Ver roteiro', icone: 'roteiro', acao: () => openEditRoteiro(p.id) },
+            { rotulo: 'Abrir projeto completo', icone: 'ver', acao: () => openProjectDetail(p.id) },
+            p.publish_link ? { rotulo: 'Abrir arquivo para publicação', icone: 'link', href: p.publish_link } : null,
+          ], { rotulo: 'Ações do projeto' })}
           <select class="proj-status-select ${p.status}" onchange="editingUpdateStatus('${p.id}',this.value)" style="min-width:120px;margin-left:4px">
             <option value="edicao" ${p.status === 'edicao' ? 'selected' : ''}>Edição</option>
             <option value="a_publicar" ${p.status === 'a_publicar' ? 'selected' : ''}>A publicar</option>
