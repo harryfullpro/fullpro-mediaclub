@@ -5696,11 +5696,19 @@ window.fpConfirm = fpConfirm;
 })();
 
 /* VIEW NAVIGATION */
-/* Toda troca de tela volta ao topo: quem rola aqui e o <main>, nao a janela. */
+/* Toda troca de tela volta ao topo: quem rola aqui e o <main>, nao a janela.
+   Aplica em tres momentos porque a view so termina de renderizar depois do
+   clique: zerar uma vez so deixava a tela seguinte aberta no meio (medido:
+   1200px viravam 632px, o maximo da tela nova, em vez de 0). */
 function fpResetScroll(){
-  const m = document.querySelector('main');
-  if (m) m.scrollTop = 0;
-  try { window.scrollTo(0, 0); } catch(e){}
+  const zerar = function(){
+    const m = document.querySelector('main');
+    if (m) m.scrollTop = 0;
+    try { window.scrollTo(0, 0); } catch(e){}
+  };
+  zerar();
+  requestAnimationFrame(function(){ zerar(); requestAnimationFrame(zerar); });
+  setTimeout(zerar, 60);
 }
 
 document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
