@@ -7206,6 +7206,9 @@ function getFilteredProjects() {
 function renderProjects() {
   const el = document.getElementById('projectsList');
   if (!el) return;
+  // O seletor de status do celular so tem conteudo depois que os projetos
+  // chegam (as opcoes trazem a contagem de cada status).
+  if (typeof fpFiltroStatusPreencher === 'function') fpFiltroStatusPreencher();
   if (PROJECTS.length === 0) {
     el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum projeto criado ainda. Clique em "+ Novo projeto" para começar.</p></div>';
     return;
