@@ -3385,7 +3385,11 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   /* !important: a tela de Clips traz flex-wrap no style= do elemento */
   .page-head { flex-wrap: nowrap !important; align-items: flex-start; }
   .page-head > div:first-child { min-width: 0; }   /* titulo quebra em vez de vazar */
-  .page-head > :last-child:not(:first-child) { margin-left: auto; flex: 0 0 auto; }
+  .page-head > :last-child:not(:first-child) { margin-left: auto; flex: 0 1 auto; flex-wrap: nowrap !important; }
+  /* Meus Posts tem um filtro ao lado do botao: o seletor encolhe para o +
+     nao cair sozinho numa segunda linha */
+  .page-head > :last-child:not(:first-child) > select { min-width: 0; flex: 1 1 auto; }
+  .page-head .fp-new-btn { flex: 0 0 auto; }   /* o glifo nunca encolhe */
 
   .fp-new-btn, .fp-new-btn.ghost,
   .fp-new-btn:hover, .fp-new-btn.ghost:hover {
