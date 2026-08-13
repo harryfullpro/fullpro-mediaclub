@@ -2701,8 +2701,17 @@
        Isto antes era um seletor por string exata — `[style*="1fr 340px"]` —
        que quebrava silenciosamente se alguem mudasse um espaco no JS. Agora
        um marcador data-fp-cols e aplicado em runtime a qualquer grid inline
-       com 2+ colunas, e o colapso vale para todos eles. */
-    [data-fp-cols] { grid-template-columns: 1fr !important; }
+       com 2+ colunas.
+
+       O colapso e adaptativo em vez de sempre 1 coluna: com 3 indicadores
+       pequenos (Edicao: "em edicao / a publicar / total"), uma coluna gastava
+       um terco da tela para mostrar tres numeros. O minmax deixa o navegador
+       encaixar quantas couberem. */
+    [data-fp-cols="2"] { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important; }
+    [data-fp-cols="3"],
+    [data-fp-cols="4"],
+    [data-fp-cols="5"],
+    [data-fp-cols="6"] { grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)) !important; }
 
     /* Edit meta grid */
     .edit-meta-grid { grid-template-columns: 1fr 1fr; }
