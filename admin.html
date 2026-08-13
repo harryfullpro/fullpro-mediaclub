@@ -5234,6 +5234,7 @@ function prettyDT(iso) {
    Roda uma vez e depois a cada bloco de HTML injetado.
    ========================================================================== */
 (function(){
+  let contadorCampo = 0;
   function temNome(el){
     return !!(el.getAttribute('aria-label') || el.getAttribute('title') ||
               (el.textContent || '').trim());
@@ -5271,6 +5272,41 @@ function prettyDT(iso) {
       if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
       // sem alt, o leitor de tela le a URL do arquivo — pior que nada
       if (!img.hasAttribute('alt')) img.setAttribute('alt', '');
+    });
+
+    // Campos sem rotulo associado. A maioria ja tem um <label> logo acima
+    // (so que sem for=) ou um placeholder que descreve o campo — basta ligar.
+    const campos = raiz.querySelectorAll ? raiz.querySelectorAll('input, select, textarea') : [];
+    campos.forEach(function(el){
+      if (el.type === 'hidden') return;
+      if (el.getAttribute('aria-label') || el.getAttribute('aria-labelledby')) return;
+      if (el.id && document.querySelector('label[for="' + el.id + '"]')) return;
+      if (el.closest('label')) return;
+
+      // 1) <label> irmao imediatamente antes, sem for=
+      let lbl = el.previousElementSibling;
+      if (!lbl || lbl.tagName !== 'LABEL') {
+        const pai = el.parentElement;
+        if (pai) {
+          const cand = pai.querySelector(':scope > label');
+          if (cand && !cand.getAttribute('for')) lbl = cand;
+        }
+      }
+      if (lbl && lbl.tagName === 'LABEL' && !lbl.getAttribute('for')) {
+        if (!el.id) el.id = 'fpCampo' + (++contadorCampo);
+        lbl.setAttribute('for', el.id);
+        return;
+      }
+
+      // 2) placeholder descreve o campo
+      if (el.placeholder) { el.setAttribute('aria-label', el.placeholder); return; }
+
+      // 3) rotulo textual mais proximo acima
+      const bloco = el.closest('.checkin-field, .form-group, .field, .modal-field');
+      if (bloco) {
+        const t = bloco.querySelector('label, .checkin-label, .field-label');
+        if (t && t.textContent.trim()) el.setAttribute('aria-label', t.textContent.trim().replace(/\s*\*$/, ''));
+      }
     });
 
     // Marca grids declarados em style inline para que o CSS mobile possa
@@ -13217,7 +13253,7 @@ function renderDashboard() {
           </div>
           <div style="text-align:center;padding:14px 8px;background:rgba(139,156,247,.06);border:1px solid rgba(139,156,247,.15);border-radius:10px">
             <div style="font-family:'Bebas Neue';font-size:26px;color:#8b9cf7;line-height:1">${coCount}</div>
-            <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-top:4px">Saidas</div>
+            <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-top:4px">Saídas</div>
           </div>
           <div style="text-align:center;padding:14px 8px;background:${inUse > 0 ? 'rgba(245,158,11,.06)' : 'var(--bg-elev)'};border:1px solid ${inUse > 0 ? 'rgba(245,158,11,.15)' : 'var(--border)'};border-radius:10px">
             <div style="font-family:'Bebas Neue';font-size:26px;color:${inUse > 0 ? '#f59e0b' : 'var(--text-muted)'};line-height:1">${inUse > 0 ? inUse : 0}</div>
