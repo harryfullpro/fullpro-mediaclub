@@ -3196,15 +3196,19 @@ body.fp-sem-scroll { overflow: hidden; }
      na tela. Aqui o alvo de toque e a linha inteira — largura toda, sem
      vizinho ao lado para errar — entao 36px de altura sao seguros e cabem
      todos os modulos sem rolar. */
-  .nav-item { min-height: 36px; padding: 6px 12px; }
+  .nav-item { min-height: 34px; padding: 5px 12px; font-size: 12.5px; }
+  .nav-item svg { width: 17px; height: 17px; }
   .nav-section {
-    height: auto; padding: 10px 12px 3px;
-    font-size: 10px; letter-spacing: 1.2px;
+    height: auto; padding: 9px 12px 2px;
+    font-size: 9.5px; letter-spacing: 1.1px;
   }
   .sidebar-nav { gap: 0; padding: 0 10px; }
-  .sidebar-brand, .sidebar > a:first-child { padding: 12px; }
-  .theme-toggle { margin-bottom: 2px; padding: 5px 12px; }
-  .sidebar-foot .nav-item, .sidebar > .nav-item { min-height: 36px; }
+  /* logo e rodape tambem encolhem: juntos custavam mais de 200px */
+  .sidebar > a:first-child, .sidebar-brand { padding: 10px 12px; }
+  .sidebar > a:first-child img, .sidebar-brand img { max-height: 26px; }
+  .theme-toggle { margin-bottom: 2px; padding: 4px 12px; }
+  .sidebar-foot { padding-top: 4px; }
+  .sidebar-foot .nav-item { min-height: 34px; }
 }
 
 /* --- link real dentro de textos ----------------------------------------- */
