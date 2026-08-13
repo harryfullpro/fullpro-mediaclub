@@ -5802,12 +5802,12 @@ function renderRequests() {
       <td><strong>${prettyDate(r.date)}</strong></td>
       <td class="sub">${prettyDT(r.createdAt)}</td>
       <td>
-        <strong>${r.nome}</strong>
-        <div class="sub">${r.whatsapp}</div>
+        <strong>${escHtml(r.nome)}</strong>
+        <div class="sub">${escHtml(r.whatsapp)}</div>
       </td>
       <td>
-        ${r.moto}
-        <div class="sub">${r.placa}</div>
+        ${escHtml(r.moto)}
+        <div class="sub">${escHtml(r.placa)}</div>
       </td>
       <td><span class="badge ${r.modalidade}">${r.modalidade === 'estudio' ? 'Estúdio' : 'Retirada'}</span></td>
       <td>${r.brinde === 'pastilhas' ? 'Pastilhas' : r.brinde === 'mochila' ? 'Mochila' : 'Capa'}</td>
@@ -5850,11 +5850,11 @@ function openDetails(id) {
   document.getElementById('modalBody').innerHTML = `
     <div class="detail-row"><div class="k">Data</div><div class="v">${prettyDate(r.date)}</div></div>
     <div class="detail-row"><div class="k">Status</div><div class="v"><span class="badge ${r.status}">${r.status === 'pending' ? 'Pendente' : r.status === 'approved' ? 'Aprovada' : 'Rejeitada'}</span></div></div>
-    <div class="detail-row"><div class="k">Nome</div><div class="v">${r.nome}</div></div>
-    <div class="detail-row"><div class="k">WhatsApp</div><div class="v">${r.whatsapp}</div></div>
+    <div class="detail-row"><div class="k">Nome</div><div class="v">${escHtml(r.nome)}</div></div>
+    <div class="detail-row"><div class="k">WhatsApp</div><div class="v">${escHtml(r.whatsapp)}</div></div>
     <div class="detail-row"><div class="k">E-mail</div><div class="v">${r.email || '—'}</div></div>
-    <div class="detail-row"><div class="k">Moto</div><div class="v">${r.moto}</div></div>
-    <div class="detail-row"><div class="k">Placa</div><div class="v">${r.placa}</div></div>
+    <div class="detail-row"><div class="k">Moto</div><div class="v">${escHtml(r.moto)}</div></div>
+    <div class="detail-row"><div class="k">Placa</div><div class="v">${escHtml(r.placa)}</div></div>
     <div class="detail-row"><div class="k">Modalidade</div><div class="v">${r.modalidade === 'estudio' ? 'Leva até FullPro' : 'Retirada no endereço'}</div></div>
     ${r.modalidade === 'retirada' ? `<div class="detail-row"><div class="k">Endereço</div><div class="v">${r.endereco || '—'}</div></div>` : ''}
     <div class="detail-row"><div class="k">Brinde</div><div class="v">${r.brinde === 'pastilhas' ? 'Jogo de pastilhas' : r.brinde === 'mochila' ? 'Mochila backpack' : 'Capa de chuva'}</div></div>
@@ -6012,18 +6012,18 @@ function renderDateViewer(iso) {
     const modalLabel = r.modalidade === 'estudio' ? 'Leva até o estúdio' : 'Retirada no endereço';
     return `<div class="dv-booking-full">
       <div class="dv-row">
-        <span class="dv-name">${r.nome}</span>
+        <span class="dv-name">${escHtml(r.nome)}</span>
         <span class="badge ${r.status}">${statusLabel}</span>
       </div>
       <div class="dv-details-grid">
-        <div class="dv-detail"><span class="dv-k">Moto</span><span class="dv-v">${r.moto}</span></div>
-        <div class="dv-detail"><span class="dv-k">Placa</span><span class="dv-v">${r.placa}</span></div>
-        <div class="dv-detail"><span class="dv-k">WhatsApp</span><span class="dv-v">${r.whatsapp}</span></div>
+        <div class="dv-detail"><span class="dv-k">Moto</span><span class="dv-v">${escHtml(r.moto)}</span></div>
+        <div class="dv-detail"><span class="dv-k">Placa</span><span class="dv-v">${escHtml(r.placa)}</span></div>
+        <div class="dv-detail"><span class="dv-k">WhatsApp</span><span class="dv-v">${escHtml(r.whatsapp)}</span></div>
         <div class="dv-detail"><span class="dv-k">Email</span><span class="dv-v">${r.email || '—'}</span></div>
         <div class="dv-detail"><span class="dv-k">Modalidade</span><span class="dv-v">${modalLabel}</span></div>
         <div class="dv-detail"><span class="dv-k">Brinde</span><span class="dv-v">${brindeName}</span></div>
-        ${r.endereco ? `<div class="dv-detail" style="grid-column:1/-1"><span class="dv-k">Endereço</span><span class="dv-v">${r.endereco}</span></div>` : ''}
-        ${r.obs ? `<div class="dv-detail" style="grid-column:1/-1"><span class="dv-k">Obs agendamento</span><span class="dv-v">${r.obs}</span></div>` : ''}
+        ${r.endereco ? `<div class="dv-detail" style="grid-column:1/-1"><span class="dv-k">Endereço</span><span class="dv-v">${escHtml(r.endereco)}</span></div>` : ''}
+        ${r.obs ? `<div class="dv-detail" style="grid-column:1/-1"><span class="dv-k">Obs agendamento</span><span class="dv-v">${escHtml(r.obs)}</span></div>` : ''}
       </div>
 
       <div class="dv-actions-row">
@@ -6355,7 +6355,7 @@ function renderCiView() {
 
     allHtml += `<div class="cal-card" style="margin-bottom:14px">
       <div class="dv-row" style="margin-bottom:12px">
-        <span class="dv-name">${r.nome} — ${r.moto} (${r.placa})</span>
+        <span class="dv-name">${escHtml(r.nome)} — ${escHtml(r.moto)} (${escHtml(r.placa)})</span>
         ${hasSaved ? '<span class="badge approved">Salvo</span>' : '<span class="badge pending">Pendente</span>'}
       </div>
       <div class="checkin-grid">
@@ -7014,7 +7014,7 @@ function populateProjBookings() {
   const sel = document.getElementById('projBooking');
   const approved = getRequests().filter(r => r.status === 'approved');
   sel.innerHTML = '<option value="">Sem vínculo (projeto avulso)</option>' +
-    approved.map(r => `<option value="${r.id}" data-moto="${r.moto}" data-placa="${r.placa}" data-date="${r.date}">${r.moto} (${r.placa}) — ${r.nome} · ${prettyDate(r.date)}</option>`).join('');
+    approved.map(r => `<option value="${r.id}" data-moto="${escHtml(r.moto)}" data-placa="${escHtml(r.placa)}" data-date="${r.date}">${escHtml(r.moto)} (${escHtml(r.placa)}) — ${escHtml(r.nome)} · ${prettyDate(r.date)}</option>`).join('');
 }
 
 function onProjBookingChange() {
@@ -12471,7 +12471,11 @@ function toggleTplCard(i) {
 }
 
 function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  // Aceita null/undefined/numero: antes quebrava com "s.replace is not a
+  // function" e derrubava a renderizacao inteira do bloco.
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function formatNum(n) {
@@ -14766,7 +14770,7 @@ async function runBlingSearch(query) {
   resultsEl.innerHTML = products.slice(0, 15).map(p => {
     const estoque = p.estoque?.saldoVirtualTotal || 0;
     const already = envioSelectedItems.some(s => s.blingId === p.id);
-    return `<div style="padding:8px 10px;border-bottom:1px solid var(--border);cursor:${already ? 'default' : 'pointer'};display:flex;align-items:center;justify-content:space-between;opacity:${already ? '.5' : '1'};transition:background .1s" ${already ? '' : `onclick="addEnvioProduct(${p.id},'${escHtml(p.nome).replace(/'/g,"\\'")}','${escHtml(p.codigo||'').replace(/'/g,"\\'")}',${p.preco||0},${estoque})" onmouseover="this.style.background='var(--bg-elev)'" onmouseout="this.style.background='none'"`}>
+    return `<div style="padding:8px 10px;border-bottom:1px solid var(--border);cursor:${already ? 'default' : 'pointer'};display:flex;align-items:center;justify-content:space-between;opacity:${already ? '.5' : '1'};transition:background .1s" ${already ? '' : `onclick="addEnvioProduct(${p.id},'${String(p.nome||'').replace(/\\/g,"\\\\").replace(/'/g,"\\'")}','${String(p.codigo||'').replace(/\\/g,"\\\\").replace(/'/g,"\\'")}',${p.preco||0},${estoque})" onmouseover="this.style.background='var(--bg-elev)'" onmouseout="this.style.background='none'"`}>
       <div>
         <div style="font-size:12px;font-weight:600;color:var(--text)">${escHtml(p.nome)}</div>
         <div style="font-size: 11px;color:var(--text-dim)">SKU: ${escHtml(p.codigo||'—')} · R$ ${(p.preco||0).toFixed(2)}</div>
@@ -15037,7 +15041,7 @@ async function saveInfEnvio() {
   const inf = PERF_INFLUENCERS.find(i => i.id === infId);
   const infName = inf ? inf.name : 'Influenciador';
 
-  const produtoResumo = envioSelectedItems.map(p => `${p.nome} (x${p.qtd})`).join(', ');
+  const produtoResumo = envioSelectedItems.map(p => `${escHtml(p.nome)} (x${p.qtd})`).join(', ');
   const totalQtd = envioSelectedItems.reduce((s, p) => s + p.qtd, 0);
   const totalValor = envioSelectedItems.reduce((s, p) => s + (p.preco * p.qtd), 0);
   const metodo = document.getElementById('envioMetodo').value;
