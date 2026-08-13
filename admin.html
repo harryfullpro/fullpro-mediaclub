@@ -3479,7 +3479,9 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
      fazia sentido quando eram 5 botoes, mas com o menu "…" eles cabem na
      mesma linha. Do jeito antigo, os controles ficavam soltos no meio do
      card. */
-  .proj-card { padding: 12px; }
+  .proj-card { padding: 12px 12px 10px; margin-bottom: 10px; }
+  /* sem produtos compativeis o container fica vazio mas cobrava 6px de margem */
+  .proj-bling:empty { display: none; }
   .proj-card-head {
     flex-direction: row !important;
     align-items: flex-start !important;
@@ -7391,7 +7393,7 @@ function renderProjects() {
         <div class="proj-meta-item"><div class="k">Data</div><div class="v">${p.production_date ? prettyDate(p.production_date) : '—'}</div></div>
         <div class="proj-meta-item"><div class="k">Custos</div><div class="v" style="${totalCost > 0 ? 'color:#f59e0b;font-weight:600' : ''}">R$ ${formatBRL(totalCost)}</div></div>
       </div>
-      <div id="projBlingProds_${p.id}" style="margin-top:6px"></div>
+      <div class="proj-bling" id="projBlingProds_${p.id}" style="margin-top:6px"></div>
       ${p.observations ? `<div style="font-size:12px;color:var(--text-dim);margin-top:6px;border-top:1px solid var(--border);padding-top:8px">${escHtml(p.observations).substring(0, 200)}${p.observations.length > 200 ? '...' : ''}</div>` : ''}
     </div>`;
   }).join('');
