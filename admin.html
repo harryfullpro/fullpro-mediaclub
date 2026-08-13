@@ -43,8 +43,10 @@
     --border: #e0e0e4;
     --border-hi: #c8c8ce;
     --text: #1a1a1e;
-    --text-dim: #5a5a66;
-    --text-muted: #8a8a96;
+    --text-dim: #4e4e5a;
+    /* #8a8a96 dava 3,4:1 sobre card branco e reprovava todo texto secundario
+       da tabela — telefone, placa, data de recebimento. #6b6b78 da 5,1:1. */
+    --text-muted: #6b6b78;
     --primary: #dd2222;
     --primary-hi: #ee3333;
     --accent: #e6a800;
@@ -3201,7 +3203,7 @@ body.fp-sem-scroll { overflow: hidden; }
 }
 th.fp-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
 th.fp-sortable:hover { color: var(--text); }
-th.fp-sortable .fp-seta { opacity: .3; margin-left: 4px; font-size: 11px; }
+th.fp-sortable .fp-seta { opacity: .55; margin-left: 4px; font-size: 11px; }
 th.fp-sortable[aria-sort="ascending"]  .fp-seta,
 th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--accent); }
 
