@@ -12882,14 +12882,17 @@ window.fpDriveCarregar = fpDriveCarregar;
 async function fpDriveVerificar(mostrarDetalhe) {
   const txt = document.getElementById('driveStatusText');
   const det = document.getElementById('driveStatusDetalhe');
-  if (txt) txt.textContent = 'Verificando...';
+  if (txt) txt.textContent = mostrarDetalhe ? 'Contando as pastas...' : 'Verificando...';
   try {
-    const r = await fetch(FP_DRIVE_URL + '?action=status');
+    // A contagem exige paginar milhares de pastas (~8 s). Ao abrir a aba só
+    // confirmamos o acesso; o número vem quando alguém clica em Verificar.
+    const r = await fetch(FP_DRIVE_URL + '?action=status' + (mostrarDetalhe ? '&contar=1' : ''));
     const d = await r.json();
     FP_DRIVE_ATIVO = !!d.configurado;
     if (txt) {
       txt.textContent = d.configurado
-        ? 'Conectado · pasta "' + (d.pasta || '?') + '" · ' + (d.pastas_de_sku || 0) + ' SKUs com pasta'
+        ? 'Conectado · pasta "' + (d.pasta || '?') + '"'
+          + (d.pastas_de_sku != null ? ' · ' + d.pastas_de_sku.toLocaleString('pt-BR') + ' SKUs com pasta' : '')
         : 'Não configurado';
       txt.style.color = d.configurado ? 'var(--success)' : 'var(--text-dim)';
     }
@@ -12898,7 +12901,10 @@ async function fpDriveVerificar(mostrarDetalhe) {
       if (d.configurado) {
         det.innerHTML = 'Lendo a pasta <strong>' + escHtml(d.pasta || '') + '</strong> como '
           + '<code style="font-size:11px">' + escHtml(d.email_conta || '') + '</code>.<br>'
-          + 'Cada pasta com o nome exato de um SKU vira a foto daquele produto no painel.';
+          + 'Cada pasta com o nome exato de um SKU vira a foto daquele produto no painel.'
+          + (d.pastas_de_sku != null
+              ? '<br>Hoje são <strong>' + d.pastas_de_sku.toLocaleString('pt-BR') + '</strong> pastas de SKU nessa raiz.'
+              : '');
       } else {
         det.innerHTML = escHtml(d.motivo || 'Configuração incompleta.')
           + (d.email_conta ? '<br><br>Conta de serviço: <code style="font-size:11px">' + escHtml(d.email_conta) + '</code>' : '');

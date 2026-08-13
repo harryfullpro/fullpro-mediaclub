@@ -242,8 +242,15 @@ Deno.serve(async (req: Request) => {
       }
       try {
         const info = await driveGet(`/files/${RAIZ}`, { fields: 'id,name,mimeType' });
-        // Conta paginando: com pageSize fixo o numero parava em 1000 e dava a
-        // impressao de ser o total real.
+
+        // Contar as pastas exige paginar tudo (5 mil+ = ~8 s). Nao contar nao
+        // da o numero; contar sempre trava a aba ao abrir. Entao o status
+        // normal so confirma o acesso e a contagem vem sob demanda
+        // (?contar=1), disparada pelo botao Verificar.
+        if (url.searchParams.get('contar') !== '1') {
+          return json({ configurado: true, email_conta: sa.client_email, pasta: info.name });
+        }
+
         let total = 0, pagina: string | undefined = undefined, voltas = 0;
         do {
           const params: Record<string, string> = {
