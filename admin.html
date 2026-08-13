@@ -3341,6 +3341,22 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   .inf-stat-card { padding: 12px; }
   .inf-stat-value { font-size: 20px; }
   .inf-tab-content { padding: 0; }
+
+  /* O cabecalho do card de influenciador tinha nome a esquerda e numeros a
+     direita sem wrap: em tela estreita o bloco da direita empurrava o card
+     para fora da largura. */
+  .inf-card { min-width: 0; overflow: hidden; }
+  .inf-card-head { flex-wrap: wrap; gap: 10px; }
+  .inf-card-head-left { flex: 1 1 160px; min-width: 0; }
+  .inf-card-head-right { flex: 0 0 auto; text-align: left; }
+
+  /* abas de influenciador: rolam em vez de quebrar em varias fileiras */
+  .inf-tabs {
+    display: flex; flex-wrap: nowrap; overflow-x: auto;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .inf-tabs::-webkit-scrollbar { display: none; }
+  .inf-tab { flex: 0 0 auto; white-space: nowrap; }
 }
 
 @media (max-width: 600px) {
@@ -5615,7 +5631,12 @@ function prettyDT(iso) {
     // (5 delas em Influenciadores, que tem muitas colunas) espremiam ou
     // estouravam a tela no celular. Envolver aqui cobre inclusive as tabelas
     // que ainda vao ser escritas.
-    const tabelas = raiz.querySelectorAll ? raiz.querySelectorAll('table') : [];
+    // querySelectorAll so olha descendentes: quando o proprio no inserido e a
+    // tabela (o caso de Usuarios), ela escapava e vazava 600px numa coluna de
+    // 235px. Por isso a raiz entra na lista.
+    const tabelas = [];
+    if (raiz.tagName === 'TABLE') tabelas.push(raiz);
+    if (raiz.querySelectorAll) tabelas.push.apply(tabelas, raiz.querySelectorAll('table'));
     tabelas.forEach(function(t){
       const pai = t.parentElement;
       if (!pai || pai.classList.contains('fp-tabela-rola') || pai.classList.contains('table-wrap')) return;
