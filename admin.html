@@ -4071,6 +4071,19 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
             </div>
             <button id="blingConnectBtn" class="action-btn approve" style="padding:6px 14px;font-size:11px" onclick="connectBling()">Conectar</button>
           </div>
+          <div style="padding:12px 14px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="#0066da" d="M4.5 20.5 1 14.5l6-10.5h7l-6 10.5z"/><path fill="#00ac47" d="m8 4 6 10.5h7L15 4z"/><path fill="#ffba00" d="M4.5 20.5h15l3.5-6H8z"/></svg>
+                <div style="min-width:0">
+                  <div style="font-size:13px;font-weight:600;color:var(--text)">Google Drive — fotos por SKU</div>
+                  <div style="font-size:11px;color:var(--text-dim)" id="driveStatusText">Verificando...</div>
+                </div>
+              </div>
+              <button class="action-btn view" style="padding:6px 14px;font-size:11px" onclick="fpDriveVerificar(true)">Verificar</button>
+            </div>
+            <div id="driveStatusDetalhe" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--bg-elev);border:1px solid var(--border);font-size:11.5px;line-height:1.6;color:var(--text-dim)"></div>
+          </div>
           <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border)">
             <div style="display:flex;align-items:center;gap:10px">
               <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#e1306c" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="#e1306c" stroke="none"/></svg>
@@ -8223,9 +8236,12 @@ function renderShotsReadOnly(shots, si) {
     return '';
   }
   function productLine(c){
+    // O data-drive-sku e o gancho: se houver pasta com esse SKU no Drive, a
+    // foto de la substitui o conteudo desta caixa (ver fpDriveAplicar).
+    const gancho = c.sku ? ' data-drive-sku="' + esc(c.sku) + '"' : '';
     const img = c.product_image
-      ? '<img src="' + esc(c.product_image) + '" width="46" height="46" style="border-radius:8px;object-fit:cover;flex-shrink:0"/>'
-      : '<div style="width:46px;height:46px;border-radius:8px;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--text-dim)" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4M4 7l8 4M4 7v10l8 4m0-10v10"/></svg></div>';
+      ? '<div' + gancho + ' style="width:46px;height:46px;border-radius:8px;flex-shrink:0;overflow:hidden"><img src="' + esc(c.product_image) + '" width="46" height="46" style="width:100%;height:100%;border-radius:8px;object-fit:cover"/></div>'
+      : '<div' + gancho + ' style="width:46px;height:46px;border-radius:8px;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--text-dim)" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4M4 7l8 4M4 7v10l8 4m0-10v10"/></svg></div>';
     const price = c.product_price != null ? 'R$ ' + brl(c.product_price) : '—';
     const stock = c.product_stock != null ? c.product_stock : '—';
     const stkColor = (typeof c.product_stock === 'number') ? (c.product_stock > 3 ? 'var(--success)' : 'var(--warning)') : 'var(--text-dim)';
@@ -8276,6 +8292,10 @@ function renderShotsReadOnly(shots, si) {
         + '</div>'
         + '</div>';
     }).join('');
+    // Foto do Drive por SKU, quando a pasta existir.
+    if (typeof fpDriveCarregar === 'function') {
+      fpDriveCarregar(clips.map(function(c){ return c.sku; }), el);
+    }
   }
   window.renderClips = renderClips;
 
@@ -8427,6 +8447,7 @@ function renderShotsReadOnly(shots, si) {
       +   '<div style="display:flex;gap:8px"><button type="button" class="fp-clip-btn" onclick="fpCloseClipDetail()">Fechar</button>'
       +     '<button type="button" class="fp-clip-btn primary" id="fpClipSave">Salvar</button></div>'
       + '</div>';
+    if (typeof fpDriveCarregar === 'function') fpDriveCarregar([c.sku], body);
     document.getElementById('fpClipSave').onclick = async function(){
       const btn = this; btn.disabled = true; btn.textContent = 'Salvando...';
       const patch = {
@@ -12005,30 +12026,15 @@ function renderCompatibleProducts(products, containerId) {
     container.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:8px 0">Nenhum produto compatível encontrado no estoque.</div>';
     return;
   }
+  // Usa o mesmo HTML da versao recolhida: antes o markup era duplicado e as
+  // duas cópias precisavam ser mantidas em sincronia na mao.
   container.innerHTML = `
     <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">
       Produtos compatíveis em estoque (${products.length})
     </div>
-    <div style="max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border-hi) transparent">
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px" class="bling-prod-grid">
-        ${products.map(p => `
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:6px;background:var(--bg-card);border:1px solid var(--border);min-width:0">
-            <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
-              ${p.imagemURL ? `<img src="${p.imagemURL}" width="32" height="32" style="border-radius:4px;object-fit:cover"/>` : '<div style="width:32px;height:32px;border-radius:4px;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--text-dim)" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4M4 7l8 4M4 7v10l8 4m0-10v10"/></svg></div>'}
-              <div style="min-width:0">
-                <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.nome)}</div>
-                <div style="font-size: 11px;color:var(--text-dim)">SKU: ${escHtml(p.codigo || '—')} · R$ ${(p.preco || 0).toFixed(2)}</div>
-              </div>
-            </div>
-            <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-              <span style="font-size:12px;font-weight:700;color:${p.estoque?.saldoVirtualTotal != null ? ((p.estoque.saldoVirtualTotal > 3) ? 'var(--success)' : 'var(--warning)') : 'var(--text-dim)'}">${p.estoque?.saldoVirtualTotal != null ? p.estoque.saldoVirtualTotal : '?'}</span>
-              <span style="font-size: 11px;color:var(--text-dim)">un</span>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
+    ${renderCompatibleProductsHTML(products)}
   `;
+  fpDriveCarregar(products.map(p => p.codigo), container);
 }
 
 // Collapsed variant for project cards - products hidden behind expander button
@@ -12053,15 +12059,19 @@ function renderCompatibleProductsCollapsed(products, containerId) {
     w.style.display = open ? 'none' : 'block';
     this.querySelector('span').textContent = open ? `Ver produtos compatíveis (${n})` : `Ocultar produtos (${n})`;
     this.querySelector('svg').style.transform = open ? '' : 'rotate(180deg)';
+    // só busca no Drive quando o bloco é aberto de fato
+    if (!open) fpDriveCarregar(products.map(p => p.codigo), w);
   };
 }
 
 function renderCompatibleProductsHTML(products) {
   return `<div style="max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border-hi) transparent"><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px" class="bling-prod-grid">` +
     products.map(p => {
+      // gancho para a foto do Drive (pasta com o nome do SKU) substituir esta caixa
+      const gancho = p.codigo ? ` data-drive-sku="${escHtml(p.codigo)}"` : '';
       const img = p.imagemURL
-        ? `<img src="${escHtml(p.imagemURL)}" width="32" height="32" style="border-radius:4px;object-fit:cover"/>`
-        : `<div style="width:32px;height:32px;border-radius:4px;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--text-dim)" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4M4 7l8 4M4 7v10l8 4m0-10v10"/></svg></div>`;
+        ? `<div${gancho} style="width:32px;height:32px;border-radius:4px;flex-shrink:0;overflow:hidden"><img src="${escHtml(p.imagemURL)}" width="32" height="32" style="width:100%;height:100%;border-radius:4px;object-fit:cover"/></div>`
+        : `<div${gancho} style="width:32px;height:32px;border-radius:4px;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--text-dim)" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4M4 7l8 4M4 7v10l8 4m0-10v10"/></svg></div>`;
       const stk = p.estoque?.saldoVirtualTotal ?? '?';
       const stkColor = typeof stk === 'number' ? (stk > 3 ? 'var(--success)' : 'var(--warning)') : 'var(--text-dim)';
       return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:6px;background:var(--bg-card);border:1px solid var(--border);min-width:0">
@@ -12159,6 +12169,7 @@ function renderIntegracoes() {
   if (yt) yt.textContent = (window.FULLPRO_CONFIG && window.FULLPRO_CONFIG.YOUTUBE_API_KEY) ? 'Configurado pelo sistema' : 'Não configurado';
   updateTKStatus();
   updateBlingStatus();
+  fpDriveVerificar(false);
   refreshIntegrationStatus().then(function(){ updateTKStatus(); updateBlingStatus(); });
 }
 
@@ -12779,7 +12790,130 @@ function openLightbox(src) {
   lb.innerHTML = `<img src="${src}"/>`;
   lb.onclick = () => lb.remove();
   document.body.appendChild(lb);
+  // Esc fecha, e o foco vai para a imagem para o teclado nao ficar preso atras.
+  const onKey = (e) => {
+    if (e.key === 'Escape') { lb.remove(); document.removeEventListener('keydown', onKey); }
+  };
+  document.addEventListener('keydown', onKey);
 }
+
+/* ==========================================================================
+   GOOGLE DRIVE — foto do produto pela pasta com o nome do SKU
+
+   A pasta e privada; quem le e uma conta de servico dentro da edge function
+   drive-proxy. O painel so pede: "destes SKUs, quais tem foto?" e depois usa
+   a URL do proxy no src da <img>.
+
+   Sem o mapa antes, cada card tentaria carregar uma imagem que na maioria dos
+   casos nao existe — o navegador engoliria dezenas de 404 por tela.
+   ========================================================================== */
+const FP_DRIVE_URL = (window.FULLPRO_CONFIG && window.FULLPRO_CONFIG.SUPABASE_URL
+  ? window.FULLPRO_CONFIG.SUPABASE_URL.replace(/\/+$/, '')
+  : '') + '/functions/v1/drive-proxy';
+
+/* sku -> true/false (tem foto). Vive enquanto a aba estiver aberta. */
+const FP_DRIVE_MAPA = new Map();
+let FP_DRIVE_ATIVO = null;   // null = ainda nao sabemos se esta configurado
+
+function fpDriveImgUrl(sku, cheia) {
+  return FP_DRIVE_URL + '?action=img&sku=' + encodeURIComponent(sku) + (cheia ? '&full=1' : '');
+}
+
+/** Pergunta ao proxy quais destes SKUs tem foto. Uma chamada para a tela toda. */
+async function fpDriveMapear(skus) {
+  const novos = [...new Set((skus || [])
+    .map(s => String(s == null ? '' : s).trim())
+    .filter(s => s && !FP_DRIVE_MAPA.has(s)))];
+  if (!novos.length) return;
+  if (FP_DRIVE_ATIVO === false) return;
+
+  try {
+    const r = await fetch(FP_DRIVE_URL + '?action=map', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ skus: novos }),
+    });
+    const data = await r.json();
+    FP_DRIVE_ATIVO = !!data.configurado;
+    if (!data.configurado) return;
+    Object.keys(data.itens || {}).forEach(sku => {
+      FP_DRIVE_MAPA.set(sku, !!(data.itens[sku] && data.itens[sku].tem));
+    });
+  } catch (e) {
+    // Drive fora do ar nao pode derrubar a tela: segue com a imagem do Bling.
+    console.warn('[Drive] não foi possível consultar:', e && e.message);
+    FP_DRIVE_ATIVO = false;
+  }
+}
+
+/** Troca os placeholders por foto do Drive, onde houver. */
+function fpDriveAplicar(raiz) {
+  const escopo = raiz || document;
+  escopo.querySelectorAll('[data-drive-sku]').forEach(el => {
+    const sku = el.getAttribute('data-drive-sku');
+    if (!sku || el.dataset.driveFeito === '1') return;
+    if (!FP_DRIVE_MAPA.get(sku)) return;
+    el.dataset.driveFeito = '1';
+
+    const img = document.createElement('img');
+    img.src = fpDriveImgUrl(sku, false);
+    img.alt = 'Foto do produto ' + sku;
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.title = 'Foto do Drive — clique para ampliar';
+    img.style.cssText = 'width:100%;height:100%;border-radius:inherit;object-fit:cover;cursor:zoom-in;display:block';
+    img.onclick = (ev) => { ev.stopPropagation(); openLightbox(fpDriveImgUrl(sku, true)); };
+    // se a imagem falhar, deixa o que ja estava no lugar
+    img.onerror = () => { el.dataset.driveFeito = ''; img.remove(); };
+
+    el.innerHTML = '';
+    el.appendChild(img);
+  });
+}
+
+/** Busca o mapa e já aplica. É o que as telas chamam. */
+async function fpDriveCarregar(skus, raiz) {
+  await fpDriveMapear(skus);
+  fpDriveAplicar(raiz);
+}
+window.fpDriveCarregar = fpDriveCarregar;
+
+/** Diagnóstico na aba Integrações. */
+async function fpDriveVerificar(mostrarDetalhe) {
+  const txt = document.getElementById('driveStatusText');
+  const det = document.getElementById('driveStatusDetalhe');
+  if (txt) txt.textContent = 'Verificando...';
+  try {
+    const r = await fetch(FP_DRIVE_URL + '?action=status');
+    const d = await r.json();
+    FP_DRIVE_ATIVO = !!d.configurado;
+    if (txt) {
+      txt.textContent = d.configurado
+        ? 'Conectado · pasta "' + (d.pasta || '?') + '" · ' + (d.pastas_de_sku || 0) + ' SKUs com pasta'
+        : 'Não configurado';
+      txt.style.color = d.configurado ? 'var(--success)' : 'var(--text-dim)';
+    }
+    if (det && (mostrarDetalhe || !d.configurado)) {
+      det.style.display = 'block';
+      if (d.configurado) {
+        det.innerHTML = 'Lendo a pasta <strong>' + escHtml(d.pasta || '') + '</strong> como '
+          + '<code style="font-size:11px">' + escHtml(d.email_conta || '') + '</code>.<br>'
+          + 'Cada pasta com o nome exato de um SKU vira a foto daquele produto no painel.';
+      } else {
+        det.innerHTML = escHtml(d.motivo || 'Configuração incompleta.')
+          + (d.email_conta ? '<br><br>Conta de serviço: <code style="font-size:11px">' + escHtml(d.email_conta) + '</code>' : '');
+      }
+    }
+    if (mostrarDetalhe) {
+      fpToast(d.configurado ? 'Google Drive conectado.' : 'Google Drive ainda não está configurado.',
+              d.configurado ? 'ok' : 'warn');
+    }
+  } catch (e) {
+    if (txt) { txt.textContent = 'Não foi possível verificar'; txt.style.color = 'var(--warning)'; }
+    if (mostrarDetalhe) fpToast('Não foi possível falar com o drive-proxy: ' + (e && e.message), 'erro');
+  }
+}
+window.fpDriveVerificar = fpDriveVerificar;
 
 
 /* EDITING MODULE */
