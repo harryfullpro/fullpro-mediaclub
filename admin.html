@@ -3548,6 +3548,48 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   #view-clips .edit-card-head > div:first-child { flex: 1 1 0; min-width: 0; }
   #view-clips .edit-actions { flex: 0 0 auto; flex-wrap: nowrap; gap: 6px; }
   #view-clips .edit-actions .proj-status-select { min-width: 0 !important; }
+  /* --- Edicao: mesmo tratamento de Projetos e Clips ----------------------
+     Escopo em #view-editing pelos mesmos dois motivos do bloco acima. */
+
+  /* painel de numeros: 3 numa fileira. Eram dois em cima, um embaixo, com
+     icone de 42px cada — 170px de tela antes do primeiro projeto. */
+  #editDashboard {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px !important; margin-bottom: 12px !important;
+  }
+  #editDashboard > div { padding: 9px 10px !important; gap: 0 !important; }
+  #editDashboard > div > div:first-child { display: none !important; }  /* icone nao cabe em 118px */
+  #editDashboard > div > div:last-child > div:nth-child(1) { font-size: 9.5px !important; letter-spacing: .2px !important; }
+  #editDashboard > div > div:last-child > div:nth-child(2) { font-size: 20px !important; }
+  #editStatBar { width: 100% !important; margin-top: 5px !important; }
+
+  /* cabecalho do card: titulo + status + "…" numa linha, chips na de baixo.
+     display:contents promove o bloco do titulo e o grupo de acoes a filhos
+     diretos do flex — sem isso os chips ficam presos junto do titulo e as
+     acoes caem para uma terceira linha. */
+  #view-editing .edit-card { padding: 12px; }
+  #view-editing .edit-card-head { flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 8px; }
+  #view-editing .edit-card-head > div:first-child { display: contents; }
+  #view-editing .edit-card-head h4 { flex: 1 1 0; min-width: 0; }
+  #view-editing .edit-card-head > div:first-child > div { flex: 1 1 100%; order: 5; margin-top: 0 !important; }
+  #view-editing .edit-actions { display: contents; }
+  #view-editing .edit-actions .proj-status-select { order: 2; min-width: 0 !important; margin-left: 0 !important; }
+  #view-editing .edit-actions .fp-so-mobile { order: 3; }
+
+  /* meta: tres caixas empilhadas gastavam ~165px; vira rotulo + valor */
+  #view-editing .edit-meta-grid { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-bottom: 8px; }
+  #view-editing .edit-meta-item {
+    flex: 0 1 auto; display: flex; align-items: baseline; gap: 6px;
+    background: none; padding: 0;
+  }
+  #view-editing .edit-meta-item:first-child { flex: 1 1 100%; }
+  #view-editing .edit-meta-item .k { flex: 0 0 auto; font-size: 10.5px; margin-bottom: 0; }
+  #view-editing .edit-meta-item .v { font-size: 12.5px; min-width: 0; overflow-wrap: anywhere; }
+
+  /* observacoes e roteiro mais justos */
+  #view-editing .edit-obs-section,
+  #view-editing .edit-script-section { padding: 10px 12px; margin-bottom: 10px; }
+
   /* caixa do produto e observacoes mais justas */
   #view-clips .fp-clip-prod { margin: 8px 0 0; padding: 8px 10px; }
   #view-clips .fp-clip-obs { margin-top: 8px; }
