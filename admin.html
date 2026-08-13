@@ -3381,10 +3381,22 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   .fp-chips-linha::-webkit-scrollbar,
   .filter-bar::-webkit-scrollbar { display: none; }
   .fp-chips-linha > *, .filter-bar > * { flex: 0 0 auto; }
-  /* a barra de projetos agora tem so 3 controles pequenos: quebra a linha em
-     vez de rolar, e o seletor de ordenacao deixa de esticar ate vazar */
-  .proj-filters { flex-wrap: wrap; gap: 8px; }
-  .proj-filters .proj-sort-select { width: auto !important; margin: 0 !important; max-width: 100%; }
+  /* Os filtros ficam direto sobre o fundo da tela: a caixa em volta so
+     roubava altura para desenhar uma borda. Os tres seletores — status,
+     destino e ordenacao — dividem uma linha so. */
+  .proj-filters {
+    display: flex; flex-wrap: nowrap; gap: 6px;
+    padding: 0; margin-bottom: 12px;
+    background: none; border: none; border-radius: 0;
+  }
+  .proj-filters .proj-sort-select {
+    flex: 1 1 0; min-width: 0; width: auto !important; margin: 0 !important;
+    padding: 8px 22px 8px 10px;
+    font-size: 12px;
+    text-overflow: ellipsis;
+  }
+  /* o bloco separado de destino sai: virou o seletor do meio */
+  .proj-dest-wrap { display: none; }
   /* a busca nao rola junto: fica na linha de baixo, inteira */
   .filter-bar .fp-busca { flex: 1 0 100%; max-width: none; order: 10; margin-top: 8px; }
   .filter-bar .fp-lista-contagem { order: 11; margin: 6px 0 0 auto; }
@@ -4123,6 +4135,10 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
         <select class="proj-sort-select fp-so-mobile" id="projStatusSelect"
                 aria-label="Filtrar por status" onchange="fpFiltroStatusMudou(this.value)">
           <option value="__todos">Todos os status</option>
+        </select>
+        <select class="proj-sort-select fp-so-mobile" id="projDestSelect"
+                aria-label="Filtrar por destino" onchange="fpFiltroDestinoMudou(this.value)">
+          <option value="__todos">Destino</option>
         </select>
         <select class="proj-sort-select" id="projSortSelect" onchange="renderProjects()">
           <option value="newest">Mais recentes</option>
@@ -7111,6 +7127,35 @@ function fpFiltroStatusMudou(valor){
 }
 window.fpFiltroStatusMudou = fpFiltroStatusMudou;
 
+/* Destino, no celular, tambem em seletor nativo — o rotulo curto ("Destino")
+   e para os tres caberem numa linha so. */
+const FP_DESTINO_ROTULOS = {
+  youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok',
+  reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads',
+};
+
+function fpFiltroDestinoPreencher(){
+  const sel = document.getElementById('projDestSelect');
+  if (!sel) return;
+  const lista = PROJECTS || [];
+  const atual = (projActiveDests.size === 1) ? [...projActiveDests][0] : '__todos';
+  sel.innerHTML = '<option value="__todos">Destino</option>'
+    + ALL_PROJ_DESTS.map(function(k){
+        const n = lista.filter(x => (x.destinations || []).includes(k)).length;
+        if (!n) return '';
+        return '<option value="' + k + '">' + (FP_DESTINO_ROTULOS[k] || k) + ' (' + n + ')</option>';
+      }).join('');
+  sel.value = atual;
+}
+
+function fpFiltroDestinoMudou(valor){
+  projActiveDests.clear();
+  if (valor !== '__todos') projActiveDests.add(valor);
+  if (typeof updateProjDestUI === 'function') updateProjDestUI();
+  renderProjects();
+}
+window.fpFiltroDestinoMudou = fpFiltroDestinoMudou;
+
 const FP_STATUS_ROTULOS = {
   planejamento: 'Planejamento',
   producao:     'Em produção',
@@ -7206,9 +7251,10 @@ function getFilteredProjects() {
 function renderProjects() {
   const el = document.getElementById('projectsList');
   if (!el) return;
-  // O seletor de status do celular so tem conteudo depois que os projetos
-  // chegam (as opcoes trazem a contagem de cada status).
+  // Os seletores do celular so tem conteudo depois que os projetos chegam
+  // (as opcoes trazem a contagem de cada status/destino).
   if (typeof fpFiltroStatusPreencher === 'function') fpFiltroStatusPreencher();
+  if (typeof fpFiltroDestinoPreencher === 'function') fpFiltroDestinoPreencher();
   if (PROJECTS.length === 0) {
     el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum projeto criado ainda. Clique em "+ Novo projeto" para começar.</p></div>';
     return;
