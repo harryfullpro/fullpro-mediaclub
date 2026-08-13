@@ -3000,7 +3000,7 @@
 
 /* --- toasts -------------------------------------------------------------- */
 .fp-toast-host {
-  position: fixed; z-index: 4000;
+  position: fixed; z-index: 100200;
   right: 18px; bottom: 18px;
   display: flex; flex-direction: column; gap: 10px;
   max-width: min(390px, calc(100vw - 32px));
@@ -3048,7 +3048,7 @@
 
 /* --- dialogo de confirmacao --------------------------------------------- */
 .fp-confirm-ov {
-  position: fixed; inset: 0; z-index: 4100;
+  position: fixed; inset: 0; z-index: 100300;
   display: flex; align-items: center; justify-content: center;
   padding: 20px;
   background: rgba(0,0,0,.62);
@@ -3217,7 +3217,7 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--accen
 /* --- indicador offline -------------------------------------------------- */
 .fp-offline {
   position: fixed; left: 50%; transform: translateX(-50%);
-  top: 12px; z-index: 4200;
+  top: 12px; z-index: 100100;
   display: none; align-items: center; gap: 8px;
   padding: 8px 16px; border-radius: var(--raio-pill);
   background: var(--warning); color: #2a1a00;
