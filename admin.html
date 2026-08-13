@@ -3287,9 +3287,12 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
     align-items: flex-start;
     gap: 10px;
   }
-  .edit-card-head > div:first-child { flex: 1 1 100%; min-width: 0; }
+  /* Base flexivel em vez de 100% fixo: quando o titulo cabe, as acoes ficam
+     na mesma linha; quando nao cabe, elas descem sozinhas. Forcar a quebra
+     sempre deixava um vazio grande entre o titulo e os botoes. */
+  .edit-card-head > div:first-child { flex: 1 1 220px; min-width: 0; }
   .edit-actions {
-    flex: 1 1 100%;
+    flex: 0 1 auto;
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 6px;
