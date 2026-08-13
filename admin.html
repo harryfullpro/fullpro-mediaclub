@@ -3526,6 +3526,28 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   /* status compacto: o seletor ocupava quase metade da largura do card */
   .proj-status-select { min-width: 0 !important; font-size: 11.5px; padding: 5px 22px 5px 9px; }
 
+  /* --- Clips: mesmo tratamento dos cards de Projetos ---------------------
+     Escopo em #view-clips porque .edit-card / .edit-card-head sao os mesmos
+     da tela de Edicao, que ja tem o layout dela ajustado. */
+  .fp-clip-filtros { flex-wrap: nowrap; margin-bottom: 12px; }
+  .fp-clip-filtros .fp-so-mobile { flex: 0 1 auto; min-width: 0; margin: 0 !important; padding: 8px 22px 8px 10px; font-size: 12px; }
+
+  #view-clips .edit-card { padding: 12px; }
+  .fp-clip-card { margin-bottom: 10px; }
+  #view-clips .edit-card-head {
+    flex-wrap: nowrap;
+    align-items: center;        /* status na altura do meio do titulo */
+    gap: 8px;
+    margin-bottom: 0;
+  }
+  #view-clips .edit-card-head > div:first-child { flex: 1 1 0; min-width: 0; }
+  #view-clips .edit-actions { flex: 0 0 auto; flex-wrap: nowrap; gap: 6px; }
+  #view-clips .edit-actions .proj-status-select { min-width: 0 !important; }
+  /* caixa do produto e observacoes mais justas */
+  .fp-clip-prod { margin: 8px 0 0; padding: 8px 10px; }
+  .fp-clip-obs { margin-top: 8px; }
+  .fp-obs-cortada { max-height: 60px; }   /* 3 linhas em vez de 5 */
+
   /* chips de filtro: estavam desproporcionais em tela pequena */
   .proj-filter-chip, .fp-chips-linha > button { padding: 7px 12px !important; font-size: 11px !important; }
   .fp-menu-btn { -webkit-tap-highlight-color: transparent; }
@@ -3673,6 +3695,20 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
 }
 
 /* --- observacao longa: deixa claro que ha mais texto ---------------------- */
+/* --- Clips: classes no lugar de style= inline, para o celular poder mexer.
+   Os valores sao identicos aos que estavam no inline: o computador nao muda. */
+.fp-clip-card { margin-bottom: 14px; }
+.fp-clip-filtros { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.fp-clip-prod {
+  margin: 12px 0 4px; padding: 12px 14px;
+  background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px;
+}
+.fp-clip-obs { margin-top: 10px; }
+.fp-clip-obs-lbl {
+  font-size: 11px; color: var(--text-muted); font-weight: 600;
+  text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px;
+}
+
 .fp-obs-cortada { position: relative; max-height: 96px; overflow: hidden; }
 .fp-obs-cortada::after {
   content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 40px;
@@ -8700,9 +8736,12 @@ function renderShotsReadOnly(shots, si) {
   window.fpSetClipFilter = function(k){ CLIP_FILTER = k; if (typeof renderClips === 'function') renderClips(); };
   function fpClipFilterBar(all){
     const defs = [['todos','Todos','',''],['planejamento','Planejamento','#3b82f6','59,130,246'],['edicao','Edição','#a855f7','168,85,247'],['concluido','Concluído','#1fd27a','31,210,122']];
-    return '<div class="fp-chips-linha" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">' + defs.map(function(d){
+    const conta = function(k){ return (k === 'todos') ? all.length : all.filter(function(c){ return c.status === k; }).length; };
+    // Computador: os chips coloridos de sempre. Celular: seletor nativo do
+    // sistema — os chips vazavam a largura da tela.
+    const chips = defs.map(function(d){
       const k = d[0], col = d[2], rgb = d[3];
-      const cnt = (k === 'todos') ? all.length : all.filter(function(c){ return c.status === k; }).length;
+      const cnt = conta(k);
       const active = (CLIP_FILTER === k);
       let style;
       if (k === 'todos') {
@@ -8711,7 +8750,14 @@ function renderShotsReadOnly(shots, si) {
         style = active ? ('border:1px solid ' + col + ';background:' + col + ';color:#fff') : ('border:1px solid rgba(' + rgb + ',.45);background:rgba(' + rgb + ',.12);color:' + col);
       }
       return '<button onclick="fpSetClipFilter(\'' + k + '\')" style="padding:7px 14px;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;border-radius:8px;cursor:pointer;font-family:inherit;' + style + '">' + d[1] + ' <span style="opacity:.75">(' + cnt + ')</span></button>';
-    }).join('') + '</div>';
+    }).join('');
+    const opcoes = defs.map(function(d){
+      return '<option value="' + d[0] + '"' + (CLIP_FILTER === d[0] ? ' selected' : '') + '>' + d[1] + ' (' + conta(d[0]) + ')</option>';
+    }).join('');
+    return '<div class="fp-clip-filtros">'
+      + '<span class="fp-so-desktop" style="display:contents">' + chips + '</span>'
+      + '<select class="proj-sort-select fp-so-mobile" aria-label="Filtrar clips por status" onchange="fpSetClipFilter(this.value)">' + opcoes + '</select>'
+      + '</div>';
   }
 
   function esc(s){ return (typeof escHtml==='function') ? escHtml(s==null?'':s) : String(s==null?'':s); }
@@ -8825,24 +8871,32 @@ function renderShotsReadOnly(shots, si) {
     if (!clips.length){ el.innerHTML = fpClipFilterBar(all) + '<div style="background:var(--bg-elev);border:1px dashed var(--border);border-radius:14px;padding:30px 20px;text-align:center;color:var(--text-muted);font-size:13px">Nenhum clip com esse status.</div>'; return; }
     el.innerHTML = fpClipFilterBar(all) + clips.map(function(c){
       const obs = (c.observations || '').trim();
-      return '<div class="edit-card" style="margin-bottom:14px">'
+      return '<div class="edit-card fp-clip-card">'
         + '<div class="edit-card-head">'
         +   '<div style="min-width:0">'
         +     '<div style="display:flex;align-items:center;gap:6px;min-width:0">'
         +       '<h4 style="margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis">' + esc(c.title || c.product_name || 'Clip') + '</h4>'
-        +       mlLinkEl(c)
+        +       '<span class="fp-so-desktop" style="display:contents">' + mlLinkEl(c) + '</span>'
         +     '</div>'
         +     (recordedTag(c) ? '<div style="margin-top:6px">' + recordedTag(c) + '</div>' : '')
         +   '</div>'
         +   '<div class="edit-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
-        +     '<button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Abrir" onclick="fpOpenClipDetail(\'' + c.id + '\')">'
-        +       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+        +     '<span class="fp-so-desktop" style="display:contents">'
+        +       '<button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Abrir" onclick="fpOpenClipDetail(\'' + c.id + '\')">'
+        +         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+        +     '</span>'
         +     statusSelect(c, false)
+        +     '<span class="fp-so-mobile">' + fpMenuHtml([
+                { rotulo: 'Abrir / editar', icone: 'editar', acao: function(){ fpOpenClipDetail(c.id); } },
+                (c.ml_link && String(c.ml_link).trim()) ? { rotulo: 'Ver anúncio no Mercado Livre', icone: 'link', href: c.ml_link } : null,
+                { sep: true },
+                { rotulo: 'Excluir clip', icone: 'excluir', perigo: true, acao: function(){ fpDeleteClip(c.id); } },
+              ], { rotulo: 'Ações do clip' }) + '</span>'
         +   '</div>'
         + '</div>'
-        + '<div style="margin:12px 0 4px;padding:12px 14px;background:var(--bg-elev);border:1px solid var(--border);border-radius:10px">' + productLine(c) + '</div>'
-        + '<div style="margin-top:10px">'
-        +   '<div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">Observações para o vídeo</div>'
+        + '<div class="fp-clip-prod">' + productLine(c) + '</div>'
+        + '<div class="fp-clip-obs">'
+        +   '<div class="fp-clip-obs-lbl">Observações para o vídeo</div>'
         +   (obs
             ? '<div class="fp-obs-cortada" style="font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.55">' + fpLinkify(esc(obs)) + '</div>'
             : '<div style="font-size:12px;color:var(--text-muted);font-style:italic">Sem observações. Clique em "Abrir" para adicionar tópicos.</div>')
