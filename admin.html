@@ -3371,6 +3371,43 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
     overflow: hidden;
   }
 
+  /* --- card de projeto: uma linha de titulo, uma de controles ------------
+     A regra antiga empilhava titulo e acoes em coluna alinhados a esquerda —
+     fazia sentido quando eram 5 botoes, mas com o menu "…" eles cabem na
+     mesma linha. Do jeito antigo, os controles ficavam soltos no meio do
+     card. */
+  .proj-card-head {
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    flex-wrap: wrap;
+    gap: 8px !important;
+    margin-bottom: 8px;
+  }
+  .proj-card-head h4 {
+    flex: 1 1 auto; min-width: 0;
+    font-size: 15px; line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  /* o grupo menu + status fica encostado a direita, na mesma linha do titulo */
+  .proj-card-head > div:last-child {
+    flex: 0 0 auto;
+    margin-left: auto;
+    align-items: center;
+  }
+
+  /* meta mais densa: rotulo e valor na mesma linha, dois pares por fileira */
+  .proj-meta { gap: 6px 12px; margin: 8px 0; }
+  .proj-meta-item { display: flex; align-items: baseline; gap: 6px; font-size: 12.5px; }
+  .proj-meta-item .k { flex: 0 0 auto; font-size: 10.5px; }
+  .proj-meta-item .v { margin-top: 0; min-width: 0; overflow-wrap: anywhere; }
+
+  /* status compacto: o seletor ocupava quase metade da largura do card */
+  .proj-status-select { min-width: 0 !important; font-size: 11.5px; padding: 5px 22px 5px 9px; }
+
+  /* chips de filtro: estavam desproporcionais em tela pequena */
+  .proj-filter-chip, .fp-chips-linha > button { padding: 7px 12px !important; font-size: 11px !important; }
+  .fp-menu-btn { -webkit-tap-highlight-color: transparent; }
+
   /* --- cabecalho da pagina ---------------------------------------------- */
   .page-head { flex-wrap: wrap; gap: 10px; }
   .page-head h1 { font-size: 26px; }
@@ -3401,6 +3438,14 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   /* --- confirmacao e toast rentes as bordas ------------------------------ */
   .fp-confirm { width: 100%; }
   .fp-toast-host { bottom: max(12px, env(safe-area-inset-bottom)); }
+}
+
+/* O fundo do botao "…" ficava preso depois do toque: :hover no celular so
+   sai quando voce toca em outro lugar. */
+@media (hover: none) {
+  .fp-menu-btn:hover { background: none; color: var(--text-muted); }
+  .fp-menu-btn[aria-expanded="true"] { background: var(--bg-elev); color: var(--text); }
+  .fp-icon-btn:hover { background: none; }
 }
 
 /* --- menu de ações "…" das listagens ------------------------------------- */
