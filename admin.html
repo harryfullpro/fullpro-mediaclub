@@ -930,7 +930,7 @@
   /* Botões de ação só-ícone (sem caixa) + tooltip */
   .fp-icon-btn {
     position: relative; display: inline-flex; align-items: center; justify-content: center;
-    width: 34px; height: 34px; padding: 0; border: none; background: none;
+    width: 34px; height: 34px; flex-shrink: 0; padding: 0; border: none; background: none;
     color: var(--text-muted); cursor: pointer; border-radius: 9px; transition: background .15s, color .15s;
   }
   .fp-icon-btn:hover { background: var(--bg-elev); color: var(--text); }
@@ -8254,8 +8254,13 @@ function renderShotsReadOnly(shots, si) {
       const obs = (c.observations || '').trim();
       return '<div class="edit-card" style="margin-bottom:14px">'
         + '<div class="edit-card-head">'
-        +   '<div style="min-width:0"><h4 style="margin:0">' + esc(c.title || c.product_name || 'Clip') + '</h4>'
-        +     '<div style="display:flex;gap:8px;margin-top:6px;align-items:center;flex-wrap:wrap">' + (recordedTag(c) || (mlLinkEl(c) ? '' : '')) + mlLinkEl(c) + '</div></div>'
+        +   '<div style="min-width:0">'
+        +     '<div style="display:flex;align-items:center;gap:6px;min-width:0">'
+        +       '<h4 style="margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis">' + esc(c.title || c.product_name || 'Clip') + '</h4>'
+        +       mlLinkEl(c)
+        +     '</div>'
+        +     (recordedTag(c) ? '<div style="margin-top:6px">' + recordedTag(c) + '</div>' : '')
+        +   '</div>'
         +   '<div class="edit-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
         +     '<button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Abrir" onclick="fpOpenClipDetail(\'' + c.id + '\')">'
         +       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
