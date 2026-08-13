@@ -3373,9 +3373,10 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   .page-head h1 { font-size: 26px; }
   .page-head p { font-size: 13px; }
 
-  /* --- botao "novo" nao empurra o titulo --------------------------------- */
-  .fp-new-btn { position: absolute; right: 12px; top: 12px; }
-  .page-head { position: relative; padding-right: 56px; }
+  /* O botao "novo" fica no fluxo: em Agenda sao DOIS nesse mesmo canto, e
+     tirar do fluxo empilharia um sobre o outro. O wrap do .page-head acima
+     ja resolve o empurrao no titulo. */
+  .page-head > div:last-child { margin-left: auto; }
 
   /* --- check-in: campos em coluna unica, alvos maiores ------------------- */
   .checkin-grid { grid-template-columns: 1fr; gap: 14px; }
@@ -3397,6 +3398,34 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   /* --- confirmacao e toast rentes as bordas ------------------------------ */
   .fp-confirm { width: 100%; }
   .fp-toast-host { bottom: max(12px, env(safe-area-inset-bottom)); }
+}
+
+/* --- area segura do aparelho (notch e barra inferior do iPhone) ---------- */
+@media (max-width: 900px) {
+  .mobile-header {
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+  main { padding-bottom: max(32px, calc(env(safe-area-inset-bottom) + 24px)); }
+  .sidebar {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  /* o drawer precisa poder rolar: com 17 itens + tema + rodape nao cabe em
+     tela de celular deitado */
+  .sidebar { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+}
+
+/* --- contêiner de rolagem aplicado a toda tabela (ver o observador no JS) - */
+.fp-tabela-rola {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+@media (max-width: 600px) {
+  /* sangra ate a borda para caber mais coluna antes de precisar rolar */
+  .fp-tabela-rola { margin-left: -12px; margin-right: -12px; padding: 0 12px; }
 }
 
 /* --- observacao longa: deixa claro que ha mais texto ---------------------- */
@@ -3449,13 +3478,13 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
 <div id="app" class="shell" style="display:none">
   <!-- Mobile header -->
   <div class="mobile-header">
-    <button class="hamburger-btn" onclick="toggleMobileSidebar()" aria-label="Menu">
+    <button class="hamburger-btn" onclick="toggleMobileSidebar()" aria-label="Abrir menu" aria-expanded="false" aria-controls="menuLateral">
       <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <span class="brand-mark"><img src="assets/logo-mediaclub.png" alt="FullPro Media Club" /></span>
   </div>
   <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileSidebar()"></div>
-  <aside class="sidebar">
+  <aside class="sidebar" id="menuLateral">
     <div class="sidebar-head">
       <a href="admin.html" class="brand">
         <span class="brand-mark brand-full"><img src="assets/logo.png" alt="FullPro" /></span>
@@ -5471,6 +5500,23 @@ function prettyDT(iso) {
       }
     });
 
+    // Toda tabela precisa poder rolar na horizontal. Das 9 do painel, apenas
+    // a de Solicitacoes estava dentro de um contêiner que rola; as outras 8
+    // (5 delas em Influenciadores, que tem muitas colunas) espremiam ou
+    // estouravam a tela no celular. Envolver aqui cobre inclusive as tabelas
+    // que ainda vao ser escritas.
+    const tabelas = raiz.querySelectorAll ? raiz.querySelectorAll('table') : [];
+    tabelas.forEach(function(t){
+      const pai = t.parentElement;
+      if (!pai || pai.classList.contains('fp-tabela-rola') || pai.classList.contains('table-wrap')) return;
+      if (t.dataset.fpEnvolvida === '1') return;
+      t.dataset.fpEnvolvida = '1';
+      const caixa = document.createElement('div');
+      caixa.className = 'fp-tabela-rola';
+      pai.insertBefore(caixa, t);
+      caixa.appendChild(t);
+    });
+
     // Marca grids declarados em style inline para que o CSS mobile possa
     // colapsa-los sem depender do texto exato do atributo.
     const grids = raiz.querySelectorAll ? raiz.querySelectorAll('[style*="grid-template-columns"]') : [];
@@ -6330,17 +6376,29 @@ function toggleTheme() {
 function toggleMobileSidebar() {
   const sidebar = document.querySelector('.sidebar');
   const overlay = document.getElementById('mobileOverlay');
+  const botao = document.querySelector('.hamburger-btn');
   const isOpen = sidebar.classList.contains('mobile-open');
   if (isOpen) {
     sidebar.classList.remove('mobile-open');
     overlay.classList.remove('show');
     document.body.style.overflow = '';
+    if (botao) { botao.setAttribute('aria-expanded', 'false'); botao.focus(); }
   } else {
     sidebar.classList.add('mobile-open');
     overlay.classList.add('show');
     document.body.style.overflow = 'hidden';
+    if (botao) botao.setAttribute('aria-expanded', 'true');
+    // foco no primeiro item para quem navega por teclado nao ficar atras
+    const item = sidebar.querySelector('.nav-item');
+    if (item) setTimeout(function(){ try { item.focus({ preventScroll: true }); } catch(e){} }, 120);
   }
 }
+// Esc fecha o menu, como em qualquer painel deslizante
+document.addEventListener('keydown', function(e){
+  if (e.key !== 'Escape') return;
+  const sidebar = document.querySelector('.sidebar');
+  if (sidebar && sidebar.classList.contains('mobile-open')) toggleMobileSidebar();
+});
 // Close mobile sidebar when a nav item is clicked
 document.addEventListener('click', function(e) {
   const navItem = e.target.closest('.nav-item');
