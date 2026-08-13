@@ -4,6 +4,34 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 13/08/2026 — Botão "novo" no padrão do iPhone e card de projeto compacto
+
+**Pedido do dono:** o + no canto superior direito, "parecendo mais com o sistema padrão
+do iPhone e não um quadrado azul com um + no centro". Depois: organizar as informações
+da listagem, manter o menu "…" no canto superior direito e apertar os cards.
+
+- O botão deixou de ser um quadrado azul preenchido e virou o **glifo + em azul de
+  sistema** (`#0A84FF` no escuro, `#007AFF` no claro), sem caixa, alinhado ao canto
+  superior direito na mesma linha do título. O alvo continua 44×44; o desenho é só o
+  símbolo. Vale para as 5 telas que têm o botão.
+- Por que **não** `position: absolute`: na Agenda são dois botões nesse mesmo canto e
+  tirar do fluxo empilharia um sobre o outro. Foi `flex-wrap: nowrap` + `margin-left: auto`.
+- O `-8px` de margem à direita é metade da folga entre o glifo e a borda do alvo — é o
+  que alinha o + com a margem do conteúdo em vez de encostar o alvo na borda da tela.
+- **Card de projeto: 188px → 136px** (sem produtos compatíveis). Título, status e o menu
+  "…" numa linha só; a fileira de destinos logo abaixo; a meta em duas fileiras, com
+  Moto/Produto ocupando a largura toda.
+- A meta em duas colunas espremia "BMW R 1300 GS 2026 (0000000)" em **quatro linhas**.
+  Virou flex: o texto longo pega a fileira inteira, Data e Custos dividem a de baixo.
+- O bloco de produtos compatíveis cobrava 6px de margem mesmo vazio — 31 dos 40 cards.
+  Agora `:empty` some.
+
+**Dois erros próprios corrigidos no caminho:**
+- `flex: 0 0 auto` no grupo de ações fazia o filtro de período de **Meus Posts** empurrar
+  o + para uma segunda linha. Passou a encolher.
+- A regra do último filho tem especificidade maior que `.page-head .fp-new-btn`, então o
+  botão de **Templates** encolhia para 40px em título longo. Resolvido com `min-width`.
+
 ## 13/08/2026 — Menu lateral compacto e avisos do console
 
 - Itens do menu de 44px para **34px**. A causa era uma regra própria de alvo de toque:

@@ -59,7 +59,20 @@ não abre o seletor nativo do iOS. No computador segue múltipla escolha pelos c
 
 ### Ações das listagens
 - Consolidadas num **menu "…"** por item — mas **só no celular**
+- O "…" fica no **canto superior direito do card**
 - No computador, os botões de ícone continuam à vista
+
+### Botão "novo" (+)
+> *"quero que ele pareça mais com o sistema padrão do iphone, e não assim um quadrado
+> azul com um + no centro"*
+
+- Canto superior direito, na mesma linha do título
+- **Glifo + em azul de sistema, sem caixa** — nada de quadrado preenchido
+- Vale só no celular; no computador segue o botão azul
+
+### Cards das listagens
+- Devem ser o **mais compactos possível** — "otimizar espaço de tela" é pedido recorrente
+- Informação organizada, não empilhada em linhas soltas
 
 ### Menu lateral
 - Espaçamento entre itens deve ser **bem reduzido**, para economizar tela

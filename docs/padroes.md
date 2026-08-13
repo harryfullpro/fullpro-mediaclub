@@ -122,6 +122,38 @@ Um `MutationObserver` cobre os 13 modais `.modal.show` e o `#fpSumOverlay.open`:
 ativa Esc e clique fora, trava a rolagem do fundo. **Modal novo que siga o padrão
 `.modal` + classe `show` herda tudo de graça.**
 
+### Cabeçalho de página e botão "novo"
+
+No celular (≤900px) o `.fp-new-btn` deixa de ser o quadrado azul e vira o **glifo + em
+azul de sistema do iOS**, sem caixa, no canto superior direito da mesma linha do título.
+
+Três detalhes que custaram para acertar:
+
+- **Nada de `position: absolute`.** A Agenda tem *dois* botões nesse canto; tirar do fluxo
+  empilha um sobre o outro. É `flex-wrap: nowrap` no `.page-head` + `margin-left: auto`.
+- **`margin-right: -8px`** = metade da folga entre o glifo e a borda do alvo de 44px. É o
+  que alinha o + com a margem do conteúdo, em vez de encostar o alvo na borda da tela.
+- **`min-width` no botão, não `flex: 0 0 auto`.** A regra
+  `.page-head > :last-child:not(:first-child)` tem especificidade 0,3,0 e vence
+  `.page-head .fp-new-btn` (0,2,0) — o botão encolhia em telas de título longo.
+
+Cabeçalho com filtro ao lado do botão (Meus Posts): o `<select>` recebe `flex: 1 1 auto`
+para encolher, senão o + cai sozinho numa segunda linha.
+
+### Card de listagem no celular
+
+Alvo: o mínimo de linhas sem esconder informação. O card de projeto é a referência
+(188px → 136px).
+
+1. Título, status e o menu "…" **numa linha só**. O "…" por último, com `order`.
+2. Fileira de chips logo abaixo.
+3. Meta com rótulo e valor **na mesma linha**, em flex — não em grid de colunas iguais.
+   O campo de texto longo pega `flex: 1 1 100%`; os curtos dividem a fileira seguinte.
+4. Container que pode vir vazio leva `:empty { display: none }` — senão cobra margem.
+
+> Grid de duas colunas iguais é a armadilha: espremia "BMW R 1300 GS 2026 (0000000)" em
+> quatro linhas enquanto "13/08/2026" sobrava espaço ao lado.
+
 ### Ergonomia automática
 
 Um observador aplica, em tudo que é injetado no DOM:
