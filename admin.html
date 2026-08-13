@@ -163,7 +163,7 @@
   .shell.hover-mode .sidebar.hover-open .brand-full { display: flex; }
   .shell.hover-mode .sidebar.hover-open .brand-short { display: none; }
   .brand-txt { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1.5px; }
-  .brand-txt small { display:block; font-family:'Inter',sans-serif; font-size: 10px; color: var(--text-muted); letter-spacing: 2px; font-weight: 500; }
+  .brand-txt small { display:block; font-family:'Inter',sans-serif; font-size: 11px; color: var(--text-muted); letter-spacing: 2px; font-weight: 500; }
   /* Hide text labels when collapsed */
   .shell.collapsed .nav-label,
   .shell.collapsed .brand-txt,
@@ -241,7 +241,7 @@
   }
   .nav-item.active .count { background: var(--primary); color: #fff; }
   /* sidebar-foot defined in sidebar block above */
-  .nav-section { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding: 5px 14px 2px; height: 18px; flex-shrink: 0; overflow: hidden; }
+  .nav-section { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding: 5px 14px 2px; height: 18px; flex-shrink: 0; overflow: hidden; }
   .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   .theme-toggle {
     display: flex; align-items: center; gap: 0; padding: 6px 12px;
@@ -351,11 +351,15 @@
     text-transform: uppercase;
     letter-spacing: .5px;
   }
-  .badge.pending { background: rgba(255,170,51,.15); color: var(--warning); }
-  .badge.approved { background: rgba(31,210,122,.15); color: var(--success); }
-  .badge.rejected { background: rgba(255,77,77,.15); color: var(--danger); }
-  .badge.estudio { background: rgba(255,207,51,.15); color: var(--accent); }
-  .badge.retirada { background: rgba(51,153,255,.15); color: #3399ff; }
+  /* Cada badge e um par explicito de tokens (texto + fundo) por tema.
+     Derivar o fundo do alfa da cor do texto funcionava no escuro e desmontava
+     no claro: "Estudio" ficava em 1,98:1, "Retirada" 2,53:1, "Aprovada" 2,75:1
+     contra o minimo de 4,5:1. Os valores abaixo passam nos dois temas. */
+  .badge.pending  { background: var(--bg-pendente);  color: var(--tx-pendente); }
+  .badge.approved { background: var(--bg-aprovado);  color: var(--tx-aprovado); }
+  .badge.rejected { background: var(--bg-rejeitado); color: var(--tx-rejeitado); }
+  .badge.estudio  { background: var(--bg-estudio);   color: var(--tx-estudio); }
+  .badge.retirada { background: var(--bg-retirada);  color: var(--tx-retirada); }
 
   .actions { display: flex; gap: 6px; }
   .action-btn {
@@ -407,7 +411,7 @@
   .block-field input:focus, .block-field select:focus { outline: none; border-color: var(--primary); }
   .block-field input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
     input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
-  .chip-reason { font-size: 10px; color: var(--text-muted); margin-left: 2px; }
+  .chip-reason { font-size: 11px; color: var(--text-muted); margin-left: 2px; }
   .cal-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -447,7 +451,7 @@
     grid-auto-rows: 32px;
     gap: 3px;
   }
-  .cal-dow { text-align: center; font-size: 9px; color: var(--text-muted); padding: 4px 0; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+  .cal-dow { text-align: center; font-size: 11px; color: var(--text-muted); padding: 4px 0; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
   .cal-day {
     display: flex;
     align-items: center;
@@ -501,7 +505,7 @@
     line-height: 1;
   }
 
-  .cal-legend { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; font-size: 10px; color: var(--text-dim); }
+  .cal-legend { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; font-size: 11px; color: var(--text-dim); }
   .cal-legend span { display: flex; align-items: center; gap: 5px; }
   .cal-legend i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
   .cal-legend .i-approved { background: rgba(31,210,122,.5); }
@@ -525,12 +529,12 @@
     display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin: 10px 0;
   }
   .dv-detail { display: flex; flex-direction: column; gap: 1px; }
-  .dv-k { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+  .dv-k { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
   .dv-v { font-size: 12px; color: var(--text); font-weight: 500; }
   .dv-actions-row { display: flex; gap: 6px; flex-wrap: wrap; }
   .dv-separator { border-top: 1px solid var(--border); margin: 12px 0; }
   .dv-checkin-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--accent); }
-  .checkin-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; display: block; margin-bottom: 4px; }
+  .checkin-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; display: block; margin-bottom: 4px; }
   .checkin-field { margin-bottom: 10px; }
   .checkin-input {
     width: 100%; padding: 8px 10px; background: var(--bg-card); border: 1px solid var(--border);
@@ -581,7 +585,7 @@
     width: 64px; height: 64px; border-radius: 6px;
     border: 2px dashed var(--border); display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 2px;
-    cursor: pointer; color: var(--text-muted); font-size: 9px; transition: border-color .15s;
+    cursor: pointer; color: var(--text-muted); font-size: 11px; transition: border-color .15s;
   }
   .photo-add:hover { border-color: #8b9cf7; color: #8b9cf7; }
   .photo-add span:first-child { font-size: 16px; }
@@ -648,7 +652,7 @@
   .rot-icon-btn .rot-tip {
     display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
     padding: 5px 10px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 6px;
-    font-size: 10px; font-weight: 500; color: var(--text-dim); white-space: nowrap; z-index: 20;
+    font-size: 11px; font-weight: 500; color: var(--text-dim); white-space: nowrap; z-index: 20;
     pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,.25);
   }
   .rot-icon-btn .rot-tip::after {
@@ -694,7 +698,7 @@
     display: flex; align-items: baseline; gap: 6px;
   }
   .rot-note { padding-left: 58px; }
-  .rot-note-label { color: #8b9cf7; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; flex-shrink: 0; }
+  .rot-note-label { color: #8b9cf7; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; flex-shrink: 0; }
   .rot-note span[contenteditable] { outline: none; flex: 1; }
   .rot-shot-note span[contenteditable] { outline: none; flex: 1; }
   .rot-note-rm { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 0 4px; transition: color .15s; }
@@ -716,11 +720,11 @@
   }
   .rot-shot-select:focus { border-color: #8b9cf7; box-shadow: 0 0 0 2px rgba(139,156,247,.15); }
   .rot-shot-select option { background: var(--bg-card); color: var(--text); }
-  .rot-shot-label { font-size: 9px; color: rgba(139,156,247,.6); text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; }
+  .rot-shot-label { font-size: 11px; color: rgba(139,156,247,.6); text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; }
   /* Shot type help tooltip */
   .rot-help-btn {
     width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(245,158,11,.4);
-    background: none; color: #f59e0b; font-size: 9px; font-weight: 700;
+    background: none; color: #f59e0b; font-size: 11px; font-weight: 700;
     cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
     position: relative; font-family: inherit; margin-left: 2px; vertical-align: middle;
     flex-shrink: 0;
@@ -882,17 +886,17 @@
   .proj-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .proj-card-head h4 { font-size: 15px; font-weight: 600; }
   .proj-dest-tag {
-    display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10px;
+    display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px;
     font-weight: 600; text-transform: uppercase; letter-spacing: .5px; margin-right: 4px;
     background: var(--bg-elev); color: var(--text-dim); border: 1px solid var(--border);
   }
-  .proj-dest-tag.youtube { background: rgba(255,0,0,.15); color: #ff4444; border-color: rgba(255,0,0,.3); }
-  .proj-dest-tag.shorts { background: rgba(255,0,0,.15); color: #ff4444; border-color: rgba(255,0,0,.3); }
-  .proj-dest-tag.tiktok { background: rgba(168,85,247,.15); color: #a855f7; border-color: rgba(168,85,247,.3); }
-  .proj-dest-tag.reels { background: rgba(225,48,108,.15); color: #e1306c; border-color: rgba(225,48,108,.3); }
-  .proj-dest-tag.clips { background: rgba(250,204,21,.15); color: #facc15; border-color: rgba(250,204,21,.3); }
+  .proj-dest-tag.youtube { background: rgba(255,0,0,.16); color: #ff8a8a; border-color: rgba(255,0,0,.35); }
+  .proj-dest-tag.shorts { background: rgba(255,0,0,.16); color: #ff8a8a; border-color: rgba(255,0,0,.35); }
+  .proj-dest-tag.tiktok { background: rgba(168,85,247,.16); color: #ce9dfb; border-color: rgba(168,85,247,.35); }
+  .proj-dest-tag.reels { background: rgba(225,48,108,.16); color: #f77fa5; border-color: rgba(225,48,108,.35); }
+  .proj-dest-tag.clips { background: rgba(250,204,21,.16); color: #fbdd6a; border-color: rgba(250,204,21,.35); }
   .proj-dest-tag.site { background: rgba(255,255,255,.1); color: #e0e0e0; border-color: rgba(255,255,255,.2); }
-  .proj-dest-tag.ads { background: rgba(59,130,246,.15); color: #3b82f6; border-color: rgba(59,130,246,.3); }
+  .proj-dest-tag.ads { background: rgba(59,130,246,.16); color: #8ab4fa; border-color: rgba(59,130,246,.35); }
   /* ── URL / Link field pattern (violeta) ── */
   .url-input {
     padding: 8px 14px; border-radius: 20px; font-size: 12px; font-family: inherit;
@@ -919,7 +923,7 @@
   .proj-link-rm:hover { color: var(--danger); }
   .proj-meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin: 10px 0; }
   .proj-meta-item { font-size: 12px; }
-  .proj-meta-item .k { color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: .5px; }
+  .proj-meta-item .k { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
   .proj-meta-item .v { color: var(--text); margin-top: 2px; }
   /* Botões de ação só-ícone (sem caixa) + tooltip */
   .fp-icon-btn {
@@ -983,7 +987,7 @@
     display: flex; align-items: center; gap: 10px; margin-top: 10px;
     padding-top: 10px; border-top: 1px solid var(--border);
   }
-  .star-rating-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+  .star-rating-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
 
   /* Project status inline select */
   .proj-status-select {
@@ -1092,13 +1096,13 @@
   .review-item-meta { flex: 1; min-width: 0; }
   .review-item-name { font-size: 13px; font-weight: 700; color: var(--text); }
   .review-item-role {
-    font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
     padding: 2px 6px; border-radius: 4px; background: rgba(168,85,247,.12); color: #a855f7;
     display: inline-block; margin-left: 6px;
   }
   .review-item-date { font-size: 11px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px; }
   .review-edited-tag {
-    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
     padding: 1px 5px; border-radius: 3px; background: rgba(245,158,11,.15); color: #f59e0b;
     display: inline-block;
   }
@@ -1375,7 +1379,7 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .6px;
@@ -1407,7 +1411,7 @@
   .debriefing-status-badge {
     display: inline-flex;
     align-items: center;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: .5px;
@@ -1504,7 +1508,7 @@
   .debriefing-review-avatar.small {
     width: 28px;
     height: 28px;
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .debriefing-review-meta {
@@ -1517,7 +1521,7 @@
     color: var(--text);
   }
   .debriefing-review-role {
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 600;
     background: rgba(139,156,247,.15);
     color: #8b9cf7;
@@ -1770,7 +1774,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
     color: #fff;
     flex-shrink: 0;
@@ -1781,7 +1785,7 @@
     color: var(--text);
   }
   .mention-dropdown-role {
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-muted);
     margin-left: auto;
     flex-shrink: 0;
@@ -1919,7 +1923,7 @@
   .engagement-stat .e-icon { flex-shrink: 0; display: flex; align-items: center; }
   .engagement-stat .e-icon svg { width: 15px; height: 15px; }
   .engagement-stat .e-val { font-size: 14px; font-weight: 700; color: var(--text); }
-  .engagement-stat .e-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; }
+  .engagement-stat .e-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .3px; }
 
 
   /* Notification cards */
@@ -1939,7 +1943,7 @@
     display: flex; align-items: center; justify-content: center;
     background: var(--primary); color: #fff;
     border-radius: 10px; min-width: 20px; height: 20px;
-    font-size: 10px; font-weight: 700;
+    font-size: 11px; font-weight: 700;
     position: absolute; top: 4px; right: 4px;
   }
   .notif-count {
@@ -2133,13 +2137,13 @@
   [data-theme="light"] .proj-filter-chip[data-dfilter="clips"].active   { background: #eab308; border-color: #eab308; color: #422006; }
   [data-theme="light"] .proj-filter-chip[data-dfilter="ads"].active     { background: #3b82f6; border-color: #3b82f6; color: #fff; }
   /* Tags de destino no card */
-  [data-theme="light"] .proj-dest-tag.youtube { background: #ef4444; border-color: #ef4444; color: #fff; }
-  [data-theme="light"] .proj-dest-tag.shorts  { background: #ef4444; border-color: #ef4444; color: #fff; }
-  [data-theme="light"] .proj-dest-tag.tiktok  { background: #a855f7; border-color: #a855f7; color: #fff; }
-  [data-theme="light"] .proj-dest-tag.reels   { background: #e1306c; border-color: #e1306c; color: #fff; }
+  [data-theme="light"] .proj-dest-tag.youtube { background: #b91c1c; border-color: #b91c1c; color: #fff; }
+  [data-theme="light"] .proj-dest-tag.shorts  { background: #b91c1c; border-color: #b91c1c; color: #fff; }
+  [data-theme="light"] .proj-dest-tag.tiktok  { background: #7126ba; border-color: #7126ba; color: #fff; }
+  [data-theme="light"] .proj-dest-tag.reels   { background: #ad1e50; border-color: #ad1e50; color: #fff; }
   [data-theme="light"] .proj-dest-tag.clips   { background: #eab308; border-color: #eab308; color: #422006; }
   [data-theme="light"] .proj-dest-tag.site    { background: #64748b; border-color: #64748b; color: #fff; }
-  [data-theme="light"] .proj-dest-tag.ads     { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+  [data-theme="light"] .proj-dest-tag.ads     { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
   /* Pill de status (select) */
   [data-theme="light"] .proj-status-select.planejamento { background-color: #3b82f6; border-color: #3b82f6; color: #fff; }
   [data-theme="light"] .proj-status-select.producao     { background-color: #f59e0b; border-color: #f59e0b; color: #4a2c00; }
@@ -2219,7 +2223,7 @@
     margin-bottom: 14px;
   }
   .edit-script-section .section-label {
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: .5px;
@@ -2247,7 +2251,7 @@
     border-radius: 8px;
     padding: 10px 12px;
   }
-  .edit-meta-item .k { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; margin-bottom: 2px; }
+  .edit-meta-item .k { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; margin-bottom: 2px; }
   .edit-meta-item .v { font-size: 13px; color: var(--text); font-weight: 500; }
   .edit-actions {
     display: flex;
@@ -2293,7 +2297,7 @@
   }
   .tpl-var {
     background: rgba(255,45,45,.08); border: 1px solid rgba(255,45,45,.2); color: var(--primary-hi);
-    padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; cursor: pointer;
+    padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;
     font-family: monospace;
   }
   .tpl-var:hover { background: rgba(255,45,45,.15); }
@@ -2327,7 +2331,7 @@
   .kpi-card { background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;transition:transform .15s,box-shadow .15s }
   .kpi-card:hover { transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15) }
   .kpi-icon { width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0 }
-  .kpi-label { font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600 }
+  .kpi-label { font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600 }
   .kpi-value { font-size:22px;font-weight:800;color:var(--text);line-height:1 }
 
   /* ── Posts Grid (Instagram-style) ── */
@@ -2374,7 +2378,7 @@
   .post-card-type {
     position: absolute; top: 10px; left: 10px;
     padding: 3px 10px; border-radius: 6px;
-    font-size: 9px; font-weight: 800; letter-spacing: .8px;
+    font-size: 11px; font-weight: 800; letter-spacing: .8px;
     background: rgba(0,0,0,.65); color: #fff;
     backdrop-filter: blur(6px);
   }
@@ -2463,7 +2467,7 @@
   .inf-card-head-left { flex:1; }
   .inf-card-head-right { text-align:right; }
   .inf-badge {
-    font-size:10px; font-weight:700; letter-spacing:1px; padding:3px 8px;
+    font-size: 11px; font-weight:700; letter-spacing:1px; padding:3px 8px;
     border-radius:4px; text-transform:uppercase; display:inline-block; margin-bottom:6px;
   }
   .inf-badge.macro { background:rgba(249,115,22,.15); color:#f97316; }
@@ -2471,13 +2475,13 @@
   .inf-badge.nano { background:rgba(59,130,246,.15); color:#3b82f6; }
   .inf-name { font-size:14px; font-weight:600; color:var(--text); margin:4px 0; }
   .inf-handle { font-size:12px; color:var(--text-muted); margin-top:2px; }
-  .inf-followers-label { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
+  .inf-followers-label { font-size: 11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
   .inf-followers { font-family:'Bebas Neue',sans-serif; font-size:20px; line-height:1; color:var(--text); margin-top:4px; }
 
   /* ── Influencer Table (reusable) ── */
   .inf-table { width:100%; font-size:12px; border-collapse:collapse; margin:16px 0; }
   .inf-table th {
-    font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px;
+    font-size: 11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px;
     font-weight:600; padding:8px 0; text-align:right; border-bottom:1px solid var(--border);
   }
   .inf-table th:first-child { text-align:left; }
@@ -2490,7 +2494,7 @@
   .inf-list-table { width:100%; font-size:12px; border-collapse:collapse; }
   .inf-list-table thead { border-bottom:2px solid var(--border); }
   .inf-list-table th {
-    font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px;
+    font-size: 11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px;
     font-weight:600; padding:10px 12px; text-align:left;
   }
   .inf-list-table th:last-child { text-align:right; }
@@ -2624,11 +2628,11 @@
 
     /* Stats grid */
     .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-    .stats-grid[style*="repeat(5"] { grid-template-columns: 1fr 1fr !important; }
+    .stats-grid { grid-template-columns: 1fr 1fr !important; }
     .dash-kpi-row { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
     .stat-card { padding: 14px; }
     .stat-card .value { font-size: 26px; }
-    .stat-card .label { font-size: 10px; }
+    .stat-card .label { font-size: 11px; }
 
     /* Page head */
     .page-head h1 { font-size: 26px; }
@@ -2655,10 +2659,7 @@
       font-size: 22px !important; flex-basis: 100% !important; order: -1 !important;
     }
 
-    /* Project form grids */
-    .proj-tab-content [style*="grid-template-columns: 1fr 1fr"] {
-      grid-template-columns: 1fr !important;
-    }
+    /* Grids do formulario de projeto: cobertos pelo mesmo marcador acima. */
 
     /* Project modal tabs */
     .proj-modal-tab { padding: 10px 8px; font-size: 11px; letter-spacing: .3px; }
@@ -2692,17 +2693,14 @@
     .proj-meta { grid-template-columns: 1fr 1fr; }
 
     /* Modal content */
-    .modal-content { max-width: 95vw !important; margin: 8px; }
-    .modal-content[style*="max-width:900px"] {
-      max-width: 95vw !important; max-height: 90vh !important;
-    }
+    .modal-content { max-width: 95vw !important; max-height: 90vh !important; margin: 8px; }
 
-    /* Various inline grids in performance views */
-    div[style*="grid-template-columns:1fr 340px"] { grid-template-columns: 1fr !important; }
-    div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
-    div[style*="grid-template-columns:140px 1fr"] { grid-template-columns: 1fr !important; }
-    div[style*="grid-template-columns:1fr 1fr 1fr"] { grid-template-columns: 1fr !important; }
-    div[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
+    /* Grids declarados em style inline pelo JS.
+       Isto antes era um seletor por string exata — `[style*="1fr 340px"]` —
+       que quebrava silenciosamente se alguem mudasse um espaco no JS. Agora
+       um marcador data-fp-cols e aplicado em runtime a qualquer grid inline
+       com 2+ colunas, e o colapso vale para todos eles. */
+    [data-fp-cols] { grid-template-columns: 1fr !important; }
 
     /* Edit meta grid */
     .edit-meta-grid { grid-template-columns: 1fr 1fr; }
@@ -2728,7 +2726,7 @@
     .proj-card { padding: 14px; }
     .proj-card-head { flex-direction: column; align-items: flex-start; gap: 8px; }
 
-    .proj-modal-tab { padding: 8px 6px; font-size: 10px; }
+    .proj-modal-tab { padding: 8px 6px; font-size: 11px; }
 
     .actions { flex-wrap: wrap; }
     .action-btn { padding: 5px 10px; font-size: 11px; }
@@ -2984,22 +2982,50 @@
   --raio-md: 8px;
   --raio-pill: 999px;
   --toque: 44px;               /* alvo minimo de toque */
+
+  /* pares texto/fundo dos badges — validados em >= 4.5:1 sobre --bg-card */
+  --tx-pendente:  #ffc16b;  --bg-pendente:  rgba(255,170,51,.16);
+  --tx-aprovado:  #5fe0a4;  --bg-aprovado:  rgba(31,210,122,.16);
+  --tx-rejeitado: #ff9a92;  --bg-rejeitado: rgba(255,77,77,.16);
+  --tx-estudio:   #ffd866;  --bg-estudio:   rgba(255,207,51,.16);
+  --tx-retirada:  #7db9ff;  --bg-retirada:  rgba(51,153,255,.18);
 }
 [data-theme="light"] {
   --perigo: #c62828;
   --perigo-bg: rgba(198,40,40,.10);
   --foco: #1d4ed8;
+
+  /* no claro o texto precisa escurecer: o mesmo tom que funciona sobre preto
+     cai para ~2:1 sobre branco */
+  --tx-pendente:  #7a4a00;  --bg-pendente:  #fdf0dc;
+  --tx-aprovado:  #0f5c3a;  --bg-aprovado:  #e0f2e9;
+  --tx-rejeitado: #9c1c1c;  --bg-rejeitado: #fce9e9;
+  --tx-estudio:   #6e5100;  --bg-estudio:   #fbf1cf;
+  --tx-retirada:  #0d4a94;  --bg-retirada:  #e4eefc;
 }
 
 /* --- anel de foco visivel ------------------------------------------------
    Havia 35 regras com outline:none contra 3 de :focus-visible. */
-:where(button, a, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--foco);
-  outline-offset: 2px;
-  border-radius: var(--raio-sm);
+/* !important e proposital: existem 28 regras de outline:none espalhadas pelo
+   arquivo, e nenhuma delas deve poder apagar o foco de quem usa teclado. */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible,
+.nav-item:focus-visible,
+.action-btn:focus-visible,
+.fp-icon-btn:focus-visible,
+.filter-btn:focus-visible,
+.proj-filter-chip:focus-visible {
+  outline: 2px solid var(--foco) !important;
+  outline-offset: 2px !important;
 }
+/* o <main> so recebe foco via "pular para o conteudo"; nao precisa de anel */
+main:focus, main:focus-visible { outline: none !important; }
 .fp-skip {
-  position: absolute; left: 8px; top: -60px; z-index: 999;
+  position: absolute; left: 8px; top: -60px; z-index: 100400;
   background: var(--bg-card); color: var(--text);
   border: 1px solid var(--border); border-radius: var(--raio-md);
   padding: 10px 16px; font-size: 13px; font-weight: 600;
@@ -3161,7 +3187,7 @@ body.fp-sem-scroll { overflow: hidden; }
 .fp-link:hover { color: #7fb8ea; }
 [data-theme="light"] .fp-link { color: #1558b0; }
 .fp-copy-btn {
-  margin-left: 6px; padding: 2px 8px; font-size: 10.5px; font-weight: 700;
+  margin-left: 6px; padding: 3px 8px; font-size: 11px; font-weight: 700;
   background: transparent; border: 1px solid var(--border-hi); border-radius: var(--raio-sm);
   color: var(--text-muted); cursor: pointer; vertical-align: 1px;
 }
@@ -3175,7 +3201,7 @@ body.fp-sem-scroll { overflow: hidden; }
 }
 th.fp-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
 th.fp-sortable:hover { color: var(--text); }
-th.fp-sortable .fp-seta { opacity: .3; margin-left: 4px; font-size: 9px; }
+th.fp-sortable .fp-seta { opacity: .3; margin-left: 4px; font-size: 11px; }
 th.fp-sortable[aria-sort="ascending"]  .fp-seta,
 th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--accent); }
 
@@ -3604,7 +3630,7 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
           <label style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.6px; font-weight:600; display:block; margin-bottom:6px">Mensagem</label>
           <textarea class="tpl-edit-area" id="tplEditBody" placeholder="Digite a mensagem aqui..."></textarea>
           <div class="tpl-vars" style="margin-top:8px">
-            <span style="font-size:10px; color:var(--text-muted); margin-right:4px">Inserir:</span>
+            <span style="font-size: 11px; color:var(--text-muted); margin-right:4px">Inserir:</span>
             <span class="tpl-var" onclick="insertVar('{nome}')">{nome}</span>
             <span class="tpl-var" onclick="insertVar('{data}')">{data}</span>
             <span class="tpl-var" onclick="insertVar('{moto}')">{moto}</span>
@@ -3897,7 +3923,7 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
         <div class="cal-card" style="margin-bottom:16px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
             <h3 style="font-size:14px;font-weight:700;margin:0">Ranking de Influenciadores</h3>
-            <span id="infLastRefresh" style="font-size:10px;color:var(--text-muted)"></span>
+            <span id="infLastRefresh" style="font-size: 11px;color:var(--text-muted)"></span>
           </div>
           <div id="infRanking"></div>
         </div>
@@ -5200,6 +5226,93 @@ function prettyDT(iso) {
 }
 
 /* ==========================================================================
+   ERGONOMIA AUTOMATICA
+   115 dos 344 botoes eram so icone, sem nome acessivel: quem navega por
+   teclado ouvia "botao" e quem usa mouse tinha que decorar o desenho. O
+   tooltip (data-tip) ja existia — falta so virar nome de verdade.
+   Tambem: nenhuma das 34 imagens tinha loading=lazy.
+   Roda uma vez e depois a cada bloco de HTML injetado.
+   ========================================================================== */
+(function(){
+  function temNome(el){
+    return !!(el.getAttribute('aria-label') || el.getAttribute('title') ||
+              (el.textContent || '').trim());
+  }
+
+  function ajustar(raiz){
+    if (!raiz || raiz.nodeType !== 1) return;
+
+    const comTip = raiz.querySelectorAll ? raiz.querySelectorAll('[data-tip]') : [];
+    comTip.forEach(function(el){
+      const tip = el.getAttribute('data-tip');
+      if (!tip) return;
+      if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', tip);
+      if (!el.getAttribute('title')) el.setAttribute('title', tip);
+    });
+
+    const semNome = raiz.querySelectorAll ? raiz.querySelectorAll('button:not([aria-label]):not([title])') : [];
+    semNome.forEach(function(b){
+      if (temNome(b)) return;
+      // ultimo recurso: usa o nome da funcao chamada no onclick
+      const oc = b.getAttribute('onclick') || '';
+      const m = oc.match(/^\s*([A-Za-z_$][\w$]*)\s*\(/);
+      if (m) {
+        const legivel = m[1]
+          .replace(/^fp/, '')
+          .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+          .replace(/^./, function(c){ return c.toUpperCase(); });
+        b.setAttribute('aria-label', legivel);
+      }
+    });
+
+    const imgs = raiz.querySelectorAll ? raiz.querySelectorAll('img') : [];
+    imgs.forEach(function(img){
+      if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+      if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
+      // sem alt, o leitor de tela le a URL do arquivo — pior que nada
+      if (!img.hasAttribute('alt')) img.setAttribute('alt', '');
+    });
+
+    // Marca grids declarados em style inline para que o CSS mobile possa
+    // colapsa-los sem depender do texto exato do atributo.
+    const grids = raiz.querySelectorAll ? raiz.querySelectorAll('[style*="grid-template-columns"]') : [];
+    grids.forEach(function(el){
+      if (el.hasAttribute('data-fp-cols')) return;
+      const m = (el.getAttribute('style') || '').match(/grid-template-columns\s*:\s*([^;]+)/i);
+      if (!m) return;
+      const valor = m[1].trim();
+      // repeat(N, ...) ou uma lista de trilhas separadas por espaco
+      const rep = valor.match(/repeat\(\s*(\d+)/i);
+      const n = rep ? parseInt(rep[1], 10)
+                    : valor.replace(/\([^)]*\)/g, '').split(/\s+/).filter(Boolean).length;
+      if (n >= 2) el.setAttribute('data-fp-cols', String(n));
+    });
+    if (raiz.matches && raiz.matches('[style*="grid-template-columns"]') && !raiz.hasAttribute('data-fp-cols')) {
+      const m = (raiz.getAttribute('style') || '').match(/grid-template-columns\s*:\s*([^;]+)/i);
+      if (m) {
+        const v = m[1].trim();
+        const rep = v.match(/repeat\(\s*(\d+)/i);
+        const n = rep ? parseInt(rep[1], 10) : v.replace(/\([^)]*\)/g, '').split(/\s+/).filter(Boolean).length;
+        if (n >= 2) raiz.setAttribute('data-fp-cols', String(n));
+      }
+    }
+  }
+
+  const obs = new MutationObserver(function(muts){
+    muts.forEach(function(m){
+      m.addedNodes.forEach(function(n){ if (n.nodeType === 1) ajustar(n); });
+    });
+  });
+
+  function iniciar(){
+    ajustar(document.body);
+    obs.observe(document.body, { childList: true, subtree: true });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar);
+  else iniciar();
+})();
+
+/* ==========================================================================
    OFFLINE — a garagem e onde o sinal cai, e e onde o check-in acontece.
    ========================================================================== */
 (function(){
@@ -6213,7 +6326,7 @@ function renderCiView() {
     if (date === '__PAST_DIVIDER__') {
       allHtml += `<div style="margin-top:28px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
         <div style="flex:1;height:1px;background:var(--border)"></div>
-        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">Agendamentos anteriores</span>
+        <span style="font-size: 11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">Agendamentos anteriores</span>
         <div style="flex:1;height:1px;background:var(--border)"></div>
       </div>`;
       return;
@@ -6825,9 +6938,9 @@ function buildSummaryModal() {
     + '#fpSumBody{overflow-y:auto;padding:18px 20px;display:flex;flex-direction:column;gap:16px}'
     + '#fpSumFoot{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}'
     + '.fp-sum-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}'
-    + '.fp-sum-item .k{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)}'
+    + '.fp-sum-item .k{font-size: 11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)}'
     + '.fp-sum-item .v{font-size:13px;color:var(--text);margin-top:2px}'
-    + '.fp-sum-sec-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-weight:700;margin-bottom:6px}'
+    + '.fp-sum-sec-label{font-size: 11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);font-weight:700;margin-bottom:6px}'
     + '.fp-sum-tab{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--primary);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}'
     + '.fp-sum-close{background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);cursor:pointer;padding:5px 11px;font-size:15px;line-height:1}';
   document.head.appendChild(st);
@@ -6847,7 +6960,7 @@ async function openProjectSummary(id) {
   const stColors = { planejamento:'#3b82f6', producao:'#f59e0b', edicao:'#a855f7', a_publicar:'#ec4899', concluido:'#16a34a' };
   const c = stColors[p.status] || '#888';
   document.getElementById('fpSumTitle').textContent = p.title || 'Sem título';
-  document.getElementById('fpSumStatus').innerHTML = '<span style="flex-shrink:0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:4px 10px;border-radius:20px;background:'+c+'22;border:1px solid '+c+';color:'+c+'">'+(statusMap[p.status]||p.status)+'</span>';
+  document.getElementById('fpSumStatus').innerHTML = '<span style="flex-shrink:0;font-size: 11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:4px 10px;border-radius:20px;background:'+c+'22;border:1px solid '+c+';color:'+c+'">'+(statusMap[p.status]||p.status)+'</span>';
   document.getElementById('fpSumBody').innerHTML = summaryHtml(p);
   document.getElementById('fpSumEdit').onclick = function(){ closeProjectSummary(); openProjectDetail(id); };
   document.getElementById('fpSumOverlay').classList.add('open');
@@ -7370,11 +7483,11 @@ function renderProjTabProducao(p) {
           <div id="projCostsList"></div>
           <div style="display:flex;gap:6px;align-items:flex-end;margin-top:auto">
             <div style="flex:1">
-              <span style="font-size:10px;color:var(--text-muted)">Descrição</span>
+              <span style="font-size: 11px;color:var(--text-muted)">Descrição</span>
               <input type="text" class="login-input" id="projCostReason" style="margin:0" placeholder="Ex: Ponteira GT Trail"/>
             </div>
             <div style="flex:0 0 100px">
-              <span style="font-size:10px;color:var(--text-muted)">R$</span>
+              <span style="font-size: 11px;color:var(--text-muted)">R$</span>
               <input type="text" class="login-input" id="projCostValue" style="margin:0" placeholder="0,00" oninput="maskCurrency(this)"/>
             </div>
             <button class="fp-icon-btn fp-ib-blue" data-tip="Adicionar custo" onclick="addProjCost()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
@@ -7586,8 +7699,8 @@ function renderShotsReadOnly(shots, si) {
         <input type="checkbox" ${shot.done?'checked':''} onchange="toggleShotDone(${si},${pi},this.checked)"/>
         <span class="rot-check-box"></span>
       </label>
-      <span style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(139,156,247,.5);min-width:50px">${escHtml(cam)}</span>
-      <span style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(245,158,11,.5);min-width:70px">${escHtml(sType)}</span>
+      <span style="font-size: 11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(139,156,247,.5);min-width:50px">${escHtml(cam)}</span>
+      <span style="font-size: 11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(245,158,11,.5);min-width:70px">${escHtml(sType)}</span>
       <span style="font-size:13px;color:${shot.done?'var(--text-muted)':'var(--text)'};${shot.done?'text-decoration:line-through;':''}">${escHtml(shot.title || '(sem descrição)')}</span>
     </div>`;
   }).join('');
@@ -7608,17 +7721,17 @@ function renderShotsReadOnly(shots, si) {
           const sType = shot.shotType || '—';
               const speech = (shot.speech || '').trim();
           const note = (shot.note || '').trim();
-          const btnStyle = 'padding:2px 9px;font-size:10px;font-weight:600;border:1px solid var(--border);background:var(--bg-elev);color:var(--text-dim);border-radius:5px;cursor:pointer;white-space:nowrap';
+          const btnStyle = 'padding:2px 9px;font-size: 11px;font-weight:600;border:1px solid var(--border);background:var(--bg-elev);color:var(--text-dim);border-radius:5px;cursor:pointer;white-space:nowrap';
           const panelStyle = 'padding:6px 16px 10px 96px;font-size:12px;line-height:1.5;border-top:1px solid rgba(255,255,255,.04)';
-          const labelStyle = 'font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-right:8px';
+          const labelStyle = 'font-size: 11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-right:8px';
           return `
               <div style="display:flex;align-items:center;gap:8px;padding:8px 16px 8px 36px;border-top:1px solid rgba(255,255,255,.06);min-height:38px">
                     <label class="rot-check" onclick="event.stopPropagation()">
                             <input type="checkbox" ${shot.done?'checked':''} onchange="toggleShotDone(${si},${pi},this.checked)"/>
                                     <span class="rot-check-box"></span>
                                           </label>
-                                                <span style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(139,156,247,.5);min-width:50px">${escHtml(cam)}</span>
-                                                      <span style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(245,158,11,.5);min-width:70px">${escHtml(sType)}</span>
+                                                <span style="font-size: 11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(139,156,247,.5);min-width:50px">${escHtml(cam)}</span>
+                                                      <span style="font-size: 11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(245,158,11,.5);min-width:70px">${escHtml(sType)}</span>
                                                             <span style="font-size:13px;color:${shot.done?'var(--text-muted)':'var(--text)'};${shot.done?'text-decoration:line-through;':''}">${escHtml(shot.title || '(sem descrição)')}</span>
         <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0">
                 ${speech ? `<button style="${btnStyle}" onclick="event.stopPropagation();fpToggleShotDetail('fpfala_${si}_${pi}',this,'Ver fala','Ocultar fala')">Ver fala</button>` : ''}
@@ -7707,7 +7820,7 @@ function renderShotsReadOnly(shots, si) {
       + '#fpPermBox h3{font-size:16px;margin:0 0 4px}'
       + '#fpPermBox .fp-sub{font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.5}'
       + '#fpPermBox .fp-grp{margin-bottom:14px}'
-      + '#fpPermBox .fp-grp-t{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}'
+      + '#fpPermBox .fp-grp-t{font-size: 11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}'
       + '#fpPermBox label{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;font-size:13px;cursor:pointer}'
       + '#fpPermBox label:hover{background:var(--bg-elev)}'
       + '#fpPermBox input[type=checkbox]{width:16px;height:16px;accent-color:var(--primary)}'
@@ -7869,8 +7982,8 @@ function renderShotsReadOnly(shots, si) {
       if (shots.length){
         html += '<div style="padding:8px 12px;display:flex;flex-direction:column;gap:4px">';
         shots.forEach(function(shot, pi){
-          const cam = shot.camera ? '<span style="font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:rgba(139,156,247,.7);margin-right:6px">' + fpEsc(shot.camera) + '</span>' : '';
-          const st = shot.shotType ? '<span style="font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:rgba(245,158,11,.7);margin-right:6px">' + fpEsc(shot.shotType) + '</span>' : '';
+          const cam = shot.camera ? '<span style="font-size: 11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:rgba(139,156,247,.7);margin-right:6px">' + fpEsc(shot.camera) + '</span>' : '';
+          const st = shot.shotType ? '<span style="font-size: 11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:rgba(245,158,11,.7);margin-right:6px">' + fpEsc(shot.shotType) + '</span>' : '';
           html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:' + (shot.done ? 'rgba(34,197,94,.06)' : 'transparent') + '">'
             + '<div style="width:18px;height:18px;border-radius:4px;border:2px solid ' + (shot.done ? '#22c55e' : 'var(--border)') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0">' + (shot.done ? '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#22c55e" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : '') + '</div>'
             + '<span style="flex:1;font-size:13px;color:' + (shot.done ? 'var(--text-muted)' : 'var(--text)') + ';' + (shot.done ? 'text-decoration:line-through;opacity:.7' : '') + '">' + cam + st + fpEsc(shot.title || ('Plano ' + (pi+1))) + '</span>'
@@ -8047,7 +8160,7 @@ function renderShotsReadOnly(shots, si) {
     const d = new Date(c.recorded_at);
     const p2 = function(n){ return String(n).padStart(2,'0'); };
     const txt = 'Gravado em ' + p2(d.getDate()) + '/' + p2(d.getMonth()+1) + '/' + d.getFullYear() + ' - ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
-    return '<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:6px;background:rgba(31,210,122,.12);border:1px solid rgba(31,210,122,.3);color:var(--success);font-size:10px;font-weight:600;white-space:nowrap"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 7 12 12 15 15"/></svg>' + txt + '</span>';
+    return '<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:6px;background:rgba(31,210,122,.12);border:1px solid rgba(31,210,122,.3);color:var(--success);font-size: 11px;font-weight:600;white-space:nowrap"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 7 12 12 15 15"/></svg>' + txt + '</span>';
   }
   function statusSelect(c, fromDetail){
     let opts = '';
@@ -8103,7 +8216,7 @@ function renderShotsReadOnly(shots, si) {
         + '</div>'
         + '<div style="margin:12px 0 4px;padding:12px 14px;background:var(--bg-elev);border:1px solid var(--border);border-radius:10px">' + productLine(c) + '</div>'
         + '<div style="margin-top:10px">'
-        +   '<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">Observações para o vídeo</div>'
+        +   '<div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">Observações para o vídeo</div>'
         +   (obs
             ? '<div style="font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.55;max-height:110px;overflow:hidden">' + fpLinkify(esc(obs)) + '</div>'
             : '<div style="font-size:12px;color:var(--text-muted);font-style:italic">Sem observações. Clique em "Abrir" para adicionar tópicos.</div>')
@@ -8147,7 +8260,7 @@ function renderShotsReadOnly(shots, si) {
       + '.fp-clip-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0}'
       + '.fp-clip-head h3{font-size:15px;margin:0;flex:1;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
       + '.fp-clip-body{overflow-y:auto;padding:16px 18px}'
-      + '.fp-clip-lbl{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin:14px 0 5px}'
+      + '.fp-clip-lbl{font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin:14px 0 5px}'
       + '.fp-clip-inp{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev);color:var(--text);font-family:inherit;font-size:14px}'
       + '.fp-clip-ta{width:100%;min-height:150px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-elev);color:var(--text);font-family:inherit;font-size:14px;line-height:1.55;resize:vertical}'
       + '.fp-clip-btn{padding:8px 16px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:var(--bg-elev);color:var(--text);cursor:pointer}'
@@ -8335,7 +8448,7 @@ function renderShots(shots, si) {
       <span class="rot-shot-label" style="margin-left:8px">Plano</span>
       <button class="rot-help-btn" title="Guia de planos">?
         <div class="rot-help-popup">
-          <strong style="color:#f59e0b;font-size:10px;letter-spacing:1px;text-transform:uppercase">Guia de planos</strong>
+          <strong style="color:#f59e0b;font-size: 11px;letter-spacing:1px;text-transform:uppercase">Guia de planos</strong>
           <dl style="margin-top:8px">
             <dt>Plano aberto</dt><dd>Enquadramento amplo, mostra o cenário completo</dd>
             <dt>Plano fechado</dt><dd>Foco no objeto/moto, pouco fundo visível</dd>
@@ -10448,7 +10561,7 @@ function buildPublishLinkCard(p) {
   if (!link && !isAPublicar) return ''; // só aparece com link, ou em "A publicar" p/ pedir
   const pink = '#ec4899';
   const badge = isAPublicar
-    ? `<span style="margin-left:auto;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:${pink};background:rgba(236,72,153,.12);border:1px solid rgba(236,72,153,.3);padding:3px 9px;border-radius:20px">A publicar</span>`
+    ? `<span style="margin-left:auto;font-size: 11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:${pink};background:rgba(236,72,153,.12);border:1px solid rgba(236,72,153,.3);padding:3px 9px;border-radius:20px">A publicar</span>`
     : '';
   const head = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="${pink}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -10681,7 +10794,7 @@ function buildPostCard(dest, data) {
         <span style="display:flex;align-items:center">${info.icon}</span>
         <span style="font-size:12px;font-weight:600;color:var(--text)">${info.name}</span>
       </div>
-      ${hasLink && !isEditing ? `<span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(31,210,122,.15);color:var(--success);letter-spacing:.3px">PUBLICADO</span>` : `<span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(255,170,51,.15);color:var(--warning);letter-spacing:.3px">PENDENTE</span>`}
+      ${hasLink && !isEditing ? `<span style="font-size: 11px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(31,210,122,.15);color:var(--success);letter-spacing:.3px">PUBLICADO</span>` : `<span style="font-size: 11px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(255,170,51,.15);color:var(--warning);letter-spacing:.3px">PENDENTE</span>`}
     </div>
     ${body}
   </div>`;
@@ -11851,12 +11964,12 @@ function renderCompatibleProducts(products, containerId) {
               ${p.imagemURL ? `<img src="${p.imagemURL}" width="32" height="32" style="border-radius:4px;object-fit:cover"/>` : '<div style="width:32px;height:32px;border-radius:4px;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--text-dim)" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4M4 7l8 4M4 7v10l8 4m0-10v10"/></svg></div>'}
               <div style="min-width:0">
                 <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.nome)}</div>
-                <div style="font-size:10px;color:var(--text-dim)">SKU: ${escHtml(p.codigo || '—')} · R$ ${(p.preco || 0).toFixed(2)}</div>
+                <div style="font-size: 11px;color:var(--text-dim)">SKU: ${escHtml(p.codigo || '—')} · R$ ${(p.preco || 0).toFixed(2)}</div>
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
               <span style="font-size:12px;font-weight:700;color:${p.estoque?.saldoVirtualTotal != null ? ((p.estoque.saldoVirtualTotal > 3) ? 'var(--success)' : 'var(--warning)') : 'var(--text-dim)'}">${p.estoque?.saldoVirtualTotal != null ? p.estoque.saldoVirtualTotal : '?'}</span>
-              <span style="font-size:10px;color:var(--text-dim)">un</span>
+              <span style="font-size: 11px;color:var(--text-dim)">un</span>
             </div>
           </div>
         `).join('')}
@@ -11902,12 +12015,12 @@ function renderCompatibleProductsHTML(products) {
         <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">${img}
           <div style="min-width:0">
             <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.nome)}</div>
-            <div style="font-size:10px;color:var(--text-dim)">SKU: ${escHtml(p.codigo || '—')} · R$ ${(p.preco || 0).toFixed(2)}</div>
+            <div style="font-size: 11px;color:var(--text-dim)">SKU: ${escHtml(p.codigo || '—')} · R$ ${(p.preco || 0).toFixed(2)}</div>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
           <span style="font-size:12px;font-weight:700;color:${stkColor}">${stk}</span>
-          <span style="font-size:10px;color:var(--text-dim)">un</span>
+          <span style="font-size: 11px;color:var(--text-dim)">un</span>
         </div>
       </div>`;
     }).join('') + `</div></div>`;
@@ -12677,7 +12790,7 @@ function renderEditingView() {
         <div class="edit-meta-item"><div class="k">Links</div><div class="v">${links.length} referência${links.length !== 1 ? 's' : ''}</div></div>
       </div>
       <div class="edit-obs-section">
-        <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:6px;font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">
           <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
           Observações
           ${p.observations ? `<button class="fp-icon-btn" data-tip="Editar observação" onclick="openObsModal('${p.id}')" style="width:24px;height:24px;margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : ''}
@@ -12719,7 +12832,7 @@ function renderEditingView() {
 
       ${links.length ? `
       <div style="margin-bottom:10px">
-        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Links de referência</div>
+        <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Links de referência</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
           ${links.map((l, i) => `<a href="${l}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;color:#a78bfa;text-decoration:none;font-size:12px;transition:border-color .15s" onmouseover="this.style.borderColor='#a78bfa'" onmouseout="this.style.borderColor='var(--border)'">
             <svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" fill="none" stroke-width="2" style="flex-shrink:0"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -12730,7 +12843,7 @@ function renderEditingView() {
 
       ${photos.length ? `
       <div>
-        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Fotos (${photos.length})</div>
+        <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Fotos (${photos.length})</div>
         <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px">
           ${photos.map(ph => `<div style="flex-shrink:0;width:80px;height:80px;border-radius:8px;overflow:hidden;border:1px solid var(--border);cursor:pointer" onclick="openLightbox('${ph}')"><img src="${ph}" style="width:100%;height:100%;object-fit:cover"/></div>`).join('')}
         </div>
@@ -12923,7 +13036,7 @@ function openEditRoteiro(id) {
             ${shot.done ? '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#22c55e" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
           </div>
           <span style="flex:1;font-size:13px;color:${shot.done ? 'var(--text-muted)' : 'var(--text)'};${shot.done ? 'text-decoration:line-through;opacity:.7' : ''}">${escHtml(shot.title || 'Plano ' + (pi + 1))}</span>
-          <span style="font-size:10px;color:var(--text-muted);flex-shrink:0">${shot.duration || 0}s</span>
+          <span style="font-size: 11px;color:var(--text-muted);flex-shrink:0">${shot.duration || 0}s</span>
         </div>`;
         if (shot.note) {
           html += `<div style="margin-left:34px;font-size:11px;color:#60a5fa;padding:2px 0"><span style="font-weight:600">Nota:</span> ${escHtml(shot.note)}</div>`;
@@ -13003,9 +13116,9 @@ function renderDashboard() {
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--primary)" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         </div>
         <div>
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Pendentes</div>
+          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Pendentes</div>
           <div style="font-family:'Bebas Neue';font-size:32px;line-height:1;color:var(--primary)">${pending}</div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${thisMonth} este mes</div>
+          <div style="font-size: 11px;color:var(--text-muted);margin-top:2px">${thisMonth} este mes</div>
         </div>
       </div>
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;align-items:center;gap:14px">
@@ -13013,9 +13126,9 @@ function renderDashboard() {
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         </div>
         <div>
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Aprovadas</div>
+          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Aprovadas</div>
           <div style="font-family:'Bebas Neue';font-size:32px;line-height:1;color:var(--success)">${approved}</div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${rejected} rejeitada${rejected !== 1 ? 's' : ''}</div>
+          <div style="font-size: 11px;color:var(--text-muted);margin-top:2px">${rejected} rejeitada${rejected !== 1 ? 's' : ''}</div>
         </div>
       </div>
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;align-items:center;gap:14px">
@@ -13023,9 +13136,9 @@ function renderDashboard() {
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#a855f7" stroke-width="1.8"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
         </div>
         <div>
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Projetos ativos</div>
+          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Projetos ativos</div>
           <div style="font-family:'Bebas Neue';font-size:32px;line-height:1;color:#a855f7">${activeProjects}</div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${projByStatus.concluido} concluido${projByStatus.concluido !== 1 ? 's' : ''}</div>
+          <div style="font-size: 11px;color:var(--text-muted);margin-top:2px">${projByStatus.concluido} concluido${projByStatus.concluido !== 1 ? 's' : ''}</div>
         </div>
       </div>
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;align-items:center;gap:14px">
@@ -13033,7 +13146,7 @@ function renderDashboard() {
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#f59e0b" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
         </div>
         <div>
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Custos totais</div>
+          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Custos totais</div>
           <div style="font-family:'Bebas Neue';font-size:28px;line-height:1;color:#f59e0b">R$ ${formatBRL(totalCosts)}</div>
         </div>
       </div>
@@ -13075,12 +13188,12 @@ function renderDashboard() {
       <div class="cal-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
           <h3>Proximos agendamentos</h3>
-          ${blockedCount > 0 ? `<span style="font-size:10px;padding:3px 8px;background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.2);border-radius:6px;color:var(--danger);font-weight:600">${blockedCount} bloqueada${blockedCount > 1 ? 's' : ''}</span>` : ''}
+          ${blockedCount > 0 ? `<span style="font-size: 11px;padding:3px 8px;background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.2);border-radius:6px;color:var(--danger);font-weight:600">${blockedCount} bloqueada${blockedCount > 1 ? 's' : ''}</span>` : ''}
         </div>
         ${upcoming.length ? upcoming.map((r, i) => `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;${i < upcoming.length - 1 ? 'border-bottom:1px solid var(--border)' : ''}">
           <div style="min-width:46px;text-align:center;background:var(--bg-elev);border-radius:10px;padding:8px 10px">
             <div style="font-family:'Bebas Neue';font-size:20px;line-height:1;color:var(--text)">${new Date(r.date + 'T12:00').getDate()}</div>
-            <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;font-weight:600">${new Date(r.date + 'T12:00').toLocaleDateString('pt-BR', { month: 'short' })}</div>
+            <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;font-weight:600">${new Date(r.date + 'T12:00').toLocaleDateString('pt-BR', { month: 'short' })}</div>
           </div>
           <div style="flex:1;min-width:0">
             <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(r.moto)}</div>
@@ -13096,20 +13209,20 @@ function renderDashboard() {
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
           <div style="text-align:center;padding:14px 8px;background:rgba(31,210,122,.06);border:1px solid rgba(31,210,122,.15);border-radius:10px">
             <div style="font-family:'Bebas Neue';font-size:26px;color:var(--success);line-height:1">${ciCount}</div>
-            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-top:4px">Entradas</div>
+            <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-top:4px">Entradas</div>
           </div>
           <div style="text-align:center;padding:14px 8px;background:rgba(139,156,247,.06);border:1px solid rgba(139,156,247,.15);border-radius:10px">
             <div style="font-family:'Bebas Neue';font-size:26px;color:#8b9cf7;line-height:1">${coCount}</div>
-            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-top:4px">Saidas</div>
+            <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-top:4px">Saidas</div>
           </div>
           <div style="text-align:center;padding:14px 8px;background:${inUse > 0 ? 'rgba(245,158,11,.06)' : 'var(--bg-elev)'};border:1px solid ${inUse > 0 ? 'rgba(245,158,11,.15)' : 'var(--border)'};border-radius:10px">
             <div style="font-family:'Bebas Neue';font-size:26px;color:${inUse > 0 ? '#f59e0b' : 'var(--text-muted)'};line-height:1">${inUse > 0 ? inUse : 0}</div>
-            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-top:4px">Em uso</div>
+            <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-top:4px">Em uso</div>
           </div>
         </div>
         <!-- Pós-produção mini -->
         <div style="padding-top:12px;border-top:1px solid var(--border)">
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">Pós-produção</div>
+          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">Pós-produção</div>
           <div style="display:flex;gap:10px">
             <div style="flex:1;display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.12);border-radius:8px">
               <div style="width:8px;height:8px;border-radius:50%;background:#a855f7"></div>
@@ -13136,16 +13249,16 @@ function renderDashboard() {
         ${recentProjects.map((p, i) => {
           const costs = (p.costs || []).reduce((s, c) => s + (c.value || 0), 0);
           const destNames = { youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads' };
-          const dests = (p.destinations || []).map(d => `<span class="proj-dest-tag ${d}" style="font-size:9px;padding:2px 6px">${destNames[d] || d}</span>`).join('');
+          const dests = (p.destinations || []).map(d => `<span class="proj-dest-tag ${d}" style="font-size: 11px;padding:2px 6px">${destNames[d] || d}</span>`).join('');
           const sc = statusColors[p.status] || '#6b7280';
           return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;${i < recentProjects.length - 1 ? 'border-bottom:1px solid var(--border)' : ''};cursor:pointer;transition:opacity .15s" onclick="openProjectDetail('${p.id}')" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
             <div style="width:4px;height:36px;border-radius:2px;background:${sc};flex-shrink:0"></div>
             <div style="flex:1;min-width:0">
               <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.title || 'Sem titulo')}</div>
-              <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap">${dests || '<span style="font-size:10px;color:var(--text-muted)">Sem destino</span>'}</div>
+              <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap">${dests || '<span style="font-size: 11px;color:var(--text-muted)">Sem destino</span>'}</div>
             </div>
             <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-              <span style="font-size:10px;padding:3px 8px;border-radius:6px;font-weight:600;background:${sc}20;color:${sc}">${statusMap[p.status] || p.status}</span>
+              <span style="font-size: 11px;padding:3px 8px;border-radius:6px;font-weight:600;background:${sc}20;color:${sc}">${statusMap[p.status] || p.status}</span>
               ${costs > 0 ? `<span style="font-size:11px;color:#f59e0b;font-weight:600">R$ ${formatBRL(costs)}</span>` : ''}
             </div>
           </div>`;
@@ -13380,7 +13493,7 @@ function renderPerfMetas() {
           <div style="width:32px;height:32px;border-radius:8px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#3b82f6" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
           </div>
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Volume de conteúdo</div>
+          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Volume de conteúdo</div>
         </div>
         <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">
           <span style="font-family:'Bebas Neue';font-size:34px;line-height:1;color:var(--text)">${longCount}L + ${shortCount}S</span>
@@ -13401,7 +13514,7 @@ function renderPerfMetas() {
           <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,45,45,.1);display:flex;align-items:center;justify-content:center">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </div>
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Views totais</div>
+          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Views totais</div>
         </div>
         <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">
           <span style="font-family:'Bebas Neue';font-size:34px;line-height:1;color:var(--text)">${fmtK(totalViews)}</span>
@@ -13422,7 +13535,7 @@ function renderPerfMetas() {
           <div style="width:32px;height:32px;border-radius:8px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
           </div>
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Cliques pro site</div>
+          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Cliques pro site</div>
         </div>
         <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">
           <span style="font-family:'Bebas Neue';font-size:34px;line-height:1;color:var(--text)">${totalClicks.toLocaleString('pt-BR')}</span>
@@ -13445,12 +13558,12 @@ function renderPerfMetas() {
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="${goalsProjected >= totalGoals ? 'var(--success)' : '#f59e0b'}" stroke-width="1.8"><path d="M6 9H4.5a2.5 2.5 0 010-5C7 4 7 7 7 7"/><path d="M18 9h1.5a2.5 2.5 0 000-5C17 4 17 7 17 7"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg>
         </div>
         <div>
-          <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Caixa coletivo — projeção de fim do mês</div>
+          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Caixa coletivo — projeção de fim do mês</div>
           <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:2px">${goalsProjected} de ${totalGoals} metas no ritmo atual</div>
         </div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:500">pool projetado</div>
+        <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:500">pool projetado</div>
         <div style="font-family:'Bebas Neue';font-size:32px;color:var(--success);line-height:1;margin-top:2px">R$ ${formatBRL(projectedPool)}</div>
       </div>
     </div>
@@ -13653,12 +13766,12 @@ function renderPerfPosts() {
           <div class="post-card-stat"><svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg> ${fmtKPosts(p.views || 0)}</div>
           <div class="post-card-stat"><svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> ${fmtKPosts(p.likes || 0)}</div>
           <div class="post-card-stat"><svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg> ${fmtKPosts(p.comments || 0)}</div>
-          <div class="post-card-stat" style="margin-top:4px;font-size:10px;opacity:.8">Clique para abrir</div>
+          <div class="post-card-stat" style="margin-top:4px;font-size: 11px;opacity:.8">Clique para abrir</div>
         </div>
       </div>
       <div class="post-card-info">
         <div class="post-card-title">${escHtml(p.title)}</div>
-        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">${p.label}</div>
+        <div style="font-size: 11px;color:var(--text-muted);margin-bottom:4px">${p.label}</div>
         <div class="post-card-meta">
           <div class="post-card-stars">${stars}</div>
         </div>
@@ -13974,13 +14087,13 @@ function renderInfVisaoGeral(active) {
           <div style="width:24px;font-family:'Bebas Neue';font-size:18px;color:${i<3?'var(--primary)':'var(--text-muted)'};text-align:center">${i+1}</div>
           <div class="inf-list-table .inf-row-avatar" style="width:36px;height:36px;border-radius:50%;background:${infCatColor(cat)};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0">${infInitials(inf.name)}</div>
           <div style="flex:1;min-width:0">
-            <div style="font-weight:600;font-size:13px;color:var(--text)">${escHtml(inf.name)} <span class="inf-badge ${cat}" style="font-size:9px;padding:2px 5px;margin-left:4px">${cat.toUpperCase()}</span></div>
+            <div style="font-weight:600;font-size:13px;color:var(--text)">${escHtml(inf.name)} <span class="inf-badge ${cat}" style="font-size: 11px;padding:2px 5px;margin-left:4px">${cat.toUpperCase()}</span></div>
             <div style="font-size:11px;color:var(--text-muted)">${escHtml(fpArroba(inf.instagram))} · ${motos}</div>
             <div class="inf-rank-bar" style="max-width:300px"><div class="inf-rank-fill" style="width:${pct}%;background:${infCatColor(cat)}"></div></div>
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div style="font-family:'Bebas Neue';font-size:20px;color:var(--text)">${formatNum(inf.views_fullpro||0)}</div>
-            <div style="font-size:10px;color:var(--text-muted)">views</div>
+            <div style="font-size: 11px;color:var(--text-muted)">views</div>
           </div>
         </div>`;
       }).join('');
@@ -14055,7 +14168,7 @@ function renderInfConfig(active) {
           <div class="inf-row-name">
             <div class="inf-row-avatar" style="background:${infCatColor(cat)}">${infInitials(inf.name)}</div>
             <div class="inf-row-info">
-              <div class="name">${escHtml(inf.name)} <span class="inf-badge ${cat}" style="font-size:8px;padding:1px 5px">${cat.toUpperCase()}</span></div>
+              <div class="name">${escHtml(inf.name)} <span class="inf-badge ${cat}" style="font-size: 11px;padding:1px 5px">${cat.toUpperCase()}</span></div>
               <div class="handle">${escHtml(inf.whatsapp || inf.email || '')}</div>
             </div>
           </div>
@@ -14124,7 +14237,7 @@ function renderInfCupons(active) {
           <div class="inf-row-avatar" style="background:${infCatColor(cat)}">${infInitials(inf.name)}</div>
           <div class="inf-row-info"><div class="name">${escHtml(inf.name)}</div><div class="handle">${escHtml(fpArroba(inf.instagram))}</div></div>
         </div></td>
-        <td><span class="inf-coupon-badge">${escHtml(inf.coupon_code)}</span>${inf.coupon_discount ? ` <span style="font-size:10px;color:var(--text-muted)">${inf.coupon_discount}% off</span>` : ''}</td>
+        <td><span class="inf-coupon-badge">${escHtml(inf.coupon_code)}</span>${inf.coupon_discount ? ` <span style="font-size: 11px;color:var(--text-muted)">${inf.coupon_discount}% off</span>` : ''}</td>
         <td style="font-weight:600;color:var(--text)">${inf.coupon_sales||0}</td>
         <td style="color:var(--text-dim)">${inf.coupon_clicks||0}</td>
         <td style="text-align:right;font-weight:600;color:var(--primary)">R$ ${formatBRL(inf.coupon_revenue||0)}</td>
@@ -14182,7 +14295,7 @@ function renderInfEnvios(active) {
       const name = inf ? inf.name : 'Desconhecido';
       const items = e.items || [];
       const produtoDisplay = items.length > 0
-        ? items.map(it => `<span style="display:inline-block;padding:1px 6px;background:var(--bg-elev);border:1px solid var(--border);border-radius:4px;font-size:10px;margin:1px 2px">${escHtml((it.nome||'').substring(0,30)||(it.codigo||''))}</span>`).join('')
+        ? items.map(it => `<span style="display:inline-block;padding:1px 6px;background:var(--bg-elev);border:1px solid var(--border);border-radius:4px;font-size: 11px;margin:1px 2px">${escHtml((it.nome||'').substring(0,30)||(it.codigo||''))}</span>`).join('')
         : `<span style="font-size:11px;color:var(--text-dim)">${escHtml(e.produto||'Sem detalhe')}</span>`;
       return `<tr>
         <td style="font-weight:600;color:var(--text);font-size:12px">${escHtml(name)}</td>
@@ -14190,12 +14303,12 @@ function renderInfEnvios(active) {
         <td style="text-align:center;font-weight:600">${e.qtd||1}</td>
         <td style="color:var(--primary);font-weight:600">R$ ${formatBRL(e.valor||0)}</td>
         <td><input type="text" value="${escHtml(e.tracking||'')}" placeholder="Rastreio…" style="width:130px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-elev);color:var(--text);font-size:11px;font-family:'JetBrains Mono',monospace" onchange="updateEnvioField('${e.id}','tracking',this.value)"/></td>
-        <td><select onchange="updateEnvioField('${e.id}','status',this.value)" style="padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-elev);color:var(--text);font-size:10px;font-weight:600">${['preparando','enviado','entregue'].map(s => `<option value="${s}"${e.status===s?' selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}</select></td>
+        <td><select onchange="updateEnvioField('${e.id}','status',this.value)" style="padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg-elev);color:var(--text);font-size: 11px;font-weight:600">${['preparando','enviado','entregue'].map(s => `<option value="${s}"${e.status===s?' selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}</select></td>
         <td style="font-size:11px;color:var(--text-muted)">${e.created_at ? new Date(e.created_at).toLocaleDateString('pt-BR') : '—'}</td>
         <td style="text-align:right"><div style="display:flex;gap:4px;justify-content:flex-end">
-          <button class="action-btn view" style="padding:3px 8px;font-size:10px" onclick="gerarEtiquetaEnvio('${e.id}')" title="Imprimir"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimir</button>
-          <button class="action-btn view" style="padding:3px 8px;font-size:10px" onclick="gerarPdfEnvio('${e.id}')" title="Baixar PDF"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF</button>
-          <button class="action-btn" style="padding:3px 6px;font-size:10px;color:var(--danger)" onclick="deleteInfEnvio('${e.id}')" title="Excluir"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+          <button class="action-btn view" style="padding:3px 8px;font-size: 11px" onclick="gerarEtiquetaEnvio('${e.id}')" title="Imprimir"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimir</button>
+          <button class="action-btn view" style="padding:3px 8px;font-size: 11px" onclick="gerarPdfEnvio('${e.id}')" title="Baixar PDF"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:2px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF</button>
+          <button class="action-btn" style="padding:3px 6px;font-size: 11px;color:var(--danger)" onclick="deleteInfEnvio('${e.id}')" title="Excluir"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
         </div></td>
       </tr>`;
     }).join('')}</tbody>
@@ -14233,7 +14346,7 @@ function renderInfConteudo(active) {
           <span style="color:var(--text-dim)">👁 ${formatNum(c.views||0)}</span>
           <span style="color:var(--text-dim)">❤ ${formatNum(c.likes||0)}</span>
           <span style="color:var(--text-dim)">💬 ${c.comments||0}</span>
-        </div>` : '<div style="font-size:10px;color:var(--warning);margin-top:4px">Métricas não disponíveis</div>'}
+        </div>` : '<div style="font-size: 11px;color:var(--warning);margin-top:4px">Métricas não disponíveis</div>'}
       </div>
       <div style="text-align:right;flex-shrink:0">
         <div style="font-size:11px;color:var(--text-muted)">${c.data_pub ? new Date(c.data_pub+'T12:00').toLocaleDateString('pt-BR') : (c.created_at ? new Date(c.created_at).toLocaleDateString('pt-BR') : '—')}</div>
@@ -14346,7 +14459,7 @@ function renderPerfBonuses() {
         <div style="text-align:center">
           <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Metas atingidas</div>
           <div style="font-family:'Bebas Neue';font-size:32px;color:${goalsHit > 0 ? 'var(--success)' : 'var(--warning)'};margin:6px 0">${goalsHit}</div>
-          <div style="font-size:10px;color:var(--text-muted)">de 4</div>
+          <div style="font-size: 11px;color:var(--text-muted)">de 4</div>
         </div>
         <div style="text-align:center;border-left:1px solid var(--border);border-right:1px solid var(--border)">
           <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Pool total</div>
@@ -14390,7 +14503,7 @@ function renderPerfBonuses() {
               <td style="padding:10px 0;text-align:right;color:var(--text)">${b.goals_hit}/4</td>
               <td style="padding:10px 0;text-align:right;color:var(--primary);font-weight:600">R$ ${formatBRL(b.total_pool || 0)}</td>
               <td style="padding:10px 0;text-align:center">
-                ${b.paid ? `<span class="badge approved">Pago</span>` : `<button class="action-btn approve" style="padding:3px 10px;font-size:10px;cursor:pointer" onclick="markBonusPaid('${b.id}')">Marcar como pago</button>`}
+                ${b.paid ? `<span class="badge approved">Pago</span>` : `<button class="action-btn approve" style="padding:3px 10px;font-size: 11px;cursor:pointer" onclick="markBonusPaid('${b.id}')">Marcar como pago</button>`}
               </td>
             </tr>`;
           }).join('')}
@@ -14656,12 +14769,12 @@ async function runBlingSearch(query) {
     return `<div style="padding:8px 10px;border-bottom:1px solid var(--border);cursor:${already ? 'default' : 'pointer'};display:flex;align-items:center;justify-content:space-between;opacity:${already ? '.5' : '1'};transition:background .1s" ${already ? '' : `onclick="addEnvioProduct(${p.id},'${escHtml(p.nome).replace(/'/g,"\\'")}','${escHtml(p.codigo||'').replace(/'/g,"\\'")}',${p.preco||0},${estoque})" onmouseover="this.style.background='var(--bg-elev)'" onmouseout="this.style.background='none'"`}>
       <div>
         <div style="font-size:12px;font-weight:600;color:var(--text)">${escHtml(p.nome)}</div>
-        <div style="font-size:10px;color:var(--text-dim)">SKU: ${escHtml(p.codigo||'—')} · R$ ${(p.preco||0).toFixed(2)}</div>
+        <div style="font-size: 11px;color:var(--text-dim)">SKU: ${escHtml(p.codigo||'—')} · R$ ${(p.preco||0).toFixed(2)}</div>
       </div>
       <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
         <span style="font-size:12px;font-weight:700;color:${estoque > 0 ? 'var(--success)' : 'var(--danger)'}">${estoque}</span>
-        <span style="font-size:10px;color:var(--text-dim)">un</span>
-        ${already ? '<span style="font-size:10px;color:var(--primary);font-weight:600;margin-left:4px">Adicionado</span>' : ''}
+        <span style="font-size: 11px;color:var(--text-dim)">un</span>
+        ${already ? '<span style="font-size: 11px;color:var(--primary);font-weight:600;margin-left:4px">Adicionado</span>' : ''}
       </div>
     </div>`;
   }).join('');
@@ -14700,10 +14813,10 @@ function renderEnvioSelectedProducts() {
     <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:var(--bg-card);border:1px solid var(--border);margin-bottom:4px">
       <div style="flex:1;min-width:0">
         <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.nome)}</div>
-        <div style="font-size:10px;color:var(--text-dim)">SKU: ${escHtml(p.codigo)} · R$ ${p.preco.toFixed(2)} · Estoque: ${p.estoque}</div>
+        <div style="font-size: 11px;color:var(--text-dim)">SKU: ${escHtml(p.codigo)} · R$ ${p.preco.toFixed(2)} · Estoque: ${p.estoque}</div>
       </div>
       <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-        <label style="font-size:10px;color:var(--text-dim)">Qtd:</label>
+        <label style="font-size: 11px;color:var(--text-dim)">Qtd:</label>
         <input type="number" min="1" max="${p.estoque}" value="${p.qtd}" style="width:50px;padding:3px 5px;border:1px solid var(--border);border-radius:4px;background:var(--bg-elev);color:var(--text);font-size:12px;text-align:center" onchange="updateEnvioProductQtd(${i},this.value)"/>
         <button onclick="removeEnvioProduct(${i})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;padding:2px 4px" title="Remover">×</button>
       </div>
@@ -15554,7 +15667,7 @@ function applyRolePermissions() {
   if (existingBadge) existingBadge.remove();
   const badge = document.createElement('div');
   badge.id = 'roleBadge';
-  badge.style.cssText = 'text-align:center;padding:6px 12px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--primary);opacity:.6;';
+  badge.style.cssText = 'text-align:center;padding:6px 12px;font-size: 11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--primary);opacity:.6;';
   badge.textContent = roleLabels[role] || CURRENT_USER?.role || '';
   const sidebarFoot = document.querySelector('.sidebar-foot');
   if (sidebarFoot) sidebarFoot.parentNode.insertBefore(badge, sidebarFoot);
