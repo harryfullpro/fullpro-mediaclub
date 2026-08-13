@@ -3415,8 +3415,11 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
 
   /* O botao "novo" fica no fluxo: em Agenda sao DOIS nesse mesmo canto, e
      tirar do fluxo empilharia um sobre o outro. O wrap do .page-head acima
-     ja resolve o empurrao no titulo. */
-  .page-head > div:last-child { margin-left: auto; }
+     ja resolve o empurrao no titulo.
+     O :not(:first-child) e essencial: em telas sem botao (Edicao, por
+     exemplo) o proprio bloco do titulo e o ultimo filho, e o margin-left
+     jogava o titulo inteiro para a direita. */
+  .page-head > div:last-child:not(:first-child) { margin-left: auto; }
 
   /* --- check-in: campos em coluna unica, alvos maiores ------------------- */
   .checkin-grid { grid-template-columns: 1fr; gap: 14px; }
@@ -4394,7 +4397,7 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#a855f7" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
           </div>
           <div>
-            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:500">Em edicao</div>
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:500">Em edição</div>
             <div style="font-size:28px;font-weight:700;color:#a855f7;line-height:1.1" id="editStatEdicao">0</div>
           </div>
         </div>
