@@ -4,6 +4,29 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 13/08/2026 — Clips com o mesmo tratamento de Projetos
+
+Mesmo padrão, aplicado à tela de Clips no celular:
+
+- **Filtro em seletor nativo** com a contagem em cada opção (`Todos (6)`,
+  `Planejamento (4)`…). Os quatro chips coloridos vazavam a largura da tela; continuam no
+  computador.
+- **Ações no menu "…"**: Abrir/editar, Ver anúncio no Mercado Livre e Excluir clip. O
+  lápis e o ícone do Mercado Livre ao lado do título ficaram só no computador.
+- Título, status e "…" **numa linha só**, com o mesmo centro vertical.
+- Caixa do produto e bloco de observações mais justos; a prévia das observações passou de
+  5 para 3 linhas.
+- O degradê que corta a prévia era de 40px sobre uma caixa de 60px — apagava duas das três
+  linhas. Passou a 22px.
+
+**Card: 273px → 210-223px.**
+
+**Erro próprio corrigido:** as classes `.fp-clip-*` são declaradas *depois* do bloco
+`@media (max-width: 600px)` no arquivo, então venciam por ordem de fonte e as regras de
+celular não pegavam nada (medido: `max-height` continuava 96px). Resolvido com escopo
+`#view-clips`, que também isola a tela de Edição — ela usa as mesmas classes
+`.edit-card` / `.edit-card-head` e já tinha o layout ajustado.
+
 ## 13/08/2026 — Menu ancorado no botão e mais aperto no card
 
 Quatro pedidos do dono, todos no celular:

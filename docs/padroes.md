@@ -157,6 +157,14 @@ Alvo: o mínimo de linhas sem esconder informação. O card de projeto é a refe
 3. Meta com rótulo e valor **na mesma linha**, em flex — não em grid de colunas iguais.
    O campo de texto longo pega `flex: 1 1 100%`; os curtos dividem a fileira seguinte.
 4. Container que pode vir vazio leva `:empty { display: none }` — senão cobra margem.
+5. Filtro de status vira `<select>` nativo com a contagem na opção; os chips coloridos
+   ficam no `.fp-so-desktop`.
+
+**Antes de escrever a regra de celular, veja onde a classe base está declarada.** Boa
+parte do CSS de módulo (as `.fp-clip-*`, por exemplo) fica **depois** dos blocos `@media`
+no arquivo — com a mesma especificidade, a declaração de baixo vence e a regra de celular
+não pega nada. Escopar com o id da tela (`#view-clips .fp-clip-prod`) resolve os dois
+problemas de uma vez: ganha a especificidade e isola telas que compartilham a classe.
 
 > Grid de duas colunas iguais é a armadilha: espremia "BMW R 1300 GS 2026 (0000000)" em
 > quatro linhas enquanto "13/08/2026" sobrava espaço ao lado.
