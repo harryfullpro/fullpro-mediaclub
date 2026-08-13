@@ -92,3 +92,21 @@ create policy "auth can delete blocked"
   on public.blocked_dates for delete
   to authenticated
   using (true);
+
+-- ============================================================================
+-- Cache do mapeamento SKU -> foto na pasta do Google Drive (edge drive-proxy)
+-- ============================================================================
+create table if not exists public.mc_drive_thumbs (
+  sku            text primary key,
+  folder_id      text,
+  file_id        text,
+  file_name      text,
+  nao_encontrado boolean not null default false,   -- pasta do SKU nao existe
+  thumb_link     text,                             -- thumbnailLink do Drive (expira)
+  thumb_link_em  timestamptz,
+  checado_em     timestamptz not null default now()
+);
+create index if not exists mc_drive_thumbs_checado_idx on public.mc_drive_thumbs (checado_em);
+alter table public.mc_drive_thumbs enable row level security;
+drop policy if exists mc_drive_thumbs_leitura on public.mc_drive_thumbs;
+create policy mc_drive_thumbs_leitura on public.mc_drive_thumbs for select using (true);

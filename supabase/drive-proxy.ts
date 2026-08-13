@@ -45,6 +45,8 @@ const ESCOPO = 'https://www.googleapis.com/auth/drive.readonly';
    pasta (pode ser que a pasta ainda vá ser criada). */
 const VALIDADE_ACHOU_MS = 7 * 24 * 3600 * 1000;
 const VALIDADE_VAZIO_MS = 6 * 3600 * 1000;
+/* o thumbnailLink do Drive expira; 1 h e conservador */
+const VALIDADE_LINK_MS  = 3600 * 1000;
 
 /* ------------------------------------------------------------------ auth --- */
 
@@ -240,16 +242,25 @@ Deno.serve(async (req: Request) => {
       }
       try {
         const info = await driveGet(`/files/${RAIZ}`, { fields: 'id,name,mimeType' });
-        const filhos = await driveGet('/files', {
-          q: `'${RAIZ}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-          fields: 'files(id)',
-          pageSize: '1000',
-        });
+        // Conta paginando: com pageSize fixo o numero parava em 1000 e dava a
+        // impressao de ser o total real.
+        let total = 0, pagina: string | undefined = undefined, voltas = 0;
+        do {
+          const params: Record<string, string> = {
+            q: `'${RAIZ}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+            fields: 'nextPageToken,files(id)',
+            pageSize: '1000',
+          };
+          if (pagina) params.pageToken = pagina;
+          const filhos = await driveGet('/files', params);
+          total += filhos.files?.length ?? 0;
+          pagina = filhos.nextPageToken;
+        } while (pagina && ++voltas < 20);
         return json({
           configurado: true,
           email_conta: sa.client_email,
           pasta: info.name,
-          pastas_de_sku: filhos.files?.length ?? 0,
+          pastas_de_sku: total,
         });
       } catch (e) {
         return json({
@@ -306,18 +317,39 @@ Deno.serve(async (req: Request) => {
       if (!l || l.nao_encontrado || !l.file_id) return new Response(null, { status: 404, headers: CORS });
 
       const tok = await accessToken();
-      // thumbnailLink do proprio Drive: bem mais leve que baixar o original
-      const meta = await driveGet(`/files/${l.file_id}`, { fields: 'thumbnailLink,mimeType' });
-      let resp: Response | null = null;
 
-      if (meta.thumbnailLink) {
+      // Pedir os metadados do arquivo a cada imagem custava uma segunda ida ao
+      // Google (~1,2 s no total). O thumbnailLink fica guardado por 1 h; se
+      // expirar antes, o fallback abaixo cobre.
+      let thumbLink: string | null = null;
+      const linkFresco = l.thumb_link && l.thumb_link_em &&
+        (Date.now() - Date.parse(l.thumb_link_em)) < VALIDADE_LINK_MS;
+
+      if (linkFresco) {
+        thumbLink = l.thumb_link;
+      } else {
+        const meta = await driveGet(`/files/${l.file_id}`, { fields: 'thumbnailLink,mimeType' });
+        thumbLink = meta.thumbnailLink || null;
+        if (thumbLink) {
+          await cacheGravar({
+            sku: l.sku || sku.trim(),
+            folder_id: l.folder_id, file_id: l.file_id, file_name: l.file_name,
+            nao_encontrado: false,
+            thumb_link: thumbLink,
+            thumb_link_em: new Date().toISOString(),
+          });
+        }
+      }
+
+      let resp: Response | null = null;
+      if (thumbLink) {
         const tamanho = full ? '=s1600' : '=s320';
-        const link = meta.thumbnailLink.replace(/=s\d+(-c)?$/, '') + tamanho;
+        const link = thumbLink.replace(/=s\d+(-c)?$/, '') + tamanho;
         resp = await fetch(link, { headers: { Authorization: 'Bearer ' + tok } });
         if (!resp.ok) resp = null;
       }
       if (!resp) {
-        // sem thumbnail (arquivo recem-enviado, por exemplo): serve o original
+        // link expirado ou arquivo sem thumbnail: serve o original
         resp = await fetch(`${DRIVE}/files/${l.file_id}?alt=media&supportsAllDrives=true`, {
           headers: { Authorization: 'Bearer ' + tok },
         });
@@ -328,7 +360,7 @@ Deno.serve(async (req: Request) => {
         status: 200,
         headers: {
           ...CORS,
-          'Content-Type': resp.headers.get('content-type') || meta.mimeType || 'image/jpeg',
+          'Content-Type': resp.headers.get('content-type') || 'image/jpeg',
           // a foto de um SKU muda raramente; 1 dia no navegador economiza muito
           'Cache-Control': 'public, max-age=86400',
         },
