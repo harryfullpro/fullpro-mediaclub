@@ -16002,6 +16002,11 @@ async function initApp() {
     const activeBtn = document.querySelector(`.nav-item[data-view="${viewName}"]`);
     if (activeBtn) activeBtn.classList.add('active');
 
+    // Volta ao topo. Este e o roteador que realmente roda: ele clona os
+    // nav-items e descarta os listeners registrados antes, entao o reset
+    // precisa estar aqui — nos handlers anteriores ele nunca era executado.
+    if (typeof fpResetScroll === 'function') fpResetScroll();
+
     // Push to browser history (unless we're restoring from popstate)
     if (pushHistory !== false) {
       const newHash = '#' + viewName;
