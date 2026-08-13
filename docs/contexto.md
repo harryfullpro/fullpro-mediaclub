@@ -1,0 +1,92 @@
+# Contexto e decisões
+
+## O que é
+
+Painel interno do **FullPro Media Club** — o estúdio de filmagem automotiva (motos) da
+FullPro. Não é um produto para clientes: é a ferramenta de trabalho da equipe.
+
+- **Landing pública:** `mediaclub.fullpro.com.br/` — onde o público pede agendamento
+- **Painel:** `mediaclub.fullpro.com.br/admin` — onde a equipe trabalha
+
+## Quem usa e onde
+
+Isso decide quase toda escolha de interface:
+
+- **No computador**, no escritório: planejamento, edição, acompanhamento de métricas.
+  Tela grande, mouse, tempo para navegar.
+- **No celular**, na garagem e no pátio: check-in e check-out de moto, conferir agenda.
+  Tela pequena, uma mão, às vezes de luva, sinal fraco.
+
+Operadores cadastrados em `mc_admin_users`, com permissão por módulo. Papéis vistos em
+uso: Administrador, Filmmaker, Mecânico/Apresentador.
+
+## Fluxo de trabalho que o painel cobre
+
+```
+Solicitação (landing)  →  Agenda  →  Check-in da moto  →  Projeto (roteiro, gravação)
+                                                              ↓
+                          Debriefing  ←  Publicação  ←  Edição  →  Check-out
+                                              ↓
+                                     Metas e bonificação
+```
+
+Módulos: Dashboard · Solicitações · Agenda · Check-in/Check-out · Projetos · Edição ·
+Clips · Debriefing · Metas · Meus Posts · Influenciadores · Bonificação · Templates
+WhatsApp · Exportar · Usuários · Integrações · Meu perfil.
+
+---
+
+## Decisões do dono (Harry)
+
+Ordem cronológica. **Estas não são suposições — foram ditas explicitamente.**
+
+### O computador está bom; o problema é o celular
+> *"Eu preciso que tu aplique essas alterações recentes somente em dispositivos móveis.
+> Olha como tá ficando no pc. Eu quero que volte a versão do pc que tava excelente."*
+
+**A regra mais importante do projeto.** Melhoria de interface entra por padrão só no
+celular. Mexer no computador exige pedido explícito. Ver `padroes.md` → duas interfaces.
+
+### Filtros
+- Devem ser **caixa suspensa**, não fileira de chips (no celular)
+- **Sem container** em volta — direto sobre o fundo da tela
+- Ordem fixa: **status → destino → ordenar**, os três na mesma linha
+- Rótulo curto ("Destino", não "Filtrar por destino") para os três caberem
+- Estilo **nativo do iPhone**, não componente próprio
+
+Consequência aceita: no celular o filtro virou escolha única, porque `<select multiple>`
+não abre o seletor nativo do iOS. No computador segue múltipla escolha pelos chips.
+
+### Ações das listagens
+- Consolidadas num **menu "…"** por item — mas **só no celular**
+- No computador, os botões de ícone continuam à vista
+
+### Menu lateral
+- Espaçamento entre itens deve ser **bem reduzido**, para economizar tela
+
+### Fotos de produto (Google Drive)
+- A foto do **Drive tem prioridade** sobre a do Bling
+- Clicar na foto **amplia ali mesmo** (lightbox), não abre o Drive
+- A pasta é **privada**, lida por conta de serviço
+
+### Modo de trabalho
+> *"pode fazer absolutamente tudo por conta, alterações, deploy, debugs e etc"*
+
+Autorização permanente para editar, publicar e depurar sem pedir confirmação a cada
+passo. **Continua valendo.** O que ele quer de volta é o resultado e o que mudou.
+
+> *"vamos por etapas"*
+
+Prefere entregas pequenas e verificáveis a uma reforma grande de uma vez. Ele testa no
+celular real e manda print.
+
+---
+
+## Como o dono valida
+
+Manda **print do iPhone**. É a fonte de verdade mais confiável do projeto — vários
+problemas só apareceram assim (thumbnail vazia por rede lenta, cabeçalho de card
+quebrado, filtros ocupando meia tela).
+
+O Chrome do agente não desce abaixo de ~570px de largura de janela; para chegar a 390px
+é preciso o modo dispositivo do DevTools. Ver `ambiente.md`.
