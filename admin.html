@@ -925,6 +925,7 @@
   .proj-link-item a:hover { text-decoration: underline; }
   .proj-link-rm { background: none; border: none; color: rgba(167,139,250,.5); cursor: pointer; font-size: 14px; padding: 0 4px; }
   .proj-link-rm:hover { color: var(--danger); }
+  .proj-dests { margin-bottom: 8px; }
   .proj-meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin: 10px 0; }
   .proj-meta-item { font-size: 12px; }
   .proj-meta-item .k { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
@@ -3478,28 +3479,40 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
      fazia sentido quando eram 5 botoes, mas com o menu "…" eles cabem na
      mesma linha. Do jeito antigo, os controles ficavam soltos no meio do
      card. */
+  .proj-card { padding: 12px; }
   .proj-card-head {
     flex-direction: row !important;
     align-items: flex-start !important;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;          /* com wrap os controles caiam para uma 2a linha */
     gap: 8px !important;
     margin-bottom: 8px;
   }
   .proj-card-head h4 {
-    flex: 1 1 auto; min-width: 0;
-    font-size: 15px; line-height: 1.3;
+    flex: 1 1 0;                /* base 0: o titulo cede espaco em vez de empurrar */
+    min-width: 0;
+    font-size: 14.5px; line-height: 1.3;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
-  /* o grupo menu + status fica encostado a direita, na mesma linha do titulo */
+  /* o grupo status + menu fica encostado a direita, na mesma linha do titulo */
   .proj-card-head > div:last-child {
     flex: 0 0 auto;
     margin-left: auto;
     align-items: center;
+    gap: 4px !important;        /* !important: o gap vem no style= do elemento */
   }
+  /* o "…" no canto superior direito; o status vem antes dele */
+  .proj-card-head .fp-so-mobile { order: 2; }
+  .proj-card-head .proj-status-select { order: 1; margin-left: 0 !important; }
 
-  /* meta mais densa: rotulo e valor na mesma linha, dois pares por fileira */
-  .proj-meta { gap: 6px 12px; margin: 8px 0; }
-  .proj-meta-item { display: flex; align-items: baseline; gap: 6px; font-size: 12.5px; }
+  /* destinos colados no titulo */
+  .proj-dests { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+
+  /* meta: rotulo e valor na mesma linha. Moto/Produto ocupa a fileira toda —
+     e o unico texto longo, e em duas colunas quebrava em quatro linhas.
+     Data e Custos, que sao curtos, dividem a fileira de baixo. */
+  .proj-meta { display: flex; flex-wrap: wrap; gap: 2px 14px; margin: 0; }
+  .proj-meta-item { display: flex; align-items: baseline; gap: 6px; font-size: 12.5px; flex: 0 1 auto; }
+  .proj-meta-item:first-child { flex: 1 1 100%; }
   .proj-meta-item .k { flex: 0 0 auto; font-size: 10.5px; }
   .proj-meta-item .v { margin-top: 0; min-width: 0; overflow-wrap: anywhere; }
 
@@ -7372,7 +7385,7 @@ function renderProjects() {
         </div>
       </div>
       ${p.status === 'a_publicar' ? `<div class="proj-rating" id="projRating_${p.id}">${projRatingHtml(p.id, [])}</div>` : ''}
-      <div style="margin-bottom:8px">${dests || '<span style="font-size:11px;color:var(--text-muted)">Sem destino definido</span>'}</div>
+      <div class="proj-dests">${dests || '<span style="font-size:11px;color:var(--text-muted)">Sem destino definido</span>'}</div>
       <div class="proj-meta">
         <div class="proj-meta-item"><div class="k">Moto / Produto</div><div class="v">${escHtml(p.moto || '—')}</div></div>
         <div class="proj-meta-item"><div class="k">Data</div><div class="v">${p.production_date ? prettyDate(p.production_date) : '—'}</div></div>
