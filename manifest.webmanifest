@@ -1,0 +1,53 @@
+{
+  "name": "FullPro Media Club — Painel",
+  "short_name": "Media Club",
+  "description": "Painel de produção do estúdio: agenda, check-in de motos, pipeline de projetos e performance.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "/admin",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0a0b",
+  "theme_color": "#0a0a0b",
+  "icons": [
+    {
+      "src": "/assets/pwa/icone-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/pwa/icone-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/pwa/icone-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Check-in / Check-out",
+      "short_name": "Check-in",
+      "description": "Registrar entrada ou saída de moto",
+      "url": "/admin#checkin"
+    },
+    {
+      "name": "Agenda",
+      "short_name": "Agenda",
+      "description": "Ver os próximos agendamentos",
+      "url": "/admin#calendar"
+    },
+    {
+      "name": "Projetos",
+      "short_name": "Projetos",
+      "description": "Pipeline de produção",
+      "url": "/admin#projects"
+    }
+  ]
+}

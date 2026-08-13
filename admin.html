@@ -2,8 +2,17 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Admin · FullPro Media Club</title>
+<!-- Instalavel no celular: a equipe usa isso no patio, nao digitando a URL. -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0a0a0b">
+<meta name="color-scheme" content="dark light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Media Club">
+<link rel="apple-touch-icon" href="/assets/pwa/icone-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/pwa/icone-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -3214,6 +3223,15 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--accen
   .fp-toast, .fp-confirm-ov, .fp-confirm { transition: none; }
 }
 
+/* --- contagem ao lado dos filtros --------------------------------------- */
+.fp-lista-contagem {
+  font-size: 12px; color: var(--text-muted); font-weight: 600;
+  margin-left: auto; white-space: nowrap; padding-right: 4px;
+}
+.filter-bar { flex-wrap: wrap; align-items: center; gap: 8px; }
+/* a coluna "Recebida" e contexto, nao o dado principal */
+#reqTable td.sub { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; }
+
 /* --- indicador offline -------------------------------------------------- */
 .fp-offline {
   position: fixed; left: 50%; transform: translateX(-50%);
@@ -3229,6 +3247,12 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
 </style>
 </head>
 <body>
+
+<a class="fp-skip" href="#conteudo">Pular para o conteúdo</a>
+<div class="fp-offline" id="fpOffline" role="status" aria-live="polite">
+  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/><path d="M5 12.55a10.94 10.94 0 015.17-2.39"/><path d="M10.71 5.05A16 16 0 0122.58 9"/><path d="M1.42 9a15.91 15.91 0 014.7-2.88"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+  Sem conexão — o que você salvar agora pode não subir
+</div>
 
 <!-- LOGIN -->
 <div id="login" class="login">
@@ -3379,7 +3403,7 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
     </div>
   </aside>
 
-  <main>
+  <main id="conteudo" tabindex="-1">
     <!-- DASHBOARD VIEW -->
     <div id="view-dashboard">
       <div class="page-head">
@@ -3424,18 +3448,24 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
         <button class="filter-btn" data-filter="pending">Pendentes</button>
         <button class="filter-btn" data-filter="approved">Aprovadas</button>
         <button class="filter-btn" data-filter="rejected">Rejeitadas</button>
+        <label class="fp-busca">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="search" placeholder="Buscar nome, placa ou moto" aria-label="Buscar solicitações por nome, placa ou moto" oninput="buscarRequests(this.value)">
+        </label>
+        <span id="reqCount" class="fp-lista-contagem"></span>
       </div>
 
       <div class="table-wrap">
-        <table>
+        <table id="reqTable">
           <thead>
             <tr>
-              <th>Data</th>
-              <th>Solicitante</th>
-              <th>Moto</th>
-              <th>Modalidade</th>
+              <th class="fp-sortable" data-campo="date" aria-sort="ascending" onclick="ordenarRequests('date')" title="Ordenar pela data do agendamento">Agendada <span class="fp-seta">▲</span></th>
+              <th class="fp-sortable" data-campo="createdAt" aria-sort="none" onclick="ordenarRequests('createdAt')" title="Ordenar pela data em que a solicitação chegou">Recebida <span class="fp-seta">▲</span></th>
+              <th class="fp-sortable" data-campo="nome" aria-sort="none" onclick="ordenarRequests('nome')">Solicitante <span class="fp-seta">▲</span></th>
+              <th class="fp-sortable" data-campo="moto" aria-sort="none" onclick="ordenarRequests('moto')">Moto <span class="fp-seta">▲</span></th>
+              <th class="fp-sortable" data-campo="modalidade" aria-sort="none" onclick="ordenarRequests('modalidade')">Modalidade <span class="fp-seta">▲</span></th>
               <th>Brinde</th>
-              <th>Status</th>
+              <th class="fp-sortable" data-campo="status" aria-sort="none" onclick="ordenarRequests('status')">Status <span class="fp-seta">▲</span></th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -4829,6 +4859,101 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
 <script src="config.js"></script>
 <script src="moto-catalog.js"></script>
 <script>
+/* ==========================================================================
+   REDE — deduplicacao e cache curto das leituras
+   Cada troca de tela refazia as consultas do zero. Em 2 minutos de navegacao
+   normal a lista de usuarios foi buscada 25 vezes (pior chamada: 3,9 s) e o
+   proxy do Bling 23 vezes — 96 requisicoes no total.
+
+   Duas camadas, ambas conservadoras:
+   1. Deduplicacao em voo: duas chamadas GET identicas ao mesmo tempo passam a
+      dividir a mesma resposta. Nao muda semantica nenhuma.
+   2. Cache com validade curta (20 s) so para GET de leitura. Qualquer escrita
+      (POST/PATCH/PUT/DELETE) limpa o cache inteiro, entao o que voce acabou de
+      salvar sempre aparece.
+   ========================================================================== */
+(function(){
+  const VALIDADE_MS = 20000;
+  const emVoo = new Map();   // url -> Promise
+  const cache = new Map();   // url -> { quando, corpo, status, headers }
+  const nativo = window.fetch.bind(window);
+
+  function ehLeituraCacheavel(url, opcoes){
+    const metodo = ((opcoes && opcoes.method) || 'GET').toUpperCase();
+    if (metodo !== 'GET') return false;
+    if (!/\/rest\/v1\/|\/functions\/v1\//.test(url)) return false;
+    // auth e realtime nunca entram em cache
+    if (/\/auth\/v1\/|realtime/.test(url)) return false;
+    return true;
+  }
+
+  function ehEscrita(url, opcoes){
+    const metodo = ((opcoes && opcoes.method) || 'GET').toUpperCase();
+    return metodo !== 'GET' && metodo !== 'HEAD' && /supabase|\/rest\/v1\/|\/functions\/v1\//.test(url);
+  }
+
+  function chave(url, opcoes){
+    // o corpo importa nas Edge Functions chamadas por GET com parametros
+    const extra = (opcoes && typeof opcoes.body === 'string') ? '|' + opcoes.body : '';
+    return url + extra;
+  }
+
+  window.fpLimparCacheRede = function(){ cache.clear(); };
+
+  window.fetch = function(entrada, opcoes){
+    const url = (typeof entrada === 'string') ? entrada
+              : (entrada && entrada.url) ? entrada.url : String(entrada);
+
+    if (ehEscrita(url, opcoes)) {
+      cache.clear();                       // o que foi escrito precisa reaparecer
+      return nativo(entrada, opcoes);
+    }
+
+    if (!ehLeituraCacheavel(url, opcoes)) return nativo(entrada, opcoes);
+
+    const k = chave(url, opcoes);
+    const agora = Date.now();
+
+    const guardado = cache.get(k);
+    if (guardado && (agora - guardado.quando) < VALIDADE_MS) {
+      return Promise.resolve(new Response(guardado.corpo, {
+        status: guardado.status,
+        statusText: guardado.statusText,
+        headers: guardado.headers
+      }));
+    }
+
+    if (emVoo.has(k)) {
+      return emVoo.get(k).then(function(r){ return r.clone(); });
+    }
+
+    const p = nativo(entrada, opcoes).then(function(resp){
+      if (resp.ok) {
+        resp.clone().text().then(function(txt){
+          cache.set(k, {
+            quando: Date.now(), corpo: txt,
+            status: resp.status, statusText: resp.statusText,
+            headers: new Headers(resp.headers)
+          });
+          // teto simples para o cache nao crescer sem limite
+          if (cache.size > 120) {
+            const maisVelha = cache.keys().next().value;
+            cache.delete(maisVelha);
+          }
+        }).catch(function(){});
+      }
+      emVoo.delete(k);
+      return resp;
+    }).catch(function(e){
+      emVoo.delete(k);
+      throw e;
+    });
+
+    emVoo.set(k, p);
+    return p.then(function(r){ return r.clone(); });
+  };
+})();
+
 const sb = supabase.createClient(
   window.FULLPRO_CONFIG.SUPABASE_URL,
   window.FULLPRO_CONFIG.SUPABASE_ANON_KEY
@@ -5073,6 +5198,51 @@ function prettyDT(iso) {
   const d = new Date(iso);
   return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
 }
+
+/* ==========================================================================
+   OFFLINE — a garagem e onde o sinal cai, e e onde o check-in acontece.
+   ========================================================================== */
+(function(){
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('/sw.js').then(function(reg){
+        // Deploy novo enquanto a aba esta aberta: avisa em vez de trocar por baixo.
+        reg.addEventListener('updatefound', function(){
+          const novo = reg.installing;
+          if (!novo) return;
+          novo.addEventListener('statechange', function(){
+            if (novo.state === 'installed' && navigator.serviceWorker.controller) {
+              fpToast('Nova versão do painel disponível.', 'info', {
+                duracao: 0,
+                acao: { texto: 'Atualizar', onClick: function(){
+                  novo.postMessage('atualizar-agora');
+                  location.reload();
+                }}
+              });
+            }
+          });
+        });
+      }).catch(function(e){ console.warn('[SW] não registrado:', e && e.message); });
+    });
+  }
+
+  function marcaConexao(){
+    const off = !navigator.onLine;
+    document.body.classList.toggle('fp-esta-offline', off);
+    if (off) {
+      fpToast('Você está sem conexão. Os dados na tela são os últimos carregados.', 'warn', { duracao: 6000 });
+    } else if (document.body.dataset.fpJaEsteveOffline === '1') {
+      if (typeof fpLimparCacheRede === 'function') fpLimparCacheRede();
+      fpToast('Conexão de volta.', 'ok', { duracao: 3000 });
+    }
+    if (off) document.body.dataset.fpJaEsteveOffline = '1';
+  }
+  window.addEventListener('online', marcaConexao);
+  window.addEventListener('offline', marcaConexao);
+  document.addEventListener('DOMContentLoaded', function(){
+    if (!navigator.onLine) document.body.classList.add('fp-esta-offline');
+  });
+})();
 
 /* "ha 1685h" nao diz nada para quem le. Converte para a maior unidade util. */
 function fpTempoRelativo(horas){
@@ -5428,31 +5598,96 @@ function renderStats() {
   document.getElementById('sApproved').textContent = approved.length;
   document.getElementById('sMonth').textContent = monthCount.length;
   document.getElementById('sTotal').textContent = all.length;
-  document.getElementById('cntReq').textContent = pending.length;
+  // Badge vermelho com "0" dizia que nao havia nada a fazer usando a cor de
+  // alarme. Sem pendencia, o badge some.
+  const badgeReq = document.getElementById('cntReq');
+  if (badgeReq) {
+    badgeReq.textContent = pending.length;
+    badgeReq.style.display = pending.length ? '' : 'none';
+    badgeReq.setAttribute('aria-label', pending.length
+      ? pending.length + (pending.length === 1 ? ' solicitação pendente' : ' solicitações pendentes')
+      : '');
+  }
 }
+
+/* Ordenacao da tabela de solicitacoes.
+   Antes era fixa por data de recebimento, enquanto a coluna em destaque mostra
+   a data do agendamento — a lista parecia baguncada (19/08, 17/08, 18/08...). */
+let reqOrdemCampo = 'date';
+let reqOrdemAsc = true;
+let reqBusca = '';
+
+function ordenarRequests(campo) {
+  if (reqOrdemCampo === campo) reqOrdemAsc = !reqOrdemAsc;
+  else { reqOrdemCampo = campo; reqOrdemAsc = campo !== 'createdAt'; }
+  renderRequests();
+}
+window.ordenarRequests = ordenarRequests;
+
+function buscarRequests(termo) {
+  reqBusca = String(termo || '').trim().toLowerCase();
+  renderRequests();
+}
+window.buscarRequests = buscarRequests;
 
 function renderRequests() {
   renderStats();
   const all = getRequests();
-  const filtered = currentFilter === 'all' ? all : all.filter(r => r.status === currentFilter);
-  filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  let filtered = currentFilter === 'all' ? all : all.filter(r => r.status === currentFilter);
+
+  if (reqBusca) {
+    filtered = filtered.filter(r =>
+      [r.nome, r.moto, r.placa, r.whatsapp].some(v =>
+        String(v || '').toLowerCase().includes(reqBusca))
+    );
+  }
+
+  const rotuloModalidade = r => (r.modalidade === 'estudio' ? 'Estúdio' : 'Retirada');
+  const rotuloStatus = r => (r.status === 'pending' ? 'Pendente' : r.status === 'approved' ? 'Aprovada' : 'Rejeitada');
+  const chaves = {
+    date:       r => r.date || '',
+    createdAt:  r => r.createdAt || '',
+    nome:       r => String(r.nome || '').toLowerCase(),
+    moto:       r => String(r.moto || '').toLowerCase(),
+    modalidade: rotuloModalidade,
+    status:     rotuloStatus,
+  };
+  const chave = chaves[reqOrdemCampo] || chaves.date;
+  filtered = filtered.slice().sort((a, b) => {
+    const va = chave(a), vb = chave(b);
+    if (va < vb) return reqOrdemAsc ? -1 : 1;
+    if (va > vb) return reqOrdemAsc ? 1 : -1;
+    return 0;
+  });
+
+  document.querySelectorAll('#reqTable th.fp-sortable').forEach(th => {
+    const meu = th.dataset.campo === reqOrdemCampo;
+    th.setAttribute('aria-sort', meu ? (reqOrdemAsc ? 'ascending' : 'descending') : 'none');
+    const seta = th.querySelector('.fp-seta');
+    if (seta) seta.textContent = meu ? (reqOrdemAsc ? '▲' : '▼') : '▲';
+  });
+
+  const cont = document.getElementById('reqCount');
+  if (cont) {
+    cont.textContent = filtered.length === all.length
+      ? all.length + (all.length === 1 ? ' solicitação' : ' solicitações')
+      : filtered.length + ' de ' + all.length;
+  }
 
   const tbody = document.getElementById('reqTableBody');
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="empty">
-      <h3>Nenhuma solicitação encontrada</h3>
-      <p>As solicitações enviadas pela landing page aparecerão aqui.</p>
+    tbody.innerHTML = `<tr><td colspan="8" class="empty">
+      <h3>${reqBusca ? 'Nada encontrado para "' + escHtml(reqBusca) + '"' : 'Nenhuma solicitação encontrada'}</h3>
+      <p>${reqBusca ? 'Tente outro nome, placa ou modelo de moto.' : 'As solicitações enviadas pela landing page aparecerão aqui.'}</p>
     </td></tr>`;
     return;
   }
 
   tbody.innerHTML = filtered.map(r => `
     <tr>
-      <td>
-        <strong>${prettyDate(r.date)}</strong>
-        <div class="sub">Recebida ${prettyDT(r.createdAt)}</div>
-      </td>
+      <td><strong>${prettyDate(r.date)}</strong></td>
+      <td class="sub">${prettyDT(r.createdAt)}</td>
       <td>
         <strong>${r.nome}</strong>
         <div class="sub">${r.whatsapp}</div>
@@ -7755,8 +7990,25 @@ function renderShotsReadOnly(shots, si) {
   // ---------- Data ----------
   async function loadClips(){
     if (typeof sb === 'undefined' || !sb) return;
+    const el = document.getElementById('clipsList');
+    if (el && !(window.CLIPS || []).length) {
+      el.innerHTML = '<div class="fp-skel"><div class="fp-skel-linha"></div><div class="fp-skel-linha"></div><div class="fp-skel-linha"></div></div>';
+    }
     const res = await sb.from('mc_clips').select('*').order('created_at', { ascending:false });
-    if (res.error){ console.warn('loadClips:', res.error.message); return; }
+    if (res.error){
+      // Antes o erro so aparecia no console e a tela ficava em branco, sem
+      // nenhuma pista para quem estava usando.
+      console.warn('loadClips:', res.error.message);
+      if (el) {
+        el.innerHTML = '<div class="fp-vazio">'
+          + '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+          + '<h3>Não foi possível carregar os clips</h3>'
+          + '<p>' + esc(res.error.message) + '</p>'
+          + '<button class="fp-vazio-acao" onclick="loadClips()">Tentar de novo</button>'
+          + '</div>';
+      }
+      return;
+    }
     window.CLIPS = res.data || [];
     renderClips();
     fpRefreshClipsBling();
