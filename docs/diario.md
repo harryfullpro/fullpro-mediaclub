@@ -4,6 +4,31 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 13/08/2026 — Edição com o mesmo tratamento
+
+Tudo em CSS, sem tocar na marcação — o módulo já tinha o menu "…".
+
+- **Painel de números: 97px → 62px.** Eram dois cartões em cima e um embaixo, cada um com
+  ícone de 42px. Agora são três numa fileira de 118px, sem o ícone (não cabe) e com o
+  número em 20px. A barra de progresso passou a ocupar a largura do cartão.
+- **Cabeçalho numa linha:** título + status + "…", mesmo centro vertical; os chips de
+  destino descem para a linha seguinte.
+- **Meta: três caixas de 52px → duas fileiras de 15px.** Moto/Produto ocupa a largura
+  toda; Data e Links dividem a de baixo.
+
+**Card: 463px → 302px.** Nos oito projetos em edição: 3.597px → 2.521px de rolagem.
+
+**A técnica que destravou o cabeçalho:** os chips de destino ficam *dentro* do bloco do
+título, então a ordem natural jogava as ações para uma terceira linha. `display: contents`
+no bloco do título e em `.edit-actions` promove título, chips, status e "…" a filhos
+diretos do flex — aí basta `order` e `flex-basis: 100%` nos chips para montar as duas
+linhas. Sem isso seria preciso mexer na marcação, o que mudaria o computador.
+
+**Nota de verificação:** a janela do Chrome estava em 1546px nesta rodada e o
+`resize_window` não pegou, então a conferência foi feita aplicando as regras do próprio
+bloco `@media` sem a media query, com a lista limitada a 366px. O computador foi conferido
+na largura real: chips, ícones, paddings e margens idênticos aos de antes.
+
 ## 13/08/2026 — Clips com o mesmo tratamento de Projetos
 
 Mesmo padrão, aplicado à tela de Clips no celular:

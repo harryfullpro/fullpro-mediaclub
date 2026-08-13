@@ -160,6 +160,12 @@ Alvo: o mínimo de linhas sem esconder informação. O card de projeto é a refe
 5. Filtro de status vira `<select>` nativo com a contagem na opção; os chips coloridos
    ficam no `.fp-so-desktop`.
 
+**`display: contents` é a saída quando a marcação não pode mudar.** Em Edição os chips de
+destino ficam dentro do bloco do título, o que empurrava as ações para uma terceira linha.
+Aplicar `display: contents` no bloco do título e em `.edit-actions` promove título, chips,
+status e "…" a filhos diretos do flex do cabeçalho — daí `order` e `flex-basis: 100%`
+montam as duas linhas. Mexer no HTML resolveria também, mas mudaria o computador.
+
 **Antes de escrever a regra de celular, veja onde a classe base está declarada.** Boa
 parte do CSS de módulo (as `.fp-clip-*`, por exemplo) fica **depois** dos blocos `@media`
 no arquivo — com a mesma especificidade, a declaração de baixo vence e a regra de celular

@@ -9,9 +9,9 @@ Ordenado por impacto. Atualizar sempre que algo for concluído ou aparecer.
 ### Auditoria mobile — telas que faltam olhar
 Já tratadas: Projetos, Clips, Edição, Solicitações, Check-in, Integrações.
 
-Projetos e Clips já receberam o pacote completo (filtro em seletor, ações no menu "…",
-card compacto). **Solicitações e Edição ainda estão no meio do caminho** — têm o menu
-"…", mas não passaram pelo aperto de card nem pelo filtro em seletor.
+Projetos, Clips e Edição já receberam o pacote completo (filtro em seletor quando há
+filtro, ações no menu "…", card compacto). **Solicitações ainda está no meio do caminho**
+— tem o menu "…", mas não passou pelo aperto de card nem pelo filtro em seletor.
 
 **Faltam ver em largura de celular:** Agenda (calendário), Influenciadores (5 tabelas e
 abas), Metas, Debriefing, Usuários.
