@@ -6,15 +6,23 @@ Ordenado por impacto. Atualizar sempre que algo for concluído ou aparecer.
 
 ## Em andamento
 
-### Meta Pixel — dois passos que só o dono pode dar
-O pixel `Pixel Media Club` (`1794140864938355`) já está na landing e disparando. Faltam,
-no Gerenciador de Negócios:
+### Campanha do Meta Ads — só falta o vídeo
+Rascunho `FullPro Media Club Ads` na conta `FullPro - Conta de anúncios` (834166548630365),
+conjunto `Landing page`, anúncio `video-joinville-01`. Tudo configurado: Joinville + 40 km,
+interesses de moto, 3 textos, 3 títulos, descrição, URL com UTMs, CTA "Agendar agora",
+formato travado em Mídia única. **Falta subir o vídeo** (9:16 e 4:5) em Criativo do
+anúncio → Mídia → Carregar.
 
-1. **Verificar o domínio** `mediaclub.fullpro.com.br` em Segurança da marca → Domínios.
-   Sem isso a Mensuração Agregada de Eventos não deixa priorizar o `Lead`, e a atribuição
-   no iOS fica bem pior. A verificação é por meta tag no `<head>` — o código entra junto
-   ao bloco `FP-META-PIXEL`.
-2. **Priorizar o `Lead`** na Mensuração Agregada de Eventos, depois da verificação.
+Dois bloqueios que não são meus de resolver:
+- **Limite de gastos da conta quase atingido** — avisado no painel; sem resolver, a
+  campanha não veicula mesmo publicada. É cobrança, só admin.
+- **4 rascunhos pendentes** na conta compartilham o botão "Conferir e publicar" — conferir
+  o que vai junto antes de publicar.
+
+### Verificar o domínio fullpro.com.br (loja)
+O `mediaclub.fullpro.com.br` já está Verified. O `fullpro.com.br` continua **Not Verified**
+— isso degrada a atribuição no iOS dos anúncios da loja. Caminho: meta tag no `<head>` via
+Breakdance Custom Code, ou TXT no DNS da GoDaddy. Fora do escopo do Media Club.
 
 ### Decidir sobre banner de consentimento (LGPD)
 A landing não tem banner e o pixel dispara antes de qualquer opt-in. É o padrão do mercado

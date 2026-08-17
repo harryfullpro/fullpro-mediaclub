@@ -4,6 +4,29 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 17/08/2026 — Verificação de domínio no Meta + campanha montada
+
+Meta tag `facebook-domain-verification` no `<head>` da home. **Status: Verified.**
+
+A tag não pode ser injetada por JS — o rastreador do Meta lê o HTML servido. Por isso
+ela fica no `<head>` estático, ao lado do bloco do pixel. Não remover.
+
+Detalhe que confunde: o diálogo de criar domínio afirma que "só pode verificar o domínio
+raiz, não um subdomínio", mas o `mediaclub.fullpro.com.br` foi adicionado e verificou
+normalmente por meta tag. O `fullpro.com.br` segue **Not Verified** (pendência da loja).
+
+Campanha `FullPro Media Club Ads` (rascunho, conta 834166548630365): segmentação, textos,
+URL com UTMs e CTA prontos. Só falta o vídeo. Ver `pendencias.md`.
+
+Um achado que valeu: a prévia mostrava carrossel/coleção com **produtos da loja**
+(pastilhas de freio) anexados ao anúncio, porque o aprimoramento "Produtos" e os formatos
+Carrossel/Coleção vinham ativos. Desativados — mostrar peça de freio para quem está sendo
+convidado a emprestar a moto não faz sentido. Custo: a pontuação da campanha caiu de 77
+para 59, porque o Meta estima +10,8% e +6,8% de conversão com esses formatos. Reversível
+em um clique se o dono discordar.
+
+---
+
 ## 17/08/2026 — Meta Pixel na landing pública
 
 Para a campanha de vídeo no Meta Ads mirando Joinville e região (público: interesse em
