@@ -4,6 +4,45 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 17/08/2026 — Meta Pixel na landing pública
+
+Para a campanha de vídeo no Meta Ads mirando Joinville e região (público: interesse em
+motos), a landing precisava rastrear conversão. Bloco `FP-META-PIXEL` no `index.html`.
+
+**Pixel próprio, não o do e-commerce.** Criado o conjunto de dados `Pixel Media Club`
+(ID `1794140864938355`) no portfólio FullPro Ltda, conectado à conta de anúncios
+`FullPro - Conta de anúncios` (834166548630365). O `Pixel FullPro (Main)`
+(`1012196736930876`) continua exclusivo da loja: misturar os dois colocaria quem só quer
+emprestar a moto nos públicos de remarketing de quem compra peça, e vice-versa.
+
+Na criação, o checkbox "Adicionar a API de Conversões" vinha marcado e afetaria **todos os
+conjuntos, novos e existentes** — desmarcado, porque mexeria também no pixel da loja.
+
+**Só na `index.html`.** O `admin.html` não leva pixel: a equipe usando o painel entraria
+no público da campanha.
+
+Eventos:
+
+| Evento | Quando | Tipo |
+|---|---|---|
+| `PageView` | carga da página | padrão |
+| `ClicouAgendar` | clique nas CTAs `#agendar` | custom |
+| `Contact` | clique no link do WhatsApp | padrão |
+| `Lead` | **depois** do insert em `mc_requests` retornar sem erro | padrão |
+
+`Lead` fica depois do insert de propósito: se o Supabase falha, o evento não dispara e a
+métrica do Meta bate com as solicitações reais. O payload não leva nome, WhatsApp nem
+e-mail — só modalidade, moto e brinde.
+
+`ClicouAgendar` existe porque `Lead` vai demorar a ter volume (o Meta precisa de ~15-25
+por semana para otimizar); serve de sinal de meio de funil nesse período.
+
+**Como desligar:** deixar `window.FP_PIXEL_ID` vazio. O guard (`/^[0-9]{10,}$/`) não
+carrega nada e a página segue igual — testado. `window.fpTrack` nasce como no-op, então
+nenhuma chamada quebra o fluxo se o pixel não carregar.
+
+O `sw.js` não interfere: ignora requisição cross-origin (linha 60).
+
 ## 13/08/2026 — Edição com o mesmo tratamento
 
 Tudo em CSS, sem tocar na marcação — o módulo já tinha o menu "…".

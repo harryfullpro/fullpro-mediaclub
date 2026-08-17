@@ -6,6 +6,21 @@ Ordenado por impacto. Atualizar sempre que algo for concluído ou aparecer.
 
 ## Em andamento
 
+### Meta Pixel — dois passos que só o dono pode dar
+O pixel `Pixel Media Club` (`1794140864938355`) já está na landing e disparando. Faltam,
+no Gerenciador de Negócios:
+
+1. **Verificar o domínio** `mediaclub.fullpro.com.br` em Segurança da marca → Domínios.
+   Sem isso a Mensuração Agregada de Eventos não deixa priorizar o `Lead`, e a atribuição
+   no iOS fica bem pior. A verificação é por meta tag no `<head>` — o código entra junto
+   ao bloco `FP-META-PIXEL`.
+2. **Priorizar o `Lead`** na Mensuração Agregada de Eventos, depois da verificação.
+
+### Decidir sobre banner de consentimento (LGPD)
+A landing não tem banner e o pixel dispara antes de qualquer opt-in. É o padrão do mercado
+para página de captação com formulário, mas a decisão é do dono. Se ele quiser, o
+`fpTrack` já é no-op por padrão — basta condicionar o init ao aceite.
+
 ### Auditoria mobile — telas que faltam olhar
 Já tratadas: Projetos, Clips, Edição, Solicitações, Check-in, Integrações.
 
