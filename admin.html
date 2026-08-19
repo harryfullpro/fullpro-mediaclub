@@ -3839,6 +3839,63 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
   #modal .fp-prod-rolagem { max-height: 200px !important; }
 }
 
+/* --- Brinde da saida ----------------------------------------------------- */
+.fp-brinde-lista { display: flex; flex-direction: column; gap: 6px; }
+.fp-brinde-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 9px;
+  background: var(--bg-elev); border: 1px solid var(--border);
+}
+.fp-brinde-item.pendente { border-color: rgba(245,158,11,.45); background: rgba(245,158,11,.07); }
+.fp-brinde-txt { flex: 1; min-width: 0; }
+.fp-brinde-nome { font-size: 12.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fp-brinde-sub { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+.fp-brinde-estoque { flex-shrink: 0; white-space: nowrap; font-size: 11px; color: var(--text-dim); }
+.fp-brinde-estoque strong { font-size: 12.5px; font-weight: 700; }
+.fp-brinde-acoes { display: flex; gap: 6px; flex-shrink: 0; }
+.fp-brinde-btn {
+  padding: 5px 10px; border-radius: 7px; cursor: pointer; font-family: inherit;
+  font-size: 11px; font-weight: 600; white-space: nowrap;
+  background: var(--bg-card); border: 1px solid var(--border); color: var(--text-dim);
+  transition: border-color .15s, color .15s, background .15s;
+}
+.fp-brinde-btn:hover { border-color: var(--border-hi); color: var(--text); }
+.fp-brinde-btn.perigo { color: var(--perigo); border-color: rgba(255,77,77,.3); }
+.fp-brinde-btn.perigo:hover { background: var(--perigo-bg); border-color: var(--perigo); }
+.fp-brinde-vazio { font-size: 12px; color: var(--text-muted); padding: 8px 2px; }
+.fp-brinde-add {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
+  padding: 7px 12px; border-radius: 8px; cursor: pointer; font-family: inherit;
+  font-size: 12px; font-weight: 600;
+  background: var(--bg-elev); border: 1px dashed var(--border-hi); color: var(--text-dim);
+  transition: border-color .15s, color .15s;
+}
+.fp-brinde-add:hover { color: var(--text); border-color: var(--text-muted); }
+.fp-brinde-busca { margin-top: 10px; }
+.fp-brinde-busca-topo { display: flex; gap: 8px; align-items: center; }
+.fp-brinde-busca-topo .checkin-input { flex: 1; min-width: 0; }
+.fp-brinde-res {
+  margin-top: 6px; max-height: 260px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 4px;
+  scrollbar-width: thin; scrollbar-color: var(--border-hi) transparent;
+}
+.fp-brinde-res-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 7px 10px; border-radius: 8px; cursor: pointer; text-align: left;
+  background: var(--bg-card); border: 1px solid var(--border); font-family: inherit;
+  transition: border-color .15s;
+}
+.fp-brinde-res-item:hover { border-color: var(--primary); }
+
+@media (max-width: 600px) {
+  /* os dois botoes descem para uma segunda fileira e dividem a largura */
+  .fp-brinde-item { flex-wrap: wrap; row-gap: 8px; }
+  .fp-brinde-acoes { flex: 1 1 100%; }
+  .fp-brinde-acoes .fp-brinde-btn { flex: 1 1 0; min-height: 36px; }
+  .fp-brinde-add { min-height: 40px; }
+  .fp-brinde-res { max-height: 46vh; }
+}
+
 </style>
 </head>
 <body>
@@ -7142,6 +7199,27 @@ function renderCiView() {
           <input type="file" id="pCam_${prefix}_${rid}" accept="image/*" capture="environment" multiple hidden onchange="addCiPhotos('${prefix}','${rid}', this)"/>
           <input type="file" id="pInput_${prefix}_${rid}" accept="image/*" multiple hidden onchange="addCiPhotos('${prefix}','${rid}')"/>
         </div>
+        ${prefix === 'co' ? `
+        <div class="checkin-field checkin-full">
+          <label class="checkin-label">
+            Brinde entregue <span class="fp-req" title="Confirme o brinde antes de salvar">*</span>
+          </label>
+          <div class="fp-brinde-lista" id="brindeLista_${rid}"></div>
+          <button type="button" class="fp-brinde-add" onclick="fpBrindeAbrirBusca('${rid}','novo')">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Adicionar brinde
+          </button>
+          <div class="fp-brinde-busca" id="brindeBusca_${rid}" hidden>
+            <div class="fp-brinde-busca-topo">
+              <input type="search" class="checkin-input" id="brindeInput_${rid}" autocomplete="off"
+                     placeholder="Buscar produto no Bling por nome ou SKU"
+                     aria-label="Buscar produto no Bling por nome ou SKU"
+                     oninput="fpBrindeBuscar('${rid}', this.value)"/>
+              <button type="button" class="fp-brinde-btn" onclick="fpBrindeFecharBusca('${rid}')">Cancelar</button>
+            </div>
+            <div class="fp-brinde-res" id="brindeRes_${rid}"></div>
+          </div>
+        </div>` : ''}
         <div class="checkin-full" id="ciProds_${prefix}_${rid}" style="margin-top:4px"></div>
         <div class="checkin-full">
           <p class="fp-save-hint" id="ciHint_${prefix}_${rid}" hidden></p>
@@ -7161,7 +7239,8 @@ function renderCiView() {
     const ci = (prefix === 'ci' ? CHECKINS : CHECKOUTS)[r.id] || { fuel_level: 0 };
     updateFuelGauge(prefix + '_' + r.id, ci.fuel_level);
     initFuelGaugeDrag(prefix + '_' + r.id);
-    fpCiValidate(prefix, r.id);
+    if (prefix === 'co') fpBrindeIniciar(r);   // ja chama fpCiValidate por dentro
+    else fpCiValidate(prefix, r.id);
   });
 
   // Load compatible Bling products for each check-in/check-out card
@@ -7228,6 +7307,9 @@ function fpCiValidate(prefix, rid) {
     const falta = [];
     if (!okKm) falta.push('quilometragem');
     if (!okFotos) falta.push('pelo menos 2 fotos');
+    // na saida o brinde do agendamento precisa virar produto do Bling — ou ser
+    // removido de proposito, quando nao teve brinde
+    if (prefix === 'co' && CO_BRINDE_PENDENTE[rid]) falta.push('confirmar o brinde');
     btn.disabled = falta.length > 0;
     btn.title = falta.length ? 'Falta preencher: ' + falta.join(' e ') : '';
     const hint = document.getElementById('ciHint_' + prefix + '_' + rid);
@@ -7256,42 +7338,313 @@ function formatKm(v) {
   return nums.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
-async function saveCiForm(prefix, rid) {
-  const table = prefix === 'ci' ? 'checkins' : 'checkouts';
-  const store = prefix === 'ci' ? CHECKINS : CHECKOUTS;
-  const fuel = parseInt(document.getElementById('fuelRange_' + prefix + '_' + rid)?.value || 0);
-  const km = (document.getElementById(prefix + 'Km_' + rid)?.value || '').replace(/\D/g, '');
-  const obs = document.getElementById(prefix + 'Obs_' + rid)?.value?.trim() || '';
-  const existing = store[rid];
-  const photos = existing?.photos || [];
 
-  const payload = { request_id: rid, fuel_level: fuel, mileage: km, observations: obs, photos };
-  let result;
-  if (existing?.id) {
-    result = await sb.from(table).update({
-      fuel_level: fuel, mileage: km, observations: obs, photos,
-      updated_at: new Date().toISOString()
-    }).eq('id', existing.id).select().single();
-  } else {
-    result = await sb.from(table).insert(payload).select().single();
+/* ==========================================================================
+   BRINDE DA SAIDA
+   O agendamento guarda so a categoria que o solicitante escolheu ('mochila',
+   'capa', 'pastilhas'). Na saida a equipe confirma qual produto do Bling saiu
+   de fato — pode ser outro, pode ser mais de um, pode nao ter tido brinde.
+   Ao salvar, cada brinde confirmado baixa uma unidade do estoque no Bling.
+   ========================================================================== */
+const CO_BRINDES = {};            // rid -> [{ id, sku, nome, imagem, estoque, sugerido }]
+const CO_BRINDE_PENDENTE = {};    // rid -> rotulo da categoria ainda nao resolvida (null = ja tratado)
+const CO_BRINDE_ALVO = {};        // rid -> { modo: 'novo'|'trocar'|'pendente', idx }
+const CO_BRINDE_RESULTADOS = {};  // rid -> resultados da busca atual
+
+const BRINDE_ROTULOS = {
+  pastilhas: 'Jogo de pastilhas', mochila: 'Mochila backpack', capa: 'Capa de chuva',
+  capa_moto: 'Capa para motos', ponteira: 'Ponteira', outros: 'Outro brinde',
+};
+/* Termo usado para achar o produto no Bling a partir da categoria. */
+const BRINDE_TERMOS = {
+  pastilhas: 'pastilha', mochila: 'mochila', capa: 'capa de chuva',
+  capa_moto: 'capa para moto', ponteira: 'ponteira',
+};
+
+const fpNorm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const fpEstoqueDe = p => (p && p.estoque && p.estoque.saldoVirtualTotal != null) ? p.estoque.saldoVirtualTotal : null;
+
+function fpBrindeDeProduto(p) {
+  return { id: p.id, sku: p.codigo || '', nome: p.nome || 'Produto',
+           imagem: p.imagemURL || '', estoque: fpEstoqueDe(p) };
+}
+
+/* Tenta transformar a categoria do agendamento num produto real do Bling. */
+async function fpBrindeSugerir(categoria) {
+  const termo = BRINDE_TERMOS[categoria];
+  if (!termo || typeof blingGetAllProducts !== 'function') return null;
+  const prods = await blingGetAllProducts();
+  const alvo = fpNorm(termo);
+  const achados = prods.filter(p => fpNorm(p.nome).includes(alvo));
+  if (!achados.length) return null;
+  // com estoque na frente; entre os que tem, o de nome mais curto costuma ser
+  // o produto principal em vez de uma variacao
+  achados.sort((a, b) => {
+    const ta = (fpEstoqueDe(a) || 0) > 0 ? 0 : 1, tb = (fpEstoqueDe(b) || 0) > 0 ? 0 : 1;
+    if (ta !== tb) return ta - tb;
+    return String(a.nome || '').length - String(b.nome || '').length;
+  });
+  return fpBrindeDeProduto(achados[0]);
+}
+
+const FP_ICONE_CAIXA = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-dim)" stroke-width="1.8"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4M4 7l8 4M4 7v10l8 4m0-10v10"/></svg>';
+
+function fpBrindeFotoHtml(b, tam) {
+  const px = tam || 34;
+  const gancho = b.sku ? ' data-drive-sku="' + escHtml(b.sku) + '"' : '';
+  const est = 'width:' + px + 'px;height:' + px + 'px;border-radius:6px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--border)';
+  return '<div class="fp-brinde-foto"' + gancho + ' style="' + est + '">'
+    + (b.imagem ? '<img src="' + escHtml(b.imagem) + '" alt="" style="width:100%;height:100%;object-fit:cover"/>' : FP_ICONE_CAIXA)
+    + '</div>';
+}
+function fpBrindeEstoqueHtml(est) {
+  const cor = typeof est === 'number' ? (est > 3 ? 'var(--success)' : 'var(--warning)') : 'var(--text-dim)';
+  return '<div class="fp-brinde-estoque"><strong style="color:' + cor + '">' + (est == null ? '?' : est) + '</strong> un</div>';
+}
+
+/* Desenha a lista de brindes do card. */
+function fpBrindePintar(rid) {
+  const cx = document.getElementById('brindeLista_' + rid);
+  if (!cx) return;
+  const itens = CO_BRINDES[rid] || [];
+  const pend = CO_BRINDE_PENDENTE[rid];
+  let html = '';
+
+  if (pend) {
+    html += '<div class="fp-brinde-item pendente">'
+      + '<div class="fp-brinde-foto" style="width:34px;height:34px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg-elev);color:var(--warning);font-weight:800">!</div>'
+      + '<div class="fp-brinde-txt"><div class="fp-brinde-nome">' + escHtml(pend) + '</div>'
+      + '<div class="fp-brinde-sub">Escolhido no agendamento — confirme qual produto saiu</div></div>'
+      + '<div class="fp-brinde-acoes">'
+      +   '<button type="button" class="fp-brinde-btn" onclick="fpBrindeAbrirBusca(\'' + rid + '\',\'pendente\')">Escolher produto</button>'
+      +   '<button type="button" class="fp-brinde-btn perigo" onclick="fpBrindeRemoverPendente(\'' + rid + '\')">Remover</button>'
+      + '</div></div>';
   }
-  if (result.error) {
-    fpToast('Erro ao salvar: ' + result.error.message + '\n\nVocê já criou a tabela "' + table + '" no Supabase?', 'erro');
+
+  itens.forEach(function (b, i) {
+    html += '<div class="fp-brinde-item">'
+      + fpBrindeFotoHtml(b)
+      + '<div class="fp-brinde-txt"><div class="fp-brinde-nome">' + escHtml(b.nome) + '</div>'
+      + '<div class="fp-brinde-sub">SKU: ' + escHtml(b.sku || '—')
+      + (b.sugerido ? ' · <span style="color:var(--warning)">sugerido pelo agendamento, confira</span>' : '') + '</div></div>'
+      + fpBrindeEstoqueHtml(b.estoque)
+      + '<div class="fp-brinde-acoes">'
+      +   '<button type="button" class="fp-brinde-btn" onclick="fpBrindeAbrirBusca(\'' + rid + '\',\'trocar\',' + i + ')">Trocar brinde</button>'
+      +   '<button type="button" class="fp-brinde-btn perigo" onclick="fpBrindeRemover(\'' + rid + '\',' + i + ')">Remover brinde</button>'
+      + '</div></div>';
+  });
+
+  if (!html) html = '<div class="fp-brinde-vazio">Sem brinde nesta saída.</div>';
+  cx.innerHTML = html;
+  if (typeof fpDriveCarregar === 'function') {
+    fpDriveCarregar(itens.map(function (b) { return b.sku; }), cx);
+  }
+}
+
+function fpBrindeAbrirBusca(rid, modo, idx) {
+  CO_BRINDE_ALVO[rid] = { modo: modo, idx: idx };
+  const cx = document.getElementById('brindeBusca_' + rid); if (!cx) return;
+  cx.hidden = false;
+  const inp = document.getElementById('brindeInput_' + rid);
+  const res = document.getElementById('brindeRes_' + rid);
+  if (res) res.innerHTML = '<div class="fp-brinde-vazio">Digite o nome ou o SKU do produto.</div>';
+  if (inp) { inp.value = ''; setTimeout(function () { try { inp.focus(); } catch (e) {} }, 30); }
+}
+function fpBrindeFecharBusca(rid) {
+  const cx = document.getElementById('brindeBusca_' + rid);
+  if (cx) cx.hidden = true;
+  delete CO_BRINDE_ALVO[rid];
+}
+
+async function fpBrindeBuscar(rid, termo) {
+  const res = document.getElementById('brindeRes_' + rid); if (!res) return;
+  const t = String(termo || '').trim();
+  if (t.length < 2) { res.innerHTML = '<div class="fp-brinde-vazio">Digite pelo menos 2 letras.</div>'; return; }
+  if (typeof isBlingConnected === 'function' && !isBlingConnected()) {
+    res.innerHTML = '<div class="fp-brinde-vazio">Bling desconectado — conecte em Integrações para buscar produtos.</div>';
     return;
   }
-  if (result.data) store[rid] = result.data;
-  else store[rid] = { ...existing, ...payload };
-  fpToast((prefix === 'ci' ? 'Check-in' : 'Check-out') + ' salvo com sucesso!', 'ok');
-  renderCiView();
+  res.innerHTML = '<div class="fp-brinde-vazio">Buscando…</div>';
+  const prods = await blingGetAllProducts();
+  // a busca corre em cima da lista ja em cache: responde a cada tecla sem
+  // uma ida a rede por letra digitada
+  const alvo = fpNorm(t);
+  const achados = prods
+    .filter(function (p) { return fpNorm(p.nome).includes(alvo) || fpNorm(p.codigo).includes(alvo); })
+    .sort(function (a, b) {
+      const ca = fpNorm(a.codigo) === alvo ? 0 : 1, cb = fpNorm(b.codigo) === alvo ? 0 : 1;
+      if (ca !== cb) return ca - cb;                       // SKU exato primeiro
+      const ea = (fpEstoqueDe(a) || 0) > 0 ? 0 : 1, eb = (fpEstoqueDe(b) || 0) > 0 ? 0 : 1;
+      if (ea !== eb) return ea - eb;                       // depois quem tem estoque
+      return String(a.nome || '').localeCompare(String(b.nome || ''));
+    })
+    .slice(0, 40);
 
-  // Auto-update ALL linked project statuses
-  const newStatus = prefix === 'ci' ? 'producao' : 'edicao';
-  const linkedProjects = PROJECTS.filter(p => p.request_id === rid && p.status !== 'concluido');
-  for (const lp of linkedProjects) {
-    await sb.from('mc_projects').update({ status: newStatus }).eq('id', lp.id);
-    lp.status = newStatus;
+  if (!achados.length) { res.innerHTML = '<div class="fp-brinde-vazio">Nada encontrado para "' + escHtml(t) + '".</div>'; return; }
+  CO_BRINDE_RESULTADOS[rid] = achados.map(fpBrindeDeProduto);
+  res.innerHTML = CO_BRINDE_RESULTADOS[rid].map(function (b, i) {
+    return '<button type="button" class="fp-brinde-res-item" onclick="fpBrindeEscolher(\'' + rid + '\',' + i + ')">'
+      + fpBrindeFotoHtml(b, 32)
+      + '<div class="fp-brinde-txt"><div class="fp-brinde-nome">' + escHtml(b.nome) + '</div>'
+      + '<div class="fp-brinde-sub">SKU: ' + escHtml(b.sku || '—') + '</div></div>'
+      + fpBrindeEstoqueHtml(b.estoque)
+      + '</button>';
+  }).join('');
+  if (typeof fpDriveCarregar === 'function') {
+    fpDriveCarregar(CO_BRINDE_RESULTADOS[rid].map(function (b) { return b.sku; }), res);
   }
-  if (linkedProjects.length) { renderProjects(); renderEditingView(); }
+}
+
+function fpBrindeEscolher(rid, i) {
+  const escolhido = (CO_BRINDE_RESULTADOS[rid] || [])[i]; if (!escolhido) return;
+  const alvo = CO_BRINDE_ALVO[rid] || { modo: 'novo' };
+  const itens = CO_BRINDES[rid] || (CO_BRINDES[rid] = []);
+  if (itens.some(function (b, k) { return String(b.id) === String(escolhido.id) && k !== alvo.idx; })) {
+    fpToast('Esse produto já está na lista de brindes.', 'warn');
+    return;
+  }
+  if (alvo.modo === 'trocar' && typeof alvo.idx === 'number') itens[alvo.idx] = escolhido;
+  else itens.push(escolhido);
+  if (alvo.modo === 'pendente') CO_BRINDE_PENDENTE[rid] = null;
+  fpBrindeFecharBusca(rid);
+  fpBrindePintar(rid);
+  fpCiValidate('co', rid);
+}
+function fpBrindeRemover(rid, i) {
+  const itens = CO_BRINDES[rid] || [];
+  itens.splice(i, 1);
+  fpBrindePintar(rid); fpCiValidate('co', rid);
+}
+function fpBrindeRemoverPendente(rid) {
+  CO_BRINDE_PENDENTE[rid] = null;      // null, nao delete: senao volta no proximo render
+  fpBrindePintar(rid); fpCiValidate('co', rid);
+}
+window.fpBrindeAbrirBusca = fpBrindeAbrirBusca;
+window.fpBrindeFecharBusca = fpBrindeFecharBusca;
+window.fpBrindeBuscar = fpBrindeBuscar;
+window.fpBrindeEscolher = fpBrindeEscolher;
+window.fpBrindeRemover = fpBrindeRemover;
+window.fpBrindeRemoverPendente = fpBrindeRemoverPendente;
+
+/* Estado inicial do card: o que ja foi salvo, ou a categoria do agendamento. */
+async function fpBrindeIniciar(r) {
+  const rid = r.id;
+  const salvo = CHECKOUTS[rid];
+  if (salvo && Array.isArray(salvo.gifts) && salvo.gifts.length) {
+    CO_BRINDES[rid] = salvo.gifts.map(function (b) { return Object.assign({}, b); });
+    CO_BRINDE_PENDENTE[rid] = null;
+  } else if (salvo && salvo.id) {
+    CO_BRINDES[rid] = CO_BRINDES[rid] || [];   // saida ja salva sem brinde
+    CO_BRINDE_PENDENTE[rid] = null;
+  } else if (!(rid in CO_BRINDE_PENDENTE)) {
+    CO_BRINDES[rid] = [];
+    CO_BRINDE_PENDENTE[rid] = BRINDE_ROTULOS[r.brinde] || r.brinde || 'Brinde';
+  }
+  fpBrindePintar(rid);
+  fpCiValidate('co', rid);
+
+  if (CO_BRINDE_PENDENTE[rid] && typeof isBlingConnected === 'function' && isBlingConnected()) {
+    const sug = await fpBrindeSugerir(r.brinde);
+    if (sug && CO_BRINDE_PENDENTE[rid]) {          // pode ter sido resolvido a mao nesse meio tempo
+      sug.sugerido = true;
+      CO_BRINDES[rid] = [sug];
+      CO_BRINDE_PENDENTE[rid] = null;
+      fpBrindePintar(rid);
+      fpCiValidate('co', rid);
+    }
+  }
+}
+
+/* Baixa de estoque no Bling: uma unidade por brinde, uma vez so.
+   gifts_stock_applied guarda o que ja baixou — salvar de novo para corrigir km
+   ou foto nao pode tirar estoque outra vez. */
+async function fpBrindeBaixarEstoque(rid) {
+  const reg = CHECKOUTS[rid];
+  if (!reg || !reg.id) return;
+  const brindes = reg.gifts || [];
+  const ja = (reg.gifts_stock_applied || []).map(String);
+  const pendentes = brindes.filter(function (b) { return b.id && ja.indexOf(String(b.id)) === -1; });
+  if (!pendentes.length) return;
+
+  if (typeof isBlingConnected !== 'function' || !isBlingConnected()) {
+    fpToast('Check-out salvo, mas o Bling está desconectado — o estoque do brinde não baixou.', 'warn', { duracao: 8000 });
+    return;
+  }
+  const sol = getRequests().find(function (x) { return x.id === rid; });
+  const nota = 'Brinde Media Club' + (sol && sol.nome ? ' — ' + sol.nome : '');
+  const ok = [], falhou = [];
+  for (const b of pendentes) {
+    const feito = await blingStockOut(b.id, 1, nota);
+    (feito ? ok : falhou).push(b);
+  }
+  if (ok.length) {
+    const novo = ja.concat(ok.map(function (b) { return String(b.id); }));
+    await sb.from('mc_checkouts').update({ gifts_stock_applied: novo }).eq('id', reg.id);
+    reg.gifts_stock_applied = novo;
+    fpToast(ok.length === 1
+      ? 'Estoque do brinde baixado no Bling (−1 un).'
+      : ok.length + ' brindes baixados no Bling (−1 un cada).', 'ok');
+  }
+  if (falhou.length) {
+    fpToast('Não consegui baixar o estoque de ' + falhou.length + ' brinde(s) no Bling. Salve o check-out de novo para tentar outra vez.', 'erro', { duracao: 10000 });
+  }
+}
+
+async function saveCiForm(prefix, rid) {
+  /* As tabelas sao mc_checkins e mc_checkouts. Aqui ia 'checkins'/'checkouts',
+     que nao existem no banco — nenhum check-in ou check-out era gravado. */
+  const table = prefix === 'ci' ? 'mc_checkins' : 'mc_checkouts';
+  const store = prefix === 'ci' ? CHECKINS : CHECKOUTS;
+  const ehSaida = prefix === 'co';
+
+  /* Trava contra clique duplo: na saida cada salvamento pode baixar estoque. */
+  const btn = document.getElementById('ciSave_' + prefix + '_' + rid);
+  if (btn && btn.dataset.salvando === '1') return;
+  if (btn) { btn.dataset.salvando = '1'; btn.disabled = true; }
+
+  try {
+    const fuel = parseInt(document.getElementById('fuelRange_' + prefix + '_' + rid)?.value || 0);
+    const km = (document.getElementById(prefix + 'Km_' + rid)?.value || '').replace(/\D/g, '');
+    const obs = document.getElementById(prefix + 'Obs_' + rid)?.value?.trim() || '';
+    const existing = store[rid];
+    const photos = existing?.photos || [];
+
+    const payload = { request_id: rid, fuel_level: fuel, mileage: km, observations: obs, photos };
+    const campos = { fuel_level: fuel, mileage: km, observations: obs, photos, updated_at: new Date().toISOString() };
+    if (ehSaida) { payload.gifts = CO_BRINDES[rid] || []; campos.gifts = payload.gifts; }
+
+    let result;
+    if (existing?.id) {
+      result = await sb.from(table).update(campos).eq('id', existing.id).select().single();
+    } else {
+      result = await sb.from(table).insert(payload).select().single();
+    }
+    if (result.error) {
+      fpToast('Erro ao salvar: ' + result.error.message, 'erro');
+      return;
+    }
+    if (result.data) store[rid] = result.data;
+    else store[rid] = { ...existing, ...payload };
+    fpToast((ehSaida ? 'Check-out' : 'Check-in') + ' salvo com sucesso!', 'ok');
+
+    // baixa do estoque dos brindes, uma unidade cada, sem repetir
+    if (ehSaida) await fpBrindeBaixarEstoque(rid);
+
+    renderCiView();
+
+    // Auto-update ALL linked project statuses
+    const newStatus = prefix === 'ci' ? 'producao' : 'edicao';
+    const linkedProjects = PROJECTS.filter(p => p.request_id === rid && p.status !== 'concluido');
+    for (const lp of linkedProjects) {
+      await sb.from('mc_projects').update({ status: newStatus }).eq('id', lp.id);
+      lp.status = newStatus;
+    }
+    if (linkedProjects.length) { renderProjects(); renderEditingView(); }
+  } finally {
+    const b = document.getElementById('ciSave_' + prefix + '_' + rid);
+    if (b) b.dataset.salvando = '0';
+    fpCiValidate(prefix, rid);
+  }
 }
 
 /* ==========================================
