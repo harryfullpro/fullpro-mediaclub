@@ -4,6 +4,34 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 19/08/2026 — Solicitações: ordem padrão e o status Stand by
+
+**Ordem padrão** passou a ser a data de recebimento, da mais recente para a mais antiga
+(era data de agendamento, crescente). Só o valor inicial mudou: se o operador clicar em
+outra coluna, a escolha dele continua valendo até recarregar a página.
+
+**Status novo: `standby`.** Solicitação que não foi descartada, só ficou em espera — moto
+interessante para a qual ainda não há produto em estoque para testar.
+
+- O banco tinha um `CHECK` que só aceitava `pending/approved/rejected`. Sem migração, a
+  gravação falharia. Constraint `requests_status_check` recriada com o quarto valor.
+- Badge violeta (`--tx-standby` / `--bg-standby`), medido: **6,95:1** no escuro e
+  **7,63:1** no claro.
+- Aba **Stand by** entre Aprovadas e Rejeitadas.
+- Botões, itens do menu "…" e rodapé do modal passaram a ser montados a partir de uma
+  lista (`REQ_ACOES`), mostrando os destinos possíveis menos o status atual. Antes eram
+  ternários repetidos em cinco lugares — acrescentar um quinto status agora é uma linha.
+- Também no seletor do modal de editar agendamento e na contagem do dashboard.
+
+Conferido em produção com ida e volta numa solicitação já rejeitada: o banco aceitou
+`standby`, a linha renderizou o badge certo, a aba filtrou, e o registro voltou ao valor
+original (a tabela não tem `updated_at`, então terminou idêntico).
+
+**Bug antigo corrigido de passagem:** o handler das abas de filtro pegava *todo*
+`.filter-btn` da página, incluindo as abas de Check-in/Check-out, que não têm
+`data-filter`. Clicar nelas zerava o filtro das solicitações e apagava o "active" das
+quatro abas. Agora o seletor é restrito a `#view-requests .filter-bar`.
+
 ## 17/08/2026 — Verificação de domínio no Meta + campanha montada
 
 Meta tag `facebook-domain-verification` no `<head>` da home. **Status: Verified.**

@@ -71,6 +71,17 @@ não abre o seletor nativo do iOS. No computador segue múltipla escolha pelos c
 - **Glifo + em azul de sistema, sem caixa** — nada de quadrado preenchido
 - Vale só no celular; no computador segue o botão azul
 
+### Solicitações
+- Ordem padrão: **data de recebimento, da mais recente para a mais antiga**
+- Status **Stand by** além de Aprovada/Rejeitada:
+
+> *"A intenção do stand by é não descartar uma solicitação, pode ser uma moto interessante
+> que ainda não temos produtos em estoque para testar com ela, e aí essa solicitação fica
+> mais fácil pra gente voltar a falar com esse cara futuramente"*
+
+Ou seja: Stand by é fila de retomada, não é arquivo morto. Rejeitada continua sendo o
+descarte.
+
 ### Cards das listagens
 - Devem ser o **mais compactos possível** — "otimizar espaço de tela" é pedido recorrente
 - Informação organizada, não empilhada em linhas soltas
