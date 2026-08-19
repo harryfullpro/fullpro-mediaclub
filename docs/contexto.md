@@ -86,6 +86,12 @@ não abre o seletor nativo do iOS. No computador segue múltipla escolha pelos c
 Ou seja: Stand by é fila de retomada, não é arquivo morto. Rejeitada continua sendo o
 descarte.
 
+### Alinhamento
+> *"nunca deixar desalinhamentos como esse ocorrer novamente"*
+
+Rótulo e valor centrados entre si. Ele revisa por print e enxerga diferença de poucos
+pixels. Ver `padroes.md` → Alinhamento.
+
 ### Cards das listagens
 - Devem ser o **mais compactos possível** — "otimizar espaço de tela" é pedido recorrente
 - Informação organizada, não empilhada em linhas soltas

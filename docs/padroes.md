@@ -208,6 +208,34 @@ Use `.maybeSingle()` quando a linha **pode não existir** — `.single()` devolv
 
 ---
 
+## Alinhamento — regra do dono
+
+> *"a tag pendente não está alinhada com o header STATUS. Corrija isso e salve como uma
+> instrução nesse chat nunca deixar desalinhamentos como esse ocorrer novamente"*
+
+**Rótulo e valor na mesma fileira ficam centrados entre si**, nunca alinhados pelo topo.
+
+```css
+.detail-row { align-items: center; }
+.detail-row.fp-det-largo { align-items: start; }   /* valor de várias linhas */
+```
+
+Alinhar pelo topo só funciona quando os dois lados são texto puro do mesmo tamanho.
+Qualquer valor em **badge, pílula, seletor ou botão** tem padding próprio e desce em
+relação ao rótulo — foi assim que a etiqueta PENDENTE ficou 3,5px abaixo de STATUS.
+A exceção é a fileira cujo valor pode ter várias linhas: ali o rótulo fica no topo, senão
+flutua no meio do parágrafo.
+
+**Conferir medindo, não olhando.** Compare o centro da caixa da pílula com o centro do
+*texto* do rótulo — `Range.getClientRects()`, não o `getBoundingClientRect()` do elemento
+inteiro, que inclui o padding e esconde o erro. Tolerância: **2px**.
+
+Depois de corrigir um caso, **varra as outras telas** atrás do mesmo padrão. A varredura
+de 19/08 percorreu as 17 telas medindo toda `.badge`, `.proj-dest-tag` e
+`.proj-status-select` contra os irmãos da mesma fileira: zero desalinhamentos restantes.
+
+---
+
 ## Cor, tipo e texto
 
 - **Badge é sempre um par de tokens por tema** (`--tx-*` / `--bg-*`), nunca texto

@@ -4,6 +4,24 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 19/08/2026 — Badge de status fora de linha no detalhe
+
+A etiqueta PENDENTE ficava **3,5px abaixo** do rótulo STATUS. Causa: `.detail-row` é um
+grid alinhado pelo topo, e o badge tem `padding: 4px 10px` próprio — o texto dele nasce
+mais baixo que o do rótulo. Nas fileiras de texto puro o erro era de 1px e passava
+despercebido; com o badge virou visível.
+
+Corrigido com `align-items: center` na fileira, e `align-items: start` só nas de texto
+longo (Endereço, Observações), onde o rótulo centrado flutuaria no meio do parágrafo.
+
+Medido depois: **0px** em todas as treze fileiras, badge incluído.
+
+Varredura nas 17 telas, medindo toda `.badge`, `.proj-dest-tag` e `.proj-status-select`
+contra os irmãos da mesma fileira: **zero** desalinhamentos restantes no painel.
+
+O dono pediu que isso vire regra permanente — está em `padroes.md` → Alinhamento, e na
+memória do agente.
+
 ## 19/08/2026 — Rodapé do detalhe em botões de ícone
 
 Pedido do dono: no rodapé do detalhe, os mesmos botões só de ícone que existiam na linha
