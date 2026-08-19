@@ -15,8 +15,13 @@ O agendamento guarda só a **categoria** que o solicitante escolheu (`pastilhas`
   ida à rede. SKU exato vem primeiro, depois quem tem estoque.
 - A miniatura usa o mesmo gancho `data-drive-sku`, então a foto do Drive tem prioridade
   sobre a do Bling — igual ao resto do painel.
-- Botões **Confirmar · Trocar brinde · Remover brinde**, e **+ Adicionar brinde** para
-  quando saiu mais de um. Remover tudo é válido: cobre a saída sem brinde.
+- Ações em **botão de ícone**, no padrão do painel: ✓ confirmar (verde), ⇄ trocar (azul),
+  🗑 remover (vermelho), e × para fechar a busca. O grupo de ações caiu de ~230px para
+  **74px**. Todos com `data-tip`, que o observador converte em `aria-label` e `title` —
+  conferido: zero botões sem nome na tela.
+- **+ Adicionar brinde** manteve o rótulo de propósito: é a porta de entrada do bloco, e
+  um + solto dentro do card seria difícil de achar.
+- Remover tudo é válido: cobre a saída sem brinde.
 - Ao salvar, cada brinde confirmado **baixa uma unidade** no Bling
   (`blingStockOut`, operação S).
 
