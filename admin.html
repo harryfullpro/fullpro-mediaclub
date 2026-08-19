@@ -383,8 +383,6 @@
   .action-btn.approve, .action-btn.whats { background: var(--success); border-color: var(--success); color: #fff; }
   .action-btn.approve:hover, .action-btn.whats:hover { background: #36df89; border-color: #36df89; }
   [data-theme="light"] .action-btn.approve, [data-theme="light"] .action-btn.whats { color: #001e10; }
-  .action-btn.standby { background: transparent; color: var(--tx-standby); border-color: rgba(168,85,247,.35); }
-  .action-btn.standby:hover { background: rgba(168,85,247,.12); }
   .action-btn.reject { background: transparent; color: var(--danger); border-color: rgba(255,77,77,.3); }
   .action-btn.reject:hover { background: rgba(255,77,77,.1); }
   .action-btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
@@ -6396,9 +6394,9 @@ window.rotuloReqStatus = rotuloReqStatus;
 /* Destinos possiveis a partir de qualquer status. Os botoes sao montados a
    partir daqui, entao acrescentar um status novo nao exige caçar ternarios. */
 const REQ_ACOES = [
-  { st: 'approved', rotulo: 'Aprovar',  menu: 'Aprovar',             icone: 'aprovar',  cls: 'fp-ib-green',  botao: 'approve', svg: '<polyline points="20 6 9 17 4 12"/>' },
-  { st: 'standby',  rotulo: 'Stand by', menu: 'Deixar em stand by',  icone: 'standby',  cls: 'fp-ib-violet', botao: 'standby', svg: '<circle cx="12" cy="12" r="9"/><line x1="10" y1="9" x2="10" y2="15"/><line x1="14" y1="9" x2="14" y2="15"/>' },
-  { st: 'rejected', rotulo: 'Rejeitar', menu: 'Rejeitar',            icone: 'rejeitar', cls: 'fp-ib-danger', botao: 'reject',  svg: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>' },
+  { st: 'approved', rotulo: 'Aprovar',  menu: 'Aprovar',            icone: 'aprovar',  cls: 'fp-ib-green',  svg: '<polyline points="20 6 9 17 4 12"/>' },
+  { st: 'standby',  rotulo: 'Stand by', menu: 'Deixar em stand by', icone: 'standby',  cls: 'fp-ib-violet', svg: '<circle cx="12" cy="12" r="9"/><line x1="10" y1="9" x2="10" y2="15"/><line x1="14" y1="9" x2="14" y2="15"/>' },
+  { st: 'rejected', rotulo: 'Rejeitar', menu: 'Rejeitar',           icone: 'rejeitar', cls: 'fp-ib-danger', svg: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>' },
 ];
 /* Botoes de icone com os destinos possiveis, menos o status atual. */
 function reqBotoesStatus(r, classeExtra) {
@@ -6407,15 +6405,6 @@ function reqBotoesStatus(r, classeExtra) {
     + ' data-tip="' + a.rotulo + '" onclick="updateStatus(\'' + r.id + '\',\'' + a.st + '\')">'
     + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">'
     + a.svg + '</svg></button>'
-  ).join('');
-}
-/* A mesma lista, como botoes de texto do rodape do modal. */
-function reqBotoesStatusTexto(r) {
-  // ordem invertida de proposito: no rodape a acao positiva fica a direita e a
-  // destrutiva a esquerda, como era antes de existir o stand by
-  return REQ_ACOES.filter(a => a.st !== r.status).reverse().map(a =>
-    '<button class="action-btn ' + a.botao + '" onclick="updateStatus(\'' + r.id + '\',\'' + a.st + '\')">'
-    + a.rotulo + '</button>'
   ).join('');
 }
 /* E como itens do menu "…" do celular. */
@@ -6581,8 +6570,8 @@ function openDetails(id) {
   }
 
   document.getElementById('modalFoot').innerHTML = `
-    <button class="action-btn whats" onclick="closeModal(); openWhatsApp('${r.id}')"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:3px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> WhatsApp</button>
-    ${reqBotoesStatusTexto(r)}
+    <button class="fp-icon-btn fp-ib-green fp-tip-left" data-tip="WhatsApp" onclick="closeModal(); openWhatsApp('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></button>
+    ${reqBotoesStatus(r, 'fp-tip-left')}
   `;
   document.getElementById('modal').classList.add('show');
 }
