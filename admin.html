@@ -3787,6 +3787,53 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
 }
 body.fp-esta-offline .fp-offline { display: inline-flex; }
 
+/* --- Detalhe da solicitacao ----------------------------------------------
+   O espacamento do bloco de produtos vinha num style= inline; virou classe
+   para o computador poder redimensiona-lo. Mesmo valor de antes. */
+.fp-det-prods { margin-top: 10px; }
+
+/* No computador: dados do solicitante em duas colunas, modal mais largo, e a
+   rolagem acontece SO na lista de produtos — o resto do popup fica parado. */
+@media (min-width: 901px) {
+  #modal .modal-content {
+    max-width: 920px !important;
+    display: flex; flex-direction: column;
+    overflow: hidden;                /* tira a rolagem do popup inteiro */
+  }
+  #modal .modal-body {
+    min-height: 0; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+
+  #modal .fp-det-grid {
+    flex: 0 0 auto;                  /* nunca encolhe: quem cede e a lista */
+    display: grid; grid-template-columns: 1fr 1fr;
+    column-gap: 32px; align-content: start;
+  }
+  /* em duas colunas a ultima linha da coluna da esquerda tambem quer a borda */
+  #modal .fp-det-grid .detail-row { border-bottom: 1px solid var(--border); }
+  #modal .fp-det-grid .fp-det-largo { grid-column: 1 / -1; }
+
+  #modal .fp-det-prods {
+    flex: 1 1 auto; min-height: 0; margin-top: 16px;
+    display: flex; flex-direction: column;
+  }
+  #modal .fp-det-prods > :not(.fp-prod-rolagem) { flex: 0 0 auto; }
+  /* !important: o max-height de 200px vem no style= do proprio elemento, que
+     e compartilhado com os cards de Projetos e Clips */
+  #modal .fp-prod-rolagem {
+    flex: 1 1 auto; min-height: 0;
+    max-height: min(380px, 42vh) !important;
+    overflow-y: auto !important;
+  }
+}
+
+/* Janela baixa: devolve a rolagem ao corpo, senao o rodape sairia da tela. */
+@media (min-width: 901px) and (max-height: 660px) {
+  #modal .modal-body { overflow-y: auto; }
+  #modal .fp-prod-rolagem { max-height: 200px !important; }
+}
+
 </style>
 </head>
 <body>
@@ -6505,6 +6552,7 @@ function openDetails(id) {
   // WhatsApp is now handled via openWhatsApp(id) modal
 
   document.getElementById('modalBody').innerHTML = `
+    <div class="fp-det-grid">
     <div class="detail-row"><div class="k">Data</div><div class="v">${prettyDate(r.date)}</div></div>
     <div class="detail-row"><div class="k">Status</div><div class="v"><span class="badge ${r.status}">${rotuloReqStatus(r.status)}</span></div></div>
     <div class="detail-row"><div class="k">Nome</div><div class="v">${escHtml(r.nome)}</div></div>
@@ -6513,13 +6561,14 @@ function openDetails(id) {
     <div class="detail-row"><div class="k">Moto</div><div class="v">${escHtml(r.moto)}</div></div>
     <div class="detail-row"><div class="k">Placa</div><div class="v">${escHtml(r.placa)}</div></div>
     <div class="detail-row"><div class="k">Modalidade</div><div class="v">${r.modalidade === 'estudio' ? 'Leva até FullPro' : 'Retirada no endereço'}</div></div>
-    ${r.modalidade === 'retirada' ? `<div class="detail-row"><div class="k">Endereço</div><div class="v">${r.endereco || '—'}</div></div>` : ''}
+    ${r.modalidade === 'retirada' ? `<div class="detail-row fp-det-largo"><div class="k">Endereço</div><div class="v">${r.endereco || '—'}</div></div>` : ''}
     <div class="detail-row"><div class="k">Brinde</div><div class="v">${r.brinde === 'pastilhas' ? 'Jogo de pastilhas' : r.brinde === 'mochila' ? 'Mochila backpack' : 'Capa de chuva'}</div></div>
-    <div class="detail-row"><div class="k">Observações</div><div class="v">${r.obs || '—'}</div></div>
+    <div class="detail-row fp-det-largo"><div class="k">Observações</div><div class="v">${r.obs || '—'}</div></div>
     <div class="detail-row"><div class="k">Aceite termo</div><div class="v">${r.aceiteTermo ? '✓ Sim' : '✕ Não'}</div></div>
     <div class="detail-row"><div class="k">Uso imagem</div><div class="v">${r.aceiteImagem ? '✓ Sim' : '✕ Não'}</div></div>
     <div class="detail-row"><div class="k">Criada em</div><div class="v">${prettyDT(r.createdAt)}</div></div>
-    <div id="reqBlingProducts" style="margin-top:10px"></div>
+    </div>
+    <div id="reqBlingProducts" class="fp-det-prods"></div>
   `;
 
   // Load compatible Bling products for this request's moto
@@ -12765,7 +12814,7 @@ function renderCompatibleProductsCollapsed(products, containerId) {
 }
 
 function renderCompatibleProductsHTML(products) {
-  return `<div style="max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border-hi) transparent"><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px" class="bling-prod-grid">` +
+  return `<div class="fp-prod-rolagem" style="max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border-hi) transparent"><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px" class="bling-prod-grid">` +
     products.map(p => {
       // gancho para a foto do Drive (pasta com o nome do SKU) substituir esta caixa
       const gancho = p.codigo ? ` data-drive-sku="${escHtml(p.codigo)}"` : '';
