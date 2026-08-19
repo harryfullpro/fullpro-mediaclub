@@ -6561,12 +6561,12 @@ function openDetails(id) {
     <div class="detail-row"><div class="k">Moto</div><div class="v">${escHtml(r.moto)}</div></div>
     <div class="detail-row"><div class="k">Placa</div><div class="v">${escHtml(r.placa)}</div></div>
     <div class="detail-row"><div class="k">Modalidade</div><div class="v">${r.modalidade === 'estudio' ? 'Leva até FullPro' : 'Retirada no endereço'}</div></div>
-    ${r.modalidade === 'retirada' ? `<div class="detail-row fp-det-largo"><div class="k">Endereço</div><div class="v">${r.endereco || '—'}</div></div>` : ''}
     <div class="detail-row"><div class="k">Brinde</div><div class="v">${r.brinde === 'pastilhas' ? 'Jogo de pastilhas' : r.brinde === 'mochila' ? 'Mochila backpack' : 'Capa de chuva'}</div></div>
-    <div class="detail-row fp-det-largo"><div class="k">Observações</div><div class="v">${r.obs || '—'}</div></div>
     <div class="detail-row"><div class="k">Aceite termo</div><div class="v">${r.aceiteTermo ? '✓ Sim' : '✕ Não'}</div></div>
     <div class="detail-row"><div class="k">Uso imagem</div><div class="v">${r.aceiteImagem ? '✓ Sim' : '✕ Não'}</div></div>
     <div class="detail-row"><div class="k">Criada em</div><div class="v">${prettyDT(r.createdAt)}</div></div>
+    ${r.modalidade === 'retirada' ? `<div class="detail-row fp-det-largo"><div class="k">Endereço</div><div class="v">${r.endereco || '—'}</div></div>` : ''}
+    <div class="detail-row fp-det-largo"><div class="k">Observações</div><div class="v">${r.obs || '—'}</div></div>
     </div>
     <div id="reqBlingProducts" class="fp-det-prods"></div>
   `;
