@@ -7349,6 +7349,7 @@ function formatKm(v) {
 const CO_BRINDES = {};            // rid -> [{ id, sku, nome, imagem, estoque, sugerido }]
 const CO_BRINDE_PENDENTE = {};    // rid -> rotulo da categoria ainda nao resolvida (null = ja tratado)
 const CO_BRINDE_ALVO = {};        // rid -> { modo: 'novo'|'trocar'|'pendente', idx }
+const CO_BRINDE_SUGESTAO = {};    // rid -> produto sugerido a partir da categoria
 const CO_BRINDE_RESULTADOS = {};  // rid -> resultados da busca atual
 
 const BRINDE_ROTULOS = {
@@ -7411,22 +7412,39 @@ function fpBrindePintar(rid) {
   let html = '';
 
   if (pend) {
-    html += '<div class="fp-brinde-item pendente">'
-      + '<div class="fp-brinde-foto" style="width:34px;height:34px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg-elev);color:var(--warning);font-weight:800">!</div>'
-      + '<div class="fp-brinde-txt"><div class="fp-brinde-nome">' + escHtml(pend) + '</div>'
-      + '<div class="fp-brinde-sub">Escolhido no agendamento — confirme qual produto saiu</div></div>'
-      + '<div class="fp-brinde-acoes">'
-      +   '<button type="button" class="fp-brinde-btn" onclick="fpBrindeAbrirBusca(\'' + rid + '\',\'pendente\')">Escolher produto</button>'
-      +   '<button type="button" class="fp-brinde-btn perigo" onclick="fpBrindeRemoverPendente(\'' + rid + '\')">Remover</button>'
-      + '</div></div>';
+    const sug = CO_BRINDE_SUGESTAO[rid];
+    if (sug) {
+      /* A sugestao NAO entra sozinha: quem confirma decide de qual SKU o
+         estoque vai sair. Adivinhar e baixar estoque sem alguem olhar erra
+         calado — "pastilha" casa com dezenas de produtos. */
+      html += '<div class="fp-brinde-item pendente">'
+        + fpBrindeFotoHtml(sug)
+        + '<div class="fp-brinde-txt"><div class="fp-brinde-nome">' + escHtml(sug.nome) + '</div>'
+        + '<div class="fp-brinde-sub">SKU: ' + escHtml(sug.sku || '—')
+        + ' · sugestão para <strong>' + escHtml(pend) + '</strong>, confirme se foi esse</div></div>'
+        + fpBrindeEstoqueHtml(sug.estoque)
+        + '<div class="fp-brinde-acoes">'
+        +   '<button type="button" class="fp-brinde-btn" onclick="fpBrindeConfirmarSugestao(\'' + rid + '\')">Confirmar</button>'
+        +   '<button type="button" class="fp-brinde-btn" onclick="fpBrindeAbrirBusca(\'' + rid + '\',\'pendente\')">Trocar brinde</button>'
+        +   '<button type="button" class="fp-brinde-btn perigo" onclick="fpBrindeRemoverPendente(\'' + rid + '\')">Remover brinde</button>'
+        + '</div></div>';
+    } else {
+      html += '<div class="fp-brinde-item pendente">'
+        + '<div class="fp-brinde-foto" style="width:34px;height:34px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bg-elev);color:var(--warning);font-weight:800">!</div>'
+        + '<div class="fp-brinde-txt"><div class="fp-brinde-nome">' + escHtml(pend) + '</div>'
+        + '<div class="fp-brinde-sub">Escolhido no agendamento — confirme qual produto saiu</div></div>'
+        + '<div class="fp-brinde-acoes">'
+        +   '<button type="button" class="fp-brinde-btn" onclick="fpBrindeAbrirBusca(\'' + rid + '\',\'pendente\')">Escolher produto</button>'
+        +   '<button type="button" class="fp-brinde-btn perigo" onclick="fpBrindeRemoverPendente(\'' + rid + '\')">Remover brinde</button>'
+        + '</div></div>';
+    }
   }
 
   itens.forEach(function (b, i) {
     html += '<div class="fp-brinde-item">'
       + fpBrindeFotoHtml(b)
       + '<div class="fp-brinde-txt"><div class="fp-brinde-nome">' + escHtml(b.nome) + '</div>'
-      + '<div class="fp-brinde-sub">SKU: ' + escHtml(b.sku || '—')
-      + (b.sugerido ? ' · <span style="color:var(--warning)">sugerido pelo agendamento, confira</span>' : '') + '</div></div>'
+      + '<div class="fp-brinde-sub">SKU: ' + escHtml(b.sku || '—') + '</div></div>'
       + fpBrindeEstoqueHtml(b.estoque)
       + '<div class="fp-brinde-acoes">'
       +   '<button type="button" class="fp-brinde-btn" onclick="fpBrindeAbrirBusca(\'' + rid + '\',\'trocar\',' + i + ')">Trocar brinde</button>'
@@ -7437,7 +7455,9 @@ function fpBrindePintar(rid) {
   if (!html) html = '<div class="fp-brinde-vazio">Sem brinde nesta saída.</div>';
   cx.innerHTML = html;
   if (typeof fpDriveCarregar === 'function') {
-    fpDriveCarregar(itens.map(function (b) { return b.sku; }), cx);
+    const skus = itens.map(function (b) { return b.sku; });
+    if (CO_BRINDE_SUGESTAO[rid]) skus.push(CO_BRINDE_SUGESTAO[rid].sku);
+    fpDriveCarregar(skus, cx);
   }
 }
 
@@ -7505,7 +7525,7 @@ function fpBrindeEscolher(rid, i) {
   }
   if (alvo.modo === 'trocar' && typeof alvo.idx === 'number') itens[alvo.idx] = escolhido;
   else itens.push(escolhido);
-  if (alvo.modo === 'pendente') CO_BRINDE_PENDENTE[rid] = null;
+  if (alvo.modo === 'pendente') { CO_BRINDE_PENDENTE[rid] = null; CO_BRINDE_SUGESTAO[rid] = null; }
   fpBrindeFecharBusca(rid);
   fpBrindePintar(rid);
   fpCiValidate('co', rid);
@@ -7515,7 +7535,15 @@ function fpBrindeRemover(rid, i) {
   itens.splice(i, 1);
   fpBrindePintar(rid); fpCiValidate('co', rid);
 }
+function fpBrindeConfirmarSugestao(rid) {
+  const sug = CO_BRINDE_SUGESTAO[rid]; if (!sug) return;
+  CO_BRINDES[rid] = (CO_BRINDES[rid] || []).concat([sug]);
+  CO_BRINDE_SUGESTAO[rid] = null;
+  CO_BRINDE_PENDENTE[rid] = null;
+  fpBrindePintar(rid); fpCiValidate('co', rid);
+}
 function fpBrindeRemoverPendente(rid) {
+  CO_BRINDE_SUGESTAO[rid] = null;
   CO_BRINDE_PENDENTE[rid] = null;      // null, nao delete: senao volta no proximo render
   fpBrindePintar(rid); fpCiValidate('co', rid);
 }
@@ -7525,6 +7553,7 @@ window.fpBrindeBuscar = fpBrindeBuscar;
 window.fpBrindeEscolher = fpBrindeEscolher;
 window.fpBrindeRemover = fpBrindeRemover;
 window.fpBrindeRemoverPendente = fpBrindeRemoverPendente;
+window.fpBrindeConfirmarSugestao = fpBrindeConfirmarSugestao;
 
 /* Estado inicial do card: o que ja foi salvo, ou a categoria do agendamento. */
 async function fpBrindeIniciar(r) {
@@ -7546,11 +7575,8 @@ async function fpBrindeIniciar(r) {
   if (CO_BRINDE_PENDENTE[rid] && typeof isBlingConnected === 'function' && isBlingConnected()) {
     const sug = await fpBrindeSugerir(r.brinde);
     if (sug && CO_BRINDE_PENDENTE[rid]) {          // pode ter sido resolvido a mao nesse meio tempo
-      sug.sugerido = true;
-      CO_BRINDES[rid] = [sug];
-      CO_BRINDE_PENDENTE[rid] = null;
+      CO_BRINDE_SUGESTAO[rid] = sug;
       fpBrindePintar(rid);
-      fpCiValidate('co', rid);
     }
   }
 }
