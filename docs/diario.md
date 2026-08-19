@@ -4,6 +4,32 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 19/08/2026 — Detalhe da solicitação em duas colunas
+
+O popup de "Ver detalhes" era estreito (560px) e o popup inteiro rolava, o que empurrava
+os produtos compatíveis para fora da vista.
+
+- **920px de largura**, dados do solicitante em **duas colunas**. Doze campos curtos
+  fecham exatamente seis fileiras; **Endereço e Observações** ficam em largura total, no
+  fim — no meio do grid eles deixavam a célula vizinha vazia.
+- **A rolagem acontece só na lista de produtos.** `.modal-content` e `.modal-body` viram
+  coluna flex com `overflow: hidden`; a lista é o único item que cede espaço
+  (`flex: 1 1 auto` com `max-height: min(380px, 42vh)`). O grid de dados leva
+  `flex: 0 0 auto` para nunca ser cortado.
+- Cada card de produto passou de ~217px para **433px** — o nome agora cabe inteiro em vez
+  de terminar em reticências.
+- O `max-height: 200px` da lista vem num `style=` inline compartilhado com os cards de
+  Projetos e Clips, por isso o override precisa de `!important` e escopo `#modal`.
+- Guarda para janela baixa (`max-height: 660px`): a rolagem volta para o corpo, senão o
+  rodapé sairia da tela.
+
+Medido com 42 cards forçados no DOM: a lista rolou 752px, corpo e popup ficaram parados e
+o rodapé permaneceu visível. O popup só cresce até 90vh — a lista encolhe de 380 para
+294px para caber.
+
+Vale **só no computador** (`min-width: 901px`). No celular o popup segue folha na base,
+uma coluna, rolando inteiro.
+
 ## 19/08/2026 — Ações da linha reduzidas a Ver e WhatsApp
 
 Com o stand by, a coluna AÇÕES chegava a cinco ícones e ficava confusa. Pedido do dono:
