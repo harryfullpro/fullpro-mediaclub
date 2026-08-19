@@ -4,6 +4,25 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 19/08/2026 — Ações da linha reduzidas a Ver e WhatsApp
+
+Com o stand by, a coluna AÇÕES chegava a cinco ícones e ficava confusa. Pedido do dono:
+deixar só **Ver detalhes** e **WhatsApp** na linha, e concentrar as mudanças de status
+**dentro do detalhe**.
+
+- Linha: 2 ícones em qualquer status. A coluna caiu para 106px e a folga foi para
+  Solicitante e Moto, que pararam de quebrar em duas linhas.
+- Rodapé do detalhe: `WhatsApp · Rejeitar · Stand by · Aprovar`. A lista de botões é
+  invertida de propósito — a ação positiva fica à direita e a destrutiva à esquerda, como
+  era antes do stand by existir.
+- No celular nada muda: o menu "…" já concentrava tudo numa lista, que não era o problema.
+- `.modal-foot` ganhou `flex-wrap` no celular, senão quatro botões espremiam.
+
+**Custo aceito:** aprovar uma pendente passou de 1 clique para 2 (abrir o detalhe e
+decidir). Com a fila normalmente em uma ou duas pendentes, vale a troca pela tabela limpa.
+Se incomodar, o caminho de um clique é transformar o badge da coluna STATUS num seletor,
+como já é em Projetos, Edição e Clips.
+
 ## 19/08/2026 — Solicitações: ordem padrão e o status Stand by
 
 **Ordem padrão** passou a ser a data de recebimento, da mais recente para a mais antiga

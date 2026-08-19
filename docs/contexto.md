@@ -73,6 +73,8 @@ não abre o seletor nativo do iOS. No computador segue múltipla escolha pelos c
 
 ### Solicitações
 - Ordem padrão: **data de recebimento, da mais recente para a mais antiga**
+- Na linha da tabela, só **Ver detalhes** e **WhatsApp** — mudanças de status acontecem
+  dentro do detalhe. Cinco ícones na linha ficaram "meio bagunçado".
 - Status **Stand by** além de Aprovada/Rejeitada:
 
 > *"A intenção do stand by é não descartar uma solicitação, pode ser uma moto interessante
