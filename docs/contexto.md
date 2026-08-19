@@ -86,6 +86,15 @@ não abre o seletor nativo do iOS. No computador segue múltipla escolha pelos c
 Ou seja: Stand by é fila de retomada, não é arquivo morto. Rejeitada continua sendo o
 descarte.
 
+### Brinde da saída
+> *"Precisamos confirmar qual foi o brinde que ele ficou de fato."*
+
+- O agendamento guarda só a **categoria**; a saída confirma o **produto do Bling**
+- Campo obrigatório antes de salvar o check-out
+- Busca por **nome ou SKU**, com miniatura, nome e **estoque atual** em cada opção
+- **Trocar · Adicionar · Remover** — pode ter mais de um brinde, ou nenhum
+- Salvar **baixa uma unidade** de cada brinde no estoque do Bling
+
 ### Alinhamento
 > *"nunca deixar desalinhamentos como esse ocorrer novamente"*
 

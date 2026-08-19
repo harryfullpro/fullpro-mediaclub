@@ -4,6 +4,52 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 19/08/2026 — Brinde confirmado na saída, com baixa de estoque no Bling
+
+O agendamento guarda só a **categoria** que o solicitante escolheu (`pastilhas`,
+`mochila`, `capa`). Faltava confirmar o que saiu de fato. Agora o check-out tem um bloco
+**Brinde entregue**, obrigatório antes de salvar.
+
+- **Busca no Bling por nome ou SKU**, com miniatura, nome e estoque atual em cada opção.
+  A busca roda sobre a lista já em cache (2.000 produtos), então responde a cada tecla sem
+  ida à rede. SKU exato vem primeiro, depois quem tem estoque.
+- A miniatura usa o mesmo gancho `data-drive-sku`, então a foto do Drive tem prioridade
+  sobre a do Bling — igual ao resto do painel.
+- Botões **Confirmar · Trocar brinde · Remover brinde**, e **+ Adicionar brinde** para
+  quando saiu mais de um. Remover tudo é válido: cobre a saída sem brinde.
+- Ao salvar, cada brinde confirmado **baixa uma unidade** no Bling
+  (`blingStockOut`, operação S).
+
+**A sugestão não se aceita sozinha.** A primeira versão resolvia a categoria num produto
+e já entrava confirmada — mas "pastilha" casa com dezenas de itens, e o palpite veio
+`PASTILHA DE FREIO (CANAÃ)` quando o brinde de verdade é outro. Baixar estoque de um SKU
+adivinhado erra calado. Agora a sugestão aparece marcada como sugestão e alguém clica em
+Confirmar.
+
+**Idempotência:** `gifts_stock_applied` guarda os ids que já baixaram. Salvar de novo para
+corrigir km ou foto não tira estoque outra vez — verificado: segunda gravação atualizou a
+quilometragem e não chamou o Bling.
+
+---
+
+**Bug grave achado no caminho: nenhum check-in ou check-out era gravado.**
+
+`saveCiForm` escrevia em `sb.from('checkins')` e `sb.from('checkouts')`. As tabelas são
+`mc_checkins` e `mc_checkouts` — as outras não existem. A própria mensagem de erro
+("Você já criou a tabela 'checkouts' no Supabase?") indicava que o autor esperava o nome
+sem prefixo.
+
+As duas tabelas tinham **uma linha cada, de 16/04/2026**, e nada depois. Ou seja: desde
+que essa função foi escrita, todo check-in e check-out do pátio se perdia — o operador
+via um toast de erro e o registro não ficava. Corrigido no mesmo commit; a gravação foi
+confirmada em produção (linha criada, lida de volta e depois apagada).
+
+**Como o resto foi verificado:** fluxo completo com `blingStockOut` substituído por um
+espião, para não mexer no inventário real como teste. Confirmado que a chamada sai uma vez
+por brinde, com quantidade 1 e a observação `Brinde Media Club — <solicitante>`. A baixa
+real no Bling usa a mesma função que o módulo de envio a influenciadores já usa em
+produção. O registro de teste foi apagado do banco.
+
 ## 19/08/2026 — Badge de status fora de linha no detalhe
 
 A etiqueta PENDENTE ficava **3,5px abaixo** do rótulo STATUS. Causa: `.detail-row` é um

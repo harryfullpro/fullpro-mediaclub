@@ -114,6 +114,15 @@ No cliente: `data-drive-sku="<sku>"` no container da imagem + `fpDriveCarregar(s
 depois do render. A imagem só substitui o conteúdo **no `onload`** — trocar antes deixava
 um quadrado cinza vazio quando a rede falhava.
 
+### Bling — baixa de estoque
+`blingStockOut(idProduto, qtd, obs)` → `bling-proxy?action=stock-move` → `POST /estoques`
+com `operacao: 'S'`. Usado por dois fluxos: envio a influenciadores e **brinde do
+check-out**.
+
+No check-out a baixa é **idempotente**: `mc_checkouts.gifts_stock_applied` guarda os ids
+que já saíram. Salvar o mesmo check-out de novo não tira estoque outra vez. Se o Bling
+falhar, o id não entra na lista e a próxima gravação tenta de novo.
+
 ### Instagram e YouTube
 Configurados por `config.js`, sem OAuth.
 
