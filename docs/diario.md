@@ -4,6 +4,33 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 19/08/2026 — Check-in/out passa a girar em torno da data
+
+As duas abas eram **Entrada** e **Saída** — o eixo era o tipo de formulário, e a lista
+despejava as 17 motos de todas as datas nas duas. Agora são **Hoje** e **Outros**.
+
+- **Hoje**: só as motos do dia, e cada card traz **entrada e saída no mesmo lugar**, num
+  seletor no topo. O card abre direto na etapa que falta (sem entrada → Entrada; com
+  entrada → Saída), e depois de salvar fica na aba onde o operador estava.
+- **Outros**: lista compacta em dois grupos, **Próximas datas** e **Datas anteriores**.
+  Serve para corrigir um registro antigo ou adiantar o de amanhã — moto que chega no fim
+  do dia para gravar no seguinte. Clicar na linha expande o card ali mesmo.
+- Selo de etapa concluída só aparece **quando está concluída**. Dois selos apagados em
+  toda linha viravam ruído e ainda pareciam as abas do card.
+
+**Os dois formulários convivem no mesmo card sem colisão** porque todo id já era
+`${prefix}_${rid}`. Bastou extrair o corpo para `ciFormHtml(prefix, r)` e chamá-lo duas
+vezes.
+
+**O card de "Outros" só é montado ao abrir.** Renderizar 17 motos × 2 formulários seria
+34 medidores de combustível e 34 grades de foto de uma vez. Medido: a lista fechada monta
+**zero** cards; abrir uma linha monta um.
+
+**Vazamento de listener corrigido de passagem.** `initFuelGaugeDrag` registrava quatro
+listeners no `document` a cada chamada e nunca removia nenhum — a cada re-render da tela a
+conta crescia (17 cards × 4, indefinidamente). Agora é um único par de listeners no
+documento apontando para o medidor ativo, e o `svg` marca que já foi ligado.
+
 ## 19/08/2026 — Cor e tamanho da capa de chuva
 
 Na landing, escolher **Capa de chuva** abre um bloco com **cor** (Preto, Verde limão) e

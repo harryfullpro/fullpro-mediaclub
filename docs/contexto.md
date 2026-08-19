@@ -86,6 +86,14 @@ não abre o seletor nativo do iOS. No computador segue múltipla escolha pelos c
 Ou seja: Stand by é fila de retomada, não é arquivo morto. Rejeitada continua sendo o
 descarte.
 
+### Check-in / Check-out gira em torno da data
+> *"quero que mostre somente o do dia"*
+
+- Abas **Hoje** e **Outros** — não mais Entrada e Saída
+- **Hoje**: motos do dia, com entrada e saída no mesmo card
+- **Outros**: lista de datas passadas e futuras, para corrigir registro antigo ou
+  adiantar o de outro dia (moto que chega à noite para gravar no dia seguinte)
+
 ### Capa de chuva tem cor e tamanho
 - **Preto** ou **verde limão**; **P, M, G, GG, G2, G3**
 - Só a capa tem variação — pastilhas e mochila não
