@@ -86,6 +86,11 @@ não abre o seletor nativo do iOS. No computador segue múltipla escolha pelos c
 Ou seja: Stand by é fila de retomada, não é arquivo morto. Rejeitada continua sendo o
 descarte.
 
+### Capa de chuva tem cor e tamanho
+- **Preto** ou **verde limão**; **P, M, G, GG, G2, G3**
+- Só a capa tem variação — pastilhas e mochila não
+- Escolhido na landing, junto do brinde; aparece em todo lugar onde o brinde aparece
+
 ### Brinde da saída
 > *"Precisamos confirmar qual foi o brinde que ele ficou de fato."*
 

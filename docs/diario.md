@@ -4,6 +4,33 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 19/08/2026 — Cor e tamanho da capa de chuva
+
+Na landing, escolher **Capa de chuva** abre um bloco com **cor** (Preto, Verde limão) e
+**tamanho** (P, M, G, GG, G2, G3). Os outros dois brindes não têm variação, então o bloco
+só aparece para a capa.
+
+- Chips com botão de rádio de verdade por baixo: o `FormData` já leva os valores, sem
+  campo escondido para sincronizar.
+- O `required` é **ligado e desligado junto com o bloco**. Campo obrigatório escondido
+  trava o envio num elemento que o navegador não consegue focar — é o mesmo cuidado que o
+  campo de endereço já tinha.
+- Trocar para outro brinde limpa a seleção, para não mandar cor de capa em quem pediu
+  mochila.
+- Colunas novas em `mc_requests`: `brinde_cor` e `brinde_tamanho`, com `CHECK` nos valores
+  válidos. Testado: `XXG` é recusado pelo banco.
+
+**O dado aparece em todo lugar onde o brinde já aparecia** — senão não serviria para nada:
+linha da tabela de Solicitações, detalhe da solicitação, agenda do dia, exportação CSV,
+a variável `{brinde}` dos templates de WhatsApp e, o mais útil, a **linha do brinde no
+check-out**, que passa a dizer `Capa de chuva · Preto · GG` para quem vai separar a peça.
+
+Conferido em produção: bloco escondido por padrão sem `required`; ao escolher a capa
+aparecem os 8 rádios obrigatórios; a marcação acende os chips; voltar para pastilhas
+esconde, limpa e tira o `required`. O `FormData` do formulário real carrega
+`brinde_cor: verde_limao` e `brinde_tamanho: G3`. Solicitações antigas, sem os campos,
+seguem exibindo só o nome do brinde.
+
 ## 19/08/2026 — Brinde confirmado na saída, com baixa de estoque no Bling
 
 O agendamento guarda só a **categoria** que o solicitante escolheu (`pastilhas`,
