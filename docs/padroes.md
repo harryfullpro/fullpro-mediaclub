@@ -189,8 +189,11 @@ Um observador aplica, em tudo que é injetado no DOM:
 no JS. Use o marcador `data-fp-cols`, que colapsa de forma adaptativa (`minmax`), não
 sempre para uma coluna.
 
-> A verificação de tabela olha **também a raiz**, não só descendentes: quando o nó
-> inserido *é* a tabela, `querySelectorAll('table')` não a encontra.
+> **Toda verificação olha também a raiz, não só descendentes.** Quando o nó inserido *é*
+> o alvo — a tabela, o botão, a imagem — `querySelectorAll` não o encontra. Isso acontece
+> sempre que um `innerHTML` monta os elementos no topo, como o rodapé do modal de
+> detalhes. Use o helper `coletar(raiz, seletor)`; foi essa falta que deixou quatro botões
+> sem `aria-label` mesmo depois da auditoria ter zerado a conta.
 
 ---
 

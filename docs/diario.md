@@ -4,6 +4,29 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 19/08/2026 — Rodapé do detalhe em botões de ícone
+
+Pedido do dono: no rodapé do detalhe, os mesmos botões só de ícone que existiam na linha
+da tabela. Ficaram `WhatsApp · Aprovar · Stand by · Rejeitar`, na ordem que a linha tinha.
+A dica abre para cima, então não é cortada pelo `overflow: hidden` do popup.
+
+Saiu junto o código morto: `reqBotoesStatusTexto`, a chave `botao` de `REQ_ACOES` e a
+regra `.action-btn.standby`.
+
+**Bug encontrado ao verificar — e é geral, não só deste rodapé.** Os quatro botões novos
+ficaram **sem nome acessível**: `aria-label` e `title` vazios, contra a linha de base de
+zero botões sem nome da auditoria.
+
+Causa: `ajustar()` montava suas listas só com `raiz.querySelectorAll(...)`, que enxerga
+apenas descendentes. Nas linhas da tabela o botão entra dentro de um `<tr>`, então é
+descendente e era coberto; num `innerHTML` que monta os elementos no topo — o caso do
+rodapé — **o próprio botão é o nó inserido** e escapava. É a mesma armadilha que já tinha
+mordido nas tabelas, agora em `[data-tip]`, `button`, `img` e campos de formulário.
+
+Corrigido com um helper `coletar(raiz, seletor)` que inclui a raiz na lista. Confirmado:
+os quatro botões voltaram a ter `aria-label` e `title`, e a tela toda marca **zero**
+botões sem nome.
+
 ## 19/08/2026 — Detalhe da solicitação em duas colunas
 
 O popup de "Ver detalhes" era estreito (560px) e o popup inteiro rolava, o que empurrava
