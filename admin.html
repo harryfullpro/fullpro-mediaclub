@@ -3853,15 +3853,6 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
 .fp-brinde-estoque { flex-shrink: 0; white-space: nowrap; font-size: 11px; color: var(--text-dim); }
 .fp-brinde-estoque strong { font-size: 12.5px; font-weight: 700; }
 .fp-brinde-acoes { display: flex; gap: 6px; flex-shrink: 0; }
-.fp-brinde-btn {
-  padding: 5px 10px; border-radius: 7px; cursor: pointer; font-family: inherit;
-  font-size: 11px; font-weight: 600; white-space: nowrap;
-  background: var(--bg-card); border: 1px solid var(--border); color: var(--text-dim);
-  transition: border-color .15s, color .15s, background .15s;
-}
-.fp-brinde-btn:hover { border-color: var(--border-hi); color: var(--text); }
-.fp-brinde-btn.perigo { color: var(--perigo); border-color: rgba(255,77,77,.3); }
-.fp-brinde-btn.perigo:hover { background: var(--perigo-bg); border-color: var(--perigo); }
 .fp-brinde-vazio { font-size: 12px; color: var(--text-muted); padding: 8px 2px; }
 .fp-brinde-add {
   display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
@@ -3890,8 +3881,8 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
 @media (max-width: 600px) {
   /* os dois botoes descem para uma segunda fileira e dividem a largura */
   .fp-brinde-item { flex-wrap: wrap; row-gap: 8px; }
-  .fp-brinde-acoes { flex: 1 1 100%; }
-  .fp-brinde-acoes .fp-brinde-btn { flex: 1 1 0; min-height: 36px; }
+  /* no celular os icones descem para uma segunda fileira, encostados a direita */
+  .fp-brinde-acoes { flex: 1 1 100%; justify-content: flex-end; }
   .fp-brinde-add { min-height: 40px; }
   .fp-brinde-res { max-height: 46vh; }
 }
@@ -7215,7 +7206,7 @@ function renderCiView() {
                      placeholder="Buscar produto no Bling por nome ou SKU"
                      aria-label="Buscar produto no Bling por nome ou SKU"
                      oninput="fpBrindeBuscar('${rid}', this.value)"/>
-              <button type="button" class="fp-brinde-btn" onclick="fpBrindeFecharBusca('${rid}')">Cancelar</button>
+              <button type="button" class="fp-icon-btn fp-tip-left" data-tip="Fechar busca" onclick="fpBrindeFecharBusca('${rid}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
             </div>
             <div class="fp-brinde-res" id="brindeRes_${rid}"></div>
           </div>
@@ -7398,6 +7389,22 @@ function fpBrindeFotoHtml(b, tam) {
     + (b.imagem ? '<img src="' + escHtml(b.imagem) + '" alt="" style="width:100%;height:100%;object-fit:cover"/>' : FP_ICONE_CAIXA)
     + '</div>';
 }
+/* Botoes de acao no padrao do painel: so o glifo, com dica no data-tip
+   (o observador de ergonomia converte em aria-label e title). */
+const FP_BRINDE_GLIFOS = {
+  confirmar: '<polyline points="20 6 9 17 4 12"/>',
+  trocar:    '<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/>',
+  remover:   '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>',
+  escolher:  '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  fechar:    '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+};
+function fpBrindeAcaoHtml(glifo, cor, dica, chamada, tipLeft) {
+  return '<button type="button" class="fp-icon-btn ' + cor + (tipLeft ? ' fp-tip-left' : '')
+    + '" data-tip="' + dica + '" onclick="' + chamada + '">'
+    + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    + FP_BRINDE_GLIFOS[glifo] + '</svg></button>';
+}
+
 function fpBrindeEstoqueHtml(est) {
   const cor = typeof est === 'number' ? (est > 3 ? 'var(--success)' : 'var(--warning)') : 'var(--text-dim)';
   return '<div class="fp-brinde-estoque"><strong style="color:' + cor + '">' + (est == null ? '?' : est) + '</strong> un</div>';
@@ -7424,9 +7431,9 @@ function fpBrindePintar(rid) {
         + ' · sugestão para <strong>' + escHtml(pend) + '</strong>, confirme se foi esse</div></div>'
         + fpBrindeEstoqueHtml(sug.estoque)
         + '<div class="fp-brinde-acoes">'
-        +   '<button type="button" class="fp-brinde-btn" onclick="fpBrindeConfirmarSugestao(\'' + rid + '\')">Confirmar</button>'
-        +   '<button type="button" class="fp-brinde-btn" onclick="fpBrindeAbrirBusca(\'' + rid + '\',\'pendente\')">Trocar brinde</button>'
-        +   '<button type="button" class="fp-brinde-btn perigo" onclick="fpBrindeRemoverPendente(\'' + rid + '\')">Remover brinde</button>'
+        +   fpBrindeAcaoHtml('confirmar', 'fp-ib-green', 'Confirmar este brinde', 'fpBrindeConfirmarSugestao(\'' + rid + '\')')
+        +   fpBrindeAcaoHtml('trocar', 'fp-ib-blue', 'Trocar brinde', 'fpBrindeAbrirBusca(\'' + rid + '\',\'pendente\')')
+        +   fpBrindeAcaoHtml('remover', 'fp-ib-danger', 'Remover brinde', 'fpBrindeRemoverPendente(\'' + rid + '\')', true)
         + '</div></div>';
     } else {
       html += '<div class="fp-brinde-item pendente">'
@@ -7434,8 +7441,8 @@ function fpBrindePintar(rid) {
         + '<div class="fp-brinde-txt"><div class="fp-brinde-nome">' + escHtml(pend) + '</div>'
         + '<div class="fp-brinde-sub">Escolhido no agendamento — confirme qual produto saiu</div></div>'
         + '<div class="fp-brinde-acoes">'
-        +   '<button type="button" class="fp-brinde-btn" onclick="fpBrindeAbrirBusca(\'' + rid + '\',\'pendente\')">Escolher produto</button>'
-        +   '<button type="button" class="fp-brinde-btn perigo" onclick="fpBrindeRemoverPendente(\'' + rid + '\')">Remover brinde</button>'
+        +   fpBrindeAcaoHtml('escolher', 'fp-ib-blue', 'Escolher produto no Bling', 'fpBrindeAbrirBusca(\'' + rid + '\',\'pendente\')')
+        +   fpBrindeAcaoHtml('remover', 'fp-ib-danger', 'Remover brinde', 'fpBrindeRemoverPendente(\'' + rid + '\')', true)
         + '</div></div>';
     }
   }
@@ -7447,8 +7454,8 @@ function fpBrindePintar(rid) {
       + '<div class="fp-brinde-sub">SKU: ' + escHtml(b.sku || '—') + '</div></div>'
       + fpBrindeEstoqueHtml(b.estoque)
       + '<div class="fp-brinde-acoes">'
-      +   '<button type="button" class="fp-brinde-btn" onclick="fpBrindeAbrirBusca(\'' + rid + '\',\'trocar\',' + i + ')">Trocar brinde</button>'
-      +   '<button type="button" class="fp-brinde-btn perigo" onclick="fpBrindeRemover(\'' + rid + '\',' + i + ')">Remover brinde</button>'
+      +   fpBrindeAcaoHtml('trocar', 'fp-ib-blue', 'Trocar brinde', 'fpBrindeAbrirBusca(\'' + rid + '\',\'trocar\',' + i + ')')
+      +   fpBrindeAcaoHtml('remover', 'fp-ib-danger', 'Remover brinde', 'fpBrindeRemover(\'' + rid + '\',' + i + ')', true)
       + '</div></div>';
   });
 
