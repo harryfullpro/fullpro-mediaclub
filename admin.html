@@ -3904,6 +3904,8 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
 .ci-selo.ok { background: var(--bg-aprovado); border-color: rgba(31,210,122,.35); color: var(--tx-aprovado); }
 .ci-linha-seta { flex: 0 0 auto; color: var(--text-muted); transition: transform .18s; }
 .ci-item.aberto .ci-linha-seta { transform: rotate(180deg); }
+.ci-linha-corpo .ci-card-top .dv-name { display: none; }   /* o nome ja esta na linha */
+.ci-linha-corpo .ci-card-top { justify-content: flex-end; }
 .ci-linha-corpo .ci-card {
   margin-bottom: 0; border-top-left-radius: 0; border-top-right-radius: 0;
   border-color: var(--primary); border-top-color: var(--border);
@@ -7337,7 +7339,7 @@ function ciLinhaHtml(r, hoje) {
   const feitoCi = !!(CHECKINS[rid] && CHECKINS[rid].id);
   const feitoCo = !!(CHECKOUTS[rid] && CHECKOUTS[rid].id);
   const aberto = ciExpandido === rid;
-  const marca = (ok, txt) => `<span class="ci-selo${ok ? ' ok' : ''}">${ok ? CI_MARCA_OK : ''}${txt}</span>`;
+  const marca = (ok, txt) => ok ? `<span class="ci-selo ok">${CI_MARCA_OK}${txt}</span>` : '';
   return `<div class="ci-item${aberto ? ' aberto' : ''}">
       <button type="button" class="ci-linha" aria-expanded="${aberto}" aria-controls="ciExp_${rid}" onclick="fpCiAlternar('${rid}')">
         <span class="ci-linha-data">${ciRotuloData(r.date, hoje)}</span>
