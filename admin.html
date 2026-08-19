@@ -3839,6 +3839,87 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
   #modal .fp-prod-rolagem { max-height: 200px !important; }
 }
 
+/* --- Check-in / Check-out: card com as duas etapas ----------------------- */
+.ci-dia { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.ci-dia-selo {
+  padding: 4px 10px; border-radius: 6px; background: var(--primary); color: #fff;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+}
+.ci-dia-data, .ci-dia-qtd { font-size: 11px; color: var(--text-muted); }
+
+.ci-card { margin-bottom: 14px; }
+.ci-card-top {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.ci-abas {
+  display: flex; gap: 4px; padding: 3px;
+  background: var(--bg-elev); border: 1px solid var(--border); border-radius: 9px;
+}
+.ci-aba {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border: none; border-radius: 7px; cursor: pointer;
+  background: none; color: var(--text-dim); font-family: inherit;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+  transition: background .15s, color .15s;
+}
+.ci-aba:hover { color: var(--text); }
+.ci-aba.feito { color: var(--success); }
+.ci-aba.active { background: var(--bg-card); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.ci-aba.active.feito { color: var(--success); }
+
+/* --- Outros: lista compacta, o card monta ao abrir ---------------------- */
+.ci-grupo {
+  display: flex; align-items: center; gap: 8px; margin: 18px 0 8px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--text-muted);
+}
+.ci-grupo:first-child { margin-top: 0; }
+.ci-grupo-qtd {
+  padding: 1px 7px; border-radius: 999px; background: var(--bg-elev);
+  border: 1px solid var(--border); letter-spacing: 0; font-weight: 700;
+}
+.ci-item { margin-bottom: 6px; }
+.ci-linha {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 10px 12px; border-radius: 10px; cursor: pointer; text-align: left;
+  background: var(--bg-card); border: 1px solid var(--border);
+  color: var(--text); font-family: inherit; font-size: 13px;
+  transition: border-color .15s, background .15s;
+}
+.ci-linha:hover { border-color: var(--border-hi); }
+.ci-item.aberto .ci-linha { border-color: var(--primary); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.ci-linha-data {
+  flex: 0 0 auto; min-width: 86px; font-size: 11.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .4px; color: var(--text-dim);
+}
+.ci-linha-txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ci-linha-placa { color: var(--text-muted); font-size: 11.5px; }
+.ci-selo {
+  display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto;
+  padding: 3px 9px; border-radius: 6px; font-size: 10.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .4px;
+  background: var(--bg-elev); border: 1px solid var(--border); color: var(--text-muted);
+}
+.ci-selo.ok { background: var(--bg-aprovado); border-color: rgba(31,210,122,.35); color: var(--tx-aprovado); }
+.ci-linha-seta { flex: 0 0 auto; color: var(--text-muted); transition: transform .18s; }
+.ci-item.aberto .ci-linha-seta { transform: rotate(180deg); }
+.ci-linha-corpo .ci-card {
+  margin-bottom: 0; border-top-left-radius: 0; border-top-right-radius: 0;
+  border-color: var(--primary); border-top-color: var(--border);
+}
+
+@media (max-width: 600px) {
+  .ci-card-top { gap: 8px; }
+  .ci-abas { width: 100%; }
+  .ci-aba { flex: 1 1 0; justify-content: center; min-height: 38px; }
+  /* a linha vira duas fileiras: identificacao em cima, selos embaixo */
+  .ci-linha { flex-wrap: wrap; row-gap: 8px; }
+  .ci-linha-data { min-width: 0; }
+  .ci-linha-txt { flex: 1 1 100%; order: 3; white-space: normal; }
+  .ci-linha-seta { margin-left: auto; }
+}
+
 /* --- Brinde da saida ----------------------------------------------------- */
 .fp-brinde-agendado { font-size: 11.5px; color: var(--text-dim); margin: 0 0 8px; }
 .fp-brinde-agendado strong { color: var(--text); }
@@ -4209,8 +4290,8 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
       </div>
 
       <div class="filter-bar">
-        <button class="filter-btn active" data-cifilter="checkin" onclick="setCiTab('checkin')">Entrada (Check-in)</button>
-        <button class="filter-btn" data-cifilter="checkout" onclick="setCiTab('checkout')">Saída (Check-out)</button>
+        <button class="filter-btn active" data-cifilter="hoje" onclick="setCiTab('hoje')">Hoje</button>
+        <button class="filter-btn" data-cifilter="outros" onclick="setCiTab('outros')">Outros</button>
       </div>
 
       <div id="ciFormWrap"></div>
@@ -7051,8 +7132,17 @@ async function submitEditBooking() {
   fpToast('Agendamento atualizado!', 'ok');
 }
 
-/* CHECK-IN / CHECK-OUT MODULE */
-let ciTab = 'checkin';
+/* ==========================================================================
+   CHECK-IN / CHECK-OUT
+   O eixo das abas e a DATA, nao o tipo de formulario: "Hoje" mostra as motos
+   do dia com entrada e saida no mesmo card, e "Outros" lista datas passadas e
+   futuras para corrigir um check antigo ou adiantar o de amanha (moto que
+   chega no fim do dia para gravar no seguinte).
+   ========================================================================== */
+let ciTab = 'hoje';
+const CI_ABA = {};          // rid -> 'ci' | 'co' (aba escolhida no card)
+let ciExpandido = null;     // rid aberto na lista de "Outros"
+
 function setCiTab(tab) {
   ciTab = tab;
   document.querySelectorAll('[data-cifilter]').forEach(b => {
@@ -7060,82 +7150,40 @@ function setCiTab(tab) {
   });
   renderCiView();
 }
+window.setCiTab = setCiTab;
 
-function renderCiView() {
-  const wrap = document.getElementById('ciFormWrap');
-  const today = fmtDate(new Date());
-  const allBookings = getRequests()
-    .filter(r => r.status === 'approved')
-    .sort((a, b) => a.date.localeCompare(b.date));
-
-  if (allBookings.length === 0) {
-    wrap.innerHTML = '<div class="dv-empty"><p>Nenhum agendamento aprovado.</p></div>';
-    return;
-  }
-
-  // Split into past and upcoming, show upcoming first then past
-  const upcoming = allBookings.filter(r => r.date >= today);
-  const past = allBookings.filter(r => r.date < today).reverse(); // most recent first
-  const upcomingBookings = [...upcoming, ...past];
-
-  const prefix = ciTab === 'checkin' ? 'ci' : 'co';
-  const label = ciTab === 'checkin' ? 'check-in' : 'check-out';
-
-  // Group bookings by date
-  const grouped = {};
-  upcomingBookings.forEach(r => {
-    if (!grouped[r.date]) grouped[r.date] = [];
-    grouped[r.date].push(r);
+/* Sem escolha explicita, o card abre na etapa que falta. */
+function ciAbaDe(rid) {
+  if (CI_ABA[rid]) return CI_ABA[rid];
+  return (CHECKINS[rid] && CHECKINS[rid].id) ? 'co' : 'ci';
+}
+function setCiAba(rid, aba) {
+  CI_ABA[rid] = aba;
+  const card = document.getElementById('ciCard_' + rid);
+  if (!card) return;
+  card.querySelectorAll('.ci-aba').forEach(b => {
+    const meu = b.dataset.aba === aba;
+    b.classList.toggle('active', meu);
+    b.setAttribute('aria-selected', meu ? 'true' : 'false');
   });
+  ['ci', 'co'].forEach(pfx => {
+    const el = document.getElementById('ciForm_' + pfx + '_' + rid);
+    if (el) el.hidden = (pfx !== aba);
+  });
+  fpCiValidate(aba, rid);
+}
+window.setCiAba = setCiAba;
 
-  let allHtml = '';
-  const allDates = Object.keys(grouped);
-  const futureDates = allDates.filter(d => d >= today).sort();
-  const pastDates = allDates.filter(d => d < today).sort().reverse();
+const CI_MARCA_OK = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
 
-  // Show a divider between future and past
-  const sortedDates = [...futureDates];
-  const hasPast = pastDates.length > 0;
-  if (hasPast) sortedDates.push('__PAST_DIVIDER__', ...pastDates);
-
-  sortedDates.forEach((date, idx) => {
-    // Past divider
-    if (date === '__PAST_DIVIDER__') {
-      allHtml += `<div style="margin-top:28px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
-        <div style="flex:1;height:1px;background:var(--border)"></div>
-        <span style="font-size: 11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">Agendamentos anteriores</span>
-        <div style="flex:1;height:1px;background:var(--border)"></div>
-      </div>`;
-      return;
-    }
-
-    const isToday = date === today;
-    const isPast = date < today;
-    const dateLabel = isToday ? 'Hoje' : new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
-    const dateBadgeColor = isToday
-      ? 'background:var(--primary);color:#fff'
-      : isPast
-        ? 'background:rgba(107,114,128,.15);color:var(--text-muted)'
-        : 'background:var(--bg-card);color:var(--text-dim);border:1px solid var(--border)';
-
-    allHtml += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;${idx > 0 && sortedDates[idx-1] !== '__PAST_DIVIDER__' ? 'margin-top:24px;padding-top:16px;border-top:1px solid var(--border);' : ''}">
-      <span style="padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;${dateBadgeColor}">${dateLabel}</span>
-      <span style="font-size:11px;color:var(--text-muted)">${date}</span>
-      <span style="font-size:11px;color:var(--text-muted)">· ${grouped[date].length} moto${grouped[date].length > 1 ? 's' : ''}</span>
-    </div>`;
-
-    grouped[date].forEach(r => {
-    const ci = (prefix === 'ci' ? CHECKINS : CHECKOUTS)[r.id] || { fuel_level: 0, mileage: '', observations: '', photos: [] };
-    const photos = ci.photos || [];
-    const hasSaved = !!ci.id;
-    const rid = r.id;
-
-    allHtml += `<div class="cal-card" style="margin-bottom:14px">
-      <div class="dv-row" style="margin-bottom:12px">
-        <span class="dv-name">${escHtml(r.nome)} — ${escHtml(r.moto)} (${escHtml(r.placa)})</span>
-        ${hasSaved ? '<span class="badge approved">Salvo</span>' : '<span class="badge pending">Pendente</span>'}
-      </div>
-      <div class="checkin-grid">
+/* Corpo do formulario. O mesmo markup serve para entrada e saida — todos os
+   ids levam o prefixo, entao os dois convivem no mesmo card sem colidir. */
+function ciFormHtml(prefix, r) {
+  const rid = r.id;
+  const ci = (prefix === 'ci' ? CHECKINS : CHECKOUTS)[rid] || { fuel_level: 0, mileage: '', observations: '', photos: [] };
+  const photos = ci.photos || [];
+  const label = prefix === 'ci' ? 'check-in' : 'check-out';
+  return `      <div class="checkin-grid">
         <div class="checkin-field">
           <label class="checkin-label">Nível de combustível</label>
           <div class="fuel-gauge-container">
@@ -7234,35 +7282,129 @@ function renderCiView() {
             Salvar ${label}
           </button>
         </div>
+      </div>`;
+}
+
+function ciCardHtml(r) {
+  const rid = r.id;
+  const aba = ciAbaDe(rid);
+  const feito = { ci: !!(CHECKINS[rid] && CHECKINS[rid].id), co: !!(CHECKOUTS[rid] && CHECKOUTS[rid].id) };
+  const abas = ['ci', 'co'].map(pfx => {
+    const meu = pfx === aba;
+    return `<button type="button" class="ci-aba${meu ? ' active' : ''}${feito[pfx] ? ' feito' : ''}" data-aba="${pfx}"
+      role="tab" aria-selected="${meu}" onclick="setCiAba('${rid}','${pfx}')">`
+      + (pfx === 'ci' ? 'Entrada' : 'Saída') + (feito[pfx] ? CI_MARCA_OK : '') + '</button>';
+  }).join('');
+  return `<div class="cal-card ci-card" id="ciCard_${rid}">
+      <div class="ci-card-top">
+        <span class="dv-name">${escHtml(r.nome)} — ${escHtml(r.moto)} (${escHtml(r.placa)})</span>
+        <div class="ci-abas" role="tablist" aria-label="Etapa do registro">${abas}</div>
       </div>
+      <div class="ci-form" id="ciForm_ci_${rid}"${aba === 'ci' ? '' : ' hidden'}>${ciFormHtml('ci', r)}</div>
+      <div class="ci-form" id="ciForm_co_${rid}"${aba === 'co' ? '' : ' hidden'}>${ciFormHtml('co', r)}</div>
     </div>`;
-    });
+}
+
+/* Liga medidor, validacao, brinde e produtos compativeis dos dois formularios. */
+function ciInitCard(r) {
+  ['ci', 'co'].forEach(pfx => {
+    const ci = (pfx === 'ci' ? CHECKINS : CHECKOUTS)[r.id] || { fuel_level: 0 };
+    updateFuelGauge(pfx + '_' + r.id, ci.fuel_level);
+    initFuelGaugeDrag(pfx + '_' + r.id);
+    fpCiValidate(pfx, r.id);
   });
-
-  wrap.innerHTML = allHtml;
-
-  upcomingBookings.forEach(r => {
-    const ci = (prefix === 'ci' ? CHECKINS : CHECKOUTS)[r.id] || { fuel_level: 0 };
-    updateFuelGauge(prefix + '_' + r.id, ci.fuel_level);
-    initFuelGaugeDrag(prefix + '_' + r.id);
-    if (prefix === 'co') fpBrindeIniciar(r);   // ja chama fpCiValidate por dentro
-    else fpCiValidate(prefix, r.id);
-  });
-
-  // Load compatible Bling products for each check-in/check-out card
-  if (isBlingConnected()) {
-    upcomingBookings.forEach(r => {
-      if (r.moto) {
-        const cId = `ciProds_${prefix}_${r.id}`;
-        const el = document.getElementById(cId);
-        if (el) {
-          el.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:4px 0"><svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align:-1px;margin-right:4px;animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="30 70"/></svg>Buscando produtos compatíveis…</div>';
-          blingFindCompatible(r.moto).then(prods => renderCompatibleProducts(prods, cId));
-        }
-      }
+  fpBrindeIniciar(r);
+  if (r.moto && typeof isBlingConnected === 'function' && isBlingConnected()) {
+    ['ci', 'co'].forEach(pfx => {
+      const el = document.getElementById('ciProds_' + pfx + '_' + r.id);
+      if (!el || el.dataset.carregado === '1') return;
+      el.dataset.carregado = '1';
+      el.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:4px 0"><svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align:-1px;margin-right:4px;animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="30 70"/></svg>Buscando produtos compatíveis…</div>';
+      blingFindCompatible(r.moto).then(prods => renderCompatibleProducts(prods, 'ciProds_' + pfx + '_' + r.id));
     });
   }
 }
+
+function ciRotuloData(iso, hoje) {
+  const d = new Date(iso + 'T12:00:00');
+  if (iso === hoje) return 'Hoje';
+  return d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' });
+}
+
+/* Linha compacta da lista de "Outros". O card so e montado ao abrir. */
+function ciLinhaHtml(r, hoje) {
+  const rid = r.id;
+  const feitoCi = !!(CHECKINS[rid] && CHECKINS[rid].id);
+  const feitoCo = !!(CHECKOUTS[rid] && CHECKOUTS[rid].id);
+  const aberto = ciExpandido === rid;
+  const marca = (ok, txt) => `<span class="ci-selo${ok ? ' ok' : ''}">${ok ? CI_MARCA_OK : ''}${txt}</span>`;
+  return `<div class="ci-item${aberto ? ' aberto' : ''}">
+      <button type="button" class="ci-linha" aria-expanded="${aberto}" aria-controls="ciExp_${rid}" onclick="fpCiAlternar('${rid}')">
+        <span class="ci-linha-data">${ciRotuloData(r.date, hoje)}</span>
+        <span class="ci-linha-txt"><strong>${escHtml(r.nome)}</strong> — ${escHtml(r.moto)} <span class="ci-linha-placa">${escHtml(r.placa)}</span></span>
+        ${marca(feitoCi, 'Entrada')}${marca(feitoCo, 'Saída')}
+        <svg class="ci-linha-seta" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="ci-linha-corpo" id="ciExp_${rid}"${aberto ? '' : ' hidden'}></div>
+    </div>`;
+}
+
+function fpCiAlternar(rid) {
+  ciExpandido = (ciExpandido === rid) ? null : rid;
+  renderCiView();
+  if (ciExpandido) {
+    const el = document.getElementById('ciCard_' + ciExpandido);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+window.fpCiAlternar = fpCiAlternar;
+
+function renderCiView() {
+  const wrap = document.getElementById('ciFormWrap');
+  if (!wrap) return;
+  const hoje = fmtDate(new Date());
+  const aprovados = getRequests().filter(r => r.status === 'approved');
+
+  if (ciTab === 'hoje') {
+    const doDia = aprovados.filter(r => r.date === hoje).sort((a, b) => a.nome.localeCompare(b.nome));
+    if (!doDia.length) {
+      const outras = aprovados.length;
+      wrap.innerHTML = `<div class="dv-empty">
+        <p>Nenhuma moto agendada para hoje.</p>
+        ${outras ? `<p style="font-size:12px;color:var(--text-muted);margin-top:6px">Para corrigir um registro antigo ou adiantar o de outro dia, use <strong>Outros</strong>.</p>` : ''}
+      </div>`;
+      return;
+    }
+    wrap.innerHTML = `<div class="ci-dia">
+        <span class="ci-dia-selo">Hoje</span>
+        <span class="ci-dia-data">${hoje}</span>
+        <span class="ci-dia-qtd">· ${doDia.length} moto${doDia.length > 1 ? 's' : ''}</span>
+      </div>` + doDia.map(ciCardHtml).join('');
+    doDia.forEach(ciInitCard);
+    return;
+  }
+
+  // --- Outros: futuras primeiro (a mais proxima em cima), depois as passadas ---
+  const futuras = aprovados.filter(r => r.date > hoje).sort((a, b) => a.date.localeCompare(b.date));
+  const passadas = aprovados.filter(r => r.date < hoje).sort((a, b) => b.date.localeCompare(a.date));
+  if (!futuras.length && !passadas.length) {
+    wrap.innerHTML = '<div class="dv-empty"><p>Nenhuma outra data com agendamento aprovado.</p></div>';
+    return;
+  }
+  const bloco = (titulo, lista) => lista.length
+    ? `<div class="ci-grupo">${titulo} <span class="ci-grupo-qtd">${lista.length}</span></div>`
+      + lista.map(r => ciLinhaHtml(r, hoje)).join('')
+    : '';
+  wrap.innerHTML = bloco('Próximas datas', futuras) + bloco('Datas anteriores', passadas);
+
+  if (ciExpandido) {
+    const r = aprovados.find(x => x.id === ciExpandido);
+    const caixa = document.getElementById('ciExp_' + ciExpandido);
+    if (r && caixa) { caixa.innerHTML = ciCardHtml(r); ciInitCard(r); }
+    else ciExpandido = null;
+  }
+}
+
 
 /* Check-out storage */
 let CHECKOUTS = {};
@@ -7673,6 +7815,7 @@ async function saveCiForm(prefix, rid) {
     }
     if (result.data) store[rid] = result.data;
     else store[rid] = { ...existing, ...payload };
+    CI_ABA[rid] = prefix;   // depois de salvar, o card volta na mesma aba
     fpToast((ehSaida ? 'Check-out' : 'Check-in') + ' salvo com sucesso!', 'ok');
 
     // baixa do estoque dos brindes, uma unidade cada, sem repetir
@@ -13892,31 +14035,33 @@ function initFuelGaugeDrag(rid) {
     return pct;
   }
 
-  let dragging = false;
+  if (svg.dataset.fpArrasto === '1') return;
+  svg.dataset.fpArrasto = '1';
 
   svg.addEventListener('mousedown', e => {
-    dragging = true;
+    FP_GAUGE_ATIVO = { rid: rid, valor: getValFromEvent };
     updateFuelGauge(rid, getValFromEvent(e));
     e.preventDefault();
   });
-  document.addEventListener('mousemove', e => {
-    if (!dragging) return;
-    updateFuelGauge(rid, getValFromEvent(e));
-  });
-  document.addEventListener('mouseup', () => { dragging = false; });
-
-  // Touch support
   svg.addEventListener('touchstart', e => {
-    dragging = true;
+    FP_GAUGE_ATIVO = { rid: rid, valor: getValFromEvent };
     updateFuelGauge(rid, getValFromEvent(e.touches[0]));
     e.preventDefault();
   }, { passive: false });
-  document.addEventListener('touchmove', e => {
-    if (!dragging) return;
-    updateFuelGauge(rid, getValFromEvent(e.touches[0]));
-  });
-  document.addEventListener('touchend', () => { dragging = false; });
 }
+
+/* Um unico par de listeners no documento para todos os medidores. Antes cada
+   chamada de initFuelGaugeDrag somava quatro listeners que nunca saiam — a
+   cada re-render da tela a conta crescia. */
+let FP_GAUGE_ATIVO = null;
+document.addEventListener('mousemove', e => {
+  if (FP_GAUGE_ATIVO) updateFuelGauge(FP_GAUGE_ATIVO.rid, FP_GAUGE_ATIVO.valor(e));
+});
+document.addEventListener('touchmove', e => {
+  if (FP_GAUGE_ATIVO && e.touches[0]) updateFuelGauge(FP_GAUGE_ATIVO.rid, FP_GAUGE_ATIVO.valor(e.touches[0]));
+});
+document.addEventListener('mouseup', () => { FP_GAUGE_ATIVO = null; });
+document.addEventListener('touchend', () => { FP_GAUGE_ATIVO = null; });
 
 function compressImg(file, maxW, q) {
   maxW = maxW || 800; q = q || 0.65;
