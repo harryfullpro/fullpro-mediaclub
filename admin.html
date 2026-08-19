@@ -362,6 +362,7 @@
   .badge.pending  { background: var(--bg-pendente);  color: var(--tx-pendente); }
   .badge.approved { background: var(--bg-aprovado);  color: var(--tx-aprovado); }
   .badge.rejected { background: var(--bg-rejeitado); color: var(--tx-rejeitado); }
+  .badge.standby  { background: var(--bg-standby);   color: var(--tx-standby); }
   .badge.estudio  { background: var(--bg-estudio);   color: var(--tx-estudio); }
   .badge.retirada { background: var(--bg-retirada);  color: var(--tx-retirada); }
 
@@ -382,6 +383,8 @@
   .action-btn.approve, .action-btn.whats { background: var(--success); border-color: var(--success); color: #fff; }
   .action-btn.approve:hover, .action-btn.whats:hover { background: #36df89; border-color: #36df89; }
   [data-theme="light"] .action-btn.approve, [data-theme="light"] .action-btn.whats { color: #001e10; }
+  .action-btn.standby { background: transparent; color: var(--tx-standby); border-color: rgba(168,85,247,.35); }
+  .action-btn.standby:hover { background: rgba(168,85,247,.12); }
   .action-btn.reject { background: transparent; color: var(--danger); border-color: rgba(255,77,77,.3); }
   .action-btn.reject:hover { background: rgba(255,77,77,.1); }
   .action-btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
@@ -964,6 +967,10 @@
   .fp-new-btn.ghost:hover { background: var(--bg-card); color: var(--text); border-color: var(--text-muted); }
   .fp-icon-btn.fp-ib-green { color: var(--success); }
   .fp-icon-btn.fp-ib-green:hover { background: rgba(31,210,122,.14); color: var(--success); }
+  .fp-icon-btn.fp-ib-violet { color: #c4a2fb; }
+  .fp-icon-btn.fp-ib-violet:hover { background: rgba(168,85,247,.15); color: #c4a2fb; }
+  [data-theme="light"] .fp-icon-btn.fp-ib-violet { color: #6d28d9; }
+  [data-theme="light"] .fp-icon-btn.fp-ib-violet:hover { background: rgba(109,40,217,.12); color: #6d28d9; }
   .fp-icon-btn.fp-ib-gold { color: #eab308; }
   .fp-icon-btn.fp-ib-gold:hover { background: rgba(234,179,8,.15); color: #eab308; }
   /* Estrelas de avaliação no card (A publicar) */
@@ -3003,6 +3010,7 @@
   --tx-rejeitado: #ff9a92;  --bg-rejeitado: rgba(255,77,77,.16);
   --tx-estudio:   #ffd866;  --bg-estudio:   rgba(255,207,51,.16);
   --tx-retirada:  #7db9ff;  --bg-retirada:  rgba(51,153,255,.18);
+  --tx-standby:   #c4a2fb;  --bg-standby:   rgba(168,85,247,.18);
   --seta-ativa: #ffcf33;
 }
 [data-theme="light"] {
@@ -3017,6 +3025,7 @@
   --tx-rejeitado: #9c1c1c;  --bg-rejeitado: #fce9e9;
   --tx-estudio:   #6e5100;  --bg-estudio:   #fbf1cf;
   --tx-retirada:  #0d4a94;  --bg-retirada:  #e4eefc;
+  --tx-standby:   #5b21b6;  --bg-standby:   #f1e9fe;
   --seta-ativa: #7a5a00;
 }
 
@@ -3980,6 +3989,7 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
         <button class="filter-btn active" data-filter="all">Todas</button>
         <button class="filter-btn" data-filter="pending">Pendentes</button>
         <button class="filter-btn" data-filter="approved">Aprovadas</button>
+        <button class="filter-btn" data-filter="standby">Stand by</button>
         <button class="filter-btn" data-filter="rejected">Rejeitadas</button>
         <label class="fp-busca">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -3992,8 +4002,8 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
         <table id="reqTable">
           <thead>
             <tr>
-              <th class="fp-sortable" data-campo="date" aria-sort="ascending" onclick="ordenarRequests('date')" title="Ordenar pela data do agendamento">Agendada <span class="fp-seta">▲</span></th>
-              <th class="fp-sortable" data-campo="createdAt" aria-sort="none" onclick="ordenarRequests('createdAt')" title="Ordenar pela data em que a solicitação chegou">Recebida <span class="fp-seta">▲</span></th>
+              <th class="fp-sortable" data-campo="date" aria-sort="none" onclick="ordenarRequests('date')" title="Ordenar pela data do agendamento">Agendada <span class="fp-seta">▲</span></th>
+              <th class="fp-sortable" data-campo="createdAt" aria-sort="descending" onclick="ordenarRequests('createdAt')" title="Ordenar pela data em que a solicitação chegou">Recebida <span class="fp-seta">▼</span></th>
               <th class="fp-sortable" data-campo="nome" aria-sort="none" onclick="ordenarRequests('nome')">Solicitante <span class="fp-seta">▲</span></th>
               <th class="fp-sortable" data-campo="moto" aria-sort="none" onclick="ordenarRequests('moto')">Moto <span class="fp-seta">▲</span></th>
               <th class="fp-sortable" data-campo="modalidade" aria-sort="none" onclick="ordenarRequests('modalidade')">Modalidade <span class="fp-seta">▲</span></th>
@@ -4929,7 +4939,7 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
         <label>Brinde *</label>
         <select id="ebBrinde"><option value="pastilhas">Pastilha de freio</option><option value="mochila">Mochila</option><option value="capa">Capa de chuva</option><option value="capa_moto">Capa para motos</option><option value="ponteira">Ponteira</option><option value="outros">Outros</option></select>
         <label>Status</label>
-        <select id="ebStatus"><option value="pending">Pendente</option><option value="approved">Aprovada</option><option value="rejected">Rejeitada</option></select>
+        <select id="ebStatus"><option value="pending">Pendente</option><option value="approved">Aprovada</option><option value="standby">Stand by</option><option value="rejected">Rejeitada</option></select>
         <label>Observações</label>
         <textarea id="ebObs" placeholder="Notas internas..."></textarea>
       </div>
@@ -6286,9 +6296,12 @@ function switchView(view){
 window.switchView = switchView;
 
 let currentFilter = 'all';
-document.querySelectorAll('.filter-btn').forEach(btn => {
+/* So as abas da barra de Solicitacoes: o seletor solto pegava tambem as abas
+   de Check-in/Check-out, que sao .filter-btn sem data-filter — clicar nelas
+   zerava o filtro das solicitacoes e apagava o "active" das quatro abas. */
+document.querySelectorAll('#view-requests .filter-bar .filter-btn[data-filter]').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#view-requests .filter-bar .filter-btn[data-filter]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentFilter = btn.dataset.filter;
     renderRequests();
@@ -6321,11 +6334,54 @@ function renderStats() {
   }
 }
 
+/* Status de uma solicitacao. "standby" = nao foi descartada, so ficou em
+   espera — moto interessante para a qual ainda nao ha produto em estoque. */
+const REQ_STATUS_ROTULOS = {
+  pending:  'Pendente',
+  approved: 'Aprovada',
+  standby:  'Stand by',
+  rejected: 'Rejeitada',
+};
+function rotuloReqStatus(st) { return REQ_STATUS_ROTULOS[st] || st || '—'; }
+window.rotuloReqStatus = rotuloReqStatus;
+
+/* Destinos possiveis a partir de qualquer status. Os botoes sao montados a
+   partir daqui, entao acrescentar um status novo nao exige caçar ternarios. */
+const REQ_ACOES = [
+  { st: 'approved', rotulo: 'Aprovar',  menu: 'Aprovar',             icone: 'aprovar',  cls: 'fp-ib-green',  botao: 'approve', svg: '<polyline points="20 6 9 17 4 12"/>' },
+  { st: 'standby',  rotulo: 'Stand by', menu: 'Deixar em stand by',  icone: 'standby',  cls: 'fp-ib-violet', botao: 'standby', svg: '<circle cx="12" cy="12" r="9"/><line x1="10" y1="9" x2="10" y2="15"/><line x1="14" y1="9" x2="14" y2="15"/>' },
+  { st: 'rejected', rotulo: 'Rejeitar', menu: 'Rejeitar',            icone: 'rejeitar', cls: 'fp-ib-danger', botao: 'reject',  svg: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>' },
+];
+/* Botoes de icone com os destinos possiveis, menos o status atual. */
+function reqBotoesStatus(r, classeExtra) {
+  return REQ_ACOES.filter(a => a.st !== r.status).map(a =>
+    '<button class="fp-icon-btn ' + a.cls + (classeExtra ? ' ' + classeExtra : '') + '"'
+    + ' data-tip="' + a.rotulo + '" onclick="updateStatus(\'' + r.id + '\',\'' + a.st + '\')">'
+    + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">'
+    + a.svg + '</svg></button>'
+  ).join('');
+}
+/* A mesma lista, como botoes de texto do rodape do modal. */
+function reqBotoesStatusTexto(r) {
+  return REQ_ACOES.filter(a => a.st !== r.status).map(a =>
+    '<button class="action-btn ' + a.botao + '" onclick="updateStatus(\'' + r.id + '\',\'' + a.st + '\')">'
+    + a.rotulo + '</button>'
+  ).join('');
+}
+/* E como itens do menu "…" do celular. */
+function reqItensMenuStatus(r) {
+  return REQ_ACOES.filter(a => a.st !== r.status).map(a => ({
+    rotulo: a.menu, icone: a.icone, perigo: a.st === 'rejected',
+    acao: () => updateStatus(r.id, a.st),
+  }));
+}
+
 /* Ordenacao da tabela de solicitacoes.
-   Antes era fixa por data de recebimento, enquanto a coluna em destaque mostra
-   a data do agendamento — a lista parecia baguncada (19/08, 17/08, 18/08...). */
-let reqOrdemCampo = 'date';
-let reqOrdemAsc = true;
+   Padrao: pela data em que a solicitacao chegou, da mais recente para a mais
+   antiga — e assim que o dono quer encontrar a tela ao abrir o modulo.
+   A ordem por data de agendamento continua a um clique no cabecalho. */
+let reqOrdemCampo = 'createdAt';
+let reqOrdemAsc = false;
 let reqBusca = '';
 
 function ordenarRequests(campo) {
@@ -6354,7 +6410,7 @@ function renderRequests() {
   }
 
   const rotuloModalidade = r => (r.modalidade === 'estudio' ? 'Estúdio' : 'Retirada');
-  const rotuloStatus = r => (r.status === 'pending' ? 'Pendente' : r.status === 'approved' ? 'Aprovada' : 'Rejeitada');
+  const rotuloStatus = r => rotuloReqStatus(r.status);
   const chaves = {
     date:       r => r.date || '',
     createdAt:  r => r.createdAt || '',
@@ -6409,27 +6465,19 @@ function renderRequests() {
       </td>
       <td><span class="badge ${r.modalidade}">${r.modalidade === 'estudio' ? 'Estúdio' : 'Retirada'}</span></td>
       <td>${r.brinde === 'pastilhas' ? 'Pastilhas' : r.brinde === 'mochila' ? 'Mochila' : 'Capa'}</td>
-      <td><span class="badge ${r.status}">${r.status === 'pending' ? 'Pendente' : r.status === 'approved' ? 'Aprovada' : 'Rejeitada'}</span></td>
+      <td><span class="badge ${r.status}">${rotuloReqStatus(r.status)}</span></td>
       <td>
         <div class="actions">
           <span class="fp-so-desktop" style="display:contents">
             <button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Ver" onclick="openDetails('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
           <button class="fp-icon-btn fp-ib-green fp-tip-left" data-tip="WhatsApp" onclick="openWhatsApp('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></button>
-          ${r.status === 'pending' ? `
-            <button class="fp-icon-btn fp-ib-green fp-tip-left" data-tip="Aprovar" onclick="updateStatus('${r.id}','approved')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg></button>
-            <button class="fp-icon-btn fp-ib-danger fp-tip-left" data-tip="Rejeitar" onclick="updateStatus('${r.id}','rejected')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-          ` : r.status === 'approved' ? `
-            <button class="fp-icon-btn fp-ib-danger fp-tip-left" data-tip="Rejeitar" onclick="updateStatus('${r.id}','rejected')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-          ` : `
-            <button class="fp-icon-btn fp-ib-green fp-tip-left" data-tip="Aprovar" onclick="updateStatus('${r.id}','approved')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg></button>
-          `}
+          ${reqBotoesStatus(r, 'fp-tip-left')}
           </span>
           <span class="fp-so-mobile">${fpMenuHtml([
             { rotulo: 'Ver detalhes', icone: 'ver', acao: () => openDetails(r.id) },
             { rotulo: 'Falar no WhatsApp', icone: 'whatsapp', acao: () => openWhatsApp(r.id) },
             { sep: true },
-            r.status !== 'approved' ? { rotulo: 'Aprovar', icone: 'aprovar', acao: () => updateStatus(r.id, 'approved') } : null,
-            r.status !== 'rejected' ? { rotulo: 'Rejeitar', icone: 'rejeitar', perigo: true, acao: () => updateStatus(r.id, 'rejected') } : null,
+            ...reqItensMenuStatus(r),
           ], { rotulo: 'Ações da solicitação' })}</span>
         </div>
       </td>
@@ -6456,7 +6504,7 @@ function openDetails(id) {
 
   document.getElementById('modalBody').innerHTML = `
     <div class="detail-row"><div class="k">Data</div><div class="v">${prettyDate(r.date)}</div></div>
-    <div class="detail-row"><div class="k">Status</div><div class="v"><span class="badge ${r.status}">${r.status === 'pending' ? 'Pendente' : r.status === 'approved' ? 'Aprovada' : 'Rejeitada'}</span></div></div>
+    <div class="detail-row"><div class="k">Status</div><div class="v"><span class="badge ${r.status}">${rotuloReqStatus(r.status)}</span></div></div>
     <div class="detail-row"><div class="k">Nome</div><div class="v">${escHtml(r.nome)}</div></div>
     <div class="detail-row"><div class="k">WhatsApp</div><div class="v">${escHtml(r.whatsapp)}</div></div>
     <div class="detail-row"><div class="k">E-mail</div><div class="v">${r.email || '—'}</div></div>
@@ -6483,14 +6531,7 @@ function openDetails(id) {
 
   document.getElementById('modalFoot').innerHTML = `
     <button class="action-btn whats" onclick="closeModal(); openWhatsApp('${r.id}')"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:3px"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg> WhatsApp</button>
-    ${r.status === 'pending' ? `
-      <button class="action-btn reject" onclick="updateStatus('${r.id}','rejected')">Rejeitar</button>
-      <button class="action-btn approve" onclick="updateStatus('${r.id}','approved')">Aprovar</button>
-    ` : r.status === 'approved' ? `
-      <button class="action-btn reject" onclick="updateStatus('${r.id}','rejected')">Rejeitar</button>
-    ` : `
-      <button class="action-btn approve" onclick="updateStatus('${r.id}','approved')">Aprovar</button>
-    `}
+    ${reqBotoesStatusTexto(r)}
   `;
   document.getElementById('modal').classList.add('show');
 }
@@ -6613,7 +6654,7 @@ function renderDateViewer(iso) {
   }
 
   container.innerHTML = bookings.map(r => {
-    const statusLabel = r.status === 'pending' ? 'Pendente' : r.status === 'approved' ? 'Aprovada' : 'Rejeitada';
+    const statusLabel = rotuloReqStatus(r.status);
     const brindeMap = {pastilhas:'Pastilha de freio',mochila:'Mochila',capa:'Capa de chuva',capa_moto:'Capa para motos',ponteira:'Ponteira',outros:'Outros'};
     const brindeName = brindeMap[r.brinde] || r.brinde;
     const modalLabel = r.modalidade === 'estudio' ? 'Leva até o estúdio' : 'Retirada no endereço';
@@ -6637,10 +6678,7 @@ function renderDateViewer(iso) {
         <button class="fp-icon-btn fp-ib-green" data-tip="WhatsApp" onclick="openWhatsApp('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></button>
         <button class="fp-icon-btn fp-ib-blue" data-tip="Editar" onclick="openEditBooking('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
         <button class="fp-icon-btn fp-ib-danger" data-tip="Remover" onclick="deleteBooking('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
-        ${r.status === 'pending' ? `
-          <button class="fp-icon-btn fp-ib-green" data-tip="Aprovar" onclick="updateStatus('${r.id}','approved')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg></button>
-          <button class="fp-icon-btn fp-ib-danger" data-tip="Rejeitar" onclick="updateStatus('${r.id}','rejected')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-        ` : ''}
+        ${r.status === 'pending' ? reqBotoesStatus(r) : ''}
       </div>
       <div id="dvBlingProds_${r.id}" style="margin-top:8px"></div>
     </div>`;
@@ -13491,6 +13529,7 @@ const FP_ICONES = {
   rejeitar: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="6"/><line x1="6" y1="6" x2="18" y2="18"/>',
   roteiro:  '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
   foto:     '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
+  standby:  '<circle cx="12" cy="12" r="9"/><line x1="10" y1="9" x2="10" y2="15"/><line x1="14" y1="9" x2="14" y2="15"/>',
 };
 
 /* Cada render cria ids novos e as acoes sao closures que seguram o objeto do
@@ -14107,6 +14146,7 @@ function renderDashboard() {
   const pending = reqs.filter(r => r.status === 'pending').length;
   const approved = reqs.filter(r => r.status === 'approved').length;
   const rejected = reqs.filter(r => r.status === 'rejected').length;
+  const standby  = reqs.filter(r => r.status === 'standby').length;
 
   const now = new Date();
   const thisMonth = reqs.filter(r => {
@@ -14169,7 +14209,7 @@ function renderDashboard() {
         <div>
           <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Aprovadas</div>
           <div style="font-family:'Bebas Neue';font-size:32px;line-height:1;color:var(--success)">${approved}</div>
-          <div style="font-size: 11px;color:var(--text-muted);margin-top:2px">${rejected} rejeitada${rejected !== 1 ? 's' : ''}</div>
+          <div style="font-size: 11px;color:var(--text-muted);margin-top:2px">${rejected} rejeitada${rejected !== 1 ? 's' : ''}${standby ? ' &middot; ' + standby + ' em stand by' : ''}</div>
         </div>
       </div>
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;align-items:center;gap:14px">
