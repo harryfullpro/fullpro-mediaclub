@@ -5828,10 +5828,21 @@ function prettyDT(iso) {
               (el.textContent || '').trim());
   }
 
+  /* querySelectorAll so enxerga descendentes. Quando o proprio no inserido e
+     o alvo, ele escapava — e isso acontece sempre que um innerHTML monta os
+     elementos no topo, como o rodape do modal de detalhes, cujos botoes
+     ficavam sem nome acessivel. A raiz entra na lista junto. */
+  function coletar(raiz, seletor){
+    const lista = [];
+    if (raiz.matches && raiz.matches(seletor)) lista.push(raiz);
+    if (raiz.querySelectorAll) lista.push.apply(lista, raiz.querySelectorAll(seletor));
+    return lista;
+  }
+
   function ajustar(raiz){
     if (!raiz || raiz.nodeType !== 1) return;
 
-    const comTip = raiz.querySelectorAll ? raiz.querySelectorAll('[data-tip]') : [];
+    const comTip = coletar(raiz, '[data-tip]');
     comTip.forEach(function(el){
       const tip = el.getAttribute('data-tip');
       if (!tip) return;
@@ -5839,7 +5850,7 @@ function prettyDT(iso) {
       if (!el.getAttribute('title')) el.setAttribute('title', tip);
     });
 
-    const semNome = raiz.querySelectorAll ? raiz.querySelectorAll('button:not([aria-label]):not([title])') : [];
+    const semNome = coletar(raiz, 'button:not([aria-label]):not([title])');
     semNome.forEach(function(b){
       if (temNome(b)) return;
       // ultimo recurso: usa o nome da funcao chamada no onclick
@@ -5854,7 +5865,7 @@ function prettyDT(iso) {
       }
     });
 
-    const imgs = raiz.querySelectorAll ? raiz.querySelectorAll('img') : [];
+    const imgs = coletar(raiz, 'img');
     imgs.forEach(function(img){
       if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
       if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
@@ -5864,7 +5875,7 @@ function prettyDT(iso) {
 
     // Campos sem rotulo associado. A maioria ja tem um <label> logo acima
     // (so que sem for=) ou um placeholder que descreve o campo — basta ligar.
-    const campos = raiz.querySelectorAll ? raiz.querySelectorAll('input, select, textarea') : [];
+    const campos = coletar(raiz, 'input, select, textarea');
     campos.forEach(function(el){
       if (el.type === 'hidden') return;
       if (el.getAttribute('aria-label') || el.getAttribute('aria-labelledby')) return;
