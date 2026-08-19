@@ -3840,6 +3840,8 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
 }
 
 /* --- Brinde da saida ----------------------------------------------------- */
+.fp-brinde-agendado { font-size: 11.5px; color: var(--text-dim); margin: 0 0 8px; }
+.fp-brinde-agendado strong { color: var(--text); }
 .fp-brinde-lista { display: flex; flex-direction: column; gap: 6px; }
 .fp-brinde-item {
   display: flex; align-items: center; gap: 10px;
@@ -5834,6 +5836,8 @@ async function loadRequests() {
     aceiteTermo:  r.aceite_termo,
     aceiteImagem: r.aceite_imagem,
     status:       r.status,
+    brindeCor:      r.brinde_cor || '',
+    brindeTamanho:  r.brinde_tamanho || '',
     createdAt:    r.created_at
   }));
 }
@@ -6457,6 +6461,15 @@ const REQ_STATUS_ROTULOS = {
 function rotuloReqStatus(st) { return REQ_STATUS_ROTULOS[st] || st || '—'; }
 window.rotuloReqStatus = rotuloReqStatus;
 
+/* Cor e tamanho existem so para a capa de chuva. Devolve o sufixo pronto
+   (" · Preto · GG") ou string vazia, para grudar em qualquer rotulo de brinde. */
+const BRINDE_CORES = { preto: 'Preto', verde_limao: 'Verde limão' };
+function fpBrindeDetalhe(r) {
+  const partes = [BRINDE_CORES[r.brindeCor] || r.brindeCor, r.brindeTamanho].filter(Boolean);
+  return partes.length ? ' · ' + partes.join(' · ') : '';
+}
+window.fpBrindeDetalhe = fpBrindeDetalhe;
+
 /* Destinos possiveis a partir de qualquer status. Os botoes sao montados a
    partir daqui, entao acrescentar um status novo nao exige caçar ternarios. */
 const REQ_ACOES = [
@@ -6569,7 +6582,8 @@ function renderRequests() {
         <div class="sub">${escHtml(r.placa)}</div>
       </td>
       <td><span class="badge ${r.modalidade}">${r.modalidade === 'estudio' ? 'Estúdio' : 'Retirada'}</span></td>
-      <td>${r.brinde === 'pastilhas' ? 'Pastilhas' : r.brinde === 'mochila' ? 'Mochila' : 'Capa'}</td>
+      <td>${r.brinde === 'pastilhas' ? 'Pastilhas' : r.brinde === 'mochila' ? 'Mochila' : 'Capa'}${
+        fpBrindeDetalhe(r) ? `<div class="sub">${escHtml(fpBrindeDetalhe(r).slice(3))}</div>` : ''}</td>
       <td><span class="badge ${r.status}">${rotuloReqStatus(r.status)}</span></td>
       <td>
         <div class="actions">
@@ -6616,7 +6630,7 @@ function openDetails(id) {
     <div class="detail-row"><div class="k">Moto</div><div class="v">${escHtml(r.moto)}</div></div>
     <div class="detail-row"><div class="k">Placa</div><div class="v">${escHtml(r.placa)}</div></div>
     <div class="detail-row"><div class="k">Modalidade</div><div class="v">${r.modalidade === 'estudio' ? 'Leva até FullPro' : 'Retirada no endereço'}</div></div>
-    <div class="detail-row"><div class="k">Brinde</div><div class="v">${r.brinde === 'pastilhas' ? 'Jogo de pastilhas' : r.brinde === 'mochila' ? 'Mochila backpack' : 'Capa de chuva'}</div></div>
+    <div class="detail-row"><div class="k">Brinde</div><div class="v">${escHtml((r.brinde === 'pastilhas' ? 'Jogo de pastilhas' : r.brinde === 'mochila' ? 'Mochila backpack' : 'Capa de chuva') + fpBrindeDetalhe(r))}</div></div>
     <div class="detail-row"><div class="k">Aceite termo</div><div class="v">${r.aceiteTermo ? '✓ Sim' : '✕ Não'}</div></div>
     <div class="detail-row"><div class="k">Uso imagem</div><div class="v">${r.aceiteImagem ? '✓ Sim' : '✕ Não'}</div></div>
     <div class="detail-row"><div class="k">Criada em</div><div class="v">${prettyDT(r.createdAt)}</div></div>
@@ -6762,7 +6776,7 @@ function renderDateViewer(iso) {
   container.innerHTML = bookings.map(r => {
     const statusLabel = rotuloReqStatus(r.status);
     const brindeMap = {pastilhas:'Pastilha de freio',mochila:'Mochila',capa:'Capa de chuva',capa_moto:'Capa para motos',ponteira:'Ponteira',outros:'Outros'};
-    const brindeName = brindeMap[r.brinde] || r.brinde;
+    const brindeName = (brindeMap[r.brinde] || r.brinde) + fpBrindeDetalhe(r);
     const modalLabel = r.modalidade === 'estudio' ? 'Leva até o estúdio' : 'Retirada no endereço';
     return `<div class="dv-booking-full">
       <div class="dv-row">
@@ -7195,6 +7209,7 @@ function renderCiView() {
           <label class="checkin-label">
             Brinde entregue <span class="fp-req" title="Confirme o brinde antes de salvar">*</span>
           </label>
+          <p class="fp-brinde-agendado">Escolhido no agendamento: <strong>${escHtml((BRINDE_ROTULOS[r.brinde] || r.brinde || '—') + fpBrindeDetalhe(r))}</strong></p>
           <div class="fp-brinde-lista" id="brindeLista_${rid}"></div>
           <button type="button" class="fp-brinde-add" onclick="fpBrindeAbrirBusca('${rid}','novo')">
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -7574,7 +7589,7 @@ async function fpBrindeIniciar(r) {
     CO_BRINDE_PENDENTE[rid] = null;
   } else if (!(rid in CO_BRINDE_PENDENTE)) {
     CO_BRINDES[rid] = [];
-    CO_BRINDE_PENDENTE[rid] = BRINDE_ROTULOS[r.brinde] || r.brinde || 'Brinde';
+    CO_BRINDE_PENDENTE[rid] = (BRINDE_ROTULOS[r.brinde] || r.brinde || 'Brinde') + fpBrindeDetalhe(r);
   }
   fpBrindePintar(rid);
   fpCiValidate('co', rid);
@@ -13490,8 +13505,8 @@ async function deleteProject(id) {
 function exportCSV() {
   const all = getRequests();
   if (all.length === 0) { fpToast('Nenhuma solicitação para exportar.', 'info'); return; }
-  const header = ['ID','Data agendada','Nome','WhatsApp','Email','Moto','Placa','Modalidade','Endereço','Brinde','Observações','Status','Aceite termo','Aceite imagem','Criado em'];
-  const rows = all.map(r => [r.id, r.date, r.nome, r.whatsapp, r.email, r.moto, r.placa, r.modalidade, r.endereco, r.brinde, r.obs, r.status, r.aceiteTermo, r.aceiteImagem, r.createdAt]);
+  const header = ['ID','Data agendada','Nome','WhatsApp','Email','Moto','Placa','Modalidade','Endereço','Brinde','Cor da capa','Tamanho da capa','Observações','Status','Aceite termo','Aceite imagem','Criado em'];
+  const rows = all.map(r => [r.id, r.date, r.nome, r.whatsapp, r.email, r.moto, r.placa, r.modalidade, r.endereco, r.brinde, r.brindeCor, r.brindeTamanho, r.obs, r.status, r.aceiteTermo, r.aceiteImagem, r.createdAt]);
   const csv = [header, ...rows].map(row => row.map(c => `"${String(c ?? '').replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob(['\ufeff' + csv], {type: 'text/csv;charset=utf-8'});
   const url = URL.createObjectURL(blob);
@@ -13786,7 +13801,7 @@ function resolveTemplate(body, r) {
   const first = r.nome.split(' ')[0];
   const dateStr = prettyDate(r.date);
   const brindeMap2 = {pastilhas:'Pastilha de Freio FullPro',mochila:'Mochila FullPro',capa:'Capa de Chuva FullPro',capa_moto:'Capa para Motos FullPro',ponteira:'Ponteira FullPro',outros:'Outro brinde'};
-  const brindeName = brindeMap2[r.brinde] || r.brinde;
+  const brindeName = (brindeMap2[r.brinde] || r.brinde) + fpBrindeDetalhe(r);
 
   return body
     .replace(/\{nome\}/g, first)
