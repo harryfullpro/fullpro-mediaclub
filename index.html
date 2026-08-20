@@ -1834,7 +1834,20 @@
     .gmap-info { padding: 24px 20px; }
     .hero-stats { grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
     .form-grid-2 { grid-template-columns: 1fr; }
-    .form-grid-3 { grid-template-columns: 1fr 1fr .7fr !important; }
+    /* Marca → Modelo → Ano é escolha em cadeia, e lado a lado no celular os
+       rotulos ficavam cortados ("Selecione a marc…"). Um por linha, largura
+       toda — o mesmo ritmo dos outros campos, que ja empilham aqui.
+       !important porque o grid vem em style inline no HTML. */
+    .form-grid-3 { grid-template-columns: 1fr !important; gap: 10px !important; }
+    /* os tres campos de texto do "Outro (nao listada)" seguem o mesmo caminho.
+       Eles nascem com style inline no moto-catalog.js, daí o !important para
+       casarem com os selects logo acima (altura, raio e o 16px do iOS). */
+    .moto-custom-fields { flex-direction: column; }
+    .moto-custom-fields input {
+      font-size: 16px !important;
+      padding: 11px 12px !important;
+      border-radius: 10px !important;
+    }
     .gift-grid { grid-template-columns: repeat(3, 1fr); }
     .footer-inner { grid-template-columns: 1fr; gap: 24px; }
     .terms-footer { flex-direction: column; align-items: stretch; }
@@ -1886,8 +1899,11 @@
   /* ===== RESPONSIVE — MOBILE (max 640px) ===== */
   @media (max-width: 640px) {
     .container { padding: 0 16px; }
-    .form-grid-3 { grid-template-columns: 1fr 1fr !important; }
-    .form-grid-3 select:last-child { grid-column: 1 / -1; }
+    /* .form-grid-3 ja empilha no bloco de 900px. A regra antiga daqui tentava
+       jogar o Ano para a linha inteira com `select:last-child`, mas nunca pegou:
+       initMotoSelects insere a div .moto-custom-fields depois do select de ano,
+       entao o ultimo filho nao e um select. Era por isso que o Ano aparecia em
+       meia coluna no celular. */
     /* Nav compact */
     .nav-inner { padding: 6px 16px; }
     .logo-img { height: 18px; }
@@ -2224,7 +2240,9 @@
     .card .sub { font-size: 12px; margin-bottom: 10px; }
     .form-group { margin-bottom: 10px; }
     .form-label { font-size: 12px; margin-bottom: 4px; }
-    .form-input, .form-textarea { padding: 10px 12px; font-size: 13px; }
+    /* 16px e o limite do iOS: com menos que isso o Safari da zoom ao focar o
+       campo e o usuario tem que pincar de volta a cada um. */
+    .form-input, .form-textarea { padding: 11px 12px; font-size: 16px; }
     .form-grid-2 { gap: 10px; }
     .radio-group { gap: 8px; }
     .radio-option { padding: 10px 12px !important; border-radius: 10px; }

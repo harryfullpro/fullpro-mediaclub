@@ -4,6 +4,34 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 20/08/2026 — Moto na landing: marca, modelo e ano um por linha
+
+Print do iPhone: os três seletores da moto lado a lado, com "Selecione a marc…" cortado e
+o Ano sozinho em meia coluna. Três coisas erradas ali:
+
+- **O formulário era inconsistente com ele mesmo.** No bloco de 900px, `.form-grid-2` já
+  colapsa para uma coluna — mas `.form-grid-3` era *forçado* a `1fr 1fr .7fr !important`.
+  Resultado: nome, WhatsApp, e-mail e placa em largura cheia, e só a moto apertada em três.
+  Agora `.form-grid-3` empilha no mesmo ponto de corte. Marca → modelo → ano é escolha em
+  cadeia; um por linha também casa com a ordem em que se preenche.
+- **A regra que tentava consertar isso era código morto.** Em ≤640px havia
+  `.form-grid-3 select:last-child { grid-column: 1 / -1 }` para jogar o Ano para a linha
+  inteira. Nunca pegou: `initMotoSelects` insere a div `.moto-custom-fields` **depois** do
+  select de ano, então o último filho não é um `select`. Era por isso que o Ano aparecia em
+  meia coluna. Removida.
+- **Todo campo dava zoom ao ser tocado.** No celular os campos estavam em `font-size: 13px`
+  e o iOS dá zoom automático em qualquer campo abaixo de 16px — a cada toque o Safari
+  aproximava e o usuário tinha que pinçar de volta. Isso, mais do que o layout, era o
+  "ruim de preencher". Agora 16px.
+
+O caminho **"Outro (não listada)"** seguiu junto: os três campos de texto que o
+`moto-catalog.js` injeta também empilham. Eles nascem com `style` inline, daí o
+`!important` para casarem com os selects — medido: 44px de altura, 16px de fonte e 10px de
+raio nos seis campos, contra 39px/14px/8px de antes.
+
+Desktop conferido: três colunas (229px, 229px, 161px) na mesma linha, fonte 14px, tudo
+como estava — as regras novas vivem todas dentro de `@media (max-width: 900px)`.
+
 ## 20/08/2026 — Solicitações no celular: a tabela virou lista de cards
 
 O dono mandou print do iPhone: das 8 colunas da tabela sobravam três na tela e o resto
