@@ -110,3 +110,25 @@ create index if not exists mc_drive_thumbs_checado_idx on public.mc_drive_thumbs
 alter table public.mc_drive_thumbs enable row level security;
 drop policy if exists mc_drive_thumbs_leitura on public.mc_drive_thumbs;
 create policy mc_drive_thumbs_leitura on public.mc_drive_thumbs for select using (true);
+
+-- ============================================================================
+-- View pública da tag "Gravando agora" da landing (20/08/2026)
+-- Já aplicada em produção. A landing lê SÓ esta view: data, moto e primeiro
+-- nome mascarado. Nunca whatsapp, e-mail, placa ou endereço.
+-- Obs.: as tabelas em produção têm prefixo mc_ (mc_requests, mc_blocked_dates).
+-- ============================================================================
+create or replace view public.mc_public_gravacoes as
+select
+  r.date,
+  r.moto,
+  case
+    when position(' ' in btrim(r.nome)) > 0
+      then initcap(split_part(btrim(r.nome), ' ', 1)) || ' ***'
+    else initcap(btrim(r.nome))
+  end as nome_publico
+from public.mc_requests r
+where r.status = 'approved'
+  and r.date between ((now() at time zone 'America/Sao_Paulo')::date - 45)
+                 and ((now() at time zone 'America/Sao_Paulo')::date + 7);
+
+grant select on public.mc_public_gravacoes to anon, authenticated;

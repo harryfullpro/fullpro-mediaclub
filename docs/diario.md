@@ -4,6 +4,37 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 20/08/2026 — A tag do topo da landing virou "Gravando agora"
+
+O `FullPro Media Club` fixo no topo do hero saiu. No lugar entra o que o estúdio está
+fazendo de verdade: **GRAVANDO AGORA · Yamaha R15 de Ws \*\*\***.
+
+- **Só o primeiro nome, o resto é `***`.** A máscara é feita **no banco**, não no
+  JavaScript: a view `mc_public_gravacoes` devolve `nome_publico` já mascarado, então o
+  nome completo nunca sai do Supabase. A view expõe três colunas — `date`, `moto`,
+  `nome_publico` — e nada de whatsapp, e-mail, placa ou endereço. `mc_requests` continua
+  fechada para o anon (RLS: só insert).
+- **A view recorta o tempo também:** só `status = 'approved'` e datas entre −45 e +7 dias,
+  no fuso de São Paulo. Não dá para varrer o histórico inteiro pelo endpoint público.
+- **Três estados, nessa ordem:** gravação de hoje → *Gravando agora*; senão a próxima
+  agendada → *Próxima gravação*; senão a última realizada → *Última gravação*. Sem dado
+  ou com erro de rede, o texto original `FullPro Media Club` fica no HTML e ninguém vê
+  buraco.
+- **Duas ou mais motos no mesmo dia** alternam a cada 6s com fade. Rebusca a cada 60s e
+  ao voltar para a aba (`visibilitychange`) — é o "tempo real" honesto para um site
+  estático, sem WebSocket.
+- **O ano sai do nome da moto e as minúsculas soltas são corrigidas** na exibição:
+  `Yamaha r15 2026` → `Yamaha R15`. Palavra que já tem maiúscula não é tocada, senão
+  `BMW` viraria `Bmw`.
+- **Texto entra por `textContent`**, nunca `innerHTML` — o campo vem de formulário
+  público.
+- **No celular a tag quebra em até 2 linhas** em vez de cortar o nome com `...`, e o ponto
+  vermelho fica alinhado com a **primeira** linha (medido: 1px de diferença do centro do
+  rótulo). Nome longo tipo *Harley-Davidson Pan America 1250 Special* cabe sem estourar a
+  viewport.
+
+---
+
 ## 19/08/2026 — Check-in/out passa a girar em torno da data
 
 As duas abas eram **Entrada** e **Saída** — o eixo era o tipo de formulário, e a lista

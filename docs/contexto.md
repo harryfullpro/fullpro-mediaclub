@@ -128,6 +128,16 @@ pixels. Ver `padroes.md` → Alinhamento.
 - Clicar na foto **amplia ali mesmo** (lightbox), não abre o Drive
 - A pasta é **privada**, lida por conta de serviço
 
+### Nome de cliente na landing: primeiro nome e mais nada
+> *"quero nome do cliente com \*\*\* no sobrenome, mostrando só o primeiro nome para
+> proteger identidade"*
+
+Vale para qualquer coisa pública que cite quem emprestou a moto. A máscara é feita **na
+view do banco** (`mc_public_gravacoes`), não no JavaScript — assim o nome completo não
+chega ao navegador nem pelo endpoint REST. Se um dia aparecer outro lugar público com
+nome de cliente, o caminho é o mesmo: view com colunas mínimas, nunca `select` na
+`mc_requests`.
+
 ### Modo de trabalho
 > *"pode fazer absolutamente tudo por conta, alterações, deploy, debugs e etc"*
 
