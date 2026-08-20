@@ -138,6 +138,9 @@ chega ao navegador nem pelo endpoint REST. Se um dia aparecer outro lugar públi
 nome de cliente, o caminho é o mesmo: view com colunas mínimas, nunca `select` na
 `mc_requests`.
 
+Quantidade de asteriscos **igual ao número de letras** do sobrenome real — foi pedido
+explícito: a máscara tem que parecer o nome da pessoa, não um `***` genérico.
+
 ### Modo de trabalho
 > *"pode fazer absolutamente tudo por conta, alterações, deploy, debugs e etc"*
 

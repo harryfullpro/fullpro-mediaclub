@@ -117,16 +117,22 @@ create policy mc_drive_thumbs_leitura on public.mc_drive_thumbs for select using
 -- nome mascarado. Nunca whatsapp, e-mail, placa ou endereço.
 -- Obs.: as tabelas em produção têm prefixo mc_ (mc_requests, mc_blocked_dates).
 -- ============================================================================
+-- A máscara usa um * por letra real do sobrenome (pedido do dono), mantendo os
+-- espaços entre os nomes: "José Luis de Oliveira" -> "José **** ** ********".
 create or replace view public.mc_public_gravacoes as
 select
   r.date,
   r.moto,
   case
-    when position(' ' in btrim(r.nome)) > 0
-      then initcap(split_part(btrim(r.nome), ' ', 1)) || ' ***'
-    else initcap(btrim(r.nome))
+    when position(' ' in n.nome) > 0
+      then initcap(split_part(n.nome, ' ', 1)) || ' ' ||
+           regexp_replace(substr(n.nome, length(split_part(n.nome, ' ', 1)) + 2), '[^ ]', '*', 'g')
+    else initcap(n.nome)
   end as nome_publico
 from public.mc_requests r
+cross join lateral (
+  select btrim(regexp_replace(r.nome, '\s+', ' ', 'g')) as nome
+) n
 where r.status = 'approved'
   and r.date between ((now() at time zone 'America/Sao_Paulo')::date - 45)
                  and ((now() at time zone 'America/Sao_Paulo')::date + 7);

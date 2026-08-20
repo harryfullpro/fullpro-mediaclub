@@ -4,6 +4,27 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 20/08/2026 — A tag ao vivo ganhou peso (e a máscara ficou do tamanho do nome)
+
+Duas correções em cima da tag do mesmo dia:
+
+- **Um `*` por letra real do sobrenome**, com os espaços preservados:
+  `José Luis de Oliveira Ossoski Junior` → `José **** ** ******** ******* ******`.
+  Continua sendo feito na view, com `regexp_replace(..., '[^ ]', '*', 'g')`.
+  Os asteriscos são desenhados num `<span>` com metade da opacidade, senão a parede de
+  `*` rouba a atenção do primeiro nome.
+- **A tag virou um bloco de verdade**, em vez de texto solto: pílula com fundo em degradê
+  vermelho, chip sólido `● GRAVANDO AGORA` estilo REC de câmera (ponto piscando em
+  `steps()`, não pulsando) e o texto em branco, 14px. A pílula respira com um glow
+  (`box-shadow` animado) **só no estado "gravando agora"**.
+- **Próxima/Última gravação usam o estado calmo** (`.fp-live-off`): chip vazado, sem glow,
+  sem piscar, texto em cinza. A tag só grita quando está gravando de fato.
+- **No celular a pílula ficou** — antes o CSS mobile tirava fundo e borda de `.badge`. É o
+  que dá evidência à tag na tela onde a maioria entra.
+- **Alinhamento medido, não olhado:** `line-height: 1` no chip faz a altura dele casar com
+  a primeira linha do texto ao lado. Centro do chip vs. centro da linha: **0,3px** no
+  celular e **0,2px** no desktop, com nome curto ou com nome de 2 linhas.
+
 ## 20/08/2026 — A tag do topo da landing virou "Gravando agora"
 
 O `FullPro Media Club` fixo no topo do hero saiu. No lugar entra o que o estúdio está

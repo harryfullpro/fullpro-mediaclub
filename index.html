@@ -209,34 +209,84 @@
     animation: pulse 2s infinite;
   }
   @keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:.5;} }
-  /* Tag ao vivo do estúdio (Gravando agora / Próxima / Última gravação) */
-  .badge .fp-live-label {
-    font-size: 11px;
+  /* ---- Tag ao vivo do estúdio (Gravando agora / Próxima / Última) ---- */
+  #fpLiveTag {
+    max-width: 100%;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 7px 16px 7px 8px;
+    font-size: 14px;
+    background: linear-gradient(135deg, rgba(255,45,45,.16) 0%, rgba(255,45,45,.05) 100%);
+    border-color: rgba(255,45,45,.38);
+  }
+  /* chip sólido tipo REC de câmera */
+  #fpLiveTag .fp-live-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    padding: 4px 10px;
+    /* line-height 1: faz a altura do chip casar com a 1ª linha do texto ao lado */
+    line-height: 1;
+    border-radius: 999px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 10.5px;
     font-weight: 800;
-    letter-spacing: .8px;
+    letter-spacing: .9px;
     text-transform: uppercase;
+    white-space: nowrap;
+    box-shadow: 0 2px 12px rgba(255,45,45,.45);
+  }
+  #fpLiveTag .fp-live-chip .badge-dot {
+    width: 7px; height: 7px;
+    flex: 0 0 auto;
+    background: #fff;
+    box-shadow: none;
+    animation: fpRecBlink 1.3s steps(1, end) infinite;
+  }
+  @keyframes fpRecBlink { 0%,49% { opacity: 1; } 50%,100% { opacity: .2; } }
+  /* pulso de luz na pílula, só quando está gravando de verdade */
+  #fpLiveTag.fp-live-on { animation: fpLiveGlow 2.6s ease-in-out infinite; }
+  @keyframes fpLiveGlow {
+    0%, 100% { box-shadow: 0 0 0 rgba(255,45,45,0); }
+    50%      { box-shadow: 0 0 26px rgba(255,45,45,.30); }
+  }
+  /* estado calmo: próxima / última gravação */
+  #fpLiveTag.fp-live-off { background: rgba(255,255,255,.04); border-color: var(--border-hi); }
+  #fpLiveTag.fp-live-off .fp-live-chip {
+    background: transparent;
+    border: 1px solid rgba(255,82,82,.45);
     color: var(--primary-hi);
+    box-shadow: none;
   }
-  .badge .fp-live-label::after {
-    content: '·';
-    margin: 0 5px 0 7px;
-    color: var(--text-dim);
-    font-weight: 600;
-  }
-  .badge .fp-live-body {
+  #fpLiveTag.fp-live-off .fp-live-chip .badge-dot { background: var(--primary-hi); animation: pulse 2.4s infinite; }
+  #fpLiveTag .fp-live-body {
     min-width: 0;
-    line-height: 1.4;
-    /* no máximo 2 linhas; o nome nunca é cortado antes da moto */
+    line-height: 1.35;
+    color: var(--text);
+    font-weight: 600;
+    /* no máximo 2 linhas; nome longo quebra em vez de ser cortado */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  .badge .fp-live-text { transition: opacity .35s ease; }
-  .badge.fp-is-fading .fp-live-text { opacity: 0; }
-  /* dot alinhado com a 1ª linha (e não com o centro do bloco de 2 linhas) */
-  .badge#fpLiveTag { max-width: 100%; align-items: flex-start; }
-  .badge#fpLiveTag .badge-dot { flex: 0 0 auto; margin-top: 5px; }
+  #fpLiveTag.fp-live-off .fp-live-body { color: var(--text-dim); font-weight: 500; }
+  #fpLiveTag .fp-live-text { transition: opacity .35s ease; }
+  /* asteriscos com menos peso: o olho vai para o primeiro nome */
+  #fpLiveTag .fp-live-mask { opacity: .5; letter-spacing: .5px; }
+  #fpLiveTag.fp-is-fading .fp-live-text { opacity: 0; }
+  /* enquanto não carregou nada, é a tag antiga: sem chip, texto discreto */
+  #fpLiveTag.fp-live-vazio { padding: 8px 14px; font-size: 13px; }
+  #fpLiveTag.fp-live-vazio .fp-live-body { color: var(--primary-hi); font-weight: 600; }
+  #fpLiveTag.fp-live-vazio .fp-live-chip { padding: 0; background: none; box-shadow: none; }
+  #fpLiveTag.fp-live-vazio .fp-live-chip .badge-dot {
+    width: 8px; height: 8px;
+    background: var(--primary);
+    box-shadow: 0 0 10px var(--primary);
+    animation: pulse 2s infinite;
+  }
   h1 {
     font-family: 'Bebas Neue', sans-serif;
     font-size: clamp(44px, 6vw, 72px);
@@ -1830,8 +1880,14 @@
     /* Badge small, no border */
     .badge { padding: 0; background: none; border: none; font-size: 11px; margin-bottom: 10px; gap: 6px; }
     .badge-dot { width: 6px; height: 6px; flex: 0 0 auto; }
-    .badge .fp-live-label { font-size: 10px; letter-spacing: .4px; flex: 0 0 auto; }
-    .badge .fp-live-label::after { margin: 0 4px 0 5px; }
+    /* a tag ao vivo mantém a pílula no celular — é o que dá evidência a ela */
+    #fpLiveTag { padding: 5px 12px 5px 6px !important; gap: 8px; font-size: 12px; margin-bottom: 12px;
+      background: linear-gradient(135deg, rgba(255,45,45,.18) 0%, rgba(255,45,45,.05) 100%);
+      border: 1px solid rgba(255,45,45,.38); }
+    #fpLiveTag .fp-live-chip { font-size: 9.5px; letter-spacing: .6px; padding: 3px 8px; gap: 5px; }
+    #fpLiveTag .fp-live-chip .badge-dot { width: 6px; height: 6px; }
+    #fpLiveTag.fp-live-off { background: rgba(255,255,255,.04); border-color: var(--border-hi); }
+    #fpLiveTag.fp-live-vazio { padding: 0 !important; background: none; border: none; font-size: 11px; }
     h1 { font-size: 32px !important; margin-bottom: 8px !important; line-height: .95; }
     .moto-marquee-wrap { margin-bottom: 12px; padding: 8px 0; border-radius: 8px; max-width: 100%; overflow: hidden; }
     .moto-marquee-label { font-size: 9px; margin-bottom: 4px; }
@@ -2260,9 +2316,9 @@
 <section class="hero">
   <div class="container hero-grid">
     <div>
-      <div class="badge reveal" id="fpLiveTag">
-        <span class="badge-dot"></span>
-        <span class="fp-live-body"><span class="fp-live-label" id="fpLiveLabel" hidden></span><span class="fp-live-text" id="fpLiveText">FullPro Media Club</span></span>
+      <div class="badge reveal fp-live-vazio" id="fpLiveTag">
+        <span class="fp-live-chip" id="fpLiveChip"><span class="badge-dot"></span><span id="fpLiveLabel" hidden></span></span>
+        <span class="fp-live-body"><span class="fp-live-text" id="fpLiveText">FullPro Media Club</span></span>
       </div>
       <h1 class="reveal">Empreste sua moto<br/>por um dia. <span>Leve recompensa.</span></h1>
       <p class="lead lead-full reveal">
@@ -3118,19 +3174,28 @@ document.getElementById('calNext').onclick = () => {
   function escolhe(rows) {
     const hoje = hojeISO();
     const agora = rows.filter(r => r.date === hoje);
-    if (agora.length) return { label: 'Gravando agora', rows: agora };
+    if (agora.length) return { label: 'Gravando agora', aoVivo: true, rows: agora };
     const futuras = rows.filter(r => r.date > hoje).sort((a, b) => a.date.localeCompare(b.date));
-    if (futuras.length) return { label: 'Próxima gravação', rows: [futuras[0]] };
+    if (futuras.length) return { label: 'Próxima gravação', aoVivo: false, rows: [futuras[0]] };
     const passadas = rows.filter(r => r.date < hoje).sort((a, b) => b.date.localeCompare(a.date));
-    if (passadas.length) return { label: 'Última gravação', rows: [passadas[0]] };
+    if (passadas.length) return { label: 'Última gravação', aoVivo: false, rows: [passadas[0]] };
     return null;
   }
 
-  function frase(r) {
+  // escreve "<moto> de <Nome> ****" no elemento, com os asteriscos num span
+  // próprio (para pesarem menos). Sempre por textContent — dado de formulário.
+  function escreve(r) {
     const moto = limpaMoto(r.moto);
     const nome = String(r.nome_publico || '').trim();
-    if (moto && nome) return moto + ' de ' + nome;
-    return moto || nome;
+    const prefixo = moto && nome ? moto + ' de ' : (moto || '');
+    const i = nome.indexOf('*');
+    elTxt.textContent = prefixo + (i < 0 ? nome : nome.slice(0, i));
+    if (i >= 0) {
+      const mask = document.createElement('span');
+      mask.className = 'fp-live-mask';
+      mask.textContent = nome.slice(i);
+      elTxt.appendChild(mask);
+    }
   }
 
   function troca() {
@@ -3138,7 +3203,7 @@ document.getElementById('calNext').onclick = () => {
     idx = (idx + 1) % itens.length;
     tag.classList.add('fp-is-fading');
     setTimeout(() => {
-      elTxt.textContent = frase(itens[idx]);
+      escreve(itens[idx]);
       tag.classList.remove('fp-is-fading');
     }, 350);
   }
@@ -3154,7 +3219,10 @@ document.getElementById('calNext').onclick = () => {
     idx = 0;
     elLab.textContent = escolhido.label;
     elLab.hidden = false;
-    elTxt.textContent = frase(itens[0]);
+    escreve(itens[0]);
+    tag.classList.remove('fp-live-vazio');
+    tag.classList.toggle('fp-live-on',  escolhido.aoVivo);
+    tag.classList.toggle('fp-live-off', !escolhido.aoVivo);
     clearInterval(timerCiclo);
     if (itens.length > 1) timerCiclo = setInterval(troca, CICLO_MS);
   }
