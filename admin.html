@@ -3972,6 +3972,130 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
   .fp-brinde-res { max-height: 46vh; }
 }
 
+/* ==========================================================================
+   SOLICITAÇÕES NO CELULAR (2026-08-20)
+
+   A tabela de 8 colunas ficava com `min-width: 600px` e rolagem horizontal:
+   numa tela de 375px sobravam tres colunas e as acoes ficavam fora do campo
+   de visao. Duas colunas (Moto e Modalidade) eram escondidas pela regra
+   generica de `@media (max-width: 900px)` — justamente a moto, que e o dado
+   principal do negocio.
+
+   Aqui a mesma tabela vira lista de cards, sem duplicar marcacao: o `<tr>`
+   passa a ser flex e cada `<td>` recebe `order` e `flex-basis`. O desktop nao
+   muda — tudo esta escopado em `#view-requests` / `#reqTable` e dentro de
+   `@media`. Este bloco fica no fim do arquivo de proposito: as regras
+   genericas de tabela do bloco de 900px vem antes e seriam mais fortes.
+   ========================================================================== */
+@media (max-width: 900px) {
+  /* --- a barra de filtros volta a quebrar linha ---------------------------
+     Com os chips fora (viraram seletor), o `flex-wrap: nowrap` da regra de
+     600px empurrava o campo de busca e a contagem para fora da tela: ficavam
+     na mesma fileira rolavel, a direita, invisiveis sem arrastar. */
+  #view-requests .filter-bar {
+    flex-wrap: wrap !important;
+    overflow: visible;
+    margin-left: 0; margin-right: 0;
+    padding-left: 0; padding-right: 0;
+    padding-bottom: 0;
+    gap: 8px;
+  }
+  #view-requests .filter-bar > * { flex: 0 1 auto; }
+  #view-requests .filter-bar .fp-busca { flex: 1 1 100%; max-width: none; order: 10; margin-top: 0; }
+  #view-requests .filter-bar .fp-lista-contagem { order: 11; margin: 0 0 0 auto; }
+  .fp-lista-select {
+    flex: 1 1 140px;
+    min-width: 0;
+    padding: 9px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-elev);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* --- a tabela vira lista de cards -------------------------------------- */
+  #view-requests .table-wrap {
+    background: none;
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+    margin-left: 0; margin-right: 0;
+  }
+  #reqTable { display: block; width: 100%; min-width: 0; }
+  #reqTable thead { display: none; }
+  #reqTable tbody { display: block; }
+  #reqTable tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px 12px;
+    padding: 12px 13px;
+    margin-bottom: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  #reqTable tbody tr:last-child { margin-bottom: 0; }
+  #reqTable tbody tr:hover td { background: none; }
+  #reqTable td {
+    display: block;
+    padding: 0;
+    border: none;
+    font-size: 13px;
+    min-width: 0;
+  }
+  /* volta o que a regra generica de 900px escondia */
+  #reqTable td:nth-child(4), #reqTable td:nth-child(5) { display: block; }
+
+  /* 1ª linha: nome + status + "…"   2ª: moto   3ª: datas   4ª: modalidade e brinde */
+  /* Base de 50% no nome: garante que status e "…" caibam na mesma fileira e
+     fiquem juntos a direita. Com `flex: 1 1 auto`, nome comprido ("Jorge
+     Enrique Santos de Lima Takao Nishimura") empurrava os dois para uma
+     segunda linha e o "…" ficava solto no meio do card. */
+  #reqTable td:nth-child(3) { order: 1; flex: 1 1 50%; }
+  #reqTable td:nth-child(7) { order: 2; flex: 0 0 auto; margin-left: auto; }
+  #reqTable td:nth-child(8) { order: 3; flex: 0 0 auto; }
+  #reqTable td:nth-child(4) { order: 4; flex: 1 1 100%; font-weight: 600; }
+  #reqTable td:nth-child(1) { order: 5; flex: 0 0 auto; }
+  #reqTable td:nth-child(2) { order: 6; flex: 0 0 auto; }
+  #reqTable td:nth-child(5) { order: 7; flex: 0 0 auto; }
+  #reqTable td:nth-child(6) { order: 8; flex: 0 0 auto; }
+
+  /* separador leve entre o bloco do titulo e as metas */
+  #reqTable td:nth-child(4) { padding-bottom: 9px; border-bottom: 1px solid var(--border); }
+
+  /* rotulo e valor na mesma linha, como no card de projeto */
+  #reqTable td[data-rotulo]::before {
+    content: attr(data-rotulo);
+    margin-right: 6px;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: .7px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  /* "Recebida" e contexto: a regra base deixa a celula inteira apagada, mas
+     no card o rotulo ja diferencia — o valor volta a ter contraste de leitura */
+  #reqTable td.sub { font-size: 12px; color: var(--text-dim); }
+  /* cor e tamanho da capa entram na mesma linha do brinde: empilhados, o
+     "Preto · G" ficava embaixo do rotulo e nao do valor */
+  #reqTable td:nth-child(6) .sub { display: inline; }
+  #reqTable td:nth-child(6) .sub::before { content: ' · '; white-space: pre; }
+  #reqTable td:nth-child(3) strong { font-size: 14.5px; line-height: 1.25; }
+  #reqTable td:nth-child(3) .sub { font-size: 12.5px; }
+  #reqTable td .actions { justify-content: flex-end; }
+  /* estado vazio: sem borda de card em volta do texto */
+  #reqTable tbody tr:has(> td.empty),
+  #reqTable tbody tr:has(> td[colspan]) { display: block; background: none; border: none; padding: 0; }
+}
+
+@media (max-width: 380px) {
+  /* iPhone SE e afins: as duas datas nao cabem lado a lado */
+  #reqTable td:nth-child(1), #reqTable td:nth-child(2) { flex: 1 1 100%; }
+}
 </style>
 </head>
 <body>
@@ -4172,11 +4296,29 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
       </div>
 
       <div class="filter-bar">
-        <button class="filter-btn active" data-filter="all">Todas</button>
-        <button class="filter-btn" data-filter="pending">Pendentes</button>
-        <button class="filter-btn" data-filter="approved">Aprovadas</button>
-        <button class="filter-btn" data-filter="standby">Stand by</button>
-        <button class="filter-btn" data-filter="rejected">Rejeitadas</button>
+        <span class="fp-so-desktop" style="display:contents">
+          <button class="filter-btn active" data-filter="all">Todas</button>
+          <button class="filter-btn" data-filter="pending">Pendentes</button>
+          <button class="filter-btn" data-filter="approved">Aprovadas</button>
+          <button class="filter-btn" data-filter="standby">Stand by</button>
+          <button class="filter-btn" data-filter="rejected">Rejeitadas</button>
+        </span>
+        <!-- No celular os cinco chips nao cabem numa linha: viram seletor nativo,
+             junto com a ordenacao (que no desktop e clique no cabecalho). -->
+        <select class="fp-so-mobile fp-lista-select" id="reqFiltroSelect" aria-label="Filtrar solicitações por status" onchange="filtrarRequestsSelect(this.value)">
+          <option value="all">Todas</option>
+          <option value="pending">Pendentes</option>
+          <option value="approved">Aprovadas</option>
+          <option value="standby">Stand by</option>
+          <option value="rejected">Rejeitadas</option>
+        </select>
+        <select class="fp-so-mobile fp-lista-select" id="reqOrdemSelect" aria-label="Ordenar solicitações" onchange="ordenarRequestsSelect(this.value)">
+          <option value="createdAt|desc">Recebidas primeiro</option>
+          <option value="createdAt|asc">Recebidas: mais antigas</option>
+          <option value="date|asc">Data agendada</option>
+          <option value="nome|asc">Nome (A–Z)</option>
+          <option value="status|asc">Status</option>
+        </select>
         <label class="fp-busca">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="search" placeholder="Buscar nome, placa ou moto" aria-label="Buscar solicitações por nome, placa ou moto" oninput="buscarRequests(this.value)">
@@ -6598,6 +6740,27 @@ function buscarRequests(termo) {
 }
 window.buscarRequests = buscarRequests;
 
+/* Os dois seletores que substituem, no celular, os chips de status e o clique
+   no cabecalho da tabela. Mantem o estado compartilhado com o desktop: quem
+   filtra pelo seletor tambem acende o chip correspondente. */
+function filtrarRequestsSelect(valor) {
+  currentFilter = valor || 'all';
+  document.querySelectorAll('#view-requests .filter-bar .filter-btn[data-filter]').forEach(b => {
+    b.classList.toggle('active', b.dataset.filter === currentFilter);
+  });
+  renderRequests();
+}
+window.filtrarRequestsSelect = filtrarRequestsSelect;
+
+function ordenarRequestsSelect(valor) {
+  const [campo, direcao] = String(valor || '').split('|');
+  if (!campo) return;
+  reqOrdemCampo = campo;
+  reqOrdemAsc = direcao === 'asc';
+  renderRequests();
+}
+window.ordenarRequestsSelect = ordenarRequestsSelect;
+
 function renderRequests() {
   renderStats();
   const all = getRequests();
@@ -6642,6 +6805,25 @@ function renderRequests() {
       : filtered.length + ' de ' + all.length;
   }
 
+  /* Seletores do celular: contagem na opcao e valor atual em sincronia com os
+     chips do desktop (o dono alterna entre os dois na mesma sessao). */
+  const selFiltro = document.getElementById('reqFiltroSelect');
+  if (selFiltro) {
+    const quantos = st => st === 'all' ? all.length : all.filter(r => r.status === st).length;
+    Array.from(selFiltro.options).forEach(op => {
+      if (!op.dataset.rotulo) op.dataset.rotulo = op.textContent;
+      op.textContent = op.dataset.rotulo + ' (' + quantos(op.value) + ')';
+    });
+    if (selFiltro.value !== currentFilter) selFiltro.value = currentFilter;
+  }
+  const selOrdem = document.getElementById('reqOrdemSelect');
+  if (selOrdem) {
+    const atual = reqOrdemCampo + '|' + (reqOrdemAsc ? 'asc' : 'desc');
+    /* ordenacao feita pelo cabecalho do desktop pode nao existir na lista
+       (Moto, Modalidade): nesse caso o seletor fica como estava. */
+    if (Array.from(selOrdem.options).some(o => o.value === atual)) selOrdem.value = atual;
+  }
+
   const tbody = document.getElementById('reqTableBody');
 
   if (filtered.length === 0) {
@@ -6652,10 +6834,13 @@ function renderRequests() {
     return;
   }
 
+  /* data-rotulo: no celular a tabela vira lista de cards e o cabecalho
+     desaparece — sem rotulo, "01/09" e "20/08 12:24" ficam sem contexto.
+     No desktop o atributo nao pinta nada. */
   tbody.innerHTML = filtered.map(r => `
     <tr>
-      <td><strong>${prettyDate(r.date)}</strong></td>
-      <td class="sub">${prettyDT(r.createdAt)}</td>
+      <td data-rotulo="Agendada"><strong>${prettyDate(r.date)}</strong></td>
+      <td class="sub" data-rotulo="Recebida">${prettyDT(r.createdAt)}</td>
       <td>
         <strong>${escHtml(r.nome)}</strong>
         <div class="sub">${escHtml(r.whatsapp)}</div>
@@ -6665,7 +6850,7 @@ function renderRequests() {
         <div class="sub">${escHtml(r.placa)}</div>
       </td>
       <td><span class="badge ${r.modalidade}">${r.modalidade === 'estudio' ? 'Estúdio' : 'Retirada'}</span></td>
-      <td>${r.brinde === 'pastilhas' ? 'Pastilhas' : r.brinde === 'mochila' ? 'Mochila' : 'Capa'}${
+      <td data-rotulo="Brinde">${r.brinde === 'pastilhas' ? 'Pastilhas' : r.brinde === 'mochila' ? 'Mochila' : 'Capa'}${
         fpBrindeDetalhe(r) ? `<div class="sub">${escHtml(fpBrindeDetalhe(r).slice(3))}</div>` : ''}</td>
       <td><span class="badge ${r.status}">${rotuloReqStatus(r.status)}</span></td>
       <td>

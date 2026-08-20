@@ -166,6 +166,25 @@ Aplicar `display: contents` no bloco do título e em `.edit-actions` promove tí
 status e "…" a filhos diretos do flex do cabeçalho — daí `order` e `flex-basis: 100%`
 montam as duas linhas. Mexer no HTML resolveria também, mas mudaria o computador.
 
+### Tabela → lista de cards, sem duplicar marcação
+
+Solicitações é a referência (`#reqTable`, bloco no fim do `<style>`). Em ≤900px o `<tr>`
+vira `display: flex`, o `<thead>` sai e cada `<td>` recebe `order` + `flex-basis` — uma
+fonte de dados só, dois layouts. Três detalhes que não são óbvios:
+
+1. **`data-rotulo` no `<td>`** e `::before { content: attr(data-rotulo) }` só dentro do
+   `@media`. Sem cabeçalho, duas datas na mesma célula-card ficam sem contexto.
+2. **Título com base percentual** (`flex: 1 1 50%`), nunca `auto`: com `auto`, nome
+   comprido empurra status e "…" para a linha seguinte e o "…" fica solto no meio do card.
+   O status leva `margin-left: auto` para colar os dois à direita.
+3. **A regra genérica de 900px esconde `:nth-child(4)` e `(5)` de qualquer tabela.** Se a
+   sua tela precisa dessas colunas, devolva explicitamente (`#suaTabela td:nth-child(4)
+   { display: block }`).
+
+Quando os chips não caberem numa linha, vire `<select>` nativo com a contagem na opção
+(`.fp-lista-select`) e **leve a ordenação junto** — com o `<thead>` oculto, ordenar deixa
+de existir no celular.
+
 **Antes de escrever a regra de celular, veja onde a classe base está declarada.** Boa
 parte do CSS de módulo (as `.fp-clip-*`, por exemplo) fica **depois** dos blocos `@media`
 no arquivo — com a mesma especificidade, a declaração de baixo vence e a regra de celular

@@ -4,6 +4,50 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 20/08/2026 — Solicitações no celular: a tabela virou lista de cards
+
+O dono mandou print do iPhone: das 8 colunas da tabela sobravam três na tela e o resto
+ficava na rolagem horizontal. Três problemas escondidos nesse print:
+
+- **Moto e Modalidade não apareciam.** A regra genérica de `@media (max-width: 900px)`
+  fazia `th/td:nth-child(4), :nth-child(5) { display: none }` para *qualquer* tabela — ou
+  seja, escondia justamente a moto, que é o dado principal do negócio.
+- **O campo de busca e a contagem estavam fora da tela.** A `.filter-bar` no celular é uma
+  fileira rolável (`flex-wrap: nowrap !important`, decisão de 13/08 para os chips). Com
+  `flex: 1 0 100%` e `order: 10`, a busca não descia para a linha de baixo: ia para a
+  direita da fileira rolável, invisível sem arrastar.
+- **Os cinco chips de status não cabiam** — "Rejeitadas" ficava cortado na borda.
+
+Agora, em ≤900px: **a mesma tabela vira lista de cards, sem duplicar marcação.** O `<tr>`
+passa a `display: flex` e cada `<td>` recebe `order` e `flex-basis`; o `<thead>` sai. Os
+`<td>` de data e brinde ganharam `data-rotulo`, que o CSS de celular imprime com
+`::before` — sem cabeçalho, "01/09" e "20/08 12:24" ficariam sem contexto. No desktop o
+atributo não pinta nada.
+
+Layout do card: **nome + status + "…"** na primeira linha, **moto + placa** na segunda
+(com um filete embaixo), **as duas datas** na terceira e **modalidade + brinde** na quarta.
+
+- **Base de 50% no nome** (`flex: 1 1 50%`) em vez de `auto`: com `auto`, nome comprido
+  ("Jorge Enrique Santos de Lima Takao Nishimura") empurrava status e "…" para uma segunda
+  linha e o "…" ficava solto no meio do card. Medido a 390px: nome, status e "…" com o
+  **mesmo centro vertical** nos três cards de teste.
+- **Cor e tamanho da capa entraram na mesma linha do brinde.** Empilhados, o "Preto · G"
+  ficava embaixo do rótulo e não do valor.
+- **As duas datas dividem uma linha a partir de 381px** e empilham em telas menores
+  (iPhone SE, 375px) — sem essa exceção, "RECEBIDA 20/08/2026 12:24" estourava.
+- **Chips e ordenação viraram dois `<select>` nativos** no celular, com a contagem na
+  opção (`Todas (50)`, `Pendentes (6)`…). A ordenação, que no desktop é clique no
+  cabeçalho, no celular não existia — o `<thead>` está oculto. Estado compartilhado: quem
+  filtra pelo seletor também acende o chip do desktop.
+
+**O bloco novo fica no fim do `<style>` de propósito** e escopado em `#view-requests` /
+`#reqTable`: as regras genéricas de tabela do bloco de 900px vêm antes e, com a mesma
+especificidade, venceriam. Desktop conferido depois: 8 colunas, chips, busca e contagem
+idênticos, seletores com `display: none`.
+
+**Fica pendente:** as outras tabelas (Influenciadores, histórico) continuam rolando na
+horizontal — a `.inf-list-table` ainda esconde da terceira coluna em diante no celular.
+
 ## 20/08/2026 — A tag ao vivo virou painel de visor de câmera
 
 A pílula, mesmo grande e piscando, não deu a evidência que o dono queria. Montei uma
