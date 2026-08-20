@@ -209,82 +209,116 @@
     animation: pulse 2s infinite;
   }
   @keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:.5;} }
-  /* ---- Tag ao vivo do estúdio (Gravando agora / Próxima / Última) ---- */
-  #fpLiveTag {
+  /* ================= TAG AO VIVO DO ESTÚDIO =================
+     Painel no estilo visor de câmera: cantos em L, linha "REC · GRAVANDO AGORA"
+     com o dia da gravação à direita, e a moto + nome mascarado embaixo.
+     Três estados: .fp-live-on (gravando hoje), .fp-live-off (próxima/última)
+     e .fp-live-vazio (sem dado ainda — volta a ser a tag discreta de antes). */
+  .fp-live {
+    position: relative;
+    display: inline-block;
     max-width: 100%;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 7px 16px 7px 8px;
-    font-size: 14px;
-    background: linear-gradient(135deg, rgba(255,45,45,.16) 0%, rgba(255,45,45,.05) 100%);
-    border-color: rgba(255,45,45,.38);
+    padding: 11px 15px;
+    margin-bottom: 22px;
+    border-radius: 10px;
+    background: rgba(255,45,45,.07);
+    border: 1px solid rgba(255,45,45,.28);
   }
-  /* chip sólido tipo REC de câmera */
-  #fpLiveTag .fp-live-chip {
+  /* cantos do visor */
+  .fp-live::before, .fp-live::after {
+    content: '';
+    position: absolute;
+    width: 13px; height: 13px;
+    border: 2px solid var(--primary);
+    pointer-events: none;
+  }
+  .fp-live::before { top: -1px; left: -1px;  border-right: 0; border-bottom: 0; border-radius: 4px 0 0 0; }
+  .fp-live::after  { bottom: -1px; right: -1px; border-left: 0;  border-top: 0;    border-radius: 0 0 4px 0; }
+  .fp-live .fp-live-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 5px;
+    white-space: nowrap;
+  }
+  .fp-live .fp-live-chip {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    flex: 0 0 auto;
-    padding: 4px 10px;
-    /* line-height 1: faz a altura do chip casar com a 1ª linha do texto ao lado */
     line-height: 1;
-    border-radius: 999px;
-    background: var(--primary);
-    color: #fff;
     font-size: 10.5px;
-    font-weight: 800;
-    letter-spacing: .9px;
+    font-weight: 900;
+    letter-spacing: 1.1px;
     text-transform: uppercase;
-    white-space: nowrap;
-    box-shadow: 0 2px 12px rgba(255,45,45,.45);
+    color: var(--primary);
   }
-  #fpLiveTag .fp-live-chip .badge-dot {
+  .fp-live .fp-live-chip .badge-dot {
     width: 7px; height: 7px;
     flex: 0 0 auto;
-    background: #fff;
-    box-shadow: none;
-    animation: fpRecBlink 1.3s steps(1, end) infinite;
+    background: var(--primary);
+    box-shadow: 0 0 8px var(--primary);
+    animation: fpRecBlink 1.2s steps(1, end) infinite;
   }
   @keyframes fpRecBlink { 0%,49% { opacity: 1; } 50%,100% { opacity: .2; } }
-  /* pulso de luz na pílula, só quando está gravando de verdade */
-  #fpLiveTag.fp-live-on { animation: fpLiveGlow 2.6s ease-in-out infinite; }
-  @keyframes fpLiveGlow {
-    0%, 100% { box-shadow: 0 0 0 rgba(255,45,45,0); }
-    50%      { box-shadow: 0 0 26px rgba(255,45,45,.30); }
+  .fp-live .fp-live-data {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
   }
-  /* estado calmo: próxima / última gravação */
-  #fpLiveTag.fp-live-off { background: rgba(255,255,255,.04); border-color: var(--border-hi); }
-  #fpLiveTag.fp-live-off .fp-live-chip {
-    background: transparent;
-    border: 1px solid rgba(255,82,82,.45);
-    color: var(--primary-hi);
-    box-shadow: none;
-  }
-  #fpLiveTag.fp-live-off .fp-live-chip .badge-dot { background: var(--primary-hi); animation: pulse 2.4s infinite; }
-  #fpLiveTag .fp-live-body {
-    min-width: 0;
-    line-height: 1.35;
-    color: var(--text);
-    font-weight: 600;
-    /* no máximo 2 linhas; nome longo quebra em vez de ser cortado */
-    display: -webkit-box;
+  .fp-live .fp-live-body {
+    display: -webkit-box;          /* no máximo 2 linhas */
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    min-width: 0;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--text);
   }
-  #fpLiveTag.fp-live-off .fp-live-body { color: var(--text-dim); font-weight: 500; }
-  #fpLiveTag .fp-live-text { transition: opacity .35s ease; }
+  .fp-live .fp-live-text { transition: opacity .35s ease; }
+  .fp-live.fp-is-fading .fp-live-text { opacity: 0; }
   /* asteriscos com menos peso: o olho vai para o primeiro nome */
-  #fpLiveTag .fp-live-mask { opacity: .5; letter-spacing: .5px; }
-  #fpLiveTag.fp-is-fading .fp-live-text { opacity: 0; }
-  /* enquanto não carregou nada, é a tag antiga: sem chip, texto discreto */
-  #fpLiveTag.fp-live-vazio { padding: 8px 14px; font-size: 13px; }
-  #fpLiveTag.fp-live-vazio .fp-live-body { color: var(--primary-hi); font-weight: 600; }
-  #fpLiveTag.fp-live-vazio .fp-live-chip { padding: 0; background: none; box-shadow: none; }
-  #fpLiveTag.fp-live-vazio .fp-live-chip .badge-dot {
+  .fp-live .fp-live-mask { opacity: .5; letter-spacing: .5px; }
+  /* gravando agora: o visor respira */
+  .fp-live.fp-live-on { animation: fpLiveGlow 2.6s ease-in-out infinite; }
+  @keyframes fpLiveGlow {
+    0%, 100% { box-shadow: 0 0 0 rgba(255,45,45,0); }
+    50%      { box-shadow: 0 0 26px rgba(255,45,45,.26); }
+  }
+  /* próxima / última gravação: mesmo painel, sem alarme */
+  .fp-live.fp-live-off { background: rgba(255,255,255,.03); border-color: var(--border-hi); }
+  .fp-live.fp-live-off::before, .fp-live.fp-live-off::after { border-color: var(--text-muted); }
+  .fp-live.fp-live-off .fp-live-chip { color: var(--text-dim); }
+  .fp-live.fp-live-off .fp-live-chip .badge-dot {
+    background: var(--primary-hi);
+    box-shadow: none;
+    animation: pulse 2.4s infinite;
+  }
+  .fp-live.fp-live-off .fp-live-body { color: var(--text-dim); font-weight: 600; }
+  /* sem dado (ou rede falhou): volta a ser a tag simples de uma linha */
+  .fp-live.fp-live-vazio {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(255,45,45,.1);
+    border-color: rgba(255,45,45,.3);
+    animation: none;
+  }
+  .fp-live.fp-live-vazio::before, .fp-live.fp-live-vazio::after { display: none; }
+  .fp-live.fp-live-vazio .fp-live-topo { margin-bottom: 0; }
+  .fp-live.fp-live-vazio .fp-live-body {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-hi);
+  }
+  .fp-live.fp-live-vazio .fp-live-chip .badge-dot {
     width: 8px; height: 8px;
-    background: var(--primary);
-    box-shadow: 0 0 10px var(--primary);
     animation: pulse 2s infinite;
   }
   h1 {
@@ -1880,14 +1914,16 @@
     /* Badge small, no border */
     .badge { padding: 0; background: none; border: none; font-size: 11px; margin-bottom: 10px; gap: 6px; }
     .badge-dot { width: 6px; height: 6px; flex: 0 0 auto; }
-    /* a tag ao vivo mantém a pílula no celular — é o que dá evidência a ela */
-    #fpLiveTag { padding: 5px 12px 5px 6px !important; gap: 8px; font-size: 12px; margin-bottom: 12px;
-      background: linear-gradient(135deg, rgba(255,45,45,.18) 0%, rgba(255,45,45,.05) 100%);
-      border: 1px solid rgba(255,45,45,.38); }
-    #fpLiveTag .fp-live-chip { font-size: 9.5px; letter-spacing: .6px; padding: 3px 8px; gap: 5px; }
-    #fpLiveTag .fp-live-chip .badge-dot { width: 6px; height: 6px; }
-    #fpLiveTag.fp-live-off { background: rgba(255,255,255,.04); border-color: var(--border-hi); }
-    #fpLiveTag.fp-live-vazio { padding: 0 !important; background: none; border: none; font-size: 11px; }
+    /* painel do visor: compacto, mas segue sendo um bloco — é o que dá evidência */
+    .fp-live { padding: 9px 12px; margin-bottom: 12px; }
+    .fp-live::before, .fp-live::after { width: 11px; height: 11px; }
+    .fp-live .fp-live-topo { gap: 10px; margin-bottom: 4px; }
+    .fp-live .fp-live-chip { font-size: 9.5px; letter-spacing: .8px; gap: 5px; }
+    .fp-live .fp-live-chip .badge-dot { width: 6px; height: 6px; }
+    .fp-live .fp-live-data { font-size: 9.5px; letter-spacing: .6px; }
+    .fp-live .fp-live-body { font-size: 13.5px; line-height: 1.3; }
+    .fp-live.fp-live-vazio { padding: 0; background: none; border: none; font-size: 11px; }
+    .fp-live.fp-live-vazio .fp-live-body { font-size: 11px; }
     h1 { font-size: 32px !important; margin-bottom: 8px !important; line-height: .95; }
     .moto-marquee-wrap { margin-bottom: 12px; padding: 8px 0; border-radius: 8px; max-width: 100%; overflow: hidden; }
     .moto-marquee-label { font-size: 9px; margin-bottom: 4px; }
@@ -2316,8 +2352,11 @@
 <section class="hero">
   <div class="container hero-grid">
     <div>
-      <div class="badge reveal fp-live-vazio" id="fpLiveTag">
-        <span class="fp-live-chip" id="fpLiveChip"><span class="badge-dot"></span><span id="fpLiveLabel" hidden></span></span>
+      <div class="fp-live reveal fp-live-vazio" id="fpLiveTag">
+        <span class="fp-live-topo">
+          <span class="fp-live-chip" id="fpLiveChip"><span class="badge-dot"></span><span id="fpLiveLabel" hidden></span></span>
+          <span class="fp-live-data" id="fpLiveData" hidden></span>
+        </span>
         <span class="fp-live-body"><span class="fp-live-text" id="fpLiveText">FullPro Media Club</span></span>
       </div>
       <h1 class="reveal">Empreste sua moto<br/>por um dia. <span>Leve recompensa.</span></h1>
@@ -3143,10 +3182,11 @@ document.getElementById('calNext').onclick = () => {
    mascarado — nada de whatsapp, e-mail, placa ou endereço) e troca o texto
    da tag do topo por "Gravando agora · <moto> de <Nome> ***". */
 (() => {
-  const tag   = document.getElementById('fpLiveTag');
-  const elLab = document.getElementById('fpLiveLabel');
-  const elTxt = document.getElementById('fpLiveText');
-  if (!tag || !elLab || !elTxt) return;
+  const tag    = document.getElementById('fpLiveTag');
+  const elLab  = document.getElementById('fpLiveLabel');
+  const elTxt  = document.getElementById('fpLiveText');
+  const elData = document.getElementById('fpLiveData');
+  if (!tag || !elLab || !elTxt || !elData) return;
 
   const CICLO_MS   = 6000;   // alterna quando há mais de uma gravação no dia
   const REFRESH_MS = 60000;  // rebusca no Supabase
@@ -3158,6 +3198,12 @@ document.getElementById('calNext').onclick = () => {
   // data de hoje no fuso de São Paulo (mesmo critério da view no banco)
   function hojeISO() {
     return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+  }
+
+  // "2026-08-20" -> "20/08"
+  function diaMes(iso) {
+    const p = String(iso || '').split('-');
+    return p.length === 3 ? p[2] + '/' + p[1] : '';
   }
 
   // "Yamaha r15 2026" -> "Yamaha R15" (tira o ano, arruma minúsculas soltas)
@@ -3196,6 +3242,8 @@ document.getElementById('calNext').onclick = () => {
       mask.textContent = nome.slice(i);
       elTxt.appendChild(mask);
     }
+    elData.textContent = diaMes(r.date);
+    elData.hidden = !elData.textContent;
   }
 
   function troca() {
@@ -3217,7 +3265,8 @@ document.getElementById('calNext').onclick = () => {
     if (!escolhido) return;   // sem dado: mantém "FullPro Media Club"
     itens = escolhido.rows;
     idx = 0;
-    elLab.textContent = escolhido.label;
+    // "REC · GRAVANDO AGORA" só quando é hoje; nos outros estados, sem alarme
+    elLab.textContent = (escolhido.aoVivo ? 'REC · ' : '') + escolhido.label;
     elLab.hidden = false;
     escreve(itens[0]);
     tag.classList.remove('fp-live-vazio');

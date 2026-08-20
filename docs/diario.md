@@ -4,6 +4,30 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 20/08/2026 — A tag ao vivo virou painel de visor de câmera
+
+A pílula, mesmo grande e piscando, não deu a evidência que o dono queria. Montei uma
+página de teste (`lab-tag.html`, já removida) com cinco desenhos no contexto real do topo
+— pílula atual, pílula grande, faixa vermelha de largura total, manchete tipográfica e
+painel de câmera. **Escolha: painel de câmera.**
+
+- **Como é:** bloco com cantos em L de visor (`::before`/`::after`), linha de cima com
+  `● REC · GRAVANDO AGORA` à esquerda e o **dia da gravação** à direita, e embaixo a moto
+  + nome mascarado em 15px (13,5px no celular). `display: inline-block`, então o painel
+  tem a largura do conteúdo — não vira uma faixa vazia atravessando o hero.
+- **O `REC ·` aparece só quando é hoje.** *Próxima gravação* e *Última gravação* usam o
+  mesmo painel no estado calmo (`.fp-live-off`): cantos e texto em cinza, ponto pulsando
+  em vez de piscando, sem glow.
+- **A tag deixou de ser `.badge`.** Virou `.fp-live`, com CSS próprio. Isso desamarrou
+  duas regras de `@media` que mexiam em `.badge` (uma tirava fundo e borda no celular, a
+  outra remontava padding e fonte) e brigavam entre si.
+- **Estado sem dado continua sendo a tag antiga:** `.fp-live-vazio` devolve a pílula
+  discreta de uma linha com `FullPro Media Club`. Se o Supabase cair, ninguém vê um visor
+  de câmera vazio.
+- **Medido:** rótulo e data centrados entre si com 0,01px de diferença no desktop e 0px no
+  celular. Nome longo (`José **** ** ******** ******* ******`) quebra em 2 linhas dentro
+  do painel, que passa a ocupar a largura toda — sem estourar a viewport (347px de 375).
+
 ## 20/08/2026 — A tag ao vivo ganhou peso (e a máscara ficou do tamanho do nome)
 
 Duas correções em cima da tag do mesmo dia:

@@ -208,6 +208,21 @@ Use `.maybeSingle()` quando a linha **pode não existir** — `.single()` devolv
 
 ---
 
+## Landing pública: dado de cliente só por view mascarada
+
+A landing (`index.html`) nunca dá `select` em `mc_requests` — o anon só tem permissão de
+`insert`. Para mostrar dado de agendamento em público existe a view
+**`mc_public_gravacoes`**, que devolve três colunas (`date`, `moto`, `nome_publico`) e
+mascara o sobrenome **no banco**, com um `*` por letra. Precisar de outro campo público?
+Nova view com o mínimo, nunca abrir a tabela.
+
+A tag ao vivo do topo (`#fpLiveTag`, marca `.fp-live`) tem três estados: `.fp-live-on`
+(gravando hoje, com `REC` e glow), `.fp-live-off` (próxima/última, sem alarme) e
+`.fp-live-vazio` (sem dado ou rede caída — volta a ser a pílula discreta). Texto sempre
+por `textContent`; os asteriscos vão num `<span class="fp-live-mask">`.
+
+---
+
 ## Alinhamento — regra do dono
 
 > *"a tag pendente não está alinhada com o header STATUS. Corrija isso e salve como uma
