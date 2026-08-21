@@ -6,6 +6,26 @@ Ordenado por impacto. Atualizar sempre que algo for concluído ou aparecer.
 
 ## Em andamento
 
+### Ligar o módulo de kit do Magis5 (falta a chave e um teste real)
+O código está no ar (`magis5-proxy` + aba Produção), mas **nunca falou com o Magis5**.
+Para ligar:
+
+1. **Criar a secret `MAGIS5_API_KEY`** na edge function `magis5-proxy` (Supabase →
+   Edge Functions → magis5-proxy → Secrets). ⚠️ O token antigo **vazou em texto puro** num
+   `readme.txt` público do plugin `woo-magis5-shipping-bridge` (ver
+   `06-MAGIS5-FLUXO-ENVIO.md` na base da loja) — gerar um **novo** no painel do Magis5.
+2. **Validar em um kit de teste** duas coisas que a documentação não deixa claras:
+   - **O que é `products_composition[].id`** — o painel manda o `productId` do componente
+     (é a leitura mais natural da resposta, que separa `id` da linha de `productId`). Se o
+     hub reclamar, a alternativa é o id da linha de composição.
+   - **A regra da participação** — se o Magis5 exige que `percentagePriceValue` some 100 e
+     o que ele faz quando não soma. O painel já mostra a soma e avisa, mas não bloqueia.
+3. **Ver se SKU sem composição aceita virar kit** pelo PATCH, ou se o `productType`
+   precisa ser mudado antes no hub.
+
+Fazer o primeiro teste com um kit de brincadeira, não com um que está anunciado.
+
+
 ### Campanha do Meta Ads — só falta o vídeo
 Rascunho `FullPro Media Club Ads` na conta `FullPro - Conta de anúncios` (834166548630365),
 conjunto `Landing page`, anúncio `video-joinville-01`. Tudo configurado: Joinville + 40 km,

@@ -85,6 +85,27 @@ Os proxies têm `verify_jwt: false` — exposição aceita para ferramenta inter
 Tokens no **servidor** (`mc_integrations`), não no localStorage — resolve "só funciona
 para quem conectou". Um administrador conecta uma vez e vale para todos.
 
+### Magis5 — composição de kit
+
+Edge function **`magis5-proxy`** (`verify_jwt: true`), código em
+[supabase/magis5-proxy.ts](../supabase/magis5-proxy.ts). A chave fica na secret
+**`MAGIS5_API_KEY`** da própria função — nunca no `config.js`, que é público.
+
+Ações (POST, corpo JSON): `health`, `produto {sku}`, `composicao {sku, itens}`.
+
+Três coisas que ditaram o desenho:
+
+1. **A API do Magis5 não busca produto por nome.** Só `GET /v1/products/{sku}` e a
+   listagem paginada sem filtro de texto. Por isso quem escolhe o produto é o **Bling**
+   (busca em cima do cache que já existe para os brindes) e o **SKU é a ponte** entre os
+   dois sistemas.
+2. **`PATCH /v1/products/{sku}` substitui `products_composition` inteiro.** O painel
+   sempre lê a composição atual antes e envia *ela + o item novo*. A função recusa lista
+   vazia — um PATCH com `[]` apagaria a composição de um kit real.
+3. **`verify_jwt` sozinho não protege:** ele aceita também a anon key, que é pública.
+   Como aqui se escreve no ERP, a função exige `role = authenticated` no token (a
+   assinatura já foi validada pelo gateway; só o papel precisa ser lido).
+
 ### Google Drive — foto por SKU
 Estrutura no Drive: `<raiz>/<SKU>/<fotos>`; a primeira foto em ordem de nome vira a
 thumbnail. Hoje são ~5.500 pastas de SKU.

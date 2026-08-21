@@ -4096,6 +4096,68 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
   /* iPhone SE e afins: as duas datas nao cabem lado a lado */
   #reqTable td:nth-child(1), #reqTable td:nth-child(2) { flex: 1 1 100%; }
 }
+/* ==========================================================================
+   PRODUTO DO PROJETO + KIT NO MAGIS5 (2026-08-20)
+   O produto vem do Bling (busca por nome/SKU, cache local) e o SKU e o que
+   enderec,a o kit no Magis5: a API do hub so tem GET /v1/products/{sku}.
+   ========================================================================== */
+.fp-prod-vazio {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.fp-prod-chip {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.fp-prod-chip .fp-prod-txt { min-width: 0; flex: 1 1 auto; }
+.fp-prod-chip .fp-prod-nome {
+  font-size: 13px; font-weight: 600; line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.fp-prod-chip .fp-prod-sku { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+.fp-prod-kit {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 8px;
+}
+.fp-prod-kit-info { font-size: 12px; color: var(--text-dim); }
+.fp-prod-kit-info b { color: var(--text); }
+.fp-prod-kit-info.erro { color: var(--primary-hi); }
+.fp-kit-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 12px; border-radius: 8px; cursor: pointer;
+  font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: .3px;
+  text-transform: uppercase;
+  background: var(--primary); border: 1px solid var(--primary); color: #fff;
+}
+.fp-kit-btn:disabled { opacity: .45; cursor: not-allowed; }
+.fp-kit-btn.secundario { background: transparent; color: var(--text); border-color: var(--border-hi); }
+.fp-kit-cab { font-size: 13px; margin-bottom: 12px; }
+.fp-kit-cab .sku { color: var(--text-muted); font-size: 12px; }
+.fp-kit-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: 8px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+.fp-kit-item .fp-kit-nome { flex: 1 1 auto; min-width: 0; font-size: 13px; }
+.fp-kit-item .fp-kit-sub { font-size: 11.5px; color: var(--text-muted); }
+.fp-kit-item .fp-kit-qtd { font-size: 12px; color: var(--text-dim); white-space: nowrap; }
+.fp-kit-total { font-size: 12px; color: var(--text-dim); margin: 8px 0 14px; }
+.fp-kit-total.alerta { color: var(--warning, #f59e0b); }
+.fp-kit-add { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px; }
+.fp-kit-form {
+  display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; margin-top: 10px;
+}
+.fp-kit-form > div { display: flex; flex-direction: column; gap: 3px; }
+.fp-kit-form span { font-size: 11px; color: var(--text-muted); }
+.fp-kit-form input { width: 90px; }
+@media (max-width: 600px) {
+  .fp-kit-form { flex-direction: column; align-items: stretch; }
+  .fp-kit-form input { width: 100%; }
+  .fp-kit-btn { width: 100%; justify-content: center; }
+}
 </style>
 </head>
 <body>
@@ -5158,6 +5220,28 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
     </div>
     <div class="modal-body" id="modalBody"></div>
     <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<!-- Modal: composicao de kit no Magis5 -->
+<div class="modal" id="kitModal">
+  <div class="modal-content" style="max-width:640px">
+    <div class="modal-head">
+      <h3>Composição do kit no Magis5</h3>
+      <button class="modal-close" onclick="fpKitFecharModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="kitCabecalho" class="fp-kit-cab"></div>
+      <div id="kitLista"></div>
+      <div class="fp-kit-add" id="kitAdd">
+        <label class="fp-busca" style="width:100%">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="search" id="kitBuscaInput" placeholder="Digite o produto que entra no kit (nome ou SKU)" aria-label="Buscar produto para incluir no kit" oninput="fpKitBuscar(this.value)">
+        </label>
+        <div class="fp-brinde-res" id="kitBuscaRes"></div>
+        <div id="kitEscolhido"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -8783,6 +8867,7 @@ async function saveProject() {
       shots: (s.shots || []).map(sh => ({ title: sh.title, duration: sh.duration, done: sh.done, note: sh.note, speech: sh.speech, camera: sh.camera, shotType: sh.shotType }))
     })),
     shoot_order: roteiroShootOrder,
+    produto: PROJ_PRODUTO,
     created_by: CURRENT_USER?.id || null
   };
 
@@ -8963,6 +9048,12 @@ function renderProjTabProducao(p) {
           <label>Moto / Produto (manual)</label>
           <input type="text" class="login-input" id="projMoto" style="margin:0" placeholder="Ex: Ducati Panigale V4"/>
         </div>
+        <!-- Produto do catalogo usado no projeto. O SKU escolhido aqui e o que
+             enderec,a o kit no Magis5 (a API do hub nao busca por nome). -->
+        <div class="block-field" id="projProdutoWrap">
+          <label>Produto usado no projeto</label>
+          <div id="projProdutoBox"></div>
+        </div>
         <div class="block-field" id="projDateFieldWrap" style="display:none">
           <label>Data de produção</label>
           <input type="date" class="login-input" id="projDate" style="margin:0"/>
@@ -9046,6 +9137,9 @@ function renderProjTabProducao(p) {
   `;
 
   // Now fill in data AFTER HTML is in the DOM
+  PROJ_PRODUTO = (p && projDetailId && p.produto) ? p.produto : null;
+  KIT_ESTADO = null;
+  fpProdPintar();
   if (p && projDetailId) {
     document.getElementById('projTitle').value = p.title || '';
     document.getElementById('projDescription').value = p.description || '';
@@ -14141,6 +14235,396 @@ function resolveTemplate(body, r) {
     .replace(/\{operador\}/g, op)
     .replace(/\{placa\}/g, r.placa || '');
 }
+
+/* ================================================================
+   PRODUTO DO PROJETO + COMPOSIÇÃO DE KIT NO MAGIS5
+
+   Fluxo: o operador escolhe no Bling o produto usado no projeto (busca por
+   nome ou SKU, em cima do cache que já existe para os brindes). O SKU desse
+   produto é o endereço do kit no Magis5 — a API do hub não tem busca por
+   nome, só GET /v1/products/{sku}.
+
+   Depois, "Adicionar produto ao kit" abre o modal: mostra a composição atual
+   lida do Magis5, o operador escolhe (também no Bling) o item que entra,
+   informa quantidade e participação, confere o resumo e confirma.
+
+   A chave do Magis5 fica na edge function magis5-proxy — nunca no navegador.
+   O PATCH do hub SUBSTITUI a lista inteira, então sempre mandamos os itens
+   que já existiam + o novo. É por isso que a leitura vem antes da escrita.
+   ================================================================ */
+
+let PROJ_PRODUTO = null;      // { blingId, sku, nome, imagem } do projeto aberto
+let KIT_ESTADO   = null;      // { sku, titulo, magis5Id, tipo, itens[], erro }
+let KIT_RESULTADOS = [];      // resultados da busca no Bling dentro do modal
+let KIT_ESCOLHIDO  = null;    // item selecionado para entrar no kit
+let MAGIS5_CONFIG  = null;    // null = não checado; bool depois
+
+async function magis5Chamar(action, extra) {
+  const corpo = Object.assign({ action: action }, extra || {});
+  const { data, error } = await sb.functions.invoke('magis5-proxy', { body: corpo });
+  if (error) {
+    // o corpo de erro da function traz a mensagem útil; o error só diz "non-2xx"
+    let detalhe = error.message || 'falha na chamada';
+    try { const j = await error.context?.json?.(); if (j?.erro) detalhe = j.erro; } catch (e) {}
+    return { erro: detalhe };
+  }
+  return data || {};
+}
+
+/* Devolve { ok, erro }: separa "sem chave" de "sem sessão" — as duas coisas
+   davam a mesma mensagem e mandavam procurar no lugar errado. */
+async function magis5Estado() {
+  if (MAGIS5_CONFIG !== null) return MAGIS5_CONFIG;
+  const r = await magis5Chamar('health');
+  if (r.erro) MAGIS5_CONFIG = { ok: false, erro: 'Magis5: ' + r.erro };
+  else if (!r.configurado) MAGIS5_CONFIG = { ok: false, erro: 'Magis5 sem chave configurada (secret MAGIS5_API_KEY da função magis5-proxy).' };
+  else MAGIS5_CONFIG = { ok: true, erro: null };
+  return MAGIS5_CONFIG;
+}
+
+/* ---------- campo do produto na aba Produção ---------- */
+
+function fpProdPintar() {
+  const cx = document.getElementById('projProdutoBox');
+  if (!cx) return;
+
+  if (!PROJ_PRODUTO) {
+    cx.innerHTML = '<div class="fp-prod-vazio">'
+      + '<button type="button" class="fp-kit-btn secundario" onclick="fpProdAbrirBusca()">'
+      + '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'
+      + 'Buscar produto no Bling</button>'
+      + '<span class="fp-prod-kit-info">Escolha o produto para liberar a edição do kit no Magis5.</span>'
+      + '</div>';
+    return;
+  }
+
+  const p = PROJ_PRODUTO;
+  cx.innerHTML = '<div class="fp-prod-chip">'
+    + fpBrindeFotoHtml({ sku: p.sku, imagem: p.imagem }, 38)
+    + '<div class="fp-prod-txt">'
+    +   '<div class="fp-prod-nome">' + escHtml(p.nome) + '</div>'
+    +   '<div class="fp-prod-sku">SKU: ' + escHtml(p.sku || '—') + '</div>'
+    + '</div>'
+    + fpBrindeAcaoHtml('trocar', 'fp-ib-blue', 'Trocar produto', 'fpProdAbrirBusca()', true)
+    + fpBrindeAcaoHtml('remover', 'fp-ib-danger', 'Remover produto', 'fpProdRemover()', true)
+    + '</div>'
+    + '<div class="fp-prod-kit">'
+    +   '<button type="button" class="fp-kit-btn" onclick="fpKitAbrirModal()"' + (p.sku ? '' : ' disabled') + '>'
+    +     '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'
+    +     'Adicionar produto ao kit</button>'
+    +   '<span class="fp-prod-kit-info" id="projKitInfo">' + (p.sku ? 'Kit no Magis5: não consultado' : 'Produto sem SKU — o Magis5 é endereçado por SKU') + '</span>'
+    + '</div>'
+    + '<div class="fp-brinde-busca" id="prodBusca" hidden style="margin-top:8px">'
+    +   '<label class="fp-busca" style="width:100%">'
+    +     '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'
+    +     '<input type="search" id="prodInput" placeholder="Nome ou SKU do produto" aria-label="Buscar produto no Bling" oninput="fpProdBuscar(this.value)">'
+    +   '</label>'
+    +   '<div class="fp-brinde-res" id="prodRes"></div>'
+    + '</div>';
+
+  if (p.sku) fpKitResumo();
+}
+
+function fpProdAbrirBusca() {
+  // sem produto ainda: a caixa de busca não existe no DOM, então desenha uma
+  const cx = document.getElementById('projProdutoBox');
+  if (!document.getElementById('prodBusca')) {
+    cx.insertAdjacentHTML('beforeend',
+      '<div class="fp-brinde-busca" id="prodBusca" style="margin-top:8px">'
+      + '<label class="fp-busca" style="width:100%">'
+      + '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'
+      + '<input type="search" id="prodInput" placeholder="Nome ou SKU do produto" aria-label="Buscar produto no Bling" oninput="fpProdBuscar(this.value)">'
+      + '</label><div class="fp-brinde-res" id="prodRes"></div></div>');
+  }
+  const cxb = document.getElementById('prodBusca');
+  if (cxb) cxb.hidden = false;
+  const res = document.getElementById('prodRes');
+  if (res) res.innerHTML = '<div class="fp-brinde-vazio">Digite o nome ou o SKU do produto.</div>';
+  const inp = document.getElementById('prodInput');
+  if (inp) { inp.value = ''; setTimeout(function () { try { inp.focus(); } catch (e) {} }, 30); }
+}
+window.fpProdAbrirBusca = fpProdAbrirBusca;
+
+/* Busca no Bling, mesma mecânica dos brindes: filtra o cache local, então
+   responde a cada tecla sem uma ida à rede por letra. */
+async function fpBlingProcurar(termo, limite) {
+  const t = String(termo || '').trim();
+  if (t.length < 2) return { erro: 'Digite pelo menos 2 letras.' };
+  if (typeof isBlingConnected === 'function' && !isBlingConnected()) {
+    return { erro: 'Bling desconectado — conecte em Integrações para buscar produtos.' };
+  }
+  const prods = await blingGetAllProducts();
+  const alvo = fpNorm(t);
+  const achados = prods
+    .filter(function (p) { return fpNorm(p.nome).includes(alvo) || fpNorm(p.codigo).includes(alvo); })
+    .sort(function (a, b) {
+      const ca = fpNorm(a.codigo) === alvo ? 0 : 1, cb = fpNorm(b.codigo) === alvo ? 0 : 1;
+      if (ca !== cb) return ca - cb;
+      return String(a.nome || '').localeCompare(String(b.nome || ''));
+    })
+    .slice(0, limite || 40);
+  return { itens: achados.map(fpBrindeDeProduto) };
+}
+
+function fpProdItemHtml(b, i, chamada) {
+  return '<button type="button" class="fp-brinde-res-item" onclick="' + chamada + '(' + i + ')">'
+    + fpBrindeFotoHtml(b, 32)
+    + '<div class="fp-brinde-txt"><div class="fp-brinde-nome">' + escHtml(b.nome) + '</div>'
+    + '<div class="fp-brinde-sub">SKU: ' + escHtml(b.sku || '—') + '</div></div>'
+    + fpBrindeEstoqueHtml(b.estoque)
+    + '</button>';
+}
+
+let PROD_RESULTADOS = [];
+async function fpProdBuscar(termo) {
+  const res = document.getElementById('prodRes'); if (!res) return;
+  res.innerHTML = '<div class="fp-brinde-vazio">Buscando…</div>';
+  const r = await fpBlingProcurar(termo, 40);
+  if (r.erro) { res.innerHTML = '<div class="fp-brinde-vazio">' + escHtml(r.erro) + '</div>'; return; }
+  if (!r.itens.length) { res.innerHTML = '<div class="fp-brinde-vazio">Nada encontrado.</div>'; return; }
+  PROD_RESULTADOS = r.itens;
+  res.innerHTML = r.itens.map(function (b, i) { return fpProdItemHtml(b, i, 'fpProdEscolher'); }).join('');
+  if (typeof fpDriveCarregar === 'function') fpDriveCarregar(r.itens.map(function (b) { return b.sku; }), res);
+}
+window.fpProdBuscar = fpProdBuscar;
+
+function fpProdEscolher(i) {
+  const b = PROD_RESULTADOS[i]; if (!b) return;
+  PROJ_PRODUTO = { blingId: b.id, sku: b.sku, nome: b.nome, imagem: b.imagem };
+  KIT_ESTADO = null;
+  fpProdPintar();
+}
+window.fpProdEscolher = fpProdEscolher;
+
+function fpProdRemover() {
+  PROJ_PRODUTO = null; KIT_ESTADO = null;
+  fpProdPintar();
+}
+window.fpProdRemover = fpProdRemover;
+
+/* ---------- leitura do kit no Magis5 ---------- */
+
+/* Duas cargas podem ficar em voo ao mesmo tempo: abrir o formulário já dispara
+   o resumo e o operador pode clicar em "adicionar ao kit" antes de a primeira
+   voltar. Sem o token, a resposta que chega por último vence — inclusive uma
+   falha antiga sobre um estado novo e bom. */
+let _kitToken = 0;
+
+async function fpKitCarregar(forcar) {
+  if (!PROJ_PRODUTO || !PROJ_PRODUTO.sku) return null;
+  if (KIT_ESTADO && !forcar) return KIT_ESTADO;
+  const sku = PROJ_PRODUTO.sku;
+  const meu = ++_kitToken;
+  const velho = function () { return meu !== _kitToken || sku !== (PROJ_PRODUTO && PROJ_PRODUTO.sku); };
+
+  const est = await magis5Estado();
+  if (velho()) return KIT_ESTADO;
+  if (!est.ok) { KIT_ESTADO = { sku: sku, erro: est.erro }; return KIT_ESTADO; }
+  const r = await magis5Chamar('produto', { sku: sku });
+  if (velho()) return KIT_ESTADO;
+  if (r.erro) { KIT_ESTADO = { sku: sku, erro: String(r.erro) }; return KIT_ESTADO; }
+  if (!r.ok) {
+    const msg = r.status === 404 ? 'SKU não encontrado no Magis5.' : ('Magis5 respondeu ' + r.status + '.');
+    KIT_ESTADO = { sku: sku, erro: msg };
+    return KIT_ESTADO;
+  }
+  const prod = r.produto || {};
+  KIT_ESTADO = {
+    sku: sku,
+    magis5Id: prod.id != null ? String(prod.id) : '',
+    titulo: prod.title || PROJ_PRODUTO.nome,
+    tipo: prod.productType || '',
+    itens: (prod.productsComposition || []).map(function (c) {
+      return {
+        // o PATCH aceita o id do PRODUTO componente; a resposta traz productId
+        // separado do id da linha de composição
+        id: String(c.productId != null ? c.productId : (c.id != null ? c.id : '')),
+        linhaId: c.id != null ? String(c.id) : '',
+        sku: c.sku || '',
+        titulo: c.title || '(sem título)',
+        quantity: Number(c.quantity || 0),
+        unitValue: Number(c.unitValue || 0),
+        percentagePriceValue: Number(c.percentagePriceValue || 0),
+      };
+    }),
+    erro: null,
+  };
+  return KIT_ESTADO;
+}
+
+async function fpKitResumo() {
+  const el = document.getElementById('projKitInfo');
+  if (!el) return;
+  el.textContent = 'Consultando o Magis5…';
+  el.classList.remove('erro');
+  const k = await fpKitCarregar(true);
+  const alvo = document.getElementById('projKitInfo');
+  if (!alvo || !k) return;
+  if (k.erro) { alvo.textContent = k.erro; alvo.classList.add('erro'); return; }
+  alvo.classList.remove('erro');
+  alvo.innerHTML = k.itens.length
+    ? 'Kit no Magis5: <b>' + k.itens.length + (k.itens.length === 1 ? ' item' : ' itens') + '</b>'
+    : 'No Magis5 esse SKU <b>não tem composição</b> — só é kit depois de ganhar o primeiro item.';
+}
+
+/* ---------- modal do kit ---------- */
+
+async function fpKitAbrirModal() {
+  if (!PROJ_PRODUTO || !PROJ_PRODUTO.sku) { fpToast('Escolha primeiro o produto do projeto.', 'warn'); return; }
+  KIT_ESCOLHIDO = null; KIT_RESULTADOS = [];
+  document.getElementById('kitModal').classList.add('show');
+  document.getElementById('kitCabecalho').innerHTML = 'Carregando a composição no Magis5…';
+  document.getElementById('kitLista').innerHTML = '';
+  document.getElementById('kitBuscaRes').innerHTML = '<div class="fp-brinde-vazio">Digite o nome ou o SKU do produto que entra no kit.</div>';
+  document.getElementById('kitEscolhido').innerHTML = '';
+  const inp = document.getElementById('kitBuscaInput'); if (inp) inp.value = '';
+  await fpKitCarregar(true);
+  fpKitPintarModal();
+}
+window.fpKitAbrirModal = fpKitAbrirModal;
+
+function fpKitFecharModal() {
+  document.getElementById('kitModal').classList.remove('show');
+  fpKitResumo();
+}
+window.fpKitFecharModal = fpKitFecharModal;
+
+function fpKitPintarModal() {
+  const cab = document.getElementById('kitCabecalho');
+  const lista = document.getElementById('kitLista');
+  const k = KIT_ESTADO;
+  if (!k) { cab.textContent = '—'; return; }
+
+  cab.innerHTML = '<strong>' + escHtml(k.titulo || PROJ_PRODUTO.nome) + '</strong>'
+    + '<div class="sku">SKU ' + escHtml(k.sku) + (k.magis5Id ? ' · id Magis5 ' + escHtml(k.magis5Id) : '') + '</div>';
+
+  if (k.erro) {
+    lista.innerHTML = '<div class="fp-brinde-vazio">' + escHtml(k.erro) + '</div>';
+    return;
+  }
+  if (!k.itens.length) {
+    lista.innerHTML = '<div class="fp-brinde-vazio">Esse SKU ainda não tem composição no Magis5.</div>';
+    return;
+  }
+  const soma = k.itens.reduce(function (t, i) { return t + (i.percentagePriceValue || 0); }, 0);
+  lista.innerHTML = k.itens.map(function (i) {
+    return '<div class="fp-kit-item">'
+      + '<div class="fp-kit-nome">' + escHtml(i.titulo)
+      +   '<div class="fp-kit-sub">SKU ' + escHtml(i.sku || '—') + ' · id ' + escHtml(i.id) + '</div></div>'
+      + '<div class="fp-kit-qtd">' + i.quantity + '× · ' + (i.percentagePriceValue || 0) + '%</div>'
+      + '</div>';
+  }).join('')
+  + '<div class="fp-kit-total' + (Math.round(soma) !== 100 ? ' alerta' : '') + '">Participação somada: <b>' + (Math.round(soma * 100) / 100) + '%</b>'
+  + (Math.round(soma) !== 100 ? ' — o Magis5 espera 100%. Ajuste as porcentagens no hub se necessário.' : '') + '</div>';
+}
+
+async function fpKitBuscar(termo) {
+  const res = document.getElementById('kitBuscaRes'); if (!res) return;
+  res.innerHTML = '<div class="fp-brinde-vazio">Buscando…</div>';
+  const r = await fpBlingProcurar(termo, 30);
+  if (r.erro) { res.innerHTML = '<div class="fp-brinde-vazio">' + escHtml(r.erro) + '</div>'; return; }
+  if (!r.itens.length) { res.innerHTML = '<div class="fp-brinde-vazio">Nada encontrado.</div>'; return; }
+  KIT_RESULTADOS = r.itens;
+  res.innerHTML = r.itens.map(function (b, i) { return fpProdItemHtml(b, i, 'fpKitEscolherItem'); }).join('');
+  if (typeof fpDriveCarregar === 'function') fpDriveCarregar(r.itens.map(function (b) { return b.sku; }), res);
+}
+window.fpKitBuscar = fpKitBuscar;
+
+/* O componente também é endereçado por SKU: o id que o Magis5 quer no PATCH é
+   o id do produto no hub, e quem resolve SKU -> id é o próprio GET. */
+async function fpKitEscolherItem(i) {
+  const b = KIT_RESULTADOS[i]; if (!b) return;
+  const cx = document.getElementById('kitEscolhido');
+  if (!b.sku) { fpToast('Esse produto não tem SKU no Bling — sem SKU o Magis5 não sabe quem é.', 'warn'); return; }
+  cx.innerHTML = '<div class="fp-brinde-vazio">Procurando "' + escHtml(b.sku) + '" no Magis5…</div>';
+  const r = await magis5Chamar('produto', { sku: b.sku });
+  if (r.erro || !r.ok) {
+    const msg = r.erro ? String(r.erro) : (r.status === 404
+      ? 'Esse SKU não existe no Magis5 — cadastre o produto no hub antes de colocá-lo no kit.'
+      : 'Magis5 respondeu ' + r.status + '.');
+    cx.innerHTML = '<div class="fp-brinde-vazio">' + escHtml(msg) + '</div>';
+    return;
+  }
+  const m5 = r.produto || {};
+  KIT_ESCOLHIDO = {
+    id: m5.id != null ? String(m5.id) : '',
+    sku: b.sku,
+    nome: m5.title || b.nome,
+    estoque: m5.stock,
+  };
+  if (!KIT_ESCOLHIDO.id) {
+    cx.innerHTML = '<div class="fp-brinde-vazio">O Magis5 devolveu o produto sem id — não dá para montar a composição.</div>';
+    KIT_ESCOLHIDO = null;
+    return;
+  }
+  const jaTem = (KIT_ESTADO?.itens || []).some(function (it) { return String(it.id) === KIT_ESCOLHIDO.id; });
+  cx.innerHTML = '<div class="fp-kit-item" style="margin-top:10px">'
+    + '<div class="fp-kit-nome">' + escHtml(KIT_ESCOLHIDO.nome)
+    +   '<div class="fp-kit-sub">SKU ' + escHtml(KIT_ESCOLHIDO.sku) + ' · id Magis5 ' + escHtml(KIT_ESCOLHIDO.id) + (jaTem ? ' · já está no kit' : '') + '</div></div>'
+    + '</div>'
+    + '<div class="fp-kit-form">'
+    +   '<div><span>Quantidade</span><input type="number" min="1" step="1" value="1" class="login-input" id="kitQtd" style="margin:0"></div>'
+    +   '<div><span>Participação no preço (%)</span><input type="number" min="0" step="0.01" value="0" class="login-input" id="kitPerc" style="margin:0"></div>'
+    +   '<div><span>Valor unitário (R$)</span><input type="number" min="0" step="0.01" value="0" class="login-input" id="kitValor" style="margin:0"></div>'
+    +   '<button type="button" class="fp-kit-btn" onclick="fpKitGravar()">Adicionar ao kit</button>'
+    + '</div>'
+    + (jaTem ? '<div class="fp-kit-total alerta">Esse produto já está na composição — confirmar vai <b>substituir</b> a linha dele.</div>' : '');
+}
+window.fpKitEscolherItem = fpKitEscolherItem;
+
+/* Escreve no Magis5. A lista enviada é a atual + o novo item, porque o PATCH
+   do hub substitui `products_composition` inteiro. */
+async function fpKitGravar() {
+  const k = KIT_ESTADO;
+  if (!k || k.erro) { fpToast('A composição atual não foi lida — sem ela não dá para gravar sem apagar o kit.', 'erro'); return; }
+  if (!KIT_ESCOLHIDO) { fpToast('Escolha o produto que entra no kit.', 'warn'); return; }
+
+  const qtd = Math.max(1, parseInt(document.getElementById('kitQtd')?.value || '1', 10) || 1);
+  const perc = Math.max(0, parseFloat(document.getElementById('kitPerc')?.value || '0') || 0);
+  const valor = Math.max(0, parseFloat(document.getElementById('kitValor')?.value || '0') || 0);
+
+  const anteriores = k.itens.map(function (i) {
+    return { id: i.id, quantity: i.quantity, unitValue: i.unitValue, percentagePriceValue: i.percentagePriceValue };
+  });
+  const novo = { id: KIT_ESCOLHIDO.id, quantity: qtd, unitValue: valor, percentagePriceValue: perc };
+  const substitui = anteriores.findIndex(function (i) { return String(i.id) === String(novo.id); });
+  const enviar = anteriores.slice();
+  if (substitui >= 0) enviar[substitui] = novo; else enviar.push(novo);
+
+  const somaDepois = enviar.reduce(function (t, i) { return t + (i.percentagePriceValue || 0); }, 0);
+  const ok = await fpConfirm({
+    titulo: 'Gravar composição no Magis5',
+    mensagem: 'O kit ' + k.sku + ' vai passar de ' + anteriores.length + ' para ' + enviar.length
+      + (enviar.length === 1 ? ' item' : ' itens') + ', incluindo ' + KIT_ESCOLHIDO.nome + ' (' + qtd + '×).',
+    detalhe: 'A API substitui a composição inteira pela lista enviada. Participação somada depois: '
+      + (Math.round(somaDepois * 100) / 100) + '%.',
+    confirmar: 'Gravar no Magis5',
+    perigo: true,
+  });
+  if (!ok) return;
+
+  fpToast('Gravando no Magis5…', 'info');
+  const r = await magis5Chamar('composicao', { sku: k.sku, itens: enviar });
+  if (r.erro) { fpToast('Magis5: ' + r.erro, 'erro'); return; }
+  if (!r.ok) {
+    const det = r.resposta && (r.resposta.message || r.resposta.error || JSON.stringify(r.resposta).slice(0, 200));
+    fpToast('Magis5 recusou (' + r.status + '): ' + (det || 'sem detalhe'), 'erro');
+    console.warn('magis5 composicao:', r);
+    return;
+  }
+  fpToast('Composição gravada no Magis5.', 'ok');
+  KIT_ESCOLHIDO = null;
+  document.getElementById('kitEscolhido').innerHTML = '';
+  document.getElementById('kitBuscaInput').value = '';
+  document.getElementById('kitBuscaRes').innerHTML = '<div class="fp-brinde-vazio">Digite o nome ou o SKU do produto que entra no kit.</div>';
+  await fpKitCarregar(true);
+  fpKitPintarModal();
+}
+window.fpKitGravar = fpKitGravar;
+
+document.getElementById('kitModal')?.addEventListener('click', function (e) {
+  if (e.target.id === 'kitModal') fpKitFecharModal();
+});
 
 /* Generate WhatsApp templates for a request — reads from managed store */
 function getWaTemplates(r) {

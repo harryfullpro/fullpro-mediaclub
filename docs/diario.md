@@ -4,6 +4,40 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 20/08/2026 — Kit do Magis5 editável de dentro do projeto
+
+Pedido: na aba Produção, escolher o produto usado no projeto e ter, ao lado, um botão que
+adiciona produto à composição do kit **dentro do Magis5**.
+
+**O que a API do Magis5 permite** (documentação lida em `developers.magis5.com.br`, seção
+Product — cinco endpoints, nenhum específico de kit): a composição é um campo do produto,
+`products_composition[{id, quantity, unitValue, percentagePriceValue}]`, aceito em `PUT` e
+em `PATCH /v1/products/{sku}`. Na leitura ela volta como `productsComposition`, com
+`productId` separado do `id` da linha.
+
+**O que ela não permite: buscar produto por nome.** Só `GET /v1/products/{sku}` e a
+listagem paginada, sem filtro de texto. Isso decidiu a arquitetura — e por sorte casa com
+o pedido: quem busca é o **Bling** (o mesmo cache dos brindes) e o **SKU** é a ponte para
+o Magis5. O id do componente que o PATCH exige sai de um `GET` pelo SKU escolhido.
+
+- **Edge function `magis5-proxy`**, `verify_jwt: true` + checagem de `role`. A chave sai
+  do navegador. Detalhe que quase passou: `verify_jwt` aceita a **anon key**, que é
+  pública no `config.js` — sem a checagem de papel, qualquer um escreveria no ERP.
+- **O PATCH substitui a lista inteira.** O painel lê a composição, monta *ela + o novo
+  item* e mostra um resumo antes de gravar ("vai passar de 2 para 3 itens… participação
+  somada depois: 110%"). A function recusa lista vazia.
+- **Guarda de resposta velha (`_kitToken`).** Abrir o formulário já dispara o resumo, e o
+  operador pode clicar em "adicionar ao kit" antes de a primeira leitura voltar. Sem o
+  token, a resposta que chega por último vence — inclusive uma falha antiga sobre um
+  estado novo e bom. Isso apareceu no teste, não em produção.
+- **Coluna `produto` (jsonb) em `mc_projects`** guarda `{blingId, sku, nome, imagem}` para
+  reabrir a tela sem nova busca.
+
+Testado com dublê da API: busca no Bling → item resolvido para o id do Magis5 → payload
+enviado com os dois itens que já existiam (7011, 7042) + o novo (88123). Nada é perdido.
+
+**Ainda não rodou contra o Magis5 de verdade** — falta a secret. Ver `pendencias.md`.
+
 ## 20/08/2026 — Moto na landing: marca, modelo e ano um por linha
 
 Print do iPhone: os três seletores da moto lado a lado, com "Selecione a marc…" cortado e
