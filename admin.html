@@ -4158,6 +4158,34 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
   .fp-kit-form input { width: 100%; }
   .fp-kit-btn { width: 100%; justify-content: center; }
 }
+/* --- painel da data: confirmado na frente, o resto atrás de um clique ----- */
+.dv-booking-full.dv-confirmado {
+  border-color: rgba(31,210,122,.35);
+  background: linear-gradient(180deg, rgba(31,210,122,.05), var(--bg-elev));
+}
+.dv-mais {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; margin-top: 4px; padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-dim);
+  font-family: inherit; font-size: 12.5px; font-weight: 600;
+  text-align: left; cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.dv-mais:hover { border-color: var(--border-hi); color: var(--text); }
+.dv-mais svg { flex: 0 0 auto; transition: transform .2s; }
+.dv-mais.aberto svg { transform: rotate(180deg); }
+.dv-mais .dv-mais-resumo {
+  margin-left: auto; font-weight: 500; font-size: 11.5px;
+  color: var(--text-muted); white-space: nowrap;
+}
+#dvGuardados { margin-top: 10px; }
+@media (max-width: 600px) {
+  .dv-mais { flex-wrap: wrap; }
+  .dv-mais .dv-mais-resumo { margin-left: 22px; flex-basis: 100%; white-space: normal; }
+}
 </style>
 </head>
 <body>
@@ -7125,12 +7153,60 @@ function renderDateViewer(iso) {
     return;
   }
 
-  container.innerHTML = bookings.map(r => {
-    const statusLabel = rotuloReqStatus(r.status);
-    const brindeMap = {pastilhas:'Pastilha de freio',mochila:'Mochila',capa:'Capa de chuva',capa_moto:'Capa para motos',ponteira:'Ponteira',outros:'Outros'};
-    const brindeName = (brindeMap[r.brinde] || r.brinde) + fpBrindeDetalhe(r);
-    const modalLabel = r.modalidade === 'estudio' ? 'Leva até o estúdio' : 'Retirada no endereço';
-    return `<div class="dv-booking-full">
+  /* Quem manda no dia é o agendamento aprovado: ele vem primeiro e inteiro.
+     O resto desce para um bloco que abre por clique.
+
+     A separação muda conforme o dia já esteja resolvido ou não:
+     - com aprovado, o dia está fechado — pendente, stand by e rejeitada são
+       todos "não deram certo" e vão juntos para o bloco fechado;
+     - sem aprovado, pendente e stand by são a fila viva do dia e ficam à
+       vista; só as rejeitadas ficam guardadas.
+     Esconder um pendente num dia sem aprovado seria esconder trabalho. */
+  const ORDEM = { pending: 0, standby: 1, rejected: 2 };
+  const aprovados = bookings.filter(r => r.status === 'approved');
+  const demais = bookings
+    .filter(r => r.status !== 'approved')
+    .sort((a, b) => (ORDEM[a.status] ?? 9) - (ORDEM[b.status] ?? 9));
+
+  const aVista = aprovados.length
+    ? aprovados
+    : aprovados.concat(demais.filter(r => r.status !== 'rejected'));
+  // sai de `demais`, que já está ordenado: pendente antes de stand by, e
+  // rejeitada por último — dentro do bloco e no resumo do botão
+  const guardados = demais.filter(r => !aVista.includes(r));
+
+  const contagem = {};
+  guardados.forEach(r => { contagem[r.status] = (contagem[r.status] || 0) + 1; });
+  // com um status só, o resumo repetiria o próprio rótulo do botão
+  const resumo = Object.keys(contagem).length < 2 ? '' : Object.keys(contagem).map(st => {
+    const n = contagem[st];
+    const rot = rotuloReqStatus(st).toLowerCase();
+    return n + ' ' + (n === 1 ? rot : rot.replace(/a$/, 'as').replace(/e$/, 'es'));
+  }).join(' · ');
+
+  container.innerHTML = aVista.map(dvCartaoHtml).join('')
+    + (guardados.length ? `
+      <button type="button" class="dv-mais" id="dvMaisBtn" aria-expanded="false" aria-controls="dvGuardados" onclick="dvAlternarGuardados()">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        <span id="dvMaisTexto">${aprovados.length ? 'Outros pedidos para este dia' : 'Pedidos rejeitados'} (${guardados.length})</span>
+        <span class="dv-mais-resumo">${escHtml(resumo)}</span>
+      </button>
+      <div id="dvGuardados" hidden>${guardados.map(dvCartaoHtml).join('')}</div>` : '');
+
+  // Produtos compatíveis só para o que está à vista: a busca no Bling é a
+  // parte mais lenta do painel e nada disso aparece enquanto o bloco fecha.
+  dvCarregarProdutos(aVista);
+  DV_GUARDADOS = guardados;
+  DV_GUARDADOS_CARREGADOS = false;
+}
+
+/* Um cartão de agendamento do painel da data. */
+function dvCartaoHtml(r) {
+  const statusLabel = rotuloReqStatus(r.status);
+  const brindeMap = {pastilhas:'Pastilha de freio',mochila:'Mochila',capa:'Capa de chuva',capa_moto:'Capa para motos',ponteira:'Ponteira',outros:'Outros'};
+  const brindeName = (brindeMap[r.brinde] || r.brinde) + fpBrindeDetalhe(r);
+  const modalLabel = r.modalidade === 'estudio' ? 'Leva até o estúdio' : 'Retirada no endereço';
+  return `<div class="dv-booking-full${r.status === 'approved' ? ' dv-confirmado' : ''}">
       <div class="dv-row">
         <span class="dv-name">${escHtml(r.nome)}</span>
         <span class="badge ${r.status}">${statusLabel}</span>
@@ -7139,9 +7215,9 @@ function renderDateViewer(iso) {
         <div class="dv-detail"><span class="dv-k">Moto</span><span class="dv-v">${escHtml(r.moto)}</span></div>
         <div class="dv-detail"><span class="dv-k">Placa</span><span class="dv-v">${escHtml(r.placa)}</span></div>
         <div class="dv-detail"><span class="dv-k">WhatsApp</span><span class="dv-v">${escHtml(r.whatsapp)}</span></div>
-        <div class="dv-detail"><span class="dv-k">Email</span><span class="dv-v">${r.email || '—'}</span></div>
+        <div class="dv-detail"><span class="dv-k">Email</span><span class="dv-v">${escHtml(r.email || '—')}</span></div>
         <div class="dv-detail"><span class="dv-k">Modalidade</span><span class="dv-v">${modalLabel}</span></div>
-        <div class="dv-detail"><span class="dv-k">Brinde</span><span class="dv-v">${brindeName}</span></div>
+        <div class="dv-detail"><span class="dv-k">Brinde</span><span class="dv-v">${escHtml(brindeName)}</span></div>
         ${r.endereco ? `<div class="dv-detail" style="grid-column:1/-1"><span class="dv-k">Endereço</span><span class="dv-v">${escHtml(r.endereco)}</span></div>` : ''}
         ${r.obs ? `<div class="dv-detail" style="grid-column:1/-1"><span class="dv-k">Obs agendamento</span><span class="dv-v">${escHtml(r.obs)}</span></div>` : ''}
       </div>
@@ -7154,23 +7230,39 @@ function renderDateViewer(iso) {
       </div>
       <div id="dvBlingProds_${r.id}" style="margin-top:8px"></div>
     </div>`;
-  }).join('');
-
-  // Load compatible products for each booking
-  if (isBlingConnected()) {
-    bookings.forEach(r => {
-      if (r.moto) {
-        const cId = 'dvBlingProds_' + r.id;
-        const el = document.getElementById(cId);
-        if (el) {
-          el.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:4px 0"><svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align:-1px;margin-right:4px;animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="30 70"/></svg>Buscando produtos…</div>';
-          blingFindCompatible(r.moto).then(prods => renderCompatibleProducts(prods, cId));
-        }
-      }
-    });
-  }
-
 }
+
+let DV_GUARDADOS = [];
+let DV_GUARDADOS_CARREGADOS = false;
+
+/* Busca no Bling os produtos compatíveis com cada moto da lista. */
+function dvCarregarProdutos(lista) {
+  if (!isBlingConnected()) return;
+  lista.forEach(r => {
+    if (!r.moto) return;
+    const cId = 'dvBlingProds_' + r.id;
+    const el = document.getElementById(cId);
+    if (!el) return;
+    el.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:4px 0"><svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align:-1px;margin-right:4px;animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="30 70"/></svg>Buscando produtos…</div>';
+    blingFindCompatible(r.moto).then(prods => renderCompatibleProducts(prods, cId));
+  });
+}
+
+function dvAlternarGuardados() {
+  const cx = document.getElementById('dvGuardados');
+  const btn = document.getElementById('dvMaisBtn');
+  if (!cx || !btn) return;
+  const abrindo = cx.hidden;
+  cx.hidden = !abrindo;
+  btn.classList.toggle('aberto', abrindo);
+  btn.setAttribute('aria-expanded', abrindo ? 'true' : 'false');
+  // os produtos compatíveis só são buscados quando o bloco abre pela 1ª vez
+  if (abrindo && !DV_GUARDADOS_CARREGADOS) {
+    DV_GUARDADOS_CARREGADOS = true;
+    dvCarregarProdutos(DV_GUARDADOS);
+  }
+}
+window.dvAlternarGuardados = dvAlternarGuardados;
 
 async function toggleBlock(iso, reason) {
   const already = BLOCKED.includes(iso);

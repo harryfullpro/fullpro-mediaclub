@@ -4,6 +4,29 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 20/08/2026 — Agenda: o confirmado na frente, o resto atrás de um clique
+
+Clicar num dia despejava todos os pedidos daquela data na ordem em que vieram do banco —
+no print do dono, uma **rejeitada** aparecia antes da **aprovada**. Agora o aprovado vem
+primeiro e inteiro, com borda verde, e o resto desce para um bloco que abre por clique.
+
+**A separação muda conforme o dia esteja resolvido ou não**, e isso é de propósito:
+
+- **Com aprovado**, o dia está fechado: pendente, stand by e rejeitada são todos "não
+  deram certo" e vão juntos para o bloco fechado — *"Outros pedidos para este dia (3) · 1
+  pendente · 2 rejeitadas"*.
+- **Sem aprovado**, pendente e stand by são a fila viva do dia e ficam à vista; só as
+  rejeitadas ficam guardadas, sob *"Pedidos rejeitados (2)"*. Esconder um pendente num dia
+  sem aprovado seria esconder trabalho.
+
+Dentro do bloco a ordem é pendente → stand by → rejeitada, e o resumo do botão segue a
+mesma ordem (os dois saem da mesma lista ordenada). Com um status só, o resumo some — ele
+repetiria o rótulo do botão.
+
+**A busca de produtos compatíveis no Bling agora só roda para o que está à vista.** É a
+parte mais lenta do painel, e antes ela disparava para todo pedido do dia — inclusive os
+que ninguém ia olhar. Os escondidos carregam na primeira vez que o bloco abre.
+
 ## 20/08/2026 — Kit do Magis5 editável de dentro do projeto
 
 Pedido: na aba Produção, escolher o produto usado no projeto e ter, ao lado, um botão que

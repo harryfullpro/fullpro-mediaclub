@@ -4,7 +4,7 @@
  * Por que existe: a chave do Magis5 (X-MAGIS5-APIKEY) dá acesso de escrita ao
  * hub inteiro — pedidos, produtos, composição de kit. Ela NÃO pode viver no
  * navegador (o config.js é público). Fica só aqui, em MAGIS5_API_KEY, e a
- * função exige usuário autenticado (verify_jwt = true).
+ * função exige usuário autenticado (verify_jwt = true + checagem de papel).
  *
  * Ações — em ?action= ou no corpo {action}, porque o painel chama por
  * sb.functions.invoke(), que sempre manda POST com JSON:
