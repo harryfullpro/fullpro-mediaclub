@@ -4472,35 +4472,35 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-prio-p:hover { transform: scale(1.25); border-color: var(--fp-prio-cor, var(--text-dim)); }
 .fp-prio-p.on { background: var(--fp-prio-cor); border-color: var(--fp-prio-cor); }
 .fp-prio-p.atual { box-shadow: 0 0 0 3px color-mix(in srgb, var(--fp-prio-cor) 25%, transparent); }
+/* Só o triângulo, sem caixa em volta. A cor é o vermelho da marca — o
+   mesmo do item ativo do menu lateral —, não o vermelho de ação
+   destrutiva, que ao lado dele parece lavado. */
 .fp-prio-emerg {
-  width: 20px; height: 20px; border-radius: 7px; padding: 0; cursor: pointer; flex: 0 0 auto;
+  width: 20px; height: 20px; padding: 0; cursor: pointer; flex: 0 0 auto;
   display: grid; place-items: center; line-height: 1;
-  background: transparent; border: 1.5px dashed var(--border-hi); color: var(--text-muted);
-  transition: all .14s ease;
+  background: none; border: 0; color: var(--text-muted);
+  transition: color .14s ease, transform .14s ease;
 }
 .fp-prio-emerg svg {
-  width: 12px; height: 12px; fill: none; stroke: currentColor;
-  stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+  width: 15px; height: 15px; fill: none; stroke: currentColor;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
 }
-.fp-prio-emerg:hover { border-color: var(--danger); color: var(--danger); border-style: solid; }
+.fp-prio-emerg:hover { color: var(--primary); transform: scale(1.15); }
 /* Emergencial não é "o quarto nível": o triângulo pisca para o olho bater
    nele antes de ler a lista inteira. */
 .fp-prio[data-n="5"] .fp-prio-emerg {
-  background: var(--danger); border-color: var(--danger); border-style: solid; color: #fff;
-  animation: fpPiscaEmerg 1.4s ease-in-out infinite;
+  color: var(--primary);
+  animation: fpPiscaEmerg 1.3s ease-in-out infinite;
 }
-@keyframes fpPiscaEmerg {
-  0%, 100% { opacity: 1;  box-shadow: 0 0 0 3px rgba(255,77,77,.22); }
-  50%      { opacity: .5; box-shadow: 0 0 0 7px rgba(255,77,77,0); }
-}
+@keyframes fpPiscaEmerg { 0%, 100% { opacity: 1; } 50% { opacity: .22; } }
 @media (prefers-reduced-motion: reduce) {
-  .fp-prio[data-n="5"] .fp-prio-emerg { animation: none; box-shadow: 0 0 0 3px rgba(255,77,77,.22); }
+  .fp-prio[data-n="5"] .fp-prio-emerg { animation: none; }
 }
 .fp-prio-rot { font-size: 11.5px; font-weight: 600; color: var(--fp-prio-cor, var(--text-muted)); min-width: 62px; }
 .fp-prio[data-n="1"] { --fp-prio-cor: #4c8dff; }
 .fp-prio[data-n="2"] { --fp-prio-cor: #e8c33c; }
 .fp-prio[data-n="3"] { --fp-prio-cor: #ff8a3d; }
-.fp-prio[data-n="5"] { --fp-prio-cor: var(--danger); }
+.fp-prio[data-n="5"] { --fp-prio-cor: var(--primary); }
 .fp-prio[data-n="1"] .fp-prio-fill { width: 6px; }
 .fp-prio[data-n="2"] .fp-prio-fill { width: 34px; }
 .fp-prio[data-n="3"] .fp-prio-fill { width: 68px; }
@@ -15192,7 +15192,7 @@ function fpPrioEscolher(prod) {
     ov.querySelector('[data-n]').focus();
   });
 }
-function fpPrioCor(n) { return { 1: '#4c8dff', 2: '#e8c33c', 3: '#ff8a3d', 5: 'var(--danger)' }[n] || 'var(--text-muted)'; }
+function fpPrioCor(n) { return { 1: '#4c8dff', 2: '#e8c33c', 3: '#ff8a3d', 5: 'var(--primary)' }[n] || 'var(--text-muted)'; }
 
 /* ---------- listagem de Produção ---------- */
 function fpProdFiltrar(f) {
