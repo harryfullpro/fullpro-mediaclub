@@ -1,5 +1,64 @@
 # Diário
 
+## 25/08/2026 · Aviso de entrada e módulo Atualizações do site
+
+**O pedido.** Um popup ao entrar no painel ou recarregar, com as solicitações
+pendentes para quem tem acesso a elas (menos o admin), as menções do debriefing e
+um resumo das novidades do sistema. Mais um módulo onde esse histórico fica.
+
+**A decisão que mudou o desenho: substituir, não somar.** Já existia um popup no
+login — o de menções, uma barra colada na base da tela que reaparecia a cada troca
+de módulo. Dois avisos disputando o mesmo canto terminam com o operador fechando
+os dois sem ler nenhum. O novo aviso engoliu o antigo; `showMentionPopup`,
+`hideMentionPopup`, `dismissMentionPopup`, `openMentionsNow` e
+`maybeShowMentionPopup` viraram fachadas finas para não quebrar quem os chamava.
+
+**"Não viu de fato" significa coisa diferente por assunto:**
+
+| Assunto | Como se sabe que já foi visto |
+|---|---|
+| Menção no debriefing | `mc_notifications.read`, que já existia |
+| Solicitação pendente | `prefs.avisos.requests_ate` — só conta o que chegou depois |
+| Relato de bug (admin) | `prefs.avisos.bugs_ate` |
+| Novidade do painel | `prefs.avisos.updates_vistos`, lista de ids |
+
+`prefs` é **coluna jsonb em `mc_admin_users`**, não tabela nova: `checkAuth()` já faz
+`select('*')`, então o valor chega dentro de `CURRENT_USER` sem uma consulta a mais —
+e a leitura dessa tabela já foi gargalo antes.
+
+**Regras de exibição:** admin não recebe aviso de solicitação (ele vive nessa tela);
+só admin recebe aviso de relato de bug. Menção e solicitação são trabalho pendente e
+só somem quando a pessoa passa pela tela; novidade e relato são informação e o
+"Entendi" já carimba.
+
+**Abre uma vez por carregamento de página, nunca ao voltar o foco da aba.** O antigo
+recarregava e reabria em `focus` e `visibilitychange`; com um modal no centro da tela
+isso reapareceria a cada alt-tab. Agora foco só atualiza os contadores.
+
+**Duas correções no caminho:**
+
+1. `class="btn primary"` / `btn ghost` **não existem neste painel** — a classe é
+   `.action-btn` (`.approve`, `.reject`, `.view`, `.danger`). Os botões nasceram sem
+   estilo nenhum, com 19px de altura e padding zero. Antes de usar uma classe de
+   botão, procure a declaração dela no `<style>`.
+2. `fpAvisoIr` gravava `requests_ate` numa chamada e o resto noutra. **Duas escritas
+   na mesma linha de `mc_admin_users` podem chegar fora de ordem** e a segunda apagaria
+   o que a primeira gravou. Virou um patch só.
+
+**De passagem:** `'manutencao'` entrou nas três listas de views que o módulo do besouro
+tinha esquecido (`admin.html` tem sete listas de views, herança de três gerações de
+roteador). Era por isso que Manutenção continuava visível por baixo do detalhe de projeto.
+
+**Medido no navegador:** selo e data do rodapé da novidade com **0px** de diferença entre
+centros; 375px sem rolagem horizontal; os dois temas conferidos. Commit `815d97a`,
+no ar em produção.
+
+**Tabelas:** `mc_updates` (changelog) e a coluna `mc_admin_users.prefs`. O DDL completo,
+com a seção de Fotografia, está em `supabase/schema-fotografia.sql`.
+
+---
+
+
 Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
