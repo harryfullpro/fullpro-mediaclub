@@ -4360,7 +4360,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 }
 .fp-aviso-ov.show { display: flex; }
 .fp-aviso {
-  width: min(520px, 100%); max-height: min(82vh, 760px);
+  width: min(680px, 100%); max-height: min(82vh, 760px);
   display: flex; flex-direction: column; overflow: hidden;
   background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015)), var(--bg-elev);
   border: 1px solid var(--border-hi); border-radius: 16px;
@@ -4373,7 +4373,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   border-color: rgba(0,0,0,.1);
   box-shadow: 0 20px 50px rgba(0,0,0,.16), 0 0 0 1px rgba(0,0,0,.04);
 }
-.fp-aviso-head { display: flex; align-items: center; gap: 10px; padding: 16px 16px 12px; }
+.fp-aviso-head { display: flex; align-items: center; gap: 10px; padding: 18px 20px 14px; }
 .fp-aviso-head h3 { font-size: 16px; font-weight: 650; margin: 0; letter-spacing: -.01em; }
 .fp-aviso-head .fp-aviso-data { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 .fp-aviso-x {
@@ -4382,14 +4382,18 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   color: var(--text-muted); font-size: 19px; line-height: 1;
 }
 .fp-aviso-x:hover { background: var(--bg-card); color: var(--text); }
-.fp-aviso-corpo { overflow-y: auto; padding: 0 16px 4px; display: flex; flex-direction: column; gap: 8px; }
+.fp-aviso-corpo { overflow-y: auto; }
+/* Uma superfície só, dividida por fios — é o padrão do debriefing. Cada
+   novidade dentro da própria caixa fazia caixa-dentro-de-caixa, que é o que
+   mais entrega interface montada por template. */
+.fp-aviso-corpo > * + * { border-top: 1px solid var(--border); }
 .fp-aviso-item {
-  display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
-  padding: 11px 12px; border-radius: 12px; cursor: pointer;
-  background: var(--bg-card); border: 1px solid var(--border); color: inherit; font: inherit;
-  transition: border-color .12s ease, transform .12s ease;
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  padding: 13px 20px; cursor: pointer; background: none; border: 0; color: inherit; font: inherit;
+  transition: background .12s ease;
 }
-.fp-aviso-item:hover { border-color: var(--border-hi); transform: translateY(-1px); }
+.fp-aviso-item:hover { background: rgba(255,255,255,.03); }
+[data-theme="light"] .fp-aviso-item:hover { background: rgba(0,0,0,.025); }
 .fp-aviso-ico { width: 30px; height: 30px; border-radius: 9px; flex: 0 0 auto; display: grid; place-items: center; }
 .fp-aviso-ico svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .fp-aviso-item.req  .fp-aviso-ico { background: rgba(255,170,51,.16); color: var(--warning); }
@@ -4399,30 +4403,135 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-aviso-sub { font-size: 12px; color: var(--text-muted); }
 .fp-aviso-item .fp-aviso-sub { display: block; margin-top: 1px; }
 .fp-aviso-item .fp-aviso-seta { margin-left: auto; color: var(--text-muted); font-size: 15px; flex: 0 0 auto; }
-.fp-aviso-secao {
-  font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
-  color: var(--text-muted); margin: 10px 2px 0;
+
+/* Faixa do patch: a régua técnica que agrupa as notas do dia. */
+.fp-aviso-patch {
+  display: flex; align-items: baseline; gap: 10px; padding: 14px 20px 9px;
+  background: rgba(255,255,255,.02);
 }
-.fp-aviso-nov { padding: 10px 12px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border); }
-.fp-aviso-nov + .fp-aviso-nov { margin-top: -2px; }
-.fp-aviso-nov .fp-aviso-nov-tit { font-size: 13.5px; font-weight: 600; }
-.fp-aviso-nov .fp-aviso-nov-txt { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; margin-top: 3px; }
-.fp-aviso-nov .fp-aviso-nov-pe  { display: flex; align-items: center; gap: 7px; margin-top: 7px; }
-.fp-aviso-foot { padding: 12px 16px 16px; display: flex; align-items: center; gap: 8px; }
+[data-theme="light"] .fp-aviso-patch { background: rgba(0,0,0,.02); }
+.fp-aviso-patch b { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--text); }
+.fp-aviso-patch .fp-aviso-sub { margin-left: auto; }
+
+/* Nota: código monoespaçado + nome técnico na primeira linha, título na
+   segunda, resumo na terceira. Sem moldura. */
+.fp-aviso-nota { padding: 12px 20px 14px; }
+.fp-aviso-nota-topo { display: flex; align-items: center; gap: 9px; margin-bottom: 4px; }
+.fp-aviso-cod { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: var(--text-muted); flex: 0 0 auto; }
+.fp-aviso-nome { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fp-aviso-tipo { margin-left: auto; flex: 0 0 auto; font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; }
+.fp-aviso-tipo::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.fp-aviso-tipo.t-design         { color: #b9a2ff; }
+.fp-aviso-tipo.t-funcionalidade { color: var(--success); }
+.fp-aviso-tipo.t-correcao       { color: var(--warning); }
+.fp-aviso-nota-tit { font-size: 14px; font-weight: 600; line-height: 1.35; }
+.fp-aviso-nota-txt { font-size: 13px; color: var(--text-dim); line-height: 1.55; margin-top: 4px; white-space: pre-wrap; }
+.fp-aviso-acoes { margin-left: auto; display: flex; gap: 6px; }
+.fp-aviso-foot { padding: 13px 20px 16px; display: flex; align-items: center; gap: 8px;
+  border-top: 1px solid var(--border); }
 .fp-aviso-foot .fp-aviso-conta { font-size: 12px; color: var(--text-muted); margin-right: auto; }
-.badge.upd-design        { background: rgba(167,139,250,.18); color: #b9a2ff; }
-.badge.upd-funcionalidade{ background: rgba(31,210,122,.18);  color: var(--success); }
-.badge.upd-correcao      { background: rgba(255,170,51,.18);  color: var(--warning); }
-/* Lista do módulo: mesma linguagem do popup, sem a caixa do popup */
-.fp-upd-dia { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); margin: 18px 2px 8px; }
-.fp-upd-card { padding: 12px 14px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border); margin-bottom: 8px; }
-.fp-upd-card .fp-upd-tit { font-size: 14px; font-weight: 600; }
-.fp-upd-card .fp-upd-txt { font-size: 13px; color: var(--text-dim); line-height: 1.55; margin-top: 4px; white-space: pre-wrap; }
-.fp-upd-card .fp-upd-pe  { display: flex; align-items: center; gap: 8px; margin-top: 9px; flex-wrap: wrap; }
+/* Lista do módulo: o mesmo container com fios do popup. */
+.fp-upd-lista { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--bg-elev); }
+.fp-upd-lista > * + * { border-top: 1px solid var(--border); }
 @media (max-width: 600px) {
   .fp-aviso-ov { padding: 0; align-items: flex-end; }
   .fp-aviso { width: 100%; max-height: 88vh; border-radius: 16px 16px 0 0; border-bottom: 0; }
   @keyframes fpAvisoEntra { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SEÇÃO FOTOGRAFIA (FP-FOTO)
+   Produção, Galeria, Dashboard, Separação e Fotografia em Lote.
+   Escala de prioridade: 1 baixa (azul) · 2 média (amarelo) · 3 alta
+   (laranja) · 5 EMERGENCIAL (vermelho). Sem prioridade = pendente, à
+   espera de um operador classificar.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* --- barra de prioridade ---------------------------------------------
+   O emergencial fica separado do trilho por um vão de propósito: ele não
+   é "o quarto nível", é uma exceção. Encostado nos outros, viraria só o
+   fim da escala e seria escolhido por hábito. */
+.fp-prio { display: inline-flex; align-items: center; gap: 9px; }
+.fp-prio-trilho {
+  position: relative; display: flex; align-items: center; justify-content: space-between;
+  width: 74px; height: 20px; padding: 0 3px; flex: 0 0 auto;
+}
+.fp-prio-trilho::before {
+  content: ''; position: absolute; left: 3px; right: 3px; height: 3px; border-radius: 2px;
+  background: var(--border-hi);
+}
+.fp-prio-fill {
+  position: absolute; left: 3px; height: 3px; border-radius: 2px; width: 0;
+  background: var(--fp-prio-cor, var(--border-hi)); transition: width .16s ease, background .16s ease;
+}
+.fp-prio-p {
+  position: relative; width: 11px; height: 11px; border-radius: 50%; padding: 0; cursor: pointer;
+  background: var(--bg-elev); border: 1.5px solid var(--border-hi); transition: all .14s ease;
+}
+.fp-prio-p:hover { transform: scale(1.25); border-color: var(--fp-prio-cor, var(--text-dim)); }
+.fp-prio-p.on { background: var(--fp-prio-cor); border-color: var(--fp-prio-cor); }
+.fp-prio-p.atual { box-shadow: 0 0 0 3px color-mix(in srgb, var(--fp-prio-cor) 25%, transparent); }
+.fp-prio-emerg {
+  width: 20px; height: 20px; border-radius: 7px; padding: 0; cursor: pointer; flex: 0 0 auto;
+  display: grid; place-items: center; font-size: 11px; font-weight: 800; line-height: 1;
+  background: transparent; border: 1.5px dashed var(--border-hi); color: var(--text-muted);
+  transition: all .14s ease;
+}
+.fp-prio-emerg:hover { border-color: var(--danger); color: var(--danger); border-style: solid; }
+.fp-prio[data-n="5"] .fp-prio-emerg {
+  background: var(--danger); border-color: var(--danger); border-style: solid; color: #fff;
+  box-shadow: 0 0 0 3px rgba(255,77,77,.2);
+}
+.fp-prio-rot { font-size: 11.5px; font-weight: 600; color: var(--fp-prio-cor, var(--text-muted)); min-width: 62px; }
+.fp-prio[data-n="1"] { --fp-prio-cor: #4c8dff; }
+.fp-prio[data-n="2"] { --fp-prio-cor: #e8c33c; }
+.fp-prio[data-n="3"] { --fp-prio-cor: #ff8a3d; }
+.fp-prio[data-n="5"] { --fp-prio-cor: var(--danger); }
+.fp-prio[data-n="1"] .fp-prio-fill { width: 6px; }
+.fp-prio[data-n="2"] .fp-prio-fill { width: 34px; }
+.fp-prio[data-n="3"] .fp-prio-fill { width: 68px; }
+.fp-prio[data-n="5"] .fp-prio-trilho { opacity: .35; }
+.fp-prio.somente-leitura .fp-prio-p,
+.fp-prio.somente-leitura .fp-prio-emerg { cursor: default; pointer-events: none; }
+
+/* --- nota de foto por estrelas --------------------------------------- */
+.fp-nota { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; }
+.fp-nota svg { width: 15px; height: 15px; flex: 0 0 auto; }
+.fp-nota.sem      { color: var(--text-muted); }
+.fp-nota.sem svg  { fill: none; stroke: var(--text-muted); stroke-width: 1.6; }
+.fp-nota.tem      { color: #e8c33c; }
+.fp-nota.tem svg  { fill: #e8c33c; stroke: none; }
+.fp-nota-btn {
+  background: none; border: 0; padding: 0 2px; cursor: pointer; font: inherit; font-size: 12px;
+  font-weight: 600; color: #7aa5ff; text-decoration: underline; text-underline-offset: 2px;
+}
+.fp-nota-btn:hover { color: #a9c4ff; }
+.fp-nota-antes { font-size: 11.5px; color: var(--text-muted); }
+
+/* --- linha de produto ------------------------------------------------ */
+.fp-prod { display: flex; flex-direction: column; gap: 6px; }
+.fp-prod-linha {
+  display: flex; align-items: center; gap: 12px; padding: 9px 12px;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 11px;
+}
+.fp-prod-linha:hover { border-color: var(--border-hi); }
+.fp-prod-linha.fora { opacity: .5; }
+.fp-prod-nome { flex: 1 1 auto; min-width: 0; }
+.fp-prod-nome b { display: block; font-size: 13.5px; font-weight: 600; line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fp-prod-sku { font-size: 11.5px; color: var(--text-muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.fp-prod-est { font-size: 12.5px; font-weight: 600; flex: 0 0 auto; min-width: 54px; text-align: right; }
+.fp-prod-est.zero { color: var(--danger); }
+.fp-prod-est small { font-weight: 500; color: var(--text-muted); }
+.fp-prod-fim { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; }
+.fp-prod-vazio { padding: 26px 12px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
+@media (max-width: 900px) {
+  .fp-prod-linha { flex-wrap: wrap; row-gap: 9px; }
+  .fp-prod-nome { flex: 1 1 60%; }
+  .fp-prod-est  { order: 2; }
+  .fp-prod-fim  { order: 3; flex-basis: 100%; justify-content: space-between; }
+  .fp-prio-rot  { min-width: 0; }
 }
 </style>
 </head>
@@ -4498,6 +4607,28 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 8h20M7 4l-2 4M12 4l-2 4M17 4l-2 4"/></svg>
       <span class="nav-label">Clips</span>
     </button>
+    <div class="nav-section">Fotografia</div>
+    <button class="nav-item" data-view="foto-dashboard">
+      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+      <span class="nav-label">Panorama</span>
+    </button>
+    <button class="nav-item" data-view="foto-producao">
+      <svg viewBox="0 0 24 24"><path d="M3 7h18v13a1 1 0 01-1 1H4a1 1 0 01-1-1z"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M7 12h10M7 16h6"/></svg>
+      <span class="nav-label">Produção</span> <span class="count" id="cntFotoUrg">0</span>
+    </button>
+    <button class="nav-item" data-view="foto-galeria">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span class="nav-label">Galeria</span>
+    </button>
+    <button class="nav-item" data-view="foto-separacao">
+      <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></svg>
+      <span class="nav-label">Separação</span>
+    </button>
+    <button class="nav-item" data-view="foto-lote">
+      <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <span class="nav-label">Fotografia em lote</span>
+    </button>
+
     <div class="nav-section">Pós-produção</div>
     <button class="nav-item" data-view="debriefing">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><path d="M8 9h.01M12 9h.01M16 9h.01"/></svg>
@@ -5562,6 +5693,84 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 
       <div id="updLista"></div>
     </div>
+
+    <div id="view-foto-dashboard" style="display:none">
+      <div class="page-head"><div>
+        <h1>Panorama da fotografia</h1>
+        <p>Quanto do catálogo já tem foto, como está a fila e o que saiu do estúdio este mês.</p>
+      </div>
+      <button class="action-btn" id="fotoSyncBtn" onclick="fpFotoSincronizar()">Sincronizar catálogo</button></div>
+      <div id="fotoPanorama"></div>
+    </div>
+
+    <div id="view-foto-producao" style="display:none">
+      <div class="page-head"><div>
+        <h1>Produção de fotos</h1>
+        <p>A fila do estúdio. Defina a prioridade de cada produto; o emergencial fura a fila.</p>
+      </div></div>
+      <div class="filter-bar">
+        <span class="fp-so-desktop" style="display:contents">
+          <button class="filter-btn active" data-fpfiltro="fila" onclick="fpProdFiltrar('fila')">Na fila</button>
+          <button class="filter-btn" data-fpfiltro="pendente" onclick="fpProdFiltrar('pendente')">Sem prioridade</button>
+          <button class="filter-btn" data-fpfiltro="emergencial" onclick="fpProdFiltrar('emergencial')">Emergenciais</button>
+          <button class="filter-btn" data-fpfiltro="comfoto" onclick="fpProdFiltrar('comfoto')">Já fotografados</button>
+          <button class="filter-btn" data-fpfiltro="fora" onclick="fpProdFiltrar('fora')">Fora de linha</button>
+        </span>
+        <select class="fp-so-mobile fp-lista-select" id="fotoProdFiltroSelect" aria-label="Filtrar produtos" onchange="fpProdFiltrar(this.value)">
+          <option value="fila">Na fila</option>
+          <option value="pendente">Sem prioridade</option>
+          <option value="emergencial">Emergenciais</option>
+          <option value="comfoto">Já fotografados</option>
+          <option value="fora">Fora de linha</option>
+        </select>
+        <input type="search" id="fotoProdBusca" placeholder="Nome ou SKU" oninput="fpProdBuscar(this.value)" aria-label="Buscar produto">
+        <span id="fotoProdCount" class="fp-lista-contagem"></span>
+      </div>
+      <div id="fotoProdLista" class="fp-prod"></div>
+      <div id="fotoProdMais" style="text-align:center;margin-top:14px"></div>
+    </div>
+
+    <div id="view-foto-galeria" style="display:none">
+      <div class="page-head"><div>
+        <h1>Galeria</h1>
+        <p>As fotos de cada produto e a nota que elas receberam.</p>
+      </div></div>
+      <div class="filter-bar">
+        <span class="fp-so-desktop" style="display:contents">
+          <button class="filter-btn active" data-fpgal="todos" onclick="fpGalFiltrar('todos')">Com foto</button>
+          <button class="filter-btn" data-fpgal="semnota" onclick="fpGalFiltrar('semnota')">Sem avaliação</button>
+          <button class="filter-btn" data-fpgal="refazer" onclick="fpGalFiltrar('refazer')">Precisam refazer</button>
+        </span>
+        <select class="fp-so-mobile fp-lista-select" id="fotoGalFiltroSelect" aria-label="Filtrar galeria" onchange="fpGalFiltrar(this.value)">
+          <option value="todos">Com foto</option>
+          <option value="semnota">Sem avaliação</option>
+          <option value="refazer">Precisam refazer</option>
+        </select>
+        <input type="search" id="fotoGalBusca" placeholder="Nome ou SKU" oninput="fpGalBuscar(this.value)" aria-label="Buscar produto">
+        <span id="fotoGalCount" class="fp-lista-contagem"></span>
+      </div>
+      <div id="fotoGalLista" class="fp-prod"></div>
+      <div id="fotoGalMais" style="text-align:center;margin-top:14px"></div>
+    </div>
+
+    <div id="view-foto-separacao" style="display:none">
+      <div class="page-head"><div>
+        <h1>Separação</h1>
+        <p>O painel monta a lista pela prioridade e manda para quem separa no estoque.</p>
+      </div></div>
+      <div id="fotoSepTopo"></div>
+      <div id="fotoSepLista" class="fp-prod"></div>
+      <div id="fotoSepRodape"></div>
+    </div>
+
+    <div id="view-foto-lote" style="display:none">
+      <div class="page-head"><div>
+        <h1>Fotografia em lote</h1>
+        <p>Os produtos do último lote separado. A foto sobe direto para a pasta do SKU no Drive.</p>
+      </div></div>
+      <div id="fotoLoteTopo"></div>
+      <div id="fotoLoteLista" class="fp-prod"></div>
+    </div>
   </main>
 </div>
 
@@ -5585,6 +5794,8 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
       <input type="hidden" id="updEdId">
       <div class="form-group"><label for="updEdTitulo">Título</label>
         <input type="text" id="updEdTitulo" placeholder="Ex.: Botão de reportar bug em todo o painel" maxlength="120"></div>
+      <div class="form-group"><label for="updEdNome">Nome técnico</label>
+        <input type="text" id="updEdNome" placeholder="Ex.: aviso-entrada" maxlength="48"></div>
       <div class="form-group"><label for="updEdDescricao">O que mudou</label>
         <textarea id="updEdDescricao" rows="4" placeholder="Uma ou duas frases, do ponto de vista de quem usa."></textarea></div>
       <div class="form-grid-3">
@@ -7141,7 +7352,7 @@ document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
+    ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
       document.getElementById('view-' + v).style.display = 'none';
     });
     document.getElementById('view-' + btn.dataset.view).style.display = 'block';
@@ -9516,7 +9727,7 @@ function openProjectDetail(id, tab) {
   switchDetailTab(tab || 'producao');
 
   // Hide all views, show project-detail
-  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
+  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
     document.getElementById('view-' + v).style.display = 'none';
   });
   document.getElementById('view-project-detail').style.display = 'block';
@@ -9537,7 +9748,7 @@ function openProjectDetail(id, tab) {
 function backToProjects() {
   stopEngagementAutoRefresh();
   projDetailId = null;
-  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
+  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
     document.getElementById('view-' + v).style.display = 'none';
   });
   document.getElementById('view-projects').style.display = 'block';
@@ -9928,13 +10139,14 @@ function renderShotsReadOnly(shots, si) {
 
   const FP_MODULE_GROUPS = [
     { sec: 'Geral', items: [['dashboard','Dashboard'],['requests','Solicitações'],['calendar','Agenda'],['checkin','Check-in / Check-out'],['projects','Projetos'],['editing','Edição'],['clips','Clips']] },
+    { sec: 'Fotografia', items: [['foto-dashboard','Panorama'],['foto-producao','Produção'],['foto-galeria','Galeria'],['foto-separacao','Separação'],['foto-lote','Fotografia em lote']] },
     { sec: 'Pós-produção', items: [['debriefing','Debriefing']] },
     { sec: 'Performance', items: [['perf-metas','Metas'],['perf-posts','Meus Posts'],['perf-influencers','Influenciadores'],['perf-bonificacao','Bonificação']] },
     { sec: 'Configurações', items: [['templates','Templates WhatsApp'],['export','Exportar'],['users','Usuários'],['manutencao','Manutenção'],['atualizacoes','Atualizações'],['integracoes','Integrações']] }
   ];
-  const FP_ALL_VIEWS = ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'];
+  const FP_ALL_VIEWS = ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'];
   const FP_ALWAYS_ON = ['profile','project-detail'];
-  const FP_NAV_ORDER = ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','atualizacoes','integracoes','profile'];
+  const FP_NAV_ORDER = ['dashboard','requests','calendar','checkin','projects','editing','clips','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','atualizacoes','integracoes','profile'];
 
   function fpRoleKey(roleStr){
     const r = (roleStr || '').toLowerCase();
@@ -14432,10 +14644,19 @@ async function loadUpdates() {
     const { data, error } = await sb.from('mc_updates')
       .select('*').eq('publicado', true)
       .order('publicado_em', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(80);
+      .order('created_at', { ascending: true })
+      .limit(120);
     if (error) throw error;
     UPDATES = data || [];
+    /* O código (004.2) é a posição da nota dentro do patch inteiro, e é
+       calculado aqui: no popup só aparecem as não vistas, e numerar em cima
+       do que sobrou daria códigos diferentes a cada abertura. */
+    const vistos = {};
+    UPDATES.forEach(u => {
+      const k = u.patch == null ? '?' : u.patch;
+      vistos[k] = (vistos[k] || 0) + 1;
+      u._cod = fpUpdPatchNum(u.patch) + '.' + vistos[k];
+    });
   } catch (e) { console.warn('loadUpdates', e); UPDATES = []; }
   fpUpdBadge();
 }
@@ -14557,17 +14778,15 @@ function fpAvisoAbrir() {
   });
 
   if (pacote.novidades.length) {
-    html += '<div class="fp-aviso-secao">Novidades no painel</div>';
-    pacote.novidades.forEach(u => {
-      html += '<div class="fp-aviso-nov"><div class="fp-aviso-nov-tit">' + escHtml(u.titulo || '') + '</div>'
-        + (u.descricao ? '<div class="fp-aviso-nov-txt">' + escHtml(u.descricao) + '</div>' : '')
-        + '<div class="fp-aviso-nov-pe">' + fpUpdSelo(u.tipo)
-        + '<span class="fp-aviso-sub">' + escHtml(fpUpdData(u.publicado_em)) + (u.modulo ? ' · ' + escHtml(u.modulo) : '') + '</span></div></div>';
+    fpUpdPorPatch(pacote.novidades).forEach(g => {
+      const noPatch = (UPDATES || []).filter(u => u.patch === g.patch).length;
+      html += fpUpdFaixaHtml(g, noPatch);
+      g.notas.forEach(u => { html += fpUpdNotaHtml(u); });
     });
   }
 
   html += '</div><div class="fp-aviso-foot">'
-    + '<span class="fp-aviso-conta">' + (pacote.novidades.length ? 'Tudo isso fica em Atualizações.' : '') + '</span>'
+    + '<span class="fp-aviso-conta">' + (pacote.novidades.length ? 'O histórico completo fica em Atualizações.' : '') + '</span>'
     + '<button class="action-btn view" type="button" onclick="fpAvisoFechar()">Entendi</button></div></div>';
 
   _avisoEl.innerHTML = html;
@@ -14639,12 +14858,2278 @@ function attachMentionWatchers() {
   window.addEventListener('focus', recarregar);
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SEÇÃO FOTOGRAFIA (FP-FOTO) — dados e fila de produção
+
+   A fonte do catálogo é o Bling, mas a leitura direta não serve para esta
+   tela: o painel lê produto em páginas de 100 com teto de 20 páginas, e o
+   catálogo é maior que isso. Aqui a lista vem de mc_photo_products, que a
+   edge function bling-sync espelha, e onde vivem as colunas de trabalho
+   (prioridade, nota, excluído) que o Bling não conhece.
+
+   Escala: 1 baixa · 2 média · 3 alta · 5 EMERGENCIAL. NULL = pendente,
+   à espera de alguém classificar. Produto que já tem foto não mostra
+   prioridade — ele saiu da fila.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+let FOTO_PRODUTOS = [];
+let _fotoCarregadoEm = 0;
+let _fotoCarregando = null;
+const FP_PRIO = { 1: 'Baixa', 2: 'Média', 3: 'Alta', 5: 'Emergencial' };
+const FP_FOTO_PAGINA = 60;
+let _prodFiltro = 'fila', _prodBusca = '', _prodMostra = FP_FOTO_PAGINA;
+
+/* Quem enxerga o módulo pode classificar — foi o pedido. A avaliação de
+   foto é outra história: só admin. */
+function fpFotoPodeEditar() { return !!document.querySelector('.nav-item[data-view="foto-producao"]'); }
+function fpFotoEhAdmin() { return typeof getUserRole === 'function' && getUserRole() === 'admin'; }
+
+async function fpFotoCarregar(forcar) {
+  if (!forcar && FOTO_PRODUTOS.length && Date.now() - _fotoCarregadoEm < 120000) return FOTO_PRODUTOS;
+  if (_fotoCarregando) return _fotoCarregando;
+  _fotoCarregando = (async () => {
+    const tudo = [];
+    try {
+      /* O PostgREST devolve no máximo 1.000 linhas por chamada; o catálogo
+         passa disso com folga, então a leitura é paginada por range. */
+      for (let de = 0; de < 20000; de += 1000) {
+        const { data, error } = await sb.from('mc_photo_products')
+          .select('*').order('sku', { ascending: true }).range(de, de + 999);
+        if (error) throw error;
+        tudo.push(...(data || []));
+        if (!data || data.length < 1000) break;
+      }
+      FOTO_PRODUTOS = tudo;
+      _fotoCarregadoEm = Date.now();
+    } catch (e) {
+      console.warn('fpFotoCarregar', e);
+      if (!FOTO_PRODUTOS.length) fpToast('Não deu para ler o catálogo de fotos: ' + (e.message || e), 'erro');
+    }
+    return FOTO_PRODUTOS;
+  })();
+  try { return await _fotoCarregando; } finally { _fotoCarregando = null; }
+}
+
+function fpFotoProduto(sku) { return FOTO_PRODUTOS.find(p => p.sku === sku); }
+
+/* ---------- barra de prioridade ---------- */
+function fpPrioHtml(sku, nivel, editavel) {
+  const n = (nivel === 1 || nivel === 2 || nivel === 3 || nivel === 5) ? nivel : 0;
+  const trava = editavel ? '' : ' somente-leitura';
+  const bola = k => '<button class="fp-prio-p' + (n && k <= n && n !== 5 ? ' on' : '') + (k === n ? ' atual' : '') + '" type="button"'
+    + ' data-tip="' + FP_PRIO[k] + '" aria-label="Prioridade ' + FP_PRIO[k] + '"'
+    + (editavel ? ' onclick="fpPrioDefinir(\'' + fpJs(sku) + '\',' + k + ')"' : '') + '></button>';
+  return '<span class="fp-prio' + trava + '" data-n="' + (n || '') + '">'
+    + '<span class="fp-prio-trilho"><span class="fp-prio-fill"></span>'
+    + bola(1) + bola(2) + bola(3) + '</span>'
+    + '<button class="fp-prio-emerg" type="button" data-tip="Emergencial — só para urgência real"'
+    + ' aria-label="Marcar como emergencial"'
+    + (editavel ? ' onclick="fpPrioDefinir(\'' + fpJs(sku) + '\',5)"' : '') + '>!</button>'
+    + '<span class="fp-prio-rot">' + (n ? FP_PRIO[n] : 'Pendente') + '</span></span>';
+}
+
+/* Escape para dentro de atributo onclick: aqui o certo é o de string JS, não
+   o de HTML — escapar para HTML faz o parser devolver a aspa e quebra a
+   chamada. Está em docs/padroes.md. */
+function fpJs(v) { return String(v == null ? '' : v).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
+
+async function fpPrioDefinir(sku, nivel) {
+  const prod = fpFotoProduto(sku);
+  if (!prod) return;
+  if (prod.prioridade === nivel) nivel = null;          // clicar de novo tira a classificação
+
+  /* O 5 pede confirmação de propósito. Sem atrito ele vira o padrão de quem
+     está com pressa e a fila inteira nasce emergencial. */
+  if (nivel === 5 && !await fpConfirm({
+    titulo: 'Marcar como emergencial',
+    mensagem: '"' + (prod.nome || sku) + '" passa na frente de toda a fila no próximo lote de separação.',
+    detalhe: 'O nível emergencial é só para urgência real — foto que está travando venda ou anúncio.',
+    confirmar: 'É emergencial',
+  })) return;
+
+  const antes = prod.prioridade;
+  prod.prioridade = nivel;                              // pinta antes de esperar a rede
+  prod.prioridade_por = CURRENT_USER ? (CURRENT_USER.name || CURRENT_USER.username) : null;
+  prod.prioridade_em = new Date().toISOString();
+  fpFotoRedesenhar();
+  const { error } = await sb.from('mc_photo_products').update({
+    prioridade: prod.prioridade, prioridade_por: prod.prioridade_por, prioridade_em: prod.prioridade_em,
+  }).eq('sku', sku);
+  if (error) {
+    prod.prioridade = antes; fpFotoRedesenhar();
+    fpToast('Não deu para gravar a prioridade: ' + error.message, 'erro');
+  }
+}
+
+/* ---------- fora de linha ---------- */
+async function fpProdExcluir(sku) {
+  const prod = fpFotoProduto(sku);
+  if (!prod) return;
+  if (!await fpConfirm({
+    titulo: 'Tirar da listagem',
+    mensagem: '"' + (prod.nome || sku) + '" sai da fila de fotografia.',
+    detalhe: 'Use para produto que não é mais vendido nem reposto. Ele continua no Bling e dá para trazer de volta pelo filtro "Fora de linha".',
+    confirmar: 'Tirar da listagem',
+  })) return;
+  prod.excluido = true;
+  prod.excluido_em = new Date().toISOString();
+  prod.excluido_por = CURRENT_USER ? (CURRENT_USER.name || CURRENT_USER.username) : null;
+  fpFotoRedesenhar();
+  const { error } = await sb.from('mc_photo_products').update({
+    excluido: true, excluido_em: prod.excluido_em, excluido_por: prod.excluido_por,
+  }).eq('sku', sku);
+  if (error) { prod.excluido = false; fpFotoRedesenhar(); fpToast('Erro: ' + error.message, 'erro'); return; }
+  fpToast('Produto fora da listagem.', 'ok', { acao: { texto: 'Desfazer', onClick: () => fpProdRestaurar(sku, true) } });
+}
+
+async function fpProdRestaurar(sku, silencioso) {
+  const prod = fpFotoProduto(sku);
+  if (!prod) return;
+  prod.excluido = false; prod.excluido_em = null; prod.excluido_por = null;
+  fpFotoRedesenhar();
+  const { error } = await sb.from('mc_photo_products')
+    .update({ excluido: false, excluido_em: null, excluido_por: null }).eq('sku', sku);
+  if (error) { prod.excluido = true; fpFotoRedesenhar(); fpToast('Erro: ' + error.message, 'erro'); return; }
+  if (!silencioso) fpToast('Produto de volta à listagem.', 'ok');
+}
+
+/* ---------- refazer a foto de um produto que já tem ---------- */
+async function fpProdEnviarAtualizacao(sku) {
+  const prod = fpFotoProduto(sku);
+  if (!prod) return;
+  const nivel = await fpPrioEscolher(prod);
+  if (!nivel) return;
+  const patch = {
+    prioridade: nivel, refazer: true, status: 'fila',
+    prioridade_por: CURRENT_USER ? (CURRENT_USER.name || CURRENT_USER.username) : null,
+    prioridade_em: new Date().toISOString(),
+  };
+  Object.assign(prod, patch);
+  fpFotoRedesenhar();
+  const { error } = await sb.from('mc_photo_products').update(patch).eq('sku', sku);
+  if (error) { fpToast('Erro: ' + error.message, 'erro'); return; }
+  fpToast('Produto de volta à fila de produção.', 'ok');
+}
+
+/* Pergunta a prioridade antes de devolver o produto para a fila. */
+function fpPrioEscolher(prod) {
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.className = 'fp-aviso-ov show';
+    ov.innerHTML = '<div class="fp-aviso" role="dialog" aria-modal="true" style="max-width:420px">'
+      + '<div class="fp-aviso-head"><div><h3>Enviar para atualização</h3>'
+      + '<div class="fp-aviso-data">' + escHtml(prod.nome || prod.sku) + '</div></div></div>'
+      + '<div class="fp-aviso-corpo"><p class="fp-aviso-sub" style="margin:0 0 4px">Com que prioridade a foto entra de novo na fila?</p>'
+      + [1, 2, 3, 5].map(k => '<button class="fp-aviso-item" type="button" data-n="' + k + '">'
+          + '<span class="fp-aviso-ico" style="background:color-mix(in srgb,' + fpPrioCor(k) + ' 18%,transparent);color:' + fpPrioCor(k) + '">'
+          + (k === 5 ? '!' : k) + '</span><span><span class="fp-aviso-tit">' + FP_PRIO[k] + '</span>'
+          + '<span class="fp-aviso-sub">' + (k === 5 ? 'Fura a fila inteira — só para urgência real.' : 'Entra no rateio normal do lote.') + '</span></span></button>').join('')
+      + '</div><div class="fp-aviso-foot"><span class="fp-aviso-conta"></span>'
+      + '<button class="action-btn" type="button" data-cancelar>Cancelar</button></div></div>';
+    const fechar = v => { ov.remove(); document.body.classList.remove('fp-sem-scroll'); resolve(v); };
+    ov.querySelectorAll('[data-n]').forEach(b => b.onclick = () => fechar(Number(b.dataset.n)));
+    ov.querySelector('[data-cancelar]').onclick = () => fechar(null);
+    ov.addEventListener('click', ev => { if (ev.target === ov) fechar(null); });
+    document.body.appendChild(ov);
+    document.body.classList.add('fp-sem-scroll');
+    ov.querySelector('[data-n]').focus();
+  });
+}
+function fpPrioCor(n) { return { 1: '#4c8dff', 2: '#e8c33c', 3: '#ff8a3d', 5: 'var(--danger)' }[n] || 'var(--text-muted)'; }
+
+/* ---------- listagem de Produção ---------- */
+function fpProdFiltrar(f) {
+  _prodFiltro = f || 'fila'; _prodMostra = FP_FOTO_PAGINA;
+  document.querySelectorAll('[data-fpfiltro]').forEach(b => b.classList.toggle('active', b.dataset.fpfiltro === _prodFiltro));
+  const sel = document.getElementById('fotoProdFiltroSelect');
+  if (sel && sel.value !== _prodFiltro) sel.value = _prodFiltro;
+  renderFotoProducao();
+}
+let _prodBuscaTimer = null;
+function fpProdBuscar(v) {
+  _prodBusca = (v || '').trim().toLowerCase();
+  clearTimeout(_prodBuscaTimer);
+  _prodBuscaTimer = setTimeout(() => { _prodMostra = FP_FOTO_PAGINA; renderFotoProducao(); }, 180);
+}
+function fpProdMais() { _prodMostra += FP_FOTO_PAGINA * 2; renderFotoProducao(); }
+
+function fpProdSelecionados() {
+  let l = FOTO_PRODUTOS;
+  if (_prodFiltro === 'fora')            l = l.filter(p => p.excluido);
+  else if (_prodFiltro === 'comfoto')    l = l.filter(p => !p.excluido && p.tem_foto);
+  else if (_prodFiltro === 'pendente')   l = l.filter(p => !p.excluido && !p.tem_foto && p.prioridade == null);
+  else if (_prodFiltro === 'emergencial')l = l.filter(p => !p.excluido && p.prioridade === 5);
+  else                                   l = l.filter(p => !p.excluido && (!p.tem_foto || p.refazer));
+  if (_prodBusca) l = l.filter(p => (p.nome || '').toLowerCase().includes(_prodBusca) || (p.sku || '').toLowerCase().includes(_prodBusca));
+  /* Emergencial no topo, depois alta, média, baixa; sem prioridade por
+     último, porque é fila de trabalho e não catálogo. Empate pelo estoque:
+     produto parado em quantidade custa mais caro sem foto. */
+  const peso = p => (p.prioridade === 5 ? 0 : p.prioridade == null ? 5 : 4 - p.prioridade);
+  return l.slice().sort((a, b) => peso(a) - peso(b) || (Number(b.estoque) || 0) - (Number(a.estoque) || 0) || String(a.nome || '').localeCompare(String(b.nome || '')));
+}
+
+function fpProdEstoqueHtml(e) {
+  const n = (e == null || e === '') ? null : Number(e);
+  if (n == null || isNaN(n)) return '<span class="fp-prod-est"><small>—</small></span>';
+  return '<span class="fp-prod-est' + (n <= 0 ? ' zero' : '') + '">' + n + ' <small>un</small></span>';
+}
+
+function renderFotoProducao() {
+  const box = document.getElementById('fotoProdLista');
+  if (!box) return;
+  const editavel = fpFotoPodeEditar();
+  const lista = fpProdSelecionados();
+  const conta = document.getElementById('fotoProdCount');
+  if (conta) conta.textContent = lista.length ? (lista.length === 1 ? '1 produto' : lista.length.toLocaleString('pt-BR') + ' produtos') : '';
+
+  if (!lista.length) {
+    box.innerHTML = '<div class="fp-prod-vazio">' + (FOTO_PRODUTOS.length
+      ? 'Nenhum produto neste filtro.'
+      : 'O catálogo ainda não foi sincronizado. Abra o Panorama e use "Sincronizar catálogo".') + '</div>';
+    document.getElementById('fotoProdMais').innerHTML = '';
+    return;
+  }
+
+  const visiveis = lista.slice(0, _prodMostra);
+  box.innerHTML = visiveis.map(p => {
+    const fora = !!p.excluido, temFoto = !!p.tem_foto;
+    const acoes = [];
+    if (fora) acoes.push({ rotulo: 'Voltar para a listagem', icone: 'ver', acao: () => fpProdRestaurar(p.sku) });
+    else {
+      if (temFoto) acoes.push({ rotulo: 'Enviar para atualização', icone: 'ver', acao: () => fpProdEnviarAtualizacao(p.sku) });
+      acoes.push({ sep: true });
+      acoes.push({ rotulo: 'Tirar da listagem', icone: 'excluir', perigo: true, acao: () => fpProdExcluir(p.sku) });
+    }
+    return '<div class="fp-prod-linha' + (fora ? ' fora' : '') + '">'
+      + fpFotoProdutoHtml(p.sku, p.imagem_bling, 38, 8)
+      + '<span class="fp-prod-nome"><b>' + escHtml(p.nome || '(sem nome)') + '</b>'
+      + '<span class="fp-prod-sku">' + escHtml(p.sku) + '</span></span>'
+      + fpProdEstoqueHtml(p.estoque)
+      + '<span class="fp-prod-fim">'
+      + (fora ? '<span class="fp-aviso-sub">Fora de linha</span>'
+         : temFoto && !p.refazer ? '<span class="fp-aviso-sub">Já fotografado</span>'
+         : fpPrioHtml(p.sku, p.prioridade, editavel))
+      + fpMenuHtml(acoes, { rotulo: 'Ações do produto' })
+      + '</span></div>';
+  }).join('');
+
+  const mais = document.getElementById('fotoProdMais');
+  mais.innerHTML = lista.length > _prodMostra
+    ? '<button class="action-btn" type="button" onclick="fpProdMais()">Mostrar mais ' + Math.min(FP_FOTO_PAGINA * 2, lista.length - _prodMostra) + '</button>'
+    : '';
+
+  fpDriveCarregar(visiveis.map(p => p.sku), box);
+  fpFotoBadgeUrgente();
+}
+
+/* Só o emergencial vira número no menu: alta e média são fila normal e um
+   contador permanente aceso vira paisagem. */
+function fpFotoBadgeUrgente() {
+  const el = document.getElementById('cntFotoUrg');
+  if (!el) return;
+  const n = FOTO_PRODUTOS.filter(p => !p.excluido && p.prioridade === 5 && (!p.tem_foto || p.refazer)).length;
+  el.textContent = n;
+  el.style.display = n ? '' : 'none';
+  el.setAttribute('aria-label', n ? (n === 1 ? '1 produto emergencial' : n + ' produtos emergenciais') : '');
+}
+
+/* Redesenha só a tela aberta — a lista tem milhares de linhas e repintar
+   todas as telas da seção a cada clique de prioridade custaria caro. */
+function fpFotoRedesenhar() {
+  const v = (location.hash || '').slice(1);
+  if (v === 'foto-galeria') renderFotoGaleria();
+  else if (v === 'foto-separacao') renderFotoSeparacao();
+  else if (v === 'foto-dashboard') renderFotoPanorama();
+  else renderFotoProducao();
+}
+
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SEPARAÇÃO — montagem do lote e mensagem do Slack
+   Emergencial entra sempre e por fora da cota; o resto é rateado 60/25/15
+   por maior resto, com redistribuição quando falta produto numa faixa.
+   Testado em mesa com 51 asserções antes de entrar aqui.
+   ═══════════════════════════════════════════════════════════════════════ */
+/* ==========================================================================
+   FullPro Media Club — separação para o estúdio de fotografia
+   JS puro de navegador: nada de import/export, tudo em funções globais com
+   prefixo fpSep* para conviver com o resto do admin.html sem colidir nome.
+
+   Duas peças e um autoteste:
+     fpSepMontarLote(produtos, tamanho)   -> escolhe QUEM vai ser fotografado
+     fpSepMensagemSlack(lote, autor)      -> vira mensagem de DM (Block Kit)
+     fpSepAutoTeste()                     -> testes de mesa, roda no console
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Constantes de negócio.
+   O rateio 60/25/15 é regra do dono, não palpite técnico: se um dia mudar,
+   muda aqui e o resto do arquivo se ajusta sozinho (as cotas são derivadas
+   destes pesos, nunca escritas na mão).
+   A ordem do array é significativa: ela é o critério de desempate do
+   arredondamento (ver fpSepRatearMaiorResto), então alta ganha de média, que
+   ganha de baixa. Isso é proposital — na dúvida, o item mais urgente leva.
+   -------------------------------------------------------------------------- */
+var FP_SEP_FAIXAS = ['alta', 'media', 'baixa'];
+var FP_SEP_PESOS = { alta: 60, media: 25, baixa: 15 };
+var FP_SEP_NIVEL_FAIXA = { 3: 'alta', 2: 'media', 1: 'baixa' };
+var FP_SEP_NIVEL_EMERGENCIAL = 5;
+var FP_SEP_TAMANHOS_PADRAO = [10, 15, 20, 30];
+
+/* --------------------------------------------------------------------------
+   Rateio proporcional com regra do MAIOR RESTO (método de Hare).
+
+   Por que maior resto e não Math.round em cada faixa: arredondar cada parte
+   isoladamente não fecha a conta. Em 15 itens o rateio exato é 9 / 3,75 / 2,25;
+   com round daria 9 + 4 + 2 = 15 por sorte, mas com 10 daria 6 + 3 + 2 = 11 —
+   um item a mais do que o operador pediu. Aqui a soma é garantida por
+   construção: distribui os pisos e depois entrega as sobras uma a uma para
+   quem tem a maior parte fracionária. Empate resolvido pela ordem do array de
+   entrada, que é fixa, então o resultado é sempre o mesmo — nada de aleatório.
+   -------------------------------------------------------------------------- */
+function fpSepRatearMaiorResto(total, chaves, pesos) {
+  var res = {};
+  var i;
+  for (i = 0; i < chaves.length; i++) res[chaves[i]] = 0;
+
+  var somaPesos = 0;
+  for (i = 0; i < chaves.length; i++) somaPesos += (pesos[chaves[i]] || 0);
+  if (!chaves.length || somaPesos <= 0 || !(total > 0)) return res;
+
+  // 1ª volta: piso de cada faixa, guardando o resto para o desempate.
+  var restos = [];
+  var usado = 0;
+  for (i = 0; i < chaves.length; i++) {
+    var exato = (total * pesos[chaves[i]]) / somaPesos;
+    var piso = Math.floor(exato);
+    res[chaves[i]] = piso;
+    usado += piso;
+    restos.push({ chave: chaves[i], resto: exato - piso, ordem: i });
+  }
+
+  // 2ª volta: as vagas que sobraram vão para os maiores restos.
+  restos.sort(function (a, b) {
+    if (b.resto !== a.resto) return b.resto - a.resto;
+    return a.ordem - b.ordem; // desempate estável = resultado reproduzível
+  });
+  var sobra = total - usado;
+  var k = 0;
+  while (sobra > 0) {
+    res[restos[k % restos.length].chave]++;
+    sobra--;
+    k++;
+  }
+  return res;
+}
+
+/* --------------------------------------------------------------------------
+   Antiguidade do item na fila.
+   Sem data válida devolve Infinity de propósito: quem não tem carimbo de
+   quando foi classificado não pode alegar que esperou mais que os outros,
+   então vai para o fim da faixa (e lá dentro mantém a ordem de entrada).
+   -------------------------------------------------------------------------- */
+function fpSepInstante(valor) {
+  if (!valor) return Infinity;
+  var t = (valor instanceof Date) ? valor.getTime() : new Date(valor).getTime();
+  return isNaN(t) ? Infinity : t;
+}
+
+function fpSepOrdenarPorAntiguidade(lista) {
+  // Anexa o índice antes de ordenar porque o sort do JS só virou estável no
+  // ES2019 — e o admin roda em navegador de loja, que às vezes é velho.
+  return lista
+    .map(function (item, i) { return { item: item, ordem: i, t: fpSepInstante(item.prioridade_em) }; })
+    .sort(function (a, b) {
+      if (a.t !== b.t) return a.t - b.t;
+      return a.ordem - b.ordem;
+    })
+    .map(function (x) { return x.item; });
+}
+
+/* --------------------------------------------------------------------------
+   PEÇA 1 — monta o lote que vai para o estúdio.
+
+   Decisões que valem registrar:
+   • Emergencial (5) não disputa vaga: entra inteiro, por fora do `tamanho`.
+     Logo o lote pode sair MAIOR que o pedido — e o aviso diz isso na cara.
+   • Prioridade null fica de fora (ninguém classificou), mas vira aviso: é
+     informação de gestão, não erro silencioso.
+   • Falta de produto numa faixa vira redistribuição proporcional entre as
+     faixas que ainda têm estoque de fila, repetida até fechar ou até não
+     sobrar ninguém. O que não deu para preencher volta em `faltou`.
+   -------------------------------------------------------------------------- */
+function fpSepMontarLote(produtos, tamanho) {
+  var avisos = [];
+  var lista = Array.isArray(produtos) ? produtos : [];
+  if (!Array.isArray(produtos)) {
+    avisos.push('Entrada inválida: esperava uma lista de produtos. Lote montado vazio.');
+  }
+
+  // Saneia o tamanho em vez de confiar. Valor esquisito não pode derrubar a
+  // tela nem, pior, montar um lote silenciosamente errado.
+  var alvoTotal = Math.floor(Number(tamanho));
+  if (!isFinite(alvoTotal) || alvoTotal < 0) {
+    avisos.push('Tamanho de lote inválido (' + tamanho + '). Só os emergenciais entraram.');
+    alvoTotal = 0;
+  } else if (FP_SEP_TAMANHOS_PADRAO.indexOf(alvoTotal) === -1 && alvoTotal > 0) {
+    avisos.push('Tamanho ' + alvoTotal + ' fora do padrão (10, 15, 20 ou 30). Rateio aplicado assim mesmo.');
+  }
+
+  // Separa em baldes. Deduplica por SKU porque a fila vem de junção de fontes
+  // (Bling + Drive) e SKU repetido significaria o mesmo produto ocupando duas
+  // vagas do estúdio.
+  var vistos = {};
+  var duplicados = 0;
+  var semPrioridade = 0;
+  var prioridadeEstranha = 0;
+  var emergenciaisBruto = [];
+  var baldes = { alta: [], media: [], baixa: [] };
+
+  for (var i = 0; i < lista.length; i++) {
+    var p = lista[i];
+    if (!p || typeof p !== 'object') continue;
+
+    var chave = (p.sku === null || p.sku === undefined || p.sku === '') ? null : String(p.sku);
+    if (chave !== null) {
+      if (vistos[chave]) { duplicados++; continue; }
+      vistos[chave] = true;
+    }
+
+    if (p.prioridade === null || p.prioridade === undefined || p.prioridade === '') {
+      semPrioridade++;
+      continue;
+    }
+    var nivel = Number(p.prioridade);
+    if (nivel === FP_SEP_NIVEL_EMERGENCIAL) {
+      emergenciaisBruto.push(p);
+    } else if (FP_SEP_NIVEL_FAIXA[nivel]) {
+      baldes[FP_SEP_NIVEL_FAIXA[nivel]].push(p);
+    } else {
+      prioridadeEstranha++; // 0, 4, "urgente"... trata como não classificado
+    }
+  }
+
+  if (duplicados > 0) {
+    avisos.push(duplicados + ' produto(s) com SKU repetido foram ignorados (mesmo item entrou duas vezes na fila).');
+  }
+  if (semPrioridade > 0) {
+    avisos.push(semPrioridade + ' produto(s) sem prioridade definida ficaram de fora — alguém precisa classificar.');
+  }
+  if (prioridadeEstranha > 0) {
+    avisos.push(prioridadeEstranha + ' produto(s) com prioridade fora da escala (1, 2, 3 ou 5) ficaram de fora.');
+  }
+
+  // Ordena cada balde: mais antigo primeiro. Feito UMA vez, antes de fatiar,
+  // para que qualquer redistribuição continue pegando os mais antigos.
+  var f;
+  for (f = 0; f < FP_SEP_FAIXAS.length; f++) {
+    baldes[FP_SEP_FAIXAS[f]] = fpSepOrdenarPorAntiguidade(baldes[FP_SEP_FAIXAS[f]]);
+  }
+  var emergenciais = fpSepOrdenarPorAntiguidade(emergenciaisBruto);
+
+  // Cotas iniciais: o que o rateio 60/25/15 pediu, antes da realidade opinar.
+  var cotas = fpSepRatearMaiorResto(alvoTotal, FP_SEP_FAIXAS, FP_SEP_PESOS);
+  var alvo = { alta: cotas.alta, media: cotas.media, baixa: cotas.baixa };
+  var entregue = { alta: 0, media: 0, baixa: 0 };
+
+  // Preenche e redistribui em rodadas. Cada rodada que sobra déficit esgota
+  // pelo menos uma faixa, então 3 rodadas bastam; a guarda existe só para o
+  // caso de alguém mexer nos pesos e criar um laço infinito por acidente.
+  var rodada = 0;
+  while (rodada++ < 10) {
+    var deficit = 0;
+    for (f = 0; f < FP_SEP_FAIXAS.length; f++) {
+      var faixa = FP_SEP_FAIXAS[f];
+      var disponivel = baldes[faixa].length - entregue[faixa];
+      var querido = alvo[faixa] - entregue[faixa];
+      var pega = Math.max(0, Math.min(disponivel, querido));
+      entregue[faixa] += pega;
+      if (querido > pega) deficit += (querido - pega);
+    }
+    if (deficit === 0) break;
+
+    // Só participam da redistribuição as faixas que ainda têm fila. A
+    // proporção entre elas é mantida (25:15 vira 62,5%:37,5%), de novo com
+    // maior resto para a soma bater.
+    var comFolga = [];
+    for (f = 0; f < FP_SEP_FAIXAS.length; f++) {
+      if (baldes[FP_SEP_FAIXAS[f]].length > entregue[FP_SEP_FAIXAS[f]]) comFolga.push(FP_SEP_FAIXAS[f]);
+    }
+    if (!comFolga.length) break; // acabou produto classificado: o lote sai menor
+
+    var extra = fpSepRatearMaiorResto(deficit, comFolga, FP_SEP_PESOS);
+    for (f = 0; f < FP_SEP_FAIXAS.length; f++) {
+      alvo[FP_SEP_FAIXAS[f]] = entregue[FP_SEP_FAIXAS[f]] + (extra[FP_SEP_FAIXAS[f]] || 0);
+    }
+  }
+
+  // Avisa faixa por faixa onde a cota original não foi honrada — o operador
+  // precisa saber que o lote não é 60/25/15 de verdade, e por quê.
+  for (f = 0; f < FP_SEP_FAIXAS.length; f++) {
+    var fx = FP_SEP_FAIXAS[f];
+    if (entregue[fx] < cotas[fx]) {
+      avisos.push('Faixa ' + fx + ': a cota pedia ' + cotas[fx] + ' e a fila só tinha ' +
+        baldes[fx].length + '. ' + (cotas[fx] - entregue[fx]) + ' vaga(s) foram redistribuídas.');
+    }
+  }
+
+  var totalNormal = entregue.alta + entregue.media + entregue.baixa;
+  var faltou = Math.max(0, alvoTotal - totalNormal);
+  if (faltou > 0) {
+    avisos.push('Lote saiu menor: ' + totalNormal + ' de ' + alvoTotal +
+      ' itens. Faltaram ' + faltou + ' produto(s) classificado(s) na fila.');
+  }
+
+  // Monta a saída na ordem em que o estúdio vai trabalhar: emergencial na
+  // frente, depois alta, média e baixa — cada faixa do mais antigo ao mais novo.
+  var itens = emergenciais.slice();
+  for (f = 0; f < FP_SEP_FAIXAS.length; f++) {
+    itens = itens.concat(baldes[FP_SEP_FAIXAS[f]].slice(0, entregue[FP_SEP_FAIXAS[f]]));
+  }
+
+  if (emergenciais.length > 0) {
+    avisos.push(emergenciais.length + ' emergencial(is) entraram por fora da cota. O lote tem ' +
+      itens.length + ' itens no total (pedido: ' + alvoTotal + ').');
+  }
+
+  return {
+    itens: itens,
+    emergenciais: emergenciais.length,
+    cotas: cotas,          // o que o rateio pediu
+    entregue: entregue,    // o que a fila conseguiu entregar
+    faltou: faltou,
+    avisos: avisos
+  };
+}
+
+/* ==========================================================================
+   PEÇA 2 — mensagem de DM no Slack (Block Kit)
+   ========================================================================== */
+
+var FP_SEP_MAX_BLOCOS = 50;      // teto duro do Block Kit
+var FP_SEP_MAX_CHARS = 2900;     // teto é 3000; a folga é para o rodapé de corte
+var FP_SEP_LINHAS_IDEAIS = 12;   // legibilidade: blocos curtos são mais fáceis de ler no celular
+
+// O Slack interpreta &, < e > como marcação. Escapar evita que um nome de
+// produto tipo "Kit R&D <novo>" quebre a renderização da lista inteira.
+function fpSepEscapar(txt) {
+  return String(txt)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// Data em português sem depender de toLocaleString: fuso e ICU do ambiente
+// mudam a saída, e a data da lista de separação não pode "variar por máquina".
+function fpSepDataBR(d) {
+  var dt = (d instanceof Date && !isNaN(d.getTime())) ? d : new Date();
+  var dd = ('0' + dt.getDate()).slice(-2);
+  var mm = ('0' + (dt.getMonth() + 1)).slice(-2);
+  return dd + '/' + mm + '/' + dt.getFullYear();
+}
+
+function fpSepLinhaItem(item, numero, destaque) {
+  var nome = fpSepEscapar(String(item && item.nome ? item.nome : 'produto sem nome').slice(0, 90));
+  var sku = fpSepEscapar(String(item && item.sku ? item.sku : 's/ SKU')).replace(/`/g, '');
+  var est = (item && item.estoque !== null && item.estoque !== undefined && item.estoque !== '')
+    ? item.estoque : '?';
+  var corpo = numero + '. ' + nome + ' — SKU `' + sku + '` — estoque ' + est;
+  // Negrito é o único destaque usado: a mensagem é operacional, não é post.
+  return destaque ? '*' + corpo + '*' : corpo;
+}
+
+// Agrupa N linhas em blocos de texto respeitando duas travas ao mesmo tempo:
+// quantidade de linhas (leitura) e caracteres (limite do Slack).
+function fpSepAgrupar(linhas, porBloco, limiteChars) {
+  var blocos = [];
+  var atual = [];
+  var tam = 0;
+  for (var i = 0; i < linhas.length; i++) {
+    var l = linhas[i];
+    if (l.length > limiteChars) l = l.slice(0, limiteChars - 3) + '...';
+    var custo = l.length + 1;
+    if (atual.length && (atual.length >= porBloco || tam + custo > limiteChars)) {
+      blocos.push({ texto: atual.join('\n'), linhas: atual.length });
+      atual = [];
+      tam = 0;
+    }
+    atual.push(l);
+    tam += custo;
+  }
+  if (atual.length) blocos.push({ texto: atual.join('\n'), linhas: atual.length });
+  return blocos;
+}
+
+function fpSepSecao(texto) {
+  return { type: 'section', text: { type: 'mrkdwn', text: texto } };
+}
+
+/**
+ * @param {object} lote  resultado de fpSepMontarLote
+ * @param {string} autor quem pediu a lista
+ * @param {Date=} quando data da lista (parâmetro só para deixar o teste
+ *                      determinístico; na tela é sempre "hoje")
+ */
+function fpSepMensagemSlack(lote, autor, quando) {
+  var l = lote && typeof lote === 'object' ? lote : {};
+  var itens = Array.isArray(l.itens) ? l.itens : [];
+  var quemPediu = fpSepEscapar(autor ? String(autor) : 'não informado');
+  var data = fpSepDataBR(quando);
+
+  var blocos = [];
+  blocos.push({
+    type: 'header',
+    text: { type: 'plain_text', text: 'Lista de separação — estúdio de fotografia', emoji: false }
+  });
+  blocos.push({
+    type: 'context',
+    elements: [{
+      type: 'mrkdwn',
+      text: data + '  |  pedido por *' + quemPediu + '*  |  ' + itens.length +
+        ' item(ns)' + (l.emergenciais ? '  |  ' + l.emergenciais + ' EMERGENCIAL(IS)' : '')
+    }]
+  });
+  blocos.push({ type: 'divider' });
+
+  if (!itens.length) {
+    // Caso vazio ainda vira mensagem válida: silêncio no Slack é pior do que
+    // "não há nada para separar", que ao menos confirma que o envio rodou.
+    blocos.push(fpSepSecao('*Nenhum produto para separar.* A fila não tinha itens classificados.'));
+    if (l.avisos && l.avisos.length) {
+      blocos.push({ type: 'context', elements: [{ type: 'mrkdwn', text: fpSepEscapar(l.avisos.join(' · ')) }] });
+    }
+    return {
+      texto: 'Lista de separação — estúdio de fotografia (' + data + ', pedido por ' + (autor || 'não informado') +
+        '): nenhum produto para separar.',
+      blocos: blocos
+    };
+  }
+
+  // Emergenciais primeiro, com numeração única e contínua para o lote todo —
+  // o estúdio conta "faltam quantos" sobre um número só.
+  var linhasEmerg = [];
+  var linhasNormais = [];
+  var n = 0;
+  var i;
+  for (i = 0; i < itens.length; i++) {
+    n++;
+    if (Number(itens[i] && itens[i].prioridade) === FP_SEP_NIVEL_EMERGENCIAL) {
+      linhasEmerg.push(fpSepLinhaItem(itens[i], n, true));
+    } else {
+      linhasNormais.push(fpSepLinhaItem(itens[i], n, false));
+    }
+  }
+
+  // Orçamento de blocos: reserva os fixos antes de fatiar a lista, senão a
+  // lista come o teto de 50 e o cabeçalho fica sem lugar.
+  var temAvisos = !!(l.avisos && l.avisos.length);
+  var reservados = 3; // header + context + divider
+  if (linhasEmerg.length) reservados += 1;   // título "EMERGENCIAL"
+  if (linhasNormais.length) reservados += 1; // título "restante da lista"
+  if (temAvisos) reservados += 1;            // context com os avisos
+  var disponiveis = Math.max(1, FP_SEP_MAX_BLOCOS - reservados);
+
+  // Começa com blocos curtos e só aperta se não couber. Assim a lista de 20
+  // itens sai legível e a de 500 sai densa, sem duas implementações.
+  var porBloco = FP_SEP_LINHAS_IDEAIS;
+  var be = fpSepAgrupar(linhasEmerg, porBloco, FP_SEP_MAX_CHARS);
+  var bn = fpSepAgrupar(linhasNormais, porBloco, FP_SEP_MAX_CHARS);
+  var tentativas = 0;
+  while (be.length + bn.length > disponiveis && tentativas++ < 20) {
+    porBloco = Math.max(porBloco + 1, Math.ceil(porBloco * 1.6));
+    be = fpSepAgrupar(linhasEmerg, porBloco, FP_SEP_MAX_CHARS);
+    bn = fpSepAgrupar(linhasNormais, porBloco, FP_SEP_MAX_CHARS);
+  }
+
+  // Se nem apertando coube (limite de caracteres manda), corta o RESTANTE,
+  // nunca o emergencial — e diz quantos ficaram de fora, em vez de sumir com eles.
+  var cortadas = 0;
+  if (be.length + bn.length > disponiveis) {
+    var espacoNormais = Math.max(0, disponiveis - be.length);
+    for (i = espacoNormais; i < bn.length; i++) cortadas += bn[i].linhas;
+    bn = bn.slice(0, espacoNormais);
+    if (be.length > disponiveis) { // lista de emergenciais absurda: corta com aviso
+      for (i = disponiveis; i < be.length; i++) cortadas += be[i].linhas;
+      be = be.slice(0, disponiveis);
+    }
+  }
+
+  if (linhasEmerg.length) {
+    blocos.push(fpSepSecao('*EMERGENCIAL — fotografar primeiro (' + linhasEmerg.length + ')*'));
+    for (i = 0; i < be.length; i++) blocos.push(fpSepSecao(be[i].texto));
+  }
+  if (linhasNormais.length && bn.length) {
+    blocos.push(fpSepSecao('*Restante da lista (' + linhasNormais.length + ')*'));
+    for (i = 0; i < bn.length; i++) blocos.push(fpSepSecao(bn[i].texto));
+  }
+
+  if (cortadas > 0 && blocos.length) {
+    var ultimo = blocos[blocos.length - 1];
+    ultimo.text.text += '\n_(+' + cortadas + ' item(ns) não couberam na mensagem — lista completa no painel.)_';
+  }
+
+  if (temAvisos) {
+    blocos.push({
+      type: 'context',
+      elements: [{ type: 'mrkdwn', text: fpSepEscapar(l.avisos.join(' · ')).slice(0, FP_SEP_MAX_CHARS) }]
+    });
+  }
+
+  // Fallback puro: é o que a pessoa lê na notificação do celular e o que
+  // aparece se o Block Kit for rejeitado. Sem marcação, e cortado com aviso.
+  var partes = ['Lista de separação — estúdio de fotografia',
+    data + ' — pedido por ' + (autor || 'não informado') + ' — ' + itens.length + ' item(ns)'];
+  if (l.emergenciais) partes.push('EMERGENCIAIS: ' + l.emergenciais);
+  var linhasTexto = [];
+  for (i = 0; i < itens.length; i++) {
+    var it = itens[i];
+    var marca = Number(it && it.prioridade) === FP_SEP_NIVEL_EMERGENCIAL ? '[EMERGENCIAL] ' : '';
+    linhasTexto.push(marca + (i + 1) + '. ' + (it && it.nome ? it.nome : 'produto sem nome') +
+      ' (SKU ' + (it && it.sku ? it.sku : 's/ SKU') + ') estoque ' +
+      (it && it.estoque !== null && it.estoque !== undefined && it.estoque !== '' ? it.estoque : '?'));
+  }
+  var texto = partes.join('\n') + '\n' + linhasTexto.join('\n');
+  if (texto.length > FP_SEP_MAX_CHARS) {
+    var corte = texto.slice(0, FP_SEP_MAX_CHARS);
+    corte = corte.slice(0, corte.lastIndexOf('\n') + 1);
+    var mostradas = corte.split('\n').length - partes.length - 1;
+    texto = corte + '... e mais ' + Math.max(0, itens.length - mostradas) + ' item(ns) — ver painel.';
+  }
+
+  return { texto: texto, blocos: blocos };
+}
+
+/* ==========================================================================
+   PEÇA 3 — testes de mesa
+   Rodar: node separacao.js     ou, no console do admin: fpSepAutoTeste()
+   ========================================================================== */
+
+function fpSepAutoTeste() {
+  var passou = 0, falhou = 0;
+
+  function conferir(rotulo, esperado, obtido) {
+    var e = JSON.stringify(esperado);
+    var o = JSON.stringify(obtido);
+    var ok = e === o;
+    if (ok) passou++; else falhou++;
+    console.log('  ' + (ok ? 'OK   ' : 'FALHA') + ' | ' + rotulo +
+      '\n         esperado: ' + e + '\n         obtido:   ' + o);
+  }
+
+  // Gerador de fila: datas crescentes para que "mais antigo" seja verificável.
+  function fila(prefixo, prioridade, qtd, diaInicial) {
+    var out = [];
+    for (var i = 0; i < qtd; i++) {
+      var dia = ('0' + ((diaInicial || 1) + i)).slice(-2);
+      out.push({
+        sku: prefixo + '-' + (i + 1),
+        nome: 'Produto ' + prefixo + ' ' + (i + 1),
+        estoque: 10 + i,
+        prioridade: prioridade,
+        prioridade_em: '2026-01-' + dia + 'T10:00:00Z'
+      });
+    }
+    return out;
+  }
+
+  console.log('\n=== TESTE 1 — lote de 15 com sobra em todas as faixas ===');
+  var t1 = fpSepMontarLote([].concat(fila('A', 3, 20), fila('M', 2, 20), fila('B', 1, 20)), 15);
+  conferir('cotas 60/25/15 de 15 (9 / 3,75 / 2,25 -> maior resto)', { alta: 9, media: 4, baixa: 2 }, t1.cotas);
+  conferir('entregue igual à cota', { alta: 9, media: 4, baixa: 2 }, t1.entregue);
+  conferir('soma das cotas = 15', 15, t1.cotas.alta + t1.cotas.media + t1.cotas.baixa);
+  conferir('total de itens', 15, t1.itens.length);
+  conferir('emergenciais', 0, t1.emergenciais);
+  conferir('faltou', 0, t1.faltou);
+  conferir('avisos', [], t1.avisos);
+  conferir('1º item é o mais antigo da alta', 'A-1', t1.itens[0].sku);
+  conferir('último da alta é o 9º mais antigo', 'A-9', t1.itens[8].sku);
+
+  console.log('\n=== TESTE 2 — lote de 10 com 8 emergenciais ===');
+  var t2 = fpSepMontarLote(
+    [].concat(fila('E', 5, 8), fila('A', 3, 10), fila('M', 2, 10), fila('B', 1, 10)), 10);
+  conferir('emergenciais contados', 8, t2.emergenciais);
+  conferir('cotas de 10 (6 / 2,5 / 1,5 -> maior resto, empate p/ média)', { alta: 6, media: 3, baixa: 1 }, t2.cotas);
+  conferir('entregue', { alta: 6, media: 3, baixa: 1 }, t2.entregue);
+  conferir('total = 8 emergenciais + 10 da cota', 18, t2.itens.length);
+  conferir('emergenciais vêm na frente', ['E-1', 'E-2', 'E-3', 'E-4', 'E-5', 'E-6', 'E-7', 'E-8'],
+    t2.itens.slice(0, 8).map(function (x) { return x.sku; }));
+  conferir('faltou', 0, t2.faltou);
+  conferir('avisa que o lote estourou o tamanho', true, t2.avisos.join(' ').indexOf('por fora da cota') > -1);
+
+  console.log('\n=== TESTE 3 — lote de 30 com só 4 produtos de alta (média/baixa sobrando) ===');
+  var t3 = fpSepMontarLote([].concat(fila('A', 3, 4), fila('M', 2, 40), fila('B', 1, 40)), 30);
+  conferir('cotas de 30 (18 / 7,5 / 4,5 -> maior resto)', { alta: 18, media: 8, baixa: 4 }, t3.cotas);
+  conferir('entregue após redistribuir 14 vagas em 25:15', { alta: 4, media: 17, baixa: 9 }, t3.entregue);
+  conferir('total de itens', 30, t3.itens.length);
+  conferir('faltou', 0, t3.faltou);
+  conferir('avisa a faixa alta furada', true, t3.avisos.join(' ').indexOf('Faixa alta') > -1);
+
+  console.log('\n=== TESTE 3b — lote de 30 sem produto suficiente em faixa nenhuma ===');
+  var t3b = fpSepMontarLote([].concat(fila('A', 3, 4), fila('M', 2, 5), fila('B', 1, 6)), 30);
+  conferir('entregue tudo que existia', { alta: 4, media: 5, baixa: 6 }, t3b.entregue);
+  conferir('total de itens', 15, t3b.itens.length);
+  conferir('faltou (30 pedidos - 15 possíveis)', 15, t3b.faltou);
+  conferir('diz que o lote saiu menor', true, t3b.avisos.join(' ').indexOf('Lote saiu menor') > -1);
+
+  console.log('\n=== TESTE 4 — catálogo com metade em prioridade nula ===');
+  var t4 = fpSepMontarLote(
+    [].concat(fila('N', null, 10), fila('A', 3, 5), fila('M', 2, 3), fila('B', 1, 2)), 10);
+  conferir('cotas de 10', { alta: 6, media: 3, baixa: 1 }, t4.cotas);
+  conferir('entregue (falta 1 de alta -> vai para baixa, única com folga)', { alta: 5, media: 3, baixa: 2 }, t4.entregue);
+  conferir('total de itens', 10, t4.itens.length);
+  conferir('nenhum item de prioridade nula entrou', 0,
+    t4.itens.filter(function (x) { return x.prioridade === null; }).length);
+  conferir('avisa os 10 sem prioridade', true, t4.avisos.join(' ').indexOf('10 produto(s) sem prioridade') > -1);
+  conferir('faltou', 0, t4.faltou);
+
+  console.log('\n=== TESTE 5 — lista vazia ===');
+  var t5 = fpSepMontarLote([], 20);
+  conferir('itens', [], t5.itens);
+  conferir('emergenciais', 0, t5.emergenciais);
+  conferir('cotas de 20 (12 / 5 / 3, exato)', { alta: 12, media: 5, baixa: 3 }, t5.cotas);
+  conferir('entregue', { alta: 0, media: 0, baixa: 0 }, t5.entregue);
+  conferir('faltou = tamanho inteiro', 20, t5.faltou);
+  conferir('tem aviso explicando', true, t5.avisos.length > 0);
+
+  console.log('\n=== TESTE 6 — Slack: lote grande respeita 50 blocos e 3000 chars ===');
+  var grande = fpSepMontarLote([].concat(fila('E', 5, 12), fila('A', 3, 300), fila('M', 2, 300), fila('B', 1, 300)), 30);
+  var m6 = fpSepMensagemSlack(grande, 'Harry', new Date(2026, 7, 25));
+  conferir('blocos dentro do teto', true, m6.blocos.length <= 50);
+  conferir('nenhum bloco de texto acima de 3000 chars', true, m6.blocos.every(function (b) {
+    var t = b.text ? b.text.text : (b.elements ? b.elements.map(function (e) { return e.text; }).join('') : '');
+    return t.length <= 3000;
+  }));
+  conferir('cabeçalho é header', 'header', m6.blocos[0].type);
+  conferir('data em formato BR no contexto', true, m6.blocos[1].elements[0].text.indexOf('25/08/2026') === 0);
+  conferir('bloco de emergencial vem antes do restante', true,
+    m6.blocos.findIndex(function (b) { return b.text && b.text.text.indexOf('EMERGENCIAL') > -1; }) <
+    m6.blocos.findIndex(function (b) { return b.text && b.text.text.indexOf('Restante da lista') > -1; }));
+  conferir('fallback em texto puro dentro do limite', true, m6.texto.length <= FP_SEP_MAX_CHARS + 60);
+  conferir('fallback cita os emergenciais', true, m6.texto.indexOf('EMERGENCIAIS: 12') > -1);
+
+  console.log('\n=== TESTE 7 — Slack: lote pequeno e lote vazio ===');
+  var m7 = fpSepMensagemSlack(t2, 'Harry', new Date(2026, 7, 25));
+  conferir('blocos <= 50', true, m7.blocos.length <= 50);
+  conferir('emergenciais em negrito', true, m7.blocos.some(function (b) {
+    return b.text && /^\*8\. Produto E 8/m.test(b.text.text);
+  }));
+  var m7v = fpSepMensagemSlack(t5, 'Harry', new Date(2026, 7, 25));
+  conferir('lote vazio ainda gera mensagem', true, m7v.blocos.length >= 4 && m7v.texto.indexOf('nenhum produto') > -1);
+
+  console.log('\n=== TESTE 8 — ordem por antiguidade e itens sem data ===');
+  var semData = [
+    { sku: 'X-1', nome: 'Sem data 1', estoque: 1, prioridade: 3 },
+    { sku: 'D-1', nome: 'Com data velha', estoque: 1, prioridade: 3, prioridade_em: '2025-01-01' },
+    { sku: 'X-2', nome: 'Sem data 2', estoque: 1, prioridade: 3 },
+    { sku: 'D-2', nome: 'Com data nova', estoque: 1, prioridade: 3, prioridade_em: '2026-01-01' }
+  ];
+  var t8 = fpSepMontarLote(semData, 10);
+  conferir('datados primeiro (mais antigo antes), sem data ao fim na ordem de entrada',
+    ['D-1', 'D-2', 'X-1', 'X-2'], t8.itens.map(function (x) { return x.sku; }));
+
+  console.log('\n=== TESTE 9 — entradas defensivas (SKU repetido, prioridade fora da escala) ===');
+  var t9 = fpSepMontarLote([
+    { sku: 'R-1', nome: 'Repetido', estoque: 2, prioridade: 3 },
+    { sku: 'R-1', nome: 'Repetido de novo', estoque: 2, prioridade: 3 },
+    { sku: 'Z-1', nome: 'Prioridade 4', estoque: 2, prioridade: 4 },
+    { sku: 'Z-2', nome: 'Prioridade texto', estoque: 2, prioridade: 'urgente' }
+  ], 10);
+  conferir('só o primeiro do SKU repetido entrou', ['R-1'], t9.itens.map(function (x) { return x.sku; }));
+  conferir('avisa duplicado', true, t9.avisos.join(' ').indexOf('SKU repetido') > -1);
+  conferir('avisa prioridade fora da escala', true, t9.avisos.join(' ').indexOf('fora da escala') > -1);
+
+  console.log('\n---------------------------------------------');
+  console.log('RESULTADO: ' + passou + ' passaram, ' + falhou + ' falharam.');
+  return { passou: passou, falhou: falhou };
+}
+
+/* Exporta no Node (para rodar os testes por linha de comando) sem atrapalhar
+   o navegador, onde `module` não existe e as funções já são globais. */
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { fpSepMontarLote: fpSepMontarLote, fpSepMensagemSlack: fpSepMensagemSlack, fpSepAutoTeste: fpSepAutoTeste };
+  if (require.main === module) fpSepAutoTeste();
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   FILA DE UPLOAD PARA O DRIVE (window.fpUploadFila)
+   Uma raia por SKU drenada em série — a sequência do nome do arquivo é
+   calculada no servidor lendo a pasta, então dois envios simultâneos do
+   mesmo SKU disputariam o mesmo número.
+   ═══════════════════════════════════════════════════════════════════════ */
+/* ==========================================================================
+   FOTOGRAFIA EM LOTE — fila de envio das fotos para a pasta do SKU no Drive
+
+   COMO USAR (5 linhas)
+   1) fpUploadFila.aoMudar(pintarLinha);                      // uma vez, quando a tela monta
+   2) fpUploadFila.adicionar('FP-RET-Z750', input.files);     // FileList, File[] ou File
+   3) function pintarLinha(sku, arquivo, estado, detalhe) {}  // pendente|enviando|ok|erro
+   4) fpUploadFila.reenviar(arquivo.id) · .cancelar(sku) · .pendentes() · .itens(sku)
+   5) o resto é automático: valida, converte HEIC, comprime até ~350 KB, envia em série
+      por SKU (no máximo 2 SKUs juntos), retenta e grava a linha em mc_photo_files.
+
+   --------------------------------------------------------------------------
+   POR QUE A FILA EXISTE (e não um fetch solto no onchange do input)
+
+   A numeração do arquivo (`<SKU>-<n>.jpg`) é calculada NO SERVIDOR, lendo a pasta
+   do Drive na hora. Dois envios do mesmo SKU ao mesmo tempo leem a mesma pasta,
+   acham o mesmo último número e gravam os dois como `-4`. Por isso o mesmo SKU
+   sempre anda em SÉRIE. SKUs diferentes usam pastas diferentes, então podem
+   correr juntos — mas só 2, senão o celular do fotógrafo encodifica 5 JPEGs ao
+   mesmo tempo e a aba engasga.
+
+   O objeto `arquivo` entregue ao callback (o mesmo que `adicionar` devolve):
+     { id, sku, nome, nomeOriginal, tamanho, tamanhoEnviado, mime, estado,
+       mensagem, tentativa, driveFileId, fileName, sequencia, cancelado }
+   Ele é MUTADO no lugar — dá para guardar a referência e redesenhar só a linha.
+
+   >> `nome`/`nomeOriginal` vêm do sistema de arquivos do usuário e podem conter
+   >> `<` e `>`. Ao pintar, use escHtml() no innerHTML (ou .textContent). <<
+
+   Campos com `_` na frente são internos; não dependa deles na interface.
+   ========================================================================== */
+
+(function () {
+  'use strict';
+
+  /* ------------------------------------------------------------- ajustes --- */
+
+  const cfg = {
+    /* Padrão da casa: ~350 KB por foto. Acima disso a gente reencoda em JPEG. */
+    ALVO_BYTES: 350 * 1024,
+
+    /* Teto duro: acima disso recusa sem tocar na rede. O base64 ainda infla o
+       corpo em ~33%, então 2 MB de arquivo já viram ~2,7 MB de POST. */
+    TETO_BYTES: 2 * 1024 * 1024,
+
+    /* HEIC tem teto próprio e maior. O que sobe para o Drive nunca é o HEIC —
+       é o JPEG que a gente gera aqui, sempre perto de 350 KB. Aplicar o teto de
+       2 MB ao arquivo bruto recusaria quase toda foto de iPhone (2–4 MB é o
+       normal em 12 MP) sem nenhum ganho: a rede nunca veria aqueles bytes. */
+    TETO_HEIC_BYTES: 6 * 1024 * 1024,
+
+    LADO_MAXIMO: 2000,                  // foto de produto para o site; acima disso é desperdício
+    QUALIDADES: [0.85, 0.72, 0.6],      // tentadas em ordem até caber no alvo
+    VOLTAS_REDUCAO: 3,                  // se nem na pior qualidade couber, encolhe o lado
+
+    SKUS_EM_PARALELO: 2,
+    TENTATIVAS: 3,                      // 1 envio + 2 retentativas
+    ESPERA_MS: [1500, 4000],            // espera crescente entre as retentativas
+
+    TIMEOUT_ENVIO_MS: 60000,            // 4G ruim no estúdio; abaixo disso dava falso negativo
+    TIMEOUT_DECODE_MS: 20000,           // navegador que trava decodificando não pode segurar a fila
+  };
+
+  /* A função é a mesma que já serve as thumbnails (drive-proxy), com a ação
+     `upload`. Endpoint calculado aqui dentro de propósito: `FP_DRIVE_URL` já
+     existe no escopo de topo do admin.html e redeclarar um `const` derruba o
+     painel inteiro com SyntaxError. */
+  const ENDPOINT = ((window.FULLPRO_CONFIG && window.FULLPRO_CONFIG.SUPABASE_URL) || '')
+    .replace(/\/+$/, '') + '/functions/v1/drive-proxy';
+
+  /* Formatos que o Drive/loja aceitam. Type vazio acontece no iOS quando a foto
+     vem pelo app Arquivos — aí o que sobra é a extensão. */
+  const TIPOS_OK = [
+    'image/jpeg', 'image/pjpeg', 'image/png', 'image/webp',
+    'image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence',
+  ];
+  const EXT_OK = /\.(jpe?g|png|webp|heic|heif)$/i;
+  const EXT_HEIC = /\.(heic|heif)$/i;
+
+  /* --------------------------------------------------------------- estado --- */
+
+  const filas = new Map();     // sku -> { sku, itens: [], rodando: bool }
+  const ouvintes = [];
+  const resumo = { ok: 0, erro: 0 };
+  let raias = 0;               // quantos SKUs estão sendo drenados agora
+  let contador = 0;
+
+  /* ------------------------------------------------------------ utilidades --- */
+
+  function toast(msg, tipo, opts) {
+    if (typeof fpToast === 'function') fpToast(msg, tipo, opts);
+    else console.log('[upload]', tipo || 'info', msg);
+  }
+
+  function fmtTam(b) {
+    b = Number(b) || 0;
+    return b >= 1048576
+      ? (b / 1048576).toFixed(1).replace('.', ',') + ' MB'
+      : Math.max(1, Math.round(b / 1024)) + ' KB';
+  }
+
+  function msgDe(e) {
+    if (!e) return 'falha desconhecida';
+    const m = e.message || e.details || e.hint || String(e);
+    // "Failed to fetch" / "Load failed" na tela do fotógrafo não ajuda ninguém
+    if (/failed to fetch|load failed|networkerror/i.test(m)) return 'sem conexão com o servidor';
+    return m;
+  }
+
+  function sessao() {
+    return localStorage.getItem('fp_session') || '';
+  }
+
+  /* CURRENT_USER é um `let` de topo do admin.html: se este bloco for colado
+     ANTES da declaração, até o `typeof` estoura (TDZ). Daí o try/catch. */
+  function usuario() {
+    try { return (typeof CURRENT_USER !== 'undefined' && CURRENT_USER) ? CURRENT_USER : null; }
+    catch (e) { return null; }
+  }
+
+  /* Devolve um quadro para a tela pintar. setTimeout(0) é de propósito: em aba
+     de fundo ele é estrangulado, e aí a gente REALMENTE quer ir devagar. */
+  function respirar() {
+    return new Promise(function (ok) { setTimeout(ok, 0); });
+  }
+
+  /* Espera que acorda cedo se o item for cancelado no meio do backoff. */
+  function esperar(ms, item) {
+    return new Promise(function (ok) {
+      const relogio = setInterval(function () {
+        if (item && item.cancelado) { clearInterval(relogio); clearTimeout(prazo); ok(); }
+      }, 200);
+      const prazo = setTimeout(function () { clearInterval(relogio); ok(); }, ms);
+    });
+  }
+
+  function comPrazo(promessa, ms, texto) {
+    return new Promise(function (ok, falhou) {
+      const t = setTimeout(function () { falhou(new Error(texto || 'tempo esgotado')); }, ms);
+      promessa.then(
+        function (v) { clearTimeout(t); ok(v); },
+        function (e) { clearTimeout(t); falhou(e); }
+      );
+    });
+  }
+
+  function cancelamento() {
+    const e = new Error('Envio cancelado.');
+    e.cancelado = true;
+    return e;
+  }
+
+  function ehHeic(f) {
+    const t = ((f && f.type) || '').toLowerCase();
+    return /heic|heif/.test(t) || EXT_HEIC.test((f && f.name) || '');
+  }
+
+  function ehJpeg(f) {
+    const t = ((f && f.type) || '').toLowerCase();
+    if (t) return t === 'image/jpeg' || t === 'image/pjpeg';
+    return /\.jpe?g$/i.test((f && f.name) || '');
+  }
+
+  /* O servidor grava o arquivo como `<SKU>-<n>.jpg`, então o que sobe tem que
+     ser JPEG de verdade. Mandamos o nome já com a extensão certa para o log da
+     function não ficar dizendo ".heic". */
+  function nomeJpg(nome) {
+    const base = String(nome || 'foto')
+      .replace(/\.[^.]+$/, '')
+      .replace(/[\\/:*?"<>|\x00-\x1f]+/g, '-')
+      .trim()
+      .slice(0, 60) || 'foto';
+    return base + '.jpg';
+  }
+
+  /* -------------------------------------------------------- 1. validação --- */
+  /* Roda no `adicionar`, antes de qualquer rede e antes de qualquer decodificação:
+     o fotógrafo descobre na hora que escolheu o arquivo errado, não 40s depois. */
+
+  function validar(f) {
+    if (!f || typeof f.size !== 'number' || typeof f.name !== 'string') {
+      return 'Arquivo inválido.';
+    }
+    if (f.size === 0) {
+      return '"' + f.name + '" está vazio (0 KB) — provavelmente ainda estava baixando do iCloud.';
+    }
+
+    const tipo = (f.type || '').toLowerCase();
+    const tipoConhecido = tipo ? TIPOS_OK.indexOf(tipo) >= 0 : EXT_OK.test(f.name);
+    if (!tipoConhecido) {
+      return '"' + f.name + '" não é uma foto JPG, PNG, WEBP ou HEIC.';
+    }
+
+    const heic = ehHeic(f);
+    const teto = heic ? cfg.TETO_HEIC_BYTES : cfg.TETO_BYTES;
+    if (f.size > teto) {
+      return '"' + f.name + '" tem ' + fmtTam(f.size) + ' e o limite é ' + fmtTam(teto)
+        + '. Reduza a qualidade na câmera ou exporte a foto menor antes de enviar.';
+    }
+    return null;
+  }
+
+  /* ------------------------------------------------ 2. HEIC e compressão --- */
+
+  /* Abre o arquivo como imagem. Devolve também o `liberar()` — sem ele o
+     ImageBitmap/objectURL fica preso na memória e 30 fotos derrubam a aba. */
+  async function decodificar(f) {
+    if (typeof createImageBitmap === 'function') {
+      try {
+        /* imageOrientation explícito: foto de celular quase sempre vem com EXIF
+           de rotação, e sem isso o produto sobe deitado para o Drive. */
+        const bm = await comPrazo(
+          createImageBitmap(f, { imageOrientation: 'from-image' }),
+          cfg.TIMEOUT_DECODE_MS, 'o navegador demorou demais para abrir a foto'
+        );
+        if (bm && bm.width && bm.height) {
+          return {
+            fonte: bm, w: bm.width, h: bm.height,
+            liberar: function () { try { bm.close(); } catch (e) {} },
+          };
+        }
+        try { bm.close(); } catch (e) {}
+      } catch (e) {
+        /* Chrome no Android rejeita HEIC exatamente aqui. Não desiste ainda:
+           navegadores antigos também engasgam com o objeto de opções. */
+      }
+    }
+
+    const url = URL.createObjectURL(f);
+    try {
+      const el = await new Promise(function (ok, falhou) {
+        const im = new Image();
+        const t = setTimeout(function () {
+          falhou(new Error('o navegador demorou demais para abrir a foto'));
+        }, cfg.TIMEOUT_DECODE_MS);
+        im.onload = function () { clearTimeout(t); ok(im); };
+        im.onerror = function () { clearTimeout(t); falhou(new Error('o navegador não abriu este arquivo')); };
+        im.decoding = 'async';
+        im.src = url;
+      });
+      if (!el.naturalWidth || !el.naturalHeight) throw new Error('imagem sem dimensão');
+      return {
+        fonte: el, w: el.naturalWidth, h: el.naturalHeight,
+        liberar: function () { URL.revokeObjectURL(url); el.src = ''; },
+      };
+    } catch (e) {
+      URL.revokeObjectURL(url);
+      throw e;
+    }
+  }
+
+  function caber(w, h, lado) {
+    if (w <= lado && h <= lado) return [w, h];
+    const escala = lado / Math.max(w, h);
+    return [Math.max(1, Math.round(w * escala)), Math.max(1, Math.round(h * escala))];
+  }
+
+  function paraBlob(cv, q) {
+    return new Promise(function (ok, falhou) {
+      if (!cv.toBlob) return falhou(new Error('este navegador não gera JPEG por canvas'));
+      cv.toBlob(function (b) {
+        b ? ok(b) : falhou(new Error('falha ao gerar o JPEG'));
+      }, 'image/jpeg', q);
+    });
+  }
+
+  /* Safari só devolve a memória do canvas quando as dimensões vão a zero. */
+  function liberarCanvas(cv) {
+    try { cv.width = 0; cv.height = 0; } catch (e) {}
+  }
+
+  async function paraJpeg(img, alvo) {
+    let lado = cfg.LADO_MAXIMO;
+    let melhor = null;
+
+    for (let volta = 0; volta < cfg.VOLTAS_REDUCAO; volta++) {
+      const wh = caber(img.w, img.h, lado);
+      const cv = document.createElement('canvas');
+      cv.width = wh[0];
+      cv.height = wh[1];
+      const ctx = cv.getContext('2d');
+
+      /* Fundo branco antes de desenhar: PNG e HEIC com transparência viram
+         manchas pretas no JPEG, que não tem canal alfa. */
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, wh[0], wh[1]);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img.fonte, 0, 0, wh[0], wh[1]);
+
+      for (let i = 0; i < cfg.QUALIDADES.length; i++) {
+        const b = await paraBlob(cv, cfg.QUALIDADES[i]);
+        await respirar();                       // um encode por quadro: a aba continua respondendo
+        if (!melhor || b.size < melhor.size) melhor = b;
+        if (b.size <= alvo) { liberarCanvas(cv); return b; }
+      }
+
+      liberarCanvas(cv);
+      lado = Math.round(lado * 0.75);           // nem na pior qualidade coube: encolhe e repete
+    }
+    return melhor;
+  }
+
+  /* Decide o que efetivamente vai para a rede. */
+  async function preparar(item) {
+    const f = item._arquivo;
+    const heic = ehHeic(f);
+
+    /* JPEG que já está no alvo passa direto: sem reencode não há perda de
+       qualidade nem CPU gasta à toa. Qualquer outro formato é reencodado,
+       porque o servidor vai salvar o arquivo com extensão .jpg. */
+    if (!heic && ehJpeg(f) && f.size <= cfg.ALVO_BYTES) {
+      return { blob: f, nome: nomeJpg(f.name), mime: 'image/jpeg' };
+    }
+
+    let img = null;
+    try {
+      img = await decodificar(f);
+    } catch (e) {
+      if (heic) {
+        throw new Error(
+          'Este navegador não abre HEIC (o iPhone abre, o Chrome do Android não). '
+          + 'No iPhone: Ajustes › Câmera › Formatos › "Mais compatível" faz a câmera gravar '
+          + 'em JPG. Ou envie a foto já exportada como JPG.'
+        );
+      }
+      throw new Error('Não consegui abrir "' + f.name + '": ' + msgDe(e) + '.');
+    }
+
+    try {
+      const blob = await paraJpeg(img, cfg.ALVO_BYTES);
+      if (!blob) throw new Error('não consegui gerar o JPEG');
+      if (blob.size > cfg.TETO_BYTES) {
+        throw new Error(
+          'Mesmo comprimida a foto ficou com ' + fmtTam(blob.size)
+          + ' (o teto é ' + fmtTam(cfg.TETO_BYTES) + '). Envie uma imagem menor.'
+        );
+      }
+      return { blob: blob, nome: nomeJpg(f.name), mime: 'image/jpeg' };
+    } finally {
+      img.liberar();
+    }
+  }
+
+  /* Base64 pelo FileReader de propósito: o navegador faz a codificação nativa,
+     fora da thread principal. Fazer btoa() em pedaço de 350 KB no JS trava a
+     aba do celular por quase um segundo. */
+  function base64De(blob) {
+    return new Promise(function (ok, falhou) {
+      const leitor = new FileReader();
+      leitor.onload = function () {
+        const s = String(leitor.result || '');
+        const virgula = s.indexOf(',');
+        if (virgula < 0) return falhou(new Error('leitura vazia'));
+        ok(s.slice(virgula + 1));           // sem o prefixo `data:image/jpeg;base64,`
+      };
+      leitor.onerror = function () { falhou(new Error('não consegui ler o arquivo do disco')); };
+      leitor.readAsDataURL(blob);
+    });
+  }
+
+  /* ------------------------------------------------------------- 3. rede --- */
+
+  /* Os mesmos cabeçalhos que `sb.functions.invoke` manda. Vamos de fetch direto
+     para ter o STATUS HTTP na mão — é o status que decide retentar ou não, e o
+     objeto de erro do supabase-js só diz "non-2xx". */
+  function cabecalhos() {
+    const chave = (window.FULLPRO_CONFIG && window.FULLPRO_CONFIG.SUPABASE_ANON_KEY) || '';
+    return {
+      'Content-Type': 'application/json',
+      apikey: chave,
+      Authorization: 'Bearer ' + chave,
+    };
+  }
+
+  /* 403 = permissão, 4xx = arquivo/pedido ruim: retentar só repete o mesmo erro
+     mais devagar. Rede caída (status null), 408, 429 e 5xx são passageiros. */
+  function podeRetentar(status) {
+    if (status === 'cancelado') return false;
+    if (status == null) return true;
+    if (status === 408 || status === 429) return true;
+    return status >= 500 && status <= 599;
+  }
+
+  async function enviarUmaVez(item, base64) {
+    const ctrl = new AbortController();
+    let porTempo = false;
+    const prazo = setTimeout(function () { porTempo = true; ctrl.abort(); }, cfg.TIMEOUT_ENVIO_MS);
+    item._abortar = function () { ctrl.abort(); };
+
+    try {
+      const r = await fetch(ENDPOINT, {
+        method: 'POST',
+        signal: ctrl.signal,
+        headers: cabecalhos(),
+        body: JSON.stringify({
+          action: 'upload',
+          sessao: sessao(),
+          sku: item.sku,
+          arquivo: { nome: item.nome, mime: item.mime, base64: base64 },
+        }),
+      });
+
+      let dados = null;
+      try { dados = await r.json(); } catch (e) { /* 502 do gateway vem em HTML */ }
+
+      if (!r.ok || (dados && (dados.erro || dados.ok === false))) {
+        let texto = (dados && dados.erro) || '';
+        if (!texto && (r.status === 401 || r.status === 403)) {
+          texto = 'sem permissão para enviar foto deste SKU (sessão inválida ou perfil sem acesso)';
+        }
+        if (!texto) texto = 'o servidor respondeu ' + r.status;
+        const e = new Error(texto);
+        e.status = r.status;
+        throw e;
+      }
+      if (!dados || !dados.file_id) {
+        const e = new Error('o servidor respondeu sem file_id');
+        e.status = r.status;
+        throw e;
+      }
+      return dados;
+    } catch (e) {
+      if (e && e.name === 'AbortError') {
+        if (porTempo) {
+          const t = new Error('o envio passou de ' + Math.round(cfg.TIMEOUT_ENVIO_MS / 1000) + 's e foi interrompido');
+          t.status = null;                    // trata como falha de rede: pode retentar
+          throw t;
+        }
+        throw cancelamento();
+      }
+      if (e && e.status === undefined) e.status = null;   // TypeError de rede
+      throw e;
+    } finally {
+      clearTimeout(prazo);
+      item._abortar = null;
+    }
+  }
+
+  async function comRetentativa(item, base64) {
+    let ultimo = null;
+    for (let n = 1; n <= cfg.TENTATIVAS; n++) {
+      if (item.cancelado) throw cancelamento();
+      item.tentativa = n;
+      avisar(item, 'enviando', {
+        fase: 'enviando', tentativa: n, de: cfg.TENTATIVAS, progresso: 0.6,
+        mensagem: n === 1 ? 'Enviando...' : 'Tentativa ' + n + ' de ' + cfg.TENTATIVAS + '...',
+      });
+      try {
+        return await enviarUmaVez(item, base64);
+      } catch (e) {
+        ultimo = e;
+        if (e && e.cancelado) throw e;
+        if (!podeRetentar(e && e.status) || n === cfg.TENTATIVAS) throw e;
+
+        const espera = cfg.ESPERA_MS[n - 1] || cfg.ESPERA_MS[cfg.ESPERA_MS.length - 1];
+        avisar(item, 'enviando', {
+          fase: 'aguardando', tentativa: n, de: cfg.TENTATIVAS, progresso: 0.6,
+          mensagem: 'Falhou (' + msgDe(e) + '). Tentando de novo em ' + Math.round(espera / 1000) + 's.',
+        });
+        await esperar(espera, item);
+      }
+    }
+    throw ultimo || new Error('falha desconhecida no envio');
+  }
+
+  /* Registro no painel. A foto JÁ está no Drive quando isto roda — por isso
+     falha aqui vira aviso, nunca erro do item (reenviar duplicaria a foto). */
+  async function registrar(item, resp) {
+    const eu = usuario();
+    const linha = {
+      sku: item.sku,
+      drive_file_id: resp.file_id,
+      file_name: resp.file_name || item.nome,
+      tamanho_bytes: item.tamanhoEnviado,
+      /* fp_session guarda o próprio id da linha de mc_admin_users, então serve
+         de reserva quando CURRENT_USER ainda não carregou. */
+      enviado_por_id: (eu && eu.id) || sessao() || null,
+      enviado_por_nome: (eu && eu.name) || 'Equipe FullPro',
+    };
+    const r = await sb.from('mc_photo_files').insert(linha);
+    if (r && r.error) throw r.error;
+  }
+
+  /* O drive-proxy guarda "este SKU não tem foto" por 6h em mc_drive_thumbs. Sem
+     limpar, a foto recém-enviada só apareceria no painel horas depois. Melhor
+     esforço: se falhar, o único prejuízo é a thumbnail atrasada. */
+  function esquecerCacheDoDrive(sku) {
+    try {
+      if (typeof FP_DRIVE_MAPA !== 'undefined' && FP_DRIVE_MAPA && FP_DRIVE_MAPA.delete) {
+        FP_DRIVE_MAPA.delete(sku);
+      }
+    } catch (e) {}
+    try {
+      fetch(ENDPOINT + '?action=limpar', {
+        method: 'POST',
+        headers: cabecalhos(),
+        body: JSON.stringify({ sku: sku }),
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  /* ------------------------------------------------------------- 4. fila --- */
+
+  function avisar(item, estado, detalhe) {
+    item.estado = estado;
+    detalhe = detalhe || {};
+    if (detalhe.mensagem) item.mensagem = detalhe.mensagem;
+
+    /* slice(): a interface pode registrar/desregistrar dentro do próprio
+       callback. E try/catch por ouvinte: um erro de render não pode parar a
+       fila no meio, senão o SKU trava e nunca libera a raia. */
+    ouvintes.slice().forEach(function (fn) {
+      try { fn(item.sku, item, estado, detalhe); }
+      catch (e) { console.warn('[upload] ouvinte falhou:', e); }
+    });
+    if (item._onEstado) {
+      try { item._onEstado(item.sku, item, estado, detalhe); }
+      catch (e) { console.warn('[upload] onEstado falhou:', e); }
+    }
+  }
+
+  function criarItem(sku, f, opts) {
+    return {
+      id: 'up' + (++contador),
+      sku: sku,
+      nome: (f && f.name) || 'foto.jpg',
+      nomeOriginal: (f && f.name) || 'foto.jpg',
+      tamanho: (f && f.size) || 0,
+      tamanhoEnviado: null,
+      mime: 'image/jpeg',
+      estado: 'pendente',
+      mensagem: '',
+      tentativa: 0,
+      driveFileId: null,
+      fileName: null,
+      sequencia: null,
+      cancelado: false,
+      _arquivo: f,
+      _abortar: null,
+      _onEstado: typeof (opts && opts.onEstado) === 'function' ? opts.onEstado : null,
+      /* O input de arquivo dispara duas vezes com facilidade no celular. */
+      _chave: [(f && f.name) || '', (f && f.size) || 0, (f && f.lastModified) || 0].join('|'),
+    };
+  }
+
+  function bombear() {
+    for (const fila of filas.values()) {
+      if (raias >= cfg.SKUS_EM_PARALELO) return;
+      if (fila.rodando) continue;
+      if (!fila.itens.some(function (i) { return i.estado === 'pendente' && !i.cancelado; })) continue;
+      fila.rodando = true;
+      raias++;
+      drenar(fila);              // sem await: as raias correm em paralelo
+    }
+  }
+
+  async function drenar(fila) {
+    try {
+      for (;;) {
+        const item = fila.itens.find(function (i) { return i.estado === 'pendente' && !i.cancelado; });
+        if (!item) break;
+        await processar(item);   // em SÉRIE: o próximo só começa quando o servidor
+        await respirar();        // já devolveu a sequência do anterior
+      }
+    } catch (e) {
+      console.warn('[upload] raia do SKU', fila.sku, 'parou:', e);
+    } finally {
+      fila.rodando = false;
+      raias--;
+      if (!fila.itens.length) filas.delete(fila.sku);
+      bombear();
+      talvezResumir();
+    }
+  }
+
+  async function processar(item) {
+    const inicio = Date.now();
+    try {
+      avisar(item, 'enviando', { fase: 'preparando', progresso: 0.1, mensagem: 'Preparando a foto...' });
+      const pronto = await preparar(item);
+      if (item.cancelado) throw cancelamento();
+
+      item.nome = pronto.nome;
+      item.mime = pronto.mime;
+      item.tamanhoEnviado = pronto.blob.size;
+
+      avisar(item, 'enviando', { fase: 'lendo', progresso: 0.35, mensagem: 'Lendo ' + fmtTam(pronto.blob.size) + '...' });
+      const b64 = await base64De(pronto.blob);
+      pronto.blob = null;                       // o blob já virou string; solta os bytes
+      if (item.cancelado) throw cancelamento();
+
+      const resp = await comRetentativa(item, b64);
+      item.driveFileId = resp.file_id || null;
+      item.fileName = resp.file_name || item.nome;
+      item.sequencia = (resp.sequencia != null) ? resp.sequencia : null;
+
+      let aviso = null;
+      try {
+        await registrar(item, resp);
+      } catch (e) {
+        aviso = 'Foto enviada ao Drive, mas não deu para registrar no painel (' + msgDe(e) + ').';
+        console.warn('[upload] mc_photo_files:', e);
+        toast(aviso, 'warn', { duracao: 8000 });
+      }
+
+      esquecerCacheDoDrive(item.sku);
+      item._arquivo = null;                     // sucesso: não precisa mais do File
+      resumo.ok++;
+      avisar(item, 'ok', {
+        fase: 'concluído', progresso: 1, aviso: aviso, resposta: resp, ms: Date.now() - inicio,
+        mensagem: aviso || ('Enviada como ' + item.fileName + '.'),
+      });
+    } catch (e) {
+      const cancelado = !!(e && e.cancelado);
+      if (!cancelado) resumo.erro++;
+      /* Em erro o File FICA na memória de propósito: é o que permite reenviar()
+         sem obrigar o fotógrafo a escolher a foto de novo. */
+      avisar(item, 'erro', {
+        fase: cancelado ? 'cancelado' : 'falhou',
+        cancelado: cancelado,
+        status: e && e.status,
+        mensagem: cancelado ? 'Envio cancelado.' : msgDe(e),
+      });
+    }
+    /* Rede de segurança: se por algum caminho o item voltasse como "pendente",
+       o `for(;;)` do drenar giraria para sempre nele. */
+    if (item.estado === 'pendente') {
+      avisar(item, 'erro', { mensagem: 'Falha desconhecida no envio.' });
+    }
+  }
+
+  function talvezResumir() {
+    if (raias > 0) return;
+    for (const fila of filas.values()) {
+      if (fila.itens.some(function (i) { return i.estado === 'pendente' && !i.cancelado; })) return;
+    }
+    const ok = resumo.ok, erro = resumo.erro;
+    resumo.ok = 0;
+    resumo.erro = 0;
+    if (!ok && !erro) return;
+
+    if (erro && !ok) {
+      toast(erro === 1 ? 'A foto não foi enviada.' : 'Nenhuma das ' + erro + ' fotos foi enviada.', 'erro');
+    } else if (erro) {
+      toast(ok + (ok === 1 ? ' foto enviada' : ' fotos enviadas') + ', '
+        + erro + (erro === 1 ? ' falhou.' : ' falharam.'), 'warn');
+    } else {
+      toast(ok === 1 ? 'Foto enviada para o Drive.' : ok + ' fotos enviadas para o Drive.', 'ok');
+    }
+  }
+
+  /* -------------------------------------------------------------- 5. API --- */
+
+  function adicionar(sku, arquivos, opts) {
+    opts = opts || {};
+    sku = String(sku == null ? '' : sku).trim();
+    const saida = [];
+
+    const lista = !arquivos ? []
+      : (typeof arquivos.length === 'number' ? Array.prototype.slice.call(arquivos) : [arquivos]);
+    if (!lista.length) return saida;
+
+    if (!sku) {
+      toast('SKU não informado — não sei para qual pasta mandar a foto.', 'erro');
+      return saida;
+    }
+    if (!sessao()) {
+      toast('Sua sessão expirou. Entre de novo no painel para enviar fotos.', 'erro');
+      return saida;
+    }
+
+    let fila = filas.get(sku);
+    if (!fila) { fila = { sku: sku, itens: [], rodando: false }; filas.set(sku, fila); }
+
+    let recusados = 0;
+    let primeira = '';
+
+    lista.forEach(function (f) {
+      const item = criarItem(sku, f, opts);
+      saida.push(item);
+
+      const repetida = fila.itens.some(function (o) {
+        return o.estado !== 'erro' && o._chave === item._chave;
+      });
+      if (repetida) {
+        avisar(item, 'erro', { mensagem: 'Esta foto já está na fila deste SKU.', duplicada: true });
+        return;
+      }
+
+      const problema = validar(f);
+      if (problema) {
+        recusados++;
+        if (!primeira) primeira = problema;
+        avisar(item, 'erro', { mensagem: problema, recusado: true });
+        return;
+      }
+
+      fila.itens.push(item);
+      avisar(item, 'pendente', { fase: 'na fila', progresso: 0, mensagem: 'Na fila.' });
+    });
+
+    if (recusados === 1) toast(primeira, 'warn', { duracao: 8000 });
+    else if (recusados > 1) toast(recusados + ' fotos não entraram na fila. A primeira: ' + primeira, 'warn', { duracao: 9000 });
+
+    bombear();
+    return saida;
+  }
+
+  function acharItem(id) {
+    for (const fila of filas.values()) {
+      const achado = fila.itens.find(function (i) { return i.id === id; });
+      if (achado) return { fila: fila, item: achado };
+    }
+    return null;
+  }
+
+  function pararItem(item) {
+    if (item.estado === 'ok' || item.estado === 'erro') return false;
+    item.cancelado = true;
+    if (item._abortar) item._abortar();          // corta o envio em voo
+    if (item.estado === 'pendente') {
+      avisar(item, 'erro', { mensagem: 'Envio cancelado.', cancelado: true, fase: 'cancelado' });
+    }
+    return true;
+  }
+
+  window.fpUploadFila = {
+    /* Registra o callback onEstado(sku, arquivo, estado, detalhe).
+       Devolve uma função que desregistra — útil ao sair da tela. */
+    aoMudar: function (fn) {
+      if (typeof fn !== 'function') return function () {};
+      ouvintes.push(fn);
+      return function () {
+        const i = ouvintes.indexOf(fn);
+        if (i >= 0) ouvintes.splice(i, 1);
+      };
+    },
+
+    /* adicionar(sku, FileList|File[]|File, { onEstado })
+       Devolve TODOS os itens criados — inclusive os recusados na validação, que
+       já vêm com estado 'erro' e a mensagem pronta para a tela. */
+    adicionar: adicionar,
+
+    /* Reenvia um item que falhou (a foto original continua em memória). */
+    reenviar: function (id) {
+      const achado = acharItem(id);
+      if (!achado) return false;
+      const item = achado.item;
+      if (item.estado !== 'erro' || !item._arquivo) return false;
+      const problema = validar(item._arquivo);
+      if (problema) { avisar(item, 'erro', { mensagem: problema, recusado: true }); return false; }
+      item.cancelado = false;
+      item.tentativa = 0;
+      item.mensagem = '';
+      if (achado.fila.itens.indexOf(item) < 0) achado.fila.itens.push(item);
+      avisar(item, 'pendente', { fase: 'na fila', progresso: 0, mensagem: 'Na fila.' });
+      bombear();
+      return true;
+    },
+
+    /* Reenvia tudo que falhou (de um SKU, ou de todos). */
+    reenviarFalhas: function (sku) {
+      let n = 0;
+      for (const fila of filas.values()) {
+        if (sku && fila.sku !== sku) continue;
+        fila.itens.slice().forEach(function (i) {
+          if (i.estado === 'erro' && i._arquivo && window.fpUploadFila.reenviar(i.id)) n++;
+        });
+      }
+      return n;
+    },
+
+    cancelar: function (sku) {
+      const fila = filas.get(String(sku || '').trim());
+      if (!fila) return 0;
+      let n = 0;
+      fila.itens.slice().forEach(function (i) { if (pararItem(i)) n++; });
+      return n;
+    },
+
+    cancelarItem: function (id) {
+      const achado = acharItem(id);
+      return achado ? pararItem(achado.item) : false;
+    },
+
+    /* Cancela o que está em voo e esquece o histórico (ok/erro) da tela. */
+    limpar: function () {
+      for (const fila of filas.values()) {
+        fila.itens.slice().forEach(pararItem);
+        fila.itens = fila.itens.filter(function (i) { return i.estado === 'enviando'; });
+        fila.itens.forEach(function (i) { i._arquivo = null; });
+      }
+      Array.from(filas.keys()).forEach(function (sku) {
+        const f = filas.get(sku);
+        if (f && !f.rodando && !f.itens.length) filas.delete(sku);
+      });
+      resumo.ok = 0;
+      resumo.erro = 0;
+    },
+
+    /* Itens vivos de um SKU (ou de todos). São os MESMOS objetos entregues ao
+       callback — para redesenhar a lista inteira do zero. */
+    itens: function (sku) {
+      if (sku) {
+        const fila = filas.get(String(sku).trim());
+        return fila ? fila.itens.slice() : [];
+      }
+      const todos = [];
+      for (const fila of filas.values()) todos.push.apply(todos, fila.itens);
+      return todos;
+    },
+
+    /* Quantas fotos ainda faltam — serve para travar o botão "Concluir lote". */
+    pendentes: function (sku) {
+      return this.itens(sku).filter(function (i) {
+        return i.estado === 'pendente' || i.estado === 'enviando';
+      }).length;
+    },
+
+    ocupada: function () { return raias > 0; },
+
+    /* Limites e paralelismo, ajustáveis em uma linha (a tela pode ler os
+       números para escrever "JPG, PNG ou HEIC até 2 MB" no rodapé do input). */
+    config: cfg,
+  };
+})();
+
+
+/* ═══════════════ SEPARAÇÃO (tela) ═══════════════ */
+let _sepTamanho = 15, _sepLote = null, _sepDestinos = null, _sepDestino = '';
+
+async function renderFotoSeparacao() {
+  const topo = document.getElementById('fotoSepTopo');
+  if (!topo) return;
+  const fila = FOTO_PRODUTOS.filter(p => !p.excluido && (!p.tem_foto || p.refazer) && p.status !== 'separacao');
+  _sepLote = fpSepMontarLote(fila, _sepTamanho);
+
+  topo.innerHTML = '<div class="filter-bar">'
+    + '<span class="fp-aviso-sub" style="margin-right:6px">Tamanho do lote</span>'
+    + [10, 15, 20, 30].map(t => '<button class="filter-btn' + (t === _sepTamanho ? ' active' : '')
+        + '" type="button" onclick="fpSepTamanho(' + t + ')">' + t + '</button>').join('')
+    + '<span class="fp-lista-contagem">' + _sepLote.itens.length + ' selecionados'
+    + (_sepLote.emergenciais ? ' · ' + _sepLote.emergenciais + ' emergencial' + (_sepLote.emergenciais > 1 ? 'is' : '') : '')
+    + '</span></div>'
+    + (_sepLote.avisos && _sepLote.avisos.length
+        ? '<div class="fp-prod-linha" style="margin-bottom:10px;display:block"><div class="fp-aviso-sub" style="line-height:1.6">'
+          + _sepLote.avisos.map(a => escHtml(a)).join('<br>') + '</div></div>' : '');
+
+  const lista = document.getElementById('fotoSepLista');
+  lista.innerHTML = _sepLote.itens.length
+    ? _sepLote.itens.map(i => {
+        const prod = fpFotoProduto(i.sku) || i;
+        return '<div class="fp-prod-linha">' + fpFotoProdutoHtml(i.sku, prod.imagem_bling, 34, 7)
+          + '<span class="fp-prod-nome"><b>' + escHtml(i.nome || i.sku) + '</b>'
+          + '<span class="fp-prod-sku">' + escHtml(i.sku) + '</span></span>'
+          + fpProdEstoqueHtml(i.estoque)
+          + '<span class="fp-prod-fim">' + fpPrioHtml(i.sku, i.prioridade, false) + '</span></div>';
+      }).join('')
+    : '<div class="fp-prod-vazio">Nenhum produto classificado na fila. Defina prioridades em Produção primeiro.</div>';
+  fpDriveCarregar(_sepLote.itens.map(i => i.sku), lista);
+
+  await fpSepDestinosCarregar();
+  const rod = document.getElementById('fotoSepRodape');
+  const temSlack = Array.isArray(_sepDestinos) && _sepDestinos.length;
+  rod.innerHTML = '<div class="filter-bar" style="margin-top:14px">'
+    + (temSlack
+        ? '<label for="fotoSepDest" class="fp-aviso-sub">Enviar para</label>'
+          + '<select id="fotoSepDest" onchange="_sepDestino=this.value" style="min-width:190px">'
+          + '<option value="">Escolha a pessoa…</option>'
+          + _sepDestinos.map(u => '<option value="' + escHtml(u.id) + '"' + (u.id === _sepDestino ? ' selected' : '') + '>'
+              + escHtml(u.nome_real || u.nome) + '</option>').join('') + '</select>'
+        : '<span class="fp-aviso-sub">' + (_sepDestinos === null
+            ? 'Consultando o Slack…'
+            : 'Slack ainda não configurado — falta o token do app. A lista continua funcionando aqui.') + '</span>')
+    + '<button class="action-btn approve" type="button" id="fotoSepEnviar" onclick="fpSepEnviar()"'
+    + (_sepLote.itens.length ? '' : ' disabled') + ' style="margin-left:auto">Enviar para separação</button>'
+    + '</div><div id="fotoSepDepois"></div>';
+}
+
+function fpSepTamanho(t) { _sepTamanho = t; renderFotoSeparacao(); }
+
+async function fpSepDestinosCarregar() {
+  if (_sepDestinos !== null) return _sepDestinos;
+  const sessao = localStorage.getItem('fp_session');
+  try {
+    const { data, error } = await sb.functions.invoke('slack-proxy', { body: { action: 'usuarios', sessao } });
+    if (error || !data || data.erro) { _sepDestinos = []; return _sepDestinos; }
+    _sepDestinos = (data.usuarios || []).sort((a, b) => String(a.nome_real || a.nome).localeCompare(String(b.nome_real || b.nome)));
+  } catch (e) { _sepDestinos = []; }
+  return _sepDestinos;
+}
+
+async function fpSepEnviar() {
+  if (!_sepLote || !_sepLote.itens.length) return;
+  const btn = document.getElementById('fotoSepEnviar');
+  const quem = CURRENT_USER ? (CURRENT_USER.name || CURRENT_USER.username) : '';
+  const sessao = localStorage.getItem('fp_session');
+  const destNome = (_sepDestinos || []).find(u => u.id === _sepDestino);
+
+  if (!await fpConfirm({
+    titulo: 'Enviar para separação',
+    mensagem: _sepLote.itens.length + ' produtos vão para a lista de separação'
+      + (destNome ? ' e a mensagem vai para ' + (destNome.nome_real || destNome.nome) + ' no Slack.' : '.'),
+    detalhe: _sepDestino ? null : 'Sem destino escolhido, o lote é registrado no painel mas nada é enviado pelo Slack.',
+    confirmar: 'Enviar',
+  })) return;
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Enviando…'; }
+  const msg = fpSepMensagemSlack(_sepLote, quem);
+  let slackOk = null, slackErro = null;
+  if (_sepDestino) {
+    try {
+      const { data, error } = await sb.functions.invoke('slack-proxy', {
+        body: { action: 'enviar', sessao, destino: _sepDestino, texto: msg.texto, blocos: msg.blocos },
+      });
+      if (error) throw error;
+      if (data && data.erro) throw new Error(data.erro);
+      slackOk = true;
+    } catch (e) { slackOk = false; slackErro = String(e.message || e); }
+  }
+
+  const itens = _sepLote.itens.map(i => ({ sku: i.sku, nome: i.nome, estoque: i.estoque, prioridade: i.prioridade }));
+  const { data: lote, error } = await sb.from('mc_photo_batches').insert({
+    criado_por_id: CURRENT_USER ? CURRENT_USER.id : null, criado_por_nome: quem,
+    tamanho: itens.length, itens,
+    slack_destino: _sepDestino || null, slack_destino_nome: destNome ? (destNome.nome_real || destNome.nome) : null,
+    slack_ok: slackOk, slack_erro: slackErro,
+  }).select().single();
+  if (error) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Enviar para separação'; }
+    fpToast('Não deu para registrar o lote: ' + error.message, 'erro');
+    return;
+  }
+
+  /* Os produtos saem da fila enquanto o lote está aberto, senão o próximo
+     lote pediria o mesmo produto que já está no carrinho do estoquista. */
+  const skus = itens.map(i => i.sku);
+  await sb.from('mc_photo_products').update({ status: 'separacao', lote_id: lote.id }).in('sku', skus);
+  FOTO_PRODUTOS.forEach(p => { if (skus.includes(p.sku)) { p.status = 'separacao'; p.lote_id = lote.id; } });
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Enviar para separação'; }
+  fpToast(slackOk === false ? 'Lote registrado, mas o Slack recusou: ' + slackErro
+    : slackOk ? 'Lista enviada no Slack.' : 'Lote registrado no painel.', slackOk === false ? 'warn' : 'ok');
+
+  document.getElementById('fotoSepDepois').innerHTML =
+    '<div class="fp-prod-linha" style="margin-top:12px">'
+    + '<span class="fp-prod-nome"><b>Lote de ' + itens.length + ' produtos criado.</b></span>'
+    + '<button class="action-btn view" type="button" onclick="document.querySelector(\'.nav-item[data-view=&quot;foto-lote&quot;]\').click()">Ir para Fotografia em lote</button></div>';
+  renderFotoSeparacao();
+}
+
+/* ═══════════════ FOTOGRAFIA EM LOTE ═══════════════ */
+let _loteAtual = null;
+
+async function renderFotoLote() {
+  const topo = document.getElementById('fotoLoteTopo'), lista = document.getElementById('fotoLoteLista');
+  if (!topo) return;
+  try {
+    const { data } = await sb.from('mc_photo_batches').select('*').eq('status', 'aberto')
+      .order('created_at', { ascending: false }).limit(1);
+    _loteAtual = (data && data[0]) || null;
+  } catch (e) { console.warn('lote', e); }
+
+  if (!_loteAtual) {
+    topo.innerHTML = '';
+    lista.innerHTML = '<div class="fp-prod-vazio">Nenhum lote em aberto. Monte um em Separação.</div>';
+    return;
+  }
+
+  const itens = Array.isArray(_loteAtual.itens) ? _loteAtual.itens : [];
+  const feitos = itens.filter(i => { const p = fpFotoProduto(i.sku); return p && p.status === 'fotografado'; }).length;
+  topo.innerHTML = '<div class="filter-bar">'
+    + '<span class="fp-lista-contagem">Lote de ' + new Date(_loteAtual.created_at).toLocaleDateString('pt-BR')
+    + ' · ' + feitos + ' de ' + itens.length + ' fotografados</span>'
+    + '<button class="action-btn" type="button" onclick="fpLoteConcluir()" style="margin-left:auto">Concluir lote</button></div>';
+
+  lista.innerHTML = itens.map(i => {
+    const prod = fpFotoProduto(i.sku) || i;
+    const pronto = prod.status === 'fotografado';
+    return '<div class="fp-prod-linha" id="lote-' + escHtml(i.sku) + '">'
+      + fpFotoProdutoHtml(i.sku, prod.imagem_bling, 38, 8)
+      + '<span class="fp-prod-nome"><b>' + escHtml(i.nome || i.sku) + '</b>'
+      + '<span class="fp-prod-sku">' + escHtml(i.sku) + '</span></span>'
+      + fpProdEstoqueHtml(i.estoque)
+      + '<span class="fp-prod-fim">' + fpPrioHtml(i.sku, i.prioridade, false)
+      + '<span class="fp-lote-estado" data-sku="' + escHtml(i.sku) + '">' + (pronto ? '<span class="fp-nota tem">✓ enviada</span>' : '') + '</span>'
+      + '<label class="action-btn view" style="cursor:pointer;margin:0">Enviar fotos'
+      + '<input type="file" accept="image/*" multiple style="display:none" onchange="fpLoteEscolher(\'' + fpJs(i.sku) + '\',this)"></label>'
+      + '</span></div>';
+  }).join('');
+  fpDriveCarregar(itens.map(i => i.sku), lista);
+  fpLoteObservar();
+}
+
+let _loteObservando = false;
+function fpLoteObservar() {
+  if (_loteObservando || !window.fpUploadFila) return;
+  _loteObservando = true;
+  fpUploadFila.aoMudar((sku, arq, estado, detalhe) => {
+    const alvo = document.querySelector('.fp-lote-estado[data-sku="' + CSS.escape(sku) + '"]');
+    if (!alvo) return;
+    const itens = fpUploadFila.itens(sku);
+    const erro = itens.filter(i => i.estado === 'erro').length;
+    const indo = itens.filter(i => i.estado === 'pendente' || i.estado === 'enviando').length;
+    const ok = itens.filter(i => i.estado === 'ok').length;
+    alvo.innerHTML = indo ? '<span class="fp-aviso-sub">enviando ' + (ok + 1) + '/' + itens.length + '…</span>'
+      : erro ? '<span class="fp-nota sem" title="' + escHtml(arq && arq.mensagem || '') + '">' + erro + ' falhou</span>'
+      : ok ? '<span class="fp-nota tem">✓ ' + ok + (ok > 1 ? ' fotos' : ' foto') + '</span>' : '';
+    if (!indo && ok && !erro) fpLoteMarcarFeito(sku, ok);
+  });
+}
+
+function fpLoteEscolher(sku, input) {
+  if (!input.files || !input.files.length) return;
+  fpUploadFila.adicionar(sku, input.files);
+  input.value = '';
+}
+
+async function fpLoteMarcarFeito(sku, quantas) {
+  const prod = fpFotoProduto(sku);
+  if (!prod || prod.status === 'fotografado') return;
+  const patch = {
+    status: 'fotografado', tem_foto: true, refazer: false,
+    fotografado_em: new Date().toISOString(),
+    fotos_qtd: (prod.fotos_qtd || 0) + (quantas || 1),
+  };
+  Object.assign(prod, patch);
+  const { error } = await sb.from('mc_photo_products').update(patch).eq('sku', sku);
+  if (error) console.warn('marcar fotografado', error);
+}
+
+async function fpLoteConcluir() {
+  if (!_loteAtual) return;
+  const itens = Array.isArray(_loteAtual.itens) ? _loteAtual.itens : [];
+  const faltam = itens.filter(i => { const p = fpFotoProduto(i.sku); return !p || p.status !== 'fotografado'; });
+  if (!await fpConfirm({
+    titulo: 'Concluir lote',
+    mensagem: faltam.length
+      ? faltam.length + ' produto(s) ainda sem foto voltam para a fila de produção.'
+      : 'Todos os produtos do lote foram fotografados.',
+    confirmar: 'Concluir',
+  })) return;
+  await sb.from('mc_photo_batches').update({ status: 'fotografado' }).eq('id', _loteAtual.id);
+  if (faltam.length) {
+    const skus = faltam.map(i => i.sku);
+    await sb.from('mc_photo_products').update({ status: 'fila', lote_id: null }).in('sku', skus);
+    FOTO_PRODUTOS.forEach(p => { if (skus.includes(p.sku)) { p.status = 'fila'; p.lote_id = null; } });
+  }
+  fpToast('Lote concluído.', 'ok');
+  renderFotoLote();
+}
+
+/* ═══════════════ GALERIA — fotos por SKU e nota da foto ═══════════════
+   A nota é única por produto e só admin dá. Nota abaixo de 2 devolve o
+   produto para a fila com `refazer`, guardando a nota velha em
+   `nota_anterior` — é ela que o card mostra depois ("era 1, agora 4").
+   ═══════════════════════════════════════════════════════════════════════ */
+let _galFiltro = 'todos', _galBusca = '', _galMostra = FP_FOTO_PAGINA;
+
+const FP_ESTRELA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.4l6.5-.9z"/></svg>';
+
+function fpNotaHtml(prod) {
+  const tem = prod.nota != null;
+  return '<span class="fp-nota ' + (tem ? 'tem' : 'sem') + '" data-tip="'
+    + (tem ? 'Nota da foto' : 'Foto ainda não avaliada') + '">' + FP_ESTRELA
+    + (tem ? prod.nota : 0) + '/5</span>'
+    + (prod.nota_anterior != null ? '<span class="fp-nota-antes">antes ' + prod.nota_anterior + '/5</span>' : '');
+}
+
+function fpGalFiltrar(f) {
+  _galFiltro = f || 'todos'; _galMostra = FP_FOTO_PAGINA;
+  document.querySelectorAll('[data-fpgal]').forEach(b => b.classList.toggle('active', b.dataset.fpgal === _galFiltro));
+  const sel = document.getElementById('fotoGalFiltroSelect');
+  if (sel && sel.value !== _galFiltro) sel.value = _galFiltro;
+  renderFotoGaleria();
+}
+let _galBuscaTimer = null;
+function fpGalBuscar(v) {
+  _galBusca = (v || '').trim().toLowerCase();
+  clearTimeout(_galBuscaTimer);
+  _galBuscaTimer = setTimeout(() => { _galMostra = FP_FOTO_PAGINA; renderFotoGaleria(); }, 180);
+}
+function fpGalMais() { _galMostra += FP_FOTO_PAGINA * 2; renderFotoGaleria(); }
+
+function renderFotoGaleria() {
+  const box = document.getElementById('fotoGalLista');
+  if (!box) return;
+  const admin = fpFotoEhAdmin();
+  let lista = FOTO_PRODUTOS.filter(p => !p.excluido && p.tem_foto);
+  if (_galFiltro === 'semnota') lista = lista.filter(p => p.nota == null);
+  else if (_galFiltro === 'refazer') lista = lista.filter(p => p.refazer);
+  if (_galBusca) lista = lista.filter(p => (p.nome || '').toLowerCase().includes(_galBusca) || (p.sku || '').toLowerCase().includes(_galBusca));
+  /* Sem nota primeiro: a tela existe para avaliar, não para admirar. */
+  lista = lista.slice().sort((a, b) => (a.nota == null ? 0 : 1) - (b.nota == null ? 0 : 1)
+    || (a.nota || 0) - (b.nota || 0) || String(a.nome || '').localeCompare(String(b.nome || '')));
+
+  const conta = document.getElementById('fotoGalCount');
+  if (conta) conta.textContent = lista.length ? (lista.length === 1 ? '1 produto' : lista.length.toLocaleString('pt-BR') + ' produtos') : '';
+
+  if (!lista.length) {
+    box.innerHTML = '<div class="fp-prod-vazio">' + (FOTO_PRODUTOS.length
+      ? 'Nenhum produto com foto neste filtro.'
+      : 'O catálogo ainda não foi sincronizado. Abra o Panorama e use "Sincronizar catálogo".') + '</div>';
+    document.getElementById('fotoGalMais').innerHTML = '';
+    return;
+  }
+
+  const visiveis = lista.slice(0, _galMostra);
+  box.innerHTML = visiveis.map(p => '<div class="fp-prod-linha">'
+    + '<span role="button" tabindex="0" style="cursor:zoom-in;display:flex" data-tip="Ver todas as fotos"'
+    + ' onclick="fpGalAbrirFotos(\'' + fpJs(p.sku) + '\')"'
+    + ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();fpGalAbrirFotos(\'' + fpJs(p.sku) + '\')}">'
+    + fpFotoProdutoHtml(p.sku, p.imagem_bling, 44, 8) + '</span>'
+    + '<span class="fp-prod-nome"><b>' + escHtml(p.nome || '(sem nome)') + '</b>'
+    + '<span class="fp-prod-sku">' + escHtml(p.sku) + (p.refazer ? ' · refazer' : '') + '</span></span>'
+    + fpProdEstoqueHtml(p.estoque)
+    + '<span class="fp-prod-fim">' + fpNotaHtml(p)
+    + (admin ? '<button class="fp-nota-btn" type="button" onclick="fpNotaAvaliar(\'' + fpJs(p.sku) + '\')">'
+        + (p.nota != null ? 'Re-avaliar' : 'Avaliar') + '</button>' : '')
+    + '</span></div>').join('');
+
+  document.getElementById('fotoGalMais').innerHTML = lista.length > _galMostra
+    ? '<button class="action-btn" type="button" onclick="fpGalMais()">Mostrar mais ' + Math.min(FP_FOTO_PAGINA * 2, lista.length - _galMostra) + '</button>'
+    : '';
+  fpDriveCarregar(visiveis.map(p => p.sku), box);
+}
+
+/* Abre todas as fotos da pasta do SKU. O drive-proxy tem uma ação própria
+   para isso: a que alimenta a miniatura devolve só a primeira imagem. */
+async function fpGalAbrirFotos(sku) {
+  const prod = fpFotoProduto(sku) || { sku };
+  const ov = document.createElement('div');
+  ov.className = 'fp-aviso-ov show';
+  ov.innerHTML = '<div class="fp-aviso" style="max-width:720px" role="dialog" aria-modal="true">'
+    + '<div class="fp-aviso-head"><div><h3>' + escHtml(prod.nome || sku) + '</h3>'
+    + '<div class="fp-aviso-data">' + escHtml(sku) + '</div></div>'
+    + '<button class="fp-aviso-x" type="button" data-fechar aria-label="Fechar">&times;</button></div>'
+    + '<div class="fp-aviso-corpo" id="fpGalGrade"><div class="fp-prod-vazio">Carregando as fotos…</div></div>'
+    + '<div class="fp-aviso-foot"><span class="fp-aviso-conta" id="fpGalConta"></span>'
+    + '<a class="action-btn" target="_blank" rel="noopener" href="' + escHtml(FP_DRIVE_URL + '?action=open&sku=' + encodeURIComponent(sku)) + '">Abrir no Drive</a>'
+    + '</div></div>';
+  const fechar = () => { ov.remove(); document.body.classList.remove('fp-sem-scroll'); };
+  ov.querySelector('[data-fechar]').onclick = fechar;
+  ov.addEventListener('click', ev => { if (ev.target === ov) fechar(); });
+  document.body.appendChild(ov);
+  document.body.classList.add('fp-sem-scroll');
+
+  try {
+    const r = await fetch(FP_DRIVE_URL + '?action=fotos&sku=' + encodeURIComponent(sku));
+    const j = await r.json();
+    const fotos = (j && j.fotos) || [];
+    const grade = ov.querySelector('#fpGalGrade');
+    if (!fotos.length) { grade.innerHTML = '<div class="fp-prod-vazio">Nenhuma foto nesta pasta.</div>'; return; }
+    grade.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">'
+      + fotos.map(f => '<img src="' + escHtml(f.thumb || '') + '" alt="' + escHtml(f.name || '') + '" loading="eager"'
+        + ' style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:9px;border:1px solid var(--border);cursor:zoom-in"'
+        + ' onclick="openLightbox(\'' + fpJs(f.cheia || f.thumb || '') + '\')">').join('') + '</div>';
+    ov.querySelector('#fpGalConta').textContent = fotos.length === 1 ? '1 foto' : fotos.length + ' fotos';
+  } catch (e) {
+    ov.querySelector('#fpGalGrade').innerHTML = '<div class="fp-prod-vazio">Não deu para ler a pasta: ' + escHtml(e.message || String(e)) + '</div>';
+  }
+}
+
+/* Avaliação: 0 a 5, uma por produto. Abaixo de 2 devolve para a fila. */
+function fpNotaAvaliar(sku) {
+  const prod = fpFotoProduto(sku);
+  if (!prod || !fpFotoEhAdmin()) return;
+  let escolhida = prod.nota == null ? 0 : prod.nota;
+  const ov = document.createElement('div');
+  ov.className = 'fp-aviso-ov show';
+  ov.innerHTML = '<div class="fp-aviso" style="max-width:440px" role="dialog" aria-modal="true">'
+    + '<div class="fp-aviso-head"><div><h3>' + (prod.nota != null ? 'Re-avaliar a foto' : 'Avaliar a foto') + '</h3>'
+    + '<div class="fp-aviso-data">' + escHtml(prod.nome || sku) + '</div></div>'
+    + '<button class="fp-aviso-x" type="button" data-fechar aria-label="Fechar">&times;</button></div>'
+    + '<div class="fp-aviso-corpo">'
+    + '<div id="fpNotaEstrelas" style="display:flex;gap:6px;justify-content:center;padding:6px 0 2px"></div>'
+    + '<div id="fpNotaRotulo" class="fp-aviso-sub" style="text-align:center;min-height:18px"></div>'
+    + '<div class="form-group"><label for="fpNotaObs">Comentário (opcional)</label>'
+    + '<textarea id="fpNotaObs" rows="3" placeholder="Ex.: fundo sujo, refazer com a moto de perfil."></textarea></div>'
+    + '</div><div class="fp-aviso-foot"><span class="fp-aviso-conta" id="fpNotaAviso"></span>'
+    + '<button class="action-btn" type="button" data-fechar>Cancelar</button>'
+    + '<button class="action-btn approve" type="button" data-salvar>Salvar nota</button></div></div>';
+
+  const pintar = () => {
+    ov.querySelector('#fpNotaEstrelas').innerHTML = [1, 2, 3, 4, 5].map(k =>
+      '<button type="button" class="fp-nota ' + (k <= escolhida ? 'tem' : 'sem') + '" data-k="' + k + '"'
+      + ' aria-label="' + k + ' de 5" style="background:none;border:0;cursor:pointer;padding:2px">'
+      + FP_ESTRELA.replace('width:15px', '') + '</button>').join('');
+    ov.querySelectorAll('#fpNotaEstrelas svg').forEach(sv => { sv.style.width = '30px'; sv.style.height = '30px'; });
+    ov.querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
+      escolhida = (Number(b.dataset.k) === escolhida) ? 0 : Number(b.dataset.k);
+      pintar();
+    });
+    ov.querySelector('#fpNotaRotulo').textContent = escolhida ? escolhida + ' de 5' : 'Sem nota';
+    ov.querySelector('#fpNotaAviso').textContent = (escolhida && escolhida < 2)
+      ? 'Nota baixa: volta para a fila de produção.' : '';
+  };
+  const fechar = () => { ov.remove(); document.body.classList.remove('fp-sem-scroll'); };
+  ov.querySelectorAll('[data-fechar]').forEach(b => b.onclick = fechar);
+  ov.addEventListener('click', ev => { if (ev.target === ov) fechar(); });
+  ov.querySelector('[data-salvar]').onclick = async () => {
+    if (!escolhida) { fpToast('Escolha uma nota de 1 a 5.', 'warn'); return; }
+    const obs = ov.querySelector('#fpNotaObs').value.trim() || null;
+    fechar();
+    await fpNotaGravar(sku, escolhida, obs);
+  };
+  document.body.appendChild(ov);
+  document.body.classList.add('fp-sem-scroll');
+  pintar();
+}
+
+async function fpNotaGravar(sku, nota, comentario) {
+  const prod = fpFotoProduto(sku);
+  if (!prod) return;
+  const quem = CURRENT_USER ? (CURRENT_USER.name || CURRENT_USER.username) : null;
+  const refazer = nota < 2;
+  const patch = {
+    nota, nota_comentario: comentario, nota_por: quem, nota_em: new Date().toISOString(),
+    /* A nota anterior só troca quando havia uma: re-avaliar duas vezes seguidas
+       não pode apagar a nota que motivou o refazer. */
+    nota_anterior: prod.nota != null ? prod.nota : prod.nota_anterior,
+    refazer,
+  };
+  if (refazer) { patch.status = 'fila'; patch.prioridade = prod.prioridade == null ? 3 : prod.prioridade; }
+  Object.assign(prod, patch);
+  fpFotoRedesenhar();
+  const [r1, r2] = await Promise.all([
+    sb.from('mc_photo_products').update(patch).eq('sku', sku),
+    sb.from('mc_photo_ratings').insert({ sku, nota, comentario, autor_id: CURRENT_USER ? CURRENT_USER.id : null, autor_nome: quem }),
+  ]);
+  if (r1.error) { fpToast('Erro ao gravar a nota: ' + r1.error.message, 'erro'); return; }
+  if (r2.error) console.warn('histórico de nota', r2.error);   // a nota já valeu; o histórico é secundário
+  fpToast(refazer ? 'Nota ' + nota + '/5 — produto de volta à fila de produção.' : 'Nota ' + nota + '/5 salva.', refazer ? 'warn' : 'ok');
+}
+
+/* ═══════════════ PANORAMA ═══════════════ */
+async function renderFotoPanorama() {
+  const box = document.getElementById('fotoPanorama');
+  if (!box) return;
+  const ativos = FOTO_PRODUTOS.filter(p => !p.excluido);
+  const com = ativos.filter(p => p.tem_foto), sem = ativos.filter(p => !p.tem_foto);
+  const notas = ativos.filter(p => p.nota != null).map(p => p.nota);
+  const media = notas.length ? (notas.reduce((a, b) => a + b, 0) / notas.length) : null;
+  const fila = { 5: 0, 3: 0, 2: 0, 1: 0, pend: 0 };
+  sem.forEach(p => { if (p.prioridade == null) fila.pend++; else fila[p.prioridade]++; });
+  const pct = ativos.length ? Math.round(com.length / ativos.length * 100) : 0;
+
+  /* "Este mês" conta o que passou pelo painel: mc_photo_files só tem foto
+     enviada por aqui. Foto que já estava no Drive antes deste módulo não
+     entra — e não deve, senão o número do mês vira o acervo inteiro. */
+  const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0, 0, 0, 0);
+  let fotosMes = [], recentes = [], lotes = [];
+  try {
+    const [f, r, l] = await Promise.all([
+      sb.from('mc_photo_files').select('sku,created_at').gte('created_at', inicioMes.toISOString()),
+      sb.from('mc_photo_files').select('*').order('created_at', { ascending: false }).limit(15),
+      sb.from('mc_photo_batches').select('*').eq('status', 'aberto').order('created_at', { ascending: false }).limit(5),
+    ]);
+    fotosMes = f.data || []; recentes = r.data || []; lotes = l.data || [];
+  } catch (e) { console.warn('panorama', e); }
+  const produtosMes = new Set(fotosMes.map(x => x.sku)).size;
+
+  const cartao = (rotulo, valor, extra) => '<div class="stat-card"><div class="label">' + rotulo + '</div>'
+    + '<div class="value">' + valor + '</div>' + (extra ? '<div class="fp-aviso-sub">' + extra + '</div>' : '') + '</div>';
+
+  const semFotoEstoque = sem.slice().sort((a, b) => (Number(b.estoque) || 0) - (Number(a.estoque) || 0)).slice(0, 8);
+
+  box.innerHTML = '<div class="stats-grid">'
+    + cartao('Com foto', com.length.toLocaleString('pt-BR'), pct + '% do catálogo ativo')
+    + cartao('Sem foto', sem.length.toLocaleString('pt-BR'), fila.pend ? fila.pend.toLocaleString('pt-BR') + ' sem prioridade' : 'tudo classificado')
+    + cartao('Nota média', media == null ? '—' : media.toFixed(1).replace('.', ',') + '/5', notas.length ? notas.length + ' produtos avaliados' : 'ainda sem avaliação')
+    + cartao('Fotos este mês', fotosMes.length.toLocaleString('pt-BR'), produtosMes + (produtosMes === 1 ? ' produto' : ' produtos'))
+    + '</div>'
+
+    + '<h3 style="margin:22px 0 10px;font-size:14px">Fila por prioridade</h3>'
+    + '<div class="fp-prod">' + [
+        ['Emergencial', fila[5], 5], ['Alta', fila[3], 3], ['Média', fila[2], 2], ['Baixa', fila[1], 1], ['Sem prioridade', fila.pend, 0],
+      ].map(([rot, qtd, n]) => '<div class="fp-prod-linha"><span class="fp-prod-nome"><b>' + rot + '</b></span>'
+        + '<span class="fp-prod-est">' + qtd.toLocaleString('pt-BR') + ' <small>itens</small></span>'
+        + '<span class="fp-prod-fim" style="width:120px"><span style="flex:1;height:5px;border-radius:3px;background:var(--border-hi);overflow:hidden;display:block">'
+        + '<span style="display:block;height:100%;width:' + (sem.length ? Math.round(qtd / sem.length * 100) : 0) + '%;background:' + fpPrioCor(n) + '"></span></span></span></div>').join('')
+    + '</div>'
+
+    + (lotes.length ? '<h3 style="margin:22px 0 10px;font-size:14px">Lotes em aberto</h3><div class="fp-prod">'
+        + lotes.map(l => '<div class="fp-prod-linha"><span class="fp-prod-nome"><b>Lote de '
+          + new Date(l.created_at).toLocaleDateString('pt-BR') + '</b><span class="fp-prod-sku">'
+          + escHtml(l.criado_por_nome || '') + (l.slack_destino_nome ? ' → ' + escHtml(l.slack_destino_nome) : '') + '</span></span>'
+          + '<span class="fp-prod-est">' + (l.tamanho || 0) + ' <small>itens</small></span></div>').join('') + '</div>' : '')
+
+    + (semFotoEstoque.length ? '<h3 style="margin:22px 0 10px;font-size:14px">Sem foto e com mais estoque parado</h3><div class="fp-prod">'
+        + semFotoEstoque.map(p => '<div class="fp-prod-linha">' + fpFotoProdutoHtml(p.sku, p.imagem_bling, 34, 7)
+          + '<span class="fp-prod-nome"><b>' + escHtml(p.nome || p.sku) + '</b><span class="fp-prod-sku">' + escHtml(p.sku) + '</span></span>'
+          + fpProdEstoqueHtml(p.estoque)
+          + '<span class="fp-prod-fim">' + fpPrioHtml(p.sku, p.prioridade, fpFotoPodeEditar()) + '</span></div>').join('') + '</div>' : '')
+
+    + (recentes.length ? '<h3 style="margin:22px 0 10px;font-size:14px">Últimas 15 fotos enviadas</h3>'
+        + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px">'
+        + recentes.map(f => '<div><img src="' + escHtml(FP_DRIVE_URL + '?action=arquivo&id=' + encodeURIComponent(f.drive_file_id || '')) + '" alt="'
+          + escHtml(f.file_name || '') + '" loading="eager" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--border)">'
+          + '<div class="fp-prod-sku" style="margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escHtml(f.sku || '') + '</div></div>').join('')
+        + '</div>' : '');
+
+  fpDriveCarregar(semFotoEstoque.map(p => p.sku), box);
+}
+
+/* Sincronização: varre o catálogo do Bling e depois confere as pastas do
+   Drive. É demorado e o botão precisa dizer isso. */
+async function fpFotoSincronizar() {
+  const btn = document.getElementById('fotoSyncBtn');
+  const sessao = localStorage.getItem('fp_session');
+  if (!sessao) { fpToast('Entre de novo no painel.', 'erro'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Lendo o Bling…'; }
+  try {
+    let pagina = 1, total = 0, voltas = 0;
+    while (voltas++ < 40) {
+      const { data, error } = await sb.functions.invoke('bling-sync', { body: { action: 'sincronizar', sessao, pagina_inicial: pagina } });
+      if (error) throw error;
+      if (data && data.erro) throw new Error(data.erro);
+      total += (data && data.gravados) || 0;
+      if (btn) btn.textContent = 'Lendo o Bling… ' + total.toLocaleString('pt-BR');
+      if (!data || !data.proxima_pagina) break;
+      pagina = data.proxima_pagina;
+    }
+    if (btn) btn.textContent = 'Conferindo o Drive…';
+    const { data: d2, error: e2 } = await sb.functions.invoke('bling-sync', { body: { action: 'drive', sessao } });
+    if (e2) throw e2;
+    if (d2 && d2.erro) throw new Error(d2.erro);
+    await fpFotoCarregar(true);
+    renderFotoPanorama();
+    fpToast(total.toLocaleString('pt-BR') + ' produtos sincronizados · ' + ((d2 && d2.casados) || 0) + ' com pasta no Drive.', 'ok', { duracao: 7000 });
+  } catch (e) {
+    fpToast('Sincronização falhou: ' + (e.message || e), 'erro', { duracao: 8000 });
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Sincronizar catálogo'; }
+  }
+}
+
 /* ═══════════════ MÓDULO ATUALIZAÇÕES DO SITE ═══════════════ */
 const FP_UPD_TIPOS = { funcionalidade: 'Funcionalidade', design: 'Design', correcao: 'Correção' };
 
-function fpUpdSelo(tipo) {
+function fpUpdPatchNum(n) { return n == null ? '000' : String(n).padStart(3, '0'); }
+function fpUpdTipoHtml(tipo) {
   const t = FP_UPD_TIPOS[tipo] ? tipo : 'funcionalidade';
-  return '<span class="badge upd-' + t + '">' + FP_UPD_TIPOS[t] + '</span>';
+  return '<span class="fp-aviso-tipo t-' + t + '">' + FP_UPD_TIPOS[t] + '</span>';
+}
+/* Uma nota: código, nome técnico, tipo, título e resumo. Sem moldura — quem
+   separa uma da outra é o fio do container. */
+function fpUpdNotaHtml(u, acoes) {
+  return '<div class="fp-aviso-nota"><div class="fp-aviso-nota-topo">'
+    + '<span class="fp-aviso-cod">' + escHtml(u._cod || '') + '</span>'
+    + '<span class="fp-aviso-nome">' + escHtml(u.nome || '') + '</span>'
+    + fpUpdTipoHtml(u.tipo) + '</div>'
+    + '<div class="fp-aviso-nota-tit">' + escHtml(u.titulo || '') + '</div>'
+    + (u.descricao ? '<div class="fp-aviso-nota-txt">' + escHtml(u.descricao) + '</div>' : '')
+    + (acoes || '') + '</div>';
+}
+/* Agrupa por patch mantendo a ordem em que a lista chegou. */
+function fpUpdPorPatch(lista) {
+  const grupos = [];
+  lista.forEach(u => {
+    const ultimo = grupos[grupos.length - 1];
+    if (ultimo && ultimo.patch === u.patch) ultimo.notas.push(u);
+    else grupos.push({ patch: u.patch, data: u.publicado_em, notas: [u] });
+  });
+  return grupos;
+}
+function fpUpdFaixaHtml(g, total) {
+  const n = total == null ? g.notas.length : total;
+  return '<div class="fp-aviso-patch"><b>Patch ' + fpUpdPatchNum(g.patch) + '</b>'
+    + '<span class="fp-aviso-sub">' + escHtml(fpUpdData(g.data)) + ' · ' + n + (n === 1 ? ' nota' : ' notas') + '</span></div>';
 }
 function fpUpdData(d) {
   if (!d) return '';
@@ -14675,20 +17160,21 @@ function renderAtualizacoes() {
     return;
   }
 
-  let html = '', diaAtual = '';
-  lista.forEach(u => {
-    const dia = fpUpdData(u.publicado_em);
-    if (dia !== diaAtual) { diaAtual = dia; html += '<div class="fp-upd-dia">' + escHtml(dia) + '</div>'; }
-    html += '<div class="fp-upd-card"><div class="fp-upd-tit">' + escHtml(u.titulo || '') + '</div>'
-      + (u.descricao ? '<div class="fp-upd-txt">' + escHtml(u.descricao) + '</div>' : '')
-      + '<div class="fp-upd-pe">' + fpUpdSelo(u.tipo)
-      + (u.modulo ? '<span class="fp-aviso-sub">' + escHtml(u.modulo) + '</span>' : '')
-      + (admin ? '<span style="margin-left:auto;display:flex;gap:6px">'
-          + '<button class="action-btn" type="button" onclick="fpUpdAbrirEditor(\'' + u.id + '\')">Editar</button>'
-          + '<button class="action-btn reject" type="button" onclick="fpUpdApagar(\'' + u.id + '\')">Excluir</button></span>' : '')
-      + '</div></div>';
+  let html = '<div class="fp-upd-lista">';
+  fpUpdPorPatch(lista).forEach(g => {
+    const noPatch = (UPDATES || []).filter(u => u.patch === g.patch).length;
+    html += fpUpdFaixaHtml(g, noPatch);
+    g.notas.forEach(u => {
+      html += fpUpdNotaHtml(u, (u.modulo || admin)
+        ? '<div class="fp-aviso-nota-topo" style="margin:9px 0 0">'
+          + (u.modulo ? '<span class="fp-aviso-sub">' + escHtml(u.modulo) + '</span>' : '')
+          + (admin ? '<span class="fp-aviso-acoes">'
+              + '<button class="action-btn" type="button" onclick="fpUpdAbrirEditor(\'' + u.id + '\')">Editar</button>'
+              + '<button class="action-btn reject" type="button" onclick="fpUpdApagar(\'' + u.id + '\')">Excluir</button></span>' : '')
+          + '</div>' : '');
+    });
   });
-  box.innerHTML = html;
+  box.innerHTML = html + '</div>';
 }
 
 /* Editor: o dono pediu que as novidades sejam escritas por mim, mas deixar
@@ -14697,6 +17183,7 @@ function fpUpdAbrirEditor(id) {
   const u = id ? (UPDATES || []).find(x => x.id === id) : null;
   document.getElementById('updEdId').value = u ? u.id : '';
   document.getElementById('updEdTitulo').value = u ? (u.titulo || '') : '';
+  document.getElementById('updEdNome').value = u ? (u.nome || '') : '';
   document.getElementById('updEdDescricao').value = u ? (u.descricao || '') : '';
   document.getElementById('updEdTipo').value = u ? (u.tipo || 'funcionalidade') : 'funcionalidade';
   document.getElementById('updEdModulo').value = u ? (u.modulo || '') : '';
@@ -14710,6 +17197,7 @@ async function fpUpdSalvar() {
   const id = document.getElementById('updEdId').value;
   const linha = {
     titulo: document.getElementById('updEdTitulo').value.trim(),
+    nome: document.getElementById('updEdNome').value.trim().toLowerCase().replace(/\s+/g, '-') || null,
     descricao: document.getElementById('updEdDescricao').value.trim() || null,
     tipo: document.getElementById('updEdTipo').value,
     modulo: document.getElementById('updEdModulo').value.trim() || null,
@@ -19093,6 +21581,7 @@ function getUserRole() {
   if (r === 'admin' || r === 'administrador' || r.startsWith('admin')) return 'admin';
   if (r.includes('filmmaker') || r.includes('gestor')) return 'filmmaker';
   if (r.includes('mecanico') || r.includes('apresentador')) return 'mecanico';
+  if (r.includes('fotograf')) return 'fotografo';
   return 'viewer';
 }
 
@@ -19101,7 +21590,8 @@ function applyRolePermissions() {
 
   // Views accessible per role
   const access = {
-    admin: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'],
+    fotografo: ['dashboard','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','atualizacoes','profile'],
+    admin: ['dashboard','requests','calendar','checkin','projects','editing','clips','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'],
     filmmaker: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','atualizacoes','profile'],
     mecanico: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-bonificacao','templates','atualizacoes','profile'],
     viewer: ['dashboard','debriefing','atualizacoes','profile']
@@ -19394,7 +21884,8 @@ async function initApp() {
      ------------------------------------------------------------------ */
   const ALL_VIEWS = [
     'dashboard','requests','calendar','checkin','projects','project-detail',
-    'editing','clips','debriefing','perf-metas','perf-posts','perf-influencers',
+    'editing','clips','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote',
+    'debriefing','perf-metas','perf-posts','perf-influencers',
     'perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'
   ];
 
@@ -19447,6 +21938,11 @@ async function initApp() {
     try {
       switch (viewName) {
         case 'atualizacoes': renderAtualizacoes(); break;
+        case 'foto-dashboard': await fpFotoCarregar(); renderFotoPanorama(); break;
+        case 'foto-producao':  await fpFotoCarregar(); renderFotoProducao(); break;
+        case 'foto-galeria':   await fpFotoCarregar(); renderFotoGaleria(); break;
+        case 'foto-separacao': await fpFotoCarregar(); renderFotoSeparacao(); break;
+        case 'foto-lote':      await fpFotoCarregar(); renderFotoLote(); break;
         case 'dashboard':
           await Promise.all([loadRequests(), loadCheckins(), loadCheckouts(), loadProjects()]);
           renderDashboard();
