@@ -335,6 +335,21 @@ de 19/08 percorreu as 17 telas medindo toda `.badge`, `.proj-dest-tag` e
 - Contraste medido ao final: **0 reprovados WCAG AA nos dois temas**
 - Textos em português, com acento. Nada de *goal*, *pool*, *pace* na interface
 
+## Drive: dois endereços para o mesmo arquivo
+
+`?action=img&sku=X` e `?action=arquivo&id=Y` devolvem **o mesmo JPEG**, mas são URLs
+diferentes — então o cache do navegador não vale entre as duas. A miniatura da listagem
+usa a primeira; a tira do visor usa a segunda.
+
+Quem quiser prévia instantânea tem que reusar **exatamente** a url que já foi baixada
+(`fpDriveImgUrl(sku, false)`). Foi essa troca que fez o visor da Galeria abrir em 2ms em
+vez de esperar a rede.
+
+Ordem de carregamento que funciona, no visor: prévia em cache → leitura da pasta → foto
+grande da posição atual, sozinha → tira de miniaturas → adiantamento das seguintes, **em
+série**. Desenhar a tira antes dispara 12 pedidos ao mesmo tempo e a foto que o operador
+quer ver fica atrás deles na fila.
+
 ## `.action-btn` é a classe de botão — `.btn` não existe
 
 `.btn`, `.btn primary` e `.btn ghost` **não existem no `admin.html`**. Botão com essas
