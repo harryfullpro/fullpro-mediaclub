@@ -166,6 +166,33 @@ Aplicar `display: contents` no bloco do título e em `.edit-actions` promove tí
 status e "…" a filhos diretos do flex do cabeçalho — daí `order` e `flex-basis: 100%`
 montam as duas linhas. Mexer no HTML resolveria também, mas mudaria o computador.
 
+### Listagem: fios, não caixas
+
+Pedido explícito do dono, em duas etapas (25/08/2026). Primeiro tirou a caixa de cada
+item; depois tirou também o container em volta da lista:
+
+> *"sem esses containers e blocos parecendo muito site de ia. Quero uma estética mais
+> moderna baseada em dividers"* · *"quero que a listagem fique diretamente no fundo do
+> site, sem containers"*
+
+**A regra:** linha de listagem **não tem moldura própria** — nem borda, nem fundo, nem
+canto arredondado. A lista também **não fica dentro de um container**. As linhas ficam
+direto sobre o fundo da tela, separadas por um fio de 1px:
+
+```css
+.minha-lista > * + * { border-top: 1px solid var(--border); }
+.minha-lista-linha { display: flex; align-items: center; gap: 12px; padding: 12px 10px; }
+.minha-lista-linha:hover { background: rgba(255,255,255,.03); }
+[data-theme="light"] .minha-lista-linha:hover { background: rgba(0,0,0,.022); }
+```
+
+Cabeçalho de bloco no meio da lista é **rótulo solto** (11–12px, maiúsculas, `letter-spacing`
+de .1em, cor `--text-muted`), sem faixa de fundo. Referência viva: `.fp-prod` / `.fp-prod-linha`
+/ `.fp-prod-faixa` (seção Fotografia) e `.fp-aviso-corpo` (aviso de entrada).
+
+Caixa dentro de caixa é o que mais entrega interface montada por template. O `.stat-card`
+do topo das telas continua valendo — é cartão de número, não item de lista.
+
 ### Tabela → lista de cards, sem duplicar marcação
 
 Solicitações é a referência (`#reqTable`, bloco no fim do `<style>`). Em ≤900px o `<tr>`
@@ -307,6 +334,17 @@ de 19/08 percorreu as 17 telas medindo toda `.badge`, `.proj-dest-tag` e
   também é cor de menu ativo)
 - Contraste medido ao final: **0 reprovados WCAG AA nos dois temas**
 - Textos em português, com acento. Nada de *goal*, *pool*, *pace* na interface
+
+## `.action-btn` é a classe de botão — `.btn` não existe
+
+`.btn`, `.btn primary` e `.btn ghost` **não existem no `admin.html`**. Botão com essas
+classes nasce sem estilo nenhum: 19px de altura, padding zero, some no rodapé.
+
+O que existe: `.action-btn` (neutro), `.action-btn.approve` (confirmar, verde),
+`.action-btn.view` (primário, azul), `.action-btn.reject` (destrutivo, contorno vermelho),
+`.action-btn.danger` (destrutivo, preenchido). Declaradas perto do topo do `<style>`.
+
+**Antes de usar uma classe de botão, procure a declaração dela no arquivo.**
 
 ## Commits
 
