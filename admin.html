@@ -3175,7 +3175,6 @@ main:focus, main:focus-visible { outline: none !important; }
   transition: transform .16s ease;
 }
 .fp-confirm-ov.aberto .fp-confirm { transform: none; }
-.fp-confirm.perigo { border-top: 3px solid var(--perigo); }
 .fp-confirm-tit { margin: 0 0 8px; font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -.01em; }
 .fp-confirm-msg { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text-dim); }
 .fp-confirm-det {
@@ -3197,11 +3196,13 @@ main:focus, main:focus-visible { outline: none !important; }
   border-radius: var(--raio-md); font-size: 13.5px; font-weight: 650;
   cursor: pointer; font-family: inherit; border: 1px solid transparent;
 }
-.fp-btn-sec { background: transparent; border-color: var(--border-hi); color: var(--text-dim); }
-.fp-btn-sec:hover { color: var(--text); border-color: var(--text-muted); }
+.fp-btn-sec { background: transparent; border-color: transparent; color: var(--perigo); }
+.fp-btn-sec:hover { background: color-mix(in srgb, var(--perigo) 12%, transparent); }
 .fp-btn-pri { background: var(--success); color: #04220f; }
 .fp-btn-pri:hover { filter: brightness(1.07); }
 .fp-btn-pri.perigo { background: var(--perigo); color: #fff; }
+.fp-btn-pri { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.fp-btn-pri svg { width: 15px; height: 15px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .fp-btn-pri:disabled { opacity: .45; cursor: not-allowed; filter: none; }
 body.fp-sem-scroll { overflow: hidden; }
 @media (max-width: 480px) {
@@ -7285,7 +7286,17 @@ function fpConfirm(cfg){
     const sim = ov.querySelector('.fp-cf-sim');
     nao.textContent = cfg.cancelar || 'Cancelar';
     sim.textContent = cfg.confirmar || 'Confirmar';
-    if (cfg.perigo) sim.classList.add('perigo');
+    if (cfg.perigo) {
+      sim.classList.add('perigo');
+      /* Triângulo de atenção antes do rótulo. Vai por DOM e não por innerHTML
+         porque o rótulo pode vir do nome de um projeto ou produto. */
+      const av = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      av.setAttribute('viewBox', '0 0 24 24');
+      av.setAttribute('aria-hidden', 'true');
+      av.innerHTML = '<path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/>'
+        + '<path d="M12 9v4"/><path d="M12 17h.01"/>';
+      sim.insertBefore(av, sim.firstChild);
+    }
 
     if (cfg.detalhe) {
       const d = ov.querySelector('.fp-confirm-det');
@@ -15052,7 +15063,8 @@ async function fpPrioDefinir(sku, nivel) {
     titulo: 'Marcar como emergencial',
     mensagem: '"' + (prod.nome || sku) + '" passa na frente de toda a fila no próximo lote de separação.',
     detalhe: 'O nível emergencial é só para urgência real — foto que está travando venda ou anúncio.',
-    confirmar: 'É emergencial',
+    confirmar: 'Confirmar',
+    perigo: true,
   })) return;
 
   const antes = prod.prioridade;
