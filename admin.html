@@ -4513,25 +4513,20 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    debriefing e do aviso de entrada. Cada linha dentro da própria caixa
    fazia caixa-dentro-de-caixa, que é o que mais entrega interface montada
    por template. */
-.fp-prod {
-  border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
-  background: var(--bg-elev);
-}
 .fp-prod:empty { display: none; }
 .fp-prod > * + * { border-top: 1px solid var(--border); }
 .fp-prod-linha {
-  display: flex; align-items: center; gap: 12px; padding: 11px 16px;
+  display: flex; align-items: center; gap: 12px; padding: 12px 10px;
   transition: background .12s ease;
 }
 .fp-prod-linha:hover { background: rgba(255,255,255,.03); }
-[data-theme="light"] .fp-prod-linha:hover { background: rgba(0,0,0,.025); }
+[data-theme="light"] .fp-prod-linha:hover { background: rgba(0,0,0,.022); }
 .fp-prod-linha.fora { opacity: .5; }
-/* Cabeçalho de bloco dentro da listagem, no lugar do <h3> solto. */
+/* Cabeçalho de bloco, no lugar do <h3> solto. Sem fundo: a listagem fica
+   direto sobre o fundo da tela, sem moldura em volta. */
 .fp-prod-faixa {
-  display: flex; align-items: baseline; gap: 10px; padding: 13px 16px 9px;
-  background: rgba(255,255,255,.02);
+  display: flex; align-items: baseline; gap: 10px; padding: 20px 10px 8px;
 }
-[data-theme="light"] .fp-prod-faixa { background: rgba(0,0,0,.02); }
 .fp-prod-faixa b { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
 .fp-prod-faixa .fp-aviso-sub { margin-left: auto; }
 /* Recado solto (avisos do rateio, lote criado): fora da listagem, com a
@@ -4551,11 +4546,78 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-prod-vazio { padding: 26px 12px; text-align: center; color: var(--text-muted); font-size: 13px; }
 
 @media (max-width: 900px) {
-  .fp-prod-linha { flex-wrap: wrap; row-gap: 9px; padding: 11px 13px; }
+  .fp-prod-linha { flex-wrap: wrap; row-gap: 9px; padding: 12px 4px; }
   .fp-prod-nome { flex: 1 1 60%; }
   .fp-prod-est  { order: 2; }
   .fp-prod-fim  { order: 3; flex-basis: 100%; justify-content: space-between; }
   .fp-prio-rot  { min-width: 0; }
+}
+
+/* --- visor de fotos do produto (Galeria) ------------------------------
+   Tela cheia, sem moldura: a foto é o conteúdo e qualquer caixa em volta
+   só rouba espaço dela. Setas, contador e tira de miniaturas flutuam por
+   cima do fundo escuro. */
+.fp-visor {
+  position: fixed; inset: 0; z-index: 100160; display: none;
+  flex-direction: column; background: rgba(0,0,0,.92);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.fp-visor.show { display: flex; }
+.fp-visor-topo { display: flex; align-items: center; gap: 12px; padding: 14px 18px; color: #fff; flex: 0 0 auto; }
+.fp-visor-topo > div:first-child { flex: 0 1 auto; min-width: 0; }
+.fp-visor-topo h3 {
+  font-size: 15px; font-weight: 650; margin: 0; line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fp-visor-topo .fp-visor-sku {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px;
+  color: rgba(255,255,255,.55); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fp-visor-conta {
+  margin-left: auto; font-size: 12.5px; color: rgba(255,255,255,.7);
+  flex: 0 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fp-visor-btn {
+  width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; flex: 0 0 auto;
+  background: rgba(255,255,255,.08); border: 0; color: #fff; cursor: pointer; font-size: 18px; line-height: 1;
+  text-decoration: none; transition: background .12s ease;
+}
+.fp-visor-btn:hover { background: rgba(255,255,255,.18); }
+.fp-visor-palco {
+  flex: 1 1 auto; min-height: 0; position: relative;
+  display: flex; align-items: center; justify-content: center; padding: 0 14px;
+}
+.fp-visor-palco img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 10px; }
+.fp-visor-carregando { position: absolute; color: rgba(255,255,255,.6); font-size: 13px; }
+.fp-visor-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(255,255,255,.1); border: 0; color: #fff; cursor: pointer; font-size: 22px; line-height: 1;
+  transition: background .12s ease, opacity .12s ease;
+}
+.fp-visor-nav:hover { background: rgba(255,255,255,.22); }
+.fp-visor-nav[disabled] { opacity: .22; cursor: default; }
+.fp-visor-nav.ant { left: 14px; }
+.fp-visor-nav.pro { right: 14px; }
+.fp-visor-tira { display: flex; gap: 7px; overflow-x: auto; padding: 12px 18px 16px; flex: 0 0 auto; }
+.fp-visor-tira img {
+  width: 54px; height: 54px; object-fit: cover; border-radius: 8px; cursor: pointer; flex: 0 0 auto;
+  opacity: .4; outline: 2px solid transparent; outline-offset: -2px; transition: opacity .12s ease, outline-color .12s ease;
+}
+.fp-visor-tira img:hover { opacity: .75; }
+.fp-visor-tira img.atual { opacity: 1; outline-color: #fff; }
+@media (max-width: 600px) {
+  /* No celular o contador desce para a própria linha: em cima, com o nome
+     do produto, ele espremia o × contra a borda da tela. */
+  .fp-visor-topo { flex-wrap: wrap; padding: 12px 12px 8px; row-gap: 4px; }
+  .fp-visor-topo > div:first-child { flex: 1 1 0; }
+  .fp-visor-topo h3 { font-size: 14px; }
+  .fp-visor-conta { order: 3; flex: 1 1 100%; margin-left: 0; font-size: 11.5px; }
+  .fp-visor-nav { width: 40px; height: 40px; }
+  .fp-visor-nav.ant { left: 6px; }
+  .fp-visor-nav.pro { right: 6px; }
+  .fp-visor-tira img { width: 46px; height: 46px; }
 }
 </style>
 </head>
@@ -16913,40 +16975,150 @@ function renderFotoGaleria() {
   fpDriveCarregar(visiveis.map(p => p.sku), box);
 }
 
-/* Abre todas as fotos da pasta do SKU. O drive-proxy tem uma ação própria
-   para isso: a que alimenta a miniatura devolve só a primeira imagem. */
+/* ---------- visor de fotos do produto ----------
+   A miniatura da listagem mostra só a primeira foto da pasta; o drive-proxy
+   tem uma ação própria (`fotos`) que devolve a pasta inteira. O visor abre
+   em tela cheia com avançar/retroceder, tira de miniaturas, teclado e
+   arrasto no celular. */
+let _visorEl = null, _visorFotos = [], _visorI = 0, _visorSku = '';
+
 async function fpGalAbrirFotos(sku) {
   const prod = fpFotoProduto(sku) || { sku };
-  const ov = document.createElement('div');
-  ov.className = 'fp-aviso-ov show';
-  ov.innerHTML = '<div class="fp-aviso" style="max-width:720px" role="dialog" aria-modal="true">'
-    + '<div class="fp-aviso-head"><div><h3>' + escHtml(prod.nome || sku) + '</h3>'
-    + '<div class="fp-aviso-data">' + escHtml(sku) + '</div></div>'
-    + '<button class="fp-aviso-x" type="button" data-fechar aria-label="Fechar">&times;</button></div>'
-    + '<div class="fp-aviso-corpo" id="fpGalGrade"><div class="fp-prod-vazio">Carregando as fotos…</div></div>'
-    + '<div class="fp-aviso-foot"><span class="fp-aviso-conta" id="fpGalConta"></span>'
-    + '<a class="action-btn" target="_blank" rel="noopener" href="' + escHtml(FP_DRIVE_URL + '?action=open&sku=' + encodeURIComponent(sku)) + '">Abrir no Drive</a>'
-    + '</div></div>';
-  const fechar = () => { ov.remove(); document.body.classList.remove('fp-sem-scroll'); };
-  ov.querySelector('[data-fechar]').onclick = fechar;
-  ov.addEventListener('click', ev => { if (ev.target === ov) fechar(); });
-  document.body.appendChild(ov);
+  _visorSku = sku; _visorFotos = []; _visorI = 0;
+  fpVisorMontar();
+  _visorEl.querySelector('.fp-visor-topo h3').textContent = prod.nome || sku;
+  _visorEl.querySelector('.fp-visor-sku').textContent = sku;
+  _visorEl.querySelector('.fp-visor-conta').textContent = 'carregando…';
+  _visorEl.querySelector('.fp-visor-tira').innerHTML = '';
+  fpVisorPalco('Lendo a pasta no Drive…');
+  _visorEl.querySelector('.fp-visor-abrir').href = FP_DRIVE_URL + '?action=open&sku=' + encodeURIComponent(sku);
+  _visorEl.classList.add('show');
   document.body.classList.add('fp-sem-scroll');
 
   try {
     const r = await fetch(FP_DRIVE_URL + '?action=fotos&sku=' + encodeURIComponent(sku));
     const j = await r.json();
-    const fotos = (j && j.fotos) || [];
-    const grade = ov.querySelector('#fpGalGrade');
-    if (!fotos.length) { grade.innerHTML = '<div class="fp-prod-vazio">Nenhuma foto nesta pasta.</div>'; return; }
-    grade.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">'
-      + fotos.map(f => '<img src="' + escHtml(f.thumb || '') + '" alt="' + escHtml(f.name || '') + '" loading="eager"'
-        + ' style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:9px;border:1px solid var(--border);cursor:zoom-in"'
-        + ' onclick="openLightbox(\'' + fpJs(f.cheia || f.thumb || '') + '\')">').join('') + '</div>';
-    ov.querySelector('#fpGalConta').textContent = fotos.length === 1 ? '1 foto' : fotos.length + ' fotos';
+    if (_visorSku !== sku) return;          // o operador já abriu outro produto
+    _visorFotos = (j && j.fotos) || [];
   } catch (e) {
-    ov.querySelector('#fpGalGrade').innerHTML = '<div class="fp-prod-vazio">Não deu para ler a pasta: ' + escHtml(e.message || String(e)) + '</div>';
+    fpVisorPalco('Não deu para ler a pasta: ' + (e.message || String(e)));
+    _visorEl.querySelector('.fp-visor-conta').textContent = '';
+    return;
   }
+
+  if (!_visorFotos.length) {
+    fpVisorPalco('Nenhuma foto nesta pasta.');
+    _visorEl.querySelector('.fp-visor-conta').textContent = '';
+    return;
+  }
+
+  _visorEl.querySelector('.fp-visor-tira').innerHTML = _visorFotos.map((f, k) =>
+    '<img src="' + escHtml(f.thumb || '') + '" alt="' + escHtml(f.name || '') + '" loading="eager"'
+    + ' data-k="' + k + '" title="' + escHtml(f.name || '') + '">').join('');
+  _visorEl.querySelectorAll('.fp-visor-tira img').forEach(im => {
+    im.onclick = () => fpVisorPara(Number(im.dataset.k));
+  });
+  fpVisorPara(0);
+}
+
+function fpVisorMontar() {
+  if (_visorEl) return _visorEl;
+  _visorEl = document.createElement('div');
+  _visorEl.className = 'fp-visor';
+  _visorEl.id = 'fpVisor';
+  _visorEl.innerHTML =
+      '<div class="fp-visor-topo"><div><h3></h3><div class="fp-visor-sku"></div></div>'
+    + '<span class="fp-visor-conta"></span>'
+    + '<a class="fp-visor-btn fp-visor-abrir" target="_blank" rel="noopener" title="Abrir a pasta no Drive" aria-label="Abrir a pasta no Drive">&#8599;</a>'
+    + '<button class="fp-visor-btn" type="button" data-fechar aria-label="Fechar">&times;</button></div>'
+    + '<div class="fp-visor-palco">'
+    + '<button class="fp-visor-nav ant" type="button" aria-label="Foto anterior">&lsaquo;</button>'
+    + '<button class="fp-visor-nav pro" type="button" aria-label="Próxima foto">&rsaquo;</button></div>'
+    + '<div class="fp-visor-tira"></div>';
+  _visorEl.querySelector('[data-fechar]').onclick = fpVisorFechar;
+  _visorEl.querySelector('.fp-visor-nav.ant').onclick = () => fpVisorIr(-1);
+  _visorEl.querySelector('.fp-visor-nav.pro').onclick = () => fpVisorIr(1);
+  /* Clique no fundo fecha; no palco, na foto ou nos controles, não. */
+  _visorEl.addEventListener('click', ev => {
+    if (ev.target === _visorEl || ev.target.classList.contains('fp-visor-palco')) fpVisorFechar();
+  });
+  document.addEventListener('keydown', ev => {
+    if (!_visorEl || !_visorEl.classList.contains('show')) return;
+    if (ev.key === 'Escape') { ev.preventDefault(); fpVisorFechar(); }
+    else if (ev.key === 'ArrowRight') { ev.preventDefault(); fpVisorIr(1); }
+    else if (ev.key === 'ArrowLeft')  { ev.preventDefault(); fpVisorIr(-1); }
+  });
+  /* Arrastar de lado no celular. 45px de folga para não trocar de foto
+     quando o dedo só encostou. */
+  let x0 = null, y0 = null;
+  _visorEl.addEventListener('touchstart', ev => {
+    if (ev.touches.length !== 1) return;
+    x0 = ev.touches[0].clientX; y0 = ev.touches[0].clientY;
+  }, { passive: true });
+  _visorEl.addEventListener('touchend', ev => {
+    if (x0 == null) return;
+    const t = ev.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+    x0 = null;
+    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) fpVisorIr(dx < 0 ? 1 : -1);
+  }, { passive: true });
+  document.body.appendChild(_visorEl);
+  return _visorEl;
+}
+
+/* Troca o conteúdo do palco preservando as setas, que moram dentro dele —
+   `innerHTML = ...` levava as duas embora e o próximo clique quebrava. */
+function fpVisorPalco(recado) {
+  const palco = _visorEl.querySelector('.fp-visor-palco');
+  palco.querySelectorAll('img, .fp-visor-carregando').forEach(n => n.remove());
+  const setas = !!(_visorFotos && _visorFotos.length);
+  palco.querySelectorAll('.fp-visor-nav').forEach(b => { b.hidden = !setas; });
+  if (recado) {
+    const av = document.createElement('span');
+    av.className = 'fp-visor-carregando';
+    av.textContent = recado;
+    palco.appendChild(av);
+  }
+  return palco;
+}
+
+function fpVisorPara(k) {
+  if (!_visorEl || !_visorFotos.length) return;
+  _visorI = Math.max(0, Math.min(_visorFotos.length - 1, k));
+  const f = _visorFotos[_visorI];
+  const palco = fpVisorPalco('Carregando…');
+  const aviso = palco.querySelector('.fp-visor-carregando');
+
+  const img = document.createElement('img');
+  img.alt = f.name || '';
+  img.onload = () => { aviso.remove(); };
+  img.onerror = () => { aviso.textContent = 'Não deu para carregar esta foto.'; img.remove(); };
+  img.src = f.cheia || f.thumb || '';
+  palco.appendChild(img);
+
+  _visorEl.querySelector('.fp-visor-conta').textContent =
+    (_visorI + 1) + ' de ' + _visorFotos.length + ' · ' + (f.name || '');
+  _visorEl.querySelector('.fp-visor-nav.ant').disabled = _visorI === 0;
+  _visorEl.querySelector('.fp-visor-nav.pro').disabled = _visorI === _visorFotos.length - 1;
+
+  const tira = _visorEl.querySelectorAll('.fp-visor-tira img');
+  tira.forEach((im, i) => im.classList.toggle('atual', i === _visorI));
+  if (tira[_visorI]) tira[_visorI].scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+
+  /* Adianta a vizinha: sem isso, cada avanço espera a rede do zero. */
+  [_visorI + 1, _visorI - 1].forEach(j => {
+    const v = _visorFotos[j];
+    if (v && (v.cheia || v.thumb)) { const pre = new Image(); pre.src = v.cheia || v.thumb; }
+  });
+}
+
+function fpVisorIr(d) { fpVisorPara(_visorI + d); }
+
+function fpVisorFechar() {
+  if (!_visorEl) return;
+  _visorEl.classList.remove('show');
+  fpVisorPalco('');
+  document.body.classList.remove('fp-sem-scroll');
+  _visorSku = '';
 }
 
 /* Avaliação: 0 a 5, uma por produto. Abaixo de 2 devolve para a fila. */
@@ -17060,7 +17232,7 @@ async function renderFotoPanorama() {
     + cartao('Fotos este mês', fotosMes.length.toLocaleString('pt-BR'), produtosMes + (produtosMes === 1 ? ' produto' : ' produtos'))
     + '</div>'
 
-    + '<div class="fp-prod" style="margin-top:22px">'
+    + '<div class="fp-prod">'
     + '<div class="fp-prod-faixa"><b>Fila por prioridade</b><span class="fp-aviso-sub">'
     + sem.length.toLocaleString('pt-BR') + ' produtos sem foto</span></div>' + [
         ['Emergencial', fila[5], 5], ['Alta', fila[3], 3], ['Média', fila[2], 2], ['Baixa', fila[1], 1], ['Sem prioridade', fila.pend, 0],
@@ -17070,19 +17242,19 @@ async function renderFotoPanorama() {
         + '<span style="display:block;height:100%;width:' + (sem.length ? Math.round(qtd / sem.length * 100) : 0) + '%;background:' + fpPrioCor(n) + '"></span></span></span></div>').join('')
     + '</div>'
 
-    + (lotes.length ? '<div class="fp-prod" style="margin-top:22px"><div class="fp-prod-faixa"><b>Lotes em aberto</b></div>'
+    + (lotes.length ? '<div class="fp-prod"><div class="fp-prod-faixa"><b>Lotes em aberto</b></div>'
         + lotes.map(l => '<div class="fp-prod-linha"><span class="fp-prod-nome"><b>Lote de '
           + new Date(l.created_at).toLocaleDateString('pt-BR') + '</b><span class="fp-prod-sku">'
           + escHtml(l.criado_por_nome || '') + (l.slack_destino_nome ? ' → ' + escHtml(l.slack_destino_nome) : '') + '</span></span>'
           + '<span class="fp-prod-est">' + (l.tamanho || 0) + ' <small>itens</small></span></div>').join('') + '</div>' : '')
 
-    + (semFotoEstoque.length ? '<div class="fp-prod" style="margin-top:22px"><div class="fp-prod-faixa"><b>Sem foto e com mais estoque parado</b><span class="fp-aviso-sub">os 8 maiores</span></div>'
+    + (semFotoEstoque.length ? '<div class="fp-prod"><div class="fp-prod-faixa"><b>Sem foto e com mais estoque parado</b><span class="fp-aviso-sub">os 8 maiores</span></div>'
         + semFotoEstoque.map(p => '<div class="fp-prod-linha">' + fpFotoProdutoHtml(p.sku, p.imagem_bling, 34, 7)
           + '<span class="fp-prod-nome"><b>' + escHtml(p.nome || p.sku) + '</b><span class="fp-prod-sku">' + escHtml(p.sku) + '</span></span>'
           + fpProdEstoqueHtml(p.estoque)
           + '<span class="fp-prod-fim">' + fpPrioHtml(p.sku, p.prioridade, fpFotoPodeEditar()) + '</span></div>').join('') + '</div>' : '')
 
-    + (recentes.length ? '<div class="fp-prod-faixa" style="margin-top:22px;background:none;padding-left:2px"><b>Últimas 15 fotos enviadas</b></div>'
+    + (recentes.length ? '<div class="fp-prod-faixa"><b>Últimas 15 fotos enviadas</b></div>'
         + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px">'
         + recentes.map(f => '<div><img src="' + escHtml(FP_DRIVE_URL + '?action=arquivo&id=' + encodeURIComponent(f.drive_file_id || '')) + '" alt="'
           + escHtml(f.file_name || '') + '" loading="eager" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--border)">'
