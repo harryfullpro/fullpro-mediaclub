@@ -4207,6 +4207,37 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
   .dv-mais { flex-wrap: wrap; }
   .dv-mais .dv-mais-resumo { margin-left: 22px; flex-basis: 100%; white-space: normal; }
 }
+/* --- caixa de foto de produto: carregando / com foto / sem foto ---------- */
+.fp-foto {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--border);
+  color: var(--text-muted);
+}
+.fp-foto > img {
+  display: none;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.fp-foto.tem-foto > img { display: block; }
+.fp-foto > span {
+  position: absolute; inset: 0;
+  display: none;
+  align-items: center; justify-content: center;
+}
+.fp-foto > span > svg { width: 58%; height: 58%; max-width: 24px; max-height: 24px; }
+.fp-foto:not(.tem-foto):not(.sem-foto) > .fp-foto-spin { display: flex; }
+.fp-foto:not(.tem-foto):not(.sem-foto) > .fp-foto-spin > svg { animation: spin .9s linear infinite; }
+.fp-foto.sem-foto { background: var(--bg-elev); }
+.fp-foto.sem-foto > .fp-foto-sem { display: flex; }
+@media (prefers-reduced-motion: reduce) {
+  .fp-foto .fp-foto-spin > svg { animation: none; }
+}
 </style>
 </head>
 <body>
@@ -7923,15 +7954,64 @@ async function fpBrindeSugerir(categoria) {
   return fpBrindeDeProduto(achados[0]);
 }
 
-const FP_ICONE_CAIXA = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-dim)" stroke-width="1.8"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4M4 7l8 4M4 7v10l8 4m0-10v10"/></svg>';
+/* ================================================================
+   CAIXA DE FOTO DE PRODUTO — um lugar só, três estados
+
+   Antes cada listagem montava a sua caixa (brinde, produto compatível,
+   clip) e nenhuma dizia em que pé a foto estava: "sem foto" usava o
+   mesmo ícone de caixa que ilustra "produto", então o operador não
+   distinguia "ainda carregando" de "não tem foto".
+
+   O estado é uma classe na caixa:
+     (nenhuma)   rodinha girando — a foto está a caminho
+     .tem-foto   a imagem
+     .sem-foto   câmera cortada
+   ================================================================ */
+const FP_FOTO_SPIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="12" cy="12" r="9" opacity=".22"/><path d="M21 12a9 9 0 00-9-9"/></svg>';
+const FP_FOTO_SEM  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="3.6"/><line x1="2.5" y1="2.5" x2="21.5" y2="21.5"/></svg>';
+
+/* Rede lenta ou caixa que ninguém mandou para o Drive não podem deixar a
+   rodinha girando para sempre: depois de 8s o que sobrou vira "sem foto". */
+let _fpFotoVarredura = null;
+function fpFotoAgendarVarredura() {
+  clearTimeout(_fpFotoVarredura);
+  _fpFotoVarredura = setTimeout(function () {
+    document.querySelectorAll('.fp-foto:not(.tem-foto):not(.sem-foto)')
+      .forEach(function (el) { el.classList.add('sem-foto'); });
+  }, 8000);
+}
+
+function fpFotoProdutoHtml(sku, url, tam, raio) {
+  const px = tam || 34;
+  const r = raio == null ? 6 : raio;
+  const temAlvo = !!(url || sku);   // sem url e sem SKU não há foto a esperar
+  fpFotoAgendarVarredura();
+  return '<div class="fp-foto' + (temAlvo ? '' : ' sem-foto') + '"'
+    + (sku ? ' data-drive-sku="' + escHtml(sku) + '"' : '')
+    + ' style="width:' + px + 'px;height:' + px + 'px;border-radius:' + r + 'px">'
+    /* eager de propósito: a miniatura tem 32-46px e é o conteúdo do cartão.
+       Com lazy, imagem fora da tela nunca começa a carregar e a caixa ficaria
+       girando (ou cairia em "sem foto") sem nem ter tentado. */
+    + (url ? '<img src="' + escHtml(url) + '" alt="" loading="eager" onload="fpFotoOk(this)" onerror="fpFotoFalhou(this)"/>' : '')
+    + '<span class="fp-foto-spin" aria-hidden="true">' + FP_FOTO_SPIN + '</span>'
+    + '<span class="fp-foto-sem" aria-hidden="true" title="Sem foto">' + FP_FOTO_SEM + '</span>'
+    + '</div>';
+}
+function fpFotoOk(img) {
+  const cx = img.closest('.fp-foto');
+  if (cx) { cx.classList.remove('sem-foto'); cx.classList.add('tem-foto'); }
+}
+function fpFotoFalhou(img) {
+  const cx = img.closest('.fp-foto');
+  img.remove();
+  // com SKU ainda há a foto do Drive por vir; sem SKU, acabou
+  if (cx && !cx.getAttribute('data-drive-sku')) cx.classList.add('sem-foto');
+}
+window.fpFotoOk = fpFotoOk;
+window.fpFotoFalhou = fpFotoFalhou;
 
 function fpBrindeFotoHtml(b, tam) {
-  const px = tam || 34;
-  const gancho = b.sku ? ' data-drive-sku="' + escHtml(b.sku) + '"' : '';
-  const est = 'width:' + px + 'px;height:' + px + 'px;border-radius:6px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--border)';
-  return '<div class="fp-brinde-foto"' + gancho + ' style="' + est + '">'
-    + (b.imagem ? '<img src="' + escHtml(b.imagem) + '" alt="" style="width:100%;height:100%;object-fit:cover"/>' : FP_ICONE_CAIXA)
-    + '</div>';
+  return fpFotoProdutoHtml(b.sku, b.imagem, tam || 34, 6);
 }
 /* Botoes de acao no padrao do painel: so o glifo, com dica no data-tip
    (o observador de ergonomia converte em aria-label e title). */
@@ -9927,10 +10007,7 @@ function renderShotsReadOnly(shots, si) {
   function productLine(c){
     // O data-drive-sku e o gancho: se houver pasta com esse SKU no Drive, a
     // foto de la substitui o conteudo desta caixa (ver fpDriveAplicar).
-    const gancho = c.sku ? ' data-drive-sku="' + esc(c.sku) + '"' : '';
-    const img = c.product_image
-      ? '<div' + gancho + ' style="width:46px;height:46px;border-radius:8px;flex-shrink:0;overflow:hidden"><img src="' + esc(c.product_image) + '" width="46" height="46" style="width:100%;height:100%;border-radius:8px;object-fit:cover"/></div>'
-      : '<div' + gancho + ' style="width:46px;height:46px;border-radius:8px;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--text-dim)" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4M4 7l8 4M4 7v10l8 4m0-10v10"/></svg></div>';
+    const img = fpFotoProdutoHtml(c.sku, c.product_image, 46, 8);
     const price = c.product_price != null ? 'R$ ' + brl(c.product_price) : '—';
     const stock = c.product_stock != null ? c.product_stock : '—';
     const stkColor = (typeof c.product_stock === 'number') ? (c.product_stock > 3 ? 'var(--success)' : 'var(--warning)') : 'var(--text-dim)';
@@ -13767,11 +13844,7 @@ function renderCompatibleProductsCollapsed(products, containerId) {
 function renderCompatibleProductsHTML(products) {
   return `<div class="fp-prod-rolagem" style="max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border-hi) transparent"><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px" class="bling-prod-grid">` +
     products.map(p => {
-      // gancho para a foto do Drive (pasta com o nome do SKU) substituir esta caixa
-      const gancho = p.codigo ? ` data-drive-sku="${escHtml(p.codigo)}"` : '';
-      const img = p.imagemURL
-        ? `<div${gancho} style="width:32px;height:32px;border-radius:4px;flex-shrink:0;overflow:hidden"><img src="${escHtml(p.imagemURL)}" width="32" height="32" style="width:100%;height:100%;border-radius:4px;object-fit:cover"/></div>`
-        : `<div${gancho} style="width:32px;height:32px;border-radius:4px;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--text-dim)" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4M4 7l8 4M4 7v10l8 4m0-10v10"/></svg></div>`;
+      const img = fpFotoProdutoHtml(p.codigo, p.imagemURL, 32, 4);
       const saldo = fpEstoqueDe(p);
       const zerado = saldo !== null && saldo <= 0;
       const stk = saldo === null ? '?' : saldo;
@@ -15121,31 +15194,39 @@ function fpDriveAplicar(raiz) {
   escopo.querySelectorAll('[data-drive-sku]').forEach(el => {
     const sku = el.getAttribute('data-drive-sku');
     if (!sku || el.dataset.driveFeito === '1') return;
-    if (!FP_DRIVE_MAPA.get(sku)) return;
-    el.dataset.driveFeito = '1';
 
-    // Guarda o que ja estava no lugar (foto do Bling ou icone de caixa). Antes
-    // o conteudo era apagado antes de saber se a imagem do Drive carregava: se
-    // falhasse, sobrava um quadrado cinza vazio — visto no celular, onde a rede
-    // e mais lenta e a falha e mais provavel.
-    const original = el.innerHTML;
+    /* Já consultamos e não existe pasta com esse SKU (ou o Drive está fora):
+       não vem mais foto nenhuma. Se a do Bling também não veio, a caixa passa a
+       dizer "sem foto" em vez de girar para sempre. */
+    if (!FP_DRIVE_MAPA.get(sku)) {
+      el.dataset.driveFeito = '1';
+      if (!el.classList.contains('tem-foto')) el.classList.add('sem-foto');
+      return;
+    }
+    el.dataset.driveFeito = '1';
 
     const img = document.createElement('img');
     img.alt = 'Foto do produto ' + sku;
     img.decoding = 'async';
+    img.loading = 'eager';   // senão o observador de ergonomia marca lazy
     img.title = 'Foto do Drive — clique para ampliar';
-    img.style.cssText = 'width:100%;height:100%;border-radius:inherit;object-fit:cover;cursor:zoom-in;display:block';
+    img.style.cursor = 'zoom-in';
     img.onclick = (ev) => { ev.stopPropagation(); openLightbox(fpDriveImgUrl(sku, true)); };
 
+    /* A troca só acontece depois de carregar: se a imagem do Drive falhar, o
+       que já estava na tela continua lá (rede lenta no celular era onde isso
+       mais aparecia). */
     img.onload = () => {
-      el.innerHTML = '';
-      el.appendChild(img);
+      const antiga = el.querySelector('img');
+      if (antiga && antiga !== img) antiga.remove();
+      el.insertBefore(img, el.firstChild);
+      el.classList.remove('sem-foto');
+      el.classList.add('tem-foto');
     };
     img.onerror = () => {
       el.dataset.driveFeito = '';
-      if (!el.innerHTML.trim()) el.innerHTML = original;
+      if (!el.classList.contains('tem-foto')) el.classList.add('sem-foto');
     };
-    // so troca depois que carregar; ate la o que existia continua na tela
     img.src = fpDriveImgUrl(sku, false);
   });
 }

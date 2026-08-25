@@ -4,6 +4,31 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 20/08/2026 — Foto de produto: carregando, com foto, sem foto
+
+Toda listagem de produto montava a sua própria caixa de foto — brinde, produto compatível
+e clip, três marcações diferentes — e nenhuma dizia em que pé a imagem estava. Pior: "sem
+foto" usava o **mesmo ícone de caixa** que ilustra "produto", então não havia como saber se
+a foto ainda vinha ou se não existia.
+
+Agora existe uma caixa só, `fpFotoProdutoHtml(sku, url, tamanho, raio)`, com o estado numa
+classe: **rodinha girando** enquanto a foto vem, **a imagem** quando carrega, **câmera
+cortada** quando não há foto. As três listagens passaram a usar ela.
+
+- **`loading="eager"` de propósito nas miniaturas.** O observador de ergonomia marca
+  `lazy` em toda imagem injetada, e com lazy uma miniatura fora da tela **nunca começa a
+  carregar** — a caixa ficaria girando sem nem ter tentado. São 32-46px e são o conteúdo
+  do cartão. Vale também para a imagem do Drive, criada por JS (`img.loading = 'eager'`,
+  senão o observador marca lazy).
+- **O Drive agora responde "não tem".** `fpDriveAplicar` só saía calado quando o SKU não
+  tinha pasta; quem não recebeu foto do Bling ficava girando para sempre. Agora marca
+  "sem foto" — e se a imagem do Bling chegar depois, `fpFotoOk` desfaz.
+- **Rede lenta não deixa rodinha eterna:** uma varredura 8s depois do último cartão
+  desenhado converte o que sobrou em "sem foto". Se a imagem chegar mais tarde, ela volta.
+
+Testado com os cinco casos: foto boa, URL quebrada sem SKU (vira "sem foto" na hora), URL
+quebrada com SKU (espera o Drive), sem nada (já nasce "sem foto") e só SKU (espera).
+
 ## 20/08/2026 — A busca de compatíveis não achava a Duke 390
 
 Depois de mostrar o produto zerado, a KTM 390 Duke continuou dando "nenhum produto
