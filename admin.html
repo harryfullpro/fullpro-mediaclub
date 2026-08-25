@@ -4577,7 +4577,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   align-items: center; justify-content: center; padding: 20px;
   background: rgba(0,0,0,.92);
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-  --fp-visor-lado: min(50vh, 56vw, 560px);
+  --fp-visor-lado: min(58vh, 64vw, 645px);
 }
 .fp-visor.show { display: flex; }
 .fp-visor-centro { display: flex; flex-direction: column; gap: 12px; max-width: 100%; }
@@ -4600,11 +4600,13 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-visor-estoque small { font-weight: 500; color: rgba(255,255,255,.55); }
 .fp-visor-estoque.zero { color: #ff6b6b; }
 .fp-visor-btn {
-  width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; flex: 0 0 auto;
-  background: rgba(255,255,255,.1); border: 0; color: #fff; cursor: pointer; font-size: 17px; line-height: 1;
-  text-decoration: none; transition: background .12s ease;
+  width: 30px; height: 30px; display: grid; place-items: center; flex: 0 0 auto;
+  background: none; border: 0; cursor: pointer; font-size: 19px; line-height: 1;
+  text-decoration: none; opacity: .85; transition: opacity .12s ease, transform .12s ease;
 }
-.fp-visor-btn:hover { background: rgba(255,255,255,.22); }
+.fp-visor-btn:hover { opacity: 1; transform: scale(1.12); }
+.fp-visor-abrir { color: var(--warning); }
+.fp-visor-btn[data-fechar] { color: var(--primary); font-size: 22px; }
 
 /* A foto e as duas setas na mesma fileira: as setas ficam coladas na imagem,
    não nas bordas da tela. */
@@ -4615,16 +4617,18 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   display: flex; align-items: center; justify-content: center;
 }
 .fp-visor-palco img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 10px; }
+/* Enquanto a versão grande não chega, o palco mostra a miniatura ampliada —
+   ela já está no cache do navegador por causa da tira, então aparece na hora. */
+.fp-visor-palco img.previa { filter: blur(6px); transform: scale(1.01); }
 .fp-visor-carregando { position: absolute; color: rgba(255,255,255,.6); font-size: 13px; }
 .fp-visor-nav {
-  width: 44px; height: 44px; border-radius: 50%; flex: 0 0 auto;
-  display: grid; place-items: center; font-size: 22px; line-height: 1;
-  background: var(--primary); border: 0; color: #fff; cursor: pointer;
-  box-shadow: 0 6px 18px rgba(255,45,45,.3);
-  transition: background .12s ease, opacity .12s ease, transform .12s ease;
+  width: 40px; height: 56px; flex: 0 0 auto;
+  display: grid; place-items: center; font-size: 40px; line-height: 1;
+  background: none; border: 0; color: var(--primary); cursor: pointer;
+  transition: opacity .12s ease, transform .12s ease;
 }
-.fp-visor-nav:hover:not([disabled]) { background: var(--primary-hi); transform: scale(1.06); }
-.fp-visor-nav[disabled] { opacity: .25; cursor: default; box-shadow: none; }
+.fp-visor-nav:hover:not([disabled]) { transform: scale(1.14); }
+.fp-visor-nav[disabled] { opacity: .2; cursor: default; }
 
 .fp-visor-tira { display: flex; overflow-x: auto; width: var(--fp-visor-lado); max-width: 100%; margin: 0 auto; }
 /* margin auto no filho centraliza quando cabe e deixa rolar quando não cabe —
@@ -4638,7 +4642,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-visor-tira img:hover { opacity: .75; }
 .fp-visor-tira img.atual { opacity: 1; outline-color: var(--primary); }
 @media (max-width: 700px) {
-  .fp-visor { padding: 12px; --fp-visor-lado: min(46vh, 74vw); }
+  .fp-visor { padding: 12px; --fp-visor-lado: min(53vh, 80vw); }
   .fp-visor-fileira { gap: 8px; }
   .fp-visor-nav { width: 36px; height: 36px; font-size: 19px; }
   .fp-visor-tira img { width: 46px; height: 46px; }
@@ -17060,52 +17064,100 @@ function renderFotoGaleria(refazerOrdem) {
 
 /* ---------- visor de fotos do produto ----------
    A miniatura da listagem mostra só a primeira foto da pasta; o drive-proxy
-   tem uma ação própria (`fotos`) que devolve a pasta inteira. O visor abre
-   em tela cheia com avançar/retroceder, tira de miniaturas, teclado e
-   arrasto no celular. */
-let _visorEl = null, _visorFotos = [], _visorI = 0, _visorSku = '';
+   tem uma ação própria (`fotos`) que devolve a pasta inteira.
+
+   Ordem de carregamento, que é o que faz o visor parecer rápido:
+     1. abre já com a miniatura que a listagem carregou (está no cache do
+        navegador, aparece no mesmo quadro);
+     2. lê a pasta no Drive;
+     3. troca pela foto grande da posição atual — sozinha, sem concorrência;
+     4. só então desenha a tira de miniaturas;
+     5. e aí começa a adiantar as fotos grandes seguintes, uma de cada vez.
+   Desenhar a tira antes disparava 12 pedidos ao mesmo tempo e a foto que o
+   operador quer ver ficava atrás deles na fila. */
+let _visorEl = null, _visorFotos = [], _visorI = 0, _visorSku = '', _visorToken = 0, _visorImgToken = 0;
+const _visorCache = new Map();   // url da foto grande -> Image já baixada
 
 async function fpGalAbrirFotos(sku) {
   const prod = fpFotoProduto(sku) || { sku };
+  const token = ++_visorToken;
   _visorSku = sku; _visorFotos = []; _visorI = 0;
   fpVisorMontar();
+
   _visorEl.querySelector('.fp-visor-topo h3').textContent = prod.nome || sku;
   _visorEl.querySelector('.fp-visor-sku').textContent = sku;
-  _visorEl.querySelector('.fp-visor-conta').textContent = '· carregando…';
+  _visorEl.querySelector('.fp-visor-conta').textContent = '';
   const est = _visorEl.querySelector('.fp-visor-estoque');
   const n = (prod.estoque == null || prod.estoque === '') ? null : Number(prod.estoque);
   est.className = 'fp-visor-estoque' + (n != null && n <= 0 ? ' zero' : '');
   est.innerHTML = (n == null || isNaN(n)) ? '<small>estoque —</small>' : n + ' <small>un</small>';
   _visorEl.querySelector('.fp-visor-tira-in').innerHTML = '';
-  fpVisorPalco('Lendo a pasta no Drive…');
   _visorEl.querySelector('.fp-visor-abrir').href = FP_DRIVE_URL + '?action=open&sku=' + encodeURIComponent(sku);
   _visorEl.classList.add('show');
   document.body.classList.add('fp-sem-scroll');
 
+  /* Prévia imediata: a listagem já baixou esta miniatura, então ela pinta sem
+     ir à rede. O visor abre com imagem, não com um retângulo preto. */
+  fpVisorPalco('');
+  if (prod.tem_foto !== false) {
+    const previa = document.createElement('img');
+    previa.className = 'previa';
+    previa.alt = '';
+    previa.src = fpDriveImgUrl(sku, false);
+    _visorEl.querySelector('.fp-visor-palco').appendChild(previa);
+  }
+
+  let fotos = [];
   try {
     const r = await fetch(FP_DRIVE_URL + '?action=fotos&sku=' + encodeURIComponent(sku));
     const j = await r.json();
-    if (_visorSku !== sku) return;          // o operador já abriu outro produto
-    _visorFotos = (j && j.fotos) || [];
+    if (token !== _visorToken) return;          // o operador já abriu outro produto
+    fotos = (j && j.fotos) || [];
   } catch (e) {
+    if (token !== _visorToken) return;
     fpVisorPalco('Não deu para ler a pasta: ' + (e.message || String(e)));
-    _visorEl.querySelector('.fp-visor-conta').textContent = '';
     return;
   }
 
-  if (!_visorFotos.length) {
-    fpVisorPalco('Nenhuma foto nesta pasta.');
-    _visorEl.querySelector('.fp-visor-conta').textContent = '';
-    return;
-  }
+  _visorFotos = fotos;
+  if (!fotos.length) { fpVisorPalco('Nenhuma foto nesta pasta.'); return; }
 
-  _visorEl.querySelector('.fp-visor-tira-in').innerHTML = _visorFotos.map((f, k) =>
+  fpVisorPara(0);                                // a foto grande vem primeiro
+  fpVisorTira();                                 // depois a tira
+  fpVisorAdiantar(token);                        // e por último as seguintes
+}
+
+function fpVisorTira() {
+  const tira = _visorEl.querySelector('.fp-visor-tira-in');
+  tira.innerHTML = _visorFotos.map((f, k) =>
     '<img src="' + escHtml(f.thumb || '') + '" alt="' + escHtml(f.name || '') + '" loading="eager"'
     + ' data-k="' + k + '" title="' + escHtml(f.name || '') + '">').join('');
-  _visorEl.querySelectorAll('.fp-visor-tira img').forEach(im => {
-    im.onclick = () => fpVisorPara(Number(im.dataset.k));
-  });
-  fpVisorPara(0);
+  tira.querySelectorAll('img').forEach(im => { im.onclick = () => fpVisorPara(Number(im.dataset.k)); });
+  fpVisorMarcarTira();
+}
+
+function fpVisorMarcarTira() {
+  const tira = _visorEl.querySelectorAll('.fp-visor-tira-in img');
+  tira.forEach((im, i) => im.classList.toggle('atual', i === _visorI));
+  if (tira[_visorI]) tira[_visorI].scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+}
+
+/* Adianta as fotos grandes na ordem, uma de cada vez a partir da atual.
+   Em série de propósito: em paralelo elas competem entre si e a próxima —
+   que é a que o operador vai pedir — chega junto com a última. */
+async function fpVisorAdiantar(token) {
+  for (let d = 1; d <= _visorFotos.length; d++) {
+    if (token !== _visorToken) return;
+    const f = _visorFotos[(_visorI + d) % _visorFotos.length];
+    const url = f && (f.cheia || f.thumb);
+    if (!url || _visorCache.has(url)) continue;
+    await new Promise(resolve => {
+      const im = new Image();
+      im.onload = im.onerror = () => resolve();
+      im.src = url;
+      _visorCache.set(url, im);
+    });
+  }
 }
 
 function fpVisorMontar() {
@@ -17127,7 +17179,7 @@ function fpVisorMontar() {
   _visorEl.querySelector('[data-fechar]').onclick = fpVisorFechar;
   _visorEl.querySelector('.fp-visor-nav.ant').onclick = () => fpVisorIr(-1);
   _visorEl.querySelector('.fp-visor-nav.pro').onclick = () => fpVisorIr(1);
-  /* Clique no fundo fecha; no palco, na foto ou nos controles, não. */
+  /* Clique no fundo fecha; na foto ou nos controles, não. */
   _visorEl.addEventListener('click', ev => {
     if (ev.target === _visorEl || ev.target.classList.contains('fp-visor-palco')
         || ev.target.classList.contains('fp-visor-fileira')) fpVisorFechar();
@@ -17155,9 +17207,7 @@ function fpVisorMontar() {
   return _visorEl;
 }
 
-/* Troca o conteúdo do palco. As setas agora ficam fora dele, na mesma
-   fileira, então dá para limpar o palco à vontade — mas elas só aparecem
-   quando há foto para navegar. */
+/* Troca o conteúdo do palco. As setas ficam fora dele, na mesma fileira. */
 function fpVisorPalco(recado) {
   const palco = _visorEl.querySelector('.fp-visor-palco');
   palco.innerHTML = '';
@@ -17176,36 +17226,43 @@ function fpVisorPara(k) {
   if (!_visorEl || !_visorFotos.length) return;
   _visorI = Math.max(0, Math.min(_visorFotos.length - 1, k));
   const f = _visorFotos[_visorI];
-  const palco = fpVisorPalco('Carregando…');
-  const aviso = palco.querySelector('.fp-visor-carregando');
+  const url = f.cheia || f.thumb || '';
+  const palco = fpVisorPalco('');
+  const meu = ++_visorImgToken;
 
   const img = document.createElement('img');
   img.alt = f.name || '';
-  img.onload = () => { aviso.remove(); };
-  img.onerror = () => { aviso.textContent = 'Não deu para carregar esta foto.'; img.remove(); };
-  img.src = f.cheia || f.thumb || '';
+  const pronta = _visorCache.get(url);
+  if (pronta && pronta.complete && pronta.naturalWidth) {
+    img.src = url;                               // já adiantada: entra sem piscar
+  } else {
+    if (f.thumb) { img.src = f.thumb; img.classList.add('previa'); }
+    const grande = new Image();
+    grande.onload = () => {
+      if (meu !== _visorImgToken) return;
+      img.src = url;
+      img.classList.remove('previa');
+    };
+    grande.onerror = () => {
+      if (meu !== _visorImgToken) return;
+      if (!f.thumb) fpVisorPalco('Não deu para carregar esta foto.');
+    };
+    grande.src = url;
+    _visorCache.set(url, grande);
+  }
   palco.appendChild(img);
 
-  _visorEl.querySelector('.fp-visor-conta').textContent =
-    '· ' + (_visorI + 1) + ' de ' + _visorFotos.length + ' · ' + (f.name || '');
+  _visorEl.querySelector('.fp-visor-conta').textContent = '· ' + (_visorI + 1) + ' de ' + _visorFotos.length;
   _visorEl.querySelector('.fp-visor-nav.ant').disabled = _visorI === 0;
   _visorEl.querySelector('.fp-visor-nav.pro').disabled = _visorI === _visorFotos.length - 1;
-
-  const tira = _visorEl.querySelectorAll('.fp-visor-tira img');
-  tira.forEach((im, i) => im.classList.toggle('atual', i === _visorI));
-  if (tira[_visorI]) tira[_visorI].scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
-
-  /* Adianta a vizinha: sem isso, cada avanço espera a rede do zero. */
-  [_visorI + 1, _visorI - 1].forEach(j => {
-    const v = _visorFotos[j];
-    if (v && (v.cheia || v.thumb)) { const pre = new Image(); pre.src = v.cheia || v.thumb; }
-  });
+  fpVisorMarcarTira();
 }
 
 function fpVisorIr(d) { fpVisorPara(_visorI + d); }
 
 function fpVisorFechar() {
   if (!_visorEl) return;
+  _visorToken++; _visorImgToken++;               // cancela prévias e adiantamentos em voo
   _visorEl.classList.remove('show');
   fpVisorPalco('');
   document.body.classList.remove('fp-sem-scroll');
