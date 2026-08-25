@@ -15,9 +15,6 @@
 <meta name="apple-mobile-web-app-title" content="Media Club">
 <link rel="apple-touch-icon" href="/assets/pwa/icone-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/assets/pwa/icone-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════════════════════
    FullPro Sans — a fonte padrão do painel e da landing.
@@ -200,7 +197,7 @@
   .shell.hover-mode .brand-short { display: flex; width: 32px; height: 32px; }
   .shell.hover-mode .sidebar.hover-open .brand-full { display: flex; }
   .shell.hover-mode .sidebar.hover-open .brand-short { display: none; }
-  .brand-txt { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1.5px; }
+  .brand-txt { font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase; font-size: 20px; letter-spacing: 1.5px; }
   .brand-txt small { display:block; font-family:'FullPro Sans',sans-serif; font-size: 11px; color: var(--text-muted); letter-spacing: 2px; font-weight: 500; }
   /* Hide text labels when collapsed */
   .shell.collapsed .nav-label,
@@ -315,7 +312,7 @@
     gap: 16px;
   }
   .page-head h1 {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase;
     font-size: 36px;
     letter-spacing: 1px;
     line-height: 1;
@@ -336,7 +333,7 @@
     padding: 20px;
   }
   .stat-card .label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-  .stat-card .value { font-family: 'Bebas Neue', sans-serif; font-size: 32px; line-height: 1; }
+  .stat-card .value { font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase; font-size: 32px; line-height: 1; }
   .stat-card.primary { border-color: rgba(255,45,45,.4); background: linear-gradient(135deg, rgba(255,45,45,.08), var(--bg-card)); }
   .stat-card .value small { font-size: 14px; color: var(--text-dim); font-family: 'FullPro Sans'; margin-left: 4px; }
 
@@ -458,7 +455,7 @@
     padding: 18px;
   }
   .cal-card h3 {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase;
     font-size: 18px;
     letter-spacing: 1px;
     margin-bottom: 2px;
@@ -471,7 +468,7 @@
     justify-content: space-between;
     margin-bottom: 8px;
   }
-  .cal-month { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; }
+  .cal-month { font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase; font-size: 16px; letter-spacing: 1px; }
   .cal-nav { display: flex; gap: 4px; }
   .cal-nav button {
     width: 28px; height: 28px;
@@ -617,7 +614,7 @@
   .fuel-gauge-wrap { margin-bottom: 12px; }
   .fuel-gauge-container { text-align: center; position: relative; }
   .fuel-svg { width: 160px; height: 100px; cursor: pointer; user-select: none; -webkit-user-select: none; }
-  .fuel-value { font-family: 'Bebas Neue', sans-serif; font-size: 20px; margin-top: -10px; text-align: center; letter-spacing: 1px; }
+  .fuel-value { font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase; font-size: 20px; margin-top: -10px; text-align: center; letter-spacing: 1px; }
 
   /* Check-in grid: fuel + km side by side, obs + photos side by side */
   .checkin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -834,7 +831,7 @@
     justify-content: space-between;
     align-items: center;
   }
-  .modal-head h3 { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 1px; }
+  .modal-head h3 { font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase; font-size: 24px; letter-spacing: 1px; }
   .modal-close {
     background: transparent;
     border: none;
@@ -882,7 +879,7 @@
     text-align: center;
   }
   .login-card .brand { justify-content: center; margin-bottom: 24px; }
-  .login-card h2 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 1px; margin-bottom: 6px; }
+  .login-card h2 { font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase; font-size: 28px; letter-spacing: 1px; margin-bottom: 6px; }
   .login-card p { color: var(--text-dim); font-size: 14px; margin-bottom: 24px; }
   .login-input {
     width: 100%;
@@ -1269,7 +1266,7 @@
     line-height: 1;
     color: var(--text);
     letter-spacing: -2px;
-    font-family: 'Bebas Neue', 'FullPro Sans', sans-serif;
+    font-family: 'FullPro Sans', 'FullPro Sans', sans-serif;
     flex-shrink: 0;
   }
   .debriefing-avg-score .score-decimal {
@@ -2543,7 +2540,7 @@
   .inf-name { font-size:14px; font-weight:600; color:var(--text); margin:4px 0; }
   .inf-handle { font-size:12px; color:var(--text-muted); margin-top:2px; }
   .inf-followers-label { font-size: 11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
-  .inf-followers { font-family:'Bebas Neue',sans-serif; font-size:20px; line-height:1; color:var(--text); margin-top:4px; }
+  .inf-followers { font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase; font-size:20px; line-height:1; color:var(--text); margin-top:4px; }
 
   /* ── Influencer Table (reusable) ── */
   .inf-table { width:100%; font-size:12px; border-collapse:collapse; margin:16px 0; }
@@ -5335,7 +5332,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
     <div id="view-project-detail" style="display:none">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
         <button class="action-btn" style="padding:6px 14px;font-size:13px" onclick="backToProjects()">← Projetos</button>
-        <h1 id="projDetailTitle" style="flex:1;font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px">Projeto</h1>
+        <h1 id="projDetailTitle" style="flex:1;font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase;font-size:28px;letter-spacing:1px">Projeto</h1>
         <select class="proj-status-select" id="projDetailStatus" onchange="quickDetailStatus(this.value)"></select>
         <button class="fp-icon-btn fp-ib-green fp-tip-left" id="projDetailSaveBtn" data-tip="Salvar" onclick="saveCurrentTab()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -19689,7 +19686,7 @@ function renderDashboard() {
         </div>
         <div>
           <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Pendentes</div>
-          <div style="font-family:'Bebas Neue';font-size:32px;line-height:1;color:var(--primary)">${pending}</div>
+          <div style="font-family:'FullPro Sans';font-size:32px;line-height:1;color:var(--primary)">${pending}</div>
           <div style="font-size: 11px;color:var(--text-muted);margin-top:2px">${thisMonth} este mes</div>
         </div>
       </div>
@@ -19699,7 +19696,7 @@ function renderDashboard() {
         </div>
         <div>
           <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Aprovadas</div>
-          <div style="font-family:'Bebas Neue';font-size:32px;line-height:1;color:var(--success)">${approved}</div>
+          <div style="font-family:'FullPro Sans';font-size:32px;line-height:1;color:var(--success)">${approved}</div>
           <div style="font-size: 11px;color:var(--text-muted);margin-top:2px">${rejected} rejeitada${rejected !== 1 ? 's' : ''}${standby ? ' &middot; ' + standby + ' em stand by' : ''}</div>
         </div>
       </div>
@@ -19709,7 +19706,7 @@ function renderDashboard() {
         </div>
         <div>
           <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Projetos ativos</div>
-          <div style="font-family:'Bebas Neue';font-size:32px;line-height:1;color:#a855f7">${activeProjects}</div>
+          <div style="font-family:'FullPro Sans';font-size:32px;line-height:1;color:#a855f7">${activeProjects}</div>
           <div style="font-size: 11px;color:var(--text-muted);margin-top:2px">${projByStatus.concluido} concluido${projByStatus.concluido !== 1 ? 's' : ''}</div>
         </div>
       </div>
@@ -19719,7 +19716,7 @@ function renderDashboard() {
         </div>
         <div>
           <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Custos totais</div>
-          <div style="font-family:'Bebas Neue';font-size:28px;line-height:1;color:#f59e0b">R$ ${formatBRL(totalCosts)}</div>
+          <div style="font-family:'FullPro Sans';font-size:28px;line-height:1;color:#f59e0b">R$ ${formatBRL(totalCosts)}</div>
         </div>
       </div>
     </div>
@@ -19764,7 +19761,7 @@ function renderDashboard() {
         </div>
         ${upcoming.length ? upcoming.map((r, i) => `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;${i < upcoming.length - 1 ? 'border-bottom:1px solid var(--border)' : ''}">
           <div style="min-width:46px;text-align:center;background:var(--bg-elev);border-radius:10px;padding:8px 10px">
-            <div style="font-family:'Bebas Neue';font-size:20px;line-height:1;color:var(--text)">${new Date(r.date + 'T12:00').getDate()}</div>
+            <div style="font-family:'FullPro Sans';font-size:20px;line-height:1;color:var(--text)">${new Date(r.date + 'T12:00').getDate()}</div>
             <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;font-weight:600">${new Date(r.date + 'T12:00').toLocaleDateString('pt-BR', { month: 'short' })}</div>
           </div>
           <div style="flex:1;min-width:0">
@@ -19780,15 +19777,15 @@ function renderDashboard() {
         <h3 style="margin-bottom:14px">Frota</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
           <div style="text-align:center;padding:14px 8px;background:rgba(31,210,122,.06);border:1px solid rgba(31,210,122,.15);border-radius:10px">
-            <div style="font-family:'Bebas Neue';font-size:26px;color:var(--success);line-height:1">${ciCount}</div>
+            <div style="font-family:'FullPro Sans';font-size:26px;color:var(--success);line-height:1">${ciCount}</div>
             <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-top:4px">Entradas</div>
           </div>
           <div style="text-align:center;padding:14px 8px;background:rgba(139,156,247,.06);border:1px solid rgba(139,156,247,.15);border-radius:10px">
-            <div style="font-family:'Bebas Neue';font-size:26px;color:#8b9cf7;line-height:1">${coCount}</div>
+            <div style="font-family:'FullPro Sans';font-size:26px;color:#8b9cf7;line-height:1">${coCount}</div>
             <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-top:4px">Saídas</div>
           </div>
           <div style="text-align:center;padding:14px 8px;background:${inUse > 0 ? 'rgba(245,158,11,.06)' : 'var(--bg-elev)'};border:1px solid ${inUse > 0 ? 'rgba(245,158,11,.15)' : 'var(--border)'};border-radius:10px">
-            <div style="font-family:'Bebas Neue';font-size:26px;color:${inUse > 0 ? '#f59e0b' : 'var(--text-muted)'};line-height:1">${inUse > 0 ? inUse : 0}</div>
+            <div style="font-family:'FullPro Sans';font-size:26px;color:${inUse > 0 ? '#f59e0b' : 'var(--text-muted)'};line-height:1">${inUse > 0 ? inUse : 0}</div>
             <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-top:4px">Em uso</div>
           </div>
         </div>
@@ -20070,7 +20067,7 @@ function renderPerfMetas() {
           <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Volume de conteúdo</div>
         </div>
         <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">
-          <span style="font-family:'Bebas Neue';font-size:34px;line-height:1;color:var(--text)">${longCount}L + ${shortCount}S</span>
+          <span style="font-family:'FullPro Sans';font-size:34px;line-height:1;color:var(--text)">${longCount}L + ${shortCount}S</span>
           <span style="font-size:13px;color:var(--text-muted)">/ ${longTarget}L + ${shortTarget}S</span>
         </div>
         <div style="height:6px;background:var(--bg-elev);border-radius:3px;overflow:hidden;margin-bottom:10px">
@@ -20091,7 +20088,7 @@ function renderPerfMetas() {
           <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Views totais</div>
         </div>
         <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">
-          <span style="font-family:'Bebas Neue';font-size:34px;line-height:1;color:var(--text)">${fmtK(totalViews)}</span>
+          <span style="font-family:'FullPro Sans';font-size:34px;line-height:1;color:var(--text)">${fmtK(totalViews)}</span>
           <span style="font-size:13px;color:var(--text-muted)">/ ${fmtK(viewsTarget)}</span>
         </div>
         <div style="height:6px;background:var(--bg-elev);border-radius:3px;overflow:hidden;margin-bottom:10px">
@@ -20112,7 +20109,7 @@ function renderPerfMetas() {
           <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Cliques pro site</div>
         </div>
         <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">
-          <span style="font-family:'Bebas Neue';font-size:34px;line-height:1;color:var(--text)">${totalClicks.toLocaleString('pt-BR')}</span>
+          <span style="font-family:'FullPro Sans';font-size:34px;line-height:1;color:var(--text)">${totalClicks.toLocaleString('pt-BR')}</span>
           <span style="font-size:13px;color:var(--text-muted)">/ ${clicksTarget.toLocaleString('pt-BR')}</span>
         </div>
         <div style="height:6px;background:var(--bg-elev);border-radius:3px;overflow:hidden;margin-bottom:10px">
@@ -20138,7 +20135,7 @@ function renderPerfMetas() {
       </div>
       <div style="text-align:right">
         <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:500">caixa projetado</div>
-        <div style="font-family:'Bebas Neue';font-size:32px;color:var(--success);line-height:1;margin-top:2px">R$ ${formatBRL(projectedPool)}</div>
+        <div style="font-family:'FullPro Sans';font-size:32px;color:var(--success);line-height:1;margin-top:2px">R$ ${formatBRL(projectedPool)}</div>
       </div>
     </div>
 
@@ -20658,7 +20655,7 @@ function renderInfVisaoGeral(active) {
         const pct = maxViews > 0 ? ((inf.views_fullpro||0)/maxViews*100) : 0;
         const motos = (inf.motos || []).join(', ') || 'Sem moto cadastrada';
         return `<div style="display:flex;align-items:center;gap:14px;padding:12px 0;${i<sorted.length-1?'border-bottom:1px solid var(--border)':''}">
-          <div style="width:24px;font-family:'Bebas Neue';font-size:18px;color:${i<3?'var(--primary)':'var(--text-muted)'};text-align:center">${i+1}</div>
+          <div style="width:24px;font-family:'FullPro Sans';font-size:18px;color:${i<3?'var(--primary)':'var(--text-muted)'};text-align:center">${i+1}</div>
           <div class="inf-list-table .inf-row-avatar" style="width:36px;height:36px;border-radius:50%;background:${infCatColor(cat)};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0">${infInitials(inf.name)}</div>
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;font-size:13px;color:var(--text)">${escHtml(inf.name)} <span class="inf-badge ${cat}" style="font-size: 11px;padding:2px 5px;margin-left:4px">${cat.toUpperCase()}</span></div>
@@ -20666,7 +20663,7 @@ function renderInfVisaoGeral(active) {
             <div class="inf-rank-bar" style="max-width:300px"><div class="inf-rank-fill" style="width:${pct}%;background:${infCatColor(cat)}"></div></div>
           </div>
           <div style="text-align:right;flex-shrink:0">
-            <div style="font-family:'Bebas Neue';font-size:20px;color:var(--text)">${formatNum(inf.views_fullpro||0)}</div>
+            <div style="font-family:'FullPro Sans';font-size:20px;color:var(--text)">${formatNum(inf.views_fullpro||0)}</div>
             <div style="font-size: 11px;color:var(--text-muted)">views</div>
           </div>
         </div>`;
@@ -20995,11 +20992,11 @@ function renderPerfBonuses() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0">
         <div style="padding:12px;background:var(--bg-elev);border-radius:8px">
           <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">Valor por meta</div>
-          <div style="font-family:'Bebas Neue';font-size:24px;color:var(--primary)">R$ ${formatBRL(goals.pool_per_goal || 500)}</div>
+          <div style="font-family:'FullPro Sans';font-size:24px;color:var(--primary)">R$ ${formatBRL(goals.pool_per_goal || 500)}</div>
         </div>
         <div style="padding:12px;background:var(--bg-elev);border-radius:8px">
           <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:4px">Metas no mês</div>
-          <div style="font-family:'Bebas Neue';font-size:24px;color:var(--text)">4</div>
+          <div style="font-family:'FullPro Sans';font-size:24px;color:var(--text)">4</div>
         </div>
       </div>
       <div style="padding:12px;background:var(--bg-elev);border-radius:8px;margin:12px 0">
@@ -21032,12 +21029,12 @@ function renderPerfBonuses() {
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
         <div style="text-align:center">
           <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Metas atingidas</div>
-          <div style="font-family:'Bebas Neue';font-size:32px;color:${goalsHit > 0 ? 'var(--success)' : 'var(--warning)'};margin:6px 0">${goalsHit}</div>
+          <div style="font-family:'FullPro Sans';font-size:32px;color:${goalsHit > 0 ? 'var(--success)' : 'var(--warning)'};margin:6px 0">${goalsHit}</div>
           <div style="font-size: 11px;color:var(--text-muted)">de 4</div>
         </div>
         <div style="text-align:center;border-left:1px solid var(--border);border-right:1px solid var(--border)">
           <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Caixa total</div>
-          <div style="font-family:'Bebas Neue';font-size:32px;color:var(--primary);margin:6px 0">R$ ${formatBRL(totalBonus)}</div>
+          <div style="font-family:'FullPro Sans';font-size:32px;color:var(--primary);margin:6px 0">R$ ${formatBRL(totalBonus)}</div>
         </div>
         <div style="text-align:center">
           <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Status</div>
