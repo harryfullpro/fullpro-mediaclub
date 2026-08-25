@@ -1775,7 +1775,7 @@
   .mention-popup {
     position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
     z-index: 100000; display: flex; align-items: center; gap: 14px;
-    background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid #ec4899;
+    background: var(--bg-card); border: 1px solid var(--border);
     border-radius: 14px; padding: 14px 18px; box-shadow: 0 12px 40px rgba(0,0,0,.4);
     max-width: min(92vw, 560px); opacity: 0; pointer-events: none; transition: all .25s ease;
   }
@@ -3087,36 +3087,50 @@ main:focus, main:focus-visible { outline: none !important; }
 /* --- toasts -------------------------------------------------------------- */
 .fp-toast-host {
   position: fixed; z-index: 100200;
-  right: 18px; bottom: 18px;
-  display: flex; flex-direction: column; gap: 10px;
-  max-width: min(390px, calc(100vw - 32px));
+  right: 20px; bottom: 20px;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+  max-width: min(420px, calc(100vw - 32px));
   pointer-events: none;
 }
+/* Sem barra colorida à esquerda: quem diz o que aconteceu é o ícone, num
+   selo discreto. O aviso encolhe até o tamanho do texto — caixa larga com
+   três palavras dentro é o que dava cara de modelo pronto. */
 .fp-toast {
   pointer-events: auto;
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 12px 12px 12px 14px;
-  background: var(--bg-elev);
+  display: flex; align-items: center; gap: 10px;
+  width: fit-content; max-width: 100%;
+  padding: 10px 12px 10px 10px;
+  /* leve realce por cima do fundo: o aviso precisa se destacar da tela sem
+     recorrer a tarja colorida */
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015)), var(--bg-elev);
   border: 1px solid var(--border-hi);
-  border-left: 3px solid var(--text-muted);
-  border-radius: var(--raio-md);
-  box-shadow: 0 8px 26px rgba(0,0,0,.34);
-  color: var(--text); font-size: 13.5px; line-height: 1.45;
+  border-radius: 12px;
+  box-shadow: 0 14px 34px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.3);
+  color: var(--text); font-size: 13px; font-weight: 500; line-height: 1.4;
   opacity: 0; transform: translateY(10px) scale(.98);
-  transition: opacity .18s ease, transform .18s ease;
+  transition: opacity .18s ease, transform .2s cubic-bezier(.2,.9,.3,1.15);
 }
 .fp-toast.entrou { opacity: 1; transform: none; }
 .fp-toast.saiu   { opacity: 0; transform: translateY(6px) scale(.98); }
-.fp-toast-ico { flex: 0 0 auto; margin-top: 1px; }
-.fp-toast-msg { flex: 1 1 auto; word-break: break-word; }
-.fp-toast-ok   { border-left-color: var(--success); }
-.fp-toast-ok   .fp-toast-ico { color: var(--success); }
-.fp-toast-erro { border-left-color: var(--perigo); }
-.fp-toast-erro .fp-toast-ico { color: var(--perigo); }
-.fp-toast-warn { border-left-color: var(--warning); }
-.fp-toast-warn .fp-toast-ico { color: var(--warning); }
-.fp-toast-info { border-left-color: #5b9dd9; }
-.fp-toast-info .fp-toast-ico { color: #5b9dd9; }
+.fp-toast-ico {
+  flex: 0 0 auto;
+  width: 24px; height: 24px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(148,148,160,.16);
+  color: var(--text-dim);
+}
+.fp-toast-msg { flex: 1 1 auto; min-width: 0; word-break: break-word; }
+/* Sombra pesada de tema escuro suja o tema claro: lá o relevo vem de uma
+   sombra suave e de um branco por cima do fundo, não de preto. */
+[data-theme="light"] .fp-toast {
+  background: linear-gradient(180deg, #fff, rgba(255,255,255,.72)), var(--bg-elev);
+  border-color: rgba(0,0,0,.1);
+  box-shadow: 0 12px 28px rgba(0,0,0,.13), 0 0 0 1px rgba(0,0,0,.04);
+}
+.fp-toast-ok   .fp-toast-ico { background: rgba(31,210,122,.16);  color: var(--success); }
+.fp-toast-erro .fp-toast-ico { background: rgba(255,77,77,.18);   color: var(--danger); }
+.fp-toast-warn .fp-toast-ico { background: rgba(255,170,51,.18);  color: var(--warning); }
+.fp-toast-info .fp-toast-ico { background: rgba(91,157,217,.18);  color: #7fb2e8; }
 .fp-toast-acao {
   flex: 0 0 auto; background: transparent; border: 1px solid var(--border-hi);
   color: var(--text); border-radius: var(--raio-sm);
@@ -3128,8 +3142,16 @@ main:focus, main:focus-visible { outline: none !important; }
   color: var(--text-muted); padding: 3px; line-height: 0; border-radius: var(--raio-sm);
 }
 .fp-toast-x:hover { color: var(--text); }
+/* aviso que some sozinho não precisa de "x" à mostra — ele aparece no hover.
+   O espaço fica reservado, então nada pula de lugar. */
+.fp-toast-x { opacity: 0; transition: opacity .15s, color .15s; }
+.fp-toast:hover .fp-toast-x,
+.fp-toast-x:focus-visible,
+.fp-toast[data-fixo="1"] .fp-toast-x { opacity: 1; }
 @media (max-width: 600px) {
   .fp-toast-host { right: 12px; left: 12px; bottom: 12px; max-width: none; }
+  .fp-toast { width: 100%; }
+  .fp-toast-x { opacity: 1; }   /* no toque não existe hover */
 }
 
 /* --- dialogo de confirmacao --------------------------------------------- */
@@ -6731,10 +6753,13 @@ function fpToast(msg, tipo, opts){
     warn: '<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
     info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>'
   };
+  // o ícone vive dentro de um selo: é ele que carrega a cor do estado agora
   el.innerHTML =
-    '<svg class="fp-toast-ico" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-      (icones[tipo] || icones.info) +
-    '</svg>' +
+    '<span class="fp-toast-ico" aria-hidden="true">' +
+      '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
+        (icones[tipo] || icones.info) +
+      '</svg>' +
+    '</span>' +
     '<span class="fp-toast-msg"></span>';
   el.querySelector('.fp-toast-msg').textContent = msg;
 
@@ -6749,6 +6774,10 @@ function fpToast(msg, tipo, opts){
     el.appendChild(b);
   }
 
+  const duracao = opts.duracao != null ? opts.duracao
+                : (tipo === 'erro' ? 8000 : opts.acao ? 7000 : 4000);
+  if (duracao <= 0 || opts.acao) el.dataset.fixo = '1';
+
   const x = document.createElement('button');
   x.type = 'button';
   x.className = 'fp-toast-x';
@@ -6760,8 +6789,7 @@ function fpToast(msg, tipo, opts){
   host.appendChild(el);
   requestAnimationFrame(function(){ el.classList.add('entrou'); });
 
-  const dur = opts.duracao != null ? opts.duracao
-            : (tipo === 'erro' ? 8000 : opts.acao ? 7000 : 4000);
+  const dur = duracao;
   let timer = dur > 0 ? setTimeout(fecha, dur) : null;
   el.addEventListener('mouseenter', function(){ if (timer) { clearTimeout(timer); timer = null; } });
   el.addEventListener('mouseleave', function(){ if (dur > 0 && !timer) timer = setTimeout(fecha, 1800); });

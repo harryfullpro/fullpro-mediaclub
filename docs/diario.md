@@ -4,6 +4,33 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 20/08/2026 — Os avisos do sistema perderam a tarja colorida
+
+O dono já tinha proibido **barra colorida à esquerda** em caixa de aviso — "cara de site
+de IA mal feito" — e o toast do painel estava exatamente assim: `border-left: 3px` na cor
+do estado. Refeito:
+
+- **A cor saiu da borda e foi para o ícone**, dentro de um selo arredondado de 24px com o
+  tom do estado a 16-18% de opacidade. O aviso inteiro tem uma borda só, uniforme.
+- **A caixa encolhe até o tamanho do texto** (`width: fit-content`). Antes esticava até
+  390px sempre — três palavras dentro de uma caixa larga é o que mais entrega template
+  pronto. "Bug reportado. Obrigado!" agora ocupa 240px.
+- **O "x" só aparece no hover** — aviso que some sozinho em 4s não precisa de botão de
+  fechar à mostra. Fica sempre visível quando o aviso é fixo, tem ação, ou no celular
+  (onde não existe hover). O espaço dele é reservado, então nada pula de lugar.
+- **Relevo em vez de tarja:** um branco de 5% por cima do fundo e sombra mais funda.
+- **Sombra própria para o tema claro** — preto pesado de tema escuro suja o claro; lá o
+  relevo vem de branco sobre o fundo e uma sombra suave.
+- **O popup de menção tinha a mesma tarja** (rosa, 3px à esquerda). Saiu junto.
+
+Dois defeitos apareceram no caminho: `.fp-toast-erro` usava `var(--perigo)`, que **não
+existe** (o token é `--danger`), então o aviso de erro ficava com a barra cinza padrão; e
+a duração era calculada depois do botão de fechar ser criado, o que impedia saber ali se o
+aviso era fixo.
+
+**Ainda com tarja, fora do escopo de hoje:** os quatro cartões de KPI do módulo de Envios
+(`border-left: 3px`). Se for para limpar, é o mesmo tratamento.
+
 ## 20/08/2026 — Botão do besouro e o módulo Manutenção
 
 Qualquer pessoa da equipe agora reporta bug ou melhoria de dentro do painel, e o relato cai
