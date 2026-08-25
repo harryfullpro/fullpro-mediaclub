@@ -172,7 +172,11 @@ create table if not exists public.mc_bug_reports (
 create index if not exists mc_bug_reports_status_idx on public.mc_bug_reports (status);
 create index if not exists mc_bug_reports_criado_idx on public.mc_bug_reports (created_at desc);
 alter table public.mc_bug_reports enable row level security;
-create policy "auth le relatos"        on public.mc_bug_reports for select to authenticated using (true);
-create policy "auth abre relato"       on public.mc_bug_reports for insert to authenticated with check (true);
-create policy "auth atualiza relato"   on public.mc_bug_reports for update to authenticated using (true) with check (true);
-create policy "auth apaga relato"      on public.mc_bug_reports for delete to authenticated using (true);
+-- ATENÇÃO: tem que liberar anon. O painel não usa Supabase Auth — o login é
+-- contra mc_admin_users e o cliente segue anônimo. Política só para
+-- 'authenticated' bloqueia o painel inteiro ("new row violates row-level
+-- security policy"), que foi o que aconteceu na primeira versão desta tabela.
+create policy "painel le relatos"      on public.mc_bug_reports for select to anon, authenticated using (true);
+create policy "painel abre relato"     on public.mc_bug_reports for insert to anon, authenticated with check (true);
+create policy "painel atualiza relato" on public.mc_bug_reports for update to anon, authenticated using (true) with check (true);
+create policy "painel apaga relato"    on public.mc_bug_reports for delete to anon, authenticated using (true);

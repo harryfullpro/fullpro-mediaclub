@@ -227,6 +227,24 @@ Use `.maybeSingle()` quando a linha **pode não existir** — `.single()` devolv
 
 ---
 
+## O painel não usa Supabase Auth — RLS tem que liberar `anon`
+
+O login é `select` em `mc_admin_users` comparando hash de senha, e o cliente Supabase
+segue **anônimo** para sempre. Consequências, as duas já cobraram tempo:
+
+1. **Tabela nova com política só para `authenticated` bloqueia o painel inteiro** — o erro
+   é `new row violates row-level security policy`. Toda tabela do painel libera
+   `anon, authenticated`.
+2. **Edge function não pode se apoiar em `role = 'authenticated'`** (rejeita todo mundo)
+   nem no `verify_jwt` sozinho (a anon key é pública no `config.js`, então libera todo
+   mundo). O que funciona: o painel manda o id de `fp_session` e a function confere em
+   `mc_admin_users` usando `SUPABASE_SERVICE_ROLE_KEY`. Ver `magis5-proxy`.
+
+> O consertado de verdade seria migrar o painel para Supabase Auth — daí RLS por usuário e
+> papel passa a valer de graça. É projeto à parte, não remendo de tabela.
+
+---
+
 ## Dois `<body>` no admin.html
 
 Além do body real, existe o do **modelo de etiqueta de transporte**, que é um documento

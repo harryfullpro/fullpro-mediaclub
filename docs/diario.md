@@ -27,9 +27,20 @@ resolvendo*, *resolvido*, *descartar*, *reabrir* e apagar. O filtro padrão é *
 **A notificação é a mesma dos agendamentos:** contador no item do menu, que **desaparece
 quando não há nada aberto** em vez de mostrar um zero em cor de alarme.
 
-**Tabela `mc_bug_reports` com RLS só para autenticado** — as tabelas antigas do projeto
-liberam `anon` também, o que com a anon key pública significa qualquer um. Aqui não: quem
-reporta está logado.
+**A tabela nasceu com RLS só para `authenticated` e não funcionou.** O primeiro relato de
+teste voltou com *"new row violates row-level security policy"*. Motivo: **o painel não usa
+Supabase Auth.** O login é `select` em `mc_admin_users` comparando hash de senha, e o
+cliente Supabase segue **anônimo** do começo ao fim — por isso todas as tabelas antigas
+liberam `anon`. Política para `authenticated` bloqueia o painel inteiro. Corrigido para
+`anon, authenticated`, testado com `set local role anon` e depois pelo fluxo real da tela.
+
+**O mesmo engano estava no `magis5-proxy`**, esperando para explodir: eu exigia
+`role = 'authenticated'` no token, o que rejeitaria todo chamado do painel assim que a
+chave do Magis5 fosse configurada. Trocado por uma checagem que faz sentido nesse modelo:
+o painel manda o id de `fp_session` e a function confere em `mc_admin_users` com a service
+role. Não é criptografia — é um UUID que só quem logou tem — mas fecha a porta que o
+`verify_jwt` sozinho deixava aberta (a anon key é pública no `config.js`). Testado: sem
+sessão → 401, sessão inventada → 401, sessão real → passa.
 
 **Uma pegadinha do arquivo:** o `admin.html` tem **dois** `<body>` — o real e o do modelo
 de etiqueta de transporte, que é gerado como HTML completo para impressão. A classe que

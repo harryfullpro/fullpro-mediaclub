@@ -4,7 +4,7 @@
  * Por que existe: a chave do Magis5 (X-MAGIS5-APIKEY) dá acesso de escrita ao
  * hub inteiro — pedidos, produtos, composição de kit. Ela NÃO pode viver no
  * navegador (o config.js é público). Fica só aqui, em MAGIS5_API_KEY, e a
- * função exige usuário autenticado (verify_jwt = true + checagem de papel).
+ * função exige a sessão do operador (id de mc_admin_users) em todo chamado.
  *
  * Ações — em ?action= ou no corpo {action}, porque o painel chama por
  * sb.functions.invoke(), que sempre manda POST com JSON:
@@ -43,16 +43,31 @@ Deno.serve(async (req) => {
   if (req.method === 'POST') corpo = await req.json().catch(() => ({}));
   const acao = url.searchParams.get('action') || String(corpo?.action || '');
 
-  /* verify_jwt aceita tambem a anon key (que e um JWT com role=anon) e ela e
-     publica no config.js. Como aqui se escreve no ERP, exigimos sessao de
-     usuario de verdade. A assinatura ja foi validada pelo gateway; so o papel
-     precisa ser lido. */
-  const cabecalho = req.headers.get('Authorization') || '';
-  const token = cabecalho.replace(/^Bearer\s+/i, '');
-  let papel = '';
-  try { papel = JSON.parse(atob(token.split('.')[1] || '')).role || ''; } catch { papel = ''; }
-  if (papel !== 'authenticated') {
-    return resposta({ erro: 'precisa de usuário autenticado no painel' }, 401);
+  /* O painel NAO usa Supabase Auth: o login e contra mc_admin_users e o cliente
+     segue como anon. Entao checar role=authenticated rejeitaria todo mundo, e
+     confiar so no verify_jwt liberaria qualquer um com a anon key (publica no
+     config.js) a escrever no ERP.
+
+     O que da para exigir e a sessao do operador: o painel manda o id salvo em
+     fp_session e aqui ele e conferido contra mc_admin_users com a service role.
+     Nao e criptografia — e um UUID que so quem logou tem. */
+  const sessao = String(corpo?.sessao || url.searchParams.get('sessao') || '');
+  const SRK = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+  const SB_URL = Deno.env.get('SUPABASE_URL') || '';
+  if (!/^[0-9a-f-]{36}$/i.test(sessao)) {
+    return resposta({ erro: 'sessão do painel ausente — entre de novo no painel' }, 401);
+  }
+  try {
+    const q = await fetch(
+      SB_URL + '/rest/v1/mc_admin_users?select=id,role&id=eq.' + encodeURIComponent(sessao),
+      { headers: { apikey: SRK, Authorization: 'Bearer ' + SRK } },
+    );
+    const linhas = await q.json();
+    if (!Array.isArray(linhas) || !linhas.length) {
+      return resposta({ erro: 'sessão do painel não confere' }, 401);
+    }
+  } catch (e) {
+    return resposta({ erro: 'não deu para validar a sessão: ' + String((e as Error)?.message || e) }, 500);
   }
 
   if (acao === 'health') return resposta({ configurado: !!chave });

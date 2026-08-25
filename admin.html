@@ -14647,7 +14647,13 @@ let KIT_ESCOLHIDO  = null;    // item selecionado para entrar no kit
 let MAGIS5_CONFIG  = null;    // null = não checado; bool depois
 
 async function magis5Chamar(action, extra) {
-  const corpo = Object.assign({ action: action }, extra || {});
+  /* A sessão do operador vai no corpo: a function confere esse id em
+     mc_admin_users. É o que dá para exigir, já que o painel não usa Supabase
+     Auth — o cliente é anon e a anon key é pública. */
+  const corpo = Object.assign({
+    action: action,
+    sessao: localStorage.getItem('fp_session') || '',
+  }, extra || {});
   const { data, error } = await sb.functions.invoke('magis5-proxy', { body: corpo });
   if (error) {
     // o corpo de erro da function traz a mensagem útil; o error só diz "non-2xx"
