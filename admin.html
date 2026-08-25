@@ -4474,14 +4474,27 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-prio-p.atual { box-shadow: 0 0 0 3px color-mix(in srgb, var(--fp-prio-cor) 25%, transparent); }
 .fp-prio-emerg {
   width: 20px; height: 20px; border-radius: 7px; padding: 0; cursor: pointer; flex: 0 0 auto;
-  display: grid; place-items: center; font-size: 11px; font-weight: 800; line-height: 1;
+  display: grid; place-items: center; line-height: 1;
   background: transparent; border: 1.5px dashed var(--border-hi); color: var(--text-muted);
   transition: all .14s ease;
 }
+.fp-prio-emerg svg {
+  width: 12px; height: 12px; fill: none; stroke: currentColor;
+  stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+}
 .fp-prio-emerg:hover { border-color: var(--danger); color: var(--danger); border-style: solid; }
+/* Emergencial não é "o quarto nível": o triângulo pisca para o olho bater
+   nele antes de ler a lista inteira. */
 .fp-prio[data-n="5"] .fp-prio-emerg {
   background: var(--danger); border-color: var(--danger); border-style: solid; color: #fff;
-  box-shadow: 0 0 0 3px rgba(255,77,77,.2);
+  animation: fpPiscaEmerg 1.4s ease-in-out infinite;
+}
+@keyframes fpPiscaEmerg {
+  0%, 100% { opacity: 1;  box-shadow: 0 0 0 3px rgba(255,77,77,.22); }
+  50%      { opacity: .5; box-shadow: 0 0 0 7px rgba(255,77,77,0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fp-prio[data-n="5"] .fp-prio-emerg { animation: none; box-shadow: 0 0 0 3px rgba(255,77,77,.22); }
 }
 .fp-prio-rot { font-size: 11.5px; font-weight: 600; color: var(--fp-prio-cor, var(--text-muted)); min-width: 62px; }
 .fp-prio[data-n="1"] { --fp-prio-cor: #4c8dff; }
@@ -4491,7 +4504,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-prio[data-n="1"] .fp-prio-fill { width: 6px; }
 .fp-prio[data-n="2"] .fp-prio-fill { width: 34px; }
 .fp-prio[data-n="3"] .fp-prio-fill { width: 68px; }
-.fp-prio[data-n="5"] .fp-prio-trilho { opacity: .35; }
+.fp-prio[data-n="5"] .fp-prio-fill { width: 68px; }
 .fp-prio.somente-leitura .fp-prio-p,
 .fp-prio.somente-leitura .fp-prio-emerg { cursor: default; pointer-events: none; }
 
@@ -14989,6 +15002,9 @@ let FOTO_PRODUTOS = [];
 let _fotoCarregadoEm = 0;
 let _fotoCarregando = null;
 const FP_PRIO = { 1: 'Baixa', 2: 'Média', 3: 'Alta', 5: 'Emergencial' };
+const FP_ICO_ATENCAO = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+  + '<path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/>'
+  + '<path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
 const FP_FOTO_PAGINA = 60;
 let _prodFiltro = 'fila', _prodBusca = '', _prodMostra = FP_FOTO_PAGINA;
 /* Ordem congelada da listagem.
@@ -15035,7 +15051,7 @@ function fpFotoProduto(sku) { return FOTO_PRODUTOS.find(p => p.sku === sku); }
 function fpPrioHtml(sku, nivel, editavel) {
   const n = (nivel === 1 || nivel === 2 || nivel === 3 || nivel === 5) ? nivel : 0;
   const trava = editavel ? '' : ' somente-leitura';
-  const bola = k => '<button class="fp-prio-p' + (n && k <= n && n !== 5 ? ' on' : '') + (k === n ? ' atual' : '') + '" type="button"'
+  const bola = k => '<button class="fp-prio-p' + (n && k <= n ? ' on' : '') + (k === n ? ' atual' : '') + '" type="button"'
     + ' data-tip="' + FP_PRIO[k] + '" aria-label="Prioridade ' + FP_PRIO[k] + '"'
     + (editavel ? ' onclick="fpPrioDefinir(\'' + fpJs(sku) + '\',' + k + ')"' : '') + '></button>';
   return '<span class="fp-prio' + trava + '" data-n="' + (n || '') + '">'
@@ -15043,7 +15059,7 @@ function fpPrioHtml(sku, nivel, editavel) {
     + bola(1) + bola(2) + bola(3) + '</span>'
     + '<button class="fp-prio-emerg" type="button" data-tip="Emergencial — só para urgência real"'
     + ' aria-label="Marcar como emergencial"'
-    + (editavel ? ' onclick="fpPrioDefinir(\'' + fpJs(sku) + '\',5)"' : '') + '>!</button>'
+    + (editavel ? ' onclick="fpPrioDefinir(\'' + fpJs(sku) + '\',5)"' : '') + '>' + FP_ICO_ATENCAO + '</button>'
     + '<span class="fp-prio-rot">' + (n ? FP_PRIO[n] : 'Pendente') + '</span></span>';
 }
 
@@ -15158,7 +15174,8 @@ function fpPrioEscolher(prod) {
       + '<div class="fp-aviso-corpo"><p class="fp-aviso-sub" style="margin:0 0 4px">Com que prioridade a foto entra de novo na fila?</p>'
       + [1, 2, 3, 5].map(k => '<button class="fp-aviso-item" type="button" data-n="' + k + '">'
           + '<span class="fp-aviso-ico" style="background:color-mix(in srgb,' + fpPrioCor(k) + ' 18%,transparent);color:' + fpPrioCor(k) + '">'
-          + (k === 5 ? '!' : k) + '</span><span><span class="fp-aviso-tit">' + FP_PRIO[k] + '</span>'
+          + (k === 5 ? '<span class="fp-prio-emerg" style="border:0;background:none;color:inherit;width:auto;height:auto">' + FP_ICO_ATENCAO + '</span>' : k)
+          + '</span><span><span class="fp-aviso-tit">' + FP_PRIO[k] + '</span>'
           + '<span class="fp-aviso-sub">' + (k === 5 ? 'Fura a fila inteira — só para urgência real.' : 'Entra no rateio normal do lote.') + '</span></span></button>').join('')
       + '</div><div class="fp-aviso-foot"><span class="fp-aviso-conta"></span>'
       + '<button class="action-btn" type="button" data-cancelar>Cancelar</button></div></div>';
