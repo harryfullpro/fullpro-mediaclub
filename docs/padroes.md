@@ -227,6 +227,15 @@ Use `.maybeSingle()` quando a linha **pode não existir** — `.single()` devolv
 
 ---
 
+## Dois `<body>` no admin.html
+
+Além do body real, existe o do **modelo de etiqueta de transporte**, que é um documento
+HTML completo dentro de uma template string (para abrir em janela de impressão). Script que
+procura `<body>` ou o último `</style>` pode acertar o errado — foi o que aconteceu com a
+classe `fp-sem-sessao`. Confira qual dos dois foi alterado antes de commitar.
+
+---
+
 ## Landing pública: dado de cliente só por view mascarada
 
 A landing (`index.html`) nunca dá `select` em `mc_requests` — o anon só tem permissão de

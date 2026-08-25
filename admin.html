@@ -4238,9 +4238,92 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
 @media (prefers-reduced-motion: reduce) {
   .fp-foto .fp-foto-spin > svg { animation: none; }
 }
+/* ==========================================================================
+   MANUTENÇÃO — botão do besouro, relato e listagem (2026-08-20)
+   O botão fica acima dos modais de propósito: bug encontrado dentro de um
+   popup precisa poder ser reportado sem fechar o popup e perder o contexto.
+   ========================================================================== */
+.fp-bug-btn {
+  position: fixed;
+  right: 18px;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 100050;
+  width: 42px; height: 42px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-hi);
+  color: var(--text-dim);
+  cursor: pointer;
+  opacity: .55;
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);
+  transition: opacity .15s, color .15s, border-color .15s, transform .15s;
+}
+.fp-bug-btn:hover, .fp-bug-btn:focus-visible {
+  opacity: 1; color: var(--primary-hi); border-color: var(--primary);
+  transform: translateY(-1px);
+}
+.fp-bug-btn svg { width: 21px; height: 21px; }
+/* na tela de login o painel nem abriu: não faz sentido reportar de lá */
+body.fp-sem-sessao .fp-bug-btn { display: none; }
+.fp-bug-modal { z-index: 100100; }
+
+.fp-bug-tipos { display: flex; gap: 8px; margin-bottom: 14px; }
+.fp-bug-tipo {
+  flex: 1; padding: 9px 10px; border-radius: 10px; cursor: pointer;
+  background: var(--bg-elev); border: 1px solid var(--border);
+  color: var(--text-dim); font-family: inherit; font-size: 12.5px; font-weight: 600;
+}
+.fp-bug-tipo.ativo { border-color: var(--primary); color: var(--text); background: rgba(255,45,45,.1); }
+.fp-bug-print {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 8px 12px; border-radius: 9px;
+  border: 1px dashed var(--border-hi); color: var(--text-dim); font-size: 12px;
+}
+.fp-bug-print:hover { border-color: var(--primary); color: var(--text); }
+#fpBugPreview img {
+  margin-top: 10px; max-width: 100%; max-height: 160px;
+  border-radius: 8px; border: 1px solid var(--border); display: block;
+}
+.fp-bug-contexto {
+  margin-top: 14px; font-size: 11px; line-height: 1.6; color: var(--text-muted);
+}
+.fp-bug-contexto b { color: var(--text-dim); font-weight: 600; }
+
+.fp-bug-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px; margin-bottom: 10px;
+}
+.fp-bug-card.aberto { border-color: rgba(255,45,45,.4); }
+.fp-bug-card.resolvido, .fp-bug-card.descartado { opacity: .72; }
+.fp-bug-topo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.fp-bug-topo .fp-bug-tit { flex: 1 1 60%; min-width: 0; font-size: 14.5px; font-weight: 700; line-height: 1.3; }
+.fp-bug-meta { font-size: 11.5px; color: var(--text-muted); margin-bottom: 8px; }
+.fp-bug-desc { font-size: 13px; color: var(--text-dim); line-height: 1.5; white-space: pre-wrap; margin-bottom: 10px; }
+.fp-bug-onde {
+  font-size: 11px; color: var(--text-muted); background: var(--bg-elev);
+  border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; margin-bottom: 10px;
+  word-break: break-all;
+}
+.fp-bug-card img.fp-bug-print-img {
+  max-width: 220px; max-height: 130px; border-radius: 8px;
+  border: 1px solid var(--border); cursor: zoom-in; display: block; margin-bottom: 10px;
+}
+.fp-bug-acoes { display: flex; gap: 6px; flex-wrap: wrap; }
+.badge.bug      { background: rgba(255,45,45,.18);  color: var(--primary-hi); }
+.badge.melhoria { background: rgba(59,130,246,.18); color: #7aa5ff; }
+.badge.andamento  { background: rgba(255,170,51,.18); color: var(--warning); }
+.badge.resolvido  { background: rgba(31,210,122,.18); color: var(--success); }
+.badge.descartado { background: rgba(148,148,160,.16); color: var(--text-muted); }
+@media (max-width: 600px) {
+  .fp-bug-btn { width: 38px; height: 38px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); }
+  .fp-bug-btn svg { width: 19px; height: 19px; }
+  .fp-bug-tipos { flex-direction: column; }
+  .fp-bug-topo .fp-bug-tit { flex: 1 1 100%; }
+}
 </style>
 </head>
-<body>
+<body class="fp-sem-sessao">
 
 <a class="fp-skip" href="#conteudo">Pular para o conteúdo</a>
 <div class="fp-offline" id="fpOffline" role="status" aria-live="polite">
@@ -4347,6 +4430,11 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
     <button class="nav-item" data-view="users">
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
       <span class="nav-label">Usuários</span>
+    </button>
+    <button class="nav-item" data-view="manutencao">
+      <!-- besouro: o ícone universal de bug -->
+      <svg viewBox="0 0 24 24"><ellipse cx="12" cy="13" rx="5" ry="7"/><path d="M12 6V4"/><path d="M9.5 5.5L8 3.5M14.5 5.5L16 3.5"/><path d="M7 10L3.5 8M7 13.5H3M7 17l-3.5 2M17 10l3.5-2M17 13.5h4M17 17l3.5 2"/><path d="M12 8v10"/></svg>
+      <span class="nav-label">Manutenção</span> <span class="count" id="cntBugs">0</span>
     </button>
     <button class="nav-item" data-view="integracoes">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
@@ -5288,7 +5376,103 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
         </div>
       </div>
     </div>
+
+    <!-- MANUTENÇÃO VIEW -->
+    <div id="view-manutencao" style="display:none">
+      <div class="page-head">
+        <div>
+          <h1>Manutenção</h1>
+          <p>Bugs e ideias de melhoria reportadas pela equipe no botão do besouro.</p>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card primary">
+          <div class="label">Abertos</div>
+          <div class="value" id="bugAbertos">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Em andamento</div>
+          <div class="value" id="bugAndamento">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Resolvidos</div>
+          <div class="value" id="bugResolvidos">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Total</div>
+          <div class="value" id="bugTotal">0</div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <span class="fp-so-desktop" style="display:contents">
+          <button class="filter-btn active" data-bugfilter="pendentes" onclick="fpBugFiltrar('pendentes')">A resolver</button>
+          <button class="filter-btn" data-bugfilter="aberto" onclick="fpBugFiltrar('aberto')">Abertos</button>
+          <button class="filter-btn" data-bugfilter="andamento" onclick="fpBugFiltrar('andamento')">Em andamento</button>
+          <button class="filter-btn" data-bugfilter="resolvido" onclick="fpBugFiltrar('resolvido')">Resolvidos</button>
+          <button class="filter-btn" data-bugfilter="descartado" onclick="fpBugFiltrar('descartado')">Descartados</button>
+          <button class="filter-btn" data-bugfilter="todos" onclick="fpBugFiltrar('todos')">Todos</button>
+        </span>
+        <select class="fp-so-mobile fp-lista-select" id="bugFiltroSelect" aria-label="Filtrar relatos" onchange="fpBugFiltrar(this.value)">
+          <option value="pendentes">A resolver</option>
+          <option value="aberto">Abertos</option>
+          <option value="andamento">Em andamento</option>
+          <option value="resolvido">Resolvidos</option>
+          <option value="descartado">Descartados</option>
+          <option value="todos">Todos</option>
+        </select>
+        <span id="bugCount" class="fp-lista-contagem"></span>
+      </div>
+
+      <div id="bugLista"></div>
+    </div>
   </main>
+</div>
+
+<!-- Botão do besouro: fica em toda tela e também sobre os popups -->
+<button id="fpBugBtn" class="fp-bug-btn" type="button" data-tip="Reportar bug ou melhoria"
+        aria-label="Reportar bug ou melhoria" onclick="fpBugAbrir()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <ellipse cx="12" cy="13" rx="5" ry="7"/>
+    <path d="M12 6V4"/><path d="M9.5 5.5L8 3.5M14.5 5.5L16 3.5"/>
+    <path d="M7 10L3.5 8M7 13.5H3M7 17l-3.5 2M17 10l3.5-2M17 13.5h4M17 17l3.5 2"/>
+    <path d="M12 8v10"/>
+  </svg>
+</button>
+
+<!-- Modal do relato -->
+<div class="modal fp-bug-modal" id="fpBugModal">
+  <div class="modal-content" style="max-width:520px">
+    <div class="modal-head">
+      <h3>Reportar para a manutenção</h3>
+      <button class="modal-close" onclick="fpBugFechar()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="fp-bug-tipos">
+        <button type="button" class="fp-bug-tipo ativo" data-tipo="bug" onclick="fpBugTipo('bug')">É um bug</button>
+        <button type="button" class="fp-bug-tipo" data-tipo="melhoria" onclick="fpBugTipo('melhoria')">É uma melhoria</button>
+      </div>
+      <div class="block-field">
+        <label>O que aconteceu? <span style="color:var(--primary)">*</span></label>
+        <input type="text" class="login-input" id="fpBugTitulo" style="margin:0" maxlength="120" placeholder="Ex: o filtro de status volta para Todas ao salvar"/>
+      </div>
+      <div class="block-field">
+        <label>Detalhes</label>
+        <textarea class="checkin-textarea" id="fpBugDesc" style="min-height:96px" placeholder="O que você estava fazendo, o que esperava que acontecesse e o que aconteceu."></textarea>
+      </div>
+      <label class="fp-bug-print">
+        <input type="file" id="fpBugImg" accept="image/*" hidden onchange="fpBugAnexar(this)"/>
+        <span id="fpBugImgRotulo">Anexar print (opcional)</span>
+      </label>
+      <div id="fpBugPreview"></div>
+      <div class="fp-bug-contexto" id="fpBugContexto"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="action-btn" onclick="fpBugFechar()">Cancelar</button>
+      <button class="action-btn approve" id="fpBugEnviar" onclick="fpBugEnviar()">Enviar relato</button>
+    </div>
+  </div>
 </div>
 
 <!-- Modal -->
@@ -6041,6 +6225,7 @@ async function checkAuth() {
   CURRENT_USER = data;
   document.getElementById('login').style.display = 'none';
   document.getElementById('app').style.display = 'grid';
+  document.body.classList.remove('fp-sem-sessao');   // libera o botão do besouro
   await initApp();
 }
 
@@ -6061,6 +6246,7 @@ document.getElementById('loginBtn').onclick = async () => {
   localStorage.setItem('fp_session', data.id);
   document.getElementById('login').style.display = 'none';
   document.getElementById('app').style.display = 'grid';
+  document.body.classList.remove('fp-sem-sessao');   // libera o botão do besouro
   await initApp();
 };
 
@@ -9575,7 +9761,7 @@ function renderShotsReadOnly(shots, si) {
     { sec: 'Performance', items: [['perf-metas','Metas'],['perf-posts','Meus Posts'],['perf-influencers','Influenciadores'],['perf-bonificacao','Bonificação']] },
     { sec: 'Configurações', items: [['templates','Templates WhatsApp'],['export','Exportar'],['users','Usuários'],['integracoes','Integrações']] }
   ];
-  const FP_ALL_VIEWS = ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','integracoes','profile'];
+  const FP_ALL_VIEWS = ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','integracoes','profile'];
   const FP_ALWAYS_ON = ['profile','project-detail'];
   const FP_NAV_ORDER = ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','integracoes','profile'];
 
@@ -14827,6 +15013,272 @@ document.getElementById('kitModal')?.addEventListener('click', function (e) {
   if (e.target.id === 'kitModal') fpKitFecharModal();
 });
 
+/* ================================================================
+   MANUTENÇÃO — relatos de bug e melhoria
+
+   O botão do besouro fica fixo em toda tela e também sobre os popups:
+   bug encontrado dentro de um modal precisa ser reportado sem fechar o
+   modal, senão o contexto se perde.
+
+   O relato carrega o contexto capturado no clique (tela aberta, URL,
+   tamanho da janela, tema, navegador e quem reportou). É o que evita o
+   vaivém de "onde exatamente isso aconteceu?".
+   ================================================================ */
+
+let BUGS = [];
+let bugFiltro = 'pendentes';
+let fpBugTipoAtual = 'bug';
+let fpBugImagem = null;
+
+const BUG_STATUS_ROTULOS = {
+  aberto: 'Aberto', andamento: 'Em andamento',
+  resolvido: 'Resolvido', descartado: 'Descartado',
+};
+
+async function loadBugs() {
+  const { data, error } = await sb.from('mc_bug_reports')
+    .select('*').order('created_at', { ascending: false });
+  if (error) { console.warn('loadBugs:', error.message); return; }
+  BUGS = data || [];
+  fpBugBadge();
+}
+
+/* Badge no menu, no mesmo estilo do de Solicitações: sem nada a fazer, ele
+   desaparece em vez de mostrar um zero em cor de alarme. */
+function fpBugBadge() {
+  const el = document.getElementById('cntBugs');
+  if (!el) return;
+  const n = BUGS.filter(b => b.status === 'aberto').length;
+  el.textContent = n;
+  el.style.display = n ? '' : 'none';
+  el.setAttribute('aria-label', n ? (n === 1 ? '1 relato aberto' : n + ' relatos abertos') : '');
+}
+
+/* ---------- abrir / fechar o relato ---------- */
+
+function fpBugContextoAtual() {
+  const ativo = document.querySelector('.nav-item.active .nav-label');
+  return {
+    view: (location.hash || '').replace('#', '') || 'dashboard',
+    tela: ativo ? ativo.textContent.trim() : '',
+    url: location.href,
+    janela: window.innerWidth + '×' + window.innerHeight,
+    tema: document.documentElement.getAttribute('data-theme') || 'dark',
+    ua: navigator.userAgent,
+    popup: (function () {
+      // qual modal estava aberto quando o besouro foi clicado
+      const m = [...document.querySelectorAll('.modal.show')]
+        .filter(x => x.id !== 'fpBugModal')
+        .map(x => (x.querySelector('.modal-head h3') || {}).textContent || x.id);
+      return m.join(' / ');
+    })(),
+  };
+}
+
+function fpBugAbrir() {
+  fpBugTipoAtual = 'bug';
+  fpBugImagem = null;
+  document.querySelectorAll('.fp-bug-tipo').forEach(b => b.classList.toggle('ativo', b.dataset.tipo === 'bug'));
+  document.getElementById('fpBugTitulo').value = '';
+  document.getElementById('fpBugDesc').value = '';
+  document.getElementById('fpBugPreview').innerHTML = '';
+  document.getElementById('fpBugImgRotulo').textContent = 'Anexar print (opcional)';
+  const ctx = fpBugContextoAtual();
+  document.getElementById('fpBugContexto').innerHTML =
+    'Vai junto automaticamente: <b>' + escHtml(ctx.tela || ctx.view) + '</b>'
+    + (ctx.popup ? ' · popup <b>' + escHtml(ctx.popup) + '</b>' : '')
+    + ' · janela <b>' + escHtml(ctx.janela) + '</b> · tema <b>' + escHtml(ctx.tema) + '</b>'
+    + ' · quem reporta <b>' + escHtml((CURRENT_USER && CURRENT_USER.name) || 'não identificado') + '</b>.';
+  document.getElementById('fpBugModal').classList.add('show');
+  setTimeout(function () { try { document.getElementById('fpBugTitulo').focus(); } catch (e) {} }, 40);
+}
+window.fpBugAbrir = fpBugAbrir;
+
+function fpBugFechar() { document.getElementById('fpBugModal').classList.remove('show'); }
+window.fpBugFechar = fpBugFechar;
+
+function fpBugTipo(t) {
+  fpBugTipoAtual = t === 'melhoria' ? 'melhoria' : 'bug';
+  document.querySelectorAll('.fp-bug-tipo').forEach(b => b.classList.toggle('ativo', b.dataset.tipo === fpBugTipoAtual));
+}
+window.fpBugTipo = fpBugTipo;
+
+/* Print anexado: redimensiona para caber numa linha de banco sem virar um
+   arquivo de megabytes (a coluna é texto, não bucket). */
+function fpBugAnexar(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  const leitor = new FileReader();
+  leitor.onload = function () {
+    const img = new Image();
+    img.onload = function () {
+      const max = 1280;
+      const escala = Math.min(1, max / Math.max(img.width, img.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(img.width * escala);
+      cv.height = Math.round(img.height * escala);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      fpBugImagem = cv.toDataURL('image/jpeg', 0.72);
+      document.getElementById('fpBugPreview').innerHTML = '<img src="' + fpBugImagem + '" alt="Print anexado"/>';
+      document.getElementById('fpBugImgRotulo').textContent = 'Trocar o print';
+    };
+    img.onerror = function () { fpToast('Não consegui ler essa imagem.', 'warn'); };
+    img.src = leitor.result;
+  };
+  leitor.readAsDataURL(f);
+}
+window.fpBugAnexar = fpBugAnexar;
+
+async function fpBugEnviar() {
+  const titulo = document.getElementById('fpBugTitulo').value.trim();
+  if (!titulo) { fpToast('Escreva em uma linha o que aconteceu.', 'warn'); return; }
+  const btn = document.getElementById('fpBugEnviar');
+  btn.disabled = true;
+  const payload = {
+    tipo: fpBugTipoAtual,
+    titulo: titulo,
+    descricao: document.getElementById('fpBugDesc').value.trim() || null,
+    contexto: fpBugContextoAtual(),
+    imagem: fpBugImagem,
+    autor_id: (CURRENT_USER && CURRENT_USER.id) || null,
+    autor_nome: (CURRENT_USER && CURRENT_USER.name) || null,
+  };
+  const { error } = await sb.from('mc_bug_reports').insert(payload);
+  btn.disabled = false;
+  if (error) { fpToast('Não deu para enviar: ' + error.message, 'erro'); return; }
+  fpBugFechar();
+  fpToast(fpBugTipoAtual === 'bug' ? 'Bug reportado. Obrigado!' : 'Melhoria enviada. Obrigado!', 'ok');
+  await loadBugs();
+  if ((location.hash || '') === '#manutencao') renderBugs();
+}
+window.fpBugEnviar = fpBugEnviar;
+
+/* ---------- a tela de Manutenção ---------- */
+
+function fpBugFiltrar(f) {
+  bugFiltro = f || 'pendentes';
+  document.querySelectorAll('#view-manutencao .filter-btn[data-bugfilter]').forEach(b => {
+    b.classList.toggle('active', b.dataset.bugfilter === bugFiltro);
+  });
+  const sel = document.getElementById('bugFiltroSelect');
+  if (sel && sel.value !== bugFiltro) sel.value = bugFiltro;
+  renderBugs();
+}
+window.fpBugFiltrar = fpBugFiltrar;
+
+function renderBugs() {
+  const cont = document.getElementById('bugLista');
+  if (!cont) return;
+
+  const conta = st => BUGS.filter(b => b.status === st).length;
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('bugAbertos', conta('aberto'));
+  set('bugAndamento', conta('andamento'));
+  set('bugResolvidos', conta('resolvido'));
+  set('bugTotal', BUGS.length);
+  fpBugBadge();
+
+  const lista = bugFiltro === 'todos' ? BUGS
+    : bugFiltro === 'pendentes' ? BUGS.filter(b => b.status === 'aberto' || b.status === 'andamento')
+    : BUGS.filter(b => b.status === bugFiltro);
+
+  const cnt = document.getElementById('bugCount');
+  if (cnt) cnt.textContent = lista.length === BUGS.length
+    ? BUGS.length + (BUGS.length === 1 ? ' relato' : ' relatos')
+    : lista.length + ' de ' + BUGS.length;
+
+  if (!lista.length) {
+    cont.innerHTML = '<div class="empty"><h3>Nada por aqui</h3>'
+      + '<p>' + (bugFiltro === 'pendentes'
+        ? 'Nenhum bug ou melhoria esperando. A equipe reporta pelo botão do besouro, no canto da tela.'
+        : 'Nenhum relato com esse filtro.') + '</p></div>';
+    return;
+  }
+
+  cont.innerHTML = lista.map(b => {
+    const ctx = b.contexto || {};
+    const acoes = [];
+    if (b.status !== 'andamento' && b.status !== 'resolvido')
+      acoes.push(fpBugAcao(b.id, 'andamento', 'Estou resolvendo', 'fp-ib-blue', '<path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>'));
+    if (b.status !== 'resolvido')
+      acoes.push(fpBugAcao(b.id, 'resolvido', 'Marcar resolvido', 'fp-ib-green', '<polyline points="20 6 9 17 4 12"/>'));
+    if (b.status !== 'descartado')
+      acoes.push(fpBugAcao(b.id, 'descartado', 'Descartar', 'fp-ib-violet', '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'));
+    if (b.status === 'resolvido' || b.status === 'descartado')
+      acoes.push(fpBugAcao(b.id, 'aberto', 'Reabrir', 'fp-ib-blue', '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>'));
+    acoes.push('<button class="fp-icon-btn fp-ib-danger" data-tip="Apagar relato" onclick="fpBugApagar(\'' + b.id + '\')">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>');
+
+    return '<div class="fp-bug-card ' + escHtml(b.status) + '">'
+      + '<div class="fp-bug-topo">'
+      +   '<span class="fp-bug-tit">' + escHtml(b.titulo) + '</span>'
+      +   '<span class="badge ' + escHtml(b.tipo) + '">' + (b.tipo === 'melhoria' ? 'Melhoria' : 'Bug') + '</span>'
+      +   '<span class="badge ' + escHtml(b.status) + '">' + escHtml(BUG_STATUS_ROTULOS[b.status] || b.status) + '</span>'
+      + '</div>'
+      + '<div class="fp-bug-meta">' + escHtml(b.autor_nome || 'Alguém da equipe') + ' · ' + prettyDT(b.created_at) + '</div>'
+      + (b.descricao ? '<div class="fp-bug-desc">' + escHtml(b.descricao) + '</div>' : '')
+      + (b.imagem ? '<img class="fp-bug-print-img" src="' + escHtml(b.imagem) + '" alt="Print do relato" onclick="openLightbox(this.src)"/>' : '')
+      + '<div class="fp-bug-onde">Onde: <b>' + escHtml(ctx.tela || ctx.view || '—') + '</b>'
+      +   (ctx.popup ? ' · popup: ' + escHtml(ctx.popup) : '')
+      +   (ctx.janela ? ' · janela ' + escHtml(ctx.janela) : '')
+      +   (ctx.tema ? ' · tema ' + escHtml(ctx.tema) : '')
+      +   (ctx.url ? '<br>' + escHtml(ctx.url) : '')
+      + '</div>'
+      + '<div class="fp-bug-acoes">' + acoes.join('') + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function fpBugAcao(id, status, dica, cor, glifo) {
+  return '<button class="fp-icon-btn ' + cor + '" data-tip="' + dica + '" onclick="fpBugStatus(\'' + id + '\',\'' + status + '\')">'
+    + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">' + glifo + '</svg></button>';
+}
+
+async function fpBugStatus(id, status) {
+  const patch = { status: status };
+  if (status === 'resolvido' || status === 'descartado') {
+    patch.resolvido_em = new Date().toISOString();
+    patch.resolvido_por = (CURRENT_USER && CURRENT_USER.name) || null;
+  } else {
+    patch.resolvido_em = null;
+    patch.resolvido_por = null;
+  }
+  const { error } = await sb.from('mc_bug_reports').update(patch).eq('id', id);
+  if (error) { fpToast('Erro ao atualizar: ' + error.message, 'erro'); return; }
+  const b = BUGS.find(x => x.id === id);
+  if (b) Object.assign(b, patch);
+  renderBugs();
+}
+window.fpBugStatus = fpBugStatus;
+
+async function fpBugApagar(id) {
+  const b = BUGS.find(x => x.id === id);
+  if (!await fpConfirm({
+    titulo: 'Apagar relato',
+    mensagem: '"' + ((b && b.titulo) || 'Relato') + '" sai da lista de manutenção.',
+    detalhe: 'Esta ação não pode ser desfeita.',
+    confirmar: 'Apagar', perigo: true,
+  })) return;
+  const { error } = await sb.from('mc_bug_reports').delete().eq('id', id);
+  if (error) { fpToast('Erro ao apagar: ' + error.message, 'erro'); return; }
+  BUGS = BUGS.filter(x => x.id !== id);
+  renderBugs();
+}
+window.fpBugApagar = fpBugApagar;
+
+/* Atalho: b abre o relato, desde que o foco não esteja num campo. */
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'b' && e.key !== 'B') return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const a = document.activeElement;
+  if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable)) return;
+  if (document.getElementById('fpBugModal').classList.contains('show')) return;
+  fpBugAbrir();
+});
+document.getElementById('fpBugModal').addEventListener('click', function (e) {
+  if (e.target.id === 'fpBugModal') fpBugFechar();
+});
+
 /* Generate WhatsApp templates for a request — reads from managed store */
 function getWaTemplates(r) {
   const tpls = loadTemplates();
@@ -18203,7 +18655,7 @@ function applyRolePermissions() {
 
   // Views accessible per role
   const access = {
-    admin: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','integracoes','profile'],
+    admin: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','integracoes','profile'],
     filmmaker: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','profile'],
     mecanico: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-bonificacao','templates','profile'],
     viewer: ['dashboard','debriefing','profile']
@@ -18285,7 +18737,7 @@ async function initApp() {
   // Integrações: carrega status compartilhado do servidor (vale p/ toda a equipe)
   await refreshIntegrationStatus();
 
-  await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects(), loadPerfPosts(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses(), loadNotifications(), loadInfExtras()]);
+  await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects(), loadPerfPosts(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses(), loadNotifications(), loadInfExtras(), loadBugs()]);
   renderDashboard();
   renderRequests();
   renderCalendar();
@@ -18497,7 +18949,7 @@ async function initApp() {
   const ALL_VIEWS = [
     'dashboard','requests','calendar','checkin','projects','project-detail',
     'editing','clips','debriefing','perf-metas','perf-posts','perf-influencers',
-    'perf-bonificacao','templates','export','users','integracoes','profile'
+    'perf-bonificacao','templates','export','users','manutencao','integracoes','profile'
   ];
 
   /* ------------------------------------------------------------------
@@ -18551,6 +19003,10 @@ async function initApp() {
         case 'dashboard':
           await Promise.all([loadRequests(), loadCheckins(), loadCheckouts(), loadProjects()]);
           renderDashboard();
+          break;
+        case 'manutencao':
+          await loadBugs();
+          renderBugs();
           break;
         case 'requests':
           await loadRequests();

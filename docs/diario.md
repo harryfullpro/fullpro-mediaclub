@@ -4,6 +4,39 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 20/08/2026 — Botão do besouro e o módulo Manutenção
+
+Qualquer pessoa da equipe agora reporta bug ou melhoria de dentro do painel, e o relato cai
+numa fila que só o dono vê.
+
+**O botão fica acima dos modais de propósito** (`z-index` 100050 contra 100 dos modais).
+Bug encontrado dentro de um popup precisa poder ser reportado **sem fechar o popup** —
+fechar perde o contexto, e o contexto é justamente o que costuma faltar num relato.
+Discreto por padrão (55% de opacidade), acende no hover. Atalho: **B**.
+
+**O relato leva o contexto capturado no clique:** tela aberta, qual popup estava por cima,
+URL, tamanho da janela, tema, navegador e quem reportou. É o que evita o vaivém de "onde
+exatamente isso aconteceu?". Print opcional, redimensionado para 1280px e JPEG 72% no
+próprio navegador — a coluna é texto, não bucket.
+
+**O módulo Manutenção** (só para admin; quem reporta usa o besouro) tem os quatro
+contadores, filtro por status e cartões com o relato, o contexto e as ações: *estou
+resolvendo*, *resolvido*, *descartar*, *reabrir* e apagar. O filtro padrão é **A resolver**
+(aberto + em andamento) — abrir na lista completa faria o dono varrer relatos já fechados.
+
+**A notificação é a mesma dos agendamentos:** contador no item do menu, que **desaparece
+quando não há nada aberto** em vez de mostrar um zero em cor de alarme.
+
+**Tabela `mc_bug_reports` com RLS só para autenticado** — as tabelas antigas do projeto
+liberam `anon` também, o que com a anon key pública significa qualquer um. Aqui não: quem
+reporta está logado.
+
+**Uma pegadinha do arquivo:** o `admin.html` tem **dois** `<body>` — o real e o do modelo
+de etiqueta de transporte, que é gerado como HTML completo para impressão. A classe que
+esconde o botão na tela de login foi para o body errado na primeira tentativa e o botão
+aparecia antes do login. Ao mexer em `<body>` ou `</style>` por script, confirme qual dos
+dois você pegou.
+
 ## 20/08/2026 — Foto de produto: carregando, com foto, sem foto
 
 Toda listagem de produto montava a sua própria caixa de foto — brinde, produto compatível

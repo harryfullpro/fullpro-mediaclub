@@ -147,3 +147,32 @@ grant select on public.mc_public_gravacoes to anon, authenticated;
 alter table public.mc_requests drop constraint if exists requests_brinde_check;
 alter table public.mc_requests add constraint requests_brinde_check
   check (brinde = any (array['pastilhas','mochila','capa','capa_moto','ponteira','outros']));
+
+-- ============================================================================
+-- Manutenção: relatos de bug e melhoria abertos pelo botão do besouro
+-- (20/08/2026). Diferente das outras tabelas daqui, o acesso é só de usuário
+-- autenticado: quem reporta é da equipe e a anon key é pública no config.js.
+-- ============================================================================
+create table if not exists public.mc_bug_reports (
+  id            uuid        primary key default gen_random_uuid(),
+  created_at    timestamptz not null default now(),
+  tipo          text        not null default 'bug' check (tipo in ('bug','melhoria')),
+  titulo        text        not null,
+  descricao     text,
+  contexto      jsonb,      -- {view, tela, popup, url, janela, tema, ua}
+  imagem        text,       -- data URL do print (redimensionado no navegador)
+  autor_id      uuid,
+  autor_nome    text,
+  status        text        not null default 'aberto'
+                check (status in ('aberto','andamento','resolvido','descartado')),
+  resolucao     text,
+  resolvido_em  timestamptz,
+  resolvido_por text
+);
+create index if not exists mc_bug_reports_status_idx on public.mc_bug_reports (status);
+create index if not exists mc_bug_reports_criado_idx on public.mc_bug_reports (created_at desc);
+alter table public.mc_bug_reports enable row level security;
+create policy "auth le relatos"        on public.mc_bug_reports for select to authenticated using (true);
+create policy "auth abre relato"       on public.mc_bug_reports for insert to authenticated with check (true);
+create policy "auth atualiza relato"   on public.mc_bug_reports for update to authenticated using (true) with check (true);
+create policy "auth apaga relato"      on public.mc_bug_reports for delete to authenticated using (true);
