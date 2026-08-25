@@ -1,5 +1,66 @@
 # Diário
 
+## 25/08/2026 · Seção FOTOGRAFIA e o aviso de entrada no dialeto do debriefing
+
+### O aviso ficou mais largo e ganhou régua técnica
+
+Pedido do dono: mais largo, com **nome para cada nota** e **patch numerado do dia**, e
+o visual do debriefing — "sem esses containers e blocos parecendo muito site de ia".
+
+- 520 → **680px**.
+- A pilha de caixinhas dentro da caixa virou **uma superfície só com fios de 1px**.
+  Caixa dentro de caixa é o que mais entrega interface montada por template.
+- `mc_updates` ganhou `nome` (kebab-case) e `patch` (inteiro). As notas do mesmo dia
+  dividem o patch; o código da nota é `patch.posição` (`004.2`).
+- **O patch é atribuído por gatilho no banco.** Quem cadastra não deve lembrar do número
+  e duas abas abertas escolheriam o mesmo. Nota de um dia que já tem patch herda.
+- **O código é calculado sobre o patch inteiro, não sobre o filtrado.** No popup só
+  aparecem as não vistas; numerar em cima do que sobrou daria código diferente a cada
+  abertura.
+
+### A seção FOTOGRAFIA
+
+Cinco telas (Panorama, Produção, Galeria, Separação, Fotografia em lote), a segunda seção
+do menu. Quatro tabelas novas, três edge functions, e o papel **Fotógrafo**, que não
+existia para o sistema de permissões — qualquer papel desconhecido caía em `viewer`, o
+mais restrito. O fotógrafo estava no papel mais fechado do painel por acidente de
+nomenclatura.
+
+**Números reais da primeira sincronização:** 2.575 produtos lidos do Bling em 26 páginas
+(o painel lia no máximo 2.000 e truncava ~575), 5.524 pastas no Drive, **1.311 produtos
+com foto** e **1.255 sem** — destes, 639 com estoque. E 4.211 pastas do Drive sem produto
+correspondente no Bling, resíduo de SKUs antigos.
+
+### Três defeitos que a revisão adversarial pegou
+
+1. **A varredura do Drive devolvia `nextPageToken`; o sincronizador lia `proximo`.**
+   Sempre vazio → parava na primeira página de 1.000 → gravava `tem_foto: false` em cima
+   de ~4.500 SKUs e reportava sucesso.
+2. **`nome text not null`** em `mc_photo_products`. A varredura do Drive faz upsert só com
+   `{sku, tem_foto, folder, checado_em}`, e o Postgres valida NOT NULL na linha proposta
+   **antes** de resolver o conflito — o lote de 500 morreria inteiro, sempre.
+3. **Índice de busca com `coalesce(nome,'')`.** O PostgREST monta `to_tsvector('portuguese', nome)`
+   sem o coalesce: expressão diferente, índice nunca usado, varredura completa silenciosa.
+
+### Verificado de verdade
+
+- Upload no Drive **testado contra o Drive real** depois da conta de serviço virar
+  administradora de conteúdo: pasta criada, `ZZ-TESTE-UPLOAD-CLAUDE-1.jpg`, segundo envio
+  virou `-2` reusando a pasta. **A pasta de teste ficou no Drive e precisa ser apagada.**
+- `drive-proxy` v7 comparado antes/depois: `status`, `map` e `img` byte a byte idênticos
+  (os mesmos 15.273 bytes na miniatura).
+- `prioridade = 4` recusada pelo banco; `5` e `null` aceitas.
+- Popup: 680px, fios de 1px, código/nome/tipo com **0px** de diferença entre centros,
+  375px sem vazamento, dois temas.
+
+### Pegadinha nova
+
+`.action-btn` é a classe de botão deste painel. **`.btn`, `.btn primary` e `.btn ghost`
+não existem** — botão com essas classes nasce sem estilo, 19px de altura e padding zero.
+
+---
+
+
 ## 25/08/2026 · Aviso de entrada e módulo Atualizações do site
 
 **O pedido.** Um popup ao entrar no painel ou recarregar, com as solicitações
