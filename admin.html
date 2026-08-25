@@ -17,7 +17,36 @@
 <link rel="icon" type="image/png" sizes="192x192" href="/assets/pwa/icone-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   FullPro Sans — a fonte padrão do painel e da landing.
+   Arquivos em assets/fonts/, servidos do próprio domínio: sem ida ao
+   Google Fonts, sem bloqueio de render por rede de terceiro.
+   `font-display: swap` desenha com a fonte do sistema até a nossa chegar —
+   texto invisível por meio segundo é pior que texto com a fonte errada.
+   Só o peso realmente usado é baixado; declarar todos não custa nada.
+   ═══════════════════════════════════════════════════════════════════════ */
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:200;font-display:swap;src:url('/assets/fonts/fullpro-sans-200.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:200;font-display:swap;src:url('/assets/fonts/fullpro-sans-200-italic.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:300;font-display:swap;src:url('/assets/fonts/fullpro-sans-300.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:300;font-display:swap;src:url('/assets/fonts/fullpro-sans-300-italic.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:400;font-display:swap;src:url('/assets/fonts/fullpro-sans-400.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:400;font-display:swap;src:url('/assets/fonts/fullpro-sans-400-italic.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:500;font-display:swap;src:url('/assets/fonts/fullpro-sans-500.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:500;font-display:swap;src:url('/assets/fonts/fullpro-sans-500-italic.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:600;font-display:swap;src:url('/assets/fonts/fullpro-sans-600.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:600;font-display:swap;src:url('/assets/fonts/fullpro-sans-600-italic.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:700;font-display:swap;src:url('/assets/fonts/fullpro-sans-700.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:700;font-display:swap;src:url('/assets/fonts/fullpro-sans-700-italic.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:800;font-display:swap;src:url('/assets/fonts/fullpro-sans-800.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:800;font-display:swap;src:url('/assets/fonts/fullpro-sans-800-italic.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:900;font-display:swap;src:url('/assets/fonts/fullpro-sans-900.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:900;font-display:swap;src:url('/assets/fonts/fullpro-sans-900-italic.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:950;font-display:swap;src:url('/assets/fonts/fullpro-sans-950.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:950;font-display:swap;src:url('/assets/fonts/fullpro-sans-950-italic.woff2') format('woff2');}
+</style>
+
 <style>
   :root, [data-theme="dark"] {
     /* Diz ao navegador em que tema desenhar os controles nativos. Sem isso, o
@@ -65,7 +94,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   /* Dropdowns legíveis no Windows + Mac */ select option, select optgroup { background-color: var(--bg-card); color: var(--text); }
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'FullPro Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
@@ -172,7 +201,7 @@
   .shell.hover-mode .sidebar.hover-open .brand-full { display: flex; }
   .shell.hover-mode .sidebar.hover-open .brand-short { display: none; }
   .brand-txt { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1.5px; }
-  .brand-txt small { display:block; font-family:'Inter',sans-serif; font-size: 11px; color: var(--text-muted); letter-spacing: 2px; font-weight: 500; }
+  .brand-txt small { display:block; font-family:'FullPro Sans',sans-serif; font-size: 11px; color: var(--text-muted); letter-spacing: 2px; font-weight: 500; }
   /* Hide text labels when collapsed */
   .shell.collapsed .nav-label,
   .shell.collapsed .brand-txt,
@@ -309,7 +338,7 @@
   .stat-card .label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
   .stat-card .value { font-family: 'Bebas Neue', sans-serif; font-size: 32px; line-height: 1; }
   .stat-card.primary { border-color: rgba(255,45,45,.4); background: linear-gradient(135deg, rgba(255,45,45,.08), var(--bg-card)); }
-  .stat-card .value small { font-size: 14px; color: var(--text-dim); font-family: 'Inter'; margin-left: 4px; }
+  .stat-card .value small { font-size: 14px; color: var(--text-dim); font-family: 'FullPro Sans'; margin-left: 4px; }
 
   /* Filters */
   .filter-bar {
@@ -1240,7 +1269,7 @@
     line-height: 1;
     color: var(--text);
     letter-spacing: -2px;
-    font-family: 'Bebas Neue', 'Inter', sans-serif;
+    font-family: 'Bebas Neue', 'FullPro Sans', sans-serif;
     flex-shrink: 0;
   }
   .debriefing-avg-score .score-decimal {
@@ -4567,7 +4596,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 /* --- seleção e ações em lote --- */
 .fp-prod-check {
   width: 16px; height: 16px; flex: 0 0 auto; margin: 0; cursor: pointer;
-  accent-color: var(--primary);
+  accent-color: #3b82f6;
 }
 .fp-prod-lote {
   position: sticky; top: 0; z-index: 5;
@@ -4578,19 +4607,19 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-prod-lote-acoes { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .fp-prod-lote-rot { font-size: 11.5px; color: var(--text-muted); }
 .fp-lote-p {
-  font-size: 11.5px; font-weight: 650; padding: 5px 11px; border-radius: 999px; cursor: pointer;
-  background: none; border: 1px solid var(--border-hi); color: var(--text-dim);
-  transition: color .12s ease, border-color .12s ease;
+  font-size: 12px; font-weight: 650; padding: 2px 4px; cursor: pointer;
+  background: none; border: 0; color: var(--fp-lote-cor);
+  transition: opacity .12s ease;
 }
-.fp-lote-p:hover { color: var(--fp-lote-cor); border-color: var(--fp-lote-cor); }
-.fp-lote-p.emerg { display: inline-flex; align-items: center; gap: 6px; }
-.fp-lote-p.emerg svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fp-lote-p:hover { opacity: .7; text-decoration: underline; text-underline-offset: 3px; }
 .fp-lote-link {
+  display: inline-flex; align-items: center; gap: 5px;
   background: none; border: 0; padding: 0 2px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600;
-  text-decoration: underline; text-underline-offset: 2px;
 }
+.fp-lote-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.fp-lote-link svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
 .fp-lote-link.perigo { color: var(--primary); }
-.fp-lote-link.neutro { color: var(--text-muted); }
+.fp-lote-link.neutro { color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px; }
 .fp-prod-vazio { padding: 26px 12px; text-align: center; color: var(--text-muted); font-size: 13px; }
 
 @media (max-width: 900px) {
@@ -8358,8 +8387,8 @@ function ciFormHtml(prefix, r) {
                 <rect x="5" y="20" width="4" height="3" rx="0.5"/>
               </g>
               <!-- E and F labels -->
-              <text x="8" y="128" fill="var(--text)" font-size="16" font-weight="800" font-family="Inter,sans-serif">E</text>
-              <text x="200" y="128" fill="var(--text)" font-size="16" font-weight="800" font-family="Inter,sans-serif">F</text>
+              <text x="8" y="128" fill="var(--text)" font-size="16" font-weight="800" font-family="FullPro Sans,sans-serif">E</text>
+              <text x="200" y="128" fill="var(--text)" font-size="16" font-weight="800" font-family="FullPro Sans,sans-serif">F</text>
               <!-- Needle (red pointer triangle — points UP at rest, rotate -90=E, +90=F) -->
               <g id="fuelNeedleGroup_${prefix}_${rid}" transform="rotate(-90,110,110)">
                 <polygon points="110,30 107.5,106 112.5,106" fill="#dd2222" stroke="#aa1111" stroke-width="0.5"/>
@@ -15302,9 +15331,10 @@ function renderFotoProducao(refazerOrdem) {
     const acoes = [];
     if (fora) acoes.push({ rotulo: 'Voltar para a listagem', icone: 'ver', acao: () => fpProdRestaurar(p.sku) });
     else {
+      acoes.push({ rotulo: 'Adicionar fotos', icone: 'ver', acao: () => fpProdAdicionarFotos(p.sku) });
       if (temFoto) acoes.push({ rotulo: 'Enviar para atualização', icone: 'ver', acao: () => fpProdEnviarAtualizacao(p.sku) });
       acoes.push({ sep: true });
-      acoes.push({ rotulo: 'Tirar da listagem', icone: 'excluir', perigo: true, acao: () => fpProdExcluir(p.sku) });
+      acoes.push({ rotulo: 'Remover da listagem', icone: 'excluir', perigo: true, acao: () => fpProdExcluir(p.sku) });
     }
     return '<div class="fp-prod-linha' + (fora ? ' fora' : '') + '" data-sku="' + escHtml(p.sku) + '">'
       + '<input type="checkbox" class="fp-prod-check" data-sku="' + escHtml(p.sku) + '"'
@@ -15347,6 +15377,56 @@ function renderFotoProducao(refazerOrdem) {
   fpFotoBadgeUrgente();
 }
 
+/* Envio avulso de foto, fora do fluxo de lote: o operador tira a foto de um
+   produto só e sobe ali mesmo, sem passar por Separação. */
+let _prodInputFoto = null;
+function fpProdAdicionarFotos(sku) {
+  const prod = fpFotoProduto(sku);
+  if (!prod) return;
+  if (!_prodInputFoto) {
+    _prodInputFoto = document.createElement('input');
+    _prodInputFoto.type = 'file';
+    _prodInputFoto.accept = 'image/*';
+    _prodInputFoto.multiple = true;
+    _prodInputFoto.style.display = 'none';
+    document.body.appendChild(_prodInputFoto);
+  }
+  _prodInputFoto.value = '';
+  _prodInputFoto.onchange = () => {
+    const arquivos = _prodInputFoto.files;
+    if (!arquivos || !arquivos.length) return;
+    fpProdEnviarFotos(sku, arquivos);
+  };
+  _prodInputFoto.click();
+}
+
+function fpProdEnviarFotos(sku, arquivos) {
+  const prod = fpFotoProduto(sku) || { sku };
+  const nome = prod.nome || sku;
+  const total = arquivos.length;
+  let ok = 0, erro = 0;
+  fpToast('Enviando ' + total + (total === 1 ? ' foto' : ' fotos') + ' de ' + nome + '…', 'info', { duracao: 3000 });
+  fpUploadFila.adicionar(sku, arquivos, {
+    onEstado: (s2, arq, estado, detalhe) => {
+      if (estado === 'ok') ok++;
+      else if (estado === 'erro') erro++;
+      else return;
+      if (ok + erro < total) return;
+      if (ok) {
+        fpLoteMarcarFeito(sku, ok);
+        fpFotoRedesenhar();
+      }
+      fpToast(
+        erro
+          ? ok + ' de ' + total + ' enviadas — ' + erro + ' falharam' + (arq && arq.mensagem ? ': ' + arq.mensagem : '.')
+          : ok + (ok === 1 ? ' foto enviada' : ' fotos enviadas') + ' para a pasta de ' + sku + '.',
+        erro ? (ok ? 'warn' : 'erro') : 'ok',
+        { duracao: erro ? 8000 : 5000 },
+      );
+    },
+  });
+}
+
 /* ---------- ações em lote ---------- */
 function fpProdLoteBarra() {
   const alvo = document.getElementById('fotoProdLoteBarra');
@@ -15359,21 +15439,23 @@ function fpProdLoteBarra() {
   if (!n) { alvo.innerHTML = ''; return; }
 
   const todosFora = [..._prodSel].every(sku => { const p = fpFotoProduto(sku); return p && p.excluido; });
-  const bt = (k, rot) => '<button class="fp-lote-p' + (k === 5 ? ' emerg' : '') + '" type="button"'
+  const bt = (k, rot) => '<button class="fp-lote-p" type="button"'
     + ' style="--fp-lote-cor:' + fpPrioCor(k) + '" onclick="fpProdLotePrioridade(' + k + ')">'
-    + (k === 5 ? FP_ICO_ATENCAO : '') + rot + '</button>';
+    + rot + '</button>';
+  const iconeX = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>';
 
   alvo.innerHTML = '<div class="fp-prod-lote">'
     + '<b>' + n + (n === 1 ? ' selecionado' : ' selecionados') + '</b>'
     + (n < naTela.length
-        ? '<button class="fp-lote-link neutro" type="button" onclick="fpProdLoteTodos()">Selecionar os ' + naTela.length + ' da tela</button>'
+        ? '<button class="fp-lote-link neutro" type="button" onclick="fpProdLoteTodos()">Selecionar todos (' + naTela.length + ')</button>'
         : '')
     + '<button class="fp-lote-link neutro" type="button" onclick="fpProdLoteLimpar()">Limpar seleção</button>'
     + '<span class="fp-prod-lote-acoes">'
-    + '<span class="fp-prod-lote-rot">Prioridade</span>'
+    + '<span class="fp-prod-lote-rot">Definir prioridade</span>'
     + bt(1, 'Baixa') + bt(2, 'Média') + bt(3, 'Alta') + bt(5, 'Emergencial')
     + '<button class="fp-lote-link perigo" type="button" onclick="'
-    + (todosFora ? 'fpProdLoteRestaurar()">Voltar para a listagem' : 'fpProdLoteExcluir()">Tirar da listagem')
+    + (todosFora ? 'fpProdLoteRestaurar()">' + iconeX + 'Voltar para a listagem'
+                 : 'fpProdLoteExcluir()">' + iconeX + 'Remover da listagem')
     + '</button></span></div>';
 }
 
@@ -15421,7 +15503,7 @@ async function fpProdLoteExcluir() {
   const skus = [..._prodSel];
   if (!skus.length) return;
   if (!await fpConfirm({
-    titulo: 'Tirar ' + skus.length + ' da listagem',
+    titulo: 'Remover ' + skus.length + ' da listagem',
     mensagem: skus.length + ' produtos saem da fila de fotografia.',
     detalhe: 'Use para produto que não é mais vendido nem reposto. Eles continuam no Bling e dá para trazer de volta pelo filtro "Fora de linha".',
     confirmar: 'Confirmar', perigo: true,
@@ -15657,8 +15739,19 @@ function fpSepMontarLote(produtos, tamanho) {
   }
   var emergenciais = fpSepOrdenarPorAntiguidade(emergenciaisBruto);
 
+  /* O emergencial fura a fila, mas NÃO estica o lote: ele ocupa vaga dentro
+     do tamanho que o operador pediu. Pedir 10 tem que devolver 10. O rateio
+     60/25/15 vale sobre o que sobrar depois deles. */
+  var emergenciaisNoLote = emergenciais.slice(0, alvoTotal);
+  var emergenciaisDeFora = emergenciais.length - emergenciaisNoLote.length;
+  var alvoNormal = Math.max(0, alvoTotal - emergenciaisNoLote.length);
+  if (emergenciaisDeFora > 0) {
+    avisos.push(emergenciaisDeFora + ' emergencial(is) não couberam num lote de ' + alvoTotal +
+      ' — aumente o tamanho do lote para levar todos.');
+  }
+
   // Cotas iniciais: o que o rateio 60/25/15 pediu, antes da realidade opinar.
-  var cotas = fpSepRatearMaiorResto(alvoTotal, FP_SEP_FAIXAS, FP_SEP_PESOS);
+  var cotas = fpSepRatearMaiorResto(alvoNormal, FP_SEP_FAIXAS, FP_SEP_PESOS);
   var alvo = { alta: cotas.alta, media: cotas.media, baixa: cotas.baixa };
   var entregue = { alta: 0, media: 0, baixa: 0 };
 
@@ -15704,27 +15797,27 @@ function fpSepMontarLote(produtos, tamanho) {
   }
 
   var totalNormal = entregue.alta + entregue.media + entregue.baixa;
-  var faltou = Math.max(0, alvoTotal - totalNormal);
+  var faltou = Math.max(0, alvoNormal - totalNormal);
   if (faltou > 0) {
-    avisos.push('Lote saiu menor: ' + totalNormal + ' de ' + alvoTotal +
+    avisos.push('Lote saiu menor: ' + (totalNormal + emergenciaisNoLote.length) + ' de ' + alvoTotal +
       ' itens. Faltaram ' + faltou + ' produto(s) classificado(s) na fila.');
   }
 
   // Monta a saída na ordem em que o estúdio vai trabalhar: emergencial na
   // frente, depois alta, média e baixa — cada faixa do mais antigo ao mais novo.
-  var itens = emergenciais.slice();
+  var itens = emergenciaisNoLote.slice();
   for (f = 0; f < FP_SEP_FAIXAS.length; f++) {
     itens = itens.concat(baldes[FP_SEP_FAIXAS[f]].slice(0, entregue[FP_SEP_FAIXAS[f]]));
   }
 
-  if (emergenciais.length > 0) {
-    avisos.push(emergenciais.length + ' emergencial(is) entraram por fora da cota. O lote tem ' +
-      itens.length + ' itens no total (pedido: ' + alvoTotal + ').');
+  if (emergenciaisNoLote.length > 0) {
+    avisos.push(emergenciaisNoLote.length + ' emergencial(is) ocuparam vaga do lote; as outras ' +
+      alvoNormal + ' foram rateadas em 60/25/15.');
   }
 
   return {
     itens: itens,
-    emergenciais: emergenciais.length,
+    emergenciais: emergenciaisNoLote.length,
     cotas: cotas,          // o que o rateio pediu
     entregue: entregue,    // o que a fila conseguiu entregar
     faltou: faltou,

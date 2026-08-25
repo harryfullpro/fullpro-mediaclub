@@ -204,6 +204,28 @@ const pastasDaRaiz = new Set<string>();
     enxerga — e desde o escopo `drive` ela enxerga o drive compartilhado
     inteiro, nao so a raiz das fotos. So passa arquivo cuja pasta e filha
     direta da raiz configurada. */
+/* id do arquivo -> mime + thumbnailLink, preenchido pela acao `fotos`.
+   Sem isto cada imagem da galeria custava DUAS idas ao Google: uma para os
+   metadados (so para descobrir o thumbnailLink) e outra para os bytes. A
+   listagem da pasta ja traz os dois campos de graca na mesma chamada, entao
+   `arquivo` passa a precisar de uma ida so.
+   O thumbnailLink do Drive dura cerca de 1 h; guardamos por 50 min. */
+const metaCache = new Map<string, { mime: string; thumb: string; em: number }>();
+const VALIDADE_META_MS = 50 * 60 * 1000;
+
+function metaGuardar(id: string, mime: string, thumb: string) {
+  if (!id || !thumb) return;
+  // teto simples: a galeria abre uma pasta por vez, nao precisa crescer sem fim
+  if (metaCache.size > 4000) metaCache.clear();
+  metaCache.set(id, { mime: mime || 'image/jpeg', thumb, em: Date.now() });
+}
+function metaLer(id: string) {
+  const m = metaCache.get(id);
+  if (!m) return null;
+  if (Date.now() - m.em > VALIDADE_META_MS) { metaCache.delete(id); return null; }
+  return m;
+}
+
 async function dentroDaRaiz(paiId: string): Promise<boolean> {
   if (!paiId) return false;
   if (paiId === RAIZ || pastasDaRaiz.has(paiId)) return true;
@@ -681,26 +703,33 @@ Deno.serve(async (req: Request) => {
       if (!id) return json({ error: 'informe o id do arquivo' }, 400);
       if (!contaServico() || !RAIZ) return new Response(null, { status: 404, headers: CORS });
 
-      let meta: any;
-      try {
-        meta = await driveGet(`/files/${encodeURIComponent(id)}`, { fields: 'id,mimeType,thumbnailLink,parents' });
-      } catch (_e) {
-        return new Response(null, { status: 404, headers: CORS });
-      }
-      if (!String(meta?.mimeType || '').startsWith('image/')) {
-        return new Response(null, { status: 404, headers: CORS });
-      }
-      const pai = Array.isArray(meta?.parents) ? String(meta.parents[0] || '') : '';
-      if (!await dentroDaRaiz(pai)) {
-        return new Response(null, { status: 404, headers: CORS });
+      /* Caminho rapido: a acao `fotos` acabou de listar a pasta e guardou
+         mime + thumbnailLink deste id. Quem esta no cache ja passou pela
+         checagem de pasta la, entao nao ha o que reconferir. */
+      let meta: any = metaLer(id);
+      if (!meta) {
+        try {
+          meta = await driveGet(`/files/${encodeURIComponent(id)}`, { fields: 'id,mimeType,thumbnailLink,parents' });
+        } catch (_e) {
+          return new Response(null, { status: 404, headers: CORS });
+        }
+        if (!String(meta?.mimeType || '').startsWith('image/')) {
+          return new Response(null, { status: 404, headers: CORS });
+        }
+        const pai = Array.isArray(meta?.parents) ? String(meta.parents[0] || '') : '';
+        if (!await dentroDaRaiz(pai)) {
+          return new Response(null, { status: 404, headers: CORS });
+        }
+        metaGuardar(id, meta.mimeType, meta.thumbnailLink);
       }
 
       const tok = await accessToken();
       let resp: Response | null = null;
-      if (meta.thumbnailLink) {
-        const link = String(meta.thumbnailLink).replace(/=s\d+(-c)?$/, '') + (full ? '=s1600' : '=s320');
+      const linkBase = meta.thumb || meta.thumbnailLink;
+      if (linkBase) {
+        const link = String(linkBase).replace(/=s\d+(-c)?$/, '') + (full ? '=s1600' : '=s320');
         resp = await fetch(link, { headers: { Authorization: 'Bearer ' + tok } });
-        if (!resp.ok) resp = null;
+        if (!resp.ok) { metaCache.delete(id); resp = null; }
       }
       if (!resp) {
         resp = await fetch(`${DRIVE}/files/${encodeURIComponent(id)}?alt=media&supportsAllDrives=true`, {
@@ -713,7 +742,7 @@ Deno.serve(async (req: Request) => {
         status: 200,
         headers: {
           ...CORS,
-          'Content-Type': resp.headers.get('content-type') || meta.mimeType || 'image/jpeg',
+          'Content-Type': resp.headers.get('content-type') || meta.mime || meta.mimeType || 'image/jpeg',
           'Cache-Control': 'public, max-age=86400',
         },
       });
@@ -731,10 +760,13 @@ Deno.serve(async (req: Request) => {
       const pasta = await acharPasta(sku);
       if (!pasta) return json({ configurado: true, sku, sem_pasta: true, total: 0, fotos: [] });
 
-      const arquivos = await listarPasta(pasta.id, "mimeType contains 'image/'", 'id,name,mimeType');
+      const arquivos = await listarPasta(pasta.id, "mimeType contains 'image/'", 'id,name,mimeType,thumbnailLink');
       // a pasta acabou de ser lida: aproveita para liberar o `arquivo` destes
       // ids sem a ida extra ao Drive para conferir o pai
       pastasDaRaiz.add(pasta.id);
+      // guarda o thumbnailLink de cada foto: `arquivo` nao vai mais precisar
+      // pedir os metadados de novo, uma ida ao Google a menos por imagem
+      for (const a of arquivos as any[]) metaGuardar(a.id, a.mimeType, a.thumbnailLink);
       const base = baseDaFuncao(url);
       const fotos = arquivos.map((a: any) => ({
         id: a.id,

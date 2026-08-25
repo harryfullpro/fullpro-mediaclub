@@ -7,7 +7,36 @@
 <meta name="description" content="Participe do FullPro Media Club: empreste sua moto por um dia para o estúdio de conteúdo da FullPro e ganhe pastilhas, mochila ou capa de chuva." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   FullPro Sans — a fonte padrão do painel e da landing.
+   Arquivos em assets/fonts/, servidos do próprio domínio: sem ida ao
+   Google Fonts, sem bloqueio de render por rede de terceiro.
+   `font-display: swap` desenha com a fonte do sistema até a nossa chegar —
+   texto invisível por meio segundo é pior que texto com a fonte errada.
+   Só o peso realmente usado é baixado; declarar todos não custa nada.
+   ═══════════════════════════════════════════════════════════════════════ */
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:200;font-display:swap;src:url('/assets/fonts/fullpro-sans-200.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:200;font-display:swap;src:url('/assets/fonts/fullpro-sans-200-italic.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:300;font-display:swap;src:url('/assets/fonts/fullpro-sans-300.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:300;font-display:swap;src:url('/assets/fonts/fullpro-sans-300-italic.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:400;font-display:swap;src:url('/assets/fonts/fullpro-sans-400.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:400;font-display:swap;src:url('/assets/fonts/fullpro-sans-400-italic.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:500;font-display:swap;src:url('/assets/fonts/fullpro-sans-500.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:500;font-display:swap;src:url('/assets/fonts/fullpro-sans-500-italic.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:600;font-display:swap;src:url('/assets/fonts/fullpro-sans-600.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:600;font-display:swap;src:url('/assets/fonts/fullpro-sans-600-italic.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:700;font-display:swap;src:url('/assets/fonts/fullpro-sans-700.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:700;font-display:swap;src:url('/assets/fonts/fullpro-sans-700-italic.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:800;font-display:swap;src:url('/assets/fonts/fullpro-sans-800.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:800;font-display:swap;src:url('/assets/fonts/fullpro-sans-800-italic.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:900;font-display:swap;src:url('/assets/fonts/fullpro-sans-900.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:900;font-display:swap;src:url('/assets/fonts/fullpro-sans-900-italic.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:normal;font-weight:950;font-display:swap;src:url('/assets/fonts/fullpro-sans-950.woff2') format('woff2');}
+@font-face{font-family:'FullPro Sans';font-style:italic;font-weight:950;font-display:swap;src:url('/assets/fonts/fullpro-sans-950-italic.woff2') format('woff2');}
+</style>
+
 
 <!-- Verificacao de dominio no Meta (Gerenciador de Negocios > Dominios).
      Precisa ficar no <head> da home e NAO pode ser injetada por JS. Nao remover. -->
@@ -73,7 +102,7 @@
   html, body { max-width: 100vw; overflow-x: hidden; touch-action: pan-x pan-y; }
   html { scroll-behavior: smooth; }
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'FullPro Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg);
     color: var(--text);
     line-height: 1.6;
@@ -528,7 +557,7 @@
     pointer-events: none;
   }
   .yt-title {
-    font-family: 'Inter', sans-serif;
+    font-family: 'FullPro Sans', sans-serif;
     font-size: 14px;
     font-weight: 600;
     color: #fff;
