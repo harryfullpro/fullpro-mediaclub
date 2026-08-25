@@ -8635,12 +8635,16 @@ function fpFotoAgendarVarredura() {
   }, 8000);
 }
 
-function fpFotoProdutoHtml(sku, url, tam, raio) {
+function fpFotoProdutoHtml(sku, url, tam, raio, opcoes) {
   const px = tam || 34;
   const r = raio == null ? 6 : raio;
   const temAlvo = !!(url || sku);   // sem url e sem SKU não há foto a esperar
   fpFotoAgendarVarredura();
+  /* `semLightbox` deixa o clique subir para quem envolve a caixa. A Galeria
+     usa isso: lá o clique tem que abrir o visor da pasta inteira, não a foto
+     sozinha. */
   return '<div class="fp-foto' + (temAlvo ? '' : ' sem-foto') + '"'
+    + (opcoes && opcoes.semLightbox ? ' data-drive-lightbox="0"' : '')
     + (sku ? ' data-drive-sku="' + escHtml(sku) + '"' : '')
     + ' style="width:' + px + 'px;height:' + px + 'px;border-radius:' + r + 'px">'
     /* eager de propósito: a miniatura tem 32-46px e é o conteúdo do cartão.
@@ -16960,7 +16964,7 @@ function renderFotoGaleria() {
     + '<span role="button" tabindex="0" style="cursor:zoom-in;display:flex" data-tip="Ver todas as fotos"'
     + ' onclick="fpGalAbrirFotos(\'' + fpJs(p.sku) + '\')"'
     + ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();fpGalAbrirFotos(\'' + fpJs(p.sku) + '\')}">'
-    + fpFotoProdutoHtml(p.sku, p.imagem_bling, 44, 8) + '</span>'
+    + fpFotoProdutoHtml(p.sku, p.imagem_bling, 44, 8, { semLightbox: true }) + '</span>'
     + '<span class="fp-prod-nome"><b>' + escHtml(p.nome || '(sem nome)') + '</b>'
     + '<span class="fp-prod-sku">' + escHtml(p.sku) + (p.refazer ? ' · refazer' : '') + '</span></span>'
     + fpProdEstoqueHtml(p.estoque)
@@ -18794,9 +18798,16 @@ function fpDriveAplicar(raiz) {
     img.alt = 'Foto do produto ' + sku;
     img.decoding = 'async';
     img.loading = 'eager';   // senão o observador de ergonomia marca lazy
-    img.title = 'Foto do Drive — clique para ampliar';
-    img.style.cursor = 'zoom-in';
-    img.onclick = (ev) => { ev.stopPropagation(); openLightbox(fpDriveImgUrl(sku, true)); };
+    /* Caixa marcada com data-drive-lightbox="0" não ganha o clique de ampliar:
+       o stopPropagation daqui impedia o clique de chegar em quem a envolve, e
+       era isso que fazia a Galeria abrir a foto sozinha em vez do visor. */
+    if (el.dataset.driveLightbox === '0') {
+      img.style.cursor = 'zoom-in';
+    } else {
+      img.title = 'Foto do Drive — clique para ampliar';
+      img.style.cursor = 'zoom-in';
+      img.onclick = (ev) => { ev.stopPropagation(); openLightbox(fpDriveImgUrl(sku, true)); };
+    }
 
     /* A troca só acontece depois de carregar: se a imagem do Drive falhar, o
        que já estava na tela continua lá (rede lenta no celular era onde isso
