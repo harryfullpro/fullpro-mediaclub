@@ -13637,48 +13637,45 @@ async function blingFindCompatible(motoModel) {
   const allProds = await blingGetAllProducts();
   if (!allProds.length) return [];
 
-  const normalize = s => (s || '').toLowerCase().replace(/[\s\-_]/g, '');
+  /* Acento fora, minúsculas, sem espaço nem hífen: "Duke 390", "duke-390" e
+     "DUKE390" viram a mesma coisa na hora de comparar. */
+  const normalize = s => (s || '').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\s\-_]/g, '');
 
-  function slugVariations(slug) {
-    const base = normalize(slug);
-    const variations = new Set([base]);
-    const noSuffix = base.replace(/([0-9])[a-z]$/, '$1');
-    if (noSuffix !== base) variations.add(noSuffix);
-    const bases = [base];
-    if (noSuffix !== base) bases.push(noSuffix);
-    for (const b of bases) {
-      const withSpace = b.replace(/([a-z])(\d)/g, '$1 $2').replace(/(\d)([a-z])/g, '$1 $2');
-      const withHyphen = b.replace(/([a-z])(\d)/g, '$1-$2').replace(/(\d)([a-z])/g, '$1-$2');
-      if (withSpace !== b) variations.add(withSpace);
-      if (withHyphen !== b) variations.add(withHyphen);
-    }
-    return [...variations];
+  /* Palavras de um nome de modelo, com número separado de letra:
+     "390 Duke" -> ['390','duke'] e "R1250GS" -> ['r','1250','gs']. */
+  function palavrasDoModelo(texto) {
+    return String(texto || '')
+      .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .replace(/([a-z])(\d)/g, '$1 $2').replace(/(\d)([a-z])/g, '$1 $2')
+      .trim().split(/\s+/).filter(Boolean);
   }
 
   const catalogInfo = window.getMotoSlug ? window.getMotoSlug(motoModel) : null;
   const motoYear = window.getMotoYear ? window.getMotoYear(motoModel) : null;
+  const marcas = (typeof MOTO_CATALOG !== 'undefined' ? MOTO_CATALOG : [])
+    .map(b => normalize(b.marca)).filter(Boolean);
 
-  let searchTokens = [];
+  let palavras = [];
   if (catalogInfo) {
-    slugVariations(catalogInfo.slug).forEach(v => searchTokens.push(v));
-    slugVariations(catalogInfo.modelo.replace(/\s+/g, '')).forEach(v => {
-      if (!searchTokens.includes(v)) searchTokens.push(v);
-    });
+    /* Só as palavras do NOME do modelo. Juntar as do slug tornava a exigência
+       impossível: "1290 Super Duke R" tem slug "1290SUPERDUKER", que vira a
+       palavra "superduker" — e nenhum produto se chama assim (a loja cadastra
+       "Superduke 1290"). O slug segue valendo no desempate. */
+    palavras = palavrasDoModelo(catalogInfo.modelo);
+    if (!palavras.length) palavras = palavrasDoModelo(catalogInfo.slug);
   } else {
-    const knownBrands = (typeof MOTO_CATALOG !== 'undefined' ? MOTO_CATALOG : []).map(b => b.marca.toLowerCase());
-    const parts = motoModel.trim().split(/\s+/);
-    const filtered = parts.filter((p, i) => {
-      if (i === 0 && knownBrands.includes(p.toLowerCase())) return false;
-      if (/^\d{4}$/.test(p)) return false;
-      return true;
-    });
-    if (filtered.length > 0) {
-      slugVariations(filtered.join('')).forEach(v => searchTokens.push(v));
-    }
+    palavras = palavrasDoModelo(motoModel)
+      .filter(w => !marcas.includes(w) && !/^(19|20)\d{2}$/.test(w));
   }
-
-  if (searchTokens.length === 0) return [];
-  const brand = catalogInfo ? normalize(catalogInfo.marca) : null;
+  /* Termo de uma letra só (o "R" de "R 1250 GS") casa com qualquer nome, então
+     não vale como exigência — entra só no desempate. */
+  const exigidos = palavras.filter(w => w.length >= 2);
+  if (!exigidos.length) return [];
+  const marcaMoto = catalogInfo ? normalize(catalogInfo.marca) : null;
+  const juntos = [exigidos.join(''), exigidos.slice().reverse().join('')];
 
   function prodMatchesYear(prodName, year) {
     if (!year) return true;
@@ -13691,33 +13688,29 @@ async function blingFindCompatible(motoModel) {
 
   return allProds.filter(p => {
     const pNorm = normalize(p.nome);
-    const pLower = (p.nome || '').toLowerCase();
-    const tokenMatch = searchTokens.some(token => pNorm.includes(token) || pLower.includes(token));
-    if (!tokenMatch) return false;
-    if (brand && !pNorm.includes(brand) && !pLower.includes(brand)) return false;
-    return true;
-  /* Produto zerado NÃO sai da lista: "não temos peça para essa moto" e "temos,
-     mas está zerada" são respostas diferentes, e a segunda é o que decide se
-     vale repor antes da gravação. Ele desce para o fim e é marcado em vermelho
-     no cartão. */
+    /* TODA palavra do modelo precisa aparecer no nome — em qualquer ordem.
+       Era isso que faltava: o catálogo diz "390 Duke" e a loja cadastra
+       "Retificador KTM Duke 390 (17-21)". Comparando os nomes grudados
+       ("390duke" vs "duke390"), nenhum produto da Duke aparecia. */
+    if (!exigidos.every(w => pNorm.includes(w))) return false;
+    if (!marcaMoto) return true;
+    if (pNorm.includes(marcaMoto)) return true;
+    /* Produto que cita OUTRA montadora não é dessa moto. Sem montadora nenhuma
+       no nome, fica: parte do cadastro escreve só o modelo. */
+    return !marcas.some(m => m !== marcaMoto && pNorm.includes(m));
   }).sort((a, b) => {
     const aEst = fpTemEstoque(a) ? 1 : 0;
     const bEst = fpTemEstoque(b) ? 1 : 0;
     if (bEst !== aEst) return bEst - aEst;
-    const aYear = prodMatchesYear(a.nome, motoYear) ? 1 : 0;
-    const bYear = prodMatchesYear(b.nome, motoYear) ? 1 : 0;
-    if (bYear !== aYear) return bYear - aYear;
-    const aNorm = normalize(a.nome);
-    const bNorm = normalize(b.nome);
-    const aLower = (a.nome || '').toLowerCase();
-    const bLower = (b.nome || '').toLowerCase();
-    let scoreA = 0, scoreB = 0;
-    for (let i = 0; i < searchTokens.length; i++) {
-      const w = searchTokens.length - i;
-      if (aNorm.includes(searchTokens[i]) || aLower.includes(searchTokens[i])) scoreA += w;
-      if (bNorm.includes(searchTokens[i]) || bLower.includes(searchTokens[i])) scoreB += w;
-    }
-    return scoreB - scoreA || (a.nome || '').localeCompare(b.nome || '');
+    const aAno = prodMatchesYear(a.nome, motoYear) ? 1 : 0;
+    const bAno = prodMatchesYear(b.nome, motoYear) ? 1 : 0;
+    if (bAno !== aAno) return bAno - aAno;
+    // quem escreve o modelo grudado ("Duke390") costuma ser o produto do modelo,
+    // não um multiaplicação que cita várias motos
+    const aJunto = juntos.some(j => normalize(a.nome).includes(j)) ? 1 : 0;
+    const bJunto = juntos.some(j => normalize(b.nome).includes(j)) ? 1 : 0;
+    if (bJunto !== aJunto) return bJunto - aJunto;
+    return String(a.nome || '').localeCompare(String(b.nome || ''));
   });
 }
 

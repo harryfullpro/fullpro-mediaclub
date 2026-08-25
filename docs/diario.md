@@ -4,6 +4,40 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 20/08/2026 — A busca de compatíveis não achava a Duke 390
+
+Depois de mostrar o produto zerado, a KTM 390 Duke continuou dando "nenhum produto
+compatível" — e dessa vez não era estoque, era o casamento de nome.
+
+**A causa:** o catálogo de motos chama o modelo de **"390 Duke"** e a loja cadastra o
+produto como **"Retificador KTM Duke 390 (17-21)"**. O algoritmo comparava os nomes
+*grudados* — procurava `390duke` dentro de `retificadorktmduke390` — e a ordem invertida
+das palavras fazia todo produto da Duke ficar de fora. O mesmo valia para qualquer moto em
+que a loja escreve o número antes do nome.
+
+**Agora o casamento é por conjunto de palavras:** toda palavra do modelo precisa aparecer
+no nome do produto, **em qualquer ordem**. `390` + `duke` acha `Duke 390` e `390 Duke`.
+
+- **Palavra de uma letra não conta como exigência** — o "R" de "R 1250 GS" casaria com
+  qualquer nome. Ela entra só no desempate.
+- **Só as palavras do nome do modelo, nunca as do slug.** Juntar as duas listas tornava a
+  exigência impossível: "1290 Super Duke R" tem slug `1290SUPERDUKER`, que vira a palavra
+  `superduker` — e nenhum produto se chama assim (a loja cadastra "Superduke 1290").
+- **A montadora deixou de ser filtro rígido.** Produto que cita **outra** montadora sai;
+  produto sem montadora nenhuma no nome fica, porque parte do cadastro só escreve o
+  modelo.
+- **Ordenação:** com estoque primeiro, depois quem bate o ano, depois quem escreve o
+  modelo grudado (costuma ser o produto do modelo, não um multiaplicação).
+
+**Verificado com nomes reais de produto num teste em Node**, com o catálogo de motos de
+verdade: KTM 390 Duke → **5 produtos** (era 0, e são exatamente os 5 que a loja lista para
+DUKE 390), Duke 200 → 3 sem contaminar a 390, Super Duke 1290 → 2, R 1250 GS → 2 (inclui o
+pisca multiaplicação), CG 160 → 2, MT 03 → 1 sem trazer a MT 07.
+
+> A fonte de produto do painel **é e continua sendo só o Bling** (`blingGetAllProducts`
+> via `bling-proxy`). A vitrine da loja foi usada apenas para *ler como os produtos são
+> nomeados* e montar a amostra do teste — nada no painel consulta o site.
+
 ## 20/08/2026 — Estoque zerado aparece, e quatro correções na Agenda
 
 **Produto zerado deixou de sumir da lista.** A busca de compatíveis terminava com
