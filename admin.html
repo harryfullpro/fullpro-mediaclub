@@ -17077,6 +17077,10 @@ function renderFotoGaleria(refazerOrdem) {
    operador quer ver ficava atrás deles na fila. */
 let _visorEl = null, _visorFotos = [], _visorI = 0, _visorSku = '', _visorToken = 0, _visorImgToken = 0;
 const _visorCache = new Map();   // url da foto grande -> Image já baixada
+/* Listagem da pasta por SKU, enquanto a aba estiver aberta. Ler a pasta no
+   Drive leva alguns segundos e é o que segura o visor; reabrir o mesmo
+   produto não precisa pagar isso de novo. */
+const _visorListas = new Map();
 
 async function fpGalAbrirFotos(sku) {
   const prod = fpFotoProduto(sku) || { sku };
@@ -17107,22 +17111,28 @@ async function fpGalAbrirFotos(sku) {
     _visorEl.querySelector('.fp-visor-palco').appendChild(previa);
   }
 
-  let fotos = [];
-  try {
-    const r = await fetch(FP_DRIVE_URL + '?action=fotos&sku=' + encodeURIComponent(sku));
-    const j = await r.json();
-    if (token !== _visorToken) return;          // o operador já abriu outro produto
-    fotos = (j && j.fotos) || [];
-  } catch (e) {
-    if (token !== _visorToken) return;
-    fpVisorPalco('Não deu para ler a pasta: ' + (e.message || String(e)));
-    return;
+  let fotos = _visorListas.get(sku) || null;
+  if (!fotos) {
+    try {
+      const r = await fetch(FP_DRIVE_URL + '?action=fotos&sku=' + encodeURIComponent(sku));
+      const j = await r.json();
+      if (token !== _visorToken) return;        // o operador já abriu outro produto
+      fotos = (j && j.fotos) || [];
+      _visorListas.set(sku, fotos);
+    } catch (e) {
+      if (token !== _visorToken) return;
+      fpVisorPalco('Não deu para ler a pasta: ' + (e.message || String(e)));
+      return;
+    }
   }
 
   _visorFotos = fotos;
   if (!fotos.length) { fpVisorPalco('Nenhuma foto nesta pasta.'); return; }
 
-  fpVisorPara(0);                                // a foto grande vem primeiro
+  /* A prévia da primeira foto usa a MESMA url que a linha da listagem usou
+     (`action=img&sku=`), não a `action=arquivo&id=` da tira: são endereços
+     diferentes para o mesmo arquivo, e só o primeiro está no cache. */
+  fpVisorPara(0, fpDriveImgUrl(sku, false));     // a foto grande vem primeiro
   fpVisorTira();                                 // depois a tira
   fpVisorAdiantar(token);                        // e por último as seguintes
 }
@@ -17222,7 +17232,7 @@ function fpVisorPalco(recado) {
   return palco;
 }
 
-function fpVisorPara(k) {
+function fpVisorPara(k, previaUrl) {
   if (!_visorEl || !_visorFotos.length) return;
   _visorI = Math.max(0, Math.min(_visorFotos.length - 1, k));
   const f = _visorFotos[_visorI];
@@ -17236,7 +17246,8 @@ function fpVisorPara(k) {
   if (pronta && pronta.complete && pronta.naturalWidth) {
     img.src = url;                               // já adiantada: entra sem piscar
   } else {
-    if (f.thumb) { img.src = f.thumb; img.classList.add('previa'); }
+    const previa = previaUrl || f.thumb;
+    if (previa) { img.src = previa; img.classList.add('previa'); }
     const grande = new Image();
     grande.onload = () => {
       if (meu !== _visorImgToken) return;
