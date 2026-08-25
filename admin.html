@@ -4496,7 +4496,13 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .fp-prio[data-n="5"] .fp-prio-emerg { animation: none; }
 }
-.fp-prio-rot { font-size: 11.5px; font-weight: 600; color: var(--fp-prio-cor, var(--text-muted)); min-width: 62px; }
+/* Largura fixa pelo rótulo mais longo ("Emergencial"), alinhado à esquerda:
+   com largura automática, cada linha empurra a coluna para um lugar
+   diferente e a lista deixa de ter colunas. */
+.fp-prio-rot {
+  font-size: 11.5px; font-weight: 600; color: var(--fp-prio-cor, var(--text-muted));
+  width: 78px; flex: 0 0 78px; text-align: left;
+}
 .fp-prio[data-n="1"] { --fp-prio-cor: #4c8dff; }
 .fp-prio[data-n="2"] { --fp-prio-cor: #e8c33c; }
 .fp-prio[data-n="3"] { --fp-prio-cor: #ff8a3d; }
@@ -4553,10 +4559,38 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-prod-nome b { display: block; font-size: 13.5px; font-weight: 600; line-height: 1.3;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fp-prod-sku { font-size: 11.5px; color: var(--text-muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-.fp-prod-est { font-size: 12.5px; font-weight: 600; flex: 0 0 auto; min-width: 54px; text-align: right; }
+.fp-prod-est { font-size: 12.5px; font-weight: 600; flex: 0 0 72px; width: 72px; text-align: right; }
 .fp-prod-est.zero { color: var(--danger); }
 .fp-prod-est small { font-weight: 500; color: var(--text-muted); }
 .fp-prod-fim { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; }
+
+/* --- seleção e ações em lote --- */
+.fp-prod-check {
+  width: 16px; height: 16px; flex: 0 0 auto; margin: 0; cursor: pointer;
+  accent-color: var(--primary);
+}
+.fp-prod-lote {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 11px 10px; background: var(--bg); border-bottom: 1px solid var(--border);
+}
+.fp-prod-lote b { font-size: 13px; font-weight: 650; }
+.fp-prod-lote-acoes { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fp-prod-lote-rot { font-size: 11.5px; color: var(--text-muted); }
+.fp-lote-p {
+  font-size: 11.5px; font-weight: 650; padding: 5px 11px; border-radius: 999px; cursor: pointer;
+  background: none; border: 1px solid var(--border-hi); color: var(--text-dim);
+  transition: color .12s ease, border-color .12s ease;
+}
+.fp-lote-p:hover { color: var(--fp-lote-cor); border-color: var(--fp-lote-cor); }
+.fp-lote-p.emerg { display: inline-flex; align-items: center; gap: 6px; }
+.fp-lote-p.emerg svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fp-lote-link {
+  background: none; border: 0; padding: 0 2px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.fp-lote-link.perigo { color: var(--primary); }
+.fp-lote-link.neutro { color: var(--text-muted); }
 .fp-prod-vazio { padding: 26px 12px; text-align: center; color: var(--text-muted); font-size: 13px; }
 
 @media (max-width: 900px) {
@@ -4564,7 +4598,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   .fp-prod-nome { flex: 1 1 60%; }
   .fp-prod-est  { order: 2; }
   .fp-prod-fim  { order: 3; flex-basis: 100%; justify-content: space-between; }
-  .fp-prio-rot  { min-width: 0; }
+  .fp-prod-lote-acoes { margin-left: 0; flex-basis: 100%; }
 }
 
 /* --- visor de fotos do produto (Galeria) ------------------------------
@@ -5841,6 +5875,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
         <input type="search" id="fotoProdBusca" placeholder="Nome ou SKU" oninput="fpProdBuscar(this.value)" aria-label="Buscar produto">
         <span id="fotoProdCount" class="fp-lista-contagem"></span>
       </div>
+      <div id="fotoProdLoteBarra"></div>
       <div id="fotoProdLista" class="fp-prod"></div>
       <div id="fotoProdMais" style="text-align:center;margin-top:14px"></div>
     </div>
@@ -15017,6 +15052,10 @@ let _prodFiltro = 'fila', _prodBusca = '', _prodMostra = FP_FOTO_PAGINA;
    outro lugar da tela. A ordem é fotografada quando a tela abre e só é
    refeita ao trocar de tela, recarregar a página ou mexer em filtro/busca. */
 let _prodOrdem = null;
+/* SKUs marcados para ação em lote. Vive enquanto a tela está aberta; trocar
+   de filtro ou de tela limpa, porque a seleção deixaria de fazer sentido. */
+const _prodSel = new Set();
+let _prodUltimaCaixa = null;   // âncora do clique com Shift
 
 /* Quem enxerga o módulo pode classificar — foi o pedido. A avaliação de
    foto é outra história: só admin. */
@@ -15196,7 +15235,7 @@ function fpPrioCor(n) { return { 1: '#4c8dff', 2: '#e8c33c', 3: '#ff8a3d', 5: 'v
 
 /* ---------- listagem de Produção ---------- */
 function fpProdFiltrar(f) {
-  _prodFiltro = f || 'fila'; _prodMostra = FP_FOTO_PAGINA;
+  _prodFiltro = f || 'fila'; _prodMostra = FP_FOTO_PAGINA; _prodSel.clear();
   document.querySelectorAll('[data-fpfiltro]').forEach(b => b.classList.toggle('active', b.dataset.fpfiltro === _prodFiltro));
   const sel = document.getElementById('fotoProdFiltroSelect');
   if (sel && sel.value !== _prodFiltro) sel.value = _prodFiltro;
@@ -15205,6 +15244,7 @@ function fpProdFiltrar(f) {
 let _prodBuscaTimer = null;
 function fpProdBuscar(v) {
   _prodBusca = (v || '').trim().toLowerCase();
+  _prodSel.clear();
   clearTimeout(_prodBuscaTimer);
   _prodBuscaTimer = setTimeout(() => { _prodMostra = FP_FOTO_PAGINA; renderFotoProducao(true); }, 180);
 }
@@ -15267,6 +15307,8 @@ function renderFotoProducao(refazerOrdem) {
       acoes.push({ rotulo: 'Tirar da listagem', icone: 'excluir', perigo: true, acao: () => fpProdExcluir(p.sku) });
     }
     return '<div class="fp-prod-linha' + (fora ? ' fora' : '') + '" data-sku="' + escHtml(p.sku) + '">'
+      + '<input type="checkbox" class="fp-prod-check" data-sku="' + escHtml(p.sku) + '"'
+      + (_prodSel.has(p.sku) ? ' checked' : '') + ' aria-label="Selecionar ' + escHtml(p.nome || p.sku) + '">'
       + fpFotoProdutoHtml(p.sku, p.imagem_bling, 38, 8)
       + '<span class="fp-prod-nome"><b>' + escHtml(p.nome || '(sem nome)') + '</b>'
       + '<span class="fp-prod-sku">' + escHtml(p.sku) + '</span></span>'
@@ -15284,8 +15326,129 @@ function renderFotoProducao(refazerOrdem) {
     ? '<button class="action-btn" type="button" onclick="fpProdMais()">Mostrar mais ' + Math.min(FP_FOTO_PAGINA * 2, lista.length - _prodMostra) + '</button>'
     : '';
 
+  const caixas = [...box.querySelectorAll('.fp-prod-check')];
+  caixas.forEach((c, i) => {
+    c.onclick = ev => {
+      if (ev.shiftKey && _prodUltimaCaixa != null) {
+        const [a, b] = [Math.min(i, _prodUltimaCaixa), Math.max(i, _prodUltimaCaixa)];
+        for (let k = a; k <= b; k++) {
+          caixas[k].checked = c.checked;
+          c.checked ? _prodSel.add(caixas[k].dataset.sku) : _prodSel.delete(caixas[k].dataset.sku);
+        }
+      } else {
+        c.checked ? _prodSel.add(c.dataset.sku) : _prodSel.delete(c.dataset.sku);
+      }
+      _prodUltimaCaixa = i;
+      fpProdLoteBarra();
+    };
+  });
+  fpProdLoteBarra();
   fpDriveCarregar(visiveis.map(p => p.sku), box);
   fpFotoBadgeUrgente();
+}
+
+/* ---------- ações em lote ---------- */
+function fpProdLoteBarra() {
+  const alvo = document.getElementById('fotoProdLoteBarra');
+  if (!alvo) return;
+  /* Só conta o que está na tela: selecionar, trocar de filtro e apagar o que
+     saiu de vista seria uma armadilha. */
+  const naTela = [...document.querySelectorAll('#fotoProdLista .fp-prod-check')].map(c => c.dataset.sku);
+  [..._prodSel].forEach(sku => { if (!naTela.includes(sku)) _prodSel.delete(sku); });
+  const n = _prodSel.size;
+  if (!n) { alvo.innerHTML = ''; return; }
+
+  const todosFora = [..._prodSel].every(sku => { const p = fpFotoProduto(sku); return p && p.excluido; });
+  const bt = (k, rot) => '<button class="fp-lote-p' + (k === 5 ? ' emerg' : '') + '" type="button"'
+    + ' style="--fp-lote-cor:' + fpPrioCor(k) + '" onclick="fpProdLotePrioridade(' + k + ')">'
+    + (k === 5 ? FP_ICO_ATENCAO : '') + rot + '</button>';
+
+  alvo.innerHTML = '<div class="fp-prod-lote">'
+    + '<b>' + n + (n === 1 ? ' selecionado' : ' selecionados') + '</b>'
+    + (n < naTela.length
+        ? '<button class="fp-lote-link neutro" type="button" onclick="fpProdLoteTodos()">Selecionar os ' + naTela.length + ' da tela</button>'
+        : '')
+    + '<button class="fp-lote-link neutro" type="button" onclick="fpProdLoteLimpar()">Limpar seleção</button>'
+    + '<span class="fp-prod-lote-acoes">'
+    + '<span class="fp-prod-lote-rot">Prioridade</span>'
+    + bt(1, 'Baixa') + bt(2, 'Média') + bt(3, 'Alta') + bt(5, 'Emergencial')
+    + '<button class="fp-lote-link perigo" type="button" onclick="'
+    + (todosFora ? 'fpProdLoteRestaurar()">Voltar para a listagem' : 'fpProdLoteExcluir()">Tirar da listagem')
+    + '</button></span></div>';
+}
+
+function fpProdLoteTodos() {
+  document.querySelectorAll('#fotoProdLista .fp-prod-check').forEach(c => { c.checked = true; _prodSel.add(c.dataset.sku); });
+  fpProdLoteBarra();
+}
+
+function fpProdLoteLimpar() {
+  _prodUltimaCaixa = null;
+  _prodSel.clear();
+  document.querySelectorAll('#fotoProdLista .fp-prod-check').forEach(c => { c.checked = false; });
+  fpProdLoteBarra();
+}
+
+async function fpProdLotePrioridade(nivel) {
+  const skus = [..._prodSel];
+  if (!skus.length) return;
+  if (nivel === 5 && !await fpConfirm({
+    titulo: 'Marcar ' + skus.length + ' como emergencial',
+    mensagem: skus.length + ' produtos passam na frente de toda a fila no próximo lote de separação.',
+    detalhe: 'O nível emergencial é só para urgência real — foto que está travando venda ou anúncio.',
+    confirmar: 'Confirmar', perigo: true,
+  })) return;
+
+  const quem = CURRENT_USER ? (CURRENT_USER.name || CURRENT_USER.username) : null;
+  const quando = new Date().toISOString();
+  const antes = skus.map(sku => { const p = fpFotoProduto(sku); return { sku, valor: p ? p.prioridade : null }; });
+  skus.forEach(sku => {
+    const p = fpFotoProduto(sku);
+    if (p) { p.prioridade = nivel; p.prioridade_por = quem; p.prioridade_em = quando; fpPrioRepintar(sku); }
+  });
+  const { error } = await sb.from('mc_photo_products')
+    .update({ prioridade: nivel, prioridade_por: quem, prioridade_em: quando }).in('sku', skus);
+  if (error) {
+    antes.forEach(a => { const p = fpFotoProduto(a.sku); if (p) { p.prioridade = a.valor; fpPrioRepintar(a.sku); } });
+    fpToast('Não deu para gravar: ' + error.message, 'erro');
+    return;
+  }
+  fpToast(skus.length + ' produtos em prioridade ' + FP_PRIO[nivel].toLowerCase() + '.', nivel === 5 ? 'warn' : 'ok');
+  fpProdLoteLimpar();
+}
+
+async function fpProdLoteExcluir() {
+  const skus = [..._prodSel];
+  if (!skus.length) return;
+  if (!await fpConfirm({
+    titulo: 'Tirar ' + skus.length + ' da listagem',
+    mensagem: skus.length + ' produtos saem da fila de fotografia.',
+    detalhe: 'Use para produto que não é mais vendido nem reposto. Eles continuam no Bling e dá para trazer de volta pelo filtro "Fora de linha".',
+    confirmar: 'Confirmar', perigo: true,
+  })) return;
+  await fpProdLoteFora(skus, true);
+}
+
+async function fpProdLoteRestaurar() { await fpProdLoteFora([..._prodSel], false); }
+
+async function fpProdLoteFora(skus, fora) {
+  if (!skus.length) return;
+  const quem = CURRENT_USER ? (CURRENT_USER.name || CURRENT_USER.username) : null;
+  const quando = fora ? new Date().toISOString() : null;
+  skus.forEach(sku => {
+    const p = fpFotoProduto(sku);
+    if (p) { p.excluido = fora; p.excluido_em = quando; p.excluido_por = fora ? quem : null; }
+  });
+  const { error } = await sb.from('mc_photo_products')
+    .update({ excluido: fora, excluido_em: quando, excluido_por: fora ? quem : null }).in('sku', skus);
+  if (error) {
+    skus.forEach(sku => { const p = fpFotoProduto(sku); if (p) p.excluido = !fora; });
+    fpToast('Não deu para gravar: ' + error.message, 'erro');
+    return;
+  }
+  fpProdLoteLimpar();
+  renderFotoProducao();
+  fpToast(skus.length + (fora ? ' produtos fora da listagem.' : ' produtos de volta à listagem.'), 'ok');
 }
 
 /* Só o emergencial vira número no menu: alta e média são fila normal e um
