@@ -14969,6 +14969,12 @@ let _fotoCarregando = null;
 const FP_PRIO = { 1: 'Baixa', 2: 'Média', 3: 'Alta', 5: 'Emergencial' };
 const FP_FOTO_PAGINA = 60;
 let _prodFiltro = 'fila', _prodBusca = '', _prodMostra = FP_FOTO_PAGINA;
+/* Ordem congelada da listagem.
+   A fila é ranqueada por prioridade, mas reordenar na hora do clique tira o
+   item de baixo do cursor: o operador classifica um produto e ele salta para
+   outro lugar da tela. A ordem é fotografada quando a tela abre e só é
+   refeita ao trocar de tela, recarregar a página ou mexer em filtro/busca. */
+let _prodOrdem = null;
 
 /* Quem enxerga o módulo pode classificar — foi o pedido. A avaliação de
    foto é outra história: só admin. */
@@ -15042,14 +15048,30 @@ async function fpPrioDefinir(sku, nivel) {
   prod.prioridade = nivel;                              // pinta antes de esperar a rede
   prod.prioridade_por = CURRENT_USER ? (CURRENT_USER.name || CURRENT_USER.username) : null;
   prod.prioridade_em = new Date().toISOString();
-  fpFotoRedesenhar();
+  fpPrioRepintar(sku);
   const { error } = await sb.from('mc_photo_products').update({
     prioridade: prod.prioridade, prioridade_por: prod.prioridade_por, prioridade_em: prod.prioridade_em,
   }).eq('sku', sku);
   if (error) {
-    prod.prioridade = antes; fpFotoRedesenhar();
+    prod.prioridade = antes; fpPrioRepintar(sku);
     fpToast('Não deu para gravar a prioridade: ' + error.message, 'erro');
   }
+}
+
+/* Troca só a barra daquele produto, em toda linha que o mostre. Redesenhar a
+   listagem inteira recarregaria as miniaturas e piscaria a tela por causa de
+   um clique. */
+function fpPrioRepintar(sku) {
+  const prod = fpFotoProduto(sku);
+  if (!prod) return;
+  document.querySelectorAll('[data-sku="' + CSS.escape(sku) + '"] .fp-prio, .fp-prod-linha[data-sku="' + CSS.escape(sku) + '"] .fp-prio')
+    .forEach(el => {
+      const editavel = !el.classList.contains('somente-leitura');
+      const molde = document.createElement('div');
+      molde.innerHTML = fpPrioHtml(sku, prod.prioridade, editavel);
+      el.replaceWith(molde.firstElementChild);
+    });
+  fpFotoBadgeUrgente();
 }
 
 /* ---------- fora de linha ---------- */
@@ -15134,13 +15156,13 @@ function fpProdFiltrar(f) {
   document.querySelectorAll('[data-fpfiltro]').forEach(b => b.classList.toggle('active', b.dataset.fpfiltro === _prodFiltro));
   const sel = document.getElementById('fotoProdFiltroSelect');
   if (sel && sel.value !== _prodFiltro) sel.value = _prodFiltro;
-  renderFotoProducao();
+  renderFotoProducao(true);
 }
 let _prodBuscaTimer = null;
 function fpProdBuscar(v) {
   _prodBusca = (v || '').trim().toLowerCase();
   clearTimeout(_prodBuscaTimer);
-  _prodBuscaTimer = setTimeout(() => { _prodMostra = FP_FOTO_PAGINA; renderFotoProducao(); }, 180);
+  _prodBuscaTimer = setTimeout(() => { _prodMostra = FP_FOTO_PAGINA; renderFotoProducao(true); }, 180);
 }
 function fpProdMais() { _prodMostra += FP_FOTO_PAGINA * 2; renderFotoProducao(); }
 
@@ -15165,11 +15187,20 @@ function fpProdEstoqueHtml(e) {
   return '<span class="fp-prod-est' + (n <= 0 ? ' zero' : '') + '">' + n + ' <small>un</small></span>';
 }
 
-function renderFotoProducao() {
+function renderFotoProducao(refazerOrdem) {
   const box = document.getElementById('fotoProdLista');
   if (!box) return;
   const editavel = fpFotoPodeEditar();
-  const lista = fpProdSelecionados();
+  let lista;
+  if (refazerOrdem || !_prodOrdem) {
+    lista = fpProdSelecionados();
+    _prodOrdem = lista.map(x => x.sku);
+  } else {
+    /* Mantém a ordem e a composição de quando a tela abriu. Produto que sumiu
+       do catálogo entre uma coisa e outra é descartado sem reordenar o resto. */
+    const porSku = new Map(FOTO_PRODUTOS.map(x => [x.sku, x]));
+    lista = _prodOrdem.map(sku => porSku.get(sku)).filter(Boolean);
+  }
   const conta = document.getElementById('fotoProdCount');
   if (conta) conta.textContent = lista.length ? (lista.length === 1 ? '1 produto' : lista.length.toLocaleString('pt-BR') + ' produtos') : '';
 
@@ -15191,7 +15222,7 @@ function renderFotoProducao() {
       acoes.push({ sep: true });
       acoes.push({ rotulo: 'Tirar da listagem', icone: 'excluir', perigo: true, acao: () => fpProdExcluir(p.sku) });
     }
-    return '<div class="fp-prod-linha' + (fora ? ' fora' : '') + '">'
+    return '<div class="fp-prod-linha' + (fora ? ' fora' : '') + '" data-sku="' + escHtml(p.sku) + '">'
       + fpFotoProdutoHtml(p.sku, p.imagem_bling, 38, 8)
       + '<span class="fp-prod-nome"><b>' + escHtml(p.nome || '(sem nome)') + '</b>'
       + '<span class="fp-prod-sku">' + escHtml(p.sku) + '</span></span>'
@@ -16910,6 +16941,7 @@ async function fpLoteConcluir() {
    `nota_anterior` — é ela que o card mostra depois ("era 1, agora 4").
    ═══════════════════════════════════════════════════════════════════════ */
 let _galFiltro = 'todos', _galBusca = '', _galMostra = FP_FOTO_PAGINA;
+let _galOrdem = null;   // ordem congelada, mesma regra da Produção
 
 const FP_ESTRELA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.4l6.5-.9z"/></svg>';
 
@@ -16926,27 +16958,34 @@ function fpGalFiltrar(f) {
   document.querySelectorAll('[data-fpgal]').forEach(b => b.classList.toggle('active', b.dataset.fpgal === _galFiltro));
   const sel = document.getElementById('fotoGalFiltroSelect');
   if (sel && sel.value !== _galFiltro) sel.value = _galFiltro;
-  renderFotoGaleria();
+  renderFotoGaleria(true);
 }
 let _galBuscaTimer = null;
 function fpGalBuscar(v) {
   _galBusca = (v || '').trim().toLowerCase();
   clearTimeout(_galBuscaTimer);
-  _galBuscaTimer = setTimeout(() => { _galMostra = FP_FOTO_PAGINA; renderFotoGaleria(); }, 180);
+  _galBuscaTimer = setTimeout(() => { _galMostra = FP_FOTO_PAGINA; renderFotoGaleria(true); }, 180);
 }
 function fpGalMais() { _galMostra += FP_FOTO_PAGINA * 2; renderFotoGaleria(); }
 
-function renderFotoGaleria() {
+function renderFotoGaleria(refazerOrdem) {
   const box = document.getElementById('fotoGalLista');
   if (!box) return;
   const admin = fpFotoEhAdmin();
-  let lista = FOTO_PRODUTOS.filter(p => !p.excluido && p.tem_foto);
-  if (_galFiltro === 'semnota') lista = lista.filter(p => p.nota == null);
-  else if (_galFiltro === 'refazer') lista = lista.filter(p => p.refazer);
-  if (_galBusca) lista = lista.filter(p => (p.nome || '').toLowerCase().includes(_galBusca) || (p.sku || '').toLowerCase().includes(_galBusca));
-  /* Sem nota primeiro: a tela existe para avaliar, não para admirar. */
-  lista = lista.slice().sort((a, b) => (a.nota == null ? 0 : 1) - (b.nota == null ? 0 : 1)
-    || (a.nota || 0) - (b.nota || 0) || String(a.nome || '').localeCompare(String(b.nome || '')));
+  let lista;
+  if (refazerOrdem || !_galOrdem) {
+    lista = FOTO_PRODUTOS.filter(p => !p.excluido && p.tem_foto);
+    if (_galFiltro === 'semnota') lista = lista.filter(p => p.nota == null);
+    else if (_galFiltro === 'refazer') lista = lista.filter(p => p.refazer);
+    if (_galBusca) lista = lista.filter(p => (p.nome || '').toLowerCase().includes(_galBusca) || (p.sku || '').toLowerCase().includes(_galBusca));
+    /* Sem nota primeiro: a tela existe para avaliar, não para admirar. */
+    lista = lista.slice().sort((a, b) => (a.nota == null ? 0 : 1) - (b.nota == null ? 0 : 1)
+      || (a.nota || 0) - (b.nota || 0) || String(a.nome || '').localeCompare(String(b.nome || '')));
+    _galOrdem = lista.map(x => x.sku);
+  } else {
+    const porSku = new Map(FOTO_PRODUTOS.map(x => [x.sku, x]));
+    lista = _galOrdem.map(sku => porSku.get(sku)).filter(Boolean);
+  }
 
   const conta = document.getElementById('fotoGalCount');
   if (conta) conta.textContent = lista.length ? (lista.length === 1 ? '1 produto' : lista.length.toLocaleString('pt-BR') + ' produtos') : '';
@@ -16960,7 +16999,7 @@ function renderFotoGaleria() {
   }
 
   const visiveis = lista.slice(0, _galMostra);
-  box.innerHTML = visiveis.map(p => '<div class="fp-prod-linha">'
+  box.innerHTML = visiveis.map(p => '<div class="fp-prod-linha" data-sku="' + escHtml(p.sku) + '">'
     + '<span role="button" tabindex="0" style="cursor:zoom-in;display:flex" data-tip="Ver todas as fotos"'
     + ' onclick="fpGalAbrirFotos(\'' + fpJs(p.sku) + '\')"'
     + ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();fpGalAbrirFotos(\'' + fpJs(p.sku) + '\')}">'
@@ -17253,7 +17292,7 @@ async function renderFotoPanorama() {
           + '<span class="fp-prod-est">' + (l.tamanho || 0) + ' <small>itens</small></span></div>').join('') + '</div>' : '')
 
     + (semFotoEstoque.length ? '<div class="fp-prod"><div class="fp-prod-faixa"><b>Sem foto e com mais estoque parado</b><span class="fp-aviso-sub">os 8 maiores</span></div>'
-        + semFotoEstoque.map(p => '<div class="fp-prod-linha">' + fpFotoProdutoHtml(p.sku, p.imagem_bling, 34, 7)
+        + semFotoEstoque.map(p => '<div class="fp-prod-linha" data-sku="' + escHtml(p.sku) + '">' + fpFotoProdutoHtml(p.sku, p.imagem_bling, 34, 7)
           + '<span class="fp-prod-nome"><b>' + escHtml(p.nome || p.sku) + '</b><span class="fp-prod-sku">' + escHtml(p.sku) + '</span></span>'
           + fpProdEstoqueHtml(p.estoque)
           + '<span class="fp-prod-fim">' + fpPrioHtml(p.sku, p.prioridade, fpFotoPodeEditar()) + '</span></div>').join('') + '</div>' : '')
@@ -22149,8 +22188,8 @@ async function initApp() {
       switch (viewName) {
         case 'atualizacoes': renderAtualizacoes(); break;
         case 'foto-dashboard': await fpFotoCarregar(); renderFotoPanorama(); break;
-        case 'foto-producao':  await fpFotoCarregar(); renderFotoProducao(); break;
-        case 'foto-galeria':   await fpFotoCarregar(); renderFotoGaleria(); break;
+        case 'foto-producao':  await fpFotoCarregar(); renderFotoProducao(true); break;
+        case 'foto-galeria':   await fpFotoCarregar(); renderFotoGaleria(true); break;
         case 'foto-separacao': await fpFotoCarregar(); renderFotoSeparacao(); break;
         case 'foto-lote':      await fpFotoCarregar(); renderFotoLote(); break;
         case 'dashboard':
