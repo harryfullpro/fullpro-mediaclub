@@ -4509,13 +4509,37 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-nota-antes { font-size: 11.5px; color: var(--text-muted); }
 
 /* --- linha de produto ------------------------------------------------ */
-.fp-prod { display: flex; flex-direction: column; gap: 6px; }
-.fp-prod-linha {
-  display: flex; align-items: center; gap: 12px; padding: 9px 12px;
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: 11px;
+/* Listagem: um container só, dividido por fios — o mesmo padrão do
+   debriefing e do aviso de entrada. Cada linha dentro da própria caixa
+   fazia caixa-dentro-de-caixa, que é o que mais entrega interface montada
+   por template. */
+.fp-prod {
+  border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+  background: var(--bg-elev);
 }
-.fp-prod-linha:hover { border-color: var(--border-hi); }
+.fp-prod:empty { display: none; }
+.fp-prod > * + * { border-top: 1px solid var(--border); }
+.fp-prod-linha {
+  display: flex; align-items: center; gap: 12px; padding: 11px 16px;
+  transition: background .12s ease;
+}
+.fp-prod-linha:hover { background: rgba(255,255,255,.03); }
+[data-theme="light"] .fp-prod-linha:hover { background: rgba(0,0,0,.025); }
 .fp-prod-linha.fora { opacity: .5; }
+/* Cabeçalho de bloco dentro da listagem, no lugar do <h3> solto. */
+.fp-prod-faixa {
+  display: flex; align-items: baseline; gap: 10px; padding: 13px 16px 9px;
+  background: rgba(255,255,255,.02);
+}
+[data-theme="light"] .fp-prod-faixa { background: rgba(0,0,0,.02); }
+.fp-prod-faixa b { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.fp-prod-faixa .fp-aviso-sub { margin-left: auto; }
+/* Recado solto (avisos do rateio, lote criado): fora da listagem, com a
+   mesma moldura do container. */
+.fp-prod-nota {
+  border: 1px solid var(--border); border-radius: 14px; background: var(--bg-elev);
+  padding: 12px 16px; font-size: 13px; color: var(--text-dim); line-height: 1.6;
+}
 .fp-prod-nome { flex: 1 1 auto; min-width: 0; }
 .fp-prod-nome b { display: block; font-size: 13.5px; font-weight: 600; line-height: 1.3;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -4527,7 +4551,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-prod-vazio { padding: 26px 12px; text-align: center; color: var(--text-muted); font-size: 13px; }
 
 @media (max-width: 900px) {
-  .fp-prod-linha { flex-wrap: wrap; row-gap: 9px; }
+  .fp-prod-linha { flex-wrap: wrap; row-gap: 9px; padding: 11px 13px; }
   .fp-prod-nome { flex: 1 1 60%; }
   .fp-prod-est  { order: 2; }
   .fp-prod-fim  { order: 3; flex-basis: 100%; justify-content: space-between; }
@@ -16607,7 +16631,7 @@ async function renderFotoSeparacao() {
     + (_sepLote.emergenciais ? ' · ' + _sepLote.emergenciais + ' emergencial' + (_sepLote.emergenciais > 1 ? 'is' : '') : '')
     + '</span></div>'
     + (_sepLote.avisos && _sepLote.avisos.length
-        ? '<div class="fp-prod-linha" style="margin-bottom:10px;display:block"><div class="fp-aviso-sub" style="line-height:1.6">'
+        ? '<div class="fp-prod-nota" style="margin-bottom:10px"><div>'
           + _sepLote.avisos.map(a => escHtml(a)).join('<br>') + '</div></div>' : '');
 
   const lista = document.getElementById('fotoSepLista');
@@ -16707,8 +16731,8 @@ async function fpSepEnviar() {
     : slackOk ? 'Lista enviada no Slack.' : 'Lote registrado no painel.', slackOk === false ? 'warn' : 'ok');
 
   document.getElementById('fotoSepDepois').innerHTML =
-    '<div class="fp-prod-linha" style="margin-top:12px">'
-    + '<span class="fp-prod-nome"><b>Lote de ' + itens.length + ' produtos criado.</b></span>'
+    '<div class="fp-prod-nota" style="margin-top:12px;display:flex;align-items:center;gap:12px">'
+    + '<b style="flex:1;color:var(--text)">Lote de ' + itens.length + ' produtos criado.</b>'
     + '<button class="action-btn view" type="button" onclick="document.querySelector(\'.nav-item[data-view=&quot;foto-lote&quot;]\').click()">Ir para Fotografia em lote</button></div>';
   renderFotoSeparacao();
 }
@@ -17036,8 +17060,9 @@ async function renderFotoPanorama() {
     + cartao('Fotos este mês', fotosMes.length.toLocaleString('pt-BR'), produtosMes + (produtosMes === 1 ? ' produto' : ' produtos'))
     + '</div>'
 
-    + '<h3 style="margin:22px 0 10px;font-size:14px">Fila por prioridade</h3>'
-    + '<div class="fp-prod">' + [
+    + '<div class="fp-prod" style="margin-top:22px">'
+    + '<div class="fp-prod-faixa"><b>Fila por prioridade</b><span class="fp-aviso-sub">'
+    + sem.length.toLocaleString('pt-BR') + ' produtos sem foto</span></div>' + [
         ['Emergencial', fila[5], 5], ['Alta', fila[3], 3], ['Média', fila[2], 2], ['Baixa', fila[1], 1], ['Sem prioridade', fila.pend, 0],
       ].map(([rot, qtd, n]) => '<div class="fp-prod-linha"><span class="fp-prod-nome"><b>' + rot + '</b></span>'
         + '<span class="fp-prod-est">' + qtd.toLocaleString('pt-BR') + ' <small>itens</small></span>'
@@ -17045,19 +17070,19 @@ async function renderFotoPanorama() {
         + '<span style="display:block;height:100%;width:' + (sem.length ? Math.round(qtd / sem.length * 100) : 0) + '%;background:' + fpPrioCor(n) + '"></span></span></span></div>').join('')
     + '</div>'
 
-    + (lotes.length ? '<h3 style="margin:22px 0 10px;font-size:14px">Lotes em aberto</h3><div class="fp-prod">'
+    + (lotes.length ? '<div class="fp-prod" style="margin-top:22px"><div class="fp-prod-faixa"><b>Lotes em aberto</b></div>'
         + lotes.map(l => '<div class="fp-prod-linha"><span class="fp-prod-nome"><b>Lote de '
           + new Date(l.created_at).toLocaleDateString('pt-BR') + '</b><span class="fp-prod-sku">'
           + escHtml(l.criado_por_nome || '') + (l.slack_destino_nome ? ' → ' + escHtml(l.slack_destino_nome) : '') + '</span></span>'
           + '<span class="fp-prod-est">' + (l.tamanho || 0) + ' <small>itens</small></span></div>').join('') + '</div>' : '')
 
-    + (semFotoEstoque.length ? '<h3 style="margin:22px 0 10px;font-size:14px">Sem foto e com mais estoque parado</h3><div class="fp-prod">'
+    + (semFotoEstoque.length ? '<div class="fp-prod" style="margin-top:22px"><div class="fp-prod-faixa"><b>Sem foto e com mais estoque parado</b><span class="fp-aviso-sub">os 8 maiores</span></div>'
         + semFotoEstoque.map(p => '<div class="fp-prod-linha">' + fpFotoProdutoHtml(p.sku, p.imagem_bling, 34, 7)
           + '<span class="fp-prod-nome"><b>' + escHtml(p.nome || p.sku) + '</b><span class="fp-prod-sku">' + escHtml(p.sku) + '</span></span>'
           + fpProdEstoqueHtml(p.estoque)
           + '<span class="fp-prod-fim">' + fpPrioHtml(p.sku, p.prioridade, fpFotoPodeEditar()) + '</span></div>').join('') + '</div>' : '')
 
-    + (recentes.length ? '<h3 style="margin:22px 0 10px;font-size:14px">Últimas 15 fotos enviadas</h3>'
+    + (recentes.length ? '<div class="fp-prod-faixa" style="margin-top:22px;background:none;padding-left:2px"><b>Últimas 15 fotos enviadas</b></div>'
         + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px">'
         + recentes.map(f => '<div><img src="' + escHtml(FP_DRIVE_URL + '?action=arquivo&id=' + encodeURIComponent(f.drive_file_id || '')) + '" alt="'
           + escHtml(f.file_name || '') + '" loading="eager" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--border)">'
