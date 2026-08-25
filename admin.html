@@ -16253,10 +16253,12 @@ if (typeof module !== 'undefined' && module.exports) {
       }
     } catch (e) {}
     try {
+      /* A ação `limpar` passou a exigir sessão quando o drive-proxy ganhou
+         escrita — sem ela a chamada só devolveria 401 e sujaria o console. */
       fetch(ENDPOINT + '?action=limpar', {
         method: 'POST',
         headers: cabecalhos(),
-        body: JSON.stringify({ sku: sku }),
+        body: JSON.stringify({ sku: sku, sessao: localStorage.getItem('fp_session') || '' }),
       }).catch(function () {});
     } catch (e) {}
   }
