@@ -4343,6 +4343,87 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   .fp-bug-tipos { flex-direction: column; }
   .fp-bug-topo .fp-bug-tit { flex: 1 1 100%; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   AVISOS DE ENTRADA (FP-AVISOS) + módulo Atualizações do site
+   O popup abre no login e a cada recarga com o que o operador ainda
+   não viu: as pendências dele, menções e as novidades do painel.
+   Substitui o antigo .mention-popup — dois avisos disputando o mesmo
+   canto da tela terminam com o operador fechando os dois sem ler.
+   Sem tarja colorida na lateral: a cor do assunto vive no selo do
+   ícone, e a caixa fica com uma borda só.
+   ═══════════════════════════════════════════════════════════════════ */
+.fp-aviso-ov {
+  position: fixed; inset: 0; z-index: 100150; display: none;
+  align-items: center; justify-content: center; padding: 20px;
+  background: rgba(0,0,0,.55); backdrop-filter: blur(3px);
+}
+.fp-aviso-ov.show { display: flex; }
+.fp-aviso {
+  width: min(520px, 100%); max-height: min(82vh, 760px);
+  display: flex; flex-direction: column; overflow: hidden;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015)), var(--bg-elev);
+  border: 1px solid var(--border-hi); border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(0,0,0,.3);
+  animation: fpAvisoEntra .22s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes fpAvisoEntra { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: none; } }
+[data-theme="light"] .fp-aviso {
+  background: linear-gradient(180deg, #fff, rgba(255,255,255,.72)), var(--bg-elev);
+  border-color: rgba(0,0,0,.1);
+  box-shadow: 0 20px 50px rgba(0,0,0,.16), 0 0 0 1px rgba(0,0,0,.04);
+}
+.fp-aviso-head { display: flex; align-items: center; gap: 10px; padding: 16px 16px 12px; }
+.fp-aviso-head h3 { font-size: 16px; font-weight: 650; margin: 0; letter-spacing: -.01em; }
+.fp-aviso-head .fp-aviso-data { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.fp-aviso-x {
+  margin-left: auto; width: 30px; height: 30px; border-radius: 8px; flex: 0 0 auto;
+  display: grid; place-items: center; background: none; border: 0; cursor: pointer;
+  color: var(--text-muted); font-size: 19px; line-height: 1;
+}
+.fp-aviso-x:hover { background: var(--bg-card); color: var(--text); }
+.fp-aviso-corpo { overflow-y: auto; padding: 0 16px 4px; display: flex; flex-direction: column; gap: 8px; }
+.fp-aviso-item {
+  display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
+  padding: 11px 12px; border-radius: 12px; cursor: pointer;
+  background: var(--bg-card); border: 1px solid var(--border); color: inherit; font: inherit;
+  transition: border-color .12s ease, transform .12s ease;
+}
+.fp-aviso-item:hover { border-color: var(--border-hi); transform: translateY(-1px); }
+.fp-aviso-ico { width: 30px; height: 30px; border-radius: 9px; flex: 0 0 auto; display: grid; place-items: center; }
+.fp-aviso-ico svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fp-aviso-item.req  .fp-aviso-ico { background: rgba(255,170,51,.16); color: var(--warning); }
+.fp-aviso-item.men  .fp-aviso-ico { background: rgba(59,130,246,.18); color: #7aa5ff; }
+.fp-aviso-item.bug  .fp-aviso-ico { background: rgba(255,45,45,.16);  color: var(--primary-hi); }
+.fp-aviso-item .fp-aviso-tit { font-size: 13.5px; font-weight: 600; }
+.fp-aviso-sub { font-size: 12px; color: var(--text-muted); }
+.fp-aviso-item .fp-aviso-sub { display: block; margin-top: 1px; }
+.fp-aviso-item .fp-aviso-seta { margin-left: auto; color: var(--text-muted); font-size: 15px; flex: 0 0 auto; }
+.fp-aviso-secao {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--text-muted); margin: 10px 2px 0;
+}
+.fp-aviso-nov { padding: 10px 12px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border); }
+.fp-aviso-nov + .fp-aviso-nov { margin-top: -2px; }
+.fp-aviso-nov .fp-aviso-nov-tit { font-size: 13.5px; font-weight: 600; }
+.fp-aviso-nov .fp-aviso-nov-txt { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; margin-top: 3px; }
+.fp-aviso-nov .fp-aviso-nov-pe  { display: flex; align-items: center; gap: 7px; margin-top: 7px; }
+.fp-aviso-foot { padding: 12px 16px 16px; display: flex; align-items: center; gap: 8px; }
+.fp-aviso-foot .fp-aviso-conta { font-size: 12px; color: var(--text-muted); margin-right: auto; }
+.badge.upd-design        { background: rgba(167,139,250,.18); color: #b9a2ff; }
+.badge.upd-funcionalidade{ background: rgba(31,210,122,.18);  color: var(--success); }
+.badge.upd-correcao      { background: rgba(255,170,51,.18);  color: var(--warning); }
+/* Lista do módulo: mesma linguagem do popup, sem a caixa do popup */
+.fp-upd-dia { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); margin: 18px 2px 8px; }
+.fp-upd-card { padding: 12px 14px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border); margin-bottom: 8px; }
+.fp-upd-card .fp-upd-tit { font-size: 14px; font-weight: 600; }
+.fp-upd-card .fp-upd-txt { font-size: 13px; color: var(--text-dim); line-height: 1.55; margin-top: 4px; white-space: pre-wrap; }
+.fp-upd-card .fp-upd-pe  { display: flex; align-items: center; gap: 8px; margin-top: 9px; flex-wrap: wrap; }
+@media (max-width: 600px) {
+  .fp-aviso-ov { padding: 0; align-items: flex-end; }
+  .fp-aviso { width: 100%; max-height: 88vh; border-radius: 16px 16px 0 0; border-bottom: 0; }
+  @keyframes fpAvisoEntra { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+}
 </style>
 </head>
 <body class="fp-sem-sessao">
@@ -4457,6 +4538,10 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
       <!-- besouro: o ícone universal de bug -->
       <svg viewBox="0 0 24 24"><ellipse cx="12" cy="13" rx="5" ry="7"/><path d="M12 6V4"/><path d="M9.5 5.5L8 3.5M14.5 5.5L16 3.5"/><path d="M7 10L3.5 8M7 13.5H3M7 17l-3.5 2M17 10l3.5-2M17 13.5h4M17 17l3.5 2"/><path d="M12 8v10"/></svg>
       <span class="nav-label">Manutenção</span> <span class="count" id="cntBugs">0</span>
+    </button>
+    <button class="nav-item" data-view="atualizacoes">
+      <svg viewBox="0 0 24 24"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+      <span class="nav-label">Atualizações</span> <span class="count" id="cntUpd">0</span>
     </button>
     <button class="nav-item" data-view="integracoes">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
@@ -5449,6 +5534,34 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 
       <div id="bugLista"></div>
     </div>
+
+    <div id="view-atualizacoes" style="display:none">
+      <div class="page-head">
+        <div>
+          <h1>Atualizações do site</h1>
+          <p>O que mudou no painel: funcionalidades novas, mudanças de design e correções.</p>
+        </div>
+        <button class="fp-new-btn" id="updNovaBtn" onclick="fpUpdAbrirEditor()" style="display:none" data-tip="Publicar atualização" aria-label="Publicar atualização">+</button>
+      </div>
+
+      <div class="filter-bar">
+        <span class="fp-so-desktop" style="display:contents">
+          <button class="filter-btn active" data-updfilter="todos" onclick="fpUpdFiltrar('todos')">Todas</button>
+          <button class="filter-btn" data-updfilter="funcionalidade" onclick="fpUpdFiltrar('funcionalidade')">Funcionalidades</button>
+          <button class="filter-btn" data-updfilter="design" onclick="fpUpdFiltrar('design')">Design</button>
+          <button class="filter-btn" data-updfilter="correcao" onclick="fpUpdFiltrar('correcao')">Correções</button>
+        </span>
+        <select class="fp-so-mobile fp-lista-select" id="updFiltroSelect" aria-label="Filtrar atualizações" onchange="fpUpdFiltrar(this.value)">
+          <option value="todos">Todas</option>
+          <option value="funcionalidade">Funcionalidades</option>
+          <option value="design">Design</option>
+          <option value="correcao">Correções</option>
+        </select>
+        <span id="updCount" class="fp-lista-contagem"></span>
+      </div>
+
+      <div id="updLista"></div>
+    </div>
   </main>
 </div>
 
@@ -5464,6 +5577,36 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 </button>
 
 <!-- Modal do relato -->
+<div class="modal" id="updModal">
+  <div class="modal-content" style="max-width:520px">
+    <div class="modal-head"><h3 id="updEdTitle">Publicar atualização</h3>
+      <button class="modal-close" type="button" onclick="fpUpdFecharEditor()" aria-label="Fechar">&times;</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="updEdId">
+      <div class="form-group"><label for="updEdTitulo">Título</label>
+        <input type="text" id="updEdTitulo" placeholder="Ex.: Botão de reportar bug em todo o painel" maxlength="120"></div>
+      <div class="form-group"><label for="updEdDescricao">O que mudou</label>
+        <textarea id="updEdDescricao" rows="4" placeholder="Uma ou duas frases, do ponto de vista de quem usa."></textarea></div>
+      <div class="form-grid-3">
+        <div class="form-group"><label for="updEdTipo">Tipo</label>
+          <select id="updEdTipo">
+            <option value="funcionalidade">Funcionalidade</option>
+            <option value="design">Design</option>
+            <option value="correcao">Correção</option>
+          </select></div>
+        <div class="form-group"><label for="updEdModulo">Módulo</label>
+          <input type="text" id="updEdModulo" placeholder="Ex.: Agenda" maxlength="40"></div>
+        <div class="form-group"><label for="updEdData">Data</label>
+          <input type="date" id="updEdData"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="action-btn" type="button" onclick="fpUpdFecharEditor()">Cancelar</button>
+      <button class="action-btn approve" type="button" onclick="fpUpdSalvar()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal fp-bug-modal" id="fpBugModal">
   <div class="modal-content" style="max-width:520px">
     <div class="modal-head">
@@ -6998,7 +7141,7 @@ document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','integracoes','profile'].forEach(v => {
+    ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
       document.getElementById('view-' + v).style.display = 'none';
     });
     document.getElementById('view-' + btn.dataset.view).style.display = 'block';
@@ -9373,7 +9516,7 @@ function openProjectDetail(id, tab) {
   switchDetailTab(tab || 'producao');
 
   // Hide all views, show project-detail
-  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','integracoes','profile'].forEach(v => {
+  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
     document.getElementById('view-' + v).style.display = 'none';
   });
   document.getElementById('view-project-detail').style.display = 'block';
@@ -9394,7 +9537,7 @@ function openProjectDetail(id, tab) {
 function backToProjects() {
   stopEngagementAutoRefresh();
   projDetailId = null;
-  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','integracoes','profile'].forEach(v => {
+  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
     document.getElementById('view-' + v).style.display = 'none';
   });
   document.getElementById('view-projects').style.display = 'block';
@@ -9787,11 +9930,11 @@ function renderShotsReadOnly(shots, si) {
     { sec: 'Geral', items: [['dashboard','Dashboard'],['requests','Solicitações'],['calendar','Agenda'],['checkin','Check-in / Check-out'],['projects','Projetos'],['editing','Edição'],['clips','Clips']] },
     { sec: 'Pós-produção', items: [['debriefing','Debriefing']] },
     { sec: 'Performance', items: [['perf-metas','Metas'],['perf-posts','Meus Posts'],['perf-influencers','Influenciadores'],['perf-bonificacao','Bonificação']] },
-    { sec: 'Configurações', items: [['templates','Templates WhatsApp'],['export','Exportar'],['users','Usuários'],['integracoes','Integrações']] }
+    { sec: 'Configurações', items: [['templates','Templates WhatsApp'],['export','Exportar'],['users','Usuários'],['manutencao','Manutenção'],['atualizacoes','Atualizações'],['integracoes','Integrações']] }
   ];
-  const FP_ALL_VIEWS = ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','integracoes','profile'];
+  const FP_ALL_VIEWS = ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'];
   const FP_ALWAYS_ON = ['profile','project-detail'];
-  const FP_NAV_ORDER = ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','integracoes','profile'];
+  const FP_NAV_ORDER = ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','atualizacoes','integracoes','profile'];
 
   function fpRoleKey(roleStr){
     const r = (roleStr || '').toLowerCase();
@@ -12455,7 +12598,7 @@ async function postDebriefingComment(projectId, parentId) {
   const origViewIds = [
     'dashboard','requests','calendar','checkin','projects',
     'project-detail','editing','perf-metas','perf-posts',
-    'perf-influencers','perf-bonificacao','templates','export',
+    'perf-influencers','perf-bonificacao','templates','export','manutencao','atualizacoes',
     'users','profile','debriefing'
   ];
   document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
@@ -14261,47 +14404,219 @@ async function notifyMentions(content, projectId, projectTitle) {
   try { await sb.from('mc_notifications').insert(rows); } catch(e){ console.warn('notifyMentions', e); }
 }
 
-let _mentionPopupEl = null;
-function showMentionPopup(count) {
-  if (!_mentionPopupEl) {
-    _mentionPopupEl = document.createElement('div');
-    _mentionPopupEl.id = 'mentionPopup';
-    _mentionPopupEl.className = 'mention-popup';
-    document.body.appendChild(_mentionPopupEl);
-  }
-  const n = count || 1;
-  _mentionPopupEl.innerHTML = `
-    <div class="mention-popup-icon">@</div>
-    <div class="mention-popup-body">
-      <div class="mention-popup-title">Você tem uma nova menção em debriefing</div>
-      <div class="mention-popup-text">${n} menção${n > 1 ? 'ões' : ''} aguardando sua atenção.</div>
-    </div>
-    <div class="mention-popup-actions">
-      <button class="mention-popup-btn ghost" onclick="dismissMentionPopup()">Entendi</button>
-      <button class="mention-popup-btn primary" onclick="openMentionsNow()">Ver agora</button>
-    </div>`;
-  _mentionPopupEl.classList.add('show');
+/* ═══════════════════════════════════════════════════════════════════════
+   AVISOS DE ENTRADA + ATUALIZAÇÕES DO SITE (FP-AVISOS)
+
+   Um popup só, aberto no login e a cada recarga, com o que o operador
+   ainda não viu: as pendências dele, as menções do debriefing e as
+   novidades do painel. Substituiu o antigo .mention-popup — dois avisos
+   disputando o mesmo canto da tela terminavam com o operador fechando os
+   dois sem ler nenhum.
+
+   "Não viu de fato" tem um significado por assunto:
+     • menção  → mc_notifications.read, que já existia
+     • pendência e novidade → carimbo em mc_admin_users.prefs.avisos, que
+       chega de graça em CURRENT_USER porque checkAuth() faz select('*')
+
+   Abre uma vez por carregamento de página, nunca ao voltar o foco da aba:
+   modal que reaparece a cada alt-tab vira ruído e é fechado sem leitura.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+let UPDATES = [];              // mc_updates publicadas, da mais nova para a mais antiga
+let _updFiltro = 'todos';
+let _avisoEl = null;
+let _avisoJaAbriu = false;     // por carregamento de página
+
+async function loadUpdates() {
+  try {
+    const { data, error } = await sb.from('mc_updates')
+      .select('*').eq('publicado', true)
+      .order('publicado_em', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(80);
+    if (error) throw error;
+    UPDATES = data || [];
+  } catch (e) { console.warn('loadUpdates', e); UPDATES = []; }
+  fpUpdBadge();
 }
-function hideMentionPopup() { if (_mentionPopupEl) _mentionPopupEl.classList.remove('show'); }
-// "Entendi" só fecha; reabre no próximo foco/troca de módulo enquanto houver menção
-function dismissMentionPopup() { hideMentionPopup(); }
-// "Ver agora" leva ao Debriefing (que marca as menções como lidas)
-function openMentionsNow() {
-  hideMentionPopup();
-  const navBtn = document.querySelector('.nav-item[data-view="debriefing"]');
-  if (navBtn && navBtn.style.display !== 'none') { navBtn.click(); }
-  else { markMentionNotificationsRead(); }
+
+/* ---------- carimbos do que já foi visto ---------- */
+function fpAvisoPrefs() {
+  const p = CURRENT_USER && CURRENT_USER.prefs;
+  return (p && typeof p === 'object' && p.avisos) ? p.avisos : {};
 }
-// Mostra o popup se houver menção não lida e não estivermos no debriefing
-function maybeShowMentionPopup(currentView) {
+async function fpAvisoGravarPrefs(patch) {
   if (!CURRENT_USER) return;
-  const mentions = (NOTIFICATIONS || []).filter(n => n.type === 'mention');
-  if (!mentions.length) { hideMentionPopup(); return; }
-  const view = currentView || (location.hash ? location.hash.slice(1) : '') || 'dashboard';
-  if (view === 'debriefing') return;
-  showMentionPopup(mentions.length);
+  const base = (CURRENT_USER.prefs && typeof CURRENT_USER.prefs === 'object') ? CURRENT_USER.prefs : {};
+  const prefs = Object.assign({}, base, { avisos: Object.assign({}, base.avisos || {}, patch) });
+  CURRENT_USER.prefs = prefs;   // local primeiro: a interface não espera a rede
+  try { await sb.from('mc_admin_users').update({ prefs }).eq('id', CURRENT_USER.id); }
+  catch (e) { console.warn('fpAvisoGravarPrefs', e); }
 }
-// Marca todas as menções do usuário como lidas (chamado ao abrir o Debriefing)
+
+/* O módulo pode estar liberado pelo papel e bloqueado pela lista de módulos
+   do usuário — as duas camadas se somam. O botão do menu é o resultado das
+   duas, então é a resposta mais barata e mais confiável. */
+function fpAvisoVeModulo(view) {
+  const b = document.querySelector('.nav-item[data-view="' + view + '"]');
+  return !!b && b.style.display !== 'none';
+}
+function fpAvisoEhAdmin() {
+  return typeof getUserRole === 'function' ? getUserRole() === 'admin' : false;
+}
+
+/* ---------- o que mostrar ---------- */
+function fpAvisoMontar() {
+  const prefs = fpAvisoPrefs();
+  const pendencias = [];
+
+  /* Solicitações: o admin não recebe — ele vive nessa tela o dia todo e o
+     aviso viraria paisagem. Para os demais, só conta o que chegou depois
+     do último carimbo. */
+  if (!fpAvisoEhAdmin() && fpAvisoVeModulo('requests')) {
+    const desde = prefs.requests_ate ? new Date(prefs.requests_ate).getTime() : 0;
+    const novas = (typeof getRequests === 'function' ? getRequests() : [])
+      .filter(r => r.status === 'pending' && new Date(r.createdAt || r.created_at || 0).getTime() > desde);
+    if (novas.length) pendencias.push({
+      chave: 'req', tipo: 'req', view: 'requests',
+      titulo: novas.length === 1 ? '1 solicitação nova aguardando' : novas.length + ' solicitações novas aguardando',
+      sub: 'Chegaram pela landing e ainda não foram respondidas.',
+      icone: '<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/>'
+    });
+  }
+
+  const mencoes = (NOTIFICATIONS || []).filter(n => n.type === 'mention');
+  if (mencoes.length) pendencias.push({
+    chave: 'men', tipo: 'men', view: 'debriefing',
+    titulo: mencoes.length === 1 ? 'Você foi mencionado no debriefing' : mencoes.length + ' menções no debriefing',
+    sub: mencoes[0].project_title ? ('Mais recente: ' + mencoes[0].project_title) : 'Alguém pediu sua atenção em um projeto.',
+    icone: '<path d="M12 2a10 10 0 100 20h5"/><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 006 0v-1a10 10 0 00-10-10"/>'
+  });
+
+  if (fpAvisoEhAdmin()) {
+    const desde = prefs.bugs_ate ? new Date(prefs.bugs_ate).getTime() : 0;
+    const novos = (typeof BUGS !== 'undefined' ? (BUGS || []) : [])
+      .filter(b => b.status === 'aberto' && new Date(b.created_at || 0).getTime() > desde);
+    if (novos.length) pendencias.push({
+      chave: 'bug', tipo: 'bug', view: 'manutencao',
+      titulo: novos.length === 1 ? '1 relato novo em Manutenção' : novos.length + ' relatos novos em Manutenção',
+      sub: novos[0].titulo ? ('Mais recente: ' + novos[0].titulo) : 'Bugs e melhorias reportados pela equipe.',
+      icone: '<ellipse cx="12" cy="13" rx="5" ry="7"/><path d="M12 6V4"/><path d="M7 10L3.5 8M7 13.5H3M7 17l-3.5 2M17 10l3.5-2M17 13.5h4M17 17l3.5 2"/>'
+    });
+  }
+
+  const vistas = Array.isArray(fpAvisoPrefs().updates_vistos) ? fpAvisoPrefs().updates_vistos : [];
+  const novidades = (UPDATES || []).filter(u => !vistas.includes(u.id)).slice(0, 6);
+
+  return { pendencias, novidades };
+}
+
+function fpUpdBadge() {
+  const el = document.getElementById('cntUpd');
+  if (!el) return;
+  const vistas = Array.isArray(fpAvisoPrefs().updates_vistos) ? fpAvisoPrefs().updates_vistos : [];
+  const n = (UPDATES || []).filter(u => !vistas.includes(u.id)).length;
+  el.textContent = n;
+  el.style.display = n ? '' : 'none';
+  el.setAttribute('aria-label', n ? (n === 1 ? '1 atualização nova' : n + ' atualizações novas') : '');
+}
+
+/* ---------- o popup ---------- */
+function fpAvisoSaudacao() {
+  const h = new Date().getHours();
+  const nome = (CURRENT_USER && (CURRENT_USER.name || CURRENT_USER.username) || '').split(' ')[0];
+  const parte = h < 12 ? 'Bom dia' : (h < 18 ? 'Boa tarde' : 'Boa noite');
+  return nome ? (parte + ', ' + nome) : parte;
+}
+
+function fpAvisoAbrir() {
+  const pacote = fpAvisoMontar();
+  if (!pacote.pendencias.length && !pacote.novidades.length) return false;
+
+  if (!_avisoEl) {
+    _avisoEl = document.createElement('div');
+    _avisoEl.className = 'fp-aviso-ov';
+    _avisoEl.id = 'fpAvisoOv';
+    _avisoEl.addEventListener('click', ev => { if (ev.target === _avisoEl) fpAvisoFechar(); });
+    document.body.appendChild(_avisoEl);
+  }
+
+  const data = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' });
+  let html = '<div class="fp-aviso" role="dialog" aria-modal="true" aria-labelledby="fpAvisoTit">'
+    + '<div class="fp-aviso-head"><div><h3 id="fpAvisoTit">' + escHtml(fpAvisoSaudacao()) + '</h3>'
+    + '<div class="fp-aviso-data">' + escHtml(data) + '</div></div>'
+    + '<button class="fp-aviso-x" type="button" onclick="fpAvisoFechar()" aria-label="Fechar">&times;</button></div>'
+    + '<div class="fp-aviso-corpo">';
+
+  pacote.pendencias.forEach(p => {
+    html += '<button class="fp-aviso-item ' + p.tipo + '" type="button" onclick="fpAvisoIr(\'' + p.view + '\',\'' + p.chave + '\')">'
+      + '<span class="fp-aviso-ico"><svg viewBox="0 0 24 24" aria-hidden="true">' + p.icone + '</svg></span>'
+      + '<span><span class="fp-aviso-tit">' + escHtml(p.titulo) + '</span>'
+      + '<span class="fp-aviso-sub">' + escHtml(p.sub) + '</span></span>'
+      + '<span class="fp-aviso-seta" aria-hidden="true">&rsaquo;</span></button>';
+  });
+
+  if (pacote.novidades.length) {
+    html += '<div class="fp-aviso-secao">Novidades no painel</div>';
+    pacote.novidades.forEach(u => {
+      html += '<div class="fp-aviso-nov"><div class="fp-aviso-nov-tit">' + escHtml(u.titulo || '') + '</div>'
+        + (u.descricao ? '<div class="fp-aviso-nov-txt">' + escHtml(u.descricao) + '</div>' : '')
+        + '<div class="fp-aviso-nov-pe">' + fpUpdSelo(u.tipo)
+        + '<span class="fp-aviso-sub">' + escHtml(fpUpdData(u.publicado_em)) + (u.modulo ? ' · ' + escHtml(u.modulo) : '') + '</span></div></div>';
+    });
+  }
+
+  html += '</div><div class="fp-aviso-foot">'
+    + '<span class="fp-aviso-conta">' + (pacote.novidades.length ? 'Tudo isso fica em Atualizações.' : '') + '</span>'
+    + '<button class="action-btn view" type="button" onclick="fpAvisoFechar()">Entendi</button></div></div>';
+
+  _avisoEl.innerHTML = html;
+  _avisoEl.classList.add('show');
+  document.body.classList.add('fp-sem-scroll');
+  _avisoJaAbriu = true;
+  const foco = _avisoEl.querySelector('.fp-aviso-item, .action-btn');
+  if (foco) setTimeout(() => foco.focus(), 60);
+  return true;
+}
+
+/* Fechar carimba o que era "informação": novidades e relatos já apareceram,
+   não voltam. Menção e solicitação são trabalho pendente de verdade — só
+   saem quando a pessoa passa pela tela. */
+async function fpAvisoFechar(extra) {
+  if (_avisoEl) _avisoEl.classList.remove('show');
+  document.body.classList.remove('fp-sem-scroll');
+  const patch = Object.assign({}, extra || {});
+  const vistas = Array.isArray(fpAvisoPrefs().updates_vistos) ? fpAvisoPrefs().updates_vistos : [];
+  const novas = (UPDATES || []).map(u => u.id).filter(id => !vistas.includes(id));
+  if (novas.length) patch.updates_vistos = vistas.concat(novas).slice(-200);
+  if (fpAvisoEhAdmin()) patch.bugs_ate = new Date().toISOString();
+  if (Object.keys(patch).length) { await fpAvisoGravarPrefs(patch); fpUpdBadge(); }
+}
+
+/* O carimbo de solicitações vai junto no mesmo patch, não numa gravação à
+   parte: duas escritas na mesma linha de mc_admin_users podem chegar fora de
+   ordem e a segunda apagaria o que a primeira acabou de gravar. */
+function fpAvisoIr(view, chave) {
+  fpAvisoFechar(chave === 'req' ? { requests_ate: new Date().toISOString() } : null);
+  const b = document.querySelector('.nav-item[data-view="' + view + '"]');
+  if (b && b.style.display !== 'none') b.click();
+}
+
+/* ---------- compatibilidade com o que chamava o popup de menção ---------- */
+function hideMentionPopup() { if (_avisoEl) _avisoEl.classList.remove('show'); document.body.classList.remove('fp-sem-scroll'); }
+function dismissMentionPopup() { fpAvisoFechar(); }
+function openMentionsNow() { fpAvisoIr('debriefing', 'men'); }
+function showMentionPopup() { fpAvisoAbrir(); }
+
+/* Chamado no boot e a cada troca de tela. Só abre uma vez por carregamento:
+   o pedido foi "ao entrar no painel ou dar um reload", não a cada clique. */
+function maybeShowMentionPopup(currentView) {
+  if (!CURRENT_USER || _avisoJaAbriu) return;
+  const view = currentView || (location.hash ? location.hash.slice(1) : '') || 'dashboard';
+  if (view === 'debriefing' || view === 'atualizacoes') return;
+  fpAvisoAbrir();
+}
+
 async function markMentionNotificationsRead() {
   hideMentionPopup();
   if (!CURRENT_USER) return;
@@ -14312,19 +14627,116 @@ async function markMentionNotificationsRead() {
   renderNotifBadge();
   try { await sb.from('mc_notifications').update({ read: true }).in('id', ids); } catch(e){ console.warn('markMention', e); }
 }
-// Observa foco/visibilidade da janela para reabrir o popup (uma vez só)
+
+/* Foco e visibilidade só atualizam os contadores. Reabrir o modal a cada
+   alt-tab transformaria o aviso em ruído. */
 let _mentionWatchersAttached = false;
 function attachMentionWatchers() {
   if (_mentionWatchersAttached) return;
   _mentionWatchersAttached = true;
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && CURRENT_USER) {
-      loadNotifications().then(() => maybeShowMentionPopup());
-    }
+  const recarregar = () => { if (CURRENT_USER) loadNotifications().then(() => renderNotifBadge()); };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') recarregar(); });
+  window.addEventListener('focus', recarregar);
+}
+
+/* ═══════════════ MÓDULO ATUALIZAÇÕES DO SITE ═══════════════ */
+const FP_UPD_TIPOS = { funcionalidade: 'Funcionalidade', design: 'Design', correcao: 'Correção' };
+
+function fpUpdSelo(tipo) {
+  const t = FP_UPD_TIPOS[tipo] ? tipo : 'funcionalidade';
+  return '<span class="badge upd-' + t + '">' + FP_UPD_TIPOS[t] + '</span>';
+}
+function fpUpdData(d) {
+  if (!d) return '';
+  const [a, m, dia] = String(d).slice(0, 10).split('-');
+  return dia + '/' + m + '/' + a;
+}
+function fpUpdFiltrar(tipo) {
+  _updFiltro = tipo || 'todos';
+  document.querySelectorAll('[data-updfilter]').forEach(b => b.classList.toggle('active', b.dataset.updfilter === _updFiltro));
+  const sel = document.getElementById('updFiltroSelect');
+  if (sel && sel.value !== _updFiltro) sel.value = _updFiltro;
+  renderAtualizacoes();
+}
+
+function renderAtualizacoes() {
+  const box = document.getElementById('updLista');
+  if (!box) return;
+  const admin = fpAvisoEhAdmin();
+  const btn = document.getElementById('updNovaBtn');
+  if (btn) btn.style.display = admin ? '' : 'none';
+
+  const lista = (UPDATES || []).filter(u => _updFiltro === 'todos' || u.tipo === _updFiltro);
+  const cont = document.getElementById('updCount');
+  if (cont) cont.textContent = lista.length ? (lista.length === 1 ? '1 atualização' : lista.length + ' atualizações') : '';
+
+  if (!lista.length) {
+    box.innerHTML = '<div class="empty-state"><p>Nenhuma atualização publicada ainda.</p></div>';
+    return;
+  }
+
+  let html = '', diaAtual = '';
+  lista.forEach(u => {
+    const dia = fpUpdData(u.publicado_em);
+    if (dia !== diaAtual) { diaAtual = dia; html += '<div class="fp-upd-dia">' + escHtml(dia) + '</div>'; }
+    html += '<div class="fp-upd-card"><div class="fp-upd-tit">' + escHtml(u.titulo || '') + '</div>'
+      + (u.descricao ? '<div class="fp-upd-txt">' + escHtml(u.descricao) + '</div>' : '')
+      + '<div class="fp-upd-pe">' + fpUpdSelo(u.tipo)
+      + (u.modulo ? '<span class="fp-aviso-sub">' + escHtml(u.modulo) + '</span>' : '')
+      + (admin ? '<span style="margin-left:auto;display:flex;gap:6px">'
+          + '<button class="action-btn" type="button" onclick="fpUpdAbrirEditor(\'' + u.id + '\')">Editar</button>'
+          + '<button class="action-btn reject" type="button" onclick="fpUpdApagar(\'' + u.id + '\')">Excluir</button></span>' : '')
+      + '</div></div>';
   });
-  window.addEventListener('focus', () => {
-    if (CURRENT_USER) loadNotifications().then(() => maybeShowMentionPopup());
-  });
+  box.innerHTML = html;
+}
+
+/* Editor: o dono pediu que as novidades sejam escritas por mim, mas deixar
+   só no código significaria depender de deploy para cada linha de texto. */
+function fpUpdAbrirEditor(id) {
+  const u = id ? (UPDATES || []).find(x => x.id === id) : null;
+  document.getElementById('updEdId').value = u ? u.id : '';
+  document.getElementById('updEdTitulo').value = u ? (u.titulo || '') : '';
+  document.getElementById('updEdDescricao').value = u ? (u.descricao || '') : '';
+  document.getElementById('updEdTipo').value = u ? (u.tipo || 'funcionalidade') : 'funcionalidade';
+  document.getElementById('updEdModulo').value = u ? (u.modulo || '') : '';
+  document.getElementById('updEdData').value = u ? String(u.publicado_em).slice(0, 10) : new Date().toISOString().slice(0, 10);
+  document.getElementById('updEdTitle').textContent = u ? 'Editar atualização' : 'Publicar atualização';
+  document.getElementById('updModal').classList.add('show');
+}
+function fpUpdFecharEditor() { document.getElementById('updModal').classList.remove('show'); }
+
+async function fpUpdSalvar() {
+  const id = document.getElementById('updEdId').value;
+  const linha = {
+    titulo: document.getElementById('updEdTitulo').value.trim(),
+    descricao: document.getElementById('updEdDescricao').value.trim() || null,
+    tipo: document.getElementById('updEdTipo').value,
+    modulo: document.getElementById('updEdModulo').value.trim() || null,
+    publicado_em: document.getElementById('updEdData').value || new Date().toISOString().slice(0, 10),
+  };
+  if (!linha.titulo) { fpToast('Escreva um título para a atualização.', 'warn'); return; }
+  const q = id ? sb.from('mc_updates').update(linha).eq('id', id) : sb.from('mc_updates').insert(linha);
+  const { error } = await q;
+  if (error) { fpToast('Erro: ' + error.message, 'erro'); return; }
+  fpUpdFecharEditor();
+  await loadUpdates();
+  renderAtualizacoes();
+  fpToast(id ? 'Atualização editada.' : 'Atualização publicada.', 'ok');
+}
+
+async function fpUpdApagar(id) {
+  const u = (UPDATES || []).find(x => x.id === id);
+  if (!await fpConfirm({
+    titulo: 'Excluir atualização',
+    mensagem: 'A nota "' + (u ? u.titulo : '') + '" sai do painel de todo mundo.',
+    confirmar: 'Excluir', perigo: true,
+  })) return;
+  const { error } = await sb.from('mc_updates').delete().eq('id', id);
+  if (error) { fpToast('Erro: ' + error.message, 'erro'); return; }
+  await loadUpdates();
+  renderAtualizacoes();
+  fpToast('Atualização excluída.', 'ok');
 }
 
 
@@ -18689,10 +19101,10 @@ function applyRolePermissions() {
 
   // Views accessible per role
   const access = {
-    admin: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','integracoes','profile'],
-    filmmaker: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','profile'],
-    mecanico: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-bonificacao','templates','profile'],
-    viewer: ['dashboard','debriefing','profile']
+    admin: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'],
+    filmmaker: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','atualizacoes','profile'],
+    mecanico: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-bonificacao','templates','atualizacoes','profile'],
+    viewer: ['dashboard','debriefing','atualizacoes','profile']
   };
 
   const allowed = access[role] || access.viewer;
@@ -18771,7 +19183,7 @@ async function initApp() {
   // Integrações: carrega status compartilhado do servidor (vale p/ toda a equipe)
   await refreshIntegrationStatus();
 
-  await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects(), loadPerfPosts(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses(), loadNotifications(), loadInfExtras(), loadBugs()]);
+  await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects(), loadPerfPosts(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses(), loadNotifications(), loadInfExtras(), loadBugs(), loadUpdates()]);
   renderDashboard();
   renderRequests();
   renderCalendar();
@@ -18983,7 +19395,7 @@ async function initApp() {
   const ALL_VIEWS = [
     'dashboard','requests','calendar','checkin','projects','project-detail',
     'editing','clips','debriefing','perf-metas','perf-posts','perf-influencers',
-    'perf-bonificacao','templates','export','users','manutencao','integracoes','profile'
+    'perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'
   ];
 
   /* ------------------------------------------------------------------
@@ -19034,6 +19446,7 @@ async function initApp() {
   async function refreshViewData(viewName) {
     try {
       switch (viewName) {
+        case 'atualizacoes': renderAtualizacoes(); break;
         case 'dashboard':
           await Promise.all([loadRequests(), loadCheckins(), loadCheckouts(), loadProjects()]);
           renderDashboard();
