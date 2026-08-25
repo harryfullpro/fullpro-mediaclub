@@ -20,6 +20,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
   :root, [data-theme="dark"] {
+    /* Diz ao navegador em que tema desenhar os controles nativos. Sem isso, o
+       ícone de calendário do <input type="date"> vem preto sobre campo escuro
+       e some. Vale também para scrollbar e para o seletor nativo. */
+    color-scheme: dark;
     --bg: #0a0a0b;
     --bg-soft: #111114;
     --bg-card: #16161a;
@@ -38,6 +42,7 @@
     --logo-filter: brightness(1.1);
   }
   [data-theme="light"] {
+    color-scheme: light;
     --bg: #f5f5f7;
     --bg-soft: #ffffff;
     --bg-card: #ffffff;
@@ -472,7 +477,6 @@
   .cal-day:hover:not(.empty) { border-color: var(--primary); }
   .cal-day.empty { background: transparent; cursor: default; }
   .cal-day.past { opacity: .35; }
-  .cal-day.selected { border-color: var(--accent); background: rgba(255,207,51,.15); font-weight: 700; }
   .cal-day.approved {
     background: rgba(31,210,122,.2);
     border-color: rgba(31,210,122,.5);
@@ -482,6 +486,23 @@
     border-color: rgba(255,45,45,.5);
   }
   .cal-day.today { font-weight: 700; border-color: var(--border-hi); }
+  /* A seleção vem DEPOIS de .approved/.blocked/.today de propósito: com a mesma
+     especificidade, quem é declarado por último vence. Antes, clicar num dia
+     com agendamento aprovado não mudava nada — o verde cobria o amarelo e o
+     operador não via onde tinha clicado. */
+  .cal-day.selected {
+    border-color: var(--accent);
+    background: rgba(255,207,51,.16);
+    font-weight: 700;
+    box-shadow: inset 0 0 0 1px rgba(255,207,51,.35);
+  }
+  /* E o dia selecionado responde ao mouse reforçando o próprio amarelo, em vez
+     de cair na regra geral de hover (que troca a borda para vermelho). */
+  .cal-day.selected:hover:not(.empty) {
+    border-color: var(--accent);
+    background: rgba(255,207,51,.32);
+    box-shadow: 0 0 0 2px rgba(255,207,51,.22), inset 0 0 0 1px rgba(255,207,51,.5);
+  }
 
   .list-blocked {
     display: flex;
@@ -7875,6 +7896,9 @@ const BRINDE_TERMOS = {
 
 const fpNorm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const fpEstoqueDe = p => (p && p.estoque && p.estoque.saldoVirtualTotal != null) ? p.estoque.saldoVirtualTotal : null;
+/* Saldo desconhecido (null) não conta como zerado: o cartão mostra "?" e não
+   o selo vermelho — dizer "sem estoque" sem saber seria pior que não dizer. */
+const fpTemEstoque = p => (fpEstoqueDe(p) || 0) > 0;
 
 function fpBrindeDeProduto(p) {
   return { id: p.id, sku: p.codigo || '', nome: p.nome || 'Produto',
@@ -13672,8 +13696,14 @@ async function blingFindCompatible(motoModel) {
     if (!tokenMatch) return false;
     if (brand && !pNorm.includes(brand) && !pLower.includes(brand)) return false;
     return true;
-  }).filter(p => (p.estoque?.saldoVirtualTotal || 0) > 0
-  ).sort((a, b) => {
+  /* Produto zerado NÃO sai da lista: "não temos peça para essa moto" e "temos,
+     mas está zerada" são respostas diferentes, e a segunda é o que decide se
+     vale repor antes da gravação. Ele desce para o fim e é marcado em vermelho
+     no cartão. */
+  }).sort((a, b) => {
+    const aEst = fpTemEstoque(a) ? 1 : 0;
+    const bEst = fpTemEstoque(b) ? 1 : 0;
+    if (bEst !== aEst) return bEst - aEst;
     const aYear = prodMatchesYear(a.nome, motoYear) ? 1 : 0;
     const bYear = prodMatchesYear(b.nome, motoYear) ? 1 : 0;
     if (bYear !== aYear) return bYear - aYear;
@@ -13696,14 +13726,16 @@ function renderCompatibleProducts(products, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
   if (!products || products.length === 0) {
-    container.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:8px 0">Nenhum produto compatível encontrado no estoque.</div>';
+    container.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:8px 0">Nenhum produto compatível encontrado no catálogo.</div>';
     return;
   }
   // Usa o mesmo HTML da versao recolhida: antes o markup era duplicado e as
   // duas cópias precisavam ser mantidas em sincronia na mao.
+  const zerados = products.filter(p => !fpTemEstoque(p)).length;
   container.innerHTML = `
     <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">
-      Produtos compatíveis em estoque (${products.length})
+      Produtos compatíveis (${products.length})
+      ${zerados ? `<span style="color:var(--primary-hi);margin-left:4px">· ${zerados} sem estoque</span>` : ''}
     </div>
     ${renderCompatibleProductsHTML(products)}
   `;
@@ -13717,20 +13749,22 @@ function renderCompatibleProductsCollapsed(products, containerId) {
   if (!products || products.length === 0) { container.innerHTML = ''; return; }
   const html = renderCompatibleProductsHTML(products);
   const n = products.length;
+  const zerados = products.filter(p => !fpTemEstoque(p)).length;
+  const aviso = zerados ? ` <span style="color:var(--primary-hi)">· ${zerados} sem estoque</span>` : '';
   const btnId = containerId + '_btn';
   const wrapId = containerId + '_wrap';
   container.innerHTML = `<button id="${btnId}" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg-elev);color:var(--text-dim);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;margin-top:4px"
     onmouseover="this.style.borderColor='var(--border-hi)';this.style.color='var(--text)'"
     onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">
     <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
-    <span>Ver produtos compatíveis (${n})</span>
+    <span>Ver produtos compatíveis (${n})${aviso}</span>
   </button>
   <div id="${wrapId}" style="display:none;margin-top:6px">${html}</div>`;
   document.getElementById(btnId).onclick = function() {
     const w = document.getElementById(wrapId);
     const open = w.style.display !== 'none';
     w.style.display = open ? 'none' : 'block';
-    this.querySelector('span').textContent = open ? `Ver produtos compatíveis (${n})` : `Ocultar produtos (${n})`;
+    this.querySelector('span').innerHTML = open ? `Ver produtos compatíveis (${n})${aviso}` : `Ocultar produtos (${n})${aviso}`;
     this.querySelector('svg').style.transform = open ? '' : 'rotate(180deg)';
     // só busca no Drive quando o bloco é aberto de fato
     if (!open) fpDriveCarregar(products.map(p => p.codigo), w);
@@ -13745,19 +13779,26 @@ function renderCompatibleProductsHTML(products) {
       const img = p.imagemURL
         ? `<div${gancho} style="width:32px;height:32px;border-radius:4px;flex-shrink:0;overflow:hidden"><img src="${escHtml(p.imagemURL)}" width="32" height="32" style="width:100%;height:100%;border-radius:4px;object-fit:cover"/></div>`
         : `<div${gancho} style="width:32px;height:32px;border-radius:4px;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--text-dim)" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4M4 7l8 4M4 7v10l8 4m0-10v10"/></svg></div>`;
-      const stk = p.estoque?.saldoVirtualTotal ?? '?';
-      const stkColor = typeof stk === 'number' ? (stk > 3 ? 'var(--success)' : 'var(--warning)') : 'var(--text-dim)';
-      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:6px;background:var(--bg-card);border:1px solid var(--border);min-width:0">
+      const saldo = fpEstoqueDe(p);
+      const zerado = saldo !== null && saldo <= 0;
+      const stk = saldo === null ? '?' : saldo;
+      const stkColor = saldo === null ? 'var(--text-dim)' : (saldo > 3 ? 'var(--success)' : 'var(--warning)');
+      /* Zerado fica com a moldura vermelha e um selo no lugar do número: o "0 un"
+         em laranja passava batido e o operador só descobria na hora de separar. */
+      const caixa = zerado
+        ? 'background:rgba(255,45,45,.07);border:1px solid rgba(255,45,45,.45)'
+        : 'background:var(--bg-card);border:1px solid var(--border)';
+      const direita = zerado
+        ? `<span style="font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#fff;background:var(--primary);padding:3px 7px;border-radius:999px;white-space:nowrap">Sem estoque</span>`
+        : `<span style="font-size:12px;font-weight:700;color:${stkColor}">${stk}</span><span style="font-size: 11px;color:var(--text-dim)">un</span>`;
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:6px;${caixa};min-width:0">
         <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">${img}
           <div style="min-width:0">
             <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.nome)}</div>
-            <div style="font-size: 11px;color:var(--text-dim)">SKU: ${escHtml(p.codigo || '—')} · R$ ${(p.preco || 0).toFixed(2)}</div>
+            <div style="font-size: 11px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">SKU: ${escHtml(p.codigo || '—')} · R$ ${(p.preco || 0).toFixed(2)}</div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-          <span style="font-size:12px;font-weight:700;color:${stkColor}">${stk}</span>
-          <span style="font-size: 11px;color:var(--text-dim)">un</span>
-        </div>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">${direita}</div>
       </div>`;
     }).join('') + `</div></div>`;
 }
@@ -14064,7 +14105,9 @@ async function clearData() {
 /* MANUAL BOOKING */
 function openBookingModal() {
   document.getElementById('bookModal').classList.add('show');
-  document.getElementById('bDate').value = '';
+  /* Se o operador clicou num dia do calendário antes de abrir o "+", esse dia
+     já vem preenchido — era o passo que ele repetia à mão toda vez. */
+  document.getElementById('bDate').value = selectedDate || '';
   document.getElementById('bNome').value = '';
   document.getElementById('bWhats').value = '';
   document.getElementById('bEmail').value = '';

@@ -138,3 +138,12 @@ where r.status = 'approved'
                  and ((now() at time zone 'America/Sao_Paulo')::date + 7);
 
 grant select on public.mc_public_gravacoes to anon, authenticated;
+
+-- ============================================================================
+-- Brinde: a restrição precisa aceitar as 6 opções que o painel oferece
+-- (20/08/2026). Nascia com 3 e derrubava o agendamento manual com "Capa para
+-- motos", "Ponteira" ou "Outros" — erro requests_brinde_check.
+-- ============================================================================
+alter table public.mc_requests drop constraint if exists requests_brinde_check;
+alter table public.mc_requests add constraint requests_brinde_check
+  check (brinde = any (array['pastilhas','mochila','capa','capa_moto','ponteira','outros']));

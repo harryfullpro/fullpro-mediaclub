@@ -4,6 +4,36 @@ Registro do que foi feito e por quê. Mais recente primeiro.
 
 ---
 
+## 20/08/2026 — Estoque zerado aparece, e quatro correções na Agenda
+
+**Produto zerado deixou de sumir da lista.** A busca de compatíveis terminava com
+`.filter(p => saldo > 0)`, então uma KTM 390 Duke que *tem* peça no catálogo, mas zerada,
+mostrava "Nenhum produto compatível encontrado no estoque" — a mesma frase de quando não
+existe peça nenhuma. São respostas diferentes: a segunda decide se vale repor antes da
+gravação. Agora o zerado entra na lista, desce para o fim, ganha **moldura vermelha e selo
+SEM ESTOQUE** no lugar do número, e a contagem do cabeçalho avisa (*"Produtos compatíveis
+(4) · 2 sem estoque"*) — inclusive no botão da versão recolhida, sem precisar abrir.
+O `0 un` em laranja que existia antes passava batido.
+
+**Brinde "Outros" (e mais dois) não salvavam.** `requests_brinde_check` só aceitava
+`pastilhas`, `mochila` e `capa`, mas o painel oferece seis opções — **três das seis**
+(`capa_moto`, `ponteira`, `outros`) estouravam a restrição no salvar. Restrição alinhada
+com a interface e testada com os seis valores, inserindo e apagando em seguida.
+
+**O "+" já vem com a data escolhida.** Se o operador clicou num dia do calendário antes de
+abrir o agendamento manual, o campo Data vem preenchido.
+
+**Dava para perder de vista o dia selecionado.** `.cal-day.approved` era declarado depois
+de `.cal-day.selected` e, com a mesma especificidade, o verde cobria o amarelo: clicar num
+dia que tem agendamento aprovado — justamente os que o operador clica — não mudava nada na
+tela. A seleção passou para depois das regras de cor e ganhou hover próprio, que reforça o
+amarelo em vez de cair na regra geral (que troca a borda para vermelho).
+
+**Ícone de calendário invisível no tema escuro.** O `<input type="date">` desenha o ícone
+pela `color-scheme`, e o painel só trocava as variáveis CSS. Agora `:root` declara
+`color-scheme: dark` e `[data-theme="light"]` declara `light` — o ícone fica branco no
+escuro e preto no claro, e de quebra scrollbars e seletores nativos acompanham o tema.
+
 ## 20/08/2026 — Agenda: o confirmado na frente, o resto atrás de um clique
 
 Clicar num dia despejava todos os pedidos daquela data na ordem em que vieram do banco —
