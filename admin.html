@@ -124,6 +124,11 @@
     display: flex; flex-direction: column; gap: 1px;
   }
   .sidebar-nav::-webkit-scrollbar { display: none; }
+  /* O menu nasce invisivel e so aparece depois da filtragem por papel/modulos
+     (fpRevelarPainel). Sem isso, quem tem acesso parcial ve a casa toda por um
+     instante. O rodape fica de fora — se a filtragem falhar, ainda da pra sair. */
+  .sidebar-nav { visibility: hidden; }
+  body.fp-menu-filtrado .sidebar-nav { visibility: visible; }
   .sidebar-foot { flex-shrink: 0; padding: 6px 12px 10px; border-top: 1px solid var(--border); }
   .shell.collapsed .sidebar-head { padding: 10px 10px 4px; }
   .shell.collapsed .sidebar-nav { padding: 0 8px; }
@@ -6877,15 +6882,35 @@ async function hashPw(pw) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+/* O menu tem que nascer certo. As permissões eram aplicadas só no fim de
+   initApp(), depois de uma dúzia de requisições — e nesse meio segundo quem tem
+   acesso parcial via a casa inteira no menu lateral. Filtramos antes de revelar
+   o painel: CURRENT_USER já está em mãos aqui, e é tudo de que as duas camadas
+   (papel + módulos do usuário) precisam. */
+function fpRevelarPainel() {
+  let filtrou = false;
+  try {
+    if (typeof applyRolePermissions === 'function') applyRolePermissions();
+    else if (typeof window.fpApplyUserModules === 'function') window.fpApplyUserModules();
+    filtrou = true;
+  } catch (e) {
+    console.warn('[perm] falhou ao filtrar o menu antes de exibir', e);
+    /* Última linha de defesa: a camada de módulos por usuário, sozinha. */
+    try { if (typeof window.fpApplyUserModules === 'function') { window.fpApplyUserModules(); filtrou = true; } } catch (e2) {}
+  }
+  if (filtrou) document.body.classList.add('fp-menu-filtrado');
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('app').style.display = 'grid';
+  document.body.classList.remove('fp-sem-sessao');   // libera o botão do besouro
+}
+
 async function checkAuth() {
   const sid = localStorage.getItem('fp_session');
   if (!sid) return;
   const { data, error } = await sb.from('mc_admin_users').select('*').eq('id', sid).single();
   if (error || !data) { localStorage.removeItem('fp_session'); return; }
   CURRENT_USER = data;
-  document.getElementById('login').style.display = 'none';
-  document.getElementById('app').style.display = 'grid';
-  document.body.classList.remove('fp-sem-sessao');   // libera o botão do besouro
+  fpRevelarPainel();
   await initApp();
 }
 
@@ -6904,9 +6929,7 @@ document.getElementById('loginBtn').onclick = async () => {
   }
   CURRENT_USER = data;
   localStorage.setItem('fp_session', data.id);
-  document.getElementById('login').style.display = 'none';
-  document.getElementById('app').style.display = 'grid';
-  document.body.classList.remove('fp-sem-sessao');   // libera o botão do besouro
+  fpRevelarPainel();
   await initApp();
 };
 
@@ -10517,6 +10540,7 @@ function renderShotsReadOnly(shots, si) {
     }
   }
   window.fpNomearSecoes = fpNomearSecoes;
+  window.fpApplyUserModules = fpApplyUserModules;
 
   let fpModalBuilt = false;
   let fpEditingId = null;
@@ -22917,7 +22941,10 @@ function applyRolePermissions() {
     ['view-perf-metas','view-perf-bonificacao'].forEach(viewId => {
       const view = document.getElementById(viewId);
       if (!view) return;
+      const anterior = view.querySelector(':scope > [data-fp-somente-leitura]');
+      if (anterior) anterior.remove();
       const badge = document.createElement('div');
+      badge.setAttribute('data-fp-somente-leitura', '1');
       badge.style.cssText = 'padding:8px 16px;background:rgba(255,207,51,.08);border:1px solid rgba(255,207,51,.2);border-radius:8px;font-size:12px;color:#ffcf33;margin-bottom:16px;display:flex;align-items:center;gap:8px;';
       badge.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Visualização somente leitura — apenas administradores podem editar.';
       view.insertBefore(badge, view.firstChild);
