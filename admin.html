@@ -4900,6 +4900,19 @@ body.fp-sem-sessao .fp-ajuda-btn { display: none !important; }
   letter-spacing: .06em; font-size: 15px; color: var(--text); margin-right: auto;
 }
 .fp-cores-abas { display: flex; gap: 4px; }
+/* Um titulo por grupo: 33 campos em lista corrida viram parede. */
+.fp-cores-grupo { margin-top: 20px; }
+.fp-cores-grupo h3 {
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em;
+  color: var(--text-muted); padding-bottom: 2px;
+}
+/* O numero de contraste fica ao lado do nome, nao numa coluna propria: so
+   alguns campos tem par para comparar. */
+.fp-cor-ct {
+  margin-left: 8px; font-size: 10px; font-weight: 600; color: var(--text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.fp-cor-ct.baixo { color: var(--warning); }
 .fp-cores-grade {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
   gap: 0 26px;
@@ -21614,29 +21627,101 @@ function fpTutReposicionar() {
    especificidade, vindo depois: ganha sem precisar de !important.
    ========================================================================== */
 
-const FP_CORES_CAMPOS = [
-  { token: '--primary',    nome: 'Vermelho da marca', onde: 'Menu ativo, botões principais, anel de foco' },
-  { token: '--primary-hi', nome: 'Vermelho no hover', onde: 'O mesmo vermelho quando o cursor chega' },
-  { token: '--accent',     nome: 'Amarelo de destaque', onde: 'Estrelas de avaliação e realces' },
-  { token: '--success',    nome: 'Verde de sucesso', onde: 'Confirmações, aprovado, enviado' },
-  { token: '--warning',    nome: 'Laranja de atenção', onde: 'Avisos que não são erro' },
-  { token: '--danger',     nome: 'Vermelho de erro', onde: 'Mensagens de falha' },
-  { token: '--perigo',     nome: 'Vermelho destrutivo', onde: 'Apagar, remover — separado do vermelho da marca' },
-  { token: '--prio-1',     nome: 'Prioridade baixa', onde: 'Fila de fotos' },
-  { token: '--prio-2',     nome: 'Prioridade média', onde: 'Fila de fotos' },
-  { token: '--prio-3',     nome: 'Prioridade alta', onde: 'Fila de fotos' },
+/* Todos os tokens de cor do painel, agrupados pelo papel que cumprem. A
+   descricao existe para quem escolhe saber ONDE aquilo aparece — cor sem
+   endereco vira tentativa e erro. */
+const FP_CORES_GRUPOS = [
+  { titulo: 'Fundo', campos: [
+    { token: '--bg',        nome: 'Fundo da página',       onde: 'A área atrás de tudo, fora dos cartões' },
+    { token: '--bg-soft',   nome: 'Fundo da barra lateral', onde: 'Menu lateral, cabeçalho do celular e cabeçalho de tabela' },
+    { token: '--bg-card',   nome: 'Fundo de cartão',       onde: 'Cartões, popups, menus e a caixa de login' },
+    { token: '--bg-elev',   nome: 'Fundo de campo',        onde: 'Campos de texto, chips e botões neutros' },
+  ]},
+  { titulo: 'Linhas', campos: [
+    { token: '--border',    nome: 'Fio padrão',      onde: 'Separadores das listagens e contorno dos cartões' },
+    { token: '--border-hi', nome: 'Fio em destaque', onde: 'Contorno de campo em foco e dos botões de ícone' },
+  ]},
+  { titulo: 'Texto', campos: [
+    { token: '--text',       nome: 'Texto principal',   onde: 'Títulos, nomes de produto e valores', contra: '--bg-card' },
+    { token: '--text-dim',   nome: 'Texto secundário',  onde: 'Descrições, rótulos e ícones do menu', contra: '--bg-card' },
+    { token: '--text-muted', nome: 'Texto apagado',     onde: 'SKU, datas, contagens e legendas', contra: '--bg-card' },
+  ]},
+  { titulo: 'Realce', campos: [
+    { token: '--primary',    nome: 'Vermelho da marca', onde: 'Menu ativo, botões principais e o anel de foco', contra: '--bg-card' },
+    { token: '--primary-hi', nome: 'Vermelho no hover', onde: 'O mesmo vermelho quando o cursor chega' },
+    { token: '--accent',     nome: 'Amarelo de destaque', onde: 'Estrelas de avaliação e realces pontuais' },
+    { token: '--success',    nome: 'Verde de sucesso',  onde: 'Confirmações, aprovado e enviado', contra: '--bg-card' },
+    { token: '--warning',    nome: 'Laranja de atenção', onde: 'Avisos que não são erro', contra: '--bg-card' },
+    { token: '--danger',     nome: 'Vermelho de erro',  onde: 'Mensagens de falha', contra: '--bg-card' },
+  ]},
+  { titulo: 'Ação destrutiva', campos: [
+    { token: '--perigo',    nome: 'Vermelho destrutivo', onde: 'Apagar e remover — separado do vermelho da marca', contra: '--bg-card' },
+    { token: '--perigo-bg', nome: 'Chapa do destrutivo', onde: 'Fundo do item "apagar" no menu de ações' },
+  ]},
+  { titulo: 'Prioridade da fila', campos: [
+    { token: '--prio-1', nome: 'Baixa',  onde: 'Barra e rótulo na fila de fotos' },
+    { token: '--prio-2', nome: 'Média',  onde: 'Barra e rótulo na fila de fotos, e as estrelas da galeria' },
+    { token: '--prio-3', nome: 'Alta',   onde: 'Barra e rótulo na fila de fotos' },
+  ]},
+  { titulo: 'Selos de status', campos: [
+    { token: '--tx-pendente',  nome: 'Pendente — texto',  onde: 'Solicitação ainda sem resposta', contra: '--bg-pendente' },
+    { token: '--bg-pendente',  nome: 'Pendente — chapa',  onde: 'Fundo do selo' },
+    { token: '--tx-aprovado',  nome: 'Aprovado — texto',  onde: 'Solicitação aceita e check-in feito', contra: '--bg-aprovado' },
+    { token: '--bg-aprovado',  nome: 'Aprovado — chapa',  onde: 'Fundo do selo' },
+    { token: '--tx-rejeitado', nome: 'Rejeitado — texto', onde: 'Solicitação recusada', contra: '--bg-rejeitado' },
+    { token: '--bg-rejeitado', nome: 'Rejeitado — chapa', onde: 'Fundo do selo' },
+    { token: '--tx-estudio',   nome: 'No estúdio — texto', onde: 'Moto que está no estúdio', contra: '--bg-estudio' },
+    { token: '--bg-estudio',   nome: 'No estúdio — chapa', onde: 'Fundo do selo' },
+    { token: '--tx-retirada',  nome: 'Retirada — texto',  onde: 'Moto liberada para retirar', contra: '--bg-retirada' },
+    { token: '--bg-retirada',  nome: 'Retirada — chapa',  onde: 'Fundo do selo' },
+    { token: '--tx-standby',   nome: 'Standby — texto',   onde: 'Projeto ou solicitação em espera', contra: '--bg-standby' },
+    { token: '--bg-standby',   nome: 'Standby — chapa',   onde: 'Fundo do selo' },
+  ]},
+  { titulo: 'Outros', campos: [
+    { token: '--seta-ativa', nome: 'Seta de ordenação', onde: 'A setinha da coluna por onde a tabela está ordenada' },
+  ]},
 ];
 
-/* Os padroes de fabrica ficam aqui, e nao lidos do CSS: depois da primeira
+const FP_CORES_CAMPOS = FP_CORES_GRUPOS.flatMap(g => g.campos);
+
+/* Padroes de fabrica. Ficam aqui, e nao lidos do CSS: depois da primeira
    personalizacao o CSS ja devolve a cor escolhida, e "restaurar padrao"
-   restauraria a personalizacao. */
+   restauraria a personalizacao. Onde ha transparencia ela e preservada — a
+   chapa dos selos no tema escuro e alfa de proposito, para pegar o tom do
+   cartao por baixo. */
 const FP_CORES_PADRAO = {
-  escuro: { '--primary':'#ff2d2d','--primary-hi':'#ff5252','--accent':'#ffcf33','--success':'#1fd27a',
-            '--warning':'#ffaa33','--danger':'#ff4d4d','--perigo':'#e5484d',
-            '--prio-1':'#4c8dff','--prio-2':'#e8c33c','--prio-3':'#ff8a3d' },
-  claro:  { '--primary':'#dd2222','--primary-hi':'#ee3333','--accent':'#e6a800','--success':'#18a863',
-            '--warning':'#e09500','--danger':'#dd3333','--perigo':'#c62828',
-            '--prio-1':'#4c8dff','--prio-2':'#e8c33c','--prio-3':'#ff8a3d' },
+  escuro: {
+    '--bg':'#0a0a0b','--bg-soft':'#151515','--bg-card':'#16161a','--bg-elev':'#1c1c22',
+    '--border':'#26262e','--border-hi':'#34343e',
+    '--text':'#f5f5f7','--text-dim':'#a1a1aa','--text-muted':'#9494a0',
+    '--primary':'#ff2d2d','--primary-hi':'#ff5252','--accent':'#ffcf33','--success':'#1fd27a',
+    '--warning':'#ffaa33','--danger':'#ff4d4d',
+    '--perigo':'#e5484d','--perigo-bg':'rgba(229,72,77,.14)',
+    '--prio-1':'#4c8dff','--prio-2':'#e8c33c','--prio-3':'#ff8a3d',
+    '--tx-pendente':'#ffc16b','--bg-pendente':'rgba(255,170,51,.16)',
+    '--tx-aprovado':'#5fe0a4','--bg-aprovado':'rgba(31,210,122,.16)',
+    '--tx-rejeitado':'#ff9a92','--bg-rejeitado':'rgba(255,77,77,.16)',
+    '--tx-estudio':'#ffd866','--bg-estudio':'rgba(255,207,51,.16)',
+    '--tx-retirada':'#a4b6d9','--bg-retirada':'rgba(126,151,201,.18)',
+    '--tx-standby':'#c4a2fb','--bg-standby':'rgba(139,92,246,.18)',
+    '--seta-ativa':'#ffcf33',
+  },
+  claro: {
+    '--bg':'#f5f5f7','--bg-soft':'#ffffff','--bg-card':'#ffffff','--bg-elev':'#f0f0f2',
+    '--border':'#e0e0e4','--border-hi':'#c8c8ce',
+    '--text':'#1a1a1e','--text-dim':'#4e4e5a','--text-muted':'#6b6b78',
+    '--primary':'#dd2222','--primary-hi':'#ee3333','--accent':'#e6a800','--success':'#18a863',
+    '--warning':'#e09500','--danger':'#dd3333',
+    '--perigo':'#c62828','--perigo-bg':'rgba(198,40,40,.10)',
+    '--prio-1':'#4c8dff','--prio-2':'#e8c33c','--prio-3':'#ff8a3d',
+    '--tx-pendente':'#7a4a00','--bg-pendente':'#fdf0dc',
+    '--tx-aprovado':'#0f5c3a','--bg-aprovado':'#e0f2e9',
+    '--tx-rejeitado':'#9c1c1c','--bg-rejeitado':'#fce9e9',
+    '--tx-estudio':'#6e5100','--bg-estudio':'#fbf1cf',
+    '--tx-retirada':'#0d4a94','--bg-retirada':'#e4eefc',
+    '--tx-standby':'#5b21b6','--bg-standby':'#f1e9fe',
+    '--seta-ativa':'#7a5a00',
+  },
 };
 
 let FP_CORES = { claro: {}, escuro: {} };   // so o que foi personalizado
@@ -21644,13 +21729,60 @@ let _coresAba = 'claro', _coresSujo = false;
 
 function fpCorValida(v) { return /^#[0-9a-fA-F]{6}$/.test(String(v || '').trim()); }
 
+/* Os tokens de chapa vem em rgba de proposito (no escuro a transparencia pega
+   o tom do cartao por baixo). O seletor do sistema so sabe hex, entao entra e
+   sai hex, e a transparencia do PADRAO daquele token e reposta na saida. */
+function fpCorHex(v) {
+  v = String(v || '').trim();
+  if (fpCorValida(v)) return v.toLowerCase();
+  const m = v.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+  if (!m) return null;
+  return '#' + [1, 2, 3].map(i => (+m[i]).toString(16).padStart(2, '0')).join('');
+}
+function fpCorAlfa(v) {
+  const m = String(v || '').match(/rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*([0-9.]+)\s*\)/);
+  return m ? m[1] : null;
+}
+function fpCorSaida(tema, token, hex) {
+  const alfa = fpCorAlfa(FP_CORES_PADRAO[tema][token]);
+  if (!alfa) return hex;
+  const n = hex.replace('#', '');
+  const p = [0, 2, 4].map(i => parseInt(n.slice(i, i + 2), 16));
+  return 'rgba(' + p.join(',') + ',' + alfa + ')';
+}
+
+/* Contraste WCAG, para o painel avisar quando uma escolha derruba a leitura.
+   Nao bloqueia nada — quem manda na cor e o dono; o numero so tira a decisao
+   do escuro. */
+function fpCorLum(hex) {
+  const n = hex.replace('#', '');
+  const c = [0, 2, 4].map(i => parseInt(n.slice(i, i + 2), 16) / 255)
+    .map(v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+  return .2126 * c[0] + .7152 * c[1] + .0722 * c[2];
+}
+/* Chapa com alfa nao e a cor final: o que o olho ve e ela sobre o cartao. */
+function fpCorSobre(tema, token) {
+  const bruto = (FP_CORES[tema] || {})[token];
+  const val = fpCorValida(bruto) ? fpCorSaida(tema, token, bruto) : FP_CORES_PADRAO[tema][token];
+  const hex = fpCorHex(val), alfa = fpCorAlfa(val);
+  if (!alfa) return hex;
+  const fundo = fpCorHex(fpCoresValor(tema, '--bg-card'));
+  const mix = i => Math.round(parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16) * (+alfa)
+    + parseInt(fundo.slice(1 + i * 2, 3 + i * 2), 16) * (1 - (+alfa)));
+  return '#' + [0, 1, 2].map(i => mix(i).toString(16).padStart(2, '0')).join('');
+}
+function fpCorContraste(a, b) {
+  const x = fpCorLum(a), y = fpCorLum(b);
+  return Math.round(((Math.max(x, y) + .05) / (Math.min(x, y) + .05)) * 100) / 100;
+}
+
 /* Escreve (ou reescreve) a folha de personalizacao. Sem entradas, some. */
 function fpCoresAplicar() {
-  const linha = (sel, mapa) => {
-    const itens = Object.entries(mapa || {}).filter(([k, v]) => fpCorValida(v));
-    return itens.length ? sel + '{' + itens.map(([k, v]) => k + ':' + v).join(';') + '}' : '';
+  const linha = (sel, tema) => {
+    const itens = Object.entries(FP_CORES[tema] || {}).filter(([k, v]) => fpCorValida(v));
+    return itens.length ? sel + '{' + itens.map(([k, v]) => k + ':' + fpCorSaida(tema, k, v)).join(';') + '}' : '';
   };
-  const css = linha(':root,[data-theme="dark"]', FP_CORES.escuro) + linha('[data-theme="light"]', FP_CORES.claro);
+  const css = linha(':root,[data-theme="dark"]', 'escuro') + linha('[data-theme="light"]', 'claro');
   let el = document.getElementById('fpCoresCustom');
   if (!css) { if (el) el.remove(); return; }
   if (!el) { el = document.createElement('style'); el.id = 'fpCoresCustom'; document.head.appendChild(el); }
@@ -21658,8 +21790,8 @@ function fpCoresAplicar() {
 }
 
 /* Guarda no navegador tambem: a leitura do banco leva uns 200ms e sem o cache
-   o painel abriria no vermelho de fabrica e trocaria de cor na cara de quem
-   esta olhando. */
+   o painel abriria nas cores de fabrica e trocaria na cara de quem esta
+   olhando. */
 function fpCoresCache(gravar) {
   try {
     if (gravar) localStorage.setItem('fp_cores', JSON.stringify(FP_CORES));
@@ -21680,12 +21812,12 @@ async function fpCoresCarregar() {
     FP_CORES = novo;
     fpCoresAplicar();
     fpCoresCache(true);
-  } catch (e) { console.warn('cores de destaque', e); }
+  } catch (e) { console.warn('cores do painel', e); }
 }
 
 function fpCoresValor(tema, token) {
   const p = (FP_CORES[tema] || {})[token];
-  return fpCorValida(p) ? p.toLowerCase() : FP_CORES_PADRAO[tema][token];
+  return fpCorValida(p) ? p.toLowerCase() : fpCorHex(FP_CORES_PADRAO[tema][token]);
 }
 
 function fpCoresRender() {
@@ -21697,35 +21829,47 @@ function fpCoresRender() {
   if (typeof CURRENT_USER === 'undefined' || !CURRENT_USER) return;
   if (typeof getUserRole === 'function' && getUserRole() !== 'admin') { box.innerHTML = ''; return; }
   const aba = _coresAba;
+  const mudados = FP_CORES_CAMPOS.filter(c => fpCorValida((FP_CORES[aba] || {})[c.token])).length;
+
+  const linha = c => {
+    const v = fpCoresValor(aba, c.token);
+    const mudou = fpCorValida((FP_CORES[aba] || {})[c.token]);
+    let selo = '';
+    if (c.contra) {
+      const r = fpCorContraste(fpCorSobre(aba, c.token), fpCorSobre(aba, c.contra));
+      selo = '<span class="fp-cor-ct' + (r < 4.5 ? ' baixo' : '') + '" title="Contraste com '
+        + (c.contra === '--bg-card' ? 'o fundo do cartão' : 'a chapa do selo')
+        + (r < 4.5 ? ' — abaixo de 4,5:1, texto pequeno fica difícil de ler' : '') + '">'
+        + r.toFixed(1).replace('.', ',') + ':1</span>';
+    }
+    return '<div class="fp-cor-linha' + (mudou ? ' mudou' : '') + '" data-token="' + c.token + '">'
+      + '<input type="color" class="fp-cor-pick" value="' + v + '"'
+      + ' aria-label="' + escHtml(c.nome) + '" oninput="fpCoresMudar(\'' + c.token + '\', this.value)">'
+      + '<span class="fp-cor-txt"><span class="fp-cor-nome">' + escHtml(c.nome) + selo + '</span>'
+      + '<span class="fp-cor-onde">' + escHtml(c.onde) + '</span></span>'
+      + '<input type="text" class="fp-cor-hex" value="' + v.toUpperCase() + '" maxlength="7" spellcheck="false"'
+      + ' aria-label="Código da cor ' + escHtml(c.nome) + '" onchange="fpCoresMudar(\'' + c.token + '\', this.value)">'
+      + (mudou ? '<button class="fp-cor-voltar" type="button" data-tip="Voltar ao padrão"'
+          + ' aria-label="Voltar ' + escHtml(c.nome) + ' ao padrão" onclick="fpCoresRestaurarUma(\'' + c.token + '\')">'
+          + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3.2-6.9"/><polyline points="3 3 3 9 9 9"/></svg>'
+          + '</button>'
+        : '<span style="width:27px;flex-shrink:0"></span>')
+      + '</div>';
+  };
+
   box.innerHTML = '<div class="fp-cores-topo">'
-    + '<h2>Cores de destaque</h2>'
+    + '<h2>Cores do painel</h2>'
     + '<div class="fp-cores-abas">'
     + ['claro', 'escuro'].map(t => '<button class="filter-btn' + (t === aba ? ' active' : '') + '" type="button"'
         + ' onclick="fpCoresAba(\'' + t + '\')">Tema ' + t + '</button>').join('')
     + '</div></div>'
-    + '<div class="fp-cores-grade">'
-    + FP_CORES_CAMPOS.map(c => {
-        const v = fpCoresValor(aba, c.token);
-        const mudou = v !== FP_CORES_PADRAO[aba][c.token];
-        return '<div class="fp-cor-linha' + (mudou ? ' mudou' : '') + '" data-token="' + c.token + '">'
-          + '<input type="color" class="fp-cor-pick" value="' + v + '"'
-          + ' aria-label="' + escHtml(c.nome) + '" oninput="fpCoresMudar(\'' + c.token + '\', this.value)">'
-          + '<span class="fp-cor-txt"><span class="fp-cor-nome">' + escHtml(c.nome) + '</span>'
-          + '<span class="fp-cor-onde">' + escHtml(c.onde) + '</span></span>'
-          + '<input type="text" class="fp-cor-hex" value="' + v.toUpperCase() + '" maxlength="7" spellcheck="false"'
-          + ' aria-label="Código da cor ' + escHtml(c.nome) + '" onchange="fpCoresMudar(\'' + c.token + '\', this.value)">'
-          + (mudou ? '<button class="fp-cor-voltar" type="button" data-tip="Voltar ao padrão"'
-              + ' aria-label="Voltar ' + escHtml(c.nome) + ' ao padrão" onclick="fpCoresRestaurarUma(\'' + c.token + '\')">'
-              + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3.2-6.9"/><polyline points="3 3 3 9 9 9"/></svg>'
-              + '</button>'
-            : '<span style="width:27px;flex-shrink:0"></span>')
-          + '</div>';
-      }).join('')
-    + '</div>'
+    + FP_CORES_GRUPOS.map(g => '<div class="fp-cores-grupo"><h3>' + escHtml(g.titulo) + '</h3>'
+        + '<div class="fp-cores-grade">' + g.campos.map(linha).join('') + '</div></div>').join('')
     + '<div class="fp-cores-pe">'
     + '<span class="fp-cores-aviso">' + (_coresSujo
         ? 'Você está vendo as cores novas nesta tela. Salvar aplica para toda a equipe.'
-        : 'A troca vale para todo mundo, nos dois temas separadamente.') + '</span>'
+        : (mudados ? mudados + (mudados === 1 ? ' cor fora do padrão neste tema.' : ' cores fora do padrão neste tema.')
+                   : 'Tudo no padrão de fábrica neste tema.')) + '</span>'
     + '<button class="action-btn" type="button" onclick="fpCoresRestaurarTudo()">Restaurar padrões</button>'
     + '<button class="action-btn approve" type="button" onclick="fpCoresSalvar()"'
     + (_coresSujo ? '' : ' disabled') + '>Salvar cores</button>'
@@ -21754,7 +21898,7 @@ function fpCoresRestaurarUma(token) {
 async function fpCoresRestaurarTudo() {
   if (!await fpConfirm({
     titulo: 'Restaurar as cores de fábrica',
-    mensagem: 'Todas as cores de destaque do tema ' + _coresAba + ' voltam ao padrão.',
+    mensagem: 'Todas as cores do tema ' + _coresAba + ' voltam ao padrão.',
     confirmar: 'Restaurar', perigo: true })) return;
   FP_CORES[_coresAba] = {};
   _coresSujo = true;
