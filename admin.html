@@ -4701,6 +4701,11 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   transition: background .12s ease;
 }
 .fp-prod-linha:hover { background: rgba(255,255,255,.03); }
+/* Linha com caixa de selecao e clicavel inteira — o cursor precisa dizer isso.
+   Quem tem acao propria dentro dela reassume o proprio cursor. */
+.fp-prod-linha:has(.fp-prod-check) { cursor: pointer; }
+.fp-prod-linha:has(.fp-prod-check) .fp-prio,
+.fp-prod-linha:has(.fp-prod-check) .fp-foto { cursor: auto; }
 [data-theme="light"] .fp-prod-linha:hover { background: rgba(0,0,0,.022); }
 .fp-prod-linha.fora { opacity: .5; }
 /* Cabeçalho de bloco, no lugar do <h3> solto. Sem fundo: a listagem fica
@@ -15681,19 +15686,45 @@ function renderFotoProducao(refazerOrdem) {
     : '';
 
   const caixas = [...box.querySelectorAll('.fp-prod-check')];
-  caixas.forEach((c, i) => {
-    c.onclick = ev => {
-      if (ev.shiftKey && _prodUltimaCaixa != null) {
-        const [a, b] = [Math.min(i, _prodUltimaCaixa), Math.max(i, _prodUltimaCaixa)];
-        for (let k = a; k <= b; k++) {
-          caixas[k].checked = c.checked;
-          c.checked ? _prodSel.add(caixas[k].dataset.sku) : _prodSel.delete(caixas[k].dataset.sku);
-        }
-      } else {
-        c.checked ? _prodSel.add(c.dataset.sku) : _prodSel.delete(c.dataset.sku);
+  const alternar = (c, ev) => {
+    const i = caixas.indexOf(c);
+    if (ev && ev.shiftKey && _prodUltimaCaixa != null && i >= 0) {
+      const [a, b] = [Math.min(i, _prodUltimaCaixa), Math.max(i, _prodUltimaCaixa)];
+      for (let k = a; k <= b; k++) {
+        caixas[k].checked = c.checked;
+        c.checked ? _prodSel.add(caixas[k].dataset.sku) : _prodSel.delete(caixas[k].dataset.sku);
       }
-      _prodUltimaCaixa = i;
-      fpProdLoteBarra();
+    } else {
+      c.checked ? _prodSel.add(c.dataset.sku) : _prodSel.delete(c.dataset.sku);
+    }
+    if (i >= 0) _prodUltimaCaixa = i;
+    fpProdLoteBarra();
+  };
+  /* O clique na própria caixa não pode subir para a linha: os dois marcariam,
+     um desfazendo o outro. */
+  caixas.forEach(c => { c.onclick = ev => { ev.stopPropagation(); alternar(c, ev); }; });
+
+  /* A caixa tem 16px de lado e errar o alvo era o normal. Agora clicar em
+     QUALQUER lugar da linha marca o produto. Continua respondendo por si o que
+     já tinha ação própria: o menu "…", o slider de prioridade, a miniatura (que
+     abre a foto) e qualquer campo. */
+  const IGNORA = 'button, a, input, select, textarea, label, .fp-prio, .fp-foto';
+  box.querySelectorAll('.fp-prod-linha').forEach(linha => {
+    const c = linha.querySelector('.fp-prod-check');
+    if (!c) return;
+    /* Shift+clique arrastaria a seleção de texto de uma linha à outra; o
+       preventDefault no mousedown mata só esse caso, sem tirar a seleção
+       normal de quem quer copiar um SKU. */
+    linha.addEventListener('mousedown', ev => {
+      if (ev.shiftKey && !ev.target.closest(IGNORA)) ev.preventDefault();
+    });
+    linha.onclick = ev => {
+      if (ev.target.closest(IGNORA)) return;
+      /* Quem arrastou para copiar o SKU não quis marcar nada. */
+      const sel = window.getSelection && window.getSelection();
+      if (sel && !sel.isCollapsed && String(sel).trim().length > 1) return;
+      c.checked = !c.checked;
+      alternar(c, ev);
     };
   });
   fpProdLoteBarra();
