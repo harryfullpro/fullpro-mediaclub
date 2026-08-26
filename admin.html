@@ -287,6 +287,15 @@
     font-weight: 700;
   }
   .nav-item.active .count { background: var(--primary); color: #fff; }
+  /* Emergenciais: numero solto, sem pilula. A cor e o aviso — cinza quando
+     ninguem esta olhando, vermelho quando o cursor chega no item. */
+  .nav-item .count.urgente {
+    background: none; padding: 0; border-radius: 0;
+    color: var(--text-muted); font-size: 12px; font-weight: 700;
+    transition: color .14s ease;
+  }
+  .nav-item:hover .count.urgente,
+  .nav-item.active .count.urgente { background: none; color: var(--primary); }
   /* sidebar-foot defined in sidebar block above */
   .nav-section { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding: 5px 14px 2px; height: 18px; flex-shrink: 0; overflow: hidden; }
   .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -5096,7 +5105,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
     <div class="nav-section" data-sec="foto">Fotografia</div>
     <button class="nav-item" data-view="foto-producao">
       <svg viewBox="0 0 24 24"><path d="M3 7h18v13a1 1 0 01-1 1H4a1 1 0 01-1-1z"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M7 12h10M7 16h6"/></svg>
-      <span class="nav-label">Produção</span> <span class="count" id="cntFotoUrg">0</span>
+      <span class="nav-label">Produção</span> <span class="count urgente" id="cntFotoUrg" style="display:none"></span>
     </button>
     <button class="nav-item" data-view="foto-galeria">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
@@ -16078,13 +16087,36 @@ async function fpProdLoteFora(skus, fora) {
 
 /* Só o emergencial vira número no menu: alta e média são fila normal e um
    contador permanente aceso vira paisagem. */
-function fpFotoBadgeUrgente() {
+function fpFotoBadgePintar(n) {
   const el = document.getElementById('cntFotoUrg');
   if (!el) return;
-  const n = FOTO_PRODUTOS.filter(p => !p.excluido && p.prioridade === 5 && (!p.tem_foto || p.refazer)).length;
-  el.textContent = n;
-  el.style.display = n ? '' : 'none';
+  el.textContent = n || '';
+  el.style.display = n ? '' : 'none';   // zero nao vira "0": vira nada
   el.setAttribute('aria-label', n ? (n === 1 ? '1 produto emergencial' : n + ' produtos emergenciais') : '');
+}
+
+function fpFotoBadgeUrgente() {
+  /* Sem catálogo em memória não há o que contar — e pintar 0 aqui apagaria o
+     número que veio do banco no boot, que era exatamente o defeito: o menu
+     mostrava zero até alguém abrir a Produção. */
+  if (!FOTO_PRODUTOS.length) return;
+  fpFotoBadgePintar(FOTO_PRODUTOS.filter(p => !p.excluido && p.prioridade === 5 && (!p.tem_foto || p.refazer)).length);
+}
+
+/* Uma contagem, não o catálogo: o número precisa estar certo já na primeira
+   tela, e ninguém vai baixar 2.566 linhas por causa de um algarismo. Mesma
+   regra do filtro local — emergencial que ainda não tem foto, ou que tem mas
+   está marcado para refazer. */
+async function fpFotoBadgeCarregar() {
+  if (typeof fpTemAcesso === 'function' && !fpTemAcesso('foto-producao')) return;
+  try {
+    const { count, error } = await sb.from('mc_photo_products')
+      .select('sku', { count: 'exact', head: true })
+      .eq('excluido', false).eq('prioridade', 5)
+      .or('tem_foto.is.false,refazer.is.true');
+    if (error) throw error;
+    fpFotoBadgePintar(Number(count) || 0);
+  } catch (e) { console.warn('badge de emergenciais', e); }
 }
 
 /* Redesenha só a tela aberta — a lista tem milhares de linhas e repintar
@@ -23725,6 +23757,9 @@ async function initApp() {
 
   // Atualiza a aba Integrações (Bling/TikTok/IG/YT) com o status compartilhado
   if (typeof renderIntegracoes === 'function') renderIntegracoes();
+
+  /* O contador de emergenciais do menu, sem esperar ninguém abrir a Produção. */
+  fpFotoBadgeCarregar();
 
   // Menções: observadores de foco/aba + popup ao abrir o painel
   attachMentionWatchers();
