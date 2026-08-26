@@ -260,6 +260,12 @@ Produção, Galeria, Separação e Fotografia em lote. Módulo sem verbete não 
 o botão. Para forçar todo mundo a ver de novo (conteúdo mudou, tela mudou),
 suba `FP_TUT_VERSAO` em `admin.html`.
 
+### As cores de destaque são escolhidas no painel
+Manutenção → Cores de destaque tem os dez realces (marca, hover, sucesso,
+atenção, erro, destrutivo, as três prioridades e o amarelo) com seletor por
+tema. Não converter paleta por script: se o dono quiser outra cor, ele troca
+ali. Fundo, brancos, cinzas e o preto do texto **não** entram no seletor.
+
 ### Modo de trabalho
 > *"pode fazer absolutamente tudo por conta, alterações, deploy, debugs e etc"*
 

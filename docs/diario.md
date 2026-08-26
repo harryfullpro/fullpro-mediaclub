@@ -1,5 +1,52 @@
 # Diário
 
+## 26/08/2026 · O dono escolhe as cores, não eu
+
+> *"cria um seletor de cores pra eu pickar uma cor no seletor de cores pra cada
+> cor de destaque do site. Assim eu personalizo a hora que quero, no tema que
+> quero e mudo quando quero da forma mais fácil"*
+
+**As duas tentativas de paleta saíram** e as cores voltaram ao que eram. No
+lugar delas, **Manutenção → Cores de destaque**: dez campos com o seletor
+nativo do sistema e caixa de hex ao lado, abas para tema claro e escuro, ponto
+vermelho no que está fora do padrão, voltar-ao-padrão por linha e restaurar
+tudo. A mudança aparece na hora na própria tela; **Salvar** aplica para a
+equipe.
+
+Os dez: vermelho da marca, vermelho no hover, amarelo de destaque, verde de
+sucesso, laranja de atenção, vermelho de erro, vermelho destrutivo e as três
+prioridades.
+
+Decisões que valem registro:
+
+- **Fundo, brancos, cinzas e o preto do texto ficam de fora.** São a base de
+  leitura, não realce — abrir isso para escolha livre é o caminho curto para um
+  painel ilegível.
+- **Guardado em `mc_theme_colors`**: uma linha por tema, mapa `token -> hex`,
+  RLS liberando `anon` (o painel não usa Supabase Auth).
+- **Aplicado por folha de estilo própria no fim do cabeçalho**, com os **mesmos
+  seletores** do arquivo (`:root,[data-theme="dark"]` e `[data-theme="light"]`).
+  Mesma especificidade vindo depois ganha — sem `!important`.
+- **Cache no navegador junto com o banco.** A leitura leva uns 200ms e sem ele
+  o painel abria no vermelho de fábrica e trocava de cor na cara de quem estava
+  olhando.
+- **Papel desconhecido não limpa a caixa.** No boot com `#manutencao` na URL o
+  `renderBugs` roda antes de `CURRENT_USER` existir, e a guarda de admin apagava
+  o painel para sempre: a tela ficava sem os campos e **sem erro nenhum**.
+
+Fica dos experimentos descartados: `--prio-1..3` continuam token em vez de três
+hex repetidos no CSS **e** no JS, e `fpPrioCor` devolve o token — senão as
+barras do Panorama ignoram a cor escolhida.
+
+### A lição
+
+Duas rodadas gastas convertendo paleta por conta própria. O pedido real nunca
+foi "acerte a cor" — era **"me dá o controle da cor"**. Ferramenta no lugar de
+palpite: quando o dono tem gosto formado sobre algo visual, o que ele quer é o
+botão, não a minha versão do gosto dele.
+
+---
+
 ## 26/08/2026 · Duas rodas, uma por tema
 
 O dono mandou um PDF com **uma página por tema** — e são paletas diferentes: a

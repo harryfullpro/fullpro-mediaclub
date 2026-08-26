@@ -104,6 +104,11 @@ ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 
 ## Supabase
 
+### `mc_theme_colors`
+Uma linha por tema (`claro` / `escuro`), coluna `cores` jsonb com `token -> hex`.
+Só os realces; mapa vazio = tudo no padrão de fábrica. RLS liberando `anon` para
+select/insert/update, como o resto do painel.
+
 Projeto `fullpro_team`, id `xgaaocnuqgcwttrljqep`.
 
 Tabelas principais: `mc_admin_users`, `mc_requests`, `mc_projects`, `mc_project_reviews`,
