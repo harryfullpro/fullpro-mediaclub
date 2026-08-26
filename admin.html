@@ -4620,6 +4620,33 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-prod-faixa .fp-aviso-sub { margin-left: auto; }
 /* Recado solto (avisos do rateio, lote criado): fora da listagem, com a
    mesma moldura do container. */
+/* Explicação da regra atrás de um botão: ela é a mesma toda vez e não precisa
+   ocupar meia tela em todas as aberturas. Fica à mão para quem quer conferir
+   por que o lote saiu como saiu. */
+.fp-info-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: 0; padding: 2px 4px; cursor: pointer;
+  font: inherit; font-size: 12.5px; font-weight: 600; color: var(--text-dim);
+  transition: color .12s ease;
+}
+.fp-info-btn:hover { color: var(--text); }
+.fp-info-btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fp-info-btn[aria-expanded="true"] { color: var(--primary); }
+.fp-info-btn .fp-info-ponto {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--warning); flex: 0 0 auto;
+}
+.fp-info-caixa {
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  padding: 14px 2px; margin-bottom: 14px;
+  font-size: 13px; color: var(--text-dim); line-height: 1.65;
+}
+.fp-info-caixa b { color: var(--text); font-weight: 650; }
+.fp-info-caixa .fp-info-titulo {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--text-muted); margin: 12px 0 5px;
+}
+.fp-info-caixa .fp-info-titulo:first-child { margin-top: 0; }
+
 .fp-prod-nota {
   border: 1px solid var(--border); border-radius: 14px; background: var(--bg-elev);
   padding: 12px 16px; font-size: 13px; color: var(--text-dim); line-height: 1.6;
@@ -17115,16 +17142,31 @@ async function renderFotoSeparacao() {
   const fila = FOTO_PRODUTOS.filter(p => !p.excluido && (!p.tem_foto || p.refazer) && p.status !== 'separacao');
   _sepLote = fpSepMontarLote(fila, _sepTamanho);
 
+  const temAviso = !!(_sepLote.avisos && _sepLote.avisos.length);
   topo.innerHTML = '<div class="filter-bar">'
     + '<span class="fp-aviso-sub" style="margin-right:6px">Tamanho do lote</span>'
     + [10, 15, 20, 30].map(t => '<button class="filter-btn' + (t === _sepTamanho ? ' active' : '')
         + '" type="button" onclick="fpSepTamanho(' + t + ')">' + t + '</button>').join('')
+    + '<button class="fp-info-btn" type="button" id="fotoSepLogicaBtn" aria-expanded="false"'
+    + ' aria-controls="fotoSepLogica" onclick="fpSepLogica()">'
+    + '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 7.6h.01"/></svg>'
+    + 'Ver lógica' + (temAviso ? '<span class="fp-info-ponto" title="Há observações neste lote"></span>' : '')
+    + '</button>'
     + '<span class="fp-lista-contagem">' + _sepLote.itens.length + ' selecionados'
     + (_sepLote.emergenciais ? ' · ' + _sepLote.emergenciais + ' emergencial' + (_sepLote.emergenciais > 1 ? 'is' : '') : '')
     + '</span></div>'
-    + (_sepLote.avisos && _sepLote.avisos.length
-        ? '<div class="fp-prod-nota" style="margin-bottom:10px"><div>'
-          + _sepLote.avisos.map(a => escHtml(a)).join('<br>') + '</div></div>' : '');
+    + '<div class="fp-info-caixa" id="fotoSepLogica" hidden>'
+    + '<div class="fp-info-titulo">Como o lote é montado</div>'
+    + 'Os <b>emergenciais entram primeiro</b> e ocupam vaga dentro do tamanho pedido — pedir '
+    + _sepTamanho + ' devolve ' + _sepTamanho + '. As vagas que sobram são rateadas em '
+    + '<b>60% alta, 25% média e 15% baixa</b>, sempre do produto mais antigo na fila para o mais novo. '
+    + 'Se uma faixa não tem produto suficiente, as vagas dela são redistribuídas entre as outras, '
+    + 'mantendo a proporção. Produto <b>sem prioridade não entra</b>: alguém precisa classificar antes.'
+    + (temAviso
+        ? '<div class="fp-info-titulo">Neste lote</div>' + _sepLote.avisos.map(a => escHtml(a)).join('<br>')
+        : '')
+    + '</div>';
+  if (_sepLogicaAberta) fpSepLogicaRestaurar();
 
   const lista = document.getElementById('fotoSepLista');
   lista.innerHTML = _sepLote.itens.length
@@ -17158,6 +17200,22 @@ async function renderFotoSeparacao() {
 }
 
 function fpSepTamanho(t) { _sepTamanho = t; renderFotoSeparacao(); }
+
+function fpSepLogicaRestaurar() {
+  const caixa = document.getElementById('fotoSepLogica');
+  const bt = document.getElementById('fotoSepLogicaBtn');
+  if (caixa) caixa.hidden = false;
+  if (bt) bt.setAttribute('aria-expanded', 'true');
+}
+
+let _sepLogicaAberta = false;
+function fpSepLogica() {
+  _sepLogicaAberta = !_sepLogicaAberta;
+  const caixa = document.getElementById('fotoSepLogica');
+  const bt = document.getElementById('fotoSepLogicaBtn');
+  if (caixa) caixa.hidden = !_sepLogicaAberta;
+  if (bt) bt.setAttribute('aria-expanded', _sepLogicaAberta ? 'true' : 'false');
+}
 
 async function fpSepDestinosCarregar() {
   if (_sepDestinos !== null) return _sepDestinos;
