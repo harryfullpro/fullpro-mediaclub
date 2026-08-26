@@ -527,10 +527,18 @@ c.getContext('2d').drawImage(img, 0, 0, 18, 18);
 // depois: drawImage(c, 0, 0, 216, 216) com imageSmoothingEnabled = false
 ```
 
-Regras que saíram das reprovações: **nada de detalhe menor que 1 unidade** do
-`viewBox` (some ou vira borrão), e desenho de referência com muita linha entra
-**simplificado** — três camadas abertas em vez de três losangos fechados, mão
-sem punho em vez de mão com punho.
+Regras que saíram das reprovações:
+
+- **Nada de detalhe menor que 1 unidade** do `viewBox` — some ou vira borrão.
+- **Curva orgânica não sobrevive.** Mão, rosto, qualquer contorno com muitas
+  inflexões vira rabisco. Troque o desenho pelo conceito: "vídeo de anúncio"
+  virou etiqueta + play, que são três traços retos.
+- **Um assunto por ícone.** Duas bolhas, ou alvo + flecha, dividem os 18px em
+  dois e nenhum dos dois lê. Escolha o que carrega o significado.
+- **Simetria quando houver dúvida.** A 18px, assimetria não lê como intenção;
+  lê como desalinho.
+- **Silhueta única na coluna.** Antes desta rodada havia três relógios e dois
+  balões quase iguais — nenhum errado sozinho, e metade da barra igual.
 
 Ícone é sempre traço em `currentColor`, `fill: none`, pontas redondas. **Marca
 colorida não entra na barra**: seria o único elemento que não acompanha o tema

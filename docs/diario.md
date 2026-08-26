@@ -1,28 +1,48 @@
 # Diário
 
-## 26/08/2026 · Três ícones do menu trocados
+## 26/08/2026 · Dez ícones do menu trocados
 
-O dono mandou a referência de cada um. O que entrou:
+O dono mandou uma referência por módulo. O que entrou:
 
 | Módulo | Antes | Agora | Por quê |
 |---|---|---|---|
-| Fotografia em lote | câmera | camadas empilhadas | a câmera repetia o assunto do bloco FOTOGRAFIA inteiro e não dizia o que muda ali |
-| Clips | rolo de filme | aperto de mão | é vídeo de anúncio do **Mercado Livre**, e o aperto é a marca deles |
+| Check-in / Check-out | relógio | caixa marcada | era o terceiro relógio da barra |
+| Projetos | livro aberto | duas folhas | o único ícone que não falava de arquivo, e Projetos é uma pilha deles |
+| Edição | lápis | tira de filme com play e lápis | o lápis sozinho dizia só "editar" |
+| Clips | rolo de filme | etiqueta com play | vídeo **de anúncio** do Mercado Livre |
+| Debriefing | balão com três pontos | balão com interrogação | era idêntico ao de Templates a 18px |
+| Fotografia em lote | câmera | camadas empilhadas | a câmera repetia o assunto do bloco FOTOGRAFIA inteiro |
+| Metas | relógio | alvo de três anéis | relógio fala de prazo, não de meta |
 | Meus Posts | lápis | jornal | lápis diz "editar", não "publicação" |
+| Templates WhatsApp | balão com linhas | a marca do WhatsApp | fone **preenchido**: em traço fino vira rabisco a 18px |
+| Atualizações | relógio | nuvem com seta | o segundo relógio |
+| Integrações | dois elos | núcleo com quatro pontas | elo diz "link", não "integração" |
+
+**Três relógios e dois balões quase iguais** dividiam a mesma barra. Nenhum era
+errado sozinho; juntos, metade da coluna era a mesma silhueta.
 
 **A regra que saiu daqui: ícone se aprova a 18px, não no desenho grande.** Cada
 candidato foi rasterizado num `<canvas>` de 18×18 e ampliado 12× sem suavização,
-para ver o que o operador vê de verdade. Dois foram reprovados assim:
+para ver o que o operador vê de verdade. O que reprovou assim:
 
 - **Três losangos fechados** (a referência literal do ícone de camadas) viram
-  massa: seis traços quase paralelos em 18px. A versão de três camadas abertas
-  lê limpo — é a mesma figura, com metade dos traços.
-- **O aperto de mão com punhos** (o desenho original) ganha duas barras soltas no
-  topo a 18px. Sem os punhos, a mão continua legível e o ícone respira.
+  massa: seis traços quase paralelos em 18px. Três camadas abertas leem limpo —
+  mesma figura, metade dos traços.
+- **O aperto de mão do Mercado Livre**, em duas tentativas. Mão tem curva demais:
+  a 18px vira rabisco, e foi o pior ícone da barra até o dono reclamar. Entrou
+  etiqueta com play, que diz "anúncio com vídeo" em três traços.
+- **Duas bolhas no Debriefing.** Divididas em 18px, nenhuma das duas sobra espaço
+  para a pergunta ser lida. Uma bolha só, com a interrogação grande.
+- **A flecha do alvo em Metas.** Empurra o alvo para o canto e vira um risco
+  atravessado. Alvo de três anéis, centrado.
+- **O quinto nó das Integrações.** A referência tem nós de tamanhos diferentes;
+  a 18px assimetria não lê como intenção, lê como desalinho.
 
-O aperto entrou **em traço monocromático**, não com o amarelo e o azul da marca:
-a coluna inteira é `currentColor`, e um logo colorido ali vira o único elemento
-que não acompanha o tema nem o estado ativo.
+**Marca colorida não entra na barra** (o amarelo e o azul do Mercado Livre, o
+verde do WhatsApp): a coluna inteira é `currentColor` e um logo colorido seria o
+único elemento que não acompanha o tema nem o estado ativo. **O que entra
+preenchido** é o fone do WhatsApp, e por legibilidade: nesse tamanho, sólido lê
+e traço fino não.
 
 ---
 
