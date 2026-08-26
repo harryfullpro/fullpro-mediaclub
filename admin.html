@@ -18445,12 +18445,21 @@ function fpNotaAvaliar(sku) {
   const prod = fpFotoProduto(sku);
   if (!prod || !fpFotoEhAdmin()) return;
   let escolhida = prod.nota == null ? 0 : prod.nota;
+
+  /* A miniatura já está carregada na listagem atrás do popup: reaproveita a
+     MESMA url, que o navegador já tem em cache — aparece na hora e não custa
+     uma requisição. Pedir de novo era ir ao Drive para mostrar o que está a
+     40px de distância, e quando o produto não tem imagem no Bling essa segunda
+     ida termina em "sem foto" — era o que estava acontecendo. */
+  const jaNaTela = document.querySelector('[data-drive-sku="' + CSS.escape(sku) + '"] img[src]');
+  const miniUrl = (jaNaTela && jaNaTela.getAttribute('src')) || prod.imagem_bling || '';
+
   const ov = document.createElement('div');
   ov.className = 'fp-aviso-ov show';
   ov.innerHTML = '<div class="fp-aviso" style="max-width:528px" role="dialog" aria-modal="true">'
     /* Miniatura antes do titulo: quem avalia está olhando várias fotos
        seguidas e precisa saber, sem ler, de qual produto é esta. */
-    + '<div class="fp-aviso-head">' + fpFotoProdutoHtml(sku, prod.imagem_bling, 38, 9, { semLightbox: true })
+    + '<div class="fp-aviso-head">' + fpFotoProdutoHtml(sku, miniUrl, 38, 9, { semLightbox: true })
     + '<div><h3>' + (prod.nota != null ? 'Re-avaliar a foto' : 'Avaliar a foto') + '</h3>'
     + '<div class="fp-aviso-data">' + escHtml(prod.nome || sku) + '</div></div>'
     + '<button class="fp-aviso-x" type="button" data-fechar aria-label="Fechar">&times;</button></div>'
