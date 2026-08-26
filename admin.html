@@ -21344,6 +21344,11 @@ function fpTutIr(i) {
     + '<button type="button" class="fp-tut-btn fp-tut-ok" onclick="fpTutProximo()">'
     + (i === _tutPassos.length - 1 ? 'Concluir' : 'Próximo') + '</button>'
     + '</div>';
+  /* Sincrono E no proximo quadro. So o rAF nao serve: em aba em segundo plano
+     o navegador nao chama requestAnimationFrame, e o buraco ficava 0x0 no
+     canto (medido). A chamada sincrona ja tem layout para medir; o rAF depois
+     so acerta o que a rolagem ainda estava assentando. */
+  fpTutReposicionar();
   requestAnimationFrame(fpTutReposicionar);
   setTimeout(() => { caixa.querySelector('.fp-tut-ok')?.focus(); }, 30);
 }
