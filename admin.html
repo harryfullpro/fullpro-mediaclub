@@ -4814,8 +4814,11 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    (`main` e o container que rola: height 100vh + overflow-y auto.) */
 .fp-lote-slot { position: sticky; top: 0; height: 0; z-index: 6; }
 /* O respiro entre as abas e o primeiro produto e a casa da barra: sem ele, ela
-   aparecia em cima da primeira linha e a escondia por inteiro. */
-.fp-lote-slot + .fp-prod { margin-top: 52px; }
+   aparecia em cima da primeira linha e a escondia por inteiro.
+   PADDING, nao margin: a margem da barra de filtros e a da lista colapsariam
+   numa so (o slot tem altura zero e nao as separa), e a barra voltava a
+   encostar na primeira linha — 7px de sobreposicao, medidos. */
+.fp-lote-slot + .fp-prod { padding-top: 54px; }
 .fp-prod-lote {
   position: absolute; left: 0; right: 0; top: 0;
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
@@ -4861,7 +4864,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   .fp-prod-fim  { order: 3; flex-basis: 100%; justify-content: space-between; }
   .fp-prod-lote-acoes { margin-left: 0; flex-basis: 100%; }
   /* Aqui a barra quebra em duas linhas: a casa dela tem que crescer junto. */
-  .fp-lote-slot + .fp-prod { margin-top: 98px; }
+  .fp-lote-slot + .fp-prod { padding-top: 100px; }
 }
 
 /* --- visor de fotos do produto (Galeria) ------------------------------
