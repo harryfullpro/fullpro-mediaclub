@@ -379,9 +379,9 @@
   .filter-btn .fp-conta:empty { display: none; }
 
   @media (max-width: 600px) { .filter-bar { gap: 16px; } }
-  .filter-btn.active:hover { background: #3f51c4; border-color: #3f51c4; }
-  .filter-btn[data-cifilter="checkout"].active { background: #5b6abf; border-color: #5b6abf; }
-  .filter-btn[data-cifilter="checkout"].active:hover { background: #4d5aad; border-color: #4d5aad; }
+  /* A aba de saida do Check-in se distingue pela cor do fio, nao por um fundo
+     preenchido — era o ultimo resto da pilula. */
+  .filter-btn[data-cifilter="checkout"].active::after { background: #7c8cf0; }
 
   /* Requests Table */
   .table-wrap {
@@ -2068,8 +2068,8 @@
 
   /* ── Light theme: sun yellow accent + contrast fixes ── */
   /* Check-in filter buttons: moon blue → sun yellow */
-  [data-theme="light"] .filter-btn.active { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
-  [data-theme="light"] .filter-btn[data-cifilter="checkout"].active { background: #2563eb; border-color: #2563eb; }
+  [data-theme="light"] .filter-btn.active { color: var(--text); }
+  [data-theme="light"] .filter-btn[data-cifilter="checkout"].active::after { background: #2563eb; }
   /* Action button "view" variant */
   [data-theme="light"] .action-btn.view { background: #3b82f6; border-color: #3b82f6; color: #fff; }
   [data-theme="light"] .action-btn.view:hover { background: #2563eb; border-color: #2563eb; color: #fff; }
@@ -2814,8 +2814,8 @@
     .stat-card .value { font-size: 24px; }
     .page-head h1 { font-size: 22px; }
 
-    .filter-bar { gap: 6px; }
-    .filter-btn { padding: 6px 12px; font-size: 12px; }
+    .filter-bar { gap: 16px; }
+    .filter-btn { padding: 6px 1px 10px; font-size: 13.5px; }
 
     .proj-card { padding: 14px; }
     .proj-card-head { flex-direction: column; align-items: flex-start; gap: 8px; }
