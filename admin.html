@@ -3218,22 +3218,29 @@ main:focus, main:focus-visible { outline: none !important; }
 }
 .fp-confirm-ov.aberto { opacity: 1; }
 .fp-confirm {
-  width: min(460px, 100%);
-  background: var(--bg-card);
+  width: min(480px, 100%);
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015)), var(--bg-elev);
   border: 1px solid var(--border-hi);
-  border-radius: 12px;
-  padding: 22px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  border-radius: 16px;
+  padding: 22px 24px 20px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(0,0,0,.3);
   transform: translateY(8px) scale(.985);
   transition: transform .16s ease;
+}
+[data-theme="light"] .fp-confirm {
+  background: linear-gradient(180deg, #fff, rgba(255,255,255,.72)), var(--bg-elev);
+  border-color: rgba(0,0,0,.1);
+  box-shadow: 0 20px 50px rgba(0,0,0,.16), 0 0 0 1px rgba(0,0,0,.04);
 }
 .fp-confirm-ov.aberto .fp-confirm { transform: none; }
 .fp-confirm-tit { margin: 0 0 8px; font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -.01em; }
 .fp-confirm-msg { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text-dim); }
+/* Antes era uma caixa tingida de vermelho dentro do diálogo — caixa dentro
+   de caixa. Virou texto entre fios, no mesmo padrão das listagens. */
 .fp-confirm-det {
-  margin-top: 12px; padding: 10px 12px;
-  background: var(--perigo-bg); border-radius: var(--raio-md);
-  font-size: 13px; color: var(--text); line-height: 1.5;
+  margin-top: 14px; padding: 12px 0;
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  font-size: 13px; color: var(--text-dim); line-height: 1.6;
 }
 .fp-confirm-digitar { margin-top: 14px; }
 .fp-confirm-dlbl { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
@@ -17149,8 +17156,167 @@ if (typeof module !== 'undefined' && module.exports) {
 })();
 
 
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PDF DA LISTA DE SEPARAÇÃO (FP-PDF)
+
+   Escrito à mão, sem biblioteca: o painel não carrega script de terceiro e
+   um PDF só de texto é meia dúzia de objetos. Fontes base do PDF (Helvetica)
+   não precisam ser embarcadas, e WinAnsi cobre todo o acento do português.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* WinAnsi é Latin-1 com uma faixa própria em 0x80-0x9F. Sem esta troca, um
+   travessão ou umas aspas curvas viram byte perdido no meio do texto. */
+const FP_PDF_WINANSI = {
+  '€': 128, '‚': 130, 'ƒ': 131, '„': 132, '…': 133,
+  '†': 134, '‡': 135, 'ˆ': 136, '‰': 137, 'Š': 138,
+  '‹': 139, 'Œ': 140, 'Ž': 142, '‘': 145, '’': 146,
+  '“': 147, '”': 148, '•': 149, '–': 150, '—': 151,
+  '˜': 152, '™': 153, 'š': 154, '›': 155, 'œ': 156,
+  'ž': 158, 'Ÿ': 159,
+};
+
+function fpPdfBytes(texto) {
+  const out = [];
+  for (const ch of String(texto)) {
+    const c = ch.codePointAt(0);
+    if (c < 256) out.push(c);
+    else if (FP_PDF_WINANSI[ch] != null) out.push(FP_PDF_WINANSI[ch]);
+    else out.push(63);                      // '?' — melhor que sumir com o caractere
+  }
+  return out;
+}
+function fpPdfTexto(t) {
+  return String(t == null ? '' : t).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+}
+
+/* Larguras da Helvetica em milésimos de em, só para medir e cortar texto que
+   não cabe na coluna. Aproximação por faixa: exata o suficiente para decidir
+   onde truncar, e evita embarcar a tabela inteira de métricas. */
+function fpPdfLargura(t, tam) {
+  let u = 0;
+  for (const ch of String(t)) {
+    const c = ch.charCodeAt(0);
+    if ('iljI.,:;|!\'`'.includes(ch)) u += 250;
+    else if ('frt()[]{}-/\\'.includes(ch)) u += 333;
+    else if (c >= 65 && c <= 90) u += 690;          // maiúsculas
+    else if ('mwMW'.includes(ch)) u += 833;
+    else u += 545;
+  }
+  return u * tam / 1000;
+}
+function fpPdfCortar(t, tam, limite) {
+  let s = String(t == null ? '' : t);
+  if (fpPdfLargura(s, tam) <= limite) return s;
+  while (s.length > 1 && fpPdfLargura(s + '…', tam) > limite) s = s.slice(0, -1);
+  return s.trimEnd() + '…';
+}
+
+/* Monta o PDF. `linhas` é [{qtd, nome, sku, local, urgente}]. */
+function fpPdfSeparacao(linhas, meta) {
+  const L = 595.28, A = 841.89, M = 42;          // A4 em pontos
+  /* O nome e a coluna que o separador usa para achar a peca na prateleira,
+     entao leva a maior fatia. SKU e localizacao sao curtos e cabem no resto. */
+  const COL = { qtd: M, nome: M + 30, sku: M + 322, local: M + 425 };
+  const LIM = { nome: 286, sku: 96, local: L - M - COL.local };
+  const paginas = [];
+  let corpo = [], y = 0, pagina = 0;
+
+  const escrever = (fonte, tam, x, yy, txt) =>
+    corpo.push('BT /' + fonte + ' ' + tam + ' Tf 1 0 0 1 ' + x.toFixed(2) + ' ' + yy.toFixed(2)
+      + ' Tm (' + fpPdfTexto(txt) + ') Tj ET');
+  const fio = (yy, x1, x2, tom) =>
+    corpo.push((tom == null ? 0.85 : tom) + ' G 0.6 w ' + x1.toFixed(2) + ' ' + yy.toFixed(2)
+      + ' m ' + x2.toFixed(2) + ' ' + yy.toFixed(2) + ' l S');
+
+  const abrirPagina = () => {
+    pagina++;
+    corpo = [];
+    y = A - M;
+    if (pagina === 1) {
+      escrever('F2', 19, M, y - 14, 'LISTA DE SEPARAÇÃO');
+      y -= 34;
+      escrever('F1', 10, M, y, meta.subtitulo);
+      y -= 14;
+      escrever('F1', 10, M, y, meta.pedido);
+      y -= 22;
+    } else {
+      escrever('F2', 12, M, y - 10, 'LISTA DE SEPARAÇÃO — continuação');
+      y -= 30;
+    }
+    escrever('F2', 8.5, COL.qtd, y, 'QTD');
+    escrever('F2', 8.5, COL.nome, y, 'PRODUTO');
+    escrever('F2', 8.5, COL.sku, y, 'SKU');
+    escrever('F2', 8.5, COL.local, y, 'LOCALIZAÇÃO');
+    y -= 7;
+    fio(y, M, L - M, 0.55);
+    y -= 15;
+  };
+  const fecharPagina = () => {
+    escrever('F1', 8, M, M - 12, meta.rodape);
+    escrever('F1', 8, L - M - 46, M - 12, 'Página ' + pagina);
+    paginas.push(corpo.join('\n'));
+  };
+
+  abrirPagina();
+  linhas.forEach((l, i) => {
+    if (y < M + 34) { fecharPagina(); abrirPagina(); }
+    escrever('F2', 10, COL.qtd, y, String(l.qtd));
+    escrever(l.urgente ? 'F2' : 'F1', 10, COL.nome, y, fpPdfCortar(l.nome, 10, LIM.nome));
+    escrever('F1', 9, COL.sku, y, fpPdfCortar(l.sku, 9, LIM.sku));
+    escrever(l.local ? 'F2' : 'F1', 9.5, COL.local, y,
+      fpPdfCortar(l.local || 'sem localização', 9.5, LIM.local));
+    y -= 10;
+    if (i < linhas.length - 1) fio(y, M, L - M, 0.88);
+    y -= 12;
+  });
+  fecharPagina();
+
+  /* ---- montagem do arquivo ---- */
+  const objetos = [];
+  const idPaginas = 2;
+  const primeiraPagina = 5;
+  objetos[1] = '<< /Type /Catalog /Pages ' + idPaginas + ' 0 R >>';
+  const kids = paginas.map((_, i) => (primeiraPagina + i * 2) + ' 0 R').join(' ');
+  objetos[2] = '<< /Type /Pages /Kids [' + kids + '] /Count ' + paginas.length + ' >>';
+  objetos[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+  objetos[4] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+  paginas.forEach((conteudo, i) => {
+    const idPag = primeiraPagina + i * 2;
+    objetos[idPag] = '<< /Type /Page /Parent ' + idPaginas + ' 0 R /MediaBox [0 0 '
+      + L.toFixed(2) + ' ' + A.toFixed(2) + '] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >>'
+      + ' /Contents ' + (idPag + 1) + ' 0 R >>';
+    objetos[idPag + 1] = { fluxo: conteudo };
+  });
+
+  const bytes = [];
+  const empurrar = t => { for (const b of fpPdfBytes(t)) bytes.push(b); };
+  empurrar('%PDF-1.4\n');
+  const posicoes = [];
+  for (let i = 1; i < objetos.length; i++) {
+    posicoes[i] = bytes.length;
+    const o = objetos[i];
+    if (o && o.fluxo != null) {
+      const corpoBytes = fpPdfBytes(o.fluxo);
+      empurrar(i + ' 0 obj\n<< /Length ' + corpoBytes.length + ' >>\nstream\n');
+      for (const b of corpoBytes) bytes.push(b);
+      empurrar('\nendstream\nendobj\n');
+    } else {
+      empurrar(i + ' 0 obj\n' + o + '\nendobj\n');
+    }
+  }
+  const inicioXref = bytes.length;
+  empurrar('xref\n0 ' + objetos.length + '\n0000000000 65535 f \n');
+  for (let i = 1; i < objetos.length; i++) {
+    empurrar(String(posicoes[i]).padStart(10, '0') + ' 00000 n \n');
+  }
+  empurrar('trailer\n<< /Size ' + objetos.length + ' /Root 1 0 R >>\nstartxref\n' + inicioXref + '\n%%EOF\n');
+  return new Uint8Array(bytes);
+}
+
 /* ═══════════════ SEPARAÇÃO (tela) ═══════════════ */
-let _sepTamanho = 15, _sepLote = null, _sepDestinos = null, _sepDestino = '';
+let _sepTamanho = 15, _sepLote = null;
+let _sepLogicaAberta = false;
 
 async function renderFotoSeparacao() {
   const topo = document.getElementById('fotoSepTopo');
@@ -17195,33 +17361,19 @@ async function renderFotoSeparacao() {
     : '<div class="fp-prod-vazio">Nenhum produto classificado na fila. Defina prioridades em Produção primeiro.</div>';
   fpDriveCarregar(_sepLote.itens.map(i => i.sku), lista);
 
-  await fpSepDestinosCarregar();
   const rod = document.getElementById('fotoSepRodape');
-  const temSlack = Array.isArray(_sepDestinos) && _sepDestinos.length;
-  rod.innerHTML = '<div class="filter-bar" style="margin-top:14px">'
-    + (temSlack
-        ? '<label for="fotoSepDest" class="fp-aviso-sub">Enviar para</label>'
-          + '<select id="fotoSepDest" onchange="_sepDestino=this.value" style="min-width:190px">'
-          + '<option value="">Escolha a pessoa…</option>'
-          + _sepDestinos.map(u => '<option value="' + escHtml(u.id) + '"' + (u.id === _sepDestino ? ' selected' : '') + '>'
-              + escHtml(u.nome_real || u.nome) + '</option>').join('') + '</select>'
-        : '<span class="fp-aviso-sub">' + (_sepDestinos === null
-            ? 'Consultando o Slack…'
-            : 'Slack ainda não configurado — falta o token do app. A lista continua funcionando aqui.') + '</span>')
-    + '<button class="action-btn approve" type="button" id="fotoSepEnviar" onclick="fpSepEnviar()"'
-    + (_sepLote.itens.length ? '' : ' disabled') + ' style="margin-left:auto">Enviar para separação</button>'
+  rod.innerHTML = '<div class="filter-bar" style="margin-top:16px;border:0">'
+    + '<span class="fp-aviso-sub">O painel gera um PDF com a lista e devolve um link público — '
+    + 'é só mandar o link para quem separa.</span>'
+    + '<button class="action-btn approve" type="button" id="fotoSepGerar" onclick="fpSepGerar()"'
+    + (_sepLote.itens.length ? '' : ' disabled') + ' style="margin-left:auto">Gerar lista de separação</button>'
     + '</div><div id="fotoSepDepois"></div>';
 }
 
 function fpSepTamanho(t) { _sepTamanho = t; renderFotoSeparacao(); }
 
+function fpSepLogica() { _sepLogicaAberta = !_sepLogicaAberta; fpSepLogicaPintar(); }
 function fpSepLogicaRestaurar() { fpSepLogicaPintar(); }
-
-let _sepLogicaAberta = false;
-function fpSepLogica() {
-  _sepLogicaAberta = !_sepLogicaAberta;
-  fpSepLogicaPintar();
-}
 
 function fpSepLogicaPintar() {
   const caixa = document.getElementById('fotoSepLogica');
@@ -17234,75 +17386,128 @@ function fpSepLogicaPintar() {
   }
 }
 
-async function fpSepDestinosCarregar() {
-  if (_sepDestinos !== null) return _sepDestinos;
-  const sessao = localStorage.getItem('fp_session');
-  try {
-    const { data, error } = await sb.functions.invoke('slack-proxy', { body: { action: 'usuarios', sessao } });
-    if (error || !data || data.erro) { _sepDestinos = []; return _sepDestinos; }
-    _sepDestinos = (data.usuarios || []).sort((a, b) => String(a.nome_real || a.nome).localeCompare(String(b.nome_real || b.nome)));
-  } catch (e) { _sepDestinos = []; }
-  return _sepDestinos;
+/* A localização física só existe na chamada de DETALHE do Bling; a listagem
+   não traz. Buscar para o catálogo inteiro levaria quase uma hora, então é
+   sob demanda, só para os itens do lote, e fica guardada em
+   mc_photo_products para o próximo lote não pagar de novo. */
+async function fpSepLocalizacoes(itens, aoAndar) {
+  const faltam = itens.filter(i => {
+    const p = fpFotoProduto(i.sku);
+    return p && p.bling_id && (p.localizacao == null);
+  });
+  if (!faltam.length) return;
+
+  let feitos = 0;
+  const fila = faltam.slice();
+  const trabalhar = async () => {
+    while (fila.length) {
+      const item = fila.shift();
+      const prod = fpFotoProduto(item.sku);
+      try {
+        const d = await blingGetProduct(prod.bling_id);
+        const loc = (d && d.estoque && d.estoque.localizacao) || '';
+        prod.localizacao = loc;
+        prod.localizacao_em = new Date().toISOString();
+        await sb.from('mc_photo_products')
+          .update({ localizacao: loc, localizacao_em: prod.localizacao_em }).eq('sku', prod.sku);
+      } catch (e) {
+        prod.localizacao = '';            // não trava a lista por causa de um produto
+      }
+      feitos++;
+      if (aoAndar) aoAndar(feitos, faltam.length);
+    }
+  };
+  /* Cinco de cada vez: em série levaria ~1s por produto; tudo de uma vez
+     estoura o limite de requisições do Bling. */
+  await Promise.all([1, 2, 3, 4, 5].map(trabalhar));
 }
 
-async function fpSepEnviar() {
+async function fpSepGerar() {
   if (!_sepLote || !_sepLote.itens.length) return;
-  const btn = document.getElementById('fotoSepEnviar');
+  const btn = document.getElementById('fotoSepGerar');
   const quem = CURRENT_USER ? (CURRENT_USER.name || CURRENT_USER.username) : '';
-  const sessao = localStorage.getItem('fp_session');
-  const destNome = (_sepDestinos || []).find(u => u.id === _sepDestino);
+  const itens = _sepLote.itens.map(i => ({ sku: i.sku, nome: i.nome, estoque: i.estoque, prioridade: i.prioridade }));
 
   if (!await fpConfirm({
-    titulo: 'Enviar para separação',
-    mensagem: _sepLote.itens.length + ' produtos vão para a lista de separação'
-      + (destNome ? ' e a mensagem vai para ' + (destNome.nome_real || destNome.nome) + ' no Slack.' : '.'),
-    detalhe: _sepDestino ? null : 'Sem destino escolhido, o lote é registrado no painel mas nada é enviado pelo Slack.',
-    confirmar: 'Enviar',
+    titulo: 'Gerar lista de separação',
+    mensagem: itens.length + ' produtos entram na lista, uma unidade de cada.',
+    detalhe: 'O PDF fica num endereço público: quem tiver o link abre sem senha. Mande só para quem vai separar.',
+    confirmar: 'Gerar PDF',
   })) return;
 
-  if (btn) { btn.disabled = true; btn.textContent = 'Enviando…'; }
-  const msg = fpSepMensagemSlack(_sepLote, quem);
-  let slackOk = null, slackErro = null;
-  if (_sepDestino) {
-    try {
-      const { data, error } = await sb.functions.invoke('slack-proxy', {
-        body: { action: 'enviar', sessao, destino: _sepDestino, texto: msg.texto, blocos: msg.blocos },
-      });
-      if (error) throw error;
-      if (data && data.erro) throw new Error(data.erro);
-      slackOk = true;
-    } catch (e) { slackOk = false; slackErro = String(e.message || e); }
+  const travar = (txt) => { if (btn) { btn.disabled = true; btn.textContent = txt; } };
+  travar('Buscando localizações…');
+  try {
+    await fpSepLocalizacoes(itens, (feito, total) => travar('Localização ' + feito + ' de ' + total + '…'));
+
+    travar('Montando o PDF…');
+    const agora = new Date();
+    const dataBR = agora.toLocaleDateString('pt-BR');
+    const horaBR = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const linhas = itens.map(i => {
+      const p = fpFotoProduto(i.sku) || {};
+      return { qtd: 1, nome: i.nome || i.sku, sku: i.sku, local: p.localizacao || '', urgente: i.prioridade === 5 };
+    });
+    const emerg = linhas.filter(l => l.urgente).length;
+    const bytes = fpPdfSeparacao(linhas, {
+      subtitulo: dataBR + ' às ' + horaBR + ' · ' + itens.length + ' itens'
+        + (emerg ? ' · ' + emerg + ' emergencial' + (emerg > 1 ? 'is' : '') : ''),
+      pedido: 'Pedido por ' + (quem || 'equipe') + ' · uma unidade de cada produto',
+      rodape: 'FullPro Media Club · lista gerada em ' + dataBR + ' ' + horaBR,
+    });
+
+    travar('Publicando…');
+    const carimbo = agora.toISOString().slice(0, 19).replace(/[:T]/g, '-');
+    const nome = 'separacao-' + carimbo + '.pdf';
+    const { error: errUp } = await sb.storage.from('separacao')
+      .upload(nome, new Blob([bytes], { type: 'application/pdf' }), { contentType: 'application/pdf' });
+    if (errUp) throw errUp;
+    const { data: pub } = sb.storage.from('separacao').getPublicUrl(nome);
+    const link = pub && pub.publicUrl;
+
+    const { data: lote, error } = await sb.from('mc_photo_batches').insert({
+      criado_por_id: CURRENT_USER ? CURRENT_USER.id : null, criado_por_nome: quem,
+      tamanho: itens.length, itens, pdf_url: link, pdf_nome: nome,
+    }).select().single();
+    if (error) throw error;
+
+    /* Os produtos saem da fila enquanto o lote está aberto, senão o próximo
+       lote pediria o mesmo produto que já está no carrinho do estoquista. */
+    const skus = itens.map(i => i.sku);
+    await sb.from('mc_photo_products').update({ status: 'separacao', lote_id: lote.id }).in('sku', skus);
+    FOTO_PRODUTOS.forEach(p => { if (skus.includes(p.sku)) { p.status = 'separacao'; p.lote_id = lote.id; } });
+
+    fpSepMostrarLink(link, itens.length);
+    fpToast('Lista pronta. O link já está na sua área de transferência.', 'ok', { duracao: 6000 });
+    try { await navigator.clipboard.writeText(link); } catch (e) { /* sem permissão: o botão copiar resolve */ }
+  } catch (e) {
+    fpToast('Não deu para gerar a lista: ' + (e.message || e), 'erro', { duracao: 9000 });
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Gerar lista de separação'; }
+    renderFotoSeparacao();
   }
-
-  const itens = _sepLote.itens.map(i => ({ sku: i.sku, nome: i.nome, estoque: i.estoque, prioridade: i.prioridade }));
-  const { data: lote, error } = await sb.from('mc_photo_batches').insert({
-    criado_por_id: CURRENT_USER ? CURRENT_USER.id : null, criado_por_nome: quem,
-    tamanho: itens.length, itens,
-    slack_destino: _sepDestino || null, slack_destino_nome: destNome ? (destNome.nome_real || destNome.nome) : null,
-    slack_ok: slackOk, slack_erro: slackErro,
-  }).select().single();
-  if (error) {
-    if (btn) { btn.disabled = false; btn.textContent = 'Enviar para separação'; }
-    fpToast('Não deu para registrar o lote: ' + error.message, 'erro');
-    return;
-  }
-
-  /* Os produtos saem da fila enquanto o lote está aberto, senão o próximo
-     lote pediria o mesmo produto que já está no carrinho do estoquista. */
-  const skus = itens.map(i => i.sku);
-  await sb.from('mc_photo_products').update({ status: 'separacao', lote_id: lote.id }).in('sku', skus);
-  FOTO_PRODUTOS.forEach(p => { if (skus.includes(p.sku)) { p.status = 'separacao'; p.lote_id = lote.id; } });
-
-  if (btn) { btn.disabled = false; btn.textContent = 'Enviar para separação'; }
-  fpToast(slackOk === false ? 'Lote registrado, mas o Slack recusou: ' + slackErro
-    : slackOk ? 'Lista enviada no Slack.' : 'Lote registrado no painel.', slackOk === false ? 'warn' : 'ok');
-
-  document.getElementById('fotoSepDepois').innerHTML =
-    '<div class="fp-prod-nota" style="margin-top:12px;display:flex;align-items:center;gap:12px">'
-    + '<b style="flex:1;color:var(--text)">Lote de ' + itens.length + ' produtos criado.</b>'
-    + '<button class="action-btn view" type="button" onclick="document.querySelector(\'.nav-item[data-view=&quot;foto-lote&quot;]\').click()">Ir para Fotografia em lote</button></div>';
-  renderFotoSeparacao();
 }
+
+function fpSepMostrarLink(link, quantos) {
+  const box = document.getElementById('fotoSepDepois');
+  if (!box) return;
+  box.innerHTML = '<div class="fp-info-caixa" style="margin-top:14px">'
+    + '<div class="fp-info-titulo">Lista de ' + quantos + ' produtos publicada</div>'
+    + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+    + '<code style="flex:1 1 300px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'
+    + 'font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--text)">'
+    + escHtml(link) + '</code>'
+    + '<button class="action-btn" type="button" onclick="fpSepCopiar(\'' + fpJs(link) + '\')">Copiar link</button>'
+    + '<a class="action-btn" href="' + escHtml(link) + '" target="_blank" rel="noopener">Abrir PDF</a>'
+    + '<button class="action-btn view" type="button" onclick="document.querySelector(\'.nav-item[data-view=&quot;foto-lote&quot;]\').click()">Ir para Fotografia em lote</button>'
+    + '</div></div>';
+}
+
+async function fpSepCopiar(link) {
+  try { await navigator.clipboard.writeText(link); fpToast('Link copiado.', 'ok'); }
+  catch (e) { fpToast('Não deu para copiar. O link está à mostra ao lado.', 'warn'); }
+}
+
 
 /* ═══════════════ FOTOGRAFIA EM LOTE ═══════════════ */
 let _loteAtual = null;
