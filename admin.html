@@ -140,6 +140,70 @@
   .shell.collapsed .sidebar-head { padding: 10px 10px 4px; }
   .shell.collapsed .sidebar-nav { padding: 0 8px; }
   .shell.collapsed .sidebar-foot { padding: 6px 8px 10px; }
+  /* ── Menu do usuario (rodape do menu lateral) ──
+     Um botao so: a foto. O resto — conta, notificacoes, idioma, tema e sair —
+     mora no popover, como no Airtable. */
+  .fp-foot-linha { display: flex; align-items: center; gap: 6px; }
+  .fp-foot-linha .sb-ctrl-wrap { margin-left: auto; }
+  .fp-usr-btn {
+    display: flex; align-items: center; padding: 3px; border: 0; background: none;
+    border-radius: 999px; cursor: pointer; flex-shrink: 0;
+    transition: box-shadow .14s ease;
+  }
+  .fp-usr-btn:hover { box-shadow: 0 0 0 2px var(--border-hi); }
+  .fp-usr-btn[aria-expanded="true"] { box-shadow: 0 0 0 2px var(--primary); }
+  .fp-usr-foto {
+    width: 30px; height: 30px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 11.5px; color: #fff; letter-spacing: .02em;
+  }
+  .fp-usr-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .fp-usr-menu {
+    position: fixed; z-index: 300; display: none; flex-direction: column;
+    min-width: 268px; padding: 0 0 6px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; box-shadow: 0 12px 34px rgba(0,0,0,.4);
+  }
+  .fp-usr-menu.show { display: flex; }
+  [data-theme="light"] .fp-usr-menu { box-shadow: 0 12px 30px rgba(0,0,0,.14); }
+  .fp-usr-cab { display: flex; align-items: center; gap: 10px; padding: 14px 14px 12px; }
+  .fp-usr-cab .fp-usr-foto { width: 38px; height: 38px; font-size: 13px; }
+  .fp-usr-cab b { display: block; font-size: 13.5px; font-weight: 650; color: var(--text); }
+  .fp-usr-cab span { display: block; font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .fp-usr-sep { height: 1px; background: var(--border); margin: 5px 0; }
+  .fp-usr-item {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    padding: 9px 14px; border: 0; background: none; cursor: pointer;
+    font: inherit; font-size: 13px; color: var(--text-dim); text-decoration: none;
+    transition: background .12s ease, color .12s ease;
+  }
+  .fp-usr-item:hover { background: var(--bg-elev); color: var(--text); }
+  .fp-usr-item svg { width: 16px; height: 16px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .fp-usr-item .fp-usr-fim { margin-left: auto; display: flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 11.5px; }
+  .fp-usr-item .fp-usr-seta { transition: transform .16s ease; }
+  .fp-usr-item[aria-expanded="true"] .fp-usr-seta { transform: rotate(90deg); }
+  .fp-usr-sub { display: none; padding: 2px 0 6px; }
+  .fp-usr-sub.show { display: block; }
+  .fp-usr-sub .fp-usr-item { padding-left: 40px; font-size: 12.5px; }
+  .fp-usr-sub .fp-usr-item.on { color: var(--text); font-weight: 650; }
+  .fp-usr-tag {
+    margin-left: auto; font-size: 9.5px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--warning);
+  }
+  /* Chave on/off no formato das dos aparelhos da Apple. */
+  .fp-switch {
+    width: 38px; height: 22px; border-radius: 999px; flex-shrink: 0;
+    background: var(--border-hi); position: relative; transition: background .22s ease;
+  }
+  .fp-switch::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 18px; height: 18px; border-radius: 50%; background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,.35); transition: transform .22s cubic-bezier(.3,1.4,.5,1);
+  }
+  .fp-switch.on { background: #34c759; }
+  .fp-switch.on::after { transform: translateX(16px); }
+
   /* Sidebar control popover */
   .sb-ctrl-wrap { position: relative; }
   .sb-ctrl-btn {
@@ -5178,22 +5242,10 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
     </div><!-- /sidebar-nav -->
 
     <div class="sidebar-foot">
-      <button class="nav-item fp-tema" type="button" onclick="toggleTheme()" aria-label="Alternar entre tema escuro e claro">
-        <svg class="ico-lua" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-        <svg class="ico-sol" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-        <span class="nav-label">Tema</span>
-        <span class="fp-tema-est"><span class="est-escuro">Escuro</span><span class="est-claro">Claro</span></span>
-      </button>
-      <div class="fp-rodape-par">
-        <button class="nav-item" id="logoutBtn">
-          <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="8 17 3 12 8 7"/><line x1="3" y1="12" x2="15" y2="12"/></svg>
-          <span class="nav-label">Sair</span>
+      <div class="fp-foot-linha">
+        <button class="fp-usr-btn" id="fpUsrBtn" type="button" aria-haspopup="menu" aria-expanded="false" onclick="fpUsrAlternar(event)">
+          <span class="fp-usr-foto" id="fpUsrFoto"></span>
         </button>
-        <a href="index.html" class="nav-item">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 013.6 9A14 14 0 0112 21a14 14 0 01-3.6-9A14 14 0 0112 3z"/></svg>
-          <span class="nav-label">Landing page</span>
-        </a>
-      </div>
 
       <div class="sb-ctrl-wrap" id="sbCtrlWrap">
         <div class="sb-popover" id="sbPopover">
@@ -5209,9 +5261,49 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
             <span class="sb-popover-dot"></span> Expandir ao passar o mouse
           </button>
         </div>
-        <button class="sb-ctrl-btn" onclick="toggleSbPopover()">
+        <button class="sb-ctrl-btn" onclick="toggleSbPopover()" aria-label="Controle do menu">
           <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-          <span class="nav-label">Sidebar</span>
+        </button>
+      </div>
+      </div>
+
+      <div class="fp-usr-menu" id="fpUsrMenu" role="menu" aria-labelledby="fpUsrBtn">
+        <div class="fp-usr-cab">
+          <span class="fp-usr-foto" id="fpUsrFotoMenu"></span>
+          <span><b id="fpUsrNome">—</b><span id="fpUsrSub"></span></span>
+        </div>
+        <div class="fp-usr-sep"></div>
+        <button class="fp-usr-item" type="button" role="menuitem" onclick="fpUsrIr('profile')">
+          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Conta
+        </button>
+        <button class="fp-usr-item" type="button" role="menuitem" onclick="fpUsrIr('prefs-notificacoes')">
+          <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+          Preferências de notificações
+        </button>
+        <button class="fp-usr-item" type="button" id="fpUsrIdiomaBtn" aria-expanded="false" onclick="fpUsrIdiomaAbrir()">
+          <svg viewBox="0 0 24 24"><path d="M4 5h10M9 3v2c0 5-2.5 8-6 9"/><path d="M6 11c1.8 3 4.4 5 7 6"/><path d="M13 21l4-9 4 9"/><path d="M14.6 18h4.8"/></svg>
+          Preferências de linguagem
+          <span class="fp-usr-fim"><span id="fpUsrIdiomaAtual">Português</span>
+            <svg class="fp-usr-seta" viewBox="0 0 24 24" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg></span>
+        </button>
+        <div class="fp-usr-sub" id="fpUsrIdiomaLista">
+          <button class="fp-usr-item on" type="button" onclick="fpUsrIdioma('pt')">Português</button>
+          <button class="fp-usr-item" type="button" onclick="fpUsrIdioma('en')">English <span class="fp-usr-tag">em breve</span></button>
+        </div>
+        <button class="fp-usr-item" type="button" role="menuitemcheckbox" onclick="fpUsrTema(event)">
+          <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+          Tema escuro
+          <span class="fp-usr-fim"><span class="fp-switch" id="fpUsrTemaChave"></span></span>
+        </button>
+        <a class="fp-usr-item" href="index.html" role="menuitem">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 013.6 9A14 14 0 0112 21a14 14 0 01-3.6-9A14 14 0 0112 3z"/></svg>
+          Ver landing page
+        </a>
+        <div class="fp-usr-sep"></div>
+        <button class="fp-usr-item" type="button" role="menuitem" id="logoutBtn">
+          <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="8 17 3 12 8 7"/><line x1="3" y1="12" x2="15" y2="12"/></svg>
+          Sair
         </button>
       </div>
     </div>
@@ -6032,6 +6124,18 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
     </div>
 
     <!-- PROFILE VIEW -->
+    <div id="view-prefs-notificacoes" style="display:none">
+      <div class="page-head"><div>
+        <h1>Preferências de notificações</h1>
+        <p>O que o painel avisa, por onde avisa e quando avisa.</p>
+      </div></div>
+      <div class="fp-vazio fp-moldura">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        <h3>EM BREVE</h3>
+        <p>Aqui você vai escolher o que quer receber — menções no debriefing, solicitações novas, lotes prontos — e por onde. Ainda não está pronto.</p>
+      </div>
+    </div>
+
     <div id="view-profile" style="display:none">
       <div class="page-head">
         <div>
@@ -7121,6 +7225,7 @@ function fpRevelarPainel() {
      contagem de 300ms, e no fim do initApp ela so chegava depois das quinze
      leituras do boot — o menu passava dois segundos sem o numero. */
   try { fpFotoBadgeCarregar(); } catch (e) { console.warn('badge de emergenciais', e); }
+  try { fpUsrPintar(); } catch (e) { console.warn('menu do usuário', e); }
   document.getElementById('login').style.display = 'none';
   document.getElementById('app').style.display = 'grid';
   document.body.classList.remove('fp-sem-sessao');   // libera o botão do besouro
@@ -7891,7 +7996,7 @@ document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
+    ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile','prefs-notificacoes'].forEach(v => {
       document.getElementById('view-' + v).style.display = 'none';
     });
     document.getElementById('view-' + btn.dataset.view).style.display = 'block';
@@ -8561,6 +8666,118 @@ function sidebarHoverOut() {
   document.getElementById('app').querySelector('.sidebar').classList.remove('hover-open');
   closeSbPopover();
 }
+
+/* ══════════ MENU DO USUÁRIO ══════════
+   Um botão só no rodapé do menu — a foto — e todo o resto num popover. A foto
+   sai de mc_admin_users.avatar; quem não tem, ganha as iniciais sobre uma cor
+   derivada do próprio nome (getAvatarColor), então ela é sempre a mesma
+   pessoa na mesma cor, e não muda a cada carregamento. */
+function fpUsrFotoHtml() {
+  const u = CURRENT_USER || {};
+  const nome = u.name || u.username || 'Usuário';
+  if (u.avatar) return '<img src="' + escHtml(u.avatar) + '" alt="' + escHtml(nome) + '">';
+  return escHtml(getInitials(nome));
+}
+
+function fpUsrPintar() {
+  const u = CURRENT_USER || {};
+  const nome = u.name || u.username || 'Usuário';
+  const fundo = u.avatar ? 'transparent' : getAvatarColor(nome);
+  ['fpUsrFoto', 'fpUsrFotoMenu'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = fpUsrFotoHtml();
+    el.style.background = fundo;
+  });
+  const btn = document.getElementById('fpUsrBtn');
+  if (btn) btn.setAttribute('aria-label', 'Conta de ' + nome);
+  const n = document.getElementById('fpUsrNome');
+  if (n) n.textContent = nome;
+  /* Não há e-mail em mc_admin_users; quem identifica a conta aqui é o usuário
+     de login, com o papel ao lado. */
+  const sub = document.getElementById('fpUsrSub');
+  if (sub) sub.textContent = '@' + (u.username || '—') + (u.role ? ' · ' + u.role : '');
+  fpUsrTemaChave();
+}
+
+function fpUsrTemaChave() {
+  const ch = document.getElementById('fpUsrTemaChave');
+  if (!ch) return;
+  const escuro = (document.documentElement.getAttribute('data-theme') || 'dark') !== 'light';
+  ch.classList.toggle('on', escuro);
+}
+
+function fpUsrAbrir() {
+  const menu = document.getElementById('fpUsrMenu');
+  const btn = document.getElementById('fpUsrBtn');
+  if (!menu || !btn) return;
+  fpUsrPintar();
+  const r = btn.getBoundingClientRect();
+  menu.style.left = r.left + 'px';
+  menu.style.bottom = (window.innerHeight - r.top + 8) + 'px';
+  menu.classList.add('show');
+  btn.setAttribute('aria-expanded', 'true');
+  /* Não deixa o menu vazar pela direita quando a barra está recolhida. */
+  const m = menu.getBoundingClientRect();
+  if (m.right > window.innerWidth - 8) menu.style.left = Math.max(8, window.innerWidth - 8 - m.width) + 'px';
+}
+
+function fpUsrFechar() {
+  const menu = document.getElementById('fpUsrMenu');
+  const btn = document.getElementById('fpUsrBtn');
+  if (menu) menu.classList.remove('show');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+  const lista = document.getElementById('fpUsrIdiomaLista');
+  const ib = document.getElementById('fpUsrIdiomaBtn');
+  if (lista) lista.classList.remove('show');
+  if (ib) ib.setAttribute('aria-expanded', 'false');
+}
+
+function fpUsrAlternar(ev) {
+  if (ev) ev.stopPropagation();
+  const menu = document.getElementById('fpUsrMenu');
+  if (menu && menu.classList.contains('show')) fpUsrFechar(); else fpUsrAbrir();
+}
+
+function fpUsrIr(view) {
+  fpUsrFechar();
+  fpIrPara(view);
+}
+
+function fpUsrIdiomaAbrir() {
+  const lista = document.getElementById('fpUsrIdiomaLista');
+  const btn = document.getElementById('fpUsrIdiomaBtn');
+  if (!lista) return;
+  const abre = !lista.classList.contains('show');
+  lista.classList.toggle('show', abre);
+  if (btn) btn.setAttribute('aria-expanded', abre ? 'true' : 'false');
+}
+
+/* O painel inteiro está escrito em português. O inglês entra quando houver
+   tradução de verdade — oferecer a opção antes disso seria trocar o idioma
+   para nada. */
+function fpUsrIdioma(lang) {
+  if (lang === 'en') {
+    fpToast('O painel em inglês ainda está sendo traduzido.', 'warn');
+    return;
+  }
+  fpUsrFechar();
+}
+
+function fpUsrTema(ev) {
+  if (ev) ev.stopPropagation();
+  toggleTheme();
+  fpUsrTemaChave();
+}
+
+/* Fecha ao clicar fora ou no Esc, como qualquer popover do painel. */
+document.addEventListener('click', ev => {
+  const menu = document.getElementById('fpUsrMenu');
+  if (!menu || !menu.classList.contains('show')) return;
+  if (menu.contains(ev.target) || ev.target.closest('#fpUsrBtn')) return;
+  fpUsrFechar();
+});
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape') fpUsrFechar(); });
 
 function toggleSbPopover() {
   const pop = document.getElementById('sbPopover');
@@ -10270,7 +10487,7 @@ function openProjectDetail(id, tab) {
   switchDetailTab(tab || 'producao');
 
   // Hide all views, show project-detail
-  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
+  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile','prefs-notificacoes'].forEach(v => {
     document.getElementById('view-' + v).style.display = 'none';
   });
   document.getElementById('view-project-detail').style.display = 'block';
@@ -10291,7 +10508,7 @@ function openProjectDetail(id, tab) {
 function backToProjects() {
   stopEngagementAutoRefresh();
   projDetailId = null;
-  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
+  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile','prefs-notificacoes'].forEach(v => {
     document.getElementById('view-' + v).style.display = 'none';
   });
   document.getElementById('view-projects').style.display = 'block';
@@ -10687,9 +10904,11 @@ function renderShotsReadOnly(shots, si) {
     { sec: 'Performance', items: [['perf-metas','Metas'],['perf-posts','Meus Posts'],['perf-influencers','Influenciadores'],['perf-bonificacao','Bonificação']] },
     { sec: 'Configurações', items: [['templates','Templates WhatsApp'],['export','Exportar'],['users','Usuários'],['manutencao','Manutenção'],['atualizacoes','Atualizações'],['integracoes','Integrações']] }
   ];
-  const FP_ALL_VIEWS = ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'];
-  const FP_ALWAYS_ON = ['profile','project-detail'];
-  const FP_NAV_ORDER = ['dashboard','requests','calendar','checkin','projects','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','atualizacoes','integracoes','profile'];
+  const FP_ALL_VIEWS = ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile','prefs-notificacoes'];
+  /* Preferências pessoais não passam pela permissão de módulo: são do dono da
+     conta, como o próprio perfil. */
+  const FP_ALWAYS_ON = ['profile','project-detail','prefs-notificacoes'];
+  const FP_NAV_ORDER = ['dashboard','requests','calendar','checkin','projects','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','atualizacoes','integracoes','profile','prefs-notificacoes'];
 
   function fpRoleKey(roleStr){
     const r = (roleStr || '').toLowerCase();
@@ -12258,6 +12477,7 @@ async function saveProfileAvatar(dataUri) {
   const { error } = await sb.from('mc_admin_users').update({ avatar: dataUri }).eq('id', CURRENT_USER.id);
   if (error) { fpToast('Erro ao salvar a foto: ' + error.message, 'erro'); return; }
   CURRENT_USER.avatar = dataUri || null;
+  try { fpUsrPintar(); } catch (e) {}   // o menu do rodapé mostra a mesma foto
   updateProfileAvatarUI();
 }
 
@@ -23666,13 +23886,13 @@ function applyRolePermissions() {
 
   // Views accessible per role
   const access = {
-    fotografo:  ['dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','atualizacoes','profile'],
+    fotografo:  ['dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','atualizacoes','profile','prefs-notificacoes'],
     /* Assistente Admin cuida das fotos, não do vídeo. */
-    assistente: ['dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','atualizacoes','profile'],
-    admin: ['dashboard','requests','calendar','checkin','projects','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'],
-    filmmaker: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','atualizacoes','profile'],
-    mecanico: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-bonificacao','templates','atualizacoes','profile'],
-    viewer: ['dashboard','debriefing','atualizacoes','profile']
+    assistente: ['dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','atualizacoes','profile','prefs-notificacoes'],
+    admin: ['dashboard','requests','calendar','checkin','projects','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile','prefs-notificacoes'],
+    filmmaker: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','atualizacoes','profile','prefs-notificacoes'],
+    mecanico: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-bonificacao','templates','atualizacoes','profile','prefs-notificacoes'],
+    viewer: ['dashboard','debriefing','atualizacoes','profile','prefs-notificacoes']
   };
 
   const allowed = access[role] || access.viewer;
@@ -23967,7 +24187,8 @@ async function initApp() {
     'dashboard','requests','calendar','checkin','projects','project-detail',
     'editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote',
     'debriefing','perf-metas','perf-posts','perf-influencers',
-    'perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'
+    'perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile',
+    'prefs-notificacoes'
   ];
 
   /* ------------------------------------------------------------------
