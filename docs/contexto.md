@@ -253,6 +253,13 @@ O WhatsApp do rodapé (47 3466-6977) é o da **loja**, e continua como está.
 Área em branco enquanto a rede responde não é aceitável. A tela abre com a
 estrutura montada e uma barra em animação no lugar exato de cada número.
 
+### Toda tela de foto explica a si mesma
+O `?` flutuante traz as instruções da tela e um tutorial guiado que abre sozinho
+na primeira visita de cada pessoa a cada módulo. Hoje cobre Dashboard de fotos,
+Produção, Galeria, Separação e Fotografia em lote. Módulo sem verbete não mostra
+o botão. Para forçar todo mundo a ver de novo (conteúdo mudou, tela mudou),
+suba `FP_TUT_VERSAO` em `admin.html`.
+
 ### Modo de trabalho
 > *"pode fazer absolutamente tudo por conta, alterações, deploy, debugs e etc"*
 

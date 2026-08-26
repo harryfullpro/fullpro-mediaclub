@@ -92,6 +92,11 @@ voltam a se mexer quando a barra abre no hover (ver `padroes.md`).
 `assets/logo-short.png` é o "F" vermelho que o dono mandou. A variante dele traz
 o ® ao lado, que a 32px vira borrão — trocar só se ele pedir.
 
+### Ajuda e tutorial só existem nos módulos de foto
+Falta escrever o verbete de Solicitações, Agenda, Check-in, Projetos, Edição,
+Clips, Debriefing e das telas de Performance. O motor já está pronto: é
+acrescentar a entrada em `FP_AJUDA` com `titulo`, `intro`, `itens` e `passos`.
+
 ---
 
 ## Segurança

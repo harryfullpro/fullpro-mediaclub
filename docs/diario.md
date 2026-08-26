@@ -1,5 +1,52 @@
 # Diário
 
+## 26/08/2026 · Ajuda da tela e tutorial guiado
+
+> *"Quero adicionar um botão ? logo acima do botão flutuante de reportar bug (…)
+> um botão ver tutorial que vai funcionar parecido com o que é nos apps da adobe
+> na primeira vez que tu acessa"*
+
+O **`?`** mora logo acima do besouro e **só aparece onde há verbete**: Dashboard
+de fotos, Produção, Galeria, Separação e Fotografia em lote. Botão de ajuda que
+abre vazio é pior que botão nenhum.
+
+Dentro dele, **Ver tutorial** acende o passo a passo sobre a própria interface —
+retângulo vazado no elemento, cartão ao lado, setas e Esc ligados.
+
+**Na primeira vez** que a pessoa entra em cada um desses módulos o tutorial abre
+sozinho. A marca fica no navegador com a versão no nome da chave
+(`fp_tut_v1:<id do usuário>:<módulo>`), então **todo mundo começou agora como
+primeira viagem** — que era o pedido — e subir `FP_TUT_VERSAO` reseta de novo
+quando o conteúdo mudar.
+
+Decisões que valem registro:
+
+- **Três ganchos, porque nem toda entrada passa pelo roteador.** `refreshViewData`
+  cobre a troca de módulo; `fpDashTrocar`, porque as duas frentes do Dashboard
+  são a **mesma view** e trocar de aba não navega; e `fpRevelarPainel`, porque
+  quem abre um favorito em `#foto-producao` caía numa tela sem `?`.
+- **O `?` é ligado depois do render, não junto.** Os passos apontam para linhas
+  da listagem, e elas só existem quando o render termina.
+- **Passo com alvo ausente é descartado na abertura, não pulado no meio** — assim
+  o contador "2 de 4" nunca mente.
+- **Não basta o alvo existir: tem que ter área.** O slot da barra de ações em
+  massa tem altura 0 e `offsetParent` válido; o passo abria um retângulo de 12px
+  em cima de nada. O alvo virou a barra de dentro (`.fp-prod-lote`).
+- **Guardar no navegador e não no banco é escolha consciente.** Quem trocar de
+  máquina vê o tutorial de novo. O custo disso é um tutorial repetido; o do
+  contrário seria coluna nova, migração e mais uma política de RLS para uma
+  preferência que não vale um round-trip.
+- **Posicionar síncrono, não só no próximo quadro.** Em aba em segundo plano o
+  navegador não chama `requestAnimationFrame` e o retângulo ficava 0×0 no canto.
+
+Conferido em produção, módulo a módulo: os 6 passos da Produção, os 4 do
+Dashboard de fotos, os 4 da Galeria, os 4 da Separação e o do lote — todos com o
+retângulo casando com o alvo dentro de 1px, o cartão inteiro dentro da janela, o
+`?` escondido fora dos módulos de foto e o tutorial **não** reabrindo na segunda
+visita.
+
+---
+
 ## 26/08/2026 · A tela de entrar virou uma prancheta
 
 > *"No modo claro quero a logo do media club em preto (…) quero uma animação de
