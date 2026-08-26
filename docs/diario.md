@@ -1,5 +1,94 @@
 # Diário
 
+## 26/08/2026 · Na landing, quem abre a conversa é o cliente
+
+> *"quero que o cliente nos envie uma mensagem para esse whatsapp confirmando o
+> agendamento dele (…) Assim a gente evita do whatsapp cair de novo por spam.
+> É melhor (…) porque melhora a segurança, o cliente mesmo nos manda mensagem
+> primeiro e assim evita de alguém querer se passar por nós"*
+
+Depois de enviar a solicitação, a tela de sucesso traz um botão verde com a
+mensagem **já escrita**: nome, moto e data, dizendo que está confirmando o
+pedido. O cliente só envia.
+
+Duas razões, as duas do dono: o número do estúdio **não sobrevive** a dezenas de
+conversas iniciadas por nós — o WhatsApp lê isso como spam e derruba a conta — e
+uma conversa aberta do lado do cliente **é a prova de que o número é nosso**.
+Ninguém se passa pela gente dentro de um contato que o próprio cliente iniciou.
+A tela diz isso com todas as letras, junto do número.
+
+Detalhes que valem registro:
+
+- **A data é formatada na mão** (`iso.slice`), não com `new Date('2026-09-03')`:
+  em fuso negativo isso volta um dia e a mensagem sairia com a data errada.
+- **Verde com texto escuro.** Branco sobre `#1fd27a` dá 2:1 e reprova no AA;
+  escuro dá 9,7:1. O verde do WhatsApp com texto branco é bonito na marca deles
+  e ilegível na nossa régua.
+- **O texto do topo do formulário mudou de lado.** Prometia que *nós* entraríamos
+  em contato em 24h — agora diz que a confirmação é dele e que respondemos em 24h.
+  Copy que contradiz o fluxo é pior que copy feia.
+- O `fpTrack` de cliques já pega qualquer `a[href*="wa.me"]`, então a conversão
+  `Contact` do Meta passou a contar a confirmação sem uma linha a mais.
+
+**O WhatsApp do rodapé continua o da loja** (47 3466-6977). O do estúdio, que
+responde a confirmação, é o 47 93384-0886.
+
+---
+
+## 26/08/2026 · Panorama vira o painel de fotos do Dashboard
+
+O módulo Panorama saiu do menu e o conteúdo dele passou para dentro do próprio
+Dashboard, que agora tem duas frentes. Switch de abas para quem tem vídeo e
+foto; quem tem uma frente só nem vê o switch.
+
+- **A frente é deduzida dos módulos de trabalho** (`fpFrentes()`), nunca do
+  Dashboard, que os dois lados dividem, e nunca da visibilidade das seções do
+  menu — a seção de vídeo aparece para quem só tem Debriefing.
+- **A escolha é lembrada por navegador e cruzada com a permissão.** A chave não
+  carrega o id do operador: sem o cruzamento, o fotógrafo herdaria "vídeo" de
+  quem usou a mesma máquina. Testado nos dois sentidos.
+- **Mover o conteúdo para dentro da view, em vez de alternar duas views.**
+  Existem quatro laços de "esconde tudo" que o switch não controla; com duas
+  views, ir a Projetos e voltar apagaria o painel de foto sem caminho de volta —
+  e em silêncio.
+- **O repintor de fotos passou a decidir pela tela à vista, não pela hash.** Um
+  favorito antigo em `#foto-dashboard` faria cada clique de prioridade repintar a
+  Produção escondida: nada muda na tela, nada aparece no console.
+
+### O que a revisão adversarial pegou depois
+
+Quatro achados de nove sobreviveram à refutação, e eram dois defeitos:
+
+1. **O Panorama era construído duas vezes por login.** `applyRolePermissions`
+   roda duas vezes (é a regra do "filtrar antes de mostrar") e cada passada
+   chegava em `fpDashTrocar`. Agora a aplicação automática só pinta se a tela
+   estiver vazia; o clique do operador continua atualizando.
+2. **O painel de vídeo nunca recarregava.** `refreshViewData` passou a carregar
+   só a frente à vista — certo — mas **trocar de aba não é navegar**: quem
+   entrava de manhã na frente de foto via, à tarde, os números da hora do login.
+
+### O painel de fotos abre na hora
+
+O panorama esperava **duas rodadas de rede em série** — o catálogo inteiro
+(2.566 linhas em três páginas) e só então três consultas — antes de pintar
+qualquer coisa. 1,7s de área vazia para mostrar quatro números.
+
+- **Uma chamada só:** `mc_photo_panorama(início do mês)` conta no banco e devolve
+  contagens, fila, os oito com mais estoque parado, lotes em aberto e as últimas
+  fotos. As contas foram conferidas uma a uma contra as da tela antes de trocar.
+- **Esqueleto em duas passadas:** a primeira é síncrona e pinta a forma certa com
+  `.fp-skel-txt` (variante em linha do esqueleto que já existia) no lugar de cada
+  número. Medido: **0,9ms** para a tela abrir, **212ms** para o dado real, e
+  **zero esqueleto** ao reabrir.
+- **O catálogo vai depois da pintura, não junto.** Rodando em paralelo, as três
+  páginas dividiam banda com a chamada do painel e empurravam o número que o
+  operador espera de 0,3s para 1,6s. Medido nas duas ordens.
+- **`fpPrioDefinir` carrega o catálogo sob demanda.** A lista do Dashboard vem
+  direto do banco; se o clique de prioridade chegasse antes do catálogo, a função
+  saía calada.
+
+---
+
 ## 26/08/2026 · O menu não podia nascer errado
 
 > *"Quando eu entro como matheus no painel, no menu lateral aparece todos os módulos e

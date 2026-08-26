@@ -202,6 +202,31 @@ nada de caixa dentro de caixa. Listagem encostada no fundo da página, separada 
 1px. Filtro em aba com sublinhado, não pílula preenchida. Vermelho de destaque é **o
 mesmo vermelho do hover do menu lateral**, nunca um pastel.
 
+### Panorama virou o painel de fotos do Dashboard
+O Dashboard tem duas frentes. Quem tem vídeo **e** foto troca por um switch de
+abas no topo e volta na frente usada por último; quem tem uma frente só não vê o
+switch e cai direto no painel dela. A frente vem dos **módulos de trabalho**, não
+do Dashboard, que os dois lados dividem.
+
+### Na landing, quem manda a primeira mensagem é o cliente
+> *"o cliente mesmo nos manda mensagem primeiro e assim evita de alguém querer se
+> passar por nós"*
+
+Nunca puxar conversa com o cliente a partir do número do estúdio: dezenas de
+conversas iniciadas por nós fazem o WhatsApp derrubar a conta por spam. Depois de
+enviar a solicitação, o cliente ganha um botão com a mensagem pronta (nome, moto
+e data) para o **47 93384-0886**. O contato nascer do lado dele também é o que
+impede alguém de se passar pela gente — e a tela avisa isso.
+
+O WhatsApp do rodapé (47 3466-6977) é o da **loja**, e continua como está.
+
+### Tela que espera dado mostra a forma, nunca o vazio
+> *"Se tiver dados para carregar coloca uma animação de loading no lugar do texto
+> até carregar a informação"*
+
+Área em branco enquanto a rede responde não é aceitável. A tela abre com a
+estrutura montada e uma barra em animação no lugar exato de cada número.
+
 ### Modo de trabalho
 > *"pode fazer absolutamente tudo por conta, alterações, deploy, debugs e etc"*
 

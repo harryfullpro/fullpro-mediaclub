@@ -450,6 +450,53 @@ tamanho**, nunca a família. Não há Google Fonts em nenhuma das duas páginas.
 
 ---
 
+## Tela que espera dado abre com a forma, não com o vazio
+
+Regra do dono: **nada de área em branco enquanto a rede responde.** A tela pinta a
+estrutura na hora e põe `.fp-skel-txt` — a variante em linha do esqueleto — no
+lugar exato de cada número que falta. Quando o dado chega, a barra vira o número
+**sem mexer no layout**: o esqueleto tem que ocupar o mesmo espaço do conteúdo
+final, senão a página salta.
+
+Duas passadas na mesma função de render: a primeira é **síncrona**, antes do
+primeiro `await`, e só acontece se a tela estiver vazia — repintar depois de uma
+ação (clique de prioridade) não pode piscar a tela inteira. Um contador de
+versão (`_panoramaVez`) descarta a passada de quem chegou atrasado.
+
+**Contar é trabalho do banco.** O panorama baixava 2.566 linhas em três páginas
+para contar quantas tinham foto: 1,7s. Uma função SQL (`mc_photo_panorama`) faz as
+contagens, o top 8 e as listas curtas numa ida só — 0,2s. Antes de trocar, cada
+número foi conferido contra o que a tela mostrava.
+
+**Ordem importa mais do que paralelismo.** Disparar o catálogo junto com a
+consulta do painel parecia mais rápido e era pior: as três páginas dividem banda
+e empurraram o número que o operador espera de 0,3s para 1,6s. O que ninguém está
+esperando vai **depois** da pintura.
+
+**`.fp-skel-txt` usa o tom da borda** (`--border` → `--border-hi`), não o do
+cartão: dentro de um `.stat-card` o cinza do fundo é invisível. E entra na
+exceção de `prefers-reduced-motion`.
+
+---
+
+## Toda tela que roda em `applyRolePermissions` roda duas vezes
+
+Já está dito na seção do filtro, mas o custo aparece aqui: `fpDashAplicar` é
+chamada nas duas passadas, e sem guarda ela reconstruía o painel de fotos inteiro
+duas vezes por login — consulta, `innerHTML` e miniaturas do Drive.
+
+O padrão que resolve é distinguir **aplicação automática** de **ação do
+operador**. `fpDashTrocar(frente, gravar)` usa `gravar === false` como marca da
+aplicação automática: nesse caso só pinta se a tela estiver vazia; no clique,
+sempre atualiza.
+
+E o simétrico, que passou batido na primeira versão: se o carregamento passa a
+ser **por frente**, trocar de frente tem que carregar. `refreshViewData` só roda
+ao navegar, e **trocar de aba não é navegar** — sem isso o painel de vídeo
+congelava na hora do login.
+
+---
+
 ## `.action-btn` é a classe de botão — `.btn` não existe
 
 `.btn`, `.btn primary` e `.btn ghost` **não existem no `admin.html`**. Botão com essas
