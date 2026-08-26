@@ -147,6 +147,15 @@
      mora no popover, como no Airtable. */
   .fp-foot-linha { display: flex; align-items: center; gap: 6px; }
   .fp-foot-linha .sb-ctrl-wrap { margin-left: auto; }
+  /* Recolhida nao ha largura para os dois lado a lado: o botao sobe para cima
+     da foto. column-reverse porque no HTML a foto vem primeiro. */
+  .shell.collapsed .fp-foot-linha,
+  .shell.hover-mode .fp-foot-linha { flex-direction: column-reverse; gap: 8px; }
+  .shell.collapsed .fp-foot-linha .sb-ctrl-wrap,
+  .shell.hover-mode .fp-foot-linha .sb-ctrl-wrap { margin-left: 0; }
+  /* Expandida ao passar o mouse, volta a ser fileira. */
+  .shell.hover-mode .sidebar.hover-open .fp-foot-linha { flex-direction: row; }
+  .shell.hover-mode .sidebar.hover-open .fp-foot-linha .sb-ctrl-wrap { margin-left: auto; }
   .fp-usr-btn {
     position: relative;
     display: flex; align-items: center; padding: 3px; border: 0; background: none;
@@ -5260,20 +5269,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
         </button>
 
       <div class="sb-ctrl-wrap" id="sbCtrlWrap">
-        <div class="sb-popover" id="sbPopover">
-          <div class="sb-popover-title">Controle do menu</div>
-          <div class="sb-popover-sep"></div>
-          <button class="sb-popover-opt" data-sbmode="expanded" onclick="setSidebarMode('expanded')">
-            <span class="sb-popover-dot"></span> Expandido
-          </button>
-          <button class="sb-popover-opt" data-sbmode="collapsed" onclick="setSidebarMode('collapsed')">
-            <span class="sb-popover-dot"></span> Recolhido
-          </button>
-          <button class="sb-popover-opt" data-sbmode="hover" onclick="setSidebarMode('hover')">
-            <span class="sb-popover-dot"></span> Expandir ao passar o mouse
-          </button>
-        </div>
-        <button class="sb-ctrl-btn" onclick="toggleSbPopover()" aria-label="Controle do menu">
+        <button class="sb-ctrl-btn" id="sbCtrlBtn" type="button" onclick="fpBarraAlternar()" aria-label="Recolher o menu">
           <svg viewBox="0 0 24 24"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
         </button>
       </div>
@@ -8805,32 +8801,38 @@ document.addEventListener('click', ev => {
 });
 document.addEventListener('keydown', ev => { if (ev.key === 'Escape') fpUsrFechar(); });
 
-function toggleSbPopover() {
-  const pop = document.getElementById('sbPopover');
-  const isOpen = pop.classList.contains('show');
-  if (isOpen) { closeSbPopover(); return; }
-  const btn = document.querySelector('.sb-ctrl-btn');
-  const r = btn.getBoundingClientRect();
-  pop.style.left = r.left + 'px';
-  pop.style.bottom = (window.innerHeight - r.top + 8) + 'px';
-  pop.classList.add('show');
+/* O botao virou interruptor: um clique recolhe, outro expande. Nao ha mais
+   escolha de modo — recolhido JA e "expande ao passar o mouse", que era o que
+   o dono queria como padrao. O modo 'collapsed' seco continua existindo no
+   codigo, mas nao e mais oferecido. */
+function fpBarraAlternar() {
+  setSidebarMode(sidebarMode === 'expanded' ? 'hover' : 'expanded');
 }
-function closeSbPopover() {
-  document.getElementById('sbPopover').classList.remove('show');
+
+/* As setas dizem o que o clique vai fazer: << recolhe, >> expande. */
+const FP_SETA_RECOLHE = '<polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/>';
+const FP_SETA_EXPANDE = '<polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/>';
+
+function fpBarraIcone() {
+  const btn = document.getElementById('sbCtrlBtn');
+  if (!btn) return;
+  const aberta = sidebarMode === 'expanded';
+  const svg = btn.querySelector('svg');
+  if (svg) svg.innerHTML = aberta ? FP_SETA_RECOLHE : FP_SETA_EXPANDE;
+  btn.setAttribute('aria-label', aberta ? 'Recolher o menu' : 'Expandir o menu');
+  btn.setAttribute('data-tip', aberta ? 'Recolher o menu' : 'Expandir o menu');
 }
-function updateSbPopoverActive() {
-  document.querySelectorAll('.sb-popover-opt').forEach(opt => {
-    opt.classList.toggle('active', opt.dataset.sbmode === sidebarMode);
-  });
-}
-// Close popover on outside click
-document.addEventListener('click', e => {
-  const wrap = document.getElementById('sbCtrlWrap');
-  if (wrap && !wrap.contains(e.target)) closeSbPopover();
-});
+
+/* Sobraram do popover que saiu; ficam como no-op para não quebrar as chamadas
+   antigas espalhadas (setSidebarMode, sidebarHoverOut). */
+function closeSbPopover() {}
+function updateSbPopoverActive() { fpBarraIcone(); }
 
 (function initSidebar() {
-  const saved = localStorage.getItem('fp_sidebar') || 'expanded';
+  /* 'collapsed' seco deixou de ser oferecido: quem tinha essa preferencia
+     guardada passa a ter o recolhido que expande ao passar o mouse. */
+  let saved = localStorage.getItem('fp_sidebar') || 'expanded';
+  if (saved === 'collapsed') saved = 'hover';
   sidebarMode = saved;
   const shell = document.getElementById('app');
   if (saved === 'collapsed') {
