@@ -3172,7 +3172,10 @@
 :root, [data-theme="dark"] {
   --perigo: #e5484d;           /* vermelho de ACAO DESTRUTIVA, separado do vermelho da marca */
   --perigo-bg: rgba(229,72,77,.14);
-  --foco: #6ea8ff;             /* anel de foco visivel */
+  /* Anel de foco no vermelho da marca — pedido do dono. Fica fino (1px) para
+     nao virar moldura: quem navega por teclado precisa saber onde esta, nao
+     levar um susto. */
+  --foco: #ff4d4d;
   --raio-sm: 4px;
   --raio-md: 8px;
   --raio-pill: 999px;
@@ -3190,7 +3193,9 @@
 [data-theme="light"] {
   --perigo: #c62828;
   --perigo-bg: rgba(198,40,40,.10);
-  --foco: #1d4ed8;
+  /* No claro, o vermelho da marca (#ff2d2d) da 3,4:1 sobre branco; este tom
+     mais escuro passa dos 4,5:1 e continua sendo o mesmo vermelho. */
+  --foco: #d11f1f;
 
   /* no claro o texto precisa escurecer: o mesmo tom que funciona sobre preto
      cai para ~2:1 sobre branco */
@@ -3218,7 +3223,7 @@ textarea:focus-visible,
 .fp-icon-btn:focus-visible,
 .filter-btn:focus-visible,
 .proj-filter-chip:focus-visible {
-  outline: 2px solid var(--foco) !important;
+  outline: 1px solid var(--foco) !important;
   outline-offset: 2px !important;
 }
 /* o <main> so recebe foco via "pular para o conteudo"; nao precisa de anel */
