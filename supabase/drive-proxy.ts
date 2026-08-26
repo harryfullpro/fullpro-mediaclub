@@ -768,12 +768,20 @@ Deno.serve(async (req: Request) => {
       // pedir os metadados de novo, uma ida ao Google a menos por imagem
       for (const a of arquivos as any[]) metaGuardar(a.id, a.mimeType, a.thumbnailLink);
       const base = baseDaFuncao(url);
+      /* `direto` e o thumbnailLink cru do Google. Se ele abrir sem credencial,
+         o navegador busca a foto no CDN do Google e esta funcao sai do caminho:
+         hoje cada imagem faz navegador -> Supabase -> Google -> volta.
+         O cliente usa `direto` e cai em `thumb`/`cheia` se falhar. */
+      const comTamanho = (link: string, tam: string) =>
+        link ? String(link).replace(/=s\d+(-c)?$/, '') + tam : '';
       const fotos = arquivos.map((a: any) => ({
         id: a.id,
         name: a.name,
         mimeType: a.mimeType,
         thumb: `${base}?action=arquivo&id=${encodeURIComponent(a.id)}`,
         cheia: `${base}?action=arquivo&id=${encodeURIComponent(a.id)}&full=1`,
+        direto: comTamanho(a.thumbnailLink, '=s320'),
+        direto_cheia: comTamanho(a.thumbnailLink, '=s1600'),
       }));
       return json({ configurado: true, sku, folder_id: pasta.id, total: fotos.length, fotos });
     }

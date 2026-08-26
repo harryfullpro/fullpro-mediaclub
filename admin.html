@@ -17329,11 +17329,32 @@ function renderFotoGaleria(refazerOrdem) {
    Desenhar a tira antes disparava 12 pedidos ao mesmo tempo e a foto que o
    operador quer ver ficava atrás deles na fila. */
 let _visorEl = null, _visorFotos = [], _visorI = 0, _visorSku = '', _visorToken = 0, _visorImgToken = 0;
+
+/* O Drive devolve, na própria listagem da pasta, um link que o navegador abre
+   DIRETO no CDN do Google, sem credencial. Medido: 3,7x mais rápido numa
+   galeria de 12 fotos (1,0s contra 3,8s), porque a foto deixa de fazer
+   navegador -> Supabase -> Google -> volta.
+
+   Duas coisas ditam como isso é usado:
+   • o link morre em menos de 12h — por isso a listagem é reservada por pouco
+     tempo (ver _visorListas) e o proxy fica de reserva;
+   • a resposta do Google não manda Access-Control-Allow-Origin, então só
+     serve para `src` de <img>. `fetch` e canvas continuam pelo proxy. */
+function fpVisorSrc(f, cheia) {
+  if (!f) return { url: '', reserva: '' };
+  return cheia
+    ? { url: f.direto_cheia || f.cheia || '', reserva: f.cheia || '' }
+    : { url: f.direto || f.thumb || '',       reserva: f.thumb || '' };
+}
 const _visorCache = new Map();   // url da foto grande -> Image já baixada
 /* Listagem da pasta por SKU, enquanto a aba estiver aberta. Ler a pasta no
    Drive leva alguns segundos e é o que segura o visor; reabrir o mesmo
    produto não precisa pagar isso de novo. */
 const _visorListas = new Map();
+/* Curta de propósito: o link direto do Google embutido na listagem morre em
+   menos de 12h. Meia hora deixa reabrir o mesmo produto de graça sem correr
+   o risco de servir link vencido. */
+const VALIDADE_LISTA_MS = 30 * 60 * 1000;
 
 async function fpGalAbrirFotos(sku) {
   const prod = fpFotoProduto(sku) || { sku };
@@ -17364,14 +17385,15 @@ async function fpGalAbrirFotos(sku) {
     _visorEl.querySelector('.fp-visor-palco').appendChild(previa);
   }
 
-  let fotos = _visorListas.get(sku) || null;
+  const guardada = _visorListas.get(sku);
+  let fotos = (guardada && Date.now() - guardada.em < VALIDADE_LISTA_MS) ? guardada.fotos : null;
   if (!fotos) {
     try {
       const r = await fetch(FP_DRIVE_URL + '?action=fotos&sku=' + encodeURIComponent(sku));
       const j = await r.json();
       if (token !== _visorToken) return;        // o operador já abriu outro produto
       fotos = (j && j.fotos) || [];
-      _visorListas.set(sku, fotos);
+      _visorListas.set(sku, { fotos, em: Date.now() });
     } catch (e) {
       if (token !== _visorToken) return;
       fpVisorPalco('Não deu para ler a pasta: ' + (e.message || String(e)));
@@ -17392,9 +17414,13 @@ async function fpGalAbrirFotos(sku) {
 
 function fpVisorTira() {
   const tira = _visorEl.querySelector('.fp-visor-tira-in');
-  tira.innerHTML = _visorFotos.map((f, k) =>
-    '<img src="' + escHtml(f.thumb || '') + '" alt="' + escHtml(f.name || '') + '" loading="eager"'
-    + ' data-k="' + k + '" title="' + escHtml(f.name || '') + '">').join('');
+  tira.innerHTML = _visorFotos.map((f, k) => {
+    const src = fpVisorSrc(f, false);
+    return '<img src="' + escHtml(src.url) + '" alt="' + escHtml(f.name || '') + '" loading="eager"'
+      + (src.reserva && src.reserva !== src.url
+          ? ' onerror="this.onerror=null;this.src=\'' + fpJs(src.reserva) + '\'"' : '')
+      + ' data-k="' + k + '" title="' + escHtml(f.name || '') + '">';
+  }).join('');
   tira.querySelectorAll('img').forEach(im => { im.onclick = () => fpVisorPara(Number(im.dataset.k)); });
   fpVisorMarcarTira();
 }
@@ -17412,7 +17438,7 @@ async function fpVisorAdiantar(token) {
   for (let d = 1; d <= _visorFotos.length; d++) {
     if (token !== _visorToken) return;
     const f = _visorFotos[(_visorI + d) % _visorFotos.length];
-    const url = f && (f.cheia || f.thumb);
+    const url = fpVisorSrc(f, true).url;
     if (!url || _visorCache.has(url)) continue;
     await new Promise(resolve => {
       const im = new Image();
@@ -17489,30 +17515,36 @@ function fpVisorPara(k, previaUrl) {
   if (!_visorEl || !_visorFotos.length) return;
   _visorI = Math.max(0, Math.min(_visorFotos.length - 1, k));
   const f = _visorFotos[_visorI];
-  const url = f.cheia || f.thumb || '';
+  const alvo = fpVisorSrc(f, true);
   const palco = fpVisorPalco('');
   const meu = ++_visorImgToken;
 
   const img = document.createElement('img');
   img.alt = f.name || '';
-  const pronta = _visorCache.get(url);
+  const pronta = _visorCache.get(alvo.url);
   if (pronta && pronta.complete && pronta.naturalWidth) {
-    img.src = url;                               // já adiantada: entra sem piscar
+    img.src = alvo.url;                          // já adiantada: entra sem piscar
   } else {
-    const previa = previaUrl || f.thumb;
+    const previa = previaUrl || fpVisorSrc(f, false).url;
     if (previa) { img.src = previa; img.classList.add('previa'); }
-    const grande = new Image();
-    grande.onload = () => {
-      if (meu !== _visorImgToken) return;
-      img.src = url;
-      img.classList.remove('previa');
+    /* Tenta o link do Google e, se ele tiver expirado, cai no proxy — que é
+       mais lento mas nunca vence. */
+    const tentar = (url, reserva) => {
+      const grande = new Image();
+      grande.onload = () => {
+        if (meu !== _visorImgToken) return;
+        img.src = url;
+        img.classList.remove('previa');
+      };
+      grande.onerror = () => {
+        if (meu !== _visorImgToken) return;
+        if (reserva && reserva !== url) { tentar(reserva, ''); return; }
+        if (!previa) fpVisorPalco('Não deu para carregar esta foto.');
+      };
+      grande.src = url;
+      _visorCache.set(url, grande);
     };
-    grande.onerror = () => {
-      if (meu !== _visorImgToken) return;
-      if (!f.thumb) fpVisorPalco('Não deu para carregar esta foto.');
-    };
-    grande.src = url;
-    _visorCache.set(url, grande);
+    tentar(alvo.url, alvo.reserva);
   }
   palco.appendChild(img);
 
