@@ -20161,8 +20161,12 @@ function openLightbox(src) {
    funcao mesmo.
    ========================================================================== */
 const FP_MENUS = new Map();
+/* Quando cada menu foi registrado. Ver fpMenuColetar. */
+const FP_MENU_NASC = new Map();
 let fpMenuSeq = 0;
 let fpMenuAberto = null;
+let fpMenuColetaAgendada = false;
+const FP_MENU_CARENCIA_MS = 30000;
 
 const FP_ICONES = {
   ver:      '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
@@ -20185,11 +20189,27 @@ const FP_ICONES = {
 /* Cada render cria ids novos e as acoes sao closures que seguram o objeto do
    item. Sem limpeza, o registro cresceria a cada re-render da lista. Quando
    passa do teto, descarta o que ja nao tem botao correspondente na tela. */
+/* A limpeza do registro NUNCA pode rodar no meio de um render.
+   fpMenuHtml devolve HTML como TEXTO: enquanto a listagem está sendo montada,
+   os botões recém-registrados ainda não existem no DOM. Uma varredura por
+   getElementById no meio dessa montagem apaga justamente eles — e foi o que
+   acontecia: ao cruzar os 400 registros durante uma troca de filtro, as linhas
+   já montadas naquele mesmo render ficavam com o menu morto. O botão recebia o
+   clique, não achava as ações e voltava sem abrir nada, sem erro no console.
+
+   Duas travas: a varredura é adiada para depois da tarefa atual (aí o innerHTML
+   já entrou) e ignora tudo que nasceu há menos de 30 segundos. */
 function fpMenuColetar() {
-  if (FP_MENUS.size < 400) return;
-  FP_MENUS.forEach(function (_, id) {
-    if (!document.getElementById(id)) FP_MENUS.delete(id);
-  });
+  if (FP_MENUS.size < 400 || fpMenuColetaAgendada) return;
+  fpMenuColetaAgendada = true;
+  setTimeout(function () {
+    fpMenuColetaAgendada = false;
+    const agora = Date.now();
+    FP_MENUS.forEach(function (_, id) {
+      if (agora - (FP_MENU_NASC.get(id) || 0) < FP_MENU_CARENCIA_MS) return;
+      if (!document.getElementById(id)) { FP_MENUS.delete(id); FP_MENU_NASC.delete(id); }
+    });
+  }, 0);
 }
 
 /** Monta o HTML do botao "…". itens = [{rotulo, icone, acao, perigo, sep, href}] */
@@ -20198,6 +20218,7 @@ function fpMenuHtml(itens, opcoes) {
   fpMenuColetar();
   const id = 'fpmenu' + (++fpMenuSeq);
   FP_MENUS.set(id, itens.filter(Boolean));
+  FP_MENU_NASC.set(id, Date.now());
   return '<button type="button" class="fp-menu-btn" id="' + id + '"'
     + ' aria-haspopup="menu" aria-expanded="false"'
     + ' aria-label="' + escHtml(opcoes.rotulo || 'Mais ações') + '"'
@@ -20243,7 +20264,12 @@ function fpMenuAbrir(ev, id) {
 
   const itens = FP_MENUS.get(id) || [];
   const botao = document.getElementById(id);
-  if (!botao || !itens.length) return;
+  /* Falhar calado aqui foi o que fez esse bug durar: o botão respondia ao
+     clique e não abria nada. Se acontecer de novo, deixa rastro. */
+  if (!botao || !itens.length) {
+    console.warn('[menu] sem ações registradas para', id, '— o registro foi limpo antes da hora?');
+    return;
+  }
 
   const painel = document.createElement('div');
   painel.className = 'fp-menu';
