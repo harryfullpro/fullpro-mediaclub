@@ -5219,15 +5219,12 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
       <span class="nav-label">Edição</span>
     </button>
     <button class="nav-item" data-view="clips">
-      <!-- A marca do Mercado Livre: elipse com o aperto de mao dentro. O
-           segredo para ela sobreviver a 18px foi a elipse — sem ela, a mao
-           sozinha vira rabisco (duas tentativas reprovadas). Com o contorno
-           em volta, o olho reconhece a marca pela silhueta e a mao so precisa
-           ser uma massa diagonal no lugar certo.
-           O aperto vai com traco mais grosso que o resto do icone (2.2 contra
-           1.8) de proposito: e ele que tem de virar massa, e a elipse e que
-           tem de ficar fina para nao fechar o vao entre as duas. -->
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="10.4" ry="8.2"/><g stroke-width="2.2"><path d="M6.2 11.8 8.4 10.4a1.7 1.7 0 0 1 1.9.1l4.1 3"/><path d="M17.8 11.8 15.6 10.4a1.7 1.7 0 0 0-1.9.1L12 11.9"/><path d="m10 13.2 1.7 1.2"/></g></svg>
+      <!-- So as duas maos do Mercado Livre, sem a elipse. Sem a moldura, elas
+           tem de carregar sozinhas o reconhecimento: por isso ocupam a caixa
+           inteira e vao a 2.4 de traco, contra 1.8 do resto da barra. Com o
+           desenho miudo e fino (as duas primeiras tentativas) isso vira
+           rabisco no tamanho real. -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g stroke-width="2.4"><path d="M2 13.2 6.2 9.6a3 3 0 0 1 3.7 0l7.1 5.6"/><path d="M22 13.2 17.8 9.6a3 3 0 0 0-3.7 0l-2.2 1.8"/><path d="m7.2 15.4 4 3.2"/><path d="m10.6 12.8 4 3.2"/></g></svg>
       <span class="nav-label">Clips</span>
     </button>
     <button class="nav-item" data-view="debriefing">
