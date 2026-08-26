@@ -5758,7 +5758,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
           <p id="dashSub">Visão geral de todas as áreas do Media Club.</p>
         </div>
         <div class="fp-sinc-bloco" id="fotoSincBloco" style="display:none">
-          <button class="fp-acao-txt" id="fotoSyncBtn" onclick="fpFotoSincronizar()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 11-3.2-6.9"/><polyline points="21 3 21 9 15 9"/></svg><span>Sincronizar catálogo</span></button>
+          <button class="fp-acao-txt" id="fotoSyncBtn" data-tip="Puxa nome, SKU e estoque do Bling. Leva alguns minutos e mostra o progresso" onclick="fpFotoSincronizar()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 11-3.2-6.9"/><polyline points="21 3 21 9 15 9"/></svg><span>Sincronizar catálogo</span></button>
           <div class="fp-sinc-linha">
             <div class="fp-sinc-quando" id="fotoSyncQuando"></div>
             <div class="fp-sinc-trilho" id="fotoSincTrilho" style="display:none"><i></i></div>
@@ -6762,11 +6762,11 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
       </div></div>
       <div class="filter-bar">
         <span class="fp-so-desktop" style="display:contents">
-          <button class="filter-btn active" data-fpfiltro="fila" onclick="fpProdFiltrar('fila')">Na fila</button>
-          <button class="filter-btn" data-fpfiltro="pendente" onclick="fpProdFiltrar('pendente')">Sem prioridade</button>
-          <button class="filter-btn" data-fpfiltro="emergencial" onclick="fpProdFiltrar('emergencial')">Emergenciais</button>
-          <button class="filter-btn" data-fpfiltro="comfoto" onclick="fpProdFiltrar('comfoto')">Já fotografados</button>
-          <button class="filter-btn" data-fpfiltro="fora" onclick="fpProdFiltrar('fora')">Fora de linha</button>
+          <button class="filter-btn active" data-fpfiltro="fila" data-tip="Produtos sem foto que já têm prioridade definida" onclick="fpProdFiltrar('fila')">Na fila</button>
+          <button class="filter-btn" data-fpfiltro="pendente" data-tip="Sem foto e ainda sem prioridade — é aqui que se começa" onclick="fpProdFiltrar('pendente')">Sem prioridade</button>
+          <button class="filter-btn" data-fpfiltro="emergencial" data-tip="Os que furam a fila no próximo lote" onclick="fpProdFiltrar('emergencial')">Emergenciais</button>
+          <button class="filter-btn" data-fpfiltro="comfoto" data-tip="Produtos que já têm foto no Drive" onclick="fpProdFiltrar('comfoto')">Já fotografados</button>
+          <button class="filter-btn" data-fpfiltro="fora" data-tip="Tirados da listagem: não entram em lote nem nas contas" onclick="fpProdFiltrar('fora')">Fora de linha</button>
         </span>
         <select class="fp-so-mobile fp-lista-select" id="fotoProdFiltroSelect" aria-label="Filtrar produtos" onchange="fpProdFiltrar(this.value)">
           <option value="fila">Na fila</option>
@@ -6790,9 +6790,9 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
       </div></div>
       <div class="filter-bar">
         <span class="fp-so-desktop" style="display:contents">
-          <button class="filter-btn active" data-fpgal="todos" onclick="fpGalFiltrar('todos')">Com foto</button>
-          <button class="filter-btn" data-fpgal="semnota" onclick="fpGalFiltrar('semnota')">Sem avaliação</button>
-          <button class="filter-btn" data-fpgal="refazer" onclick="fpGalFiltrar('refazer')">Precisam refazer</button>
+          <button class="filter-btn active" data-fpgal="todos" data-tip="Tudo que já tem foto, avaliado ou não" onclick="fpGalFiltrar('todos')">Com foto</button>
+          <button class="filter-btn" data-fpgal="semnota" data-tip="Fotos que ninguém deu nota ainda" onclick="fpGalFiltrar('semnota')">Sem avaliação</button>
+          <button class="filter-btn" data-fpgal="refazer" data-tip="Nota baixa: voltaram para a fila da Produção" onclick="fpGalFiltrar('refazer')">Precisam refazer</button>
         </span>
         <select class="fp-so-mobile fp-lista-select" id="fotoGalFiltroSelect" aria-label="Filtrar galeria" onchange="fpGalFiltrar(this.value)">
           <option value="todos">Com foto</option>
@@ -16567,7 +16567,7 @@ function renderFotoProducao(refazerOrdem, desde) {
 
   const mais = document.getElementById('fotoProdMais');
   mais.innerHTML = lista.length > _prodMostra
-    ? '<button class="fp-acao-txt fp-mais" type="button" onclick="fpProdMais()">Mostrar mais '
+    ? '<button class="fp-acao-txt fp-mais" type="button" data-tip="Carrega o próximo bloco no fim da listagem" onclick="fpProdMais()">Mostrar mais '
         + Math.min(FP_FOTO_PAGINA * 2, lista.length - _prodMostra)
         + '<svg viewBox="0 0 24 24" aria-hidden="true">' + FP_ICONES.baixo + '</svg></button>'
     : '';
@@ -16700,6 +16700,7 @@ function fpProdLoteBarra() {
      dizer "Voltar para a listagem" — o contrario do que ele faz. */
   const todosFora = n > 0 && [..._prodSel].every(sku => { const p = fpFotoProduto(sku); return p && p.excluido; });
   const bt = (k, rot) => '<button class="fp-lote-p" type="button"' + trava
+    + ' data-tip="Marca os selecionados como ' + rot.toLowerCase() + '"'
     + ' style="--fp-lote-cor:' + fpPrioCor(k) + '" onclick="fpProdLotePrioridade(' + k + ')">'
     + rot + '</button>';
   /* A lixeira do menu de acoes, e nao um X proprio: e o mesmo gesto, tem que
@@ -16715,17 +16716,20 @@ function fpProdLoteBarra() {
     + '<b' + (vazia ? ' class="apagado"' : '') + '>'
     + (vazia ? 'Nenhum selecionado' : n + (n === 1 ? ' selecionado' : ' selecionados')) + '</b>'
     + (n < naTela.length
-        ? '<button class="fp-lote-link neutro" type="button" onclick="fpProdLoteTodos()">Selecionar todos (' + naTela.length + ')</button>'
+        ? '<button class="fp-lote-link neutro" type="button" data-tip="Marca todos os produtos visíveis nesta aba" onclick="fpProdLoteTodos()">Selecionar todos (' + naTela.length + ')</button>'
         : '')
     + (vazia ? ''
-        : '<button class="fp-lote-link neutro" type="button" onclick="fpProdLoteLimpar()">Limpar seleção</button>')
+        : '<button class="fp-lote-link neutro" type="button" data-tip="Desmarca tudo o que está selecionado" onclick="fpProdLoteLimpar()">Limpar seleção</button>')
     + '</span>'
     + '<span class="fp-prod-lote-acoes' + (vazia ? ' apagado' : '') + '">'
     + '<span class="fp-prod-lote-rot">Definir prioridade</span>'
     + bt(1, 'Baixa') + bt(2, 'Média') + bt(3, 'Alta') + bt(5, 'Emergencial')
     + '</span>'
     + '<span class="fp-lote-dir' + (vazia ? ' apagado' : '') + '">'
-    + '<button class="fp-lote-link perigo" type="button"' + trava + ' onclick="'
+    + '<button class="fp-lote-link perigo" type="button"' + trava
+    + ' data-tip="' + (todosFora
+        ? 'Traz os selecionados de volta para a fila do estúdio'
+        : 'Tira os selecionados da listagem: não entram em lote nem nas contas') + '" onclick="'
     + (todosFora ? 'fpProdLoteRestaurar()">' + iconeVolta + 'Voltar para a listagem'
                  : 'fpProdLoteExcluir()">' + iconeLixo + 'Remover da listagem')
     + '</button></span></div>';
@@ -18578,8 +18582,10 @@ async function renderFotoSeparacao() {
   topo.innerHTML = '<div class="filter-bar">'
     + '<span class="fp-aviso-sub" style="margin-right:6px;padding:6px 0 11px">Tamanho do lote</span>'
     + [10, 15, 20, 30].map(t => '<button class="filter-btn' + (t === _sepTamanho ? ' active' : '')
-        + '" type="button" onclick="fpSepTamanho(' + t + ')">' + t + '</button>').join('')
+        + '" type="button" data-tip="Montar um lote de ' + t + ' produtos para a bancada"'
+        + ' onclick="fpSepTamanho(' + t + ')">' + t + '</button>').join('')
     + '<button class="fp-info-btn" type="button" id="fotoSepLogicaBtn" aria-expanded="false"'
+    + ' data-tip="Mostra como o lote foi montado: quem entrou, por qual faixa e por quê"'
     + ' aria-controls="fotoSepLogica" onclick="fpSepLogica()">'
     + '<span class="fp-info-ico">' + FP_ICO_OLHO_OFF + '</span>Ver lógica</button>'
     + fpSepContagemHtml()
@@ -18616,7 +18622,7 @@ async function renderFotoSeparacao() {
   rod.innerHTML = '<div class="filter-bar" style="margin-top:16px;border:0">'
     + '<span class="fp-aviso-sub">O painel gera um PDF com a lista e devolve um link público — '
     + 'é só mandar o link para quem separa.</span>'
-    + '<button class="action-btn approve" type="button" id="fotoSepGerar" onclick="fpSepGerar()"'
+    + '<button class="action-btn approve" type="button" id="fotoSepGerar" data-tip="Fecha o lote e gera o PDF com link público para quem vai buscar no estoque" onclick="fpSepGerar()"'
     + (_sepLote.itens.length ? '' : ' disabled') + ' style="margin-left:auto">Gerar lista de separação</button>'
     + '</div><div id="fotoSepDepois"></div>'
     + fpSepHistoricoHtml();
@@ -18831,7 +18837,7 @@ async function renderFotoLote() {
       + '<h3>Nenhum lote em aberto</h3>'
       + '<p>Os produtos aparecem aqui depois que um lote é montado. Vá em Separação, escolha o tamanho e gere a lista.</p>'
       + (fpTemAcesso('foto-separacao')
-          ? '<button class="fp-vazio-acao" type="button" onclick="fpIrPara(\'foto-separacao\')">Ir para Separação</button>'
+          ? '<button class="fp-vazio-acao" type="button" data-tip="Monte um lote para os produtos aparecerem aqui" onclick="fpIrPara(\'foto-separacao\')">Ir para Separação</button>'
           : '')
       + '</div>';
     return;
@@ -18843,8 +18849,8 @@ async function renderFotoLote() {
     + '<span class="fp-lista-contagem">Lote de ' + new Date(_loteAtual.created_at).toLocaleDateString('pt-BR')
     + ' · ' + feitos + ' de ' + itens.length + ' fotografados</span>'
     + '<span style="margin-left:auto;display:flex;gap:8px">'
-    + '<button class="action-btn reject" type="button" onclick="fpLoteCancelar()">Cancelar lote</button>'
-    + '<button class="action-btn approve" type="button" onclick="fpLoteConcluir()">Concluir lote</button>'
+    + '<button class="action-btn reject" type="button" data-tip="Cancela o lote: os produtos voltam para a fila sem foto" onclick="fpLoteCancelar()">Cancelar lote</button>'
+    + '<button class="action-btn approve" type="button" data-tip="Fecha o lote como concluído" onclick="fpLoteConcluir()">Concluir lote</button>'
     + '</span></div>';
 
   lista.innerHTML = itens.map(i => {
@@ -18997,8 +19003,9 @@ function fpGalOrdenaBarra(vazia) {
   el.innerHTML = '<span class="fp-ordena-rot">Ordenar por</span>'
     + FP_GAL_ORDENS.map(([k, rot]) => {
         const ativo = k === _galOrdenar;
+        const dica = ativo ? 'Clique de novo para inverter a ordem' : 'Ordenar a listagem por ' + rot.toLowerCase();
         return '<button type="button" class="' + (ativo ? 'on' : '') + (ativo && _galDir < 0 ? ' sobe' : '')
-          + '" onclick="fpGalOrdenar(\'' + k + '\')" aria-pressed="' + ativo + '">' + rot
+          + '" data-tip="' + dica + '" onclick="fpGalOrdenar(\'' + k + '\')" aria-pressed="' + ativo + '">' + rot
           + (ativo ? '<svg viewBox="0 0 24 24" aria-hidden="true">' + FP_ICONES.baixo + '</svg>' : '') + '</button>';
       }).join('');
 }
@@ -19089,13 +19096,13 @@ function renderFotoGaleria(refazerOrdem, desde) {
     + '<span class="fp-prod-sku">' + escHtml(p.sku) + (p.refazer ? ' · refazer' : '') + '</span></span>'
     + fpProdEstoqueHtml(p.estoque)
     + '<span class="fp-prod-fim">' + fpNotaHtml(p)
-    + (admin ? '<button class="fp-nota-btn" type="button" onclick="fpNotaAvaliar(\'' + fpJs(p.sku) + '\')">'
+    + (admin ? '<button class="fp-nota-btn" type="button" data-tip="Ver a foto ampliada e dar nota de 1 a 5" onclick="fpNotaAvaliar(\'' + fpJs(p.sku) + '\')">'
         + (p.nota != null ? 'Re-avaliar' : 'Avaliar') + '</button>' : '')
     + '</span></div>').join('');
   if (anexar) box.insertAdjacentHTML('beforeend', html); else box.innerHTML = html;
 
   document.getElementById('fotoGalMais').innerHTML = lista.length > _galMostra
-    ? '<button class="fp-acao-txt fp-mais" type="button" onclick="fpGalMais()">Mostrar mais '
+    ? '<button class="fp-acao-txt fp-mais" type="button" data-tip="Carrega o próximo bloco no fim da listagem" onclick="fpGalMais()">Mostrar mais '
         + Math.min(FP_FOTO_PAGINA * 2, lista.length - _galMostra)
         + '<svg viewBox="0 0 24 24" aria-hidden="true">' + FP_ICONES.baixo + '</svg></button>'
     : '';
