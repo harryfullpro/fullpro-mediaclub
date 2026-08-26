@@ -161,10 +161,15 @@
      Botao que se mexe sozinho debaixo do cursor e clique errado na certa. */
   .fp-usr-btn {
     position: relative;
-    /* Recuo a esquerda calculado para o centro da foto cair na mesma coluna do
-       centro dos icones do menu (medido, nao estimado). */
-    display: flex; align-items: center; padding: 3px 3px 3px 8px; border: 0; background: none;
-    border-radius: 999px; cursor: pointer; flex-shrink: 0;
+    /* O alinhamento com a coluna de icones vem de MARGEM, nunca de recuo
+       interno. Com `padding: 3px 3px 3px 8px` o botao virava 41x36 — o anel
+       de foco desenhava uma elipse e a foto ficava 2,5px fora do centro dela
+       (medido). Margem desloca o botao inteiro e deixa a caixa quadrada:
+       12 (recuo do rodape) + 8 + 15 = 35, a mesma coluna dos icones. */
+    display: flex; align-items: center; justify-content: center;
+    margin-left: 8px; padding: 0; border: 0; background: none;
+    width: 30px; height: 30px;
+    border-radius: 50%; cursor: pointer; flex-shrink: 0;
     transition: box-shadow .14s ease;
   }
   .fp-usr-btn:hover { box-shadow: 0 0 0 2px var(--border-hi); }
