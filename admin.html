@@ -426,11 +426,11 @@
 
   .actions { display: flex; gap: 6px; }
   .action-btn {
-    padding: 6px 12px;
+    padding: 7px 14px;
     border: 1px solid var(--border);
     background: var(--bg-elev);
     color: var(--text);
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 12px;
     font-weight: 600;
@@ -438,9 +438,18 @@
     font-family: inherit;
   }
   .action-btn:hover { border-color: var(--border-hi); }
-  .action-btn.approve, .action-btn.whats { background: var(--success); border-color: var(--success); color: #fff; }
-  .action-btn.approve:hover, .action-btn.whats:hover { background: #36df89; border-color: #36df89; }
-  [data-theme="light"] .action-btn.approve, [data-theme="light"] .action-btn.whats { color: #001e10; }
+  /* Verde mais vivo que o --success, que é o tom de estado nos selos e ficava
+     apagado num botão de ação. */
+  .action-btn.approve, .action-btn.whats {
+    background: #00d76a; border-color: #00d76a; color: #04220f;
+  }
+  .action-btn.approve:hover, .action-btn.whats:hover { background: #16ef7f; border-color: #16ef7f; }
+  [data-theme="light"] .action-btn.approve, [data-theme="light"] .action-btn.whats {
+    background: #00b85a; border-color: #00b85a; color: #fff;
+  }
+  [data-theme="light"] .action-btn.approve:hover, [data-theme="light"] .action-btn.whats:hover {
+    background: #00a350; border-color: #00a350;
+  }
   .action-btn.reject { background: transparent; color: var(--danger); border-color: rgba(255,77,77,.3); }
   .action-btn.reject:hover { background: rgba(255,77,77,.1); }
   .action-btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
@@ -3253,12 +3262,12 @@ main:focus, main:focus-visible { outline: none !important; }
 .fp-confirm-acoes { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
 .fp-btn-sec, .fp-btn-pri {
   min-height: var(--toque); padding: 0 18px;
-  border-radius: var(--raio-md); font-size: 13.5px; font-weight: 650;
+  border-radius: 6px; font-size: 13.5px; font-weight: 650;
   cursor: pointer; font-family: inherit; border: 1px solid transparent;
 }
 .fp-btn-sec { background: transparent; border-color: transparent; color: var(--perigo); }
 .fp-btn-sec:hover { background: color-mix(in srgb, var(--perigo) 12%, transparent); }
-.fp-btn-pri { background: var(--success); color: #04220f; }
+.fp-btn-pri { background: #00d76a; color: #04220f; }
 .fp-btn-pri:hover { filter: brightness(1.07); }
 .fp-btn-pri.perigo { background: var(--perigo); color: #fff; }
 .fp-btn-pri { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
@@ -17496,8 +17505,10 @@ async function fpSepGerar() {
     const { error: errUp } = await sb.storage.from('separacao')
       .upload(nome, new Blob([bytes], { type: 'application/pdf' }), { contentType: 'application/pdf' });
     if (errUp) throw errUp;
-    const { data: pub } = sb.storage.from('separacao').getPublicUrl(nome);
-    const link = pub && pub.publicUrl;
+    /* O endereço cru do Supabase é um id de projeto sem significado nenhum
+       para quem recebe. O vercel.json reescreve /lista/<arquivo> para o balde,
+       então o link sai no domínio do Media Club. */
+    const link = 'https://mediaclub.fullpro.com.br/lista/' + nome;
 
     const { data: lote, error } = await sb.from('mc_photo_batches').insert({
       criado_por_id: CURRENT_USER ? CURRENT_USER.id : null, criado_por_nome: quem,
