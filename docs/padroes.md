@@ -559,6 +559,49 @@ listagem aparecendo acima da barra.
 
 ---
 
+## Anel de foco: `[tabindex="0"]`, nunca `[tabindex]`
+
+O seletor largo pega também os `tabindex="-1"`, que existem para receber foco
+**por programa** — o `<main>` do "pular para o conteúdo" é um deles. Pior: um
+seletor de atributo (0,2,0) ganha de `main:focus-visible` (0,1,1), então a regra
+que deveria apagar o anel do main nunca valia, e ele contornava a área de
+conteúdo inteira.
+
+Anel só onde o Tab chega. Foco programático não desenha nada.
+
+---
+
+## Sticky não avisa quando gruda — use uma sentinela
+
+Comparar o topo do elemento com o `top` da regra **não funciona**: medido, um
+slot com `top: calc(-1 * var(--pad-topo))` para em 0, não nos −32px pedidos.
+Quem manda no ponto de parada é a caixa que o contém, não só a propriedade.
+
+O que funciona é uma marca de altura zero imediatamente acima, que continua
+rolando normalmente:
+
+```js
+grudou = sentinela.getBoundingClientRect().top < alvo.getBoundingClientRect().top - 1;
+```
+
+Vale para sombra, borda, qualquer coisa que só deva existir no estado grudado.
+E lembre: **quem rola é o `<main>`**, não a janela.
+
+---
+
+## Camada decorativa atrás de conteúdo pede `isolation: isolate`
+
+Pseudo-elemento posicionado passa por cima de filhos estáticos. Para pintar
+**atrás** do conteúdo (a malha de blueprint da barra lateral, por exemplo):
+`isolation: isolate` no pai, `z-index: 0` no pseudo e `position: relative;
+z-index: 1` nos filhos.
+
+E calibre por tema: linha escura sobre branco tem contraste de verdade, no
+escuro a mesma alfa vira quase nada. A barra lateral usa **menos da metade** da
+opacidade no claro.
+
+---
+
 ## Botão redondo se alinha por margem, nunca por recuo interno
 
 `border-radius: 50%` num botão que não é quadrado desenha uma **elipse**, e o

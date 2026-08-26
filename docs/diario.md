@@ -45,6 +45,75 @@ retângulo casando com o alvo dentro de 1px, o cartão inteiro dentro da janela,
 `?` escondido fora dos módulos de foto e o tutorial **não** reabrindo na segunda
 visita.
 
+### Ajustes do dono, no mesmo dia
+
+- **O texto é do operador, não do projeto.** Saíram dos passos as explicações de
+  *por que* a interface é assim — o tamanho do alvo de clique, o que recarrega e
+  o que não, o que acompanha a rolagem. Isso é conversa de quem constrói; quem
+  usa quer saber o que fazer.
+- **O `?` virou o símbolo de texto**, sem chapa nem borda. É um sinal, não um
+  controle que precise anunciar área de clique — a caixa de 42px continua ali
+  para o toque, só não aparece.
+- **Durante o tutorial, os únicos alvos vivos são Sair e Próximo.** O fundo
+  deixou de avançar o passo ao ser clicado, e `#app` mais os dois botões
+  flutuantes ficam `inert` enquanto ele roda. O laço de foco sozinho não
+  segurava: chamar `.focus()` de dentro do próprio `focusin` é engolido pelo
+  navegador — medido, o foco continuava no botão da listagem, onde Enter
+  dispararia a ação.
+
+---
+
+## 26/08/2026 · A prancheta na barra lateral, e três defeitos que ela achou
+
+A mesma malha da tela de entrar passou a rodar atrás do menu, **em voz baixa**:
+um terço da opacidade do login, porque aqui ela vive debaixo de texto o tempo
+todo. Papel milimetrado de 20px com a grossa de 80px, máscara apagando topo e
+base, e um brilho que sobe e desce em 46s.
+
+**`isolation: isolate` na barra é obrigatório.** Sem contexto de empilhamento, o
+pseudo-elemento posicionado passa por cima dos itens do menu, que são estáticos.
+
+**No claro tudo pesa mais.** Linha escura sobre branco tem contraste de verdade;
+no escuro a mesma alfa vira quase nada. A malha caiu para menos da metade e o
+brilho de .075 para .030 — no branco o vermelho pintava a barra de rosa.
+
+### O anel vermelho que contornava a tela inteira
+
+> *"toda vez que eu seguro shift esse div da tela fica com esse contorno
+> vermelho"*
+
+O seletor do anel de foco era `[tabindex]` solto, que pega também os
+`tabindex="-1"` — elementos que existem para receber foco **por programa**, não
+pela navegação. O `<main>` é um deles. E como o seletor de atributo tem
+especificidade (0,2,0) contra (0,1,1) de `main:focus-visible`, a regra que
+deveria apagar o anel do main **nunca valeu**.
+
+O caminho até o bug é bonito: shift+clique na listagem para selecionar
+intervalo → o `preventDefault` que impede o arrasto de texto também impede a
+linha de tomar o foco → ele sobe para o `<main>` → a próxima tecla acende o anel
+em volta de toda a área de conteúdo.
+
+Agora o anel é só de `[tabindex="0"]` e dos controles de verdade.
+
+### A sombra da barra de ações em massa
+
+Parada dentro do respiro reservado, a sombra era um degrau no meio da página sem
+nada embaixo. Ela existe para a barra parecer estar **por cima** da listagem — e
+isso só acontece com a página rolada.
+
+**`position: sticky` não avisa quando gruda**, e comparar o topo do elemento com
+o `top` da regra não funciona: medido, o slot para em 0 e não nos −32px que a
+regra pede — quem manda no ponto de parada é a caixa que o contém, não só a
+propriedade. A saída foi uma **sentinela de altura zero** logo acima, que
+continua rolando: enquanto os dois estão na mesma altura a barra está no lugar
+dela; quando a sentinela sobe e o slot fica para trás, grudou.
+
+Conferido: rolagem 0 e 120 sem sombra, 300 e 900 com sombra, e de volta a 0 sem.
+
+---
+
+
+
 ---
 
 ## 26/08/2026 · A tela de entrar virou uma prancheta
