@@ -350,6 +350,10 @@
      contagem ao lado do rotulo — a barra passa a informar, nao so enfeitar —,
      e o conjunto se apoia num fio que atravessa a linha inteira. */
   .filter-bar:has(.filter-btn) { border-bottom: 1px solid var(--border); gap: 24px; }
+  /* Numa barra de abas, tudo que nao e aba precisa do mesmo recuo embaixo para
+     o texto assentar na mesma linha — as abas carregam 11px por causa do
+     sublinhado da ativa. Fora dessa barra, nada muda. */
+  .filter-bar:has(.filter-btn) .fp-lista-contagem { padding: 6px 0 11px; }
   .filter-btn {
     position: relative;
     padding: 6px 1px 11px;
