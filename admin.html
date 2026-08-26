@@ -20656,14 +20656,26 @@ function fpDashTrocar(frente, gravar) {
   if (sub) sub.textContent = foto
     ? 'Quanto do catálogo já tem foto, como está a fila e o que saiu do estúdio este mês.'
     : 'Visão geral de todas as áreas do Media Club.';
-  if (gravar !== false) { try { localStorage.setItem('fp_dash_frente', FP_DASH_FRENTE); } catch (e) {} }
-  /* Sem await: fpDashAplicar roda na mesma tarefa síncrona que revela o
-     painel — e renderFotoPanorama pinta o esqueleto antes do primeiro await,
-     então a tela abre na hora. Quem só faz vídeo nunca paga a leitura do
-     catálogo de fotos. */
-  /* Chamada direta, nao adiada: async nunca estoura de forma sincrona, e assim
-     o esqueleto e pintado no mesmo turno do clique. */
-  if (foto) renderFotoPanorama().catch(e => console.warn('fpDashTrocar', e));
+  /* `gravar === false` marca a aplicação automática (fpDashAplicar, no login);
+     qualquer outra chamada é o operador clicando na aba. A diferença importa:
+     applyRolePermissions roda DUAS vezes por login e chegava aqui duas vezes,
+     refazendo consulta, painel inteiro e miniaturas de graça. */
+  const espontaneo = gravar !== false;
+  if (espontaneo) { try { localStorage.setItem('fp_dash_frente', FP_DASH_FRENTE); } catch (e) {} }
+
+  if (foto) {
+    const box = document.getElementById('fotoPanorama');
+    /* Chamada direta, não adiada: função async nunca estoura de forma síncrona,
+       e assim o esqueleto é pintado no mesmo turno do clique. Quem só faz vídeo
+       nunca paga a leitura do catálogo de fotos. */
+    if (espontaneo || !box || !box.innerHTML.trim()) renderFotoPanorama().catch(e => console.warn('fpDashTrocar', e));
+  } else if (espontaneo) {
+    /* O painel de vídeo também envelhece. refreshViewData recarrega só a frente
+       à vista, e trocar de aba não é navegar: quem entrava de manhã na frente
+       de foto encontrava, à tarde, os números da hora do login. */
+    Promise.all([loadRequests(), loadCheckins(), loadCheckouts(), loadProjects()])
+      .then(renderDashboard).catch(e => console.warn('fpDashTrocar', e));
+  }
 }
 
 /* ==========================================
