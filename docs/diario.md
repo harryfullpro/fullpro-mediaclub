@@ -1,5 +1,68 @@
 # Diário
 
+## 26/08/2026 · A roda de cores vira o tema claro
+
+> *"aplique essas cores como padrão do nosso tema claro (…) não vamos modificar
+> as cores base de fundo e tons de branco (…) nem as cores neutras e o preto dos
+> textos"*
+
+**52 valores mapeados** — os tokens semânticos, os pares de badge, os chips de
+projeto, as tags de destino, os tons de ação e as barras de prioridade.
+
+### O método: troca a matiz, mantém a luminosidade
+
+Cada cor de elemento teve a **matiz** levada para a mais próxima das 12 da roda,
+com a **luminosidade original preservada**. É o que permite aplicar uma paleta
+inteira sem auditar contraste de novo: com o L intacto, todo par que passava
+continua passando.
+
+Conferido par a par, antes → depois: **nenhum cruzou o piso de 4,5:1**, e alguns
+melhoraram — branco sobre azul foi de 3,68 para 4,13; o texto do chip de Clips
+sobre o amarelo, de 7,6 para 9,12.
+
+**Neutro não entra no mapa.** O corte é saturação abaixo de 0,18: pega fundos,
+brancos, cinzas, o preto do texto e o cinza-ardósia da tag "site", que
+continuam exatamente como estavam.
+
+### Duas correções à mão
+
+A matiz mais próxima nem sempre é a leitura certa:
+
+- **O rosa do Reels** (340°) fica a 18° do Vermelho e a 25° do Vermelho-violeta.
+  Pela conta, iria para o vermelho — e viraria a **mesma cor do YouTube**, com a
+  tag deixando de distinguir destino. Foi para o Vermelho-violeta.
+- **O marrom escuro do Clips** é o texto que fica *em cima* do amarelo do próprio
+  chip. Pela matiz iria para o Vermelho-laranja e descolaria da família dele.
+  Ficou no Amarelo-laranja.
+
+### Prioridade virou token
+
+Eram três hex soltos repetidos no CSS **e de novo no JS**. Viraram `--prio-1`,
+`--prio-2` e `--prio-3`, e `fpPrioCor` passou a devolver o token: as barras do
+Panorama são estilo inline e ficavam com a cor do tema escuro dentro do tema
+claro.
+
+No claro elas usam a matiz da roda com a **mesma luminância relativa** de antes
+— aqui não bastava manter o L do HSL, porque o amarelo puro tem luminância bem
+mais alta na mesma altura de HSL e o rótulo "Média" ficaria pior do que já é.
+Com a luminância casada, o contraste de cada uma é idêntico ao que era.
+
+**Fica pendente:** "Média" em tema claro dá 1,7:1 sobre branco — já dava antes,
+e o mapa não piorou. Se for para corrigir, é escurecer o amarelo, e aí ele vira
+oliva.
+
+### A roda usada
+
+| | | | |
+|---|---|---|---|
+| Vermelho `#DA2128` | Vermelho-laranja `#F26522` | Laranja `#F7941D` | Amarelo-laranja `#FBB040` |
+| Amarelo `#FCE81A` | Amarelo-verde `#8CC63E` | Verde `#0DA457` | Azul-verde `#2AB3A6` |
+| Azul `#2B57C4` | Azul-violeta `#453F94` | Violeta `#6A3D9A` | Vermelho-violeta `#B8419A` |
+
+O tema escuro **não foi tocado**.
+
+---
+
 ## 26/08/2026 · Ajuda da tela e tutorial guiado
 
 > *"Quero adicionar um botão ? logo acima do botão flutuante de reportar bug (…)

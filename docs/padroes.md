@@ -559,6 +559,29 @@ listagem aparecendo acima da barra.
 
 ---
 
+## Trocar paleta: mexa na matiz, não na luminosidade
+
+Para aplicar uma paleta nova sem refazer a auditoria de contraste: leve a
+**matiz** de cada cor para a mais próxima da paleta e **mantenha a
+luminosidade**. Com o L intacto, todo par que passava continua passando.
+
+Onde a matiz muda muito de luminância intrínseca (amarelo puro, por exemplo),
+troque o critério: case a **luminância relativa** (WCAG) em vez do L do HSL,
+por bissecção. O contraste sai idêntico ao original.
+
+Duas guardas obrigatórias:
+
+- **Saturação abaixo de 0,18 não entra no mapa** — é neutro: fundo, branco,
+  cinza, o preto do texto.
+- **A matiz mais próxima nem sempre é a leitura certa.** Se duas cores com
+  significados diferentes caem na mesma casa da paleta, force uma delas para a
+  vizinha. Foi o caso do rosa do Reels, que iria virar o vermelho do YouTube.
+
+E confira **os pares**, não as cores soltas: texto sobre o próprio chip, branco
+sobre o botão, `--tx-*` sobre `--bg-*`.
+
+---
+
 ## Anel de foco: `[tabindex="0"]`, nunca `[tabindex]`
 
 O seletor largo pega também os `tabindex="-1"`, que existem para receber foco
