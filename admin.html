@@ -139,9 +139,9 @@
   .sidebar-nav { visibility: hidden; }
   body.fp-menu-filtrado .sidebar-nav { visibility: visible; }
   .sidebar-foot { flex-shrink: 0; padding: 6px 12px 10px; border-top: 1px solid var(--border); }
-  .shell.collapsed .sidebar-head { padding: 10px 10px 4px; }
-  .shell.collapsed .sidebar-nav { padding: 0 8px; }
-  .shell.collapsed .sidebar-foot { padding: 6px 8px 10px; }
+  /* Recolhida NAO muda a caixa de nada: mesmos recuos do expandido, so sem os
+     rotulos. Era o que fazia os icones pularem de lugar quando o hover abria a
+     barra — o operador mira num icone e ele se move debaixo do cursor. */
   /* ── Menu do usuario (rodape do menu lateral) ──
      Um botao so: a foto. O resto — conta, notificacoes, idioma, tema e sair —
      mora no popover, como no Airtable. */
@@ -153,12 +153,14 @@
   .shell.hover-mode .fp-foot-linha { flex-direction: column-reverse; gap: 8px; }
   .shell.collapsed .fp-foot-linha .sb-ctrl-wrap,
   .shell.hover-mode .fp-foot-linha .sb-ctrl-wrap { margin-left: 0; }
-  /* Expandida ao passar o mouse, volta a ser fileira. */
-  .shell.hover-mode .sidebar.hover-open .fp-foot-linha { flex-direction: row; }
-  .shell.hover-mode .sidebar.hover-open .fp-foot-linha .sb-ctrl-wrap { margin-left: auto; }
+  /* O >> NAO volta para o lado da foto quando o hover abre a barra: ele so
+     muda de lugar quando a pessoa clica e a barra fica expandida de verdade.
+     Botao que se mexe sozinho debaixo do cursor e clique errado na certa. */
   .fp-usr-btn {
     position: relative;
-    display: flex; align-items: center; padding: 3px; border: 0; background: none;
+    /* Recuo a esquerda calculado para o centro da foto cair na mesma coluna do
+       centro dos icones do menu (medido, nao estimado). */
+    display: flex; align-items: center; padding: 3px 3px 3px 8px; border: 0; background: none;
     border-radius: 999px; cursor: pointer; flex-shrink: 0;
     transition: box-shadow .14s ease;
   }
@@ -241,7 +243,7 @@
   }
   .sb-ctrl-btn:hover { background: var(--bg-card); color: var(--text); }
   .sb-ctrl-btn svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  .shell.collapsed .sb-ctrl-btn { justify-content: center; padding: 10px; }
+
   .sb-popover {
     position: fixed;
     background: var(--bg-card); border: 1px solid var(--border);
@@ -327,24 +329,28 @@
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .shell.collapsed .nav-item { padding: 6px; justify-content: center; }
+
   /* Hover overlay mode: sidebar overlays content instead of pushing it */
   /* Hover mode: grid stays 68px like collapsed, sidebar overlays on hover */
   .shell.hover-mode { grid-template-columns: 68px 1fr; }
-  .shell.hover-mode .sidebar { padding: 24px 10px; }
+  /* Sem recuo vertical proprio: com ele a lista comecava 24px mais abaixo que
+     no expandido e, com 22 modulos, o fim da lista saia da tela. */
+  .shell.hover-mode .sidebar { padding: 0; }
   .shell.hover-mode .nav-label,
   .shell.hover-mode .brand-txt,
   .shell.hover-mode .count,
   .shell.hover-mode .fp-tema-est { display: none; }
   .shell.hover-mode .nav-section { color: transparent; }
-  .shell.hover-mode .nav-item { padding: 6px; justify-content: center; }
+
   .shell.hover-mode .brand { justify-content: center; }
   .shell.hover-mode .brand-mark { width: 36px; height: 36px; }
-  .shell.hover-mode .sb-ctrl-btn { justify-content: center; padding: 10px; }
+
   /* Hover expand: sidebar overflows its grid column as overlay */
   .shell.hover-mode .sidebar.hover-open {
     position: relative; z-index: 90;
-    width: 260px; padding: 24px 16px;
+    /* Mesmo recuo do estado recolhido: mudar o padding aqui deslocava a coluna
+       inteira de icones no instante em que o mouse chegava. */
+    width: 260px; padding: 0;
     box-shadow: 6px 0 24px rgba(0,0,0,.3);
   }
   .shell.hover-mode .sidebar.hover-open .nav-label,
@@ -352,10 +358,7 @@
   .shell.hover-mode .sidebar.hover-open .count,
   .shell.hover-mode .sidebar.hover-open .fp-tema-est { display: revert; }
   .shell.hover-mode .sidebar.hover-open .nav-section { color: var(--text-muted); }
-  .shell.hover-mode .sidebar.hover-open .nav-item { padding: 5px 14px; justify-content: flex-start; }
-  .shell.hover-mode .sidebar.hover-open .brand { justify-content: flex-start; }
   .shell.hover-mode .sidebar.hover-open .brand-mark { width: 130px; height: 36px; }
-  .shell.hover-mode .sidebar.hover-open .sb-ctrl-btn { justify-content: flex-start; padding: 10px 14px; }
   .nav-item:hover { background: var(--bg-card); color: var(--text); }
   .nav-item.active { background: rgba(255,45,45,.1); color: var(--primary); }
   .nav-item .count {
