@@ -485,6 +485,11 @@
   }
   .fp-acao-txt:hover { color: var(--text); }
   .fp-acao-txt:disabled { cursor: default; }
+  /* "Mostrar mais" fica centrado embaixo da listagem, com a seta depois do
+     numero — o gesto e descer, e o icone diz para onde. */
+  .fp-mais { gap: 5px; }
+  .fp-mais svg { width: 14px; height: 14px; transition: transform .14s ease; }
+  .fp-mais:hover svg { transform: translateY(2px); }
   .fp-acao-txt svg { width: 15px; height: 15px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   /* Sincronizando: o mesmo botao, em verde, com o icone girando. */
   .fp-acao-txt.fp-sinc, .fp-acao-txt.fp-sinc:disabled { color: var(--success); opacity: 1; }
@@ -15767,7 +15772,9 @@ function renderFotoProducao(refazerOrdem) {
 
   const mais = document.getElementById('fotoProdMais');
   mais.innerHTML = lista.length > _prodMostra
-    ? '<button class="action-btn" type="button" onclick="fpProdMais()">Mostrar mais ' + Math.min(FP_FOTO_PAGINA * 2, lista.length - _prodMostra) + '</button>'
+    ? '<button class="fp-acao-txt fp-mais" type="button" onclick="fpProdMais()">Mostrar mais '
+        + Math.min(FP_FOTO_PAGINA * 2, lista.length - _prodMostra)
+        + '<svg viewBox="0 0 24 24" aria-hidden="true">' + FP_ICONES.baixo + '</svg></button>'
     : '';
 
   const caixas = [...box.querySelectorAll('.fp-prod-check')];
@@ -18154,7 +18161,9 @@ function renderFotoGaleria(refazerOrdem) {
     + '</span></div>').join('');
 
   document.getElementById('fotoGalMais').innerHTML = lista.length > _galMostra
-    ? '<button class="action-btn" type="button" onclick="fpGalMais()">Mostrar mais ' + Math.min(FP_FOTO_PAGINA * 2, lista.length - _galMostra) + '</button>'
+    ? '<button class="fp-acao-txt fp-mais" type="button" onclick="fpGalMais()">Mostrar mais '
+        + Math.min(FP_FOTO_PAGINA * 2, lista.length - _galMostra)
+        + '<svg viewBox="0 0 24 24" aria-hidden="true">' + FP_ICONES.baixo + '</svg></button>'
     : '';
   fpDriveCarregar(visiveis.map(p => p.sku), box);
 }
@@ -20164,6 +20173,7 @@ const FP_ICONES = {
   standby:  '<circle cx="12" cy="12" r="9"/><line x1="10" y1="9" x2="10" y2="15"/><line x1="14" y1="9" x2="14" y2="15"/>',
   mais:     '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
   enviar:   '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+  baixo:    '<polyline points="6 9 12 15 18 9"/>',
   atualizar:'<path d="M21 12a9 9 0 11-3.2-6.9"/><polyline points="21 3 21 9 15 9"/>',
 };
 
