@@ -4590,12 +4590,15 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .fp-prio[data-n="5"] .fp-prio-emerg { animation: none; }
 }
-/* Largura fixa pelo rótulo mais longo ("Emergencial"), alinhado à esquerda:
-   com largura automática, cada linha empurra a coluna para um lugar
-   diferente e a lista deixa de ter colunas. */
+/* Coluna de largura fixa e texto à esquerda: com largura automática cada
+   linha empurra a coluna para um lugar diferente e a lista perde as colunas.
+   A largura não é a do rótulo mais longo POSSÍVEL, e sim a do mais longo
+   PRESENTE naquela lista — sem nenhum "Emergencial" à vista, reservar espaço
+   para ele deixaria uma faixa vazia até a margem direita.
+   Quem mede é fpPrioAjustarColuna, depois do render. */
 .fp-prio-rot {
   font-size: 11.5px; font-weight: 600; color: var(--fp-prio-cor, var(--text-muted));
-  width: 78px; flex: 0 0 78px; text-align: left;
+  width: var(--fp-rot-larg, 78px); flex: 0 0 var(--fp-rot-larg, 78px); text-align: left;
 }
 .fp-prio[data-n="1"] { --fp-prio-cor: #4c8dff; }
 .fp-prio[data-n="2"] { --fp-prio-cor: #e8c33c; }
@@ -4714,6 +4717,16 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-lote-link.perigo { color: var(--primary); }
 .fp-lote-link.neutro { color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px; }
 .fp-prod-vazio { padding: 26px 12px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
+/* Composição do lote por prioridade. Substitui o "· 1 emergencial" no texto:
+   a proporção de cada cor diz mais, e de relance, do que a contagem de um
+   nível só. */
+.fp-sep-conta { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+.fp-sep-barra {
+  display: flex; width: 180px; height: 5px; border-radius: 3px; overflow: hidden;
+  background: var(--border);
+}
+.fp-sep-barra i { display: block; height: 100%; transition: width .2s ease; }
 
 @media (max-width: 900px) {
   .fp-prod-linha { flex-wrap: wrap; row-gap: 9px; padding: 12px 0; }
@@ -15362,6 +15375,24 @@ function fpPrioEscolher(prod) {
     ov.querySelector('[data-n]').focus();
   });
 }
+/* Mede o texto de cada rótulo já renderizado e encolhe a coluna até o maior
+   deles. Mede o TEXTO (Range), não a caixa: a caixa já tem a largura fixa que
+   estamos tentando calcular, e mediria a si mesma. */
+function fpPrioAjustarColuna(raiz) {
+  if (!raiz) return;
+  const rots = raiz.querySelectorAll('.fp-prio-rot');
+  if (!rots.length) { raiz.style.removeProperty('--fp-rot-larg'); return; }
+  let maior = 0;
+  const faixa = document.createRange();
+  rots.forEach(el => {
+    if (!el.firstChild) return;
+    faixa.selectNodeContents(el);
+    const r = faixa.getClientRects()[0];
+    if (r && r.width > maior) maior = r.width;
+  });
+  raiz.style.setProperty('--fp-rot-larg', maior ? Math.ceil(maior) + 'px' : '78px');
+}
+
 function fpPrioCor(n) { return { 1: '#4c8dff', 2: '#e8c33c', 3: '#ff8a3d', 5: 'var(--primary)' }[n] || 'var(--text-muted)'; }
 
 /* Liga um campo de busca: digitar filtra, Enter filtra na hora, a lupa é
@@ -15530,6 +15561,7 @@ function renderFotoProducao(refazerOrdem) {
     };
   });
   fpProdLoteBarra();
+  fpPrioAjustarColuna(box);
   fpDriveCarregar(visiveis.map(p => p.sku), box);
   fpFotoBadgeUrgente();
 }
@@ -17396,9 +17428,8 @@ async function renderFotoSeparacao() {
     + '<button class="fp-info-btn" type="button" id="fotoSepLogicaBtn" aria-expanded="false"'
     + ' aria-controls="fotoSepLogica" onclick="fpSepLogica()">'
     + '<span class="fp-info-ico">' + FP_ICO_OLHO_OFF + '</span>Ver lógica</button>'
-    + '<span class="fp-lista-contagem">' + _sepLote.itens.length + ' selecionados'
-    + (_sepLote.emergenciais ? ' · ' + _sepLote.emergenciais + ' emergencial' + (_sepLote.emergenciais > 1 ? 'is' : '') : '')
-    + '</span></div>'
+    + fpSepContagemHtml()
+    + '</div>'
     + '<div class="fp-info-caixa" id="fotoSepLogica" hidden>'
     + '<div class="fp-info-titulo">Como o lote é montado</div>'
     + 'Os <b>emergenciais entram primeiro</b> e ocupam vaga dentro do tamanho pedido — pedir '
@@ -17423,6 +17454,7 @@ async function renderFotoSeparacao() {
           + '<span class="fp-prod-fim">' + fpPrioHtml(i.sku, i.prioridade, false) + '</span></div>';
       }).join('')
     : '<div class="fp-prod-vazio">Nenhum produto classificado na fila. Defina prioridades em Produção primeiro.</div>';
+  fpPrioAjustarColuna(lista);
   fpDriveCarregar(_sepLote.itens.map(i => i.sku), lista);
 
   await fpSepHistoricoCarregar();
@@ -17435,6 +17467,25 @@ async function renderFotoSeparacao() {
     + '</div><div id="fotoSepDepois"></div>'
     + fpSepHistoricoHtml();
   if (_sepUltimoLink) fpSepMostrarLink(_sepUltimoLink, _sepUltimoQtd);
+}
+
+/* Contagem com a composição do lote embaixo: cada faixa vira um pedaço da
+   barra, na cor da prioridade. */
+function fpSepContagemHtml() {
+  const itens = (_sepLote && _sepLote.itens) || [];
+  const n = itens.length;
+  const contagem = { 5: 0, 3: 0, 2: 0, 1: 0 };
+  itens.forEach(i => { if (contagem[i.prioridade] != null) contagem[i.prioridade]++; });
+  const pedaco = k => contagem[k]
+    ? '<i style="width:' + (contagem[k] / n * 100).toFixed(2) + '%;background:' + fpPrioCor(k) + '"></i>'
+    : '';
+  const resumo = [5, 3, 2, 1].filter(k => contagem[k])
+    .map(k => contagem[k] + ' ' + FP_PRIO[k].toLowerCase()).join(' · ');
+  return '<span class="fp-lista-contagem fp-sep-conta">'
+    + '<span>' + n + (n === 1 ? ' selecionado' : ' selecionados') + '</span>'
+    + (n ? '<span class="fp-sep-barra" data-tip="' + escHtml(resumo) + '" aria-label="Composição do lote: '
+        + escHtml(resumo) + '">' + pedaco(5) + pedaco(3) + pedaco(2) + pedaco(1) + '</span>' : '')
+    + '</span>';
 }
 
 function fpSepTamanho(t) { _sepTamanho = t; _sepUltimoLink = null; renderFotoSeparacao(); }
@@ -17653,6 +17704,7 @@ async function renderFotoLote() {
       + '<input type="file" accept="image/*" multiple style="display:none" onchange="fpLoteEscolher(\'' + fpJs(i.sku) + '\',this)"></label>'
       + '</span></div>';
   }).join('');
+  fpPrioAjustarColuna(lista);
   fpDriveCarregar(itens.map(i => i.sku), lista);
   fpLoteObservar();
 }
