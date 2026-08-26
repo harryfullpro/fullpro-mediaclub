@@ -393,6 +393,10 @@
   /* A aba de saida do Check-in se distingue pela cor do fio, nao por um fundo
      preenchido — era o ultimo resto da pilula. */
   .filter-btn[data-cifilter="checkout"].active::after { background: #7c8cf0; }
+  /* Switch de frente do Dashboard: as mesmas abas, com icone. O .filter-btn nao
+     e inline-flex, senao o icone nao centraria com o rotulo. */
+  #dashFrenteBar .filter-btn { display: inline-flex; align-items: center; gap: 7px; }
+  #dashFrenteBar .filter-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
 
   /* Requests Table */
   .table-wrap {
@@ -4901,10 +4905,6 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
       <span class="nav-label">Debriefing</span> <span class="count" id="cntDebriefing" style="display:none">0</span>
     </button>
     <div class="nav-section" data-sec="foto">Fotografia</div>
-    <button class="nav-item" data-view="foto-dashboard">
-      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
-      <span class="nav-label">Panorama</span>
-    </button>
     <button class="nav-item" data-view="foto-producao">
       <svg viewBox="0 0 24 24"><path d="M3 7h18v13a1 1 0 01-1 1H4a1 1 0 01-1-1z"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M7 12h10M7 16h6"/></svg>
       <span class="nav-label">Produção</span> <span class="count" id="cntFotoUrg">0</span>
@@ -5017,10 +5017,24 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
       <div class="page-head">
         <div>
           <h1>Dashboard</h1>
-          <p>Visão geral de todas as áreas do Media Club.</p>
+          <p id="dashSub">Visão geral de todas as áreas do Media Club.</p>
         </div>
+        <button class="action-btn" id="fotoSyncBtn" style="display:none" onclick="fpFotoSincronizar()">Sincronizar catálogo</button>
       </div>
-      <div id="dashboardContent"></div>
+      <!-- Switch de frente. Só aparece para quem tem vídeo E foto; quem tem uma
+           frente só cai direto no painel dela. Ver fpDashAplicar. -->
+      <div class="filter-bar" id="dashFrenteBar" style="display:none">
+        <button class="filter-btn active" id="dashBtnVideo" data-fpfrente="video" onclick="fpDashTrocar('video')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          Vídeo
+        </button>
+        <button class="filter-btn" id="dashBtnFoto" data-fpfrente="foto" onclick="fpDashTrocar('foto')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          Fotografia
+        </button>
+      </div>
+      <div id="dashPainelVideo"><div id="dashboardContent"></div></div>
+      <div id="dashPainelFoto" style="display:none"><div id="fotoPanorama"></div></div>
     </div>
 
     <!-- REQUESTS VIEW -->
@@ -5980,15 +5994,6 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
       </div>
 
       <div id="updLista"></div>
-    </div>
-
-    <div id="view-foto-dashboard" style="display:none">
-      <div class="page-head"><div>
-        <h1>Panorama da fotografia</h1>
-        <p>Quanto do catálogo já tem foto, como está a fila e o que saiu do estúdio este mês.</p>
-      </div>
-      <button class="action-btn" id="fotoSyncBtn" onclick="fpFotoSincronizar()">Sincronizar catálogo</button></div>
-      <div id="fotoPanorama"></div>
     </div>
 
     <div id="view-foto-producao" style="display:none">
@@ -7669,7 +7674,7 @@ document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
+    ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
       document.getElementById('view-' + v).style.display = 'none';
     });
     document.getElementById('view-' + btn.dataset.view).style.display = 'block';
@@ -10048,7 +10053,7 @@ function openProjectDetail(id, tab) {
   switchDetailTab(tab || 'producao');
 
   // Hide all views, show project-detail
-  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
+  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
     document.getElementById('view-' + v).style.display = 'none';
   });
   document.getElementById('view-project-detail').style.display = 'block';
@@ -10069,7 +10074,7 @@ function openProjectDetail(id, tab) {
 function backToProjects() {
   stopEngagementAutoRefresh();
   projDetailId = null;
-  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
+  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'].forEach(v => {
     document.getElementById('view-' + v).style.display = 'none';
   });
   document.getElementById('view-projects').style.display = 'block';
@@ -10461,13 +10466,13 @@ function renderShotsReadOnly(shots, si) {
   const FP_MODULE_GROUPS = [
     { sec: 'Painel', items: [['dashboard','Dashboard']] },
     { sec: 'Vídeo', items: [['requests','Solicitações'],['calendar','Agenda'],['checkin','Check-in / Check-out'],['projects','Projetos'],['editing','Edição'],['clips','Clips'],['debriefing','Debriefing']] },
-    { sec: 'Fotografia', items: [['foto-dashboard','Panorama'],['foto-producao','Produção'],['foto-galeria','Galeria'],['foto-separacao','Separação'],['foto-lote','Fotografia em lote']] },
+    { sec: 'Fotografia', items: [['foto-producao','Produção'],['foto-galeria','Galeria'],['foto-separacao','Separação'],['foto-lote','Fotografia em lote']] },
     { sec: 'Performance', items: [['perf-metas','Metas'],['perf-posts','Meus Posts'],['perf-influencers','Influenciadores'],['perf-bonificacao','Bonificação']] },
     { sec: 'Configurações', items: [['templates','Templates WhatsApp'],['export','Exportar'],['users','Usuários'],['manutencao','Manutenção'],['atualizacoes','Atualizações'],['integracoes','Integrações']] }
   ];
-  const FP_ALL_VIEWS = ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'];
+  const FP_ALL_VIEWS = ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'];
   const FP_ALWAYS_ON = ['profile','project-detail'];
-  const FP_NAV_ORDER = ['dashboard','requests','calendar','checkin','projects','editing','clips','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','atualizacoes','integracoes','profile'];
+  const FP_NAV_ORDER = ['dashboard','requests','calendar','checkin','projects','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','atualizacoes','integracoes','profile'];
 
   function fpRoleKey(roleStr){
     const r = (roleStr || '').toLowerCase();
@@ -10481,6 +10486,22 @@ function renderShotsReadOnly(shots, si) {
     if (fpIsAdmin()) return null;
     const mods = (CURRENT_USER && Array.isArray(CURRENT_USER.modules)) ? CURRENT_USER.modules : [];
     return new Set(mods.concat(FP_ALWAYS_ON));
+  }
+
+  /* As duas frentes da casa. A frente é deduzida dos módulos de trabalho, não
+     do Dashboard (que as duas dividem) nem da visibilidade das seções do menu
+     — a seção de vídeo aparece para quem só tem Debriefing, e amarrar uma
+     coisa na outra criaria dependência de ordem de execução.
+     Administrador tem as duas, sempre: para ele fpAllowedSet devolve null. */
+  const FP_FRENTE_VIDEO = ['requests','calendar','checkin','projects','editing','clips','debriefing'];
+  const FP_FRENTE_FOTO  = ['foto-producao','foto-galeria','foto-separacao','foto-lote'];
+  function fpFrentes(){
+    const allowed = fpAllowedSet();
+    if (allowed === null) return { video: true, foto: true };
+    return {
+      video: FP_FRENTE_VIDEO.some(function(v){ return allowed.has(v); }),
+      foto:  FP_FRENTE_FOTO.some(function(v){ return allowed.has(v); })
+    };
   }
 
   function fpShowView(view){
@@ -10541,6 +10562,7 @@ function renderShotsReadOnly(shots, si) {
   }
   window.fpNomearSecoes = fpNomearSecoes;
   window.fpApplyUserModules = fpApplyUserModules;
+  window.fpFrentes = fpFrentes;
 
   let fpModalBuilt = false;
   let fpEditingId = null;
@@ -10650,6 +10672,7 @@ function renderShotsReadOnly(shots, si) {
       _origARP.apply(this, arguments);
       try { fpApplyUserModules(); } catch(e){ console.warn('fpApplyUserModules', e); }
       try { fpNomearSecoes(); } catch(e){ console.warn('fpNomearSecoes', e); }
+      try { if (typeof fpDashAplicar === 'function') fpDashAplicar(); } catch(e){ console.warn('fpDashAplicar', e); }
     };
   }
   if (typeof renderUsers === 'function') {
@@ -15556,7 +15579,7 @@ function renderFotoProducao(refazerOrdem) {
   if (!lista.length) {
     box.innerHTML = '<div class="fp-prod-vazio">' + (FOTO_PRODUTOS.length
       ? 'Nenhum produto neste filtro.'
-      : 'O catálogo ainda não foi sincronizado. Abra o Panorama e use "Sincronizar catálogo".') + '</div>';
+      : 'O catálogo ainda não foi sincronizado. Abra o Dashboard, troque para o painel de Fotografia e use "Sincronizar catálogo".') + '</div>';
     document.getElementById('fotoProdMais').innerHTML = '';
     return;
   }
@@ -15785,9 +15808,11 @@ function fpFotoBadgeUrgente() {
    todas as telas da seção a cada clique de prioridade custaria caro. */
 function fpFotoRedesenhar() {
   const v = (location.hash || '').slice(1);
+  /* O Panorama agora mora no Dashboard. Sem este ramo, cada clique de
+     prioridade repintaria a Produção — que está escondida: falha silenciosa. */
+  if (!v || v === 'dashboard') { if (FP_DASH_FRENTE === 'foto') renderFotoPanorama(); return; }
   if (v === 'foto-galeria') renderFotoGaleria();
   else if (v === 'foto-separacao') renderFotoSeparacao();
-  else if (v === 'foto-dashboard') renderFotoPanorama();
   else renderFotoProducao();
 }
 
@@ -17916,7 +17941,7 @@ function renderFotoGaleria(refazerOrdem) {
   if (!lista.length) {
     box.innerHTML = '<div class="fp-prod-vazio">' + (FOTO_PRODUTOS.length
       ? 'Nenhum produto com foto neste filtro.'
-      : 'O catálogo ainda não foi sincronizado. Abra o Panorama e use "Sincronizar catálogo".') + '</div>';
+      : 'O catálogo ainda não foi sincronizado. Abra o Dashboard, troque para o painel de Fotografia e use "Sincronizar catálogo".') + '</div>';
     document.getElementById('fotoGalMais').innerHTML = '';
     return;
   }
@@ -20512,6 +20537,54 @@ function renderDashboard() {
   `;
 }
 
+/* ═══════════════ DASHBOARD DE DUAS FRENTES ═══════════════
+   O painel de foto veio do módulo Panorama, que deixou de ser item de menu.
+   Quem tem as duas frentes troca pelo switch; quem tem uma só nem vê o switch
+   e cai direto no painel dela. */
+let FP_DASH_FRENTE = 'video';
+
+/* Chamada de dentro de applyRolePermissions — ou seja, antes de o painel
+   aparecer. Só mexe em display/classe/texto: nada de injetar no DOM, porque
+   roda duas vezes por sessão. */
+function fpDashAplicar() {
+  const f = (typeof window.fpFrentes === 'function') ? window.fpFrentes() : { video: true, foto: false };
+  const barra = document.getElementById('dashFrenteBar');
+  if (barra) barra.style.display = (f.video && f.foto) ? 'flex' : 'none';
+
+  /* A escolha é lembrada por navegador, como o tema e o menu. A chave não
+     carrega o id do operador, então é sempre cruzada com a permissão atual —
+     senão o fotógrafo herdaria "vídeo" de quem usou a mesma máquina. */
+  let alvo = null;
+  try { alvo = localStorage.getItem('fp_dash_frente'); } catch (e) {}
+  if (alvo !== 'foto' && alvo !== 'video') alvo = null;
+  if (alvo === 'foto'  && !f.foto)  alvo = null;
+  if (alvo === 'video' && !f.video) alvo = null;
+  if (!alvo) alvo = (f.foto && !f.video) ? 'foto' : 'video';
+  fpDashTrocar(alvo, false);
+}
+
+function fpDashTrocar(frente, gravar) {
+  FP_DASH_FRENTE = (frente === 'foto') ? 'foto' : 'video';
+  const foto = FP_DASH_FRENTE === 'foto';
+  const pv = document.getElementById('dashPainelVideo');
+  const pf = document.getElementById('dashPainelFoto');
+  if (pv) pv.style.display = foto ? 'none' : '';
+  if (pf) pf.style.display = foto ? '' : 'none';
+  const bv = document.getElementById('dashBtnVideo'), bf = document.getElementById('dashBtnFoto');
+  if (bv) bv.classList.toggle('active', !foto);
+  if (bf) bf.classList.toggle('active', foto);
+  const sinc = document.getElementById('fotoSyncBtn');
+  if (sinc) sinc.style.display = foto ? '' : 'none';
+  const sub = document.getElementById('dashSub');
+  if (sub) sub.textContent = foto
+    ? 'Quanto do catálogo já tem foto, como está a fila e o que saiu do estúdio este mês.'
+    : 'Visão geral de todas as áreas do Media Club.';
+  if (gravar !== false) { try { localStorage.setItem('fp_dash_frente', FP_DASH_FRENTE); } catch (e) {} }
+  /* Sem await: fpDashAplicar roda na mesma tarefa síncrona que revela o
+     painel. Quem só faz vídeo nunca paga a leitura do catálogo de fotos. */
+  if (foto) fpFotoCarregar().then(renderFotoPanorama).catch(e => console.warn('fpDashTrocar', e));
+}
+
 /* ==========================================
    PERFORMANCE MODULE
    ========================================== */
@@ -22886,10 +22959,10 @@ function applyRolePermissions() {
 
   // Views accessible per role
   const access = {
-    fotografo:  ['dashboard','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','atualizacoes','profile'],
+    fotografo:  ['dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','atualizacoes','profile'],
     /* Assistente Admin cuida das fotos, não do vídeo. */
-    assistente: ['dashboard','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','atualizacoes','profile'],
-    admin: ['dashboard','requests','calendar','checkin','projects','editing','clips','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'],
+    assistente: ['dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','atualizacoes','profile'],
+    admin: ['dashboard','requests','calendar','checkin','projects','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'],
     filmmaker: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','atualizacoes','profile'],
     mecanico: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-bonificacao','templates','atualizacoes','profile'],
     viewer: ['dashboard','debriefing','atualizacoes','profile']
@@ -23185,7 +23258,7 @@ async function initApp() {
      ------------------------------------------------------------------ */
   const ALL_VIEWS = [
     'dashboard','requests','calendar','checkin','projects','project-detail',
-    'editing','clips','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote',
+    'editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote',
     'debriefing','perf-metas','perf-posts','perf-influencers',
     'perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'
   ];
@@ -23239,14 +23312,18 @@ async function initApp() {
     try {
       switch (viewName) {
         case 'atualizacoes': renderAtualizacoes(); break;
-        case 'foto-dashboard': await fpFotoCarregar(); renderFotoPanorama(); break;
         case 'foto-producao':  await fpFotoCarregar(); renderFotoProducao(true); break;
         case 'foto-galeria':   await fpFotoCarregar(); renderFotoGaleria(true); break;
         case 'foto-separacao': await fpFotoCarregar(); renderFotoSeparacao(); break;
         case 'foto-lote':      await fpFotoCarregar(); renderFotoLote(); break;
         case 'dashboard':
-          await Promise.all([loadRequests(), loadCheckins(), loadCheckouts(), loadProjects()]);
-          renderDashboard();
+          /* Cada frente carrega o seu: as quatro leituras de vídeo não servem
+             ao painel de foto, e a leitura do catálogo não serve ao de vídeo. */
+          if (FP_DASH_FRENTE === 'foto') { await fpFotoCarregar(); renderFotoPanorama(); }
+          else {
+            await Promise.all([loadRequests(), loadCheckins(), loadCheckouts(), loadProjects()]);
+            renderDashboard();
+          }
           break;
         case 'manutencao':
           await loadBugs();
