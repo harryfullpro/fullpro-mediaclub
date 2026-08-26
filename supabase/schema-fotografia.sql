@@ -520,3 +520,46 @@ grant select, insert, update, delete on public.mc_photo_batches  to anon, authen
 -- arquivo de novo à toa. Este NOTIFY custa nada e fecha a porta.
 -- ----------------------------------------------------------------------------
 notify pgrst, 'reload schema';
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Panorama do Dashboard em uma ida só (2026-08-26)
+--
+-- O painel baixava o catálogo inteiro (2.566 linhas, três páginas de 1.000) só
+-- para contar, e depois disparava mais três consultas. Perto de dois segundos
+-- de área vazia. Agora o banco conta e devolve tudo junto.
+-- security invoker (padrão): a RLS de quem chama continua valendo.
+-- ─────────────────────────────────────────────────────────────────────────────
+create or replace function public.mc_photo_panorama(p_inicio_mes timestamptz)
+returns json
+language sql
+stable
+as $$
+  select json_build_object(
+    'ativos',     (select count(*) from mc_photo_products where excluido is not true),
+    'com_foto',   (select count(*) from mc_photo_products where excluido is not true and tem_foto is true),
+    'sem_foto',   (select count(*) from mc_photo_products where excluido is not true and tem_foto is not true),
+    'avaliados',  (select count(*) from mc_photo_products where excluido is not true and nota is not null),
+    'nota_media', (select avg(nota) from mc_photo_products where excluido is not true and nota is not null),
+    'p5',   (select count(*) from mc_photo_products where excluido is not true and tem_foto is not true and prioridade = 5),
+    'p3',   (select count(*) from mc_photo_products where excluido is not true and tem_foto is not true and prioridade = 3),
+    'p2',   (select count(*) from mc_photo_products where excluido is not true and tem_foto is not true and prioridade = 2),
+    'p1',   (select count(*) from mc_photo_products where excluido is not true and tem_foto is not true and prioridade = 1),
+    'pend', (select count(*) from mc_photo_products where excluido is not true and tem_foto is not true and prioridade is null),
+    -- o início do mês vem do navegador, para respeitar o fuso de quem olha
+    'fotos_mes',    (select count(*) from mc_photo_files where created_at >= p_inicio_mes),
+    'produtos_mes', (select count(distinct sku) from mc_photo_files where created_at >= p_inicio_mes),
+    'recentes', (select coalesce(json_agg(t), '[]'::json) from (
+        select sku, drive_file_id, file_name, created_at
+          from mc_photo_files order by created_at desc limit 15) t),
+    'lotes', (select coalesce(json_agg(t), '[]'::json) from (
+        select id, created_at, criado_por_nome, slack_destino_nome, tamanho
+          from mc_photo_batches where status = 'aberto' order by created_at desc limit 5) t),
+    'sem_foto_estoque', (select coalesce(json_agg(t), '[]'::json) from (
+        select sku, nome, estoque, prioridade, imagem_bling
+          from mc_photo_products
+         where excluido is not true and tem_foto is not true
+         order by estoque desc nulls last limit 8) t)
+  );
+$$;
+
+grant execute on function public.mc_photo_panorama(timestamptz) to anon, authenticated;

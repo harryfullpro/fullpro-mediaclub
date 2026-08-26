@@ -15336,7 +15336,11 @@ function fpPrioHtml(sku, nivel, editavel) {
 function fpJs(v) { return String(v == null ? '' : v).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
 
 async function fpPrioDefinir(sku, nivel) {
-  const prod = fpFotoProduto(sku);
+  let prod = fpFotoProduto(sku);
+  /* O painel do Dashboard pinta a lista direto do banco, sem esperar o
+     catálogo. Se o clique chegar antes dele, carrega e tenta de novo — antes
+     essa janela saía calada. */
+  if (!prod) { await fpFotoCarregar(); prod = fpFotoProduto(sku); }
   if (!prod) return;
   if (prod.prioridade === nivel) nivel = null;          // clicar de novo tira a classificação
 
@@ -18322,58 +18326,51 @@ function fpSkelTxt(larg, alt) {
   return '<span class="fp-skel-txt" style="width:' + larg + ';height:' + (alt || 13) + 'px"></span>';
 }
 
-/* O painel é montado em duas passadas, porque tem duas fontes com tempos
-   diferentes: o catálogo (FOTO_PRODUTOS, milhares de linhas) e as três
-   consultas próprias do panorama. Cada bloco mostra o esqueleto até a SUA
-   fonte chegar — quem volta ao painel com o catálogo em cache já vê os
-   números de cara, e só o do mês pisca.
-   estado = { catalogo: bool, dados: {fotosMes, recentes, lotes} | null } */
-function fpPanoramaHtml(estado) {
-  const temCat = !!(estado && estado.catalogo);
-  const dados  = (estado && estado.dados) || null;
-
-  const ativos = FOTO_PRODUTOS.filter(p => !p.excluido);
-  const com = ativos.filter(p => p.tem_foto), sem = ativos.filter(p => !p.tem_foto);
-  const notas = ativos.filter(p => p.nota != null).map(p => p.nota);
-  const media = notas.length ? (notas.reduce((a, b) => a + b, 0) / notas.length) : null;
-  const fila = { 5: 0, 3: 0, 2: 0, 1: 0, pend: 0 };
-  sem.forEach(p => { if (p.prioridade == null) fila.pend++; else fila[p.prioridade]++; });
-  const pct = ativos.length ? Math.round(com.length / ativos.length * 100) : 0;
-  const num = n => n.toLocaleString('pt-BR');
-
-  const fotosMes = dados ? dados.fotosMes : [];
-  const recentes = dados ? dados.recentes : [];
-  const lotes    = dados ? dados.lotes    : [];
-  const produtosMes = new Set(fotosMes.map(x => x.sku)).size;
+/* Todo o painel vem de UMA chamada: mc_photo_panorama(início do mês) conta no
+   banco exatamente o que a tela mostra. Antes, para contar, o navegador
+   baixava o catálogo inteiro — 2.566 linhas em três páginas — e só então
+   disparava outras três consultas. Quase dois segundos de área vazia.
+   `d` é o retorno da função, ou null enquanto ela não voltou: aí cada número
+   vira uma barra em animação, e a tela já abre com a forma certa. */
+function fpPanoramaHtml(d) {
+  const n = v => Number(v || 0);
+  const ativos = n(d && d.ativos), com = n(d && d.com_foto), sem = n(d && d.sem_foto);
+  const avaliados = n(d && d.avaliados);
+  const media = (d && d.nota_media != null) ? Number(d.nota_media) : null;
+  const fila = { 5: n(d && d.p5), 3: n(d && d.p3), 2: n(d && d.p2), 1: n(d && d.p1), pend: n(d && d.pend) };
+  const pct = ativos ? Math.round(com / ativos * 100) : 0;
+  const fotosMes = n(d && d.fotos_mes), produtosMes = n(d && d.produtos_mes);
+  const recentes = (d && d.recentes) || [];
+  const lotes    = (d && d.lotes) || [];
+  const topo     = (d && d.sem_foto_estoque) || [];
+  const num = v => v.toLocaleString('pt-BR');
 
   const cartao = (rotulo, valor, extra) => '<div class="stat-card"><div class="label">' + rotulo + '</div>'
     + '<div class="value">' + valor + '</div>' + (extra ? '<div class="fp-aviso-sub">' + extra + '</div>' : '') + '</div>';
 
-  const semFotoEstoque = sem.slice().sort((a, b) => (Number(b.estoque) || 0) - (Number(a.estoque) || 0)).slice(0, 8);
-
-  const html = '<div class="stats-grid">'
+  return '<div class="stats-grid">'
     + cartao('Com foto',
-        temCat ? num(com.length) : fpSkelTxt('92px', 28),
-        temCat ? pct + '% do catálogo ativo' : fpSkelTxt('118px', 11))
+        d ? num(com) : fpSkelTxt('92px', 28),
+        d ? pct + '% do catálogo ativo' : fpSkelTxt('118px', 11))
     + cartao('Sem foto',
-        temCat ? num(sem.length) : fpSkelTxt('92px', 28),
-        temCat ? (fila.pend ? num(fila.pend) + ' sem prioridade' : 'tudo classificado') : fpSkelTxt('104px', 11))
+        d ? num(sem) : fpSkelTxt('92px', 28),
+        d ? (fila.pend ? num(fila.pend) + ' sem prioridade' : 'tudo classificado') : fpSkelTxt('104px', 11))
     + cartao('Nota média',
-        temCat ? (media == null ? '—' : media.toFixed(1).replace('.', ',') + '/5') : fpSkelTxt('76px', 28),
-        temCat ? (notas.length ? notas.length + ' produtos avaliados' : 'ainda sem avaliação') : fpSkelTxt('126px', 11))
+        d ? (media == null ? '—' : media.toFixed(1).replace('.', ',') + '/5') : fpSkelTxt('76px', 28),
+        d ? (avaliados ? avaliados + ' produtos avaliados' : 'ainda sem avaliação') : fpSkelTxt('126px', 11))
     + cartao('Fotos este mês',
-        dados ? num(fotosMes.length) : fpSkelTxt('62px', 28),
-        dados ? produtosMes + (produtosMes === 1 ? ' produto' : ' produtos') : fpSkelTxt('82px', 11))
+        d ? num(fotosMes) : fpSkelTxt('62px', 28),
+        d ? produtosMes + (produtosMes === 1 ? ' produto' : ' produtos') : fpSkelTxt('82px', 11))
     + '</div>'
 
     + '<div class="fp-prod">'
     + '<div class="fp-prod-faixa"><b>Fila por prioridade</b><span class="fp-aviso-sub">'
-    + (temCat ? num(sem.length) + ' produtos sem foto' : fpSkelTxt('132px', 11)) + '</span></div>' + [
+    + (d ? num(sem) + ' produtos sem foto' : fpSkelTxt('132px', 11)) + '</span></div>' + [
         ['Emergencial', fila[5], 5], ['Alta', fila[3], 3], ['Média', fila[2], 2], ['Baixa', fila[1], 1], ['Sem prioridade', fila.pend, 0],
-      ].map(([rot, qtd, n]) => '<div class="fp-prod-linha"><span class="fp-prod-nome"><b>' + rot + '</b></span>'
-        + '<span class="fp-prod-est">' + (temCat ? num(qtd) + ' <small>itens</small>' : fpSkelTxt('46px', 12)) + '</span>'
+      ].map(([rot, qtd, nivel]) => '<div class="fp-prod-linha"><span class="fp-prod-nome"><b>' + rot + '</b></span>'
+        + '<span class="fp-prod-est">' + (d ? num(qtd) + ' <small>itens</small>' : fpSkelTxt('46px', 12)) + '</span>'
         + '<span class="fp-prod-fim" style="width:120px"><span style="flex:1;height:5px;border-radius:3px;background:var(--border-hi);overflow:hidden;display:block">'
-        + '<span style="display:block;height:100%;width:' + (temCat && sem.length ? Math.round(qtd / sem.length * 100) : 0) + '%;background:' + fpPrioCor(n) + '"></span></span></span></div>').join('')
+        + '<span style="display:block;height:100%;width:' + (d && sem ? Math.round(qtd / sem * 100) : 0) + '%;background:' + fpPrioCor(nivel) + '"></span></span></span></div>').join('')
     + '</div>'
 
     + (lotes.length ? '<div class="fp-prod"><div class="fp-prod-faixa"><b>Lotes em aberto</b></div>'
@@ -18382,9 +18379,9 @@ function fpPanoramaHtml(estado) {
           + escHtml(l.criado_por_nome || '') + (l.slack_destino_nome ? ' → ' + escHtml(l.slack_destino_nome) : '') + '</span></span>'
           + '<span class="fp-prod-est">' + (l.tamanho || 0) + ' <small>itens</small></span></div>').join('') + '</div>' : '')
 
-    + ((temCat && !semFotoEstoque.length) ? '' : '<div class="fp-prod"><div class="fp-prod-faixa"><b>Sem foto e com mais estoque parado</b><span class="fp-aviso-sub">os 8 maiores</span></div>'
-    + (temCat
-        ? semFotoEstoque.map(p => '<div class="fp-prod-linha" data-sku="' + escHtml(p.sku) + '">' + fpFotoProdutoHtml(p.sku, p.imagem_bling, 34, 7)
+    + ((d && !topo.length) ? '' : '<div class="fp-prod"><div class="fp-prod-faixa"><b>Sem foto e com mais estoque parado</b><span class="fp-aviso-sub">os 8 maiores</span></div>'
+    + (d
+        ? topo.map(p => '<div class="fp-prod-linha" data-sku="' + escHtml(p.sku) + '">' + fpFotoProdutoHtml(p.sku, p.imagem_bling, 34, 7)
             + '<span class="fp-prod-nome"><b>' + escHtml(p.nome || p.sku) + '</b><span class="fp-prod-sku">' + escHtml(p.sku) + '</span></span>'
             + fpProdEstoqueHtml(p.estoque)
             + '<span class="fp-prod-fim">' + fpPrioHtml(p.sku, p.prioridade, fpFotoPodeEditar()) + '</span></div>').join('')
@@ -18395,17 +18392,15 @@ function fpPanoramaHtml(estado) {
             + '<span class="fp-prod-fim">' + fpSkelTxt('108px', 14) + '</span></div>').join(''))
     + '</div>')
 
-    + ((dados && !recentes.length) ? '' : '<div class="fp-prod-faixa"><b>Últimas 15 fotos enviadas</b></div>'
+    + ((d && !recentes.length) ? '' : '<div class="fp-prod-faixa"><b>Últimas 15 fotos enviadas</b></div>'
     + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px">'
-    + (dados
+    + (d
         ? recentes.map(f => '<div><img src="' + escHtml(FP_DRIVE_URL + '?action=arquivo&id=' + encodeURIComponent(f.drive_file_id || '')) + '" alt="'
             + escHtml(f.file_name || '') + '" loading="eager" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--border)">'
             + '<div class="fp-prod-sku" style="margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escHtml(f.sku || '') + '</div></div>').join('')
         : Array.from({ length: 15 }, () => '<div><span class="fp-skel-txt" style="width:100%;aspect-ratio:1;height:auto;border-radius:8px"></span>'
             + '<div style="margin-top:3px">' + fpSkelTxt('64px', 10) + '</div></div>').join(''))
     + '</div>');
-
-  return { html, semFotoEstoque };
 }
 
 /* Quem chegou por último manda: duas aberturas seguidas não podem pintar uma
@@ -18420,32 +18415,40 @@ async function renderFotoPanorama() {
   /* Passada 1, síncrona: a tela abre com a forma certa e o esqueleto no lugar
      do que ainda não chegou. Só quando não há nada pintado — repintar depois
      de um clique de prioridade não pode piscar a tela inteira. */
-  if (!box.innerHTML.trim()) box.innerHTML = fpPanoramaHtml({ catalogo: FOTO_PRODUTOS.length > 0, dados: null }).html;
+  if (!box.innerHTML.trim()) box.innerHTML = fpPanoramaHtml(null);
+
+  /* O catálogo não segura mais o painel: quem precisa dele são as outras telas
+     da seção e a edição de prioridade. Vai em segundo plano. */
+  fpFotoCarregar().catch(e => console.warn('catálogo de fotos', e));
 
   /* "Este mês" conta o que passou pelo painel: mc_photo_files só tem foto
      enviada por aqui. Foto que já estava no Drive antes deste módulo não
-     entra — e não deve, senão o número do mês vira o acervo inteiro. */
+     entra — e não deve, senão o número do mês vira o acervo inteiro. O início
+     do mês vai do navegador para respeitar o fuso de quem está olhando. */
   const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0, 0, 0, 0);
-  let fotosMes = [], recentes = [], lotes = [];
-  try {
-    /* O catálogo corre junto com as três consultas, não antes delas: em série
-       eram duas idas ao banco, uma esperando a outra. */
-    const [, f, r, l] = await Promise.all([
-      fpFotoCarregar(),
-      sb.from('mc_photo_files').select('sku,created_at').gte('created_at', inicioMes.toISOString()),
-      sb.from('mc_photo_files').select('*').order('created_at', { ascending: false }).limit(15),
-      sb.from('mc_photo_batches').select('*').eq('status', 'aberto').order('created_at', { ascending: false }).limit(5),
-    ]);
-    fotosMes = f.data || []; recentes = r.data || []; lotes = l.data || [];
-  } catch (e) { console.warn('panorama', e); }
+  const { data, error } = await sb.rpc('mc_photo_panorama', { p_inicio_mes: inicioMes.toISOString() });
   if (vez !== _panoramaVez) return;
 
-  /* Passada 2: o que chegou. `catalogo: true` mesmo se a leitura falhou — daí
-     o painel mostra zero, que é a verdade do que temos, e não um esqueleto
-     que pisca para sempre. */
-  const montado = fpPanoramaHtml({ catalogo: true, dados: { fotosMes, recentes, lotes } });
-  box.innerHTML = montado.html;
-  fpDriveCarregar(montado.semFotoEstoque.map(p => p.sku), box);
+  if (error || !data) {
+    console.warn('panorama', error);
+    box.innerHTML = '<div class="fp-vazio">'
+      + '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+      + '<h3>Não foi possível carregar o panorama</h3>'
+      + '<p>' + escHtml((error && error.message) || 'A consulta não devolveu nada.') + '</p>'
+      + '<button class="fp-vazio-acao" onclick="fpPanoramaRecarregar()">Tentar de novo</button>'
+      + '</div>';
+    return;
+  }
+
+  /* Passada 2: o dado no lugar do esqueleto. */
+  box.innerHTML = fpPanoramaHtml(data);
+  fpDriveCarregar(((data.sem_foto_estoque) || []).map(p => p.sku), box);
+}
+
+function fpPanoramaRecarregar() {
+  const box = document.getElementById('fotoPanorama');
+  if (box) box.innerHTML = '';      // limpa para o esqueleto voltar a aparecer
+  renderFotoPanorama();
 }
 
 /* Sincronização: varre o catálogo do Bling e depois confere as pastas do
