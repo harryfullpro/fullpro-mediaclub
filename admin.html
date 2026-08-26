@@ -15669,7 +15669,11 @@ function renderFotoProducao(refazerOrdem) {
     const acoes = [];
     if (fora) acoes.push({ rotulo: 'Voltar para a listagem', icone: 'ver', acao: () => fpProdRestaurar(p.sku) });
     else {
-      acoes.push({ rotulo: 'Adicionar fotos', icone: 'mais', acao: () => fpProdAdicionarFotos(p.sku) });
+      /* Quem ainda não tem foto recebe a primeira: é envio, com ícone de upload.
+         Quem já tem, ganha mais uma: é adição, com o +. Mesma ação por baixo. */
+      acoes.push(temFoto
+        ? { rotulo: 'Adicionar fotos', icone: 'mais', acao: () => fpProdAdicionarFotos(p.sku) }
+        : { rotulo: 'Enviar fotos', icone: 'enviar', acao: () => fpProdAdicionarFotos(p.sku) });
       if (temFoto) acoes.push({ rotulo: 'Enviar para atualização', icone: 'atualizar', acao: () => fpProdEnviarAtualizacao(p.sku) });
       acoes.push({ sep: true });
       acoes.push({ rotulo: 'Remover da listagem', icone: 'excluir', perigo: true, acao: () => fpProdExcluir(p.sku) });
@@ -19986,6 +19990,7 @@ const FP_ICONES = {
   foto:     '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
   standby:  '<circle cx="12" cy="12" r="9"/><line x1="10" y1="9" x2="10" y2="15"/><line x1="14" y1="9" x2="14" y2="15"/>',
   mais:     '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  enviar:   '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
   atualizar:'<path d="M21 12a9 9 0 11-3.2-6.9"/><polyline points="21 3 21 9 15 9"/>',
 };
 
