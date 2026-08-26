@@ -21149,11 +21149,11 @@ const FP_AJUDA = {
     passos: [
       { alvo: '#view-foto-producao .filter-bar', titulo: 'As abas da fila',
         texto: 'Na fila, Sem prioridade, Emergenciais, Já fotografados e Fora de linha. O número ao lado de cada aba é quanto tem nela.' },
-      { alvo: '#fotoProdBusca', titulo: 'Busca por nome ou SKU',
+      { alvo: '#view-foto-producao .fp-busca', titulo: 'Busca por nome ou SKU',
         texto: 'Filtra dentro da aba em que você está. Serve para achar um produto específico sem sair da fila.' },
       { alvo: '#fotoProdLista .fp-prod-linha', titulo: 'Clique na linha para selecionar',
         texto: 'Qualquer lugar da linha marca o produto — a caixinha tem 16px e errar era rotina. Com Shift, seleciona do último marcado até aqui.' },
-      { alvo: '#fotoProdLoteBarra', titulo: 'Ações em massa',
+      { alvo: '#fotoProdLoteBarra .fp-prod-lote', titulo: 'Ações em massa',
         texto: 'Com produtos marcados, esta barra define a prioridade de todos de uma vez ou tira todos da listagem. Ela fica sempre visível e acompanha a rolagem.' },
       { alvo: '#fotoProdLista .fp-prod-linha .fp-prio', titulo: 'Prioridade de um produto',
         texto: 'Baixa, média, alta e emergencial. O emergencial fura a fila e ganha um triângulo piscando — use com parcimônia, senão ninguém olha mais para ele.' },
@@ -21294,7 +21294,15 @@ function fpTutAbrir(chave) {
   const d = FP_AJUDA[chave]; if (!d || !d.passos) return;
   /* Passo cujo alvo nao esta na tela e descartado agora, nao pulado no meio:
      assim o contador "2 de 4" nunca mente. */
-  _tutPassos = d.passos.filter(p => { const el = document.querySelector(p.alvo); return el && el.offsetParent !== null; });
+  /* Nao basta existir: o slot da barra de acoes em massa tem altura 0 e um
+     `offsetParent` valido — apontar para ele abria um buraco de 12px em cima
+     de nada (medido). O alvo tem de ter area. */
+  _tutPassos = d.passos.filter(p => {
+    const el = document.querySelector(p.alvo);
+    if (!el || el.offsetParent === null) return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 4 && r.height > 4;
+  });
   if (!_tutPassos.length) return;
   _tutFocoAnterior = document.activeElement;
   _tutAtivo = true; _tutI = 0;
