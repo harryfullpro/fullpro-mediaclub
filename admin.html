@@ -301,7 +301,11 @@
   /* Sair e landing page dividem a mesma fileira: duas acoes curtas, uma linha
      so. Sair primeiro, que e a mais usada. */
   .fp-rodape-par { display: flex; gap: 4px; }
-  .fp-rodape-par .nav-item { flex: 1 1 0; min-width: 0; }
+  /* Meio a meio cortava "Landing page" (medido). Sair leva so a largura que
+     precisa e a landing fica com o resto. */
+  .fp-rodape-par #logoutBtn { flex: 0 0 auto; }
+  .fp-rodape-par a.nav-item { flex: 1 1 auto; min-width: 0; }
+  .fp-rodape-par .nav-item { padding-left: 10px; padding-right: 10px; gap: 8px; }
   .fp-rodape-par .nav-label { overflow: hidden; text-overflow: ellipsis; }
   /* Recolhido, os dois icones continuam lado a lado, so sem rotulo. */
   .shell.collapsed .fp-rodape-par, .shell.hover-mode .fp-rodape-par { gap: 2px; }
