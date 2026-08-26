@@ -4861,11 +4861,11 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
       </a>
     </div>
     <div class="sidebar-nav">
-    <div class="nav-section" data-sec="video">Vídeo</div>
     <button class="nav-item active" data-view="dashboard">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       <span class="nav-label">Dashboard</span>
     </button>
+    <div class="nav-section" data-sec="video">Vídeo</div>
     <button class="nav-item" data-view="requests">
       <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
       <span class="nav-label">Solicitações</span> <span class="count" id="cntReq">0</span>
@@ -10436,7 +10436,8 @@ function renderShotsReadOnly(shots, si) {
   'use strict';
 
   const FP_MODULE_GROUPS = [
-    { sec: 'Vídeo', items: [['dashboard','Dashboard'],['requests','Solicitações'],['calendar','Agenda'],['checkin','Check-in / Check-out'],['projects','Projetos'],['editing','Edição'],['clips','Clips'],['debriefing','Debriefing']] },
+    { sec: 'Painel', items: [['dashboard','Dashboard']] },
+    { sec: 'Vídeo', items: [['requests','Solicitações'],['calendar','Agenda'],['checkin','Check-in / Check-out'],['projects','Projetos'],['editing','Edição'],['clips','Clips'],['debriefing','Debriefing']] },
     { sec: 'Fotografia', items: [['foto-dashboard','Panorama'],['foto-producao','Produção'],['foto-galeria','Galeria'],['foto-separacao','Separação'],['foto-lote','Fotografia em lote']] },
     { sec: 'Performance', items: [['perf-metas','Metas'],['perf-posts','Meus Posts'],['perf-influencers','Influenciadores'],['perf-bonificacao','Bonificação']] },
     { sec: 'Configurações', items: [['templates','Templates WhatsApp'],['export','Exportar'],['users','Usuários'],['manutencao','Manutenção'],['atualizacoes','Atualizações'],['integracoes','Integrações']] }
