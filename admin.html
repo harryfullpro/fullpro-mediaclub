@@ -3388,16 +3388,17 @@ body.fp-sem-scroll { overflow: hidden; }
 .fp-zona-risco p { margin: 0 0 14px; font-size: 13px; color: var(--text-dim); line-height: 1.55; }
 .fp-btn-perigo {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  min-height: var(--toque); padding: 0 18px;
+  min-height: 30px; padding: 0 14px;
   background: transparent; border: 1px solid var(--perigo);
-  color: var(--perigo); border-radius: var(--raio-md);
+  color: var(--perigo); border-radius: 6px;
   font-size: 13px; font-weight: 650; cursor: pointer; font-family: inherit;
 }
 .fp-btn-perigo:hover { background: var(--perigo); color: #fff; }
 
 /* --- ergonomia de toque (o painel e usado no patio, no celular) --------- */
 @media (pointer: coarse), (max-width: 900px) {
-  .action-btn, .fp-icon-btn, .filter-btn, .proj-filter-chip, .photo-add, .fp-filter-clear {
+  .action-btn, .fp-icon-btn, .filter-btn, .proj-filter-chip, .photo-add, .fp-filter-clear,
+  .fp-vazio-acao, .fp-btn-perigo, .fp-btn-sec, .fp-btn-pri {
     min-height: var(--toque);
   }
   .fp-icon-btn { min-width: var(--toque); }
@@ -3502,10 +3503,12 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
 .fp-vazio svg { color: var(--text-muted); opacity: .5; }
 .fp-vazio h3 { margin: 4px 0 0; font-size: 15px; font-weight: 650; color: var(--text); }
 .fp-vazio p { margin: 0; font-size: 13.5px; color: var(--text-muted); max-width: 42ch; line-height: 1.55; }
+/* Na mesma proporcao dos botoes de dialogo: 30px, 13px, canto de 6px. O alvo
+   de toque volta no celular (regra de ergonomia mais abaixo). */
 .fp-vazio .fp-vazio-acao {
-  margin-top: 6px; min-height: var(--toque); padding: 0 18px;
+  margin-top: 6px; min-height: 30px; padding: 0 14px;
   background: var(--bg-elev); border: 1px solid var(--border-hi);
-  border-radius: var(--raio-md); color: var(--text);
+  border-radius: 6px; color: var(--text);
   font-size: 13px; font-weight: 650; cursor: pointer; font-family: inherit;
 }
 .fp-vazio .fp-vazio-acao:hover { border-color: var(--text-muted); }
@@ -15462,8 +15465,13 @@ function fpTemAcesso(view) {
   return !!b && b.style.display !== 'none';
 }
 
+/* Triangulo simetrico. O desenho anterior era uma copia mal arredondada: a
+   encosta esquerda corria 8,5 na horizontal e a direita 7,5, e o apice ficava
+   centrado em 12,5 contra uma base centrada em 12 — torto, e com o ponto de
+   exclamacao (x=12) fora do eixo da propria forma. Agora as duas encostas
+   correm 8,47 e apice e base dividem o mesmo eixo, x=12. */
 const FP_ICO_ATENCAO = '<svg viewBox="0 0 24 24" aria-hidden="true">'
-  + '<path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/>'
+  + '<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>'
   + '<path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
 const FP_FOTO_PAGINA = 60;
 let _prodFiltro = 'fila', _prodBusca = '', _prodMostra = FP_FOTO_PAGINA;
