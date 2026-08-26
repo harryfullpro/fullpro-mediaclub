@@ -559,26 +559,30 @@ listagem aparecendo acima da barra.
 
 ---
 
-## Trocar paleta: mexa na matiz, não na luminosidade
+## Cor nova não se converte por script — se escolhe na Manutenção
 
-Para aplicar uma paleta nova sem refazer a auditoria de contraste: leve a
-**matiz** de cada cor para a mais próxima da paleta e **mantenha a
-luminosidade**. Com o L intacto, todo par que passava continua passando.
+Manutenção → Cores do painel tem os 33 tokens de cor, por tema, com seletor e
+campo de hex. Se o dono quiser outra cor, ele troca ali; não escrever conversor
+de paleta.
 
-Onde a matiz muda muito de luminância intrínseca (amarelo puro, por exemplo),
-troque o critério: case a **luminância relativa** (WCAG) em vez do L do HSL,
-por bissecção. O contraste sai idêntico ao original.
+Ao acrescentar um token de cor ao CSS, acrescente também o verbete em
+`FP_CORES_GRUPOS` (nome, onde aparece, e `contra` quando houver par de
+contraste) e o valor de fábrica em `FP_CORES_PADRAO` — nos dois temas.
 
-Duas guardas obrigatórias:
+---
 
-- **Saturação abaixo de 0,18 não entra no mapa** — é neutro: fundo, branco,
-  cinza, o preto do texto.
-- **A matiz mais próxima nem sempre é a leitura certa.** Se duas cores com
-  significados diferentes caem na mesma casa da paleta, force uma delas para a
-  vizinha. Foi o caso do rosa do Reels, que iria virar o vermelho do YouTube.
+## Dica no hover: `data-tip`, não `aria-label`
 
-E confira **os pares**, não as cores soltas: texto sobre o próprio chip, branco
-sobre o botão, `--tx-*` sobre `--bg-*`.
+`aria-label` dá **nome acessível**; não gera `title` e não aparece no hover. O
+observador de ergonomia lê `data-tip` e escreve os dois de uma vez — então todo
+controle que precise de explicação leva `data-tip`, e só ele.
+
+Como conferir uma tela inteira:
+
+```js
+[...document.querySelectorAll('#view-x button, #view-x label[for], #view-x a[href]')]
+  .filter(e => e.offsetParent !== null && !e.getAttribute('title'))
+```
 
 ---
 

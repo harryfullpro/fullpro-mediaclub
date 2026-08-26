@@ -1,5 +1,50 @@
 # Diário
 
+## 26/08/2026 · O seletor cobre o painel inteiro, e a Fotografia ganha dicas
+
+> *"amplia esse controle de cores para todas as cores do site com uma descrição
+> de onde é usado"*
+
+De dez realces para **33 tokens por tema**, em oito grupos: fundo, linhas,
+texto, realce, ação destrutiva, prioridade, os seis selos de status e a seta de
+ordenação. **Cada campo diz onde aquilo aparece** — cor sem endereço vira
+tentativa e erro.
+
+Duas coisas que o alcance maior exigiu:
+
+- **Chapa com transparência.** Vários tokens de fundo são `rgba` de propósito —
+  no tema escuro a alfa pega o tom do cartão por baixo — e o seletor do sistema
+  só sabe hex. Entra e sai hex, e a **transparência do padrão daquele token é
+  reposta na saída**.
+- **Aviso de contraste.** Texto, realce e os pares de selo mostram a razão WCAG
+  ao lado do nome, calculada sobre a **cor final**: chapa com alfa é composta
+  sobre o cartão antes de medir, senão o número mentiria. Fica amarelo abaixo de
+  4,5:1 e **não bloqueia nada** — quem manda na cor é o dono; o número só tira a
+  decisão do escuro.
+
+### Dica no hover em tudo que se clica na Fotografia
+
+> *"garanta que todos os elementos da sessão fotografia tenham hover de
+> acessibilidade dando uma breve descrição do que cada botão faz"*
+
+Abas das quatro telas, mostrar mais, ordenar da galeria, avaliar foto,
+selecionar todos, limpar seleção, os quatro botões de prioridade em massa,
+remover/voltar para a listagem, tamanho do lote, ver lógica, gerar lista,
+concluir e cancelar lote, ir para Separação, sincronizar catálogo, e a lupa e o
+X da busca.
+
+Tudo por **`data-tip`**: o observador de ergonomia já transforma isso em `title`
+e `aria-label`, então um atributo serve o mouse e o leitor de tela.
+
+**A armadilha:** vários botões já tinham `aria-label` e mesmo assim não mostravam
+nada no hover. **Nome acessível não é dica** — o `title` é outro atributo, e só
+o `data-tip` gera os dois.
+
+Conferido em produção: **513 elementos clicáveis** nas três telas (314 na
+Produção, 129 na Galeria, 70 na Separação) e **zero sem dica**.
+
+---
+
 ## 26/08/2026 · O dono escolhe as cores, não eu
 
 > *"cria um seletor de cores pra eu pickar uma cor no seletor de cores pra cada
