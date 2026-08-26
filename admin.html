@@ -15932,7 +15932,9 @@ function fpProdLoteBarra() {
   const vazia = !n;
   const trava = vazia ? ' disabled' : '';
 
-  const todosFora = [..._prodSel].every(sku => { const p = fpFotoProduto(sku); return p && p.excluido; });
+  /* `n > 0` na frente: [].every() devolve TRUE, e sem selecao o botao passava a
+     dizer "Voltar para a listagem" — o contrario do que ele faz. */
+  const todosFora = n > 0 && [..._prodSel].every(sku => { const p = fpFotoProduto(sku); return p && p.excluido; });
   const bt = (k, rot) => '<button class="fp-lote-p" type="button"' + trava
     + ' style="--fp-lote-cor:' + fpPrioCor(k) + '" onclick="fpProdLotePrioridade(' + k + ')">'
     + rot + '</button>';
