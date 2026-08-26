@@ -3175,10 +3175,10 @@
 :root, [data-theme="dark"] {
   --perigo: #e5484d;           /* vermelho de ACAO DESTRUTIVA, separado do vermelho da marca */
   --perigo-bg: rgba(229,72,77,.14);
-  /* Anel de foco no vermelho da marca — pedido do dono. Fica fino (1px) para
-     nao virar moldura: quem navega por teclado precisa saber onde esta, nao
-     levar um susto. */
-  --foco: #ff4d4d;
+  /* Anel de foco: o MESMO vermelho da marca usado no resto do painel, nao um
+     tom proprio. Fino (1px) e para dentro (offset negativo) — por fora ele
+     contorna a caixa e parece grosso. */
+  --foco: var(--primary);
   --raio-sm: 4px;
   --raio-md: 8px;
   --raio-pill: 999px;
@@ -3196,9 +3196,8 @@
 [data-theme="light"] {
   --perigo: #c62828;
   --perigo-bg: rgba(198,40,40,.10);
-  /* No claro, o vermelho da marca (#ff2d2d) da 3,4:1 sobre branco; este tom
-     mais escuro passa dos 4,5:1 e continua sendo o mesmo vermelho. */
-  --foco: #d11f1f;
+  /* No claro o proprio --primary ja e mais escuro (#dd2222). */
+  --foco: var(--primary);
 
   /* no claro o texto precisa escurecer: o mesmo tom que funciona sobre preto
      cai para ~2:1 sobre branco */
@@ -3227,7 +3226,9 @@ textarea:focus-visible,
 .filter-btn:focus-visible,
 .proj-filter-chip:focus-visible {
   outline: 1px solid var(--foco) !important;
-  outline-offset: 2px !important;
+  /* Para DENTRO: com offset positivo o anel abraca a caixa por fora e engorda a
+     silhueta do elemento; por dentro ele so risca a propria borda. */
+  outline-offset: -1px !important;
 }
 /* o <main> so recebe foco via "pular para o conteudo"; nao precisa de anel */
 main:focus, main:focus-visible { outline: none !important; }
