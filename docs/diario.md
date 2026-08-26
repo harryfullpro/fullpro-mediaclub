@@ -1,5 +1,144 @@
 # Diário
 
+## 26/08/2026 · O menu não podia nascer errado
+
+> *"Quando eu entro como matheus no painel, no menu lateral aparece todos os módulos e
+> depois de meio segundo atualiza para só os que ele tem permissão. De modo algum isso
+> pode aparecer pra ele, nem por meio segundo que seja."*
+
+A filtragem de permissão era a **última** coisa de `initApp()` — depois de umas quinze
+requisições (`loadRequests`, `loadUsers`, `loadProjects`, `loadUpdates`…). E o painel já
+tinha sido revelado antes de tudo isso. Resultado: quem tem acesso parcial via os
+**24 itens** do menu, com Usuários, Integrações e Manutenção à mostra, até a filtragem
+chegar.
+
+O conserto não é adiantar um pedaço da filtragem: é inverter a ordem. Nasceu
+`fpRevelarPainel()`, que filtra **enquanto `#app` ainda está `display:none`** e só depois
+revela. As duas camadas (papel + módulos do usuário) só precisam de `CURRENT_USER`, que
+já está em mãos no login e no `checkAuth()` — nada ali depende de dado carregado.
+
+Os dois únicos lugares que mostravam o painel passaram a chamar essa função. Como filtrar
+e revelar acontecem na **mesma tarefa síncrona**, o navegador não tem onde pintar o estado
+cru — não é uma corrida ganha por pouco, é uma corrida que deixou de existir.
+
+Trava de segurança por cima: `.sidebar-nav` nasce com `visibility:hidden` e só ganha
+visibilidade com a classe `fp-menu-filtrado`, posta pela própria `fpRevelarPainel()`. Se
+um dia a filtragem estourar no meio, o menu **não aparece** em vez de aparecer inteiro. O
+**rodapé fica fora da trava** de propósito: tema, landing e Sair continuam alcançáveis
+num painel quebrado.
+
+Efeito colateral que precisou de cuidado: `applyRolePermissions()` agora roda duas vezes
+por sessão (antes de revelar e no fim do `initApp`, que redesenha as telas de Performance).
+O aviso de "somente leitura" era criado sem dedupe e duplicaria — ganhou
+`data-fp-somente-leitura` e remoção do anterior.
+
+Medido em produção, com a sessão do Matheus: 24 itens no estado cru → filtragem com
+`app=none` → revelação com a trava aberta e **8 itens** visíveis. Administrador continua
+com os 24 e as quatro seções.
+
+---
+
+## 26/08/2026 · Seções do menu com nome por papel
+
+> *"Para administrador as seções devem ter nome de geral > VIDEO, fotografia >
+> FOTOGRAFIA (…). Para não administradores a sessão VIDEO vira GERAL e FOTOGRAFIA vira
+> GERAL."*
+
+O administrador vê a casa dividida, porque para ele são duas operações. Quem trabalha só
+de um lado não tem por que enxergar a divisão: a única seção que aparece se chama
+**GERAL**. Pós-produção deixou de existir e o **Debriefing** foi para a seção de vídeo.
+
+Três coisas que o pedido não previa e apareceram na implementação:
+
+- **O Dashboard morava dentro da seção VÍDEO.** Isso fazia o Assistente ver *duas*
+  seções — "VÍDEO" com o Dashboard sozinho e "FOTOGRAFIA" — em vez do GERAL único. Saiu
+  de todas as seções e foi para o topo, sem cabeçalho.
+- **O teste do papel `assistente` tem que vir antes do de administrador**, porque o nome
+  do papel é "Assistente Admin." e contém a palavra *admin*. Na ordem ingênua, ele entrava
+  como administrador de verdade.
+- **`modules` em branco bloqueia quem não é administrador.** O papel novo foi criado sem
+  módulos e, para não-admin, `fpAllowedSet()` devolve só `FP_ALWAYS_ON` — o Matheus não
+  veria nada além do próprio perfil. O José Gustavo (Fotógrafo) estava no mesmo buraco,
+  preso em `["dashboard"]` de antes da seção existir. Os dois receberam a seção de
+  Fotografia inteira.
+
+Regra que ficou: se um dia um não-administrador tiver acesso aos dois lados, os nomes
+específicos voltam **para essa pessoa**. Duas seções chamadas GERAL, uma embaixo da outra,
+seriam piores que a divisão que estamos escondendo.
+
+Verificado simulando os quatro papéis em produção.
+
+---
+
+## 26/08/2026 · A fonte do site inteiro virou FullPro Sans
+
+Reznik, renomeada. 18 arquivos `.woff2` em `assets/fonts/` (pesos 200–950 + itálicos),
+uso interno e não comercial, autorizado pelo dono. Google Fonts saiu do `<head>` das duas
+páginas.
+
+**Duas armadilhas, as duas custaram uma rodada:**
+
+1. **`url('assets/fonts/…')` não carrega nada.** O caminho relativo resolve contra a URL
+   da página, e o painel é servido em `/admin` (`cleanUrls`) — o navegador pedia
+   `/admin/assets/fonts/…`. Sem erro visível: a fonte simplesmente não trocava e o
+   fallback assumia. Todo `src` de `@font-face` usa **caminho absoluto** (`/assets/…`).
+2. **Bebas Neue não tem minúsculas.** Ela estava *fazendo o papel* de `text-transform:
+   uppercase` em 30 regras. Trocar a família revelou textos que sempre foram em caixa
+   mista — "Painel administrativo" no lugar de "PAINEL ADMINISTRATIVO". Cada uma das 30
+   regras ganhou `text-transform: uppercase` explícito e `font-weight: 800`, porque Bebas
+   é condensada de peso único e a FullPro Sans no peso normal ficava magra no lugar dela.
+
+---
+
+## 26/08/2026 · Filtros e busca, e duas colisões de nome no mesmo dia
+
+> *"vamos mudar o formato desses filtros por tags para um modelo mais moderno sem esse
+> fundo container que é muito cara de ia (…) e também quero que funcione a busca, porque
+> eu digito ali mas o enter não funciona"*
+
+Pílula preenchida virou **aba com sublinhado de 3px** e contagem por aba; a busca ganhou
+lupa, Enter, Esc e botão de limpar. Duas correções depois do primeiro corte:
+
+- O primeiro resultado ficou **apagado demais** ("sem nenhum destaque"). Rótulo subiu para
+  14px/700 e a aba ativa ganhou contagem em destaque.
+- A pílula voltava **só no tema claro**: o tema claro redeclara `.filter-btn.active` com
+  fundo azul e texto branco, muito depois da minha regra. Sobrou também um
+  `.active:hover` azul e uma regra de celular que forçava 12px em qualquer largura.
+
+**As duas colisões:**
+
+- **`fpProdBuscar` já existia** — é a busca de produto do kit do Magis5. A declaração
+  posterior venceu, então o campo de busca da Fotografia chamava a função do Magis5, que
+  procura `#prodRes` (inexistente) e **retorna calada, sem erro no console**. Virou
+  `fpProdBuscarFila`.
+- **`.fp-busca` já existia** — é a busca de Solicitações. Minhas regras vinham *antes* no
+  arquivo e perdiam. Em vez de renomear, reescrevi o componente existente (agora os dois
+  usam o mesmo). No meio da reescrita perdi `fill:none; stroke:currentColor` e a lupa
+  virou um borrão preto sobre preto — achado medindo, não olhando.
+
+Lição que virou padrão: **antes de criar função ou classe, procure o nome no arquivo.**
+
+---
+
+## 26/08/2026 · Acabamento da seção FOTOGRAFIA
+
+Pedidos pequenos do dono, todos aplicados:
+
+- **Extremidades laterais alinhadas** — cabeçalho, filtros, listagem e rodapé passam a
+  compartilhar a mesma margem lateral. Elemento que "quase" alinha é pior que elemento
+  claramente destacado.
+- **Barra de composição do lote** — abaixo de "15 selecionados", uma barra preenchida por
+  cor conforme a mistura de prioridades. O texto voltou a dizer só a contagem.
+- **Coluna de prioridade que se mede sozinha** — a largura vem do rótulo mais comprido em
+  tela (`Range.getClientRects()`), com 78px de piso. Sem isso, "EMERGENCIAL" empurrava a
+  coluna e os outros rótulos ficavam soltos da extremidade direita.
+- **As listas em PDF ficam salvas no módulo de Separação** — o dono deu F5 e a lista sumiu.
+  Agora cada geração é registrada e o histórico aparece na tela.
+- **O PDF sai no domínio do Media Club** (`/lista/…`), por *rewrite* no `vercel.json` para
+  o Storage do Supabase, em vez do link comprido e aleatório do balde.
+
+---
+
 ## 26/08/2026 · Separação vira PDF público, e o que o Bling não conta
 
 O Slack dependia de app e token que não existem. A lista de separação passou a

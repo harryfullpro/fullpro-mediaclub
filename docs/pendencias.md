@@ -26,6 +26,20 @@ Para ligar:
 Fazer o primeiro teste com um kit de brincadeira, não com um que está anunciado.
 
 
+### Ligar o Slack da separação (falta o app e o token)
+`fpSepMensagemSlack` e a edge function `slack-proxy` estão no ar e **dormentes**. Falta o
+dono criar o app no Slack e fornecer o token `xoxb-`. Enquanto isso, a lista de separação
+vai por **PDF de link público** — que resolve o dia a dia e pode muito bem ficar como é.
+
+### Os PDFs de separação se acumulam sem limpeza
+Balde `storage/separacao`, público, com políticas de SELECT e INSERT para `anon` e
+**sem DELETE**. Cada lote gerado vira um arquivo que fica lá para sempre. Não é urgente
+(são alguns KB cada), mas precisa de uma decisão: prazo de validade, limpeza manual pela
+aba Manutenção, ou nada.
+
+Cuidado ao mexer: `sb.storage.remove()` **responde sucesso mesmo quando o RLS bloqueia** —
+a resposta traz os nomes pedidos, não os apagados. Conferir listando de novo.
+
 ### Campanha do Meta Ads — só falta o vídeo
 Rascunho `FullPro Media Club Ads` na conta `FullPro - Conta de anúncios` (834166548630365),
 conjunto `Landing page`, anúncio `video-joinville-01`. Tudo configurado: Joinville + 40 km,
@@ -75,6 +89,17 @@ Num painel interno o risco é contido, mas é o tipo de coisa que piora conforme
 cresce. Correção real: token assinado com expiração, ou usar o Supabase Auth de verdade.
 
 **O dono foi avisado três vezes e ainda não priorizou.** Não tratar sem ele pedir.
+
+### `mc_fin_renames` e `mc_fin_rh` estão com RLS desligado
+Qualquer pessoa com a anon key — que é pública, está no `config.js` — lê e escreve nessas
+duas tabelas. São dados de pessoal e de renomeação financeira, o tipo de coisa que não
+devia estar aberta.
+
+Correção: `alter table … enable row level security` e políticas para `anon, authenticated`
+como nas demais tabelas do painel (o painel não usa Supabase Auth — ver `padroes.md`).
+
+**Levantado duas vezes, sem resposta do dono.** Ligar RLS sem política derruba a tela que
+usa a tabela, então não fazer solto: é uma migração com teste na mesma sessão.
 
 ### Campos de senha fora de `<form>`
 Gera três avisos no console (`Password field is not contained in a form`) e atrapalha o

@@ -18,7 +18,8 @@ Isso decide quase toda escolha de interface:
   Tela pequena, uma mão, às vezes de luva, sinal fraco.
 
 Operadores cadastrados em `mc_admin_users`, com permissão por módulo. Papéis vistos em
-uso: Administrador, Filmmaker, Mecânico/Apresentador.
+uso: Administrador, Filmmaker, Mecânico/Apresentador, **Fotógrafo** e **Assistente
+Admin.** (esse último cuida das fotos, não do vídeo).
 
 ## Fluxo de trabalho que o painel cobre
 
@@ -32,7 +33,9 @@ Solicitação (landing)  →  Agenda  →  Check-in da moto  →  Projeto (rotei
 
 Módulos: Dashboard · Solicitações · Agenda · Check-in/Check-out · Projetos · Edição ·
 Clips · Debriefing · Metas · Meus Posts · Influenciadores · Bonificação · Templates
-WhatsApp · Exportar · Usuários · Integrações · Meu perfil.
+WhatsApp · Exportar · Usuários · Manutenção · Atualizações · Integrações · Meu perfil.
+
+Seção **Fotografia**: Panorama · Produção · Galeria · Separação · Fotografia em lote.
 
 ---
 
@@ -140,6 +143,64 @@ nome de cliente, o caminho é o mesmo: view com colunas mínimas, nunca `select`
 
 Quantidade de asteriscos **igual ao número de letras** do sobrenome real — foi pedido
 explícito: a máscara tem que parecer o nome da pessoa, não um `***` genérico.
+
+### Seção FOTOGRAFIA (agosto/2026)
+Segunda seção do menu, logo abaixo da primeira. Cinco módulos: **Panorama**, **Produção**
+(fila com prioridade), **Galeria** (avaliação por estrelas), **Separação** (lotes) e
+**Fotografia em lote** (envio direto para a pasta do SKU no Drive).
+
+Decisões dele, ditas explicitamente:
+
+- A fila é **a listagem inteira do Bling**, com opção de remover produto da listagem
+- Produto novo entra como **PENDENTE**; qualquer operador com acesso ao módulo pode
+  definir prioridade
+- Prioridade 1/2/3 (azul, amarelo, laranja) e **nível 5 EMERGENCIAL** exclusivo,
+  vermelho, que **sobrepõe qualquer outra** — slider todo preenchido e triângulo piscando
+- **Avaliação de foto é exclusiva do admin**, 0 a 5, começando em 0 cinza; abaixo de 2
+  interessa para refazer, e ao reavaliar aparece a nota anterior
+- O fotógrafo sobe a foto **já no tamanho e formato certos** (limite de 350 KB) — o painel
+  não redimensiona
+- Emergenciais entram no lote escolhido pelo operador e o resto é rateado pela lógica
+  percentual definida por ele
+
+### Papéis novos: Fotógrafo e Assistente Admin.
+O **Assistente Admin.** cuida das fotos, **não do vídeo** — mesmo com "Admin" no nome do
+papel. Os dois papéis têm exatamente o mesmo escopo hoje: a seção de Fotografia,
+Atualizações e o próprio perfil.
+
+### Nome das seções do menu depende de quem olha
+> *"Para administrador as seções devem ter nome de geral > VIDEO, fotografia > FOTOGRAFIA
+> (…). Para não administradores a sessão VIDEO vira GERAL e FOTOGRAFIA vira GERAL."*
+
+Administrador vê a casa dividida (VÍDEO · FOTOGRAFIA · PERFORMANCE · CONFIGURAÇÕES); quem
+trabalha de um lado só vê **GERAL** e CONFIGURAÇÕES com o que lhe cabe. **Pós-produção
+deixou de existir** e o Debriefing passou para a seção de vídeo. Dashboard fica no topo,
+fora de qualquer seção.
+
+### Permissão nunca aparece e depois desaparece
+> *"de modo algum isso pode aparecer pra ele, nem por meio segundo que seja"*
+
+Menu com módulo que o operador não pode acessar é vazamento, mesmo por meio segundo. O
+painel só é revelado depois de filtrado. Ver `padroes.md` → filtrar antes de mostrar.
+
+### Lista de separação em PDF público
+O Slack ficou para depois (falta app e token). A lista sai em **PDF com link público** no
+domínio do Media Club (`/lista/…`), com quantidade 1, nome, SKU e localização no estoque —
+quem separa não tem conta no painel. As listas geradas **ficam salvas no módulo**; o dono
+deu F5 e a lista tinha sumido.
+
+### Tipografia: FullPro Sans em 100% do site
+Reznik renomeada como **FullPro Sans**, uso interno e não comercial ("*pode dale irmão,
+isso vai tá num uso interno e não comercial*"). Nenhuma outra família — muda peso e
+tamanho, nunca a fonte. Bebas Neue saiu de todos os cabeçalhos.
+
+### Container é "cara de IA"
+> *"eu não quero CONTAINERS NESSA MERDA"*
+
+Dito várias vezes, sobre filtros, listagens, popups e avisos: nada de caixa em volta,
+nada de caixa dentro de caixa. Listagem encostada no fundo da página, separada por fios de
+1px. Filtro em aba com sublinhado, não pílula preenchida. Vermelho de destaque é **o
+mesmo vermelho do hover do menu lateral**, nunca um pastel.
 
 ### Modo de trabalho
 > *"pode fazer absolutamente tudo por conta, alterações, deploy, debugs e etc"*

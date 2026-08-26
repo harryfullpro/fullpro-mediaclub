@@ -26,4 +26,4 @@ Estes arquivos só valem se estiverem em dia. A regra:
 O `CLAUDE.md` na raiz do repositório aponta para cá, então qualquer sessão nova do
 Claude Code lê isto automaticamente antes de mexer no código.
 
-Última revisão completa: **13/08/2026**
+Última revisão completa: **26/08/2026**

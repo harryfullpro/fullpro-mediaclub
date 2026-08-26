@@ -318,6 +318,13 @@ flutua no meio do parágrafo.
 *texto* do rótulo — `Range.getClientRects()`, não o `getBoundingClientRect()` do elemento
 inteiro, que inclui o padding e esconde o erro. Tolerância: **2px**.
 
+**As extremidades laterais da página são uma só.** Cabeçalho, filtros, listagem, rodapé e
+barra de seleção compartilham a mesma margem lateral — o olho lê a coluna invisível das
+duas bordas e qualquer elemento que "quase" chega nela parece defeito. Valor que precisa
+encostar na direita (contagem, prioridade, badge) vai até a margem, não até 6px antes dela.
+Coluna cuja largura depende do texto se mede sozinha (`Range.getClientRects()` no rótulo
+mais comprido em tela, com piso) em vez de largura fixa chutada.
+
 Depois de corrigir um caso, **varra as outras telas** atrás do mesmo padrão. A varredura
 de 19/08 percorreu as 17 telas medindo toda `.badge`, `.proj-dest-tag` e
 `.proj-status-select` contra os irmãos da mesma fileira: zero desalinhamentos restantes.
@@ -349,6 +356,99 @@ Ordem de carregamento que funciona, no visor: prévia em cache → leitura da pa
 grande da posição atual, sozinha → tira de miniaturas → adiantamento das seguintes, **em
 série**. Desenhar a tira antes dispara 12 pedidos ao mesmo tempo e a foto que o operador
 quer ver fica atrás deles na fila.
+
+---
+
+## Filtrar antes de mostrar — o menu não nasce errado
+
+> *"de modo algum isso pode aparecer pra ele, nem por meio segundo que seja"*
+
+Permissão aplicada depois de o painel aparecer é **vazamento**, não atraso de interface.
+Quem revela o painel é **`fpRevelarPainel()`**, e ela faz nesta ordem:
+
+1. filtra o menu (`applyRolePermissions()`, que já embute os módulos por usuário e o nome
+   das seções) — com `#app` ainda em `display:none`;
+2. marca `document.body` com `fp-menu-filtrado`;
+3. só então mostra o painel.
+
+As duas camadas de permissão dependem **apenas de `CURRENT_USER`**, que existe desde o
+login. Nada ali precisa de dado carregado — então não há motivo para esperar o `initApp()`.
+
+Filtrar e revelar na **mesma tarefa síncrona** é o que dá a garantia: o navegador não pinta
+no meio de uma função. Por cima disso, `.sidebar-nav` nasce `visibility:hidden` e só abre
+com a classe — se a filtragem estourar, o menu não aparece em vez de aparecer inteiro. O
+**rodapé do menu fica fora da trava**: num painel quebrado, Sair tem que continuar
+clicável.
+
+**Consequência:** `applyRolePermissions()` roda **duas vezes por sessão**. Tudo que ela
+insere no DOM precisa ser idempotente — remover o anterior por id/atributo antes de criar
+(foi o caso do aviso de "somente leitura", que duplicava).
+
+Tela nova que apareça antes da permissão? Mesmo caminho: esconder por padrão, revelar
+depois de decidir.
+
+---
+
+## `modules` em branco bloqueia quem não é administrador
+
+`mc_admin_users.modules` é a segunda camada de permissão, cruzada com o papel:
+
+- **Administrador:** `fpAllowedSet()` devolve `null` — vê tudo, `modules` é ignorado.
+- **Qualquer outro papel com `modules` nulo ou `[]`:** sobra só `FP_ALWAYS_ON`
+  (`profile`, `project-detail`). O operador entra e **não vê nada**.
+
+Papel novo criado no banco sem preencher `modules` nasce, portanto, mudo. Já aconteceu
+duas vezes (Fotógrafo e Assistente Admin.). Ao criar papel ou operador, preencher os
+módulos no mesmo movimento.
+
+**Papel se testa por conteúdo, e a ordem dos testes importa.** `getUserRole()` compara
+`role` em minúsculas com `includes` — e "Assistente Admin." **contém** *admin*. O teste de
+`assistente` vem **antes** do de administrador; inverter a ordem promove o assistente a
+administrador.
+
+**Registrar uma tela nova custa sete listas.** Três arrays legados de "esconder tudo",
+`FP_ALL_VIEWS`, `FP_NAV_ORDER`, `ALL_VIEWS` e `FP_MODULE_GROUPS` — mais o mapa `access`, o
+`refreshViewData` e o `initApp`. Esquecer uma dá tela que abre mas não some, ou módulo que
+não aparece na tela de permissões.
+
+---
+
+## Antes de criar função ou classe, procure o nome
+
+O `admin.html` tem 22 mil linhas e três gerações de código empilhadas. Nome repetido não
+dá erro: **o último vence, calado**.
+
+Dois casos no mesmo dia:
+
+- `fpProdBuscar` já era a busca de kit do Magis5. A busca da Fotografia passou a chamar a
+  função do Magis5, que procura um elemento inexistente e **retorna sem console.error**.
+  Sintoma: campo de busca que não faz absolutamente nada.
+- `.fp-busca` já era o componente de busca de Solicitações. Minhas regras estavam antes no
+  arquivo e perdiam para as antigas — estilo aplicado "pela metade", sem aviso nenhum.
+
+```bash
+grep -n "function fpMinhaFuncao\|\.minha-classe\b" admin.html
+```
+
+Classe que já existe: **reescreva o componente existente** para os dois usos, não crie um
+paralelo. E ao reescrever SVG inline, confira `fill="none"` e `stroke="currentColor"` —
+foi assim que a lupa virou um borrão preto sobre preto.
+
+---
+
+## Tipografia: FullPro Sans e nada mais
+
+Uma família no site inteiro (`assets/fonts/`, pesos 200–950 + itálicos). Varia **peso e
+tamanho**, nunca a família. Não há Google Fonts em nenhuma das duas páginas.
+
+- **`src` de `@font-face` sempre com caminho absoluto** — `url('/assets/fonts/…')`. O
+  painel é servido em `/admin` e o caminho relativo vira `/admin/assets/…`: 404 silencioso,
+  fallback assumindo, nenhuma pista no console.
+- **Caixa alta é declarada, não herdada da fonte.** As regras que eram Bebas Neue (fonte
+  sem minúsculas) carregam `text-transform: uppercase` + `font-weight: 800` explícitos.
+  Trocar de família sem isso revela caixa mista onde sempre se leu caixa alta.
+
+---
 
 ## `.action-btn` é a classe de botão — `.btn` não existe
 
