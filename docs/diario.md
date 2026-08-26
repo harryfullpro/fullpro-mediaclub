@@ -35,6 +35,36 @@ Detalhes que valem registro:
   Essa classe é o campo de formulário do painel inteiro — perfil, usuários,
   bug, projetos. Mexer nela mudaria vinte telas de uma vez.
 
+### A logo nova e o cache de um ano
+
+O dono mandou as duas versões desenhadas (branca e preta, 6117px). Entraram
+como **dois arquivos**, não como filtro: `invert()` sobre a branca devolve um
+preto chapado que perde o contorno interno do capacete. Um `<span role="img">`
+segura as duas para o leitor de tela ler um nome só.
+
+**O arquivo novo subiu e ninguém teria visto.** A Vercel serve
+`/assets/*` com `cache-control: public, max-age=31536000, immutable`: o
+navegador de quem já abriu o painel ficaria com a logo velha **até 2027**.
+Conferido que a resposta trazia os bytes novos (900×773) e mesmo assim a página
+mostrava 600×575. A correção é `?v=2` na URL — em `<img>`, no `<link
+rel="icon">` e no manifest.
+
+**Regra:** trocar um arquivo em `assets/` sem mudar a URL não chega em ninguém.
+
+### O gradiente que existia e não se via
+
+> *"o fundo da tela de login ta pronto? ainda falta a animação do gradiente, né?"*
+
+Estava pronto e rodando — em 40s e 52s, o que dá **1vw por segundo**. Movimento
+que existe no papel e some no olho. Agora são três brilhos em **22s, 30s e
+17s**, com trajeto maior: medido nos keyframes, o primeiro anda 344px na
+horizontal até os 7 segundos.
+
+**Armadilha de medição, de novo:** com a aba em segundo plano o compositor
+congela a animação e `getComputedStyle` devolve sempre a matriz identidade —
+parece bug e não é. Para conferir sem depender do foco da aba, fixe
+`getAnimations()[0].currentTime` e leia o transform em cada instante.
+
 ---
 
 ## 26/08/2026 · Dez ícones do menu trocados

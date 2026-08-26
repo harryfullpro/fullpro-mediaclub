@@ -46,6 +46,22 @@ curl -s https://mediaclub.fullpro.com.br/admin | shasum -a 256 | cut -d' ' -f1
 (`/admin?v=2#dashboard`) para furar, e cheque com `typeof fpToast === 'function'` se a
 versão nova carregou.
 
+### Trocar um arquivo em `assets/` sem mudar a URL não chega em ninguém
+
+A Vercel serve `/assets/*` com `cache-control: public, max-age=31536000,
+immutable`. Substituir `logo-mediaclub.png` publica os bytes novos — e o
+navegador de quem já abriu o painel continua com o antigo por um ano.
+
+Sempre versionar a URL (`?v=2`) em **todos** os pontos: `<img>`, `<link
+rel="icon">`, `apple-touch-icon` e `manifest.webmanifest`. Conferir com:
+
+```bash
+curl -s https://mediaclub.fullpro.com.br/assets/logo-mediaclub.png -o /tmp/a.png && sips -g pixelWidth /tmp/a.png
+```
+
+Se o servidor devolve o arquivo novo e a tela mostra o velho, é cache do
+navegador, não deploy.
+
 ### Quando a Vercel simplesmente não publica
 
 Aconteceu em 26/08/2026: commit no `main`, nenhum erro, nenhum build falhando — e
