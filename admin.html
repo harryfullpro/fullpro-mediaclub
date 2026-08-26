@@ -298,6 +298,13 @@
      unico elemento do painel com desenho proprio — e a pilula nem seguia a
      paleta. Quem diz o estado agora e a palavra a direita, e o icone troca
      junto: lua no escuro, sol no claro. Tudo por CSS, sem uma linha de JS. */
+  /* Sair e landing page dividem a mesma fileira: duas acoes curtas, uma linha
+     so. Sair primeiro, que e a mais usada. */
+  .fp-rodape-par { display: flex; gap: 4px; }
+  .fp-rodape-par .nav-item { flex: 1 1 0; min-width: 0; }
+  .fp-rodape-par .nav-label { overflow: hidden; text-overflow: ellipsis; }
+  /* Recolhido, os dois icones continuam lado a lado, so sem rotulo. */
+  .shell.collapsed .fp-rodape-par, .shell.hover-mode .fp-rodape-par { gap: 2px; }
   .fp-tema .fp-tema-est {
     margin-left: auto; font-size: 11px; font-weight: 600;
     color: var(--text-muted); letter-spacing: .02em;
@@ -5170,14 +5177,16 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
         <span class="nav-label">Tema</span>
         <span class="fp-tema-est"><span class="est-escuro">Escuro</span><span class="est-claro">Claro</span></span>
       </button>
-      <a href="index.html" class="nav-item">
-        <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-        <span class="nav-label">Ver landing page</span>
-      </a>
-      <button class="nav-item" id="logoutBtn">
-        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        <span class="nav-label">Sair</span>
-      </button>
+      <div class="fp-rodape-par">
+        <button class="nav-item" id="logoutBtn">
+          <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="8 17 3 12 8 7"/><line x1="3" y1="12" x2="15" y2="12"/></svg>
+          <span class="nav-label">Sair</span>
+        </button>
+        <a href="index.html" class="nav-item">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 013.6 9A14 14 0 0112 21a14 14 0 01-3.6-9A14 14 0 0112 3z"/></svg>
+          <span class="nav-label">Landing page</span>
+        </a>
+      </div>
 
       <div class="sb-ctrl-wrap" id="sbCtrlWrap">
         <div class="sb-popover" id="sbPopover">
