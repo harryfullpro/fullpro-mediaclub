@@ -1096,24 +1096,91 @@
 
   /* Login */
   .login {
+    /* Tons da prancheta. Azul de nanquim no claro, azul frio no escuro — o
+       vermelho da marca fica so no brilho que passeia, senao a tela de entrar
+       vira um alerta. */
+    --bp-fina: rgba(28,52,96,.055);
+    --bp-grossa: rgba(28,52,96,.10);
+    --bp-tec: rgba(28,52,96,.13);
+    position: relative;
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
-    background: radial-gradient(circle at 50% 30%, rgba(255,45,45,.1), transparent 50%);
+    background: var(--bg);
+    overflow: hidden;
+  }
+  [data-theme="light"] .login {
+    --bp-fina: rgba(28,52,96,.07);
+    --bp-grossa: rgba(28,52,96,.13);
+    --bp-tec: rgba(28,52,96,.16);
+  }
+  .login-fundo { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  /* Papel milimetrado: malha fina de 24px e a grossa de 120px por cima. A
+     mascara apaga as bordas — grade que morre no corte da tela parece papel de
+     parede; morrendo por dentro, parece folha. */
+  .login-grade {
+    position: absolute; inset: -2px;
+    background-image:
+      linear-gradient(var(--bp-fina) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bp-fina) 1px, transparent 1px),
+      linear-gradient(var(--bp-grossa) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bp-grossa) 1px, transparent 1px);
+    background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px;
+    -webkit-mask-image: radial-gradient(ellipse 92% 84% at 50% 46%, #000 30%, transparent 80%);
+    mask-image: radial-gradient(ellipse 92% 84% at 50% 46%, #000 30%, transparent 80%);
+  }
+  .login-tec {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    fill: none; stroke: var(--bp-tec); stroke-width: 1.2; color: var(--bp-tec);
+    -webkit-mask-image: radial-gradient(ellipse 88% 80% at 50% 46%, #000 25%, transparent 76%);
+    mask-image: radial-gradient(ellipse 88% 80% at 50% 46%, #000 25%, transparent 76%);
+  }
+  /* Os dois brilhos: 40s e 52s, sem sincronia, para o fundo nunca repetir o
+     mesmo quadro enquanto alguem digita a senha. */
+  .login-brilho { position: absolute; border-radius: 50%; filter: blur(80px); will-change: transform; }
+  .login-b1 {
+    width: 48vw; height: 48vw; min-width: 380px; min-height: 380px;
+    background: rgba(255,45,45,.22); top: -14%; left: -10%;
+    animation: fpLoginDeriva1 40s ease-in-out infinite;
+  }
+  .login-b2 {
+    width: 42vw; height: 42vw; min-width: 320px; min-height: 320px;
+    background: rgba(52,104,220,.16); bottom: -16%; right: -8%;
+    animation: fpLoginDeriva2 52s ease-in-out infinite;
+  }
+  [data-theme="light"] .login-b1 { background: rgba(255,45,45,.13); }
+  [data-theme="light"] .login-b2 { background: rgba(52,104,220,.11); }
+  @keyframes fpLoginDeriva1 {
+    0%, 100% { transform: translate3d(0,0,0) scale(1); }
+    50% { transform: translate3d(20vw, 12vh, 0) scale(1.18); }
+  }
+  @keyframes fpLoginDeriva2 {
+    0%, 100% { transform: translate3d(0,0,0) scale(1.06); }
+    50% { transform: translate3d(-18vw, -14vh, 0) scale(.9); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .login-brilho { animation: none; }
   }
   .login-card {
+    position: relative; z-index: 1;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 40px;
-    max-width: 380px;
+    padding: 26px 26px 22px;
+    max-width: 340px;
     width: 100%;
     text-align: center;
+    box-shadow: 0 20px 50px rgba(6,12,26,.30);
   }
+  [data-theme="light"] .login-card { box-shadow: 0 18px 44px rgba(20,40,80,.12); }
+  /* A logo e branca (600x575, um unico tom). Sobre o card branco do tema claro
+     ela some — invertida, vira preta e mantem o recorte. */
+  .login-logo { width: 116px; height: auto; display: block; margin: 0 auto 12px; }
+  [data-theme="light"] .login-logo { filter: invert(1); }
   .login-card .brand { justify-content: center; margin-bottom: 24px; }
-  .login-card h2 { font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase; font-size: 28px; letter-spacing: 1px; margin-bottom: 6px; }
+  .login-card h2 { font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase; font-size: 22px; letter-spacing: 2px; margin-bottom: 18px; }
   .login-card p { color: var(--text-dim); font-size: 14px; margin-bottom: 24px; }
   .login-input {
     width: 100%;
@@ -1142,6 +1209,12 @@
   .login-btn:hover { background: var(--primary-hi); }
   .login-err { color: var(--danger); font-size: 13px; margin-top: 12px; min-height: 18px; }
   .login-hint { color: var(--text-muted); font-size: 11px; margin-top: 16px; }
+  /* Compactacao so do cartao de entrar: .login-input e a classe de campo do
+     painel inteiro (perfil, usuarios, bug), e mexer nela mudaria 20 telas. */
+  .login-card .login-input { padding: 11px 13px; font-size: 14px; margin-bottom: 9px; }
+  .login-card .login-btn { padding: 12px; font-size: 14px; }
+  .login-card .login-err { margin-top: 9px; min-height: 16px; }
+  .login-card .login-hint { margin: 12px 0 0; }
 
   /* Booking form */
   .book-form { display: flex; flex-direction: column; gap: 14px; }
@@ -5156,12 +5229,31 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 
 <!-- LOGIN -->
 <div id="login" class="login">
+  <!-- Prancheta de arquitetura: papel milimetrado, dois brilhos que passeiam
+       devagar e um desenho tecnico de fundo. Tudo decorativo — aria-hidden e
+       pointer-events none para nao entrar no caminho do teclado nem do leitor
+       de tela, que na tela de login so tem duas coisas a dizer. -->
+  <div class="login-fundo" aria-hidden="true">
+    <div class="login-grade"></div>
+    <svg class="login-tec" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <circle cx="238" cy="286" r="168"/>
+      <circle cx="238" cy="286" r="96" stroke-dasharray="5 7"/>
+      <path d="M238 96v380M48 286h380" stroke-dasharray="5 7"/>
+      <circle cx="238" cy="286" r="5"/>
+      <path d="M132 742h368M132 730v24M500 730v24"/>
+      <path d="m146 742-14-6v12zM486 742l14-6v12" fill="currentColor" stroke="none"/>
+      <rect x="1006" y="176" width="318" height="228" rx="4"/>
+      <path d="m1006 176 318 228M1324 176l-318 228" stroke-dasharray="4 8"/>
+      <path d="M1128 640a112 112 0 0 1 112-112" />
+      <path d="M1240 528v-46M1240 640h-112" stroke-dasharray="5 7"/>
+      <path d="M640 40v14M700 40v22M760 40v14M820 40v22M880 40v14"/>
+    </svg>
+    <span class="login-brilho login-b1"></span>
+    <span class="login-brilho login-b2"></span>
+  </div>
   <div class="login-card">
-    <div style="text-align:center;margin-bottom:24px">
-      <img src="assets/logo-mediaclub.png" alt="FullPro Media Club" style="width:180px;height:auto" />
-    </div>
-    <h2>Painel administrativo</h2>
-    <p>Entre para gerenciar agendamentos.</p>
+    <img class="login-logo" src="assets/logo-mediaclub.png" alt="FullPro Media Club" />
+    <h2>Admin</h2>
     <input type="text" class="login-input" id="loginUser" placeholder="Usuário" autocomplete="username" style="margin-bottom:10px" />
     <input type="password" class="login-input" id="loginPw" placeholder="Senha" autocomplete="current-password" />
     <button class="login-btn" id="loginBtn">Entrar</button>
