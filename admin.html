@@ -2728,6 +2728,7 @@
   @media (min-width: 1600px) {
     main { padding: 40px 48px; }
     main > div { max-width: 1400px; margin-left: auto; margin-right: auto; }
+    .fp-lote-slot { top: -40px; }
     :root { --fp-col-gap: 30px; }
     .stat-card .value { font-size: 44px; }
     .page-head h1 { font-size: 40px; }
@@ -3658,6 +3659,7 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
 @media (max-width: 600px) {
   /* --- respiro geral ----------------------------------------------------- */
   main { padding: 14px 12px 32px; }
+  .fp-lote-slot { top: -14px; }
   .cal-card, .edit-card, .proj-card { padding: 14px; }
 
   /* --- fileiras de chips: rolam na horizontal em vez de empilhar ---------
@@ -4816,8 +4818,13 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 /* Sticky de altura zero: a barra acompanha a rolagem e continua a mao mesmo no
    ultimo produto da lista, mas nao ocupa espaco nenhum no fluxo — quem
    determina a posicao das linhas continua sendo so a listagem.
-   (`main` e o container que rola: height 100vh + overflow-y auto.) */
-.fp-lote-slot { position: sticky; top: 0; height: 0; z-index: 6; }
+   (`main` e o container que rola: height 100vh + overflow-y auto.)
+
+   O `top` NEGATIVO vale o padding do main: com top:0 o navegador gruda a barra
+   na borda interna do padding e sobrava uma faixa de listagem passando por
+   cima dela — confusao visual entre a barra e as linhas. Com -32px ela encosta
+   no topo de verdade. O valor acompanha o padding em cada largura. */
+.fp-lote-slot { position: sticky; top: -32px; height: 0; z-index: 6; }
 /* O respiro entre as abas e o primeiro produto e a casa da barra: sem ele, ela
    aparecia em cima da primeira linha e a escondia por inteiro.
    PADDING, nao margin: a margem da barra de filtros e a da lista colapsariam
@@ -4826,7 +4833,10 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-lote-slot + .fp-prod { padding-top: 54px; }
 .fp-prod-lote {
   position: absolute; left: 0; right: 0; top: 0;
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  /* 1fr auto 1fr: a coluna do meio fica no centro da barra independentemente do
+     tamanho das laterais. Com flex + margin-left:auto ela so ficava "depois do
+     que sobrou", colada no vermelho do remover. */
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px;
   padding: 11px 0; background: var(--bg); border-bottom: 1px solid var(--border);
   /* Opaca e com sombra: ela cobre a primeira linha, e precisa parecer que
      esta por cima — nao que a linha sumiu. */
@@ -4834,7 +4844,9 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 }
 [data-theme="light"] .fp-prod-lote { box-shadow: 0 12px 24px -10px rgba(0,0,0,.16); }
 .fp-prod-lote b { font-size: 13px; font-weight: 650; }
-.fp-prod-lote-acoes { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fp-lote-esq { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.fp-lote-dir { display: flex; align-items: center; justify-content: flex-end; }
+.fp-prod-lote-acoes { display: flex; align-items: center; gap: 8px; justify-content: center; }
 .fp-prod-lote-rot { font-size: 13px; font-weight: 700; color: var(--text-dim); }
 .fp-lote-p {
   font-size: 12px; font-weight: 650; padding: 2px 4px; cursor: pointer;
@@ -4867,7 +4879,9 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   .fp-prod-nome { flex: 1 1 60%; }
   .fp-prod-est  { order: 2; }
   .fp-prod-fim  { order: 3; flex-basis: 100%; justify-content: space-between; }
-  .fp-prod-lote-acoes { margin-left: 0; flex-basis: 100%; }
+  /* Sem largura para tres colunas: volta a empilhar. */
+  .fp-prod-lote { display: flex; flex-wrap: wrap; }
+  .fp-prod-lote-acoes { flex-basis: 100%; justify-content: flex-start; flex-wrap: wrap; }
   /* Aqui a barra quebra em duas linhas: a casa dela tem que crescer junto. */
   .fp-lote-slot + .fp-prod { padding-top: 100px; }
 }
@@ -15869,20 +15883,30 @@ function fpProdLoteBarra() {
   const bt = (k, rot) => '<button class="fp-lote-p" type="button"'
     + ' style="--fp-lote-cor:' + fpPrioCor(k) + '" onclick="fpProdLotePrioridade(' + k + ')">'
     + rot + '</button>';
-  const iconeX = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+  /* A lixeira do menu de acoes, e nao um X proprio: e o mesmo gesto, tem que
+     ser o mesmo desenho. */
+  const iconeLixo = '<svg viewBox="0 0 24 24" aria-hidden="true">' + FP_ICONES.excluir + '</svg>';
+  const iconeVolta = '<svg viewBox="0 0 24 24" aria-hidden="true">' + FP_ICONES.atualizar + '</svg>';
 
+  /* Tres colunas: contagem a esquerda, prioridade no CENTRO da barra e a acao
+     destrutiva sozinha na direita. Antes o grupo inteiro era empurrado para a
+     direita e "Definir prioridade" encostava no vermelho do remover. */
   alvo.innerHTML = '<div class="fp-prod-lote">'
+    + '<span class="fp-lote-esq">'
     + '<b>' + n + (n === 1 ? ' selecionado' : ' selecionados') + '</b>'
     + (n < naTela.length
         ? '<button class="fp-lote-link neutro" type="button" onclick="fpProdLoteTodos()">Selecionar todos (' + naTela.length + ')</button>'
         : '')
     + '<button class="fp-lote-link neutro" type="button" onclick="fpProdLoteLimpar()">Limpar seleção</button>'
+    + '</span>'
     + '<span class="fp-prod-lote-acoes">'
     + '<span class="fp-prod-lote-rot">Definir prioridade</span>'
     + bt(1, 'Baixa') + bt(2, 'Média') + bt(3, 'Alta') + bt(5, 'Emergencial')
+    + '</span>'
+    + '<span class="fp-lote-dir">'
     + '<button class="fp-lote-link perigo" type="button" onclick="'
-    + (todosFora ? 'fpProdLoteRestaurar()">' + iconeX + 'Voltar para a listagem'
-                 : 'fpProdLoteExcluir()">' + iconeX + 'Remover da listagem')
+    + (todosFora ? 'fpProdLoteRestaurar()">' + iconeVolta + 'Voltar para a listagem'
+                 : 'fpProdLoteExcluir()">' + iconeLixo + 'Remover da listagem')
     + '</button></span></div>';
 }
 
