@@ -15685,7 +15685,7 @@ function fpProdBuscarFila(v, agora) {
   const roda = () => { _prodMostra = FP_FOTO_PAGINA; renderFotoProducao(true); };
   if (agora) roda(); else _prodBuscaTimer = setTimeout(roda, 180);
 }
-function fpProdMais() { _prodMostra += FP_FOTO_PAGINA * 2; renderFotoProducao(); }
+function fpProdMais() { const antes = _prodMostra; _prodMostra += FP_FOTO_PAGINA * 2; renderFotoProducao(false, antes); }
 
 function fpProdSelecionados() {
   let l = FOTO_PRODUTOS;
@@ -15708,7 +15708,7 @@ function fpProdEstoqueHtml(e) {
   return '<span class="fp-prod-est' + (n <= 0 ? ' zero' : '') + '">' + n + ' <small>un</small></span>';
 }
 
-function renderFotoProducao(refazerOrdem) {
+function renderFotoProducao(refazerOrdem, desde) {
   const box = document.getElementById('fotoProdLista');
   if (!box) return;
   fpBuscaLigar('fotoProdBusca', fpProdBuscarFila);
@@ -15746,7 +15746,10 @@ function renderFotoProducao(refazerOrdem) {
   }
 
   const visiveis = lista.slice(0, _prodMostra);
-  box.innerHTML = visiveis.map(p => {
+  const jaNaTela = box.querySelectorAll('.fp-prod-linha').length;
+  const anexar = !!desde && jaNaTela === desde && desde < visiveis.length;
+  const desenhar = anexar ? visiveis.slice(desde) : visiveis;
+  const html = desenhar.map(p => {
     const fora = !!p.excluido, temFoto = !!p.tem_foto;
     const acoes = [];
     if (fora) acoes.push({ rotulo: 'Voltar para a listagem', icone: 'ver', acao: () => fpProdRestaurar(p.sku) });
@@ -15774,6 +15777,7 @@ function renderFotoProducao(refazerOrdem) {
       + fpMenuHtml(acoes, { rotulo: 'Ações do produto' })
       + '</span></div>';
   }).join('');
+  if (anexar) box.insertAdjacentHTML('beforeend', html); else box.innerHTML = html;
 
   const mais = document.getElementById('fotoProdMais');
   mais.innerHTML = lista.length > _prodMostra
@@ -15811,10 +15815,18 @@ function renderFotoProducao(refazerOrdem) {
     if (!c) return;
     /* Shift+clique arrastaria a seleção de texto de uma linha à outra; o
        preventDefault no mousedown mata só esse caso, sem tirar a seleção
-       normal de quem quer copiar um SKU. */
-    linha.addEventListener('mousedown', ev => {
-      if (ev.shiftKey && !ev.target.closest(IGNORA)) ev.preventDefault();
-    });
+       normal de quem quer copiar um SKU.
+       Uma vez por linha: com "mostrar mais" anexando, esta volta passa de novo
+       pelas linhas antigas, e addEventListener empilharia um ouvinte a cada
+       clique em "mostrar mais". (O onclick abaixo e propriedade: reatribuir
+       substitui, e PRECISA ser reatribuido, porque o closure guarda a lista de
+       caixas daquele render.) */
+    if (linha.dataset.fpLigada !== '1') {
+      linha.dataset.fpLigada = '1';
+      linha.addEventListener('mousedown', ev => {
+        if (ev.shiftKey && !ev.target.closest(IGNORA)) ev.preventDefault();
+      });
+    }
     linha.onclick = ev => {
       if (ev.target.closest(IGNORA)) return;
       /* Quem arrastou para copiar o SKU não quis marcar nada. */
@@ -15826,7 +15838,7 @@ function renderFotoProducao(refazerOrdem) {
   });
   fpProdLoteBarra();
   fpPrioAjustarColuna(box);
-  fpDriveCarregar(visiveis.map(p => p.sku), box);
+  fpDriveCarregar(desenhar.map(p => p.sku), box);
   fpFotoBadgeUrgente();
 }
 
@@ -18109,9 +18121,13 @@ function fpGalBuscar(v, agora) {
   const roda = () => { _galMostra = FP_FOTO_PAGINA; renderFotoGaleria(true); };
   if (agora) roda(); else _galBuscaTimer = setTimeout(roda, 180);
 }
-function fpGalMais() { _galMostra += FP_FOTO_PAGINA * 2; renderFotoGaleria(); }
+/* Passa o tamanho ANTERIOR: o render desenha só o que entrou depois dele.
+   Redesenhar a lista inteira destruia os <img> das linhas antigas e o
+   navegador ia buscar cada miniatura de novo no Drive — 120 requisicoes para
+   mostrar o que ja estava na tela. */
+function fpGalMais() { const antes = _galMostra; _galMostra += FP_FOTO_PAGINA * 2; renderFotoGaleria(false, antes); }
 
-function renderFotoGaleria(refazerOrdem) {
+function renderFotoGaleria(refazerOrdem, desde) {
   const box = document.getElementById('fotoGalLista');
   if (!box) return;
   fpBuscaLigar('fotoGalBusca', fpGalBuscar);
@@ -18152,7 +18168,13 @@ function renderFotoGaleria(refazerOrdem) {
   }
 
   const visiveis = lista.slice(0, _galMostra);
-  box.innerHTML = visiveis.map(p => '<div class="fp-prod-linha" data-sku="' + escHtml(p.sku) + '">'
+  /* Só anexa quando o DOM esta exatamente como o render anterior o deixou.
+     Qualquer divergencia (filtro trocado, busca, dado novo) volta a redesenhar
+     tudo: e melhor pagar as miniaturas do que mostrar lista inconsistente. */
+  const jaNaTela = box.querySelectorAll('.fp-prod-linha').length;
+  const anexar = !!desde && jaNaTela === desde && desde < visiveis.length;
+  const desenhar = anexar ? visiveis.slice(desde) : visiveis;
+  const html = desenhar.map(p => '<div class="fp-prod-linha" data-sku="' + escHtml(p.sku) + '">'
     + '<span role="button" tabindex="0" style="cursor:zoom-in;display:flex" data-tip="Ver todas as fotos"'
     + ' onclick="fpGalAbrirFotos(\'' + fpJs(p.sku) + '\')"'
     + ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();fpGalAbrirFotos(\'' + fpJs(p.sku) + '\')}">'
@@ -18164,13 +18186,16 @@ function renderFotoGaleria(refazerOrdem) {
     + (admin ? '<button class="fp-nota-btn" type="button" onclick="fpNotaAvaliar(\'' + fpJs(p.sku) + '\')">'
         + (p.nota != null ? 'Re-avaliar' : 'Avaliar') + '</button>' : '')
     + '</span></div>').join('');
+  if (anexar) box.insertAdjacentHTML('beforeend', html); else box.innerHTML = html;
 
   document.getElementById('fotoGalMais').innerHTML = lista.length > _galMostra
     ? '<button class="fp-acao-txt fp-mais" type="button" onclick="fpGalMais()">Mostrar mais '
         + Math.min(FP_FOTO_PAGINA * 2, lista.length - _galMostra)
         + '<svg viewBox="0 0 24 24" aria-hidden="true">' + FP_ICONES.baixo + '</svg></button>'
     : '';
-  fpDriveCarregar(visiveis.map(p => p.sku), box);
+  /* Só as novas: pedir o mapa do Drive de novo para quem ja esta desenhado e
+     ida de rede para nada. */
+  fpDriveCarregar(desenhar.map(p => p.sku), box);
 }
 
 /* ---------- visor de fotos do produto ----------
