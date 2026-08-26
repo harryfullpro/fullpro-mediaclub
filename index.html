@@ -398,6 +398,16 @@
     border: 1px solid var(--border-hi);
   }
   .btn-ghost:hover { background: rgba(255,255,255,.08); }
+  /* Confirmacao no WhatsApp. Texto escuro sobre o verde: branco sobre esse
+     tom da 2:1, reprovado; escuro da 9,7:1. */
+  .btn-whats {
+    background: var(--success);
+    color: #0b0b0d;
+    font-weight: 700;
+    box-shadow: 0 10px 34px rgba(31,210,122,.28);
+  }
+  .btn-whats:hover { background: #34e08c; transform: translateY(-2px); box-shadow: 0 14px 44px rgba(31,210,122,.36); }
+  .btn-whats svg { width: 20px; height: 20px; flex-shrink: 0; }
   .cta-short { display: none; }
   .lead-short { display: none; }
   .cta-txt-mob { display: none; }
@@ -1466,6 +1476,11 @@
   }
   .success-state h3 { font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase; font-size: 32px; margin-bottom: 10px; }
   .success-state p { color: var(--text-dim); max-width: 400px; margin: 0 auto 20px; }
+  .success-nota {
+    font-size: 12.5px; color: var(--text-muted) !important;
+    max-width: 420px; margin: 18px auto 22px !important; line-height: 1.6;
+  }
+  .success-nota strong { color: var(--text-dim); white-space: nowrap; }
   /* TERMS FULLSCREEN */
   .terms-overlay {
     position: fixed;
@@ -2678,7 +2693,7 @@
     <div class="section-title reveal">
       <small>Agendamento</small>
       <h2>Reserve sua data</h2>
-      <p>Preencha o formulário abaixo. Em até 24h entraremos em contato via WhatsApp para confirmar seu agendamento.</p>
+      <p>Preencha o formulário abaixo e confirme pelo WhatsApp — a mensagem já vai pronta. Respondemos em até 24h.</p>
     </div>
     <div class="schedule-wrap reveal">
       <!-- Calendar -->
@@ -2845,7 +2860,12 @@
         <div class="success-state" id="successView">
           <div class="success-icon">✓</div>
           <h3>Solicitação enviada!</h3>
-          <p>Nossa equipe vai analisar sua solicitação e entrar em contato via WhatsApp em até 24h para confirmar o agendamento.</p>
+          <p>Falta um passo: confirme pelo WhatsApp. A mensagem já vai escrita — você só precisa enviar. Respondemos por ali mesmo em até 24h.</p>
+          <a class="btn btn-whats" id="waConfirmar" href="https://wa.me/5547933840886" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.2-1.8-.9-2-1-.3-.1-.5-.2-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.6c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.6 0-.2-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.8.4-.3.3-1.1 1-1.1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.3 5.2 4.6.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.5.3-.7.3-1.4.2-1.5-.1-.1-.3-.2-.6-.3z"/><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1112 20.2z"/></svg>
+            Confirmar no WhatsApp
+          </a>
+          <p class="success-nota">Falamos com você só por este número: <strong>(47) 93384-0886</strong>. Como é você que abre a conversa, ninguém consegue se passar pela gente. Nunca pedimos senha, código ou pagamento por mensagem.</p>
           <button class="btn btn-ghost" onclick="location.reload()">Nova solicitação</button>
         </div>
       </div>
@@ -3371,6 +3391,25 @@ document.querySelectorAll('.capa-opt input[type="radio"]').forEach(inp => {
   });
 });
 atualizaCapa();
+/* O WhatsApp do estúdio — o mesmo que responde a confirmação. */
+const FP_WHATS_ESTUDIO = '5547933840886';
+
+/* A mensagem que o cliente envia. Nome e moto para acharmos a solicitação sem
+   perguntar nada, e a data porque é o que a equipe procura primeiro. Data
+   formatada na mão: `new Date('2026-09-03')` volta um dia em fuso negativo. */
+function fpMensagemConfirmacao(p) {
+  const nome = (p.nome || '').trim();
+  const moto = (p.moto || '').trim();
+  let data = '';
+  const iso = String(p.date || '');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) data = iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4);
+  return 'Olá! Aqui é ' + (nome || 'o cliente do agendamento')
+    + '. Acabei de enviar uma solicitação de agendamento no FullPro Media Club'
+    + (moto ? ' para a minha ' + moto : '')
+    + (data ? ', para o dia ' + data : '')
+    + '. Estou confirmando o pedido.';
+}
+
 /* Máscara WhatsApp */
 document.querySelector('input[name="whatsapp"]').addEventListener('input', e => {
   let v = e.target.value.replace(/\D/g,'').slice(0,11);
@@ -3457,6 +3496,15 @@ document.getElementById('reservaForm').addEventListener('submit', async e => {
     moto: payload.moto || '',
     brinde: payload.brinde || ''
   });
+  /* Quem manda a primeira mensagem e o cliente, nao a gente. Dois motivos: o
+     numero do estudio nao sobrevive a dezenas de conversas iniciadas por nos
+     (o WhatsApp le isso como spam e derruba a conta), e uma conversa aberta
+     do lado dele e a prova de que o numero e nosso — ninguem se passa pela
+     gente dentro de um contato que o proprio cliente iniciou. */
+  const waLink = document.getElementById('waConfirmar');
+  if (waLink) waLink.href = 'https://wa.me/' + FP_WHATS_ESTUDIO
+    + '?text=' + encodeURIComponent(fpMensagemConfirmacao(payload));
+
   document.getElementById('formView').style.display = 'none';
   document.getElementById('successView').classList.add('show');
   document.getElementById('successView').scrollIntoView({behavior:'smooth', block:'center'});
