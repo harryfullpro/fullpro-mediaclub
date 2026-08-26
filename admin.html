@@ -17333,6 +17333,54 @@ let _sepLogicaAberta = false;
    depois de gerar (para tirar do lote os produtos que acabaram de sair da
    fila) — e isso apagava o link antes de o operador conseguir copiá-lo. */
 let _sepUltimoLink = null, _sepUltimoQtd = 0;
+/* Listas já geradas. O link vivia só na memória da aba, então um F5 apagava
+   da tela um PDF que continuava existindo no banco e no storage. */
+let _sepHistorico = [];
+
+async function fpSepHistoricoCarregar() {
+  try {
+    const { data, error } = await sb.from('mc_photo_batches')
+      .select('id,created_at,criado_por_nome,tamanho,status,pdf_url')
+      .not('pdf_url', 'is', null)
+      .order('created_at', { ascending: false }).limit(20);
+    if (error) throw error;
+    _sepHistorico = data || [];
+  } catch (e) { console.warn('histórico de separação', e); }
+}
+
+const FP_SEP_STATUS = { aberto: 'Em separação', fotografado: 'Concluído', cancelado: 'Cancelado' };
+
+function fpSepHistoricoHtml() {
+  if (!_sepHistorico.length) return '';
+  return '<div class="fp-prod">'
+    + '<div class="fp-prod-faixa"><b>Listas geradas</b>'
+    + '<span class="fp-aviso-sub">' + _sepHistorico.length
+    + (_sepHistorico.length === 1 ? ' lista' : ' listas') + '</span></div>'
+    + _sepHistorico.map(l => {
+        const d = new Date(l.created_at);
+        const quando = d.toLocaleDateString('pt-BR') + ' às '
+          + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const st = l.status || 'aberto';
+        const selo = st === 'aberto' ? 'andamento' : (st === 'cancelado' ? 'descartado' : 'resolvido');
+        return '<div class="fp-prod-linha">'
+          + '<span class="fp-prod-nome"><b>' + escHtml(quando) + '</b>'
+          + '<span class="fp-prod-sku">' + escHtml(l.criado_por_nome || 'equipe') + '</span></span>'
+          + '<span class="fp-prod-est">' + (l.tamanho || 0) + ' <small>itens</small></span>'
+          + '<span class="fp-prod-fim">'
+          + '<span class="badge ' + selo + '">' + (FP_SEP_STATUS[st] || st) + '</span>'
+          + '<button class="fp-icon-btn" type="button" data-tip="Copiar link"'
+          + ' aria-label="Copiar link da lista de ' + escHtml(quando) + '"'
+          + ' onclick="fpSepCopiar(\'' + fpJs(l.pdf_url) + '\')">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+          + '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>'
+          + '<a class="fp-icon-btn" href="' + escHtml(l.pdf_url) + '" target="_blank" rel="noopener"'
+          + ' data-tip="Abrir PDF" aria-label="Abrir o PDF de ' + escHtml(quando) + '">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+          + '<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg></a>'
+          + '</span></div>';
+      }).join('')
+    + '</div>';
+}
 
 async function renderFotoSeparacao() {
   const topo = document.getElementById('fotoSepTopo');
@@ -17377,13 +17425,15 @@ async function renderFotoSeparacao() {
     : '<div class="fp-prod-vazio">Nenhum produto classificado na fila. Defina prioridades em Produção primeiro.</div>';
   fpDriveCarregar(_sepLote.itens.map(i => i.sku), lista);
 
+  await fpSepHistoricoCarregar();
   const rod = document.getElementById('fotoSepRodape');
   rod.innerHTML = '<div class="filter-bar" style="margin-top:16px;border:0">'
     + '<span class="fp-aviso-sub">O painel gera um PDF com a lista e devolve um link público — '
     + 'é só mandar o link para quem separa.</span>'
     + '<button class="action-btn approve" type="button" id="fotoSepGerar" onclick="fpSepGerar()"'
     + (_sepLote.itens.length ? '' : ' disabled') + ' style="margin-left:auto">Gerar lista de separação</button>'
-    + '</div><div id="fotoSepDepois"></div>';
+    + '</div><div id="fotoSepDepois"></div>'
+    + fpSepHistoricoHtml();
   if (_sepUltimoLink) fpSepMostrarLink(_sepUltimoLink, _sepUltimoQtd);
 }
 
