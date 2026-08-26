@@ -3509,6 +3509,20 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   font-size: 13px; font-weight: 650; cursor: pointer; font-family: inherit;
 }
 .fp-vazio .fp-vazio-acao:hover { border-color: var(--text-muted); }
+/* Moldura de lugar vazio. Aqui a caixa NAO e enfeite: ela e a informacao —
+   desenha o espaco que a listagem ocuparia e diz, sem texto, que ele esta
+   vazio. Por isso tracejada e de contorno fraco, nunca preenchida.
+   O texto fica nos tons normais: quem tem opacidade reduzida e a moldura, e
+   nao a mensagem, senao o aviso fica ilegivel junto. */
+.fp-vazio.fp-moldura {
+  border: 1.5px dashed var(--border-hi);
+  border-radius: 16px;
+  min-height: 300px;
+  padding: 40px 24px;
+  opacity: .9;
+}
+.fp-vazio.fp-moldura svg { width: 34px; height: 34px; color: var(--warning); opacity: .8; }
+.fp-vazio.fp-moldura svg path { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 
 /* --- skeleton de carregamento ------------------------------------------- */
 .fp-skel { display: grid; gap: 10px; padding: 4px 0; }
@@ -15435,6 +15449,19 @@ const FP_ICO_OLHO_OFF = '<svg viewBox="0 0 24 24" aria-hidden="true">'
   + '<path d="M9.9 4.2A10.9 10.9 0 0112 4c6.4 0 10 7 10 7a17.6 17.6 0 01-3.2 4.2"/>'
   + '<path d="M6.6 6.6A17.4 17.4 0 002 11s3.6 7 10 7a10.7 10.7 0 005.4-1.4"/>'
   + '<path d="M9.9 9.9a3 3 0 104.2 4.2"/><path d="M2 2l20 20"/></svg>';
+/* Ir para outra tela de dentro do conteudo. O roteador que roda de verdade
+   (switchToView) vive dentro de um IIFE e nao e global: o caminho publico e
+   clicar no proprio item do menu, que e o que o operador faria. */
+function fpIrPara(view) {
+  const b = document.querySelector('.nav-item[data-view="' + view + '"]');
+  if (b) b.click(); else location.hash = '#' + view;
+}
+/* Existe e esta liberado para quem esta olhando? */
+function fpTemAcesso(view) {
+  const b = document.querySelector('.nav-item[data-view="' + view + '"]');
+  return !!b && b.style.display !== 'none';
+}
+
 const FP_ICO_ATENCAO = '<svg viewBox="0 0 24 24" aria-hidden="true">'
   + '<path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/>'
   + '<path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
@@ -17996,7 +18023,13 @@ async function renderFotoLote() {
 
   if (!_loteAtual) {
     topo.innerHTML = '';
-    lista.innerHTML = '<div class="fp-prod-vazio">Nenhum lote em aberto. Monte um em Separação.</div>';
+    lista.innerHTML = '<div class="fp-vazio fp-moldura">' + FP_ICO_ATENCAO
+      + '<h3>Nenhum lote em aberto</h3>'
+      + '<p>Os produtos aparecem aqui depois que um lote é montado. Vá em Separação, escolha o tamanho e gere a lista.</p>'
+      + (fpTemAcesso('foto-separacao')
+          ? '<button class="fp-vazio-acao" type="button" onclick="fpIrPara(\'foto-separacao\')">Ir para Separação</button>'
+          : '')
+      + '</div>';
     return;
   }
 
