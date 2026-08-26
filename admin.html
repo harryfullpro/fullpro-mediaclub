@@ -17317,6 +17317,10 @@ function fpPdfSeparacao(linhas, meta) {
 /* ═══════════════ SEPARAÇÃO (tela) ═══════════════ */
 let _sepTamanho = 15, _sepLote = null;
 let _sepLogicaAberta = false;
+/* O último link gerado. Vive fora do render porque a tela é redesenhada
+   depois de gerar (para tirar do lote os produtos que acabaram de sair da
+   fila) — e isso apagava o link antes de o operador conseguir copiá-lo. */
+let _sepUltimoLink = null, _sepUltimoQtd = 0;
 
 async function renderFotoSeparacao() {
   const topo = document.getElementById('fotoSepTopo');
@@ -17368,9 +17372,10 @@ async function renderFotoSeparacao() {
     + '<button class="action-btn approve" type="button" id="fotoSepGerar" onclick="fpSepGerar()"'
     + (_sepLote.itens.length ? '' : ' disabled') + ' style="margin-left:auto">Gerar lista de separação</button>'
     + '</div><div id="fotoSepDepois"></div>';
+  if (_sepUltimoLink) fpSepMostrarLink(_sepUltimoLink, _sepUltimoQtd);
 }
 
-function fpSepTamanho(t) { _sepTamanho = t; renderFotoSeparacao(); }
+function fpSepTamanho(t) { _sepTamanho = t; _sepUltimoLink = null; renderFotoSeparacao(); }
 
 function fpSepLogica() { _sepLogicaAberta = !_sepLogicaAberta; fpSepLogicaPintar(); }
 function fpSepLogicaRestaurar() { fpSepLogicaPintar(); }
@@ -17506,6 +17511,7 @@ async function fpSepGerar() {
     await sb.from('mc_photo_products').update({ status: 'separacao', lote_id: lote.id }).in('sku', skus);
     FOTO_PRODUTOS.forEach(p => { if (skus.includes(p.sku)) { p.status = 'separacao'; p.lote_id = lote.id; } });
 
+    _sepUltimoLink = link; _sepUltimoQtd = itens.length;
     fpSepMostrarLink(link, itens.length);
     fpToast('Lista pronta. O link já está na sua área de transferência.', 'ok', { duracao: 6000 });
     try { await navigator.clipboard.writeText(link); } catch (e) { /* sem permissão: o botão copiar resolve */ }
