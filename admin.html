@@ -17389,37 +17389,62 @@ function fpSepLogicaPintar() {
 /* A localização física só existe na chamada de DETALHE do Bling; a listagem
    não traz. Buscar para o catálogo inteiro levaria quase uma hora, então é
    sob demanda, só para os itens do lote, e fica guardada em
-   mc_photo_products para o próximo lote não pagar de novo. */
+   mc_photo_products para o próximo lote não pagar de novo.
+
+   O Bling limita a mais ou menos 3 chamadas por segundo. Na primeira versão
+   eu disparei cinco de uma vez e voltou 429 em oito dos dez produtos — e,
+   pior, o erro era gravado como "sem localização", envenenando o cache para
+   sempre. Agora as chamadas são espaçadas, o 429 é reconhecido e repetido, e
+   **nada é gravado quando a chamada falha**: vazio no banco passa a
+   significar "perguntei e o produto não tem", nunca "não consegui perguntar". */
+const FP_BLING_INTERVALO_MS = 360;   // ~2,8 chamadas por segundo
+let _blingProximaChamada = 0;
+
+async function fpBlingVez() {
+  const agora = Date.now();
+  const quando = Math.max(agora, _blingProximaChamada);
+  _blingProximaChamada = quando + FP_BLING_INTERVALO_MS;
+  if (quando > agora) await new Promise(r => setTimeout(r, quando - agora));
+}
+
 async function fpSepLocalizacoes(itens, aoAndar) {
   const faltam = itens.filter(i => {
     const p = fpFotoProduto(i.sku);
-    return p && p.bling_id && (p.localizacao == null);
+    return p && p.bling_id && p.localizacao == null;
   });
-  if (!faltam.length) return;
+  if (!faltam.length) return { buscados: 0, falharam: 0 };
 
-  let feitos = 0;
+  let feitos = 0, falharam = 0;
   const fila = faltam.slice();
   const trabalhar = async () => {
     while (fila.length) {
       const item = fila.shift();
       const prod = fpFotoProduto(item.sku);
-      try {
-        const d = await blingGetProduct(prod.bling_id);
-        const loc = (d && d.estoque && d.estoque.localizacao) || '';
-        prod.localizacao = loc;
-        prod.localizacao_em = new Date().toISOString();
-        await sb.from('mc_photo_products')
-          .update({ localizacao: loc, localizacao_em: prod.localizacao_em }).eq('sku', prod.sku);
-      } catch (e) {
-        prod.localizacao = '';            // não trava a lista por causa de um produto
+      let ok = false;
+      for (let tentativa = 1; tentativa <= 3 && !ok; tentativa++) {
+        await fpBlingVez();
+        try {
+          const d = await blingGetProduct(prod.bling_id);
+          if (!d) throw new Error('sem resposta');       // 429 ou erro: NÃO grava
+          const loc = (d.estoque && d.estoque.localizacao) || '';
+          prod.localizacao = loc;
+          prod.localizacao_em = new Date().toISOString();
+          await sb.from('mc_photo_products')
+            .update({ localizacao: loc, localizacao_em: prod.localizacao_em }).eq('sku', prod.sku);
+          ok = true;
+        } catch (e) {
+          if (tentativa < 3) await new Promise(r => setTimeout(r, 700 * tentativa));
+        }
       }
+      if (!ok) falharam++;
       feitos++;
       if (aoAndar) aoAndar(feitos, faltam.length);
     }
   };
-  /* Cinco de cada vez: em série levaria ~1s por produto; tudo de uma vez
-     estoura o limite de requisições do Bling. */
-  await Promise.all([1, 2, 3, 4, 5].map(trabalhar));
+  /* Duas raias, com as chamadas espaçadas entre elas pelo mesmo relógio:
+     em série levaria ~1,5s por produto; cinco de uma vez estoura o Bling. */
+  await Promise.all([1, 2].map(trabalhar));
+  return { buscados: faltam.length - falharam, falharam };
 }
 
 async function fpSepGerar() {
@@ -17438,7 +17463,11 @@ async function fpSepGerar() {
   const travar = (txt) => { if (btn) { btn.disabled = true; btn.textContent = txt; } };
   travar('Buscando localizações…');
   try {
-    await fpSepLocalizacoes(itens, (feito, total) => travar('Localização ' + feito + ' de ' + total + '…'));
+    const loc = await fpSepLocalizacoes(itens, (feito, total) => travar('Localização ' + feito + ' de ' + total + '…'));
+    if (loc.falharam) {
+      fpToast(loc.falharam + ' produto(s) ficaram sem localização — o Bling recusou a consulta. '
+        + 'Eles saem na lista como "sem localização" e serão tentados de novo no próximo lote.', 'warn', { duracao: 9000 });
+    }
 
     travar('Montando o PDF…');
     const agora = new Date();
