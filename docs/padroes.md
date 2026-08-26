@@ -541,7 +541,10 @@ Duas regras:
 
 1. **Um alarme de cada vez.** Quando a barra abre e o número reaparece, o ícone
    para de piscar. Dois elementos piscando pela mesma causa viram ruído.
-2. **Desligar em `prefers-reduced-motion`.** Todo seletor que ganhar
+2. **A piscada é movimento, não cor.** O elemento mantém a cor neutra dos
+   vizinhos e só vai a `--primary` no hover. Cor fixa de alarme num ícone de
+   menu compete com o estado "ativo" e desalinha a coluna inteira.
+3. **Desligar em `prefers-reduced-motion`.** Todo seletor que ganhar
    `fpPiscaEmerg` entra também no bloco `@media (prefers-reduced-motion: reduce)`
    logo abaixo do `@keyframes`.
 
@@ -566,6 +569,10 @@ antes e depois do `hover-open`.
 `.fp-foot-linha` precisa de `align-items: flex-start` no estado recolhido: com
 `center`, o avatar e o `»` escorregam de x=34 para x=130 quando a barra vai de
 68 para 260px.
+
+Pelo mesmo motivo, **o que some com a barra recolhida some por `visibility`**,
+não por `display`: `#roleBadge` escondido com `display: none` faria o rodapé
+inteiro subir 28px no instante do hover.
 
 ---
 

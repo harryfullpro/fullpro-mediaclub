@@ -77,14 +77,27 @@ move sozinho debaixo do cursor é clique errado na certa.
 
 Com a barra fechada o número fica `display: none` — e o alarme sumia por
 inteiro. Agora `fpFotoBadgePintar` marca o item com `.fp-nav-emerg` e o CSS
-pisca **o ícone de Produção**, em `--primary`, na mesma `fpPiscaEmerg` de 1,3s
-do triângulo da listagem. Quando a barra abre, o ícone para e o número volta a
-ser o sinal: dois alarmes ao mesmo tempo é ruído, não ênfase.
+pisca **o ícone de Produção**, na mesma `fpPiscaEmerg` de 1,3s do triângulo da
+listagem. Quando a barra abre, o ícone para e o número volta a ser o sinal:
+dois alarmes ao mesmo tempo é ruído, não ênfase.
 
-Medido em produção: opacidade oscilando de 0,25 a 0,99 no ícone contra 0,23 a
-1,00 no triângulo — mesmo ritmo, mesma amplitude. Com zero emergenciais a classe
-sai e nada pisca. Desligado junto com as outras piscadas em
-`prefers-reduced-motion`.
+> *"esse icone precisa piscar na cor neutra dele igual todos os outros modulos,
+> ele só fica vermelho no hover"*
+
+**Pisca na cor neutra**, a mesma dos 21 vizinhos. Quem chama a atenção é o
+movimento; vermelho fixo tirava o ícone da coluna e virava um segundo estado
+"ativo". O vermelho volta no hover — exatamente o que o número já fazia.
+
+Medido em produção: opacidade oscilando de 0,23 a 1,00 no ícone, igual ao
+triângulo, com a cor em `rgb(161,161,170)` — a mesma do vizinho — e `#ff2d2d` no
+hover. Com zero emergenciais a classe sai e nada pisca. Desligado junto com as
+outras piscadas em `prefers-reduced-motion`.
+
+**O cargo saiu da barra recolhida.** O `#roleBadge` tem 67px de texto e a barra
+tem 68px: aparecia "ADMINIST" cortado na vertical. Some por `visibility`, nunca
+por `display` — o vão continua reservado, senão o rodapé inteiro pula 28px no
+instante em que o hover abre a barra, que é justo o que passamos o dia
+consertando.
 
 ---
 

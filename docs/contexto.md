@@ -140,12 +140,15 @@ pixels. Ver `padroes.md` → Alinhamento.
 - **Tema claro é o padrão** para quem nunca escolheu.
 - O preto da barra é `#151515` (sRGB 0,082), em `--bg-soft`. O fundo da página é
   outro e não acompanha.
+- **O nome do cargo não aparece com a barra recolhida** — não cabe em 68px e
+  saía cortado. O cargo já está no menu do usuário.
 
 ### Emergencial tem que piscar — recolhido também
 Aberta, o que pisca é o número ao lado de "Produção"; recolhida, o número some e
-quem pisca é **o próprio ícone do módulo**, em vermelho. Sempre um alarme só de
-cada vez, no mesmo ritmo do triângulo da listagem. Zero emergenciais não mostra
-nada — contador permanente aceso vira paisagem.
+quem pisca é **o próprio ícone do módulo** — na **cor neutra dos outros
+módulos**, vermelho só no hover. Sempre um alarme só de cada vez, no mesmo ritmo
+do triângulo da listagem. Zero emergenciais não mostra nada — contador
+permanente aceso vira paisagem.
 
 ### Fotos de produto (Google Drive)
 - A foto do **Drive tem prioridade** sobre a do Bling
