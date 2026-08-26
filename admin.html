@@ -15807,13 +15807,15 @@ function fpFotoBadgeUrgente() {
 /* Redesenha só a tela aberta — a lista tem milhares de linhas e repintar
    todas as telas da seção a cada clique de prioridade custaria caro. */
 function fpFotoRedesenhar() {
-  const v = (location.hash || '').slice(1);
-  /* O Panorama agora mora no Dashboard. Sem este ramo, cada clique de
-     prioridade repintaria a Produção — que está escondida: falha silenciosa. */
-  if (!v || v === 'dashboard') { if (FP_DASH_FRENTE === 'foto') renderFotoPanorama(); return; }
-  if (v === 'foto-galeria') renderFotoGaleria();
-  else if (v === 'foto-separacao') renderFotoSeparacao();
-  else renderFotoProducao();
+  /* Decide pela tela que está à vista, não pela hash: o Panorama passou a morar
+     dentro do Dashboard e a hash pode estar atrasada (favorito antigo, boot no
+     meio do caminho). Errar aqui é repintar uma tela escondida — falha
+     silenciosa, sem nada no console. */
+  const vendo = id => { const el = document.getElementById('view-' + id); return !!el && el.style.display !== 'none'; };
+  if (vendo('foto-galeria')) renderFotoGaleria();
+  else if (vendo('foto-separacao')) renderFotoSeparacao();
+  else if (vendo('foto-producao')) renderFotoProducao();
+  else if (vendo('dashboard') && FP_DASH_FRENTE === 'foto') renderFotoPanorama();
 }
 
 
