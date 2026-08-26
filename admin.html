@@ -3327,9 +3327,13 @@ main:focus, main:focus-visible { outline: none !important; }
   font-size: 14px; font-family: inherit; letter-spacing: .06em;
 }
 .fp-confirm-acoes { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
+/* Na proporcao do .action-btn, que e o botao padrao do painel: 30px de altura,
+   13px, canto de 6px. Antes carregavam os 44px do alvo de toque e ficavam
+   gordos ao lado de tudo o mais. O alvo de toque volta no celular, onde eles
+   ocupam a largura inteira (media query no fim deste bloco). */
 .fp-btn-sec, .fp-btn-pri {
-  min-height: var(--toque); padding: 0 18px;
-  border-radius: 6px; font-size: 13.5px; font-weight: 650;
+  min-height: 30px; padding: 0 14px;
+  border-radius: 6px; font-size: 13px; font-weight: 650;
   cursor: pointer; font-family: inherit; border: 1px solid transparent;
 }
 .fp-btn-sec { background: transparent; border-color: transparent; color: var(--perigo); }
@@ -3343,7 +3347,8 @@ main:focus, main:focus-visible { outline: none !important; }
 body.fp-sem-scroll { overflow: hidden; }
 @media (max-width: 480px) {
   .fp-confirm-acoes { flex-direction: column-reverse; }
-  .fp-btn-sec, .fp-btn-pri { width: 100%; }
+  /* No dedo, o alvo minimo volta a valer. */
+  .fp-btn-sec, .fp-btn-pri { width: 100%; min-height: var(--toque); }
 }
 
 /* --- check-in: obrigatoriedade e contagem de fotos ---------------------- */
@@ -18404,8 +18409,11 @@ function fpNotaAvaliar(sku) {
   let escolhida = prod.nota == null ? 0 : prod.nota;
   const ov = document.createElement('div');
   ov.className = 'fp-aviso-ov show';
-  ov.innerHTML = '<div class="fp-aviso" style="max-width:440px" role="dialog" aria-modal="true">'
-    + '<div class="fp-aviso-head"><div><h3>' + (prod.nota != null ? 'Re-avaliar a foto' : 'Avaliar a foto') + '</h3>'
+  ov.innerHTML = '<div class="fp-aviso" style="max-width:528px" role="dialog" aria-modal="true">'
+    /* Miniatura antes do titulo: quem avalia está olhando várias fotos
+       seguidas e precisa saber, sem ler, de qual produto é esta. */
+    + '<div class="fp-aviso-head">' + fpFotoProdutoHtml(sku, prod.imagem_bling, 38, 9, { semLightbox: true })
+    + '<div><h3>' + (prod.nota != null ? 'Re-avaliar a foto' : 'Avaliar a foto') + '</h3>'
     + '<div class="fp-aviso-data">' + escHtml(prod.nome || sku) + '</div></div>'
     + '<button class="fp-aviso-x" type="button" data-fechar aria-label="Fechar">&times;</button></div>'
     /* Um bloco só dentro do corpo: como filhos diretos, cada pedaço ganhava um
