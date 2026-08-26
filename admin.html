@@ -13,8 +13,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Media Club">
-<link rel="apple-touch-icon" href="/assets/pwa/icone-192.png">
-<link rel="icon" type="image/png" sizes="192x192" href="/assets/pwa/icone-192.png">
+<link rel="apple-touch-icon" href="/assets/pwa/icone-192.png?v=2">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/pwa/icone-192.png?v=2">
 <style>
 /* ═══════════════════════════════════════════════════════════════════════
    FullPro Sans — a fonte padrão do painel e da landing.
@@ -1137,28 +1137,43 @@
     -webkit-mask-image: radial-gradient(ellipse 88% 80% at 50% 46%, #000 25%, transparent 76%);
     mask-image: radial-gradient(ellipse 88% 80% at 50% 46%, #000 25%, transparent 76%);
   }
-  /* Os dois brilhos: 40s e 52s, sem sincronia, para o fundo nunca repetir o
-     mesmo quadro enquanto alguem digita a senha. */
-  .login-brilho { position: absolute; border-radius: 50%; filter: blur(80px); will-change: transform; }
+  /* Tres brilhos em 22s, 30s e 17s. A primeira versao rodava em 40s e 52s e
+     o dono perguntou se a animacao tinha ficado pronta: 20vw em 20 segundos e
+     1vw por segundo, movimento que existe no papel e some no olho. O periodo
+     curto e o que faz a tela parecer viva; os tres tempos sem divisor comum
+     sao o que impede o fundo de repetir o mesmo quadro. */
+  .login-brilho { position: absolute; border-radius: 50%; filter: blur(72px); will-change: transform; }
   .login-b1 {
-    width: 48vw; height: 48vw; min-width: 380px; min-height: 380px;
-    background: rgba(255,45,45,.13); top: -14%; left: -10%;
-    animation: fpLoginDeriva1 40s ease-in-out infinite;
+    width: 46vw; height: 46vw; min-width: 380px; min-height: 380px;
+    background: rgba(255,45,45,.20); top: -16%; left: -12%;
+    animation: fpLoginDeriva1 22s ease-in-out infinite;
   }
   .login-b2 {
-    width: 42vw; height: 42vw; min-width: 320px; min-height: 320px;
-    background: rgba(52,104,220,.11); bottom: -16%; right: -8%;
-    animation: fpLoginDeriva2 52s ease-in-out infinite;
+    width: 40vw; height: 40vw; min-width: 320px; min-height: 320px;
+    background: rgba(52,104,220,.17); bottom: -18%; right: -10%;
+    animation: fpLoginDeriva2 30s ease-in-out infinite;
   }
-  [data-theme="light"] .login-b1 { background: rgba(255,45,45,.13); }
-  [data-theme="light"] .login-b2 { background: rgba(52,104,220,.11); }
+  .login-b3 {
+    width: 26vw; height: 26vw; min-width: 220px; min-height: 220px;
+    background: rgba(255,45,45,.13); top: 42%; left: 38%;
+    animation: fpLoginDeriva3 17s ease-in-out infinite;
+  }
+  [data-theme="light"] .login-b1 { background: rgba(255,45,45,.16); }
+  [data-theme="light"] .login-b2 { background: rgba(52,104,220,.14); }
+  [data-theme="light"] .login-b3 { background: rgba(255,45,45,.10); }
   @keyframes fpLoginDeriva1 {
     0%, 100% { transform: translate3d(0,0,0) scale(1); }
-    50% { transform: translate3d(20vw, 12vh, 0) scale(1.18); }
+    33% { transform: translate3d(28vw, 8vh, 0) scale(1.22); }
+    66% { transform: translate3d(12vw, 26vh, 0) scale(.92); }
   }
   @keyframes fpLoginDeriva2 {
-    0%, 100% { transform: translate3d(0,0,0) scale(1.06); }
-    50% { transform: translate3d(-18vw, -14vh, 0) scale(.9); }
+    0%, 100% { transform: translate3d(0,0,0) scale(1.08); }
+    40% { transform: translate3d(-26vw, -10vh, 0) scale(.86); }
+    75% { transform: translate3d(-8vw, -24vh, 0) scale(1.15); }
+  }
+  @keyframes fpLoginDeriva3 {
+    0%, 100% { transform: translate3d(0,0,0) scale(.9); }
+    50% { transform: translate3d(-22vw, -16vh, 0) scale(1.3); }
   }
   @media (prefers-reduced-motion: reduce) {
     .login-brilho { animation: none; }
@@ -1175,10 +1190,15 @@
     box-shadow: 0 20px 50px rgba(6,12,26,.30);
   }
   [data-theme="light"] .login-card { box-shadow: 0 18px 44px rgba(20,40,80,.12); }
-  /* A logo e branca (600x575, um unico tom). Sobre o card branco do tema claro
-     ela some — invertida, vira preta e mantem o recorte. */
-  .login-logo { width: 116px; height: auto; display: block; margin: 0 auto 12px; }
-  [data-theme="light"] .login-logo { filter: invert(1); }
+  /* Dois arquivos, nao um filtro: o dono mandou a versao preta desenhada, e
+     `invert()` sobre a branca devolvia um preto chapado que perde o contorno
+     interno do capacete. Um <span role="img"> segura as duas para o leitor de
+     tela ler um nome so. */
+  .login-logo-caixa { display: block; width: 126px; margin: 0 auto 12px; }
+  .login-logo { width: 100%; height: auto; display: block; }
+  .login-logo-claro { display: none; }
+  [data-theme="light"] .login-logo-escuro { display: none; }
+  [data-theme="light"] .login-logo-claro { display: block; }
   .login-card .brand { justify-content: center; margin-bottom: 24px; }
   .login-card h2 { font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase; font-size: 22px; letter-spacing: 2px; margin-bottom: 18px; }
   .login-card p { color: var(--text-dim); font-size: 14px; margin-bottom: 24px; }
@@ -5250,9 +5270,13 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
     </svg>
     <span class="login-brilho login-b1"></span>
     <span class="login-brilho login-b2"></span>
+    <span class="login-brilho login-b3"></span>
   </div>
   <div class="login-card">
-    <img class="login-logo" src="assets/logo-mediaclub.png" alt="FullPro Media Club" />
+    <span class="login-logo-caixa" role="img" aria-label="FullPro Media Club">
+      <img class="login-logo login-logo-escuro" src="assets/logo-mediaclub.png" alt="" aria-hidden="true" />
+      <img class="login-logo login-logo-claro" src="assets/logo-mediaclub-preto.png" alt="" aria-hidden="true" />
+    </span>
     <h2>Admin</h2>
     <input type="text" class="login-input" id="loginUser" placeholder="Usuário" autocomplete="username" style="margin-bottom:10px" />
     <input type="password" class="login-input" id="loginPw" placeholder="Senha" autocomplete="current-password" />
