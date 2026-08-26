@@ -5268,11 +5268,14 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
      que sobrou", colada no vermelho do remover. */
   display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px;
   padding: 11px 0; background: var(--bg); border-bottom: 1px solid var(--border);
-  /* Opaca e com sombra: ela cobre a primeira linha, e precisa parecer que
-     esta por cima — nao que a linha sumiu. */
-  box-shadow: 0 12px 24px -8px rgba(0,0,0,.55);
+  /* Sem sombra parada. A barra so precisa parecer "por cima" quando esta
+     grudada no topo cobrindo a listagem; no lugar dela, dentro do respiro
+     reservado, a sombra era um degrau no meio da pagina sem nada embaixo. */
+  box-shadow: none;
+  transition: box-shadow .18s ease;
 }
-[data-theme="light"] .fp-prod-lote { box-shadow: 0 12px 24px -10px rgba(0,0,0,.16); }
+.fp-lote-slot.grudada .fp-prod-lote { box-shadow: 0 12px 24px -8px rgba(0,0,0,.55); }
+[data-theme="light"] .fp-lote-slot.grudada .fp-prod-lote { box-shadow: 0 12px 24px -10px rgba(0,0,0,.16); }
 .fp-prod-lote b { font-size: 13px; font-weight: 650; }
 .fp-lote-esq { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .fp-lote-dir { display: flex; align-items: center; justify-content: flex-end; }
@@ -16632,6 +16635,35 @@ function fpProdLoteBarra() {
     + (todosFora ? 'fpProdLoteRestaurar()">' + iconeVolta + 'Voltar para a listagem'
                  : 'fpProdLoteExcluir()">' + iconeLixo + 'Remover da listagem')
     + '</button></span></div>';
+  fpLoteSombraLigar();
+  fpLoteSombra();
+}
+
+/* `position: sticky` nao avisa quando gruda. O teste e comparar o topo do
+   slot com o ponto onde ele PARA de rolar: quando os dois batem, ele encostou.
+   Vale para qualquer .fp-lote-slot da pagina, e o `top` sai do CSS em vez de
+   estar repetido aqui — ele muda por media query. */
+let _loteSombraLigada = false;
+
+function fpLoteSombra() {
+  const main = document.querySelector('main');
+  if (!main) return;
+  const base = main.getBoundingClientRect().top;
+  document.querySelectorAll('.fp-lote-slot').forEach(slot => {
+    if (!slot.firstElementChild) { slot.classList.remove('grudada'); return; }
+    const topo = parseFloat(getComputedStyle(slot).top) || 0;
+    slot.classList.toggle('grudada', slot.getBoundingClientRect().top <= base + topo + 1);
+  });
+}
+
+function fpLoteSombraLigar() {
+  if (_loteSombraLigada) return;
+  const main = document.querySelector('main');
+  if (!main) return;
+  /* Quem rola e o <main>, nao a janela — o painel inteiro depende disso. */
+  main.addEventListener('scroll', fpLoteSombra, { passive: true });
+  window.addEventListener('resize', fpLoteSombra);
+  _loteSombraLigada = true;
 }
 
 function fpProdLoteTodos() {
