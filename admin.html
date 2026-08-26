@@ -149,8 +149,11 @@
   .fp-foot-linha .sb-ctrl-wrap { margin-left: auto; }
   /* Recolhida nao ha largura para os dois lado a lado: o botao sobe para cima
      da foto. column-reverse porque no HTML a foto vem primeiro. */
+  /* `align-items: flex-start` e o que prende os dois na mesma coluna dos icones:
+     centrados, eles escorregavam de x=34 para x=130 quando o hover alargava a
+     barra de 68 para 260px (medido). */
   .shell.collapsed .fp-foot-linha,
-  .shell.hover-mode .fp-foot-linha { flex-direction: column-reverse; gap: 8px; }
+  .shell.hover-mode .fp-foot-linha { flex-direction: column-reverse; gap: 8px; align-items: flex-start; }
   .shell.collapsed .fp-foot-linha .sb-ctrl-wrap,
   .shell.hover-mode .fp-foot-linha .sb-ctrl-wrap { margin-left: 0; }
   /* O >> NAO volta para o lado da foto quando o hover abre a barra: ele so
