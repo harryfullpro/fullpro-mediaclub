@@ -1,5 +1,67 @@
 # Diário
 
+## 26/08/2026 · Duas rodas, uma por tema
+
+O dono mandou um PDF com **uma página por tema** — e são paletas diferentes: a
+do escuro é mais fechada.
+
+**Como as 24 cores saíram do arquivo.** O PDF é CMYK com perfil FOGRA39, então
+não dá para ler o hex do código-fonte. Rasterizei cada página (as duas vinham
+no mesmo arquivo; separei reconstruindo um PDF mínimo por stream de conteúdo) e
+li a **cor dominante de cada fatia por corrida angular** — varre o anel de grau
+em grau e agrupa em corridas, o que ignora borda e antisserrilhado. São os tons
+que o visualizador dele mostra, não uma conversão de CMYK inventada por mim.
+
+**105 valores mapeados**: os do tema escuro pela roda escura, os de dentro de
+`[data-theme="light"]` pela roda clara.
+
+### A regra e as três travas
+
+Usa o **tom da roda, exatamente**. Três travas impedem que isso quebre o que já
+funcionava:
+
+1. **Primeiro plano do tema não recebe tom cheio.** No claro é a cor escura que
+   serve de texto; no escuro, a clara. Sem isso o selo "rejeitado" trocava
+   vinho-sobre-rosa por vermelho-sobre-rosa e sumia.
+2. **Tinta clara e tinta escura mantêm a própria claridade** — são chapa de
+   badge, não cor de identidade.
+3. **Quem já tinha 3:1 ou mais não pode cair abaixo do que tinha.** Abaixo de
+   3:1 é decorativo e recebe o tom cheio.
+
+A trava 3 foi o que **destravou o amarelo**: na primeira tentativa ele voltava
+ácido só para preservar 1,7:1 de um rótulo que já era ilegível. Cor que nunca
+foi legível não é texto — é enfeite, e enfeite pode ter a cor da paleta.
+
+### Duas classificações corrigidas à mão
+
+- **A segunda fatia do círculo escuro** é um vinho de matiz 1°, praticamente a
+  mesma do vermelho (4°). Parece fatia repetida e escurecida no arquivo, não uma
+  cor nova. Sem trava, o vermelho da marca cairia nela.
+- **O verde de "aprovado"** (155°) cai mais perto do azul-verde na conta. Ia
+  virar turquesa e o selo perderia o significado.
+
+### O que mudou de verdade
+
+| token | antes | claro | escuro |
+|---|---|---|---|
+| `--primary` | `#ff2d2d` / `#dd2222` | `#c64e47` | `#d26359` |
+| `--success` | `#1fd27a` / `#18a863` | `#4fa874` | `#46a253` |
+| `--warning` | `#ffaa33` / `#e09500` | `#ebbc5b` | `#e3a355` |
+| `--prio-1` (baixa) | `#4c8dff` | `#42639c` | `#7590c6` |
+| `--prio-2` (média) | `#e8c33c` | `#f1eb74` | `#ede96c` |
+| `--prio-3` (alta) | `#ff8a3d` | `#d88051` | `#d87e48` |
+
+Os seis pares de badge do tema claro continuam **todos acima de 4,5:1** sobre a
+própria chapa. Fundos, brancos, cinzas e o preto dos textos não foram tocados.
+
+**Vale registrar:** a paleta é mais fechada que a anterior, e isso alcança o
+vermelho da marca. `contexto.md` tem a regra "vermelho de destaque é o mesmo
+vermelho do hover do menu, nunca um pastel" — a roda nova é menos saturada que
+esse vermelho. Foi aplicada porque foi pedida; se for para manter o `#ff2d2d`
+da marca, é uma linha.
+
+---
+
 ## 26/08/2026 · A roda de cores vira o tema claro
 
 > *"aplique essas cores como padrão do nosso tema claro (…) não vamos modificar
