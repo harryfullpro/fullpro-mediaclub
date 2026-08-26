@@ -20656,7 +20656,9 @@ function fpDashTrocar(frente, gravar) {
      painel — e renderFotoPanorama pinta o esqueleto antes do primeiro await,
      então a tela abre na hora. Quem só faz vídeo nunca paga a leitura do
      catálogo de fotos. */
-  if (foto) Promise.resolve().then(renderFotoPanorama).catch(e => console.warn('fpDashTrocar', e));
+  /* Chamada direta, nao adiada: async nunca estoura de forma sincrona, e assim
+     o esqueleto e pintado no mesmo turno do clique. */
+  if (foto) renderFotoPanorama().catch(e => console.warn('fpDashTrocar', e));
 }
 
 /* ==========================================
