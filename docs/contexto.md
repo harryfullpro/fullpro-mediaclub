@@ -65,6 +65,10 @@ não abre o seletor nativo do iOS. No computador segue múltipla escolha pelos c
 - O "…" fica no **canto superior direito do card**, estreito (26px)
 - O menu abre **a partir da posição do botão**, nunca como folha na base da tela
 - No computador, os botões de ícone continuam à vista
+- **Clicar em qualquer lugar da linha seleciona** — a caixa de 16px é alvo
+  pequeno demais e o miss click era rotina
+- A **barra de ações em massa sobrepõe** a listagem (nunca empurra), gruda no
+  topo sem folga ao rolar e **fica sempre visível** no espaço dela
 
 ### Botão "novo" (+)
 > *"quero que ele pareça mais com o sistema padrão do iphone, e não assim um quadrado
@@ -125,6 +129,23 @@ pixels. Ver `padroes.md` → Alinhamento.
 
 ### Menu lateral
 - Espaçamento entre itens deve ser **bem reduzido**, para economizar tela
+- **O rodapé é um botão de usuário, no modelo do Airtable**: avatar (foto, ou
+  iniciais sobre uma cor derivada do nome) abrindo um popover com Conta,
+  Notificações, Linguagem, Tema e Sair. Nada de botões soltos empilhados.
+- **`«` recolhe na hora** — não abre preferência nenhuma. Recolhida, a barra
+  **abre no hover**; `»` fixa aberta.
+- **Ícone não muda de lugar quando a barra abre.** Recolhida e expandida são a
+  mesma caixa; o que aparece é o rótulo. Vale para o avatar e para o `»`, que só
+  se muda de lugar no clique — nunca debaixo do cursor.
+- **Tema claro é o padrão** para quem nunca escolheu.
+- O preto da barra é `#151515` (sRGB 0,082), em `--bg-soft`. O fundo da página é
+  outro e não acompanha.
+
+### Emergencial tem que piscar — recolhido também
+Aberta, o que pisca é o número ao lado de "Produção"; recolhida, o número some e
+quem pisca é **o próprio ícone do módulo**, em vermelho. Sempre um alarme só de
+cada vez, no mesmo ritmo do triângulo da listagem. Zero emergenciais não mostra
+nada — contador permanente aceso vira paisagem.
 
 ### Fotos de produto (Google Drive)
 - A foto do **Drive tem prioridade** sobre a do Bling
@@ -215,7 +236,9 @@ do Dashboard, que os dois lados dividem.
 Nunca puxar conversa com o cliente a partir do número do estúdio: dezenas de
 conversas iniciadas por nós fazem o WhatsApp derrubar a conta por spam. Depois de
 enviar a solicitação, o cliente ganha um botão com a mensagem pronta (nome, moto
-e data) para o **47 93384-0886**. O contato nascer do lado dele também é o que
+e data) para o **47 98849-7292** — número trocado a pedido do dono em
+26/08/2026; o do estúdio (47 93384-0886) fica de reserva. O contato nascer do
+lado dele também é o que
 impede alguém de se passar pela gente — e a tela avisa isso.
 
 O WhatsApp do rodapé (47 3466-6977) é o da **loja**, e continua como está.

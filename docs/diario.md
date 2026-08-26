@@ -1,5 +1,184 @@
 # Diário
 
+## 26/08/2026 · O rodapé da sidebar virou um botão de usuário
+
+> *"vamos copiar esse modelo do airtable. Quero no lugar de todos os botões ali
+> na parte inferior da sidebar expandidos para um botão que será o ícone do
+> usuário (…) quero exatamente como está no exemplo do airtable"*
+
+Cinco linhas soltas no rodapé (perfil, tema, landing, sair) viraram **um avatar**.
+Sem foto, o painel gera iniciais sobre uma cor tirada do próprio nome — sempre a
+mesma para a mesma pessoa, nunca sorteada a cada carregamento. Clicando, abre o
+popover com nome e e-mail, Conta, Preferências de notificações, Preferências de
+linguagem, Tema com chave estilo Apple, um fio e Sair.
+
+O que só apareceu montando:
+
+- **O menu não podia morar dentro da sidebar.** A barra tem `overflow: hidden`
+  para os rótulos não vazarem quando recolhida — e cortava o popover pela
+  metade. `fpUsrAbrir` move o menu para o `document.body` e o prende à
+  viewport; ao fechar, volta para o lugar.
+- **`.fp-usr-cab span` pegava o avatar junto**, porque o avatar também é um
+  `span`. As iniciais renderizavam como um bloco cinza de 12px no canto. O
+  seletor passou a ser `.fp-usr-id`.
+- **Notificações abriu como tela em branco de propósito**: a view
+  `prefs-notificacoes` existe, é registrada nas sete listas de sempre e mostra
+  um card **EM BREVE**. Item de menu que não leva a lugar nenhum é pior que item
+  que leva a uma tela honesta.
+- **Tema claro virou o padrão** (`fp_theme`), como pedido. Quem já tinha
+  escolhido escuro continua no escuro.
+- **O "outro preto" da sidebar virou `#151515`** (sRGB 0,082) em `--bg-soft`. O
+  fundo da página não mudou — só a barra e os elementos que a acompanham.
+
+---
+
+## 26/08/2026 · Recolhida e expandida passaram a ser a mesma caixa
+
+> *"Preciso garantir que não va mudar a posição x nem y dos icones quando
+> estiver recolhido e eu passar o mouse ativando o hover"*
+
+O `«` recolhe direto (não abre mais preferências), o `»` expande, e por padrão a
+barra recolhida **abre no hover**. Só que abrir no hover mexia em tudo: a versão
+recolhida tinha recuo próprio, itens centrados e 24px de espaço no topo, então
+os 22 ícones pulavam de lugar debaixo do cursor.
+
+A correção foi apagar a geometria da versão recolhida inteira: os dois estados
+usam **a mesma caixa**, e o que muda é só o rótulo aparecer. Medido em produção,
+recolhida contra aberta:
+
+| | recolhida | com hover |
+|---|---|---|
+| 1º ícone | x=35, y=68 | x=35, y=68 |
+| 22º ícone | x=35, y=753 | x=35, y=753 |
+| botão `»` | x=35, y=929 | x=35, y=929 |
+| avatar | x=35, y=972 | x=35, y=972 |
+
+Dois detalhes que só a medição pegou:
+
+- **O avatar e o `»` estavam centrados na fileira do rodapé** e escorregavam de
+  x=34 para x=130 quando a barra ia de 68 para 260px. `align-items: flex-start`
+  os traz para a mesma coluna dos ícones.
+- **O recuo vertical próprio do modo hover empurrava a lista 24px para baixo** e,
+  com 22 módulos, o fim da lista saía da tela. Foi a zero.
+
+Os 22 módulos cabem sem rolagem a partir de **~880px de altura de janela**; em
+860px faltam 27px e em 780px faltam 107px. Abaixo disso a lista rola, que é o
+comportamento correto — espremer 22 linhas e 4 títulos de seção numa janela
+baixa custaria a altura de toque de todo mundo.
+
+**O `»` não volta para o lado do avatar no hover**, só no clique. Botão que se
+move sozinho debaixo do cursor é clique errado na certa.
+
+### O emergencial recolhido: quem pisca é o ícone
+
+> *"na versão recolhida da sidebar perdemos a animação de ficar piscando a
+> notificação do produto emergencial. Pra resolver isso vamos fazer o próprio
+> ícone do módulo ficar piscando"*
+
+Com a barra fechada o número fica `display: none` — e o alarme sumia por
+inteiro. Agora `fpFotoBadgePintar` marca o item com `.fp-nav-emerg` e o CSS
+pisca **o ícone de Produção**, em `--primary`, na mesma `fpPiscaEmerg` de 1,3s
+do triângulo da listagem. Quando a barra abre, o ícone para e o número volta a
+ser o sinal: dois alarmes ao mesmo tempo é ruído, não ênfase.
+
+Medido em produção: opacidade oscilando de 0,25 a 0,99 no ícone contra 0,23 a
+1,00 no triângulo — mesmo ritmo, mesma amplitude. Com zero emergenciais a classe
+sai e nada pisca. Desligado junto com as outras piscadas em
+`prefers-reduced-motion`.
+
+---
+
+## 26/08/2026 · Barra de ações em massa: sobrepõe, gruda no topo e nunca some
+
+> *"ao invés de abaixar o div das listagens, sobreponha o novo header de ações em
+> massa na listagem"* … *"vamos fixar a barra de ações em lote para ficar sempre
+> visível nesse espaço"*
+
+Três pedidos que viraram uma coisa só. A barra deixou de empurrar a listagem
+para baixo (a lista inteira dava um pulo a cada seleção), passou a **sobrepor**,
+e agora ocupa um espaço reservado o tempo todo — cheia quando há seleção, com
+"Nenhum selecionado" quando não há.
+
+- **Ao rolar, ela encosta no topo sem folga.** O espaço de 8px que sobrava vinha
+  de cascata: `.fp-lote-slot { top: -40px }` dentro do `@media (min-width:1600px)`
+  perdia para a regra base, que vem depois no arquivo. Os dois passaram a sair do
+  mesmo token, `--pad-topo`.
+- **`[].every()` devolve `true`.** Com a barra sempre visível, seleção vazia
+  fazia o botão destrutivo ler "Voltar para a listagem". Agora `n > 0 &&`.
+- O `×` de remover virou a **lixeira** padrão, e "Definir prioridade" ficou
+  centralizada e mais pesada.
+
+**Clicar em qualquer lugar da linha marca o produto** — a caixa tem 16px de lado
+e errar o alvo era o normal. Continuam respondendo por si o menu `…`, o slider
+de prioridade e a miniatura. Shift+clique seleciona intervalo, e o
+`preventDefault` no `mousedown` mata só o arrasto de seleção de texto, sem tirar
+a cópia de um SKU.
+
+---
+
+## 26/08/2026 · Sincronizar catálogo: uma barra de progresso que não mente
+
+> *"quero um loading mais gradual com animação de tempo real (…) pode até usar
+> animação de piscando pra ficar bonitinho"*
+
+"Lendo o Bling…" virou **Atualizando** em verde com barra de 0 a 100%, sem caixa
+em volta, e a data e hora da última atualização logo abaixo.
+
+O progresso tem **duas camadas**: `real`, que só anda quando uma etapa confirma,
+e `mostrado`, que persegue o real com suavização e um creep lento enquanto
+espera. O mostrado nunca passa 8 pontos à frente do real nem ultrapassa o teto
+da etapa. Barra que salta de 10% para 90% e trava ensina o operador a não
+confiar nela.
+
+---
+
+## 26/08/2026 · Acabamento das listagens
+
+- **Galeria não recarrega tudo no "Mostrar mais".** Antes, mais 120 produtos
+  repintavam as 1.311 miniaturas e a tela piscava inteira. Agora anexa só as
+  novas.
+- **Barra de ordenação na Galeria**, na ordem pedida: **Nome · Estoque ·
+  Avaliação**, com Nome A-Z por padrão (`FP_GAL_ORDENS`).
+- **Estado vazio com moldura**: contorno tracejado, cantos arredondados,
+  opacidade reduzida e o aviso centrado com triângulo de exclamação. O triângulo
+  original era torto de verdade — a inclinação esquerda corria 8,5 na horizontal
+  contra 7,5 da direita, e o ápice ficava em 12,5 com a base em 12. Trocado por
+  um caminho simétrico.
+- **Métricas sem container**, no padrão de fios da casa, com o vão entre colunas
+  saindo de `--fp-col-gap`.
+- **O contorno do Tab** ficou em `--foco: var(--primary)`, 1px e **para dentro**
+  (`inset`), que é o que o faz parecer fino sem sumir.
+
+---
+
+## 26/08/2026 · O menu "…" que morria ao trocar de aba
+
+> *"as vezes ao trocar de tag lá na fila (…) o menu de ... fica inclicável"*
+
+Bug intermitente, e por isso mesmo o mais caro. `fpMenuColetar()` varria o
+registro `FP_MENUS` por `getElementById` **durante** a montagem da string de
+HTML: as linhas ainda não estavam no DOM, o `getElementById` voltava `null` e a
+varredura apagava os ids delas. Só disparava quando o mapa passava de 400
+entradas — daí o "às vezes".
+
+A varredura passou a ser adiada e a respeitar 30s de carência. E o caminho
+silencioso agora escreve `console.warn`: bug que não deixa rastro no console
+volta.
+
+---
+
+## 26/08/2026 · A Vercel segurou um commit por 11 minutos
+
+Sem erro, sem build falhando: o commit subiu, a Vercel não publicou e a borda
+continuou servindo o HTML de 20 minutos antes (`x-vercel-cache: HIT`, `age:
+1263`). Um commit vazio soltou a fila em ~10 segundos.
+
+Registrado porque o sintoma é indistinguível de "o código não funcionou".
+**Antes de investigar um deploy que parece não ter surtido efeito, confirme que
+ele saiu** — ver `pendencias.md`.
+
+---
+
 ## 26/08/2026 · Na landing, quem abre a conversa é o cliente
 
 > *"quero que o cliente nos envie uma mensagem para esse whatsapp confirmando o

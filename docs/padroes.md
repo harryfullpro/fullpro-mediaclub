@@ -508,6 +508,91 @@ O que existe: `.action-btn` (neutro), `.action-btn.approve` (confirmar, verde),
 
 **Antes de usar uma classe de botão, procure a declaração dela no arquivo.**
 
+---
+
+## Tokens de espaço: `--pad-topo` e `--fp-col-gap`
+
+O recuo do topo da página e o vão entre colunas de métrica saem de token, não de
+número solto. Quem gruda no topo (a barra de ações em massa) **tem que derivar do
+mesmo token** — o `top` negativo dela é a contrapartida exata do recuo.
+
+**Armadilha de cascata, já paga:** `.fp-lote-slot { top: -40px }` escrito dentro
+de `@media (min-width: 1600px)` perde para a regra base se a base vier **depois**
+no arquivo. Media query não ganha especificidade; ganha ordem. Sobraram 8px de
+listagem aparecendo acima da barra.
+
+---
+
+## Foco de teclado: 1px, `--foco`, e para dentro
+
+O contorno do Tab existe e não se apaga — mas é **1px**, na cor `--foco`
+(= `--primary`, o vermelho vibrante da casa) e **`inset`**. Para fora ele engorda
+visualmente e briga com o vizinho; para dentro parece fino sem sumir.
+
+---
+
+## Piscar é um padrão, não um enfeite: `fpPiscaEmerg`
+
+Só o **emergencial** pisca, sempre com a mesma animação (`fpPiscaEmerg`, 1,3s,
+opacidade 1 → 0,22). Hoje em três lugares: o triângulo da listagem, o número no
+menu lateral e — com a barra recolhida — o ícone do módulo.
+
+Duas regras:
+
+1. **Um alarme de cada vez.** Quando a barra abre e o número reaparece, o ícone
+   para de piscar. Dois elementos piscando pela mesma causa viram ruído.
+2. **Desligar em `prefers-reduced-motion`.** Todo seletor que ganhar
+   `fpPiscaEmerg` entra também no bloco `@media (prefers-reduced-motion: reduce)`
+   logo abaixo do `@keyframes`.
+
+Quem liga é o JS que já sabe a contagem (`fpFotoBadgePintar` marca
+`.fp-nav-emerg` no `.nav-item`); o CSS decide **onde** piscar conforme o estado
+da barra.
+
+---
+
+## A sidebar recolhida não tem geometria própria
+
+Recolhida, expandida e aberta-no-hover compartilham o mesmo `padding`, o mesmo
+`justify-content` e a mesma altura de linha. A única diferença é `.nav-label`,
+`.brand-txt`, `.count` e `.fp-tema-est` sumirem.
+
+Isso não é preferência estética: com o hover abrindo a barra, **qualquer**
+diferença de caixa faz os 22 ícones se moverem debaixo do cursor no instante do
+clique. Se precisar mexer no recuo, mexa nos dois estados juntos e **meça** —
+`getBoundingClientRect()` dos ícones extremos, do botão de controle e do avatar,
+antes e depois do `hover-open`.
+
+`.fp-foot-linha` precisa de `align-items: flex-start` no estado recolhido: com
+`center`, o avatar e o `»` escorregam de x=34 para x=130 quando a barra vai de
+68 para 260px.
+
+---
+
+## "Mostrar mais" anexa; nunca repinta a lista inteira
+
+Na Galeria, repintar para mostrar mais 120 produtos recarregava as 1.311
+miniaturas e piscava a tela. O botão **anexa só as novas**.
+
+Consequência para quem liga eventos por linha: a volta passa de novo pelas
+linhas antigas. `addEventListener` empilharia um ouvinte a cada clique em
+"Mostrar mais" — use `onclick` (propriedade, reatribuir substitui) ou marque a
+linha com `dataset` e ligue uma vez só. As duas coisas convivem no
+`renderFotoProducao`, e por motivos diferentes: o `onclick` **precisa** ser
+reatribuído, porque o closure guarda a lista de caixas daquele render.
+
+---
+
+## Barra de progresso: duas camadas, senão ela mente
+
+`fpSincIniciar` / `fpSincAndar(real, teto)` / `fpSincEncerrar` mantêm dois
+números: `real`, que só anda quando uma etapa confirma, e `mostrado`, que
+persegue o real com suavização e um creep lento enquanto espera.
+
+O mostrado **nunca** passa 8 pontos à frente do real nem ultrapassa o teto da
+etapa. Barra que salta para 90% e trava ensina o operador a não confiar nela — e
+depois disso nenhuma barra do painel funciona.
+
 ## Commits
 
 Mensagem em português, explicando **o porquê** e não só o quê. Terminar com:

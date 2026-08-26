@@ -391,12 +391,18 @@
      volta a ser o sinal e o icone para, para nao alarmar em dobro. */
   .shell.collapsed .nav-item.fp-nav-emerg svg,
   .shell.hover-mode .nav-item.fp-nav-emerg svg {
-    color: var(--primary);
     animation: fpPiscaEmerg 1.3s ease-in-out infinite;
   }
-  .shell.hover-mode .sidebar.hover-open .nav-item.fp-nav-emerg svg {
-    color: inherit; animation: none;
-  }
+  /* Pisca na cor neutra dos outros modulos: quem chama a atencao e o
+     movimento, nao a cor. Vermelho so no hover, igual o numero fazia. */
+  .nav-item.fp-nav-emerg:hover svg { color: var(--primary); }
+  .shell.hover-mode .sidebar.hover-open .nav-item.fp-nav-emerg svg { animation: none; }
+  /* O cargo nao cabe em 68px — saia "ADMINIST" cortado na vertical da barra.
+     `visibility` e nao `display`: o vao continua reservado, senao o rodape
+     inteiro pula 28px no instante em que o hover abre a barra. */
+  .shell.collapsed #roleBadge,
+  .shell.hover-mode #roleBadge { visibility: hidden; }
+  .shell.hover-mode .sidebar.hover-open #roleBadge { visibility: visible; }
   /* sidebar-foot defined in sidebar block above */
   .nav-section { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding: 5px 14px 2px; height: 18px; flex-shrink: 0; overflow: hidden; }
   .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }

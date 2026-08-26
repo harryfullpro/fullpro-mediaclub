@@ -77,6 +77,21 @@ Estado medido: em viewport de 390×844, **nenhuma das 17 telas vaza a largura** 
 rolagem horizontal na página. O que falta é avaliação de *layout* — densidade, ordem,
 o que sobra e o que falta — não de vazamento.
 
+### Preferências de notificações é uma tela vazia de propósito
+A view `prefs-notificacoes` existe no menu do usuário e mostra um card **EM
+BREVE**. Falta decidir o que entra: e-mail de solicitação nova, aviso de
+emergencial na fila, resumo diário. Nenhum canal está ligado.
+
+### O menu lateral pede ~880px de altura para caber inteiro
+Com 22 módulos e 4 títulos de seção, abaixo de ~880px de janela a lista rola (em
+860px faltam 27px; em 780px, 107px). Se incomodar em alguma tela, a saída é
+reduzir a altura da linha — e **nos dois estados juntos**, senão os ícones
+voltam a se mexer quando a barra abre no hover (ver `padroes.md`).
+
+### Logo recolhida: a versão com ® está de fora
+`assets/logo-short.png` é o "F" vermelho que o dono mandou. A variante dele traz
+o ® ao lado, que a 32px vira borrão — trocar só se ele pedir.
+
 ---
 
 ## Segurança

@@ -46,6 +46,24 @@ curl -s https://mediaclub.fullpro.com.br/admin | shasum -a 256 | cut -d' ' -f1
 (`/admin?v=2#dashboard`) para furar, e cheque com `typeof fpToast === 'function'` se a
 versão nova carregou.
 
+### Quando a Vercel simplesmente não publica
+
+Aconteceu em 26/08/2026: commit no `main`, nenhum erro, nenhum build falhando — e
+a borda continuou servindo o HTML de **20 minutos antes** por 11 minutos. Um
+commit vazio (`git commit --allow-empty`) soltou a fila em ~10 segundos.
+
+O sintoma é idêntico ao de "o código não funcionou". Antes de sair depurando,
+confirme que a versão nova saiu, procurando na resposta uma marca que só existe
+no commit novo:
+
+```bash
+curl -s "https://mediaclub.fullpro.com.br/admin?v=$RANDOM" | grep -c "minha-classe-nova"
+curl -sI https://mediaclub.fullpro.com.br/admin | grep -i "x-vercel-cache\|age\|last-modified"
+```
+
+`x-vercel-cache: HIT` com `age` alto e `last-modified` velho = borda parada, não
+código errado.
+
 ### Se o push falhar com "Could not read from remote repository"
 
 O ssh-agent perdeu a chave (costuma acontecer quando o Mac suspende). A chave tem
