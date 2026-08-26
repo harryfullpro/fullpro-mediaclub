@@ -472,20 +472,31 @@
     font-family: inherit;
   }
   .action-btn:hover { border-color: var(--border-hi); }
-  /* Sincronizacao em curso: rotulo verde e um fio que enche de 0 a 100% na base
-     do proprio botao. Sem caixa nova, sem deslocar nada de lugar.
-     `.fp-sinc:disabled` para vencer o opacity .45 de :disabled — o botao esta
-     travado, mas tem que continuar legivel: e ele que informa o progresso. */
+  /* Sincronizando: o botao perde a caixa. Sobra o rotulo verde piscando de leve
+     e um fio que enche — o mesmo vocabulario do sublinhado das abas.
+     `.fp-sinc:disabled` para vencer o opacity .45 de :disabled: o botao esta
+     travado, mas tem que continuar legivel, porque e ele que informa. */
   .action-btn.fp-sinc, .action-btn.fp-sinc:disabled {
-    position: relative; overflow: hidden; opacity: 1; cursor: default;
-    color: var(--success); border-color: rgba(31,210,122,.4);
+    opacity: 1; cursor: default; color: var(--success);
+    background: none; border-color: transparent; padding: 7px 0;
   }
-  .fp-sinc-pct { margin-left: 8px; font-variant-numeric: tabular-nums; opacity: .72; }
-  .fp-sinc-barra { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(31,210,122,.16); }
-  .fp-sinc-barra i { display: block; height: 100%; width: 0; background: var(--success); transition: width .35s ease; }
+  .fp-sinc-pct { margin-left: 9px; font-variant-numeric: tabular-nums; opacity: .7; }
+  .fp-sinc-rot { animation: fpSincPisca 1.7s ease-in-out infinite; }
+  @keyframes fpSincPisca { 0%, 100% { opacity: 1 } 50% { opacity: .5 } }
   .fp-sinc-bloco { text-align: right; }
-  .fp-sinc-quando { margin-top: 7px; font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-  .fp-sinc-quando:empty { display: none; }
+  /* A mesma fileira serve ao carimbo de hora e ao trilho: altura reservada para
+     a troca de um pelo outro nao empurrar o cabecalho. */
+  .fp-sinc-linha { min-height: 18px; margin-top: 7px; display: flex; align-items: center; justify-content: flex-end; }
+  .fp-sinc-quando { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .fp-sinc-trilho { width: 210px; height: 3px; border-radius: 2px; background: rgba(31,210,122,.14); overflow: hidden; }
+  .fp-sinc-trilho i {
+    display: block; height: 100%; width: 0; border-radius: 2px;
+    background: var(--success); box-shadow: 0 0 9px rgba(31,210,122,.5);
+    animation: fpSincPisca 1.7s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fp-sinc-rot, .fp-sinc-trilho i { animation: none; }
+  }
   /* Verde mais vivo que o --success, que é o tom de estado nos selos e ficava
      apagado num botão de ação. */
   .action-btn.approve, .action-btn.whats {
@@ -5065,7 +5076,10 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
         </div>
         <div class="fp-sinc-bloco" id="fotoSincBloco" style="display:none">
           <button class="action-btn" id="fotoSyncBtn" onclick="fpFotoSincronizar()">Sincronizar catálogo</button>
-          <div class="fp-sinc-quando" id="fotoSyncQuando"></div>
+          <div class="fp-sinc-linha">
+            <div class="fp-sinc-quando" id="fotoSyncQuando"></div>
+            <div class="fp-sinc-trilho" id="fotoSincTrilho" style="display:none"><i></i></div>
+          </div>
         </div>
       </div>
       <!-- Switch de frente. Só aparece para quem tem vídeo E foto; quem tem uma
@@ -18523,34 +18537,69 @@ function fpPanoramaRecarregar() {
   renderFotoPanorama();
 }
 
-/* ── Progresso no próprio botão ──
-   A barra nunca volta atrás: a leitura do Bling é retomável e uma página pode
-   gravar menos que a anterior, o que faria a porcentagem recuar e parecer erro.
-   A régua é o tamanho do catálogo que o banco já conhece — não há total
-   antecipado na API do Bling, então é estimativa, e por isso a fase do Bling
-   para em 85%: o número não pode bater 100% antes de a conferência do Drive
-   terminar. */
-let _sincPct = 0;
+/* ── Progresso da sincronização ──
+   Os eventos reais são poucos e espaçados: cada página do Bling volta a cada
+   poucos segundos e a conferência do Drive é uma chamada só. Marcar só os
+   eventos dava três saltos — 3%, 85%, 100% — e uma barra parada no meio.
+
+   Então há duas camadas. `real` é o que está confirmado. `mostrado` persegue
+   `real` suavemente e, enquanto a resposta não chega, avança sozinho devagar —
+   nunca mais de 8 pontos à frente do confirmado, nunca além do teto da fase.
+   Assim a barra se move em tempo real sem prometer o que não aconteceu.
+
+   A barra nunca volta atrás: a leitura é retomável e uma página pode gravar
+   menos que a anterior, o que faria a porcentagem recuar e parecer erro. E a
+   fase do Bling para em 85% porque a API não diz o total antecipadamente: a
+   régua é o tamanho do catálogo que o banco já conhece, ou seja, estimativa. */
+let _sinc = null;
 
 function fpSincIniciar(btn) {
   if (!btn) return;
-  _sincPct = 0;
+  fpSincParar();
   btn.disabled = true;
   btn.classList.add('fp-sinc');
-  btn.innerHTML = '<span>Atualizando</span><span class="fp-sinc-pct">0%</span>'
-    + '<span class="fp-sinc-barra"><i></i></span>';
+  btn.innerHTML = '<span class="fp-sinc-rot">Atualizando</span><span class="fp-sinc-pct">0%</span>';
+  const quando = document.getElementById('fotoSyncQuando');
+  const trilho = document.getElementById('fotoSincTrilho');
+  if (quando) quando.style.display = 'none';
+  if (trilho) trilho.style.display = '';
+  _sinc = { real: 0, teto: 9, mostrado: 0, btn: btn, timer: setInterval(fpSincTique, 60) };
+  fpSincTique();
 }
 
-function fpSincAndar(btn, pct) {
-  if (!btn || !btn.classList.contains('fp-sinc')) return;
-  _sincPct = Math.max(_sincPct, Math.min(100, pct));
-  const barra = btn.querySelector('.fp-sinc-barra i');
-  const rot = btn.querySelector('.fp-sinc-pct');
-  if (barra) barra.style.width = _sincPct.toFixed(1) + '%';
-  if (rot) rot.textContent = Math.round(_sincPct) + '%';
+function fpSincTique() {
+  const e = _sinc;
+  if (!e) return;
+  /* Mira: nunca abaixo do confirmado, nunca mais de 8 à frente dele, nunca
+     acima do teto da fase. Entre um evento e o outro, o +0.4 por quadro é o
+     que mantém a barra viva. */
+  const mira = Math.min(e.teto, e.real + 8, Math.max(e.real, e.mostrado + 0.4));
+  e.mostrado += (mira - e.mostrado) * 0.14;
+  if (e.mostrado > 99.7) e.mostrado = 100;
+  const fio = document.querySelector('#fotoSincTrilho i');
+  const rot = e.btn && e.btn.querySelector('.fp-sinc-pct');
+  if (fio) fio.style.width = e.mostrado.toFixed(1) + '%';
+  if (rot) rot.textContent = Math.round(e.mostrado) + '%';
+}
+
+/* Marca o que de fato aconteceu. `teto` é onde a fase atual pode chegar. */
+function fpSincAndar(real, teto) {
+  if (!_sinc) return;
+  _sinc.real = Math.max(_sinc.real, Math.min(100, real));
+  if (teto != null) _sinc.teto = Math.max(_sinc.teto, Math.min(100, teto));
+}
+
+function fpSincParar() {
+  if (_sinc && _sinc.timer) clearInterval(_sinc.timer);
+  _sinc = null;
 }
 
 function fpSincEncerrar(btn) {
+  fpSincParar();
+  const quando = document.getElementById('fotoSyncQuando');
+  const trilho = document.getElementById('fotoSincTrilho');
+  if (trilho) { trilho.style.display = 'none'; const i = trilho.querySelector('i'); if (i) i.style.width = '0'; }
+  if (quando) quando.style.display = '';
   if (!btn) return;
   btn.classList.remove('fp-sinc');
   btn.disabled = false;
@@ -18568,30 +18617,29 @@ async function fpFotoSincronizar() {
   const regua = Math.max(300, _fotoTotalBanco || FOTO_PRODUTOS.length || 2500);
   try {
     let pagina = 1, total = 0, voltas = 0;
-    fpSincAndar(btn, 3);
     while (voltas++ < 40) {
       const { data, error } = await sb.functions.invoke('bling-sync', { body: { action: 'sincronizar', sessao, pagina_inicial: pagina } });
       if (error) throw error;
       if (data && data.erro) throw new Error(data.erro);
       total += (data && data.gravados) || 0;
-      fpSincAndar(btn, 3 + Math.min(1, total / regua) * 82);
+      fpSincAndar(3 + Math.min(1, total / regua) * 82, 85);
       if (!data || !data.proxima_pagina) break;
       pagina = data.proxima_pagina;
     }
     /* O Bling acabou: fecha a fase em 85 mesmo que a estimativa tenha ficado
-       curta, senão a barra salta de 12% para 88% e parece defeito. */
-    fpSincAndar(btn, 85);
+       curta. O salto é absorvido pelo motor, que caminha até lá em vez de pular. */
+    fpSincAndar(85, 92);
     const { data: d2, error: e2 } = await sb.functions.invoke('bling-sync', { body: { action: 'drive', sessao } });
     if (e2) throw e2;
     if (d2 && d2.erro) throw new Error(d2.erro);
-    fpSincAndar(btn, 96);
+    fpSincAndar(93, 97);
     await fpFotoCarregar(true);
-    fpSincAndar(btn, 100);
+    fpSincAndar(100, 100);
     renderFotoPanorama();
     fpToast(total.toLocaleString('pt-BR') + ' produtos sincronizados · ' + ((d2 && d2.casados) || 0) + ' com pasta no Drive.', 'ok', { duracao: 7000 });
-    /* Meio segundo com a barra cheia antes de o botão voltar ao normal: sem
-       isso o 100% nunca é visto. */
-    await new Promise(r => setTimeout(r, 600));
+    /* Tempo de a barra caminhar até o 100 e ser vista antes de o botão voltar
+       ao normal — sem isso ninguém enxerga o fim. */
+    await new Promise(r => setTimeout(r, 900));
   } catch (e) {
     fpToast('Sincronização falhou: ' + (e.message || e), 'erro', { duracao: 8000 });
   } finally {
