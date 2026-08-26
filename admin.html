@@ -146,6 +146,7 @@
   .fp-foot-linha { display: flex; align-items: center; gap: 6px; }
   .fp-foot-linha .sb-ctrl-wrap { margin-left: auto; }
   .fp-usr-btn {
+    position: relative;
     display: flex; align-items: center; padding: 3px; border: 0; background: none;
     border-radius: 999px; cursor: pointer; flex-shrink: 0;
     transition: box-shadow .14s ease;
@@ -158,6 +159,13 @@
     font-weight: 700; font-size: 11.5px; color: #fff; letter-spacing: .02em;
   }
   .fp-usr-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* O aviso de mencoes veio do item "Meu perfil", que saiu da barra. Na foto
+     ele precisa ser menor, e com um anel da cor do fundo para nao se misturar
+     com a imagem. */
+  .fp-usr-btn .notif-badge {
+    top: -1px; right: -1px; min-width: 16px; height: 16px;
+    font-size: 9.5px; border: 2px solid var(--bg); padding: 0 3px;
+  }
 
   .fp-usr-menu {
     position: fixed; z-index: 300; display: none; flex-direction: column;
@@ -169,8 +177,12 @@
   [data-theme="light"] .fp-usr-menu { box-shadow: 0 12px 30px rgba(0,0,0,.14); }
   .fp-usr-cab { display: flex; align-items: center; gap: 10px; padding: 14px 14px 12px; }
   .fp-usr-cab .fp-usr-foto { width: 38px; height: 38px; font-size: 13px; }
-  .fp-usr-cab b { display: block; font-size: 13.5px; font-weight: 650; color: var(--text); }
-  .fp-usr-cab span { display: block; font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  /* Escopo pelo bloco de texto, NAO por `span`: a foto tambem e um span dentro
+     do cabecalho, e a regra generica a transformava em bloco de texto de 12px —
+     as iniciais iam parar no canto do circulo. */
+  .fp-usr-id { min-width: 0; }
+  .fp-usr-id b { display: block; font-size: 13.5px; font-weight: 650; color: var(--text); }
+  .fp-usr-id span { display: block; font-size: 12px; color: var(--text-muted); margin-top: 1px; }
   .fp-usr-sep { height: 1px; background: var(--border); margin: 5px 0; }
   .fp-usr-item {
     display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
@@ -5234,17 +5246,13 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
       <span class="nav-label">Integrações</span>
     </button>
-    <button class="nav-item" data-view="profile" style="position:relative">
-      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <span class="nav-label">Meu perfil</span>
-      <span class="notif-badge" id="notifBadge" style="display:none">0</span>
-    </button>
     </div><!-- /sidebar-nav -->
 
     <div class="sidebar-foot">
       <div class="fp-foot-linha">
         <button class="fp-usr-btn" id="fpUsrBtn" type="button" aria-haspopup="menu" aria-expanded="false" onclick="fpUsrAlternar(event)">
           <span class="fp-usr-foto" id="fpUsrFoto"></span>
+          <span class="notif-badge" id="notifBadge" style="display:none">0</span>
         </button>
 
       <div class="sb-ctrl-wrap" id="sbCtrlWrap">
@@ -5262,7 +5270,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
           </button>
         </div>
         <button class="sb-ctrl-btn" onclick="toggleSbPopover()" aria-label="Controle do menu">
-          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+          <svg viewBox="0 0 24 24"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
         </button>
       </div>
       </div>
@@ -5270,7 +5278,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
       <div class="fp-usr-menu" id="fpUsrMenu" role="menu" aria-labelledby="fpUsrBtn">
         <div class="fp-usr-cab">
           <span class="fp-usr-foto" id="fpUsrFotoMenu"></span>
-          <span><b id="fpUsrNome">—</b><span id="fpUsrSub"></span></span>
+          <span class="fp-usr-id"><b id="fpUsrNome">—</b><span id="fpUsrSub"></span></span>
         </div>
         <div class="fp-usr-sep"></div>
         <button class="fp-usr-item" type="button" role="menuitem" onclick="fpUsrIr('profile')">
@@ -8583,13 +8591,15 @@ document.getElementById('addBlockBtn').onclick = () => {
 /* THEME TOGGLE */
 function toggleTheme() {
   const html = document.documentElement;
-  const current = html.getAttribute('data-theme') || 'dark';
+  const current = html.getAttribute('data-theme') || 'light';
   const next = current === 'dark' ? 'light' : 'dark';
   html.setAttribute('data-theme', next);
   localStorage.setItem('fp_theme', next);
 }
 (function initTheme() {
-  const saved = localStorage.getItem('fp_theme') || 'dark';
+  /* Claro por padrao — decisao do dono. O escuro continua a um clique no menu
+     do usuario e fica guardado para as proximas visitas. */
+  const saved = localStorage.getItem('fp_theme') || 'light';
   document.documentElement.setAttribute('data-theme', saved);
 })();
 
