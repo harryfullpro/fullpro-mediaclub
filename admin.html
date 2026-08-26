@@ -126,6 +126,48 @@
     top: 0;
     transition: padding .25s cubic-bezier(.4,0,.2,1);
   }
+  /* ── Prancheta na barra lateral ──────────────────────────────────────────
+     A mesma ideia do fundo da tela de entrar, em voz baixa: a barra tem
+     texto por cima o tempo todo, entao a malha aqui vale um terco da
+     opacidade que ela tem no login. Duas camadas, ambas decorativas:
+     `::before` e o papel milimetrado, `::after` e um brilho que sobe e desce
+     em 46s. `isolation: isolate` cria o contexto de empilhamento; sem ele o
+     pseudo-elemento posicionado passaria por cima dos itens do menu, que sao
+     estaticos. */
+  .sidebar { isolation: isolate; }
+  .sidebar > * { position: relative; z-index: 1; }
+  .sidebar::before, .sidebar::after { content: ''; position: absolute; pointer-events: none; z-index: 0; }
+  .sidebar::before {
+    inset: 0;
+    --sb-fina: rgba(150,190,255,.030);
+    --sb-grossa: rgba(150,190,255,.055);
+    background-image:
+      linear-gradient(var(--sb-fina) 1px, transparent 1px),
+      linear-gradient(90deg, var(--sb-fina) 1px, transparent 1px),
+      linear-gradient(var(--sb-grossa) 1px, transparent 1px),
+      linear-gradient(90deg, var(--sb-grossa) 1px, transparent 1px);
+    background-size: 20px 20px, 20px 20px, 80px 80px, 80px 80px;
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 14%, #000 86%, transparent);
+    mask-image: linear-gradient(180deg, transparent, #000 14%, #000 86%, transparent);
+  }
+  [data-theme="light"] .sidebar::before {
+    --sb-fina: rgba(28,52,96,.045);
+    --sb-grossa: rgba(28,52,96,.075);
+  }
+  .sidebar::after {
+    left: -30%; right: -30%; height: 42vh; top: -10%;
+    border-radius: 50%;
+    background: rgba(255,45,45,.10);
+    filter: blur(52px);
+    animation: fpSbBrilho 46s ease-in-out infinite;
+  }
+  [data-theme="light"] .sidebar::after { background: rgba(255,45,45,.075); }
+  @keyframes fpSbBrilho {
+    0%, 100% { transform: translate3d(0, -6vh, 0) scale(1); }
+    50% { transform: translate3d(0, 74vh, 0) scale(1.25); }
+  }
+  @media (prefers-reduced-motion: reduce) { .sidebar::after { animation: none; } }
+
   .sidebar-head { padding: 10px 16px 4px; flex-shrink: 0; }
   .sidebar-nav {
     flex: 1; overflow-y: auto; overflow-x: hidden; padding: 0 12px;
