@@ -331,6 +331,20 @@
     gap: 14px;
     margin-bottom: 28px;
   }
+  /* Fila por prioridade e a animacao dividem a linha ao meio. Com 1fr 1fr e o
+     MESMO gap da grade de cartoes, a coluna da esquerda termina exatamente onde
+     termina o segundo cartao (2c+g nos dois casos) e a direita comeca onde
+     comeca o terceiro. A altura vem da fila; a animacao se estica. */
+  .fp-dash-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: stretch; }
+  .fp-dash-anim { position: relative; min-height: 220px; color: var(--text); pointer-events: none; }
+  /* Absoluta para a animacao nunca ditar a altura da linha — quem manda e a fila. */
+  .fp-dash-anim svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  @media (max-width: 1000px) {
+    /* Sem largura para duas colunas, a animacao e enfeite: sai de cena em vez de
+       empurrar a fila para baixo da dobra. */
+    .fp-dash-duo { grid-template-columns: 1fr; }
+    .fp-dash-anim { display: none; }
+  }
   .stat-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -18321,6 +18335,10 @@ async function fpNotaGravar(sku, nota, comentario) {
 }
 
 /* ═══════════════ PANORAMA ═══════════════ */
+/* A animação do fluxo de fotografia, ao lado da fila. Vazia = a fila ocupa a
+   linha inteira (ver .fp-dash-duo). */
+const FP_ANIM_FOTO = '';
+
 /* Uma barra em animação no lugar exato do número. */
 function fpSkelTxt(larg, alt) {
   return '<span class="fp-skel-txt" style="width:' + larg + ';height:' + (alt || 13) + 'px"></span>';
@@ -18363,6 +18381,7 @@ function fpPanoramaHtml(d) {
         d ? produtosMes + (produtosMes === 1 ? ' produto' : ' produtos') : fpSkelTxt('82px', 11))
     + '</div>'
 
+    + '<div class="fp-dash-duo">'
     + '<div class="fp-prod">'
     + '<div class="fp-prod-faixa"><b>Fila por prioridade</b><span class="fp-aviso-sub">'
     + (d ? num(sem) + ' produtos sem foto' : fpSkelTxt('132px', 11)) + '</span></div>' + [
@@ -18371,6 +18390,11 @@ function fpPanoramaHtml(d) {
         + '<span class="fp-prod-est">' + (d ? num(qtd) + ' <small>itens</small>' : fpSkelTxt('46px', 12)) + '</span>'
         + '<span class="fp-prod-fim" style="width:120px"><span style="flex:1;height:5px;border-radius:3px;background:var(--border-hi);overflow:hidden;display:block">'
         + '<span style="display:block;height:100%;width:' + (d && sem ? Math.round(qtd / sem * 100) : 0) + '%;background:' + fpPrioCor(nivel) + '"></span></span></span></div>').join('')
+    + '</div>'
+    /* A animação é decorativa: fora do alcance do leitor de tela e do cursor.
+       Com a constante vazia, o grid de uma coluna devolve a linha inteira à
+       fila, sem buraco. */
+    + '<div class="fp-dash-anim" aria-hidden="true">' + FP_ANIM_FOTO + '</div>'
     + '</div>'
 
     + (lotes.length ? '<div class="fp-prod"><div class="fp-prod-faixa"><b>Lotes em aberto</b></div>'

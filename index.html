@@ -1476,11 +1476,28 @@
   }
   .success-state h3 { font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase; font-size: 32px; margin-bottom: 10px; }
   .success-state p { color: var(--text-dim); max-width: 400px; margin: 0 auto 20px; }
-  .success-nota {
-    font-size: 12.5px; color: var(--text-muted) !important;
-    max-width: 420px; margin: 18px auto 22px !important; line-height: 1.6;
+  /* Antifraude com peso proprio: fio em cima e embaixo, rotulo pequeno em
+     caixa alta e o numero em destaque. Sem caixa em volta e sem barra colorida
+     na lateral — e o padrao da casa. Texto alinhado a esquerda porque sao tres
+     linhas: centralizado, o olho perde o inicio de cada uma. */
+  .success-seg {
+    max-width: 470px; margin: 24px auto 26px; text-align: left;
+    border-top: 1px solid var(--border-hi);
+    border-bottom: 1px solid var(--border-hi);
+    padding: 15px 0;
   }
-  .success-nota strong { color: var(--text-dim); white-space: nowrap; }
+  .success-seg-t {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 10.5px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase;
+    color: var(--success); margin-bottom: 8px;
+  }
+  .success-seg-t svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .success-seg p {
+    font-size: 13.5px; color: var(--text-dim) !important;
+    max-width: none; margin: 0 !important; line-height: 1.65;
+  }
+  .success-seg strong { color: var(--text); font-weight: 700; }
+  .success-seg strong:first-of-type { white-space: nowrap; }
   /* TERMS FULLSCREEN */
   .terms-overlay {
     position: fixed;
@@ -2865,7 +2882,13 @@
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.2-1.8-.9-2-1-.3-.1-.5-.2-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.6c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.6 0-.2-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.8.4-.3.3-1.1 1-1.1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.3 5.2 4.6.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.5.3-.7.3-1.4.2-1.5-.1-.1-.3-.2-.6-.3z"/><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1112 20.2z"/></svg>
             Confirmar no WhatsApp
           </a>
-          <p class="success-nota">Falamos com você só por este número: <strong>(47) 93384-0886</strong>. Como é você que abre a conversa, ninguém consegue se passar pela gente. Nunca pedimos senha, código ou pagamento por mensagem.</p>
+          <div class="success-seg">
+            <div class="success-seg-t">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+              Segurança
+            </div>
+            <p>Falamos com você <strong>só pelo (47) 93384-0886</strong> — o número que você acabou de acionar. Como é <strong>você</strong> que abre a conversa, ninguém consegue se passar pela gente. E nunca pedimos senha, código ou pagamento por mensagem.</p>
+          </div>
           <button class="btn btn-ghost" onclick="location.reload()">Nova solicitação</button>
         </div>
       </div>
@@ -2945,7 +2968,7 @@
           <li><a href="https://instagram.com/fullprobr" target="_blank" rel="noopener">Instagram @fullprobr</a></li>
           <li><a href="https://www.youtube.com/@fullprobr" target="_blank" rel="noopener">YouTube</a></li>
           <li><a href="https://fullpro.parts" target="_blank" rel="noopener">fullpro.parts</a></li>
-          <li><a href="https://wa.me/554734666977" target="_blank" rel="noopener">WhatsApp contato</a></li>
+          <li><a href="https://wa.me/5547933840886" target="_blank" rel="noopener">WhatsApp do estúdio</a></li>
         </ul>
       </div>
     </div>
