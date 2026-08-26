@@ -150,9 +150,13 @@
     -webkit-mask-image: linear-gradient(180deg, transparent, #000 14%, #000 86%, transparent);
     mask-image: linear-gradient(180deg, transparent, #000 14%, #000 86%, transparent);
   }
+  /* No claro tudo pesa mais: linha escura sobre branco tem contraste real,
+     enquanto no escuro a mesma alfa vira quase nada. Metade da malha e menos
+     de metade do brilho — no branco o vermelho a .075 pintava a barra de
+     rosa. */
   [data-theme="light"] .sidebar::before {
-    --sb-fina: rgba(28,52,96,.045);
-    --sb-grossa: rgba(28,52,96,.075);
+    --sb-fina: rgba(28,52,96,.020);
+    --sb-grossa: rgba(28,52,96,.034);
   }
   .sidebar::after {
     left: -30%; right: -30%; height: 42vh; top: -10%;
@@ -161,7 +165,7 @@
     filter: blur(52px);
     animation: fpSbBrilho 46s ease-in-out infinite;
   }
-  [data-theme="light"] .sidebar::after { background: rgba(255,45,45,.075); }
+  [data-theme="light"] .sidebar::after { background: rgba(255,45,45,.030); }
   @keyframes fpSbBrilho {
     0%, 100% { transform: translate3d(0, -6vh, 0) scale(1); }
     50% { transform: translate3d(0, 74vh, 0) scale(1.25); }
