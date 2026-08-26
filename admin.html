@@ -3438,8 +3438,17 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   animation: fpSkel 1.3s ease-in-out infinite;
 }
 @keyframes fpSkel { 0% { background-position: 100% 50% } 100% { background-position: 0 50% } }
+/* Variante em linha: ocupa o lugar exato de um numero ou de um rotulo enquanto
+   o dado nao chegou. Usa o tom da borda, nao o do cartao — dentro de um
+   .stat-card o cinza do fundo seria invisivel. */
+.fp-skel-txt {
+  display: inline-block; vertical-align: middle; border-radius: 6px;
+  background: linear-gradient(90deg, var(--border) 25%, var(--border-hi) 37%, var(--border) 63%);
+  background-size: 400% 100%;
+  animation: fpSkel 1.3s ease-in-out infinite;
+}
 @media (prefers-reduced-motion: reduce) {
-  .fp-skel-linha { animation: none; }
+  .fp-skel-linha, .fp-skel-txt { animation: none; }
   .fp-toast, .fp-confirm-ov, .fp-confirm { transition: none; }
 }
 
@@ -18308,9 +18317,21 @@ async function fpNotaGravar(sku, nota, comentario) {
 }
 
 /* ═══════════════ PANORAMA ═══════════════ */
-async function renderFotoPanorama() {
-  const box = document.getElementById('fotoPanorama');
-  if (!box) return;
+/* Uma barra em animação no lugar exato do número. */
+function fpSkelTxt(larg, alt) {
+  return '<span class="fp-skel-txt" style="width:' + larg + ';height:' + (alt || 13) + 'px"></span>';
+}
+
+/* O painel é montado em duas passadas, porque tem duas fontes com tempos
+   diferentes: o catálogo (FOTO_PRODUTOS, milhares de linhas) e as três
+   consultas próprias do panorama. Cada bloco mostra o esqueleto até a SUA
+   fonte chegar — quem volta ao painel com o catálogo em cache já vê os
+   números de cara, e só o do mês pisca.
+   estado = { catalogo: bool, dados: {fotosMes, recentes, lotes} | null } */
+function fpPanoramaHtml(estado) {
+  const temCat = !!(estado && estado.catalogo);
+  const dados  = (estado && estado.dados) || null;
+
   const ativos = FOTO_PRODUTOS.filter(p => !p.excluido);
   const com = ativos.filter(p => p.tem_foto), sem = ativos.filter(p => !p.tem_foto);
   const notas = ativos.filter(p => p.nota != null).map(p => p.nota);
@@ -18318,20 +18339,11 @@ async function renderFotoPanorama() {
   const fila = { 5: 0, 3: 0, 2: 0, 1: 0, pend: 0 };
   sem.forEach(p => { if (p.prioridade == null) fila.pend++; else fila[p.prioridade]++; });
   const pct = ativos.length ? Math.round(com.length / ativos.length * 100) : 0;
+  const num = n => n.toLocaleString('pt-BR');
 
-  /* "Este mês" conta o que passou pelo painel: mc_photo_files só tem foto
-     enviada por aqui. Foto que já estava no Drive antes deste módulo não
-     entra — e não deve, senão o número do mês vira o acervo inteiro. */
-  const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0, 0, 0, 0);
-  let fotosMes = [], recentes = [], lotes = [];
-  try {
-    const [f, r, l] = await Promise.all([
-      sb.from('mc_photo_files').select('sku,created_at').gte('created_at', inicioMes.toISOString()),
-      sb.from('mc_photo_files').select('*').order('created_at', { ascending: false }).limit(15),
-      sb.from('mc_photo_batches').select('*').eq('status', 'aberto').order('created_at', { ascending: false }).limit(5),
-    ]);
-    fotosMes = f.data || []; recentes = r.data || []; lotes = l.data || [];
-  } catch (e) { console.warn('panorama', e); }
+  const fotosMes = dados ? dados.fotosMes : [];
+  const recentes = dados ? dados.recentes : [];
+  const lotes    = dados ? dados.lotes    : [];
   const produtosMes = new Set(fotosMes.map(x => x.sku)).size;
 
   const cartao = (rotulo, valor, extra) => '<div class="stat-card"><div class="label">' + rotulo + '</div>'
@@ -18339,21 +18351,29 @@ async function renderFotoPanorama() {
 
   const semFotoEstoque = sem.slice().sort((a, b) => (Number(b.estoque) || 0) - (Number(a.estoque) || 0)).slice(0, 8);
 
-  box.innerHTML = '<div class="stats-grid">'
-    + cartao('Com foto', com.length.toLocaleString('pt-BR'), pct + '% do catálogo ativo')
-    + cartao('Sem foto', sem.length.toLocaleString('pt-BR'), fila.pend ? fila.pend.toLocaleString('pt-BR') + ' sem prioridade' : 'tudo classificado')
-    + cartao('Nota média', media == null ? '—' : media.toFixed(1).replace('.', ',') + '/5', notas.length ? notas.length + ' produtos avaliados' : 'ainda sem avaliação')
-    + cartao('Fotos este mês', fotosMes.length.toLocaleString('pt-BR'), produtosMes + (produtosMes === 1 ? ' produto' : ' produtos'))
+  const html = '<div class="stats-grid">'
+    + cartao('Com foto',
+        temCat ? num(com.length) : fpSkelTxt('92px', 28),
+        temCat ? pct + '% do catálogo ativo' : fpSkelTxt('118px', 11))
+    + cartao('Sem foto',
+        temCat ? num(sem.length) : fpSkelTxt('92px', 28),
+        temCat ? (fila.pend ? num(fila.pend) + ' sem prioridade' : 'tudo classificado') : fpSkelTxt('104px', 11))
+    + cartao('Nota média',
+        temCat ? (media == null ? '—' : media.toFixed(1).replace('.', ',') + '/5') : fpSkelTxt('76px', 28),
+        temCat ? (notas.length ? notas.length + ' produtos avaliados' : 'ainda sem avaliação') : fpSkelTxt('126px', 11))
+    + cartao('Fotos este mês',
+        dados ? num(fotosMes.length) : fpSkelTxt('62px', 28),
+        dados ? produtosMes + (produtosMes === 1 ? ' produto' : ' produtos') : fpSkelTxt('82px', 11))
     + '</div>'
 
     + '<div class="fp-prod">'
     + '<div class="fp-prod-faixa"><b>Fila por prioridade</b><span class="fp-aviso-sub">'
-    + sem.length.toLocaleString('pt-BR') + ' produtos sem foto</span></div>' + [
+    + (temCat ? num(sem.length) + ' produtos sem foto' : fpSkelTxt('132px', 11)) + '</span></div>' + [
         ['Emergencial', fila[5], 5], ['Alta', fila[3], 3], ['Média', fila[2], 2], ['Baixa', fila[1], 1], ['Sem prioridade', fila.pend, 0],
       ].map(([rot, qtd, n]) => '<div class="fp-prod-linha"><span class="fp-prod-nome"><b>' + rot + '</b></span>'
-        + '<span class="fp-prod-est">' + qtd.toLocaleString('pt-BR') + ' <small>itens</small></span>'
+        + '<span class="fp-prod-est">' + (temCat ? num(qtd) + ' <small>itens</small>' : fpSkelTxt('46px', 12)) + '</span>'
         + '<span class="fp-prod-fim" style="width:120px"><span style="flex:1;height:5px;border-radius:3px;background:var(--border-hi);overflow:hidden;display:block">'
-        + '<span style="display:block;height:100%;width:' + (sem.length ? Math.round(qtd / sem.length * 100) : 0) + '%;background:' + fpPrioCor(n) + '"></span></span></span></div>').join('')
+        + '<span style="display:block;height:100%;width:' + (temCat && sem.length ? Math.round(qtd / sem.length * 100) : 0) + '%;background:' + fpPrioCor(n) + '"></span></span></span></div>').join('')
     + '</div>'
 
     + (lotes.length ? '<div class="fp-prod"><div class="fp-prod-faixa"><b>Lotes em aberto</b></div>'
@@ -18362,20 +18382,70 @@ async function renderFotoPanorama() {
           + escHtml(l.criado_por_nome || '') + (l.slack_destino_nome ? ' → ' + escHtml(l.slack_destino_nome) : '') + '</span></span>'
           + '<span class="fp-prod-est">' + (l.tamanho || 0) + ' <small>itens</small></span></div>').join('') + '</div>' : '')
 
-    + (semFotoEstoque.length ? '<div class="fp-prod"><div class="fp-prod-faixa"><b>Sem foto e com mais estoque parado</b><span class="fp-aviso-sub">os 8 maiores</span></div>'
-        + semFotoEstoque.map(p => '<div class="fp-prod-linha" data-sku="' + escHtml(p.sku) + '">' + fpFotoProdutoHtml(p.sku, p.imagem_bling, 34, 7)
-          + '<span class="fp-prod-nome"><b>' + escHtml(p.nome || p.sku) + '</b><span class="fp-prod-sku">' + escHtml(p.sku) + '</span></span>'
-          + fpProdEstoqueHtml(p.estoque)
-          + '<span class="fp-prod-fim">' + fpPrioHtml(p.sku, p.prioridade, fpFotoPodeEditar()) + '</span></div>').join('') + '</div>' : '')
+    + ((temCat && !semFotoEstoque.length) ? '' : '<div class="fp-prod"><div class="fp-prod-faixa"><b>Sem foto e com mais estoque parado</b><span class="fp-aviso-sub">os 8 maiores</span></div>'
+    + (temCat
+        ? semFotoEstoque.map(p => '<div class="fp-prod-linha" data-sku="' + escHtml(p.sku) + '">' + fpFotoProdutoHtml(p.sku, p.imagem_bling, 34, 7)
+            + '<span class="fp-prod-nome"><b>' + escHtml(p.nome || p.sku) + '</b><span class="fp-prod-sku">' + escHtml(p.sku) + '</span></span>'
+            + fpProdEstoqueHtml(p.estoque)
+            + '<span class="fp-prod-fim">' + fpPrioHtml(p.sku, p.prioridade, fpFotoPodeEditar()) + '</span></div>').join('')
+        : Array.from({ length: 8 }, () => '<div class="fp-prod-linha">'
+            + '<span class="fp-skel-txt" style="width:34px;height:34px;border-radius:7px"></span>'
+            + '<span class="fp-prod-nome">' + fpSkelTxt('min(240px, 46vw)', 13) + '<span class="fp-prod-sku">' + fpSkelTxt('88px', 10) + '</span></span>'
+            + '<span class="fp-prod-est">' + fpSkelTxt('52px', 12) + '</span>'
+            + '<span class="fp-prod-fim">' + fpSkelTxt('108px', 14) + '</span></div>').join(''))
+    + '</div>')
 
-    + (recentes.length ? '<div class="fp-prod-faixa"><b>Últimas 15 fotos enviadas</b></div>'
-        + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px">'
-        + recentes.map(f => '<div><img src="' + escHtml(FP_DRIVE_URL + '?action=arquivo&id=' + encodeURIComponent(f.drive_file_id || '')) + '" alt="'
-          + escHtml(f.file_name || '') + '" loading="eager" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--border)">'
-          + '<div class="fp-prod-sku" style="margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escHtml(f.sku || '') + '</div></div>').join('')
-        + '</div>' : '');
+    + ((dados && !recentes.length) ? '' : '<div class="fp-prod-faixa"><b>Últimas 15 fotos enviadas</b></div>'
+    + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px">'
+    + (dados
+        ? recentes.map(f => '<div><img src="' + escHtml(FP_DRIVE_URL + '?action=arquivo&id=' + encodeURIComponent(f.drive_file_id || '')) + '" alt="'
+            + escHtml(f.file_name || '') + '" loading="eager" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--border)">'
+            + '<div class="fp-prod-sku" style="margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escHtml(f.sku || '') + '</div></div>').join('')
+        : Array.from({ length: 15 }, () => '<div><span class="fp-skel-txt" style="width:100%;aspect-ratio:1;height:auto;border-radius:8px"></span>'
+            + '<div style="margin-top:3px">' + fpSkelTxt('64px', 10) + '</div></div>').join(''))
+    + '</div>');
 
-  fpDriveCarregar(semFotoEstoque.map(p => p.sku), box);
+  return { html, semFotoEstoque };
+}
+
+/* Quem chegou por último manda: duas aberturas seguidas não podem pintar uma
+   por cima da outra fora de ordem. */
+let _panoramaVez = 0;
+
+async function renderFotoPanorama() {
+  const box = document.getElementById('fotoPanorama');
+  if (!box) return;
+  const vez = ++_panoramaVez;
+
+  /* Passada 1, síncrona: a tela abre com a forma certa e o esqueleto no lugar
+     do que ainda não chegou. Só quando não há nada pintado — repintar depois
+     de um clique de prioridade não pode piscar a tela inteira. */
+  if (!box.innerHTML.trim()) box.innerHTML = fpPanoramaHtml({ catalogo: FOTO_PRODUTOS.length > 0, dados: null }).html;
+
+  /* "Este mês" conta o que passou pelo painel: mc_photo_files só tem foto
+     enviada por aqui. Foto que já estava no Drive antes deste módulo não
+     entra — e não deve, senão o número do mês vira o acervo inteiro. */
+  const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0, 0, 0, 0);
+  let fotosMes = [], recentes = [], lotes = [];
+  try {
+    /* O catálogo corre junto com as três consultas, não antes delas: em série
+       eram duas idas ao banco, uma esperando a outra. */
+    const [, f, r, l] = await Promise.all([
+      fpFotoCarregar(),
+      sb.from('mc_photo_files').select('sku,created_at').gte('created_at', inicioMes.toISOString()),
+      sb.from('mc_photo_files').select('*').order('created_at', { ascending: false }).limit(15),
+      sb.from('mc_photo_batches').select('*').eq('status', 'aberto').order('created_at', { ascending: false }).limit(5),
+    ]);
+    fotosMes = f.data || []; recentes = r.data || []; lotes = l.data || [];
+  } catch (e) { console.warn('panorama', e); }
+  if (vez !== _panoramaVez) return;
+
+  /* Passada 2: o que chegou. `catalogo: true` mesmo se a leitura falhou — daí
+     o painel mostra zero, que é a verdade do que temos, e não um esqueleto
+     que pisca para sempre. */
+  const montado = fpPanoramaHtml({ catalogo: true, dados: { fotosMes, recentes, lotes } });
+  box.innerHTML = montado.html;
+  fpDriveCarregar(montado.semFotoEstoque.map(p => p.sku), box);
 }
 
 /* Sincronização: varre o catálogo do Bling e depois confere as pastas do
@@ -20583,8 +20653,10 @@ function fpDashTrocar(frente, gravar) {
     : 'Visão geral de todas as áreas do Media Club.';
   if (gravar !== false) { try { localStorage.setItem('fp_dash_frente', FP_DASH_FRENTE); } catch (e) {} }
   /* Sem await: fpDashAplicar roda na mesma tarefa síncrona que revela o
-     painel. Quem só faz vídeo nunca paga a leitura do catálogo de fotos. */
-  if (foto) fpFotoCarregar().then(renderFotoPanorama).catch(e => console.warn('fpDashTrocar', e));
+     painel — e renderFotoPanorama pinta o esqueleto antes do primeiro await,
+     então a tela abre na hora. Quem só faz vídeo nunca paga a leitura do
+     catálogo de fotos. */
+  if (foto) Promise.resolve().then(renderFotoPanorama).catch(e => console.warn('fpDashTrocar', e));
 }
 
 /* ==========================================
@@ -23321,7 +23393,7 @@ async function initApp() {
         case 'dashboard':
           /* Cada frente carrega o seu: as quatro leituras de vídeo não servem
              ao painel de foto, e a leitura do catálogo não serve ao de vídeo. */
-          if (FP_DASH_FRENTE === 'foto') { await fpFotoCarregar(); renderFotoPanorama(); }
+          if (FP_DASH_FRENTE === 'foto') { await renderFotoPanorama(); }
           else {
             await Promise.all([loadRequests(), loadCheckins(), loadCheckouts(), loadProjects()]);
             renderDashboard();
