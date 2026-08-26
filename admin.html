@@ -7673,6 +7673,8 @@ function fpRevelarPainel() {
      ao banco confirmar. Sem o cache, o painel abria no vermelho de fabrica e
      trocava de cor na cara de quem estava olhando. */
   try { fpCoresCarregar(); } catch (e) { console.warn('cores de destaque', e); }
+  /* De novo aqui porque agora ha usuario: ver o comentario em fpCoresRender. */
+  try { fpCoresRender(); } catch (e) { console.warn('cores de destaque', e); }
   document.getElementById('login').style.display = 'none';
   document.getElementById('app').style.display = 'grid';
   document.body.classList.remove('fp-sem-sessao');   // libera o botão do besouro
@@ -21689,6 +21691,10 @@ function fpCoresValor(tema, token) {
 function fpCoresRender() {
   const box = document.getElementById('fpCoresPainel');
   if (!box) return;
+  /* Papel ainda desconhecido nao limpa a caixa: no boot com #manutencao na
+     URL o renderBugs roda ANTES do usuario existir, e a limpeza apagava o
+     painel para sempre — a tela ficava sem os campos e sem erro nenhum. */
+  if (typeof CURRENT_USER === 'undefined' || !CURRENT_USER) return;
   if (typeof getUserRole === 'function' && getUserRole() !== 'admin') { box.innerHTML = ''; return; }
   const aba = _coresAba;
   box.innerHTML = '<div class="fp-cores-topo">'
