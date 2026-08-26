@@ -303,8 +303,11 @@
   .fp-rodape-par { display: flex; gap: 4px; }
   /* Meio a meio cortava "Landing page" (medido). Sair leva so a largura que
      precisa e a landing fica com o resto. */
-  .fp-rodape-par #logoutBtn { flex: 0 0 auto; }
-  .fp-rodape-par a.nav-item { flex: 1 1 auto; min-width: 0; }
+  /* `width: auto` obrigatorio: o .nav-item base tem width:100%, e com
+     flex-basis auto isso faz o Sair reivindicar a fileira inteira e esmagar a
+     landing (medido: 235px contra 20px). */
+  .fp-rodape-par #logoutBtn { flex: 0 0 auto; width: auto; }
+  .fp-rodape-par a.nav-item { flex: 1 1 auto; min-width: 0; width: auto; }
   .fp-rodape-par .nav-item { padding-left: 10px; padding-right: 10px; gap: 8px; }
   .fp-rodape-par .nav-label { overflow: hidden; text-overflow: ellipsis; }
   /* Recolhido, os dois icones continuam lado a lado, so sem rotulo. */
