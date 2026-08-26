@@ -1,5 +1,55 @@
 # Diário
 
+## 26/08/2026 · Separação vira PDF público, e o que o Bling não conta
+
+O Slack dependia de app e token que não existem. A lista de separação passou a
+virar **PDF com link público** — manda-se só o link para quem separa.
+
+### A localização do estoque só existe no detalhe
+
+`estoque.localizacao` (`"M1 (5, C)"`, `"PP"`, `"C3 (2, B) 1"`) **não vem na
+listagem** de produtos do Bling, só em `GET /produtos/{id}`. Buscar para os 2.566
+produtos levaria quase uma hora, então é sob demanda — só os itens do lote — e
+fica guardada em `mc_photo_products.localizacao`.
+
+### Duas armadilhas que custaram uma rodada cada
+
+**1. O Bling limita a ~3 chamadas por segundo.** Disparei cinco de uma vez e
+voltou **429 em oito dos dez** produtos. Pior: o erro caía no `catch` e era
+gravado como localização vazia — o produto ficaria "sem localização" para sempre.
+Agora as chamadas são espaçadas por um relógio compartilhado (~2,8/s), o erro é
+repetido três vezes, e **nada é gravado quando a chamada falha**. Vazio no banco
+significa "perguntei e não tem", nunca "não consegui perguntar".
+
+**2. O `finally` apagava o próprio resultado.** Depois de gerar, a tela é
+redesenhada para tirar do lote os produtos que saíram da fila — e o redesenho
+reconstruía o rodapé inteiro, inclusive o container onde o link tinha acabado de
+ser escrito. O PDF era gerado, publicado e registrado; só não chegava aos olhos
+do operador. O link agora vive fora do render.
+
+### PDF escrito à mão
+
+Sem biblioteca: o painel não carrega script de terceiro e um PDF só de texto são
+meia dúzia de objetos. Helvetica é fonte base (não precisa embarcar) e WinAnsi
+cobre o português — **com a tabela de 0x80–0x9F**, senão travessão e aspas curvas
+viram byte perdido. Emergencial sai em negrito.
+
+Validado fora do navegador antes de subir: 46 itens → 2 páginas, reconhecido como
+PDF 1.4 válido, e a renderização confere acento, quebra de página e numeração.
+
+### Armazenamento
+
+Balde `storage/separacao`, **público por necessidade** — quem separa não tem conta
+no painel. Teto de 5 MB e só `application/pdf`. Políticas de SELECT e INSERT para
+`anon`; **sem DELETE**, e isso foi confirmado na prática: o `remove()` do cliente
+**responde sucesso mesmo quando o RLS bloqueia** — a resposta traz os nomes
+pedidos, não os apagados. Conferir listando de novo.
+
+**Pendência:** os PDFs se acumulam sem limpeza automática.
+
+---
+
+
 ## 25/08/2026 · Seção FOTOGRAFIA e o aviso de entrada no dialeto do debriefing
 
 ### O aviso ficou mais largo e ganhou régua técnica
