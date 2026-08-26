@@ -4861,7 +4861,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
       </a>
     </div>
     <div class="sidebar-nav">
-    <div class="nav-section">Geral</div>
+    <div class="nav-section" data-sec="video">Vídeo</div>
     <button class="nav-item active" data-view="dashboard">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       <span class="nav-label">Dashboard</span>
@@ -4891,7 +4891,11 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 8h20M7 4l-2 4M12 4l-2 4M17 4l-2 4"/></svg>
       <span class="nav-label">Clips</span>
     </button>
-    <div class="nav-section">Fotografia</div>
+    <button class="nav-item" data-view="debriefing">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><path d="M8 9h.01M12 9h.01M16 9h.01"/></svg>
+      <span class="nav-label">Debriefing</span> <span class="count" id="cntDebriefing" style="display:none">0</span>
+    </button>
+    <div class="nav-section" data-sec="foto">Fotografia</div>
     <button class="nav-item" data-view="foto-dashboard">
       <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
       <span class="nav-label">Panorama</span>
@@ -4913,11 +4917,6 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
       <span class="nav-label">Fotografia em lote</span>
     </button>
 
-    <div class="nav-section">Pós-produção</div>
-    <button class="nav-item" data-view="debriefing">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><path d="M8 9h.01M12 9h.01M16 9h.01"/></svg>
-      <span class="nav-label">Debriefing</span> <span class="count" id="cntDebriefing" style="display:none">0</span>
-    </button>
     <div class="nav-section">Performance</div>
     <button class="nav-item" data-view="perf-metas">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
@@ -10437,9 +10436,8 @@ function renderShotsReadOnly(shots, si) {
   'use strict';
 
   const FP_MODULE_GROUPS = [
-    { sec: 'Geral', items: [['dashboard','Dashboard'],['requests','Solicitações'],['calendar','Agenda'],['checkin','Check-in / Check-out'],['projects','Projetos'],['editing','Edição'],['clips','Clips']] },
+    { sec: 'Vídeo', items: [['dashboard','Dashboard'],['requests','Solicitações'],['calendar','Agenda'],['checkin','Check-in / Check-out'],['projects','Projetos'],['editing','Edição'],['clips','Clips'],['debriefing','Debriefing']] },
     { sec: 'Fotografia', items: [['foto-dashboard','Panorama'],['foto-producao','Produção'],['foto-galeria','Galeria'],['foto-separacao','Separação'],['foto-lote','Fotografia em lote']] },
-    { sec: 'Pós-produção', items: [['debriefing','Debriefing']] },
     { sec: 'Performance', items: [['perf-metas','Metas'],['perf-posts','Meus Posts'],['perf-influencers','Influenciadores'],['perf-bonificacao','Bonificação']] },
     { sec: 'Configurações', items: [['templates','Templates WhatsApp'],['export','Exportar'],['users','Usuários'],['manutencao','Manutenção'],['atualizacoes','Atualizações'],['integracoes','Integrações']] }
   ];
@@ -10494,6 +10492,30 @@ function renderShotsReadOnly(shots, si) {
     });
     fpGuardView();
   }
+
+  /* O administrador vê a casa dividida — VÍDEO e FOTOGRAFIA são duas
+     operações diferentes. Quem não é administrador trabalha só de um lado, e
+     para essa pessoa a divisão é ruído: a seção que ela enxerga se chama
+     GERAL.
+
+     Se um dia alguém não-administrador tiver acesso aos dois lados, os nomes
+     específicos voltam — duas seções chamadas GERAL, uma embaixo da outra,
+     seriam piores que a divisão que estamos escondendo. */
+  function fpNomearSecoes() {
+    const admin = typeof getUserRole === 'function' && getUserRole() === 'admin';
+    const secs = {
+      video: document.querySelector('.nav-section[data-sec="video"]'),
+      foto:  document.querySelector('.nav-section[data-sec="foto"]'),
+    };
+    const visivel = k => !!secs[k] && secs[k].style.display !== 'none';
+    const ambos = visivel('video') && visivel('foto');
+    const nome = { video: 'Vídeo', foto: 'Fotografia' };
+    for (const k in secs) {
+      if (!secs[k]) continue;
+      secs[k].textContent = (admin || ambos) ? nome[k] : 'Geral';
+    }
+  }
+  window.fpNomearSecoes = fpNomearSecoes;
 
   let fpModalBuilt = false;
   let fpEditingId = null;
@@ -10602,6 +10624,7 @@ function renderShotsReadOnly(shots, si) {
     applyRolePermissions = function(){
       _origARP.apply(this, arguments);
       try { fpApplyUserModules(); } catch(e){ console.warn('fpApplyUserModules', e); }
+      try { fpNomearSecoes(); } catch(e){ console.warn('fpNomearSecoes', e); }
     };
   }
   if (typeof renderUsers === 'function') {
@@ -22823,6 +22846,9 @@ async function markBonusPaid(id) {
 /* =============== ROLE-BASED ACCESS CONTROL =============== */
 function getUserRole() {
   const r = (CURRENT_USER?.role || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  /* Antes do teste de admin: "Assistente Admin." contém a palavra, e um
+     "Assistente Administrador" cairia como administrador de verdade. */
+  if (r.includes('assistente')) return 'assistente';
   if (r === 'admin' || r === 'administrador' || r.startsWith('admin')) return 'admin';
   if (r.includes('filmmaker') || r.includes('gestor')) return 'filmmaker';
   if (r.includes('mecanico') || r.includes('apresentador')) return 'mecanico';
@@ -22835,7 +22861,9 @@ function applyRolePermissions() {
 
   // Views accessible per role
   const access = {
-    fotografo: ['dashboard','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','atualizacoes','profile'],
+    fotografo:  ['dashboard','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','atualizacoes','profile'],
+    /* Assistente Admin cuida das fotos, não do vídeo. */
+    assistente: ['dashboard','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','atualizacoes','profile'],
     admin: ['dashboard','requests','calendar','checkin','projects','editing','clips','foto-dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile'],
     filmmaker: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','atualizacoes','profile'],
     mecanico: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-bonificacao','templates','atualizacoes','profile'],
