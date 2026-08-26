@@ -385,6 +385,18 @@
   }
   .nav-item:hover .count.urgente,
   .nav-item.active .count.urgente { background: none; color: var(--primary); }
+  /* Recolhida, a barra esconde o numero — e com ele o unico aviso de que ha
+     emergencial na fila. Quem pisca entao e o proprio icone do modulo: mesma
+     cor e mesmo ritmo do triangulo da listagem. Aberta pelo hover, o numero
+     volta a ser o sinal e o icone para, para nao alarmar em dobro. */
+  .shell.collapsed .nav-item.fp-nav-emerg svg,
+  .shell.hover-mode .nav-item.fp-nav-emerg svg {
+    color: var(--primary);
+    animation: fpPiscaEmerg 1.3s ease-in-out infinite;
+  }
+  .shell.hover-mode .sidebar.hover-open .nav-item.fp-nav-emerg svg {
+    color: inherit; animation: none;
+  }
   /* sidebar-foot defined in sidebar block above */
   .nav-section { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding: 5px 14px 2px; height: 18px; flex-shrink: 0; overflow: hidden; }
   .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -4832,6 +4844,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 @keyframes fpPiscaEmerg { 0%, 100% { opacity: 1; } 50% { opacity: .22; } }
 @media (prefers-reduced-motion: reduce) {
   .fp-prio[data-n="5"] .fp-prio-emerg,
+  .nav-item.fp-nav-emerg svg,
   .nav-item .count.urgente { animation: none; }
 }
 /* Coluna de largura fixa e texto à esquerda: com largura automática cada
@@ -16359,6 +16372,10 @@ function fpFotoBadgePintar(n) {
   el.textContent = n || '';
   el.style.display = n ? '' : 'none';   // zero nao vira "0": vira nada
   el.setAttribute('aria-label', n ? (n === 1 ? '1 produto emergencial' : n + ' produtos emergenciais') : '');
+  /* Com a barra recolhida o numero fica display:none e o alarme sumia. A
+     marca vai no item inteiro para o CSS poder piscar o icone no lugar. */
+  const item = el.closest('.nav-item');
+  if (item) item.classList.toggle('fp-nav-emerg', !!n);
 }
 
 function fpFotoBadgeUrgente() {
