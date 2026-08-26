@@ -353,7 +353,9 @@
   /* Numa barra de abas, tudo que nao e aba precisa do mesmo recuo embaixo para
      o texto assentar na mesma linha — as abas carregam 11px por causa do
      sublinhado da ativa. Fora dessa barra, nada muda. */
-  .filter-bar:has(.filter-btn) .fp-lista-contagem { padding: 6px 0 11px; }
+  /* 15px e nao 11px: a contagem usa fonte menor que as abas, entao com o
+     mesmo recuo o texto dela assenta 2px abaixo. Medido, nao estimado. */
+  .filter-bar:has(.filter-btn) .fp-lista-contagem { padding: 6px 0 15px; }
   .filter-btn {
     position: relative;
     padding: 6px 1px 11px;
