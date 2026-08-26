@@ -17154,7 +17154,7 @@ async function renderFotoSeparacao() {
 
   const temAviso = !!(_sepLote.avisos && _sepLote.avisos.length);
   topo.innerHTML = '<div class="filter-bar">'
-    + '<span class="fp-aviso-sub" style="margin-right:6px">Tamanho do lote</span>'
+    + '<span class="fp-aviso-sub" style="margin-right:6px;padding:6px 0 11px">Tamanho do lote</span>'
     + [10, 15, 20, 30].map(t => '<button class="filter-btn' + (t === _sepTamanho ? ' active' : '')
         + '" type="button" onclick="fpSepTamanho(' + t + ')">' + t + '</button>').join('')
     + '<button class="fp-info-btn" type="button" id="fotoSepLogicaBtn" aria-expanded="false"'
