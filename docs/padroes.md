@@ -510,6 +510,34 @@ O que existe: `.action-btn` (neutro), `.action-btn.approve` (confirmar, verde),
 
 ---
 
+## Ícone de menu se aprova a 18px
+
+`.nav-item svg` renderiza a **18px com traço 1,8** — e é aí que o ícone tem que
+funcionar, não no preview grande. O que decide nesse tamanho é o **vão entre os
+traços**, não o desenho: acima de uns 4 traços paralelos vira massa cinza.
+
+Como conferir antes de commitar (roda no console da própria página):
+
+```js
+const img = new Image();
+img.src = 'data:image/svg+xml;utf8,' + svgComOsPaths;  // width/height 18
+await img.decode();
+const c = document.createElement('canvas'); c.width = c.height = 18;
+c.getContext('2d').drawImage(img, 0, 0, 18, 18);
+// depois: drawImage(c, 0, 0, 216, 216) com imageSmoothingEnabled = false
+```
+
+Regras que saíram das reprovações: **nada de detalhe menor que 1 unidade** do
+`viewBox` (some ou vira borrão), e desenho de referência com muita linha entra
+**simplificado** — três camadas abertas em vez de três losangos fechados, mão
+sem punho em vez de mão com punho.
+
+Ícone é sempre traço em `currentColor`, `fill: none`, pontas redondas. **Marca
+colorida não entra na barra**: seria o único elemento que não acompanha o tema
+nem o estado ativo.
+
+---
+
 ## Tokens de espaço: `--pad-topo` e `--fp-col-gap`
 
 O recuo do topo da página e o vão entre colunas de métrica saem de token, não de

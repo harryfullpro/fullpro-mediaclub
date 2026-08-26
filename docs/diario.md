@@ -1,5 +1,31 @@
 # Diário
 
+## 26/08/2026 · Três ícones do menu trocados
+
+O dono mandou a referência de cada um. O que entrou:
+
+| Módulo | Antes | Agora | Por quê |
+|---|---|---|---|
+| Fotografia em lote | câmera | camadas empilhadas | a câmera repetia o assunto do bloco FOTOGRAFIA inteiro e não dizia o que muda ali |
+| Clips | rolo de filme | aperto de mão | é vídeo de anúncio do **Mercado Livre**, e o aperto é a marca deles |
+| Meus Posts | lápis | jornal | lápis diz "editar", não "publicação" |
+
+**A regra que saiu daqui: ícone se aprova a 18px, não no desenho grande.** Cada
+candidato foi rasterizado num `<canvas>` de 18×18 e ampliado 12× sem suavização,
+para ver o que o operador vê de verdade. Dois foram reprovados assim:
+
+- **Três losangos fechados** (a referência literal do ícone de camadas) viram
+  massa: seis traços quase paralelos em 18px. A versão de três camadas abertas
+  lê limpo — é a mesma figura, com metade dos traços.
+- **O aperto de mão com punhos** (o desenho original) ganha duas barras soltas no
+  topo a 18px. Sem os punhos, a mão continua legível e o ícone respira.
+
+O aperto entrou **em traço monocromático**, não com o amarelo e o azul da marca:
+a coluna inteira é `currentColor`, e um logo colorido ali vira o único elemento
+que não acompanha o tema nem o estado ativo.
+
+---
+
 ## 26/08/2026 · O rodapé da sidebar virou um botão de usuário
 
 > *"vamos copiar esse modelo do airtable. Quero no lugar de todos os botões ali
