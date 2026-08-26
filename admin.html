@@ -4625,12 +4625,16 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    por que o lote saiu como saiu. */
 .fp-info-btn {
   display: inline-flex; align-items: center; gap: 6px;
-  background: none; border: 0; padding: 2px 4px; cursor: pointer;
-  font: inherit; font-size: 12.5px; font-weight: 600; color: var(--text-dim);
+  background: none; border: 0; cursor: pointer;
+  /* mesmo recuo das abas de filtro: sem isso o texto deste botao assenta
+     abaixo da linha dos rotulos, porque elas carregam 11px embaixo */
+  padding: 6px 2px 11px;
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--text-dim);
   transition: color .12s ease;
 }
 .fp-info-btn:hover { color: var(--text); }
-.fp-info-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.fp-info-btn .fp-info-ico { display: inline-flex; flex: 0 0 auto; }
+.fp-info-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .fp-info-btn[aria-expanded="true"] { color: var(--primary); }
 .fp-info-caixa {
   border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
@@ -15134,6 +15138,15 @@ let FOTO_PRODUTOS = [];
 let _fotoCarregadoEm = 0;
 let _fotoCarregando = null;
 const FP_PRIO = { 1: 'Baixa', 2: 'Média', 3: 'Alta', 5: 'Emergencial' };
+/* Olho riscado enquanto o texto está escondido, olho aberto quando está à
+   vista: o ícone mostra o estado atual, não a ação. */
+const FP_ICO_OLHO = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+  + '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/>'
+  + '<circle cx="12" cy="12" r="3"/></svg>';
+const FP_ICO_OLHO_OFF = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+  + '<path d="M9.9 4.2A10.9 10.9 0 0112 4c6.4 0 10 7 10 7a17.6 17.6 0 01-3.2 4.2"/>'
+  + '<path d="M6.6 6.6A17.4 17.4 0 002 11s3.6 7 10 7a10.7 10.7 0 005.4-1.4"/>'
+  + '<path d="M9.9 9.9a3 3 0 104.2 4.2"/><path d="M2 2l20 20"/></svg>';
 const FP_ICO_ATENCAO = '<svg viewBox="0 0 24 24" aria-hidden="true">'
   + '<path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/>'
   + '<path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
@@ -17146,8 +17159,7 @@ async function renderFotoSeparacao() {
         + '" type="button" onclick="fpSepTamanho(' + t + ')">' + t + '</button>').join('')
     + '<button class="fp-info-btn" type="button" id="fotoSepLogicaBtn" aria-expanded="false"'
     + ' aria-controls="fotoSepLogica" onclick="fpSepLogica()">'
-    + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.2 7.6a3.9 3.9 0 017.6 1.3c0 2.7-3.8 3.7-3.8 3.7v1.6"/><path d="M12 18.6h.01"/></svg>'
-    + 'Ver lógica</button>'
+    + '<span class="fp-info-ico">' + FP_ICO_OLHO_OFF + '</span>Ver lógica</button>'
     + '<span class="fp-lista-contagem">' + _sepLote.itens.length + ' selecionados'
     + (_sepLote.emergenciais ? ' · ' + _sepLote.emergenciais + ' emergencial' + (_sepLote.emergenciais > 1 ? 'is' : '') : '')
     + '</span></div>'
@@ -17197,20 +17209,23 @@ async function renderFotoSeparacao() {
 
 function fpSepTamanho(t) { _sepTamanho = t; renderFotoSeparacao(); }
 
-function fpSepLogicaRestaurar() {
-  const caixa = document.getElementById('fotoSepLogica');
-  const bt = document.getElementById('fotoSepLogicaBtn');
-  if (caixa) caixa.hidden = false;
-  if (bt) bt.setAttribute('aria-expanded', 'true');
-}
+function fpSepLogicaRestaurar() { fpSepLogicaPintar(); }
 
 let _sepLogicaAberta = false;
 function fpSepLogica() {
   _sepLogicaAberta = !_sepLogicaAberta;
+  fpSepLogicaPintar();
+}
+
+function fpSepLogicaPintar() {
   const caixa = document.getElementById('fotoSepLogica');
   const bt = document.getElementById('fotoSepLogicaBtn');
   if (caixa) caixa.hidden = !_sepLogicaAberta;
-  if (bt) bt.setAttribute('aria-expanded', _sepLogicaAberta ? 'true' : 'false');
+  if (bt) {
+    bt.setAttribute('aria-expanded', _sepLogicaAberta ? 'true' : 'false');
+    const ico = bt.querySelector('.fp-info-ico');
+    if (ico) ico.innerHTML = _sepLogicaAberta ? FP_ICO_OLHO : FP_ICO_OLHO_OFF;
+  }
 }
 
 async function fpSepDestinosCarregar() {
