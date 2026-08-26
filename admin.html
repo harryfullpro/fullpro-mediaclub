@@ -17581,7 +17581,10 @@ async function renderFotoLote() {
   topo.innerHTML = '<div class="filter-bar">'
     + '<span class="fp-lista-contagem">Lote de ' + new Date(_loteAtual.created_at).toLocaleDateString('pt-BR')
     + ' · ' + feitos + ' de ' + itens.length + ' fotografados</span>'
-    + '<button class="action-btn" type="button" onclick="fpLoteConcluir()" style="margin-left:auto">Concluir lote</button></div>';
+    + '<span style="margin-left:auto;display:flex;gap:8px">'
+    + '<button class="action-btn reject" type="button" onclick="fpLoteCancelar()">Cancelar lote</button>'
+    + '<button class="action-btn approve" type="button" onclick="fpLoteConcluir()">Concluir lote</button>'
+    + '</span></div>';
 
   lista.innerHTML = itens.map(i => {
     const prod = fpFotoProduto(i.sku) || i;
@@ -17639,6 +17642,38 @@ async function fpLoteMarcarFeito(sku, quantas) {
   Object.assign(prod, patch);
   const { error } = await sb.from('mc_photo_products').update(patch).eq('sku', sku);
   if (error) console.warn('marcar fotografado', error);
+}
+
+/* Cancelar é para o lote que não aconteceu: a lista foi separada errado, o
+   estoquista não achou as peças, mudou a prioridade. Produto já fotografado
+   NÃO volta para a fila — a foto existe no Drive, desfazer isso seria mentira.
+   O resto volta e fica disponível para o próximo lote. */
+async function fpLoteCancelar() {
+  if (!_loteAtual) return;
+  const itens = Array.isArray(_loteAtual.itens) ? _loteAtual.itens : [];
+  const feitos = itens.filter(i => { const p = fpFotoProduto(i.sku); return p && p.status === 'fotografado'; });
+  const voltam = itens.length - feitos.length;
+
+  if (!await fpConfirm({
+    titulo: 'Cancelar lote',
+    mensagem: voltam + ' produto(s) voltam para a fila de produção.',
+    detalhe: feitos.length
+      ? feitos.length + ' produto(s) já fotografado(s) continuam como estão — as fotos já estão no Drive.'
+      : 'O PDF já enviado continua acessível pelo link, mas a lista deixa de valer.',
+    confirmar: 'Cancelar lote', perigo: true,
+  })) return;
+
+  const { error } = await sb.from('mc_photo_batches').update({ status: 'cancelado' }).eq('id', _loteAtual.id);
+  if (error) { fpToast('Erro: ' + error.message, 'erro'); return; }
+
+  const skus = itens.filter(i => { const p = fpFotoProduto(i.sku); return !p || p.status !== 'fotografado'; })
+    .map(i => i.sku);
+  if (skus.length) {
+    await sb.from('mc_photo_products').update({ status: 'fila', lote_id: null }).in('sku', skus);
+    FOTO_PRODUTOS.forEach(p => { if (skus.includes(p.sku)) { p.status = 'fila'; p.lote_id = null; } });
+  }
+  fpToast('Lote cancelado. ' + skus.length + ' produto(s) de volta à fila.', 'ok');
+  renderFotoLote();
 }
 
 async function fpLoteConcluir() {
