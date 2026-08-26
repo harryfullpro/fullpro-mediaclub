@@ -4630,11 +4630,8 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   transition: color .12s ease;
 }
 .fp-info-btn:hover { color: var(--text); }
-.fp-info-btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fp-info-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .fp-info-btn[aria-expanded="true"] { color: var(--primary); }
-.fp-info-btn .fp-info-ponto {
-  width: 6px; height: 6px; border-radius: 50%; background: var(--warning); flex: 0 0 auto;
-}
 .fp-info-caixa {
   border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
   padding: 14px 2px; margin-bottom: 14px;
@@ -17149,9 +17146,8 @@ async function renderFotoSeparacao() {
         + '" type="button" onclick="fpSepTamanho(' + t + ')">' + t + '</button>').join('')
     + '<button class="fp-info-btn" type="button" id="fotoSepLogicaBtn" aria-expanded="false"'
     + ' aria-controls="fotoSepLogica" onclick="fpSepLogica()">'
-    + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 8.5a3.6 3.6 0 016.9 1.2c0 2.4-3.5 3.6-3.5 3.6"/><path d="M12 17.6h.01"/></svg>'
-    + 'Ver lógica' + (temAviso ? '<span class="fp-info-ponto" title="Há observações neste lote"></span>' : '')
-    + '</button>'
+    + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.2 7.6a3.9 3.9 0 017.6 1.3c0 2.7-3.8 3.7-3.8 3.7v1.6"/><path d="M12 18.6h.01"/></svg>'
+    + 'Ver lógica</button>'
     + '<span class="fp-lista-contagem">' + _sepLote.itens.length + ' selecionados'
     + (_sepLote.emergenciais ? ' · ' + _sepLote.emergenciais + ' emergencial' + (_sepLote.emergenciais > 1 ? 'is' : '') : '')
     + '</span></div>'
