@@ -559,6 +559,24 @@ listagem aparecendo acima da barra.
 
 ---
 
+## Botão redondo se alinha por margem, nunca por recuo interno
+
+`border-radius: 50%` num botão que não é quadrado desenha uma **elipse**, e o
+anel de foco/hover desenha junto. Aconteceu com o botão da foto do usuário:
+`padding: 3px 3px 3px 8px` para alinhar com a coluna de ícones deixou a caixa
+em **41×36**, com a foto 2,5px fora do centro do próprio anel.
+
+Regra: o que desloca é `margin`; a caixa fica quadrada e o anel concêntrico.
+Confira medindo os dois retângulos:
+
+```js
+const b = btn.getBoundingClientRect(), f = foto.getBoundingClientRect();
+b.width === b.height                                   // redondo
+Math.abs((b.x + b.width/2) - (f.x + f.width/2)) < 0.5  // concêntrico
+```
+
+---
+
 ## Foco de teclado: 1px, `--foco`, e para dentro
 
 O contorno do Tab existe e não se apaga — mas é **1px**, na cor `--foco`
