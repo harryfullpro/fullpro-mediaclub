@@ -1,5 +1,42 @@
 # Diário
 
+## 26/08/2026 · A tela de entrar virou uma prancheta
+
+> *"No modo claro quero a logo do media club em preto (…) quero uma animação de
+> fundo com o gradiente se movendo e quero que se pareça com uma artboard de
+> arquitetura no fundo, tipo aquelas blueprint"*
+
+**A logo estava invisível no tema claro** e ninguém tinha reparado: o arquivo é
+branco de um tom só (600×575, um único valor de pixel), e o card do tema claro é
+branco. `filter: invert(1)` no claro resolve sem duplicar arquivo — o recorte
+continua o mesmo, só o tom vira preto.
+
+"Painel administrativo" virou **ADMIN**, a legenda saiu, e o cartão encolheu de
+40px de recuo e 380 de largura para 26px e 340.
+
+O fundo tem três camadas:
+
+- **Papel milimetrado** — malha de 24px com a grossa de 120px por cima.
+- **Desenho técnico** — círculo com eixos, cota com setas, retângulo com
+  diagonais de construção e um arco com raio. Em SVG, `preserveAspectRatio`
+  `slice`, tudo `aria-hidden`.
+- **Dois brilhos** que passeiam em **40s e 52s**. Períodos primos entre si de
+  propósito: sincronizados, o fundo repetiria o mesmo quadro enquanto alguém
+  digita a senha.
+
+Detalhes que valem registro:
+
+- **Máscara radial nas duas camadas de fundo.** Grade que morre no corte da tela
+  parece papel de parede; morrendo por dentro, parece folha sobre a mesa.
+- **A grade sumia no escuro.** As linhas estavam em azul de nanquim nos dois
+  temas — escuro sobre quase preto não existe. No escuro elas viram azul claro, e
+  os brilhos caíram de .22/.16 para .13/.11, que era o que engolia a malha.
+- **A compactação vai em `.login-card .login-input`, não em `.login-input`.**
+  Essa classe é o campo de formulário do painel inteiro — perfil, usuários,
+  bug, projetos. Mexer nela mudaria vinte telas de uma vez.
+
+---
+
 ## 26/08/2026 · Dez ícones do menu trocados
 
 O dono mandou uma referência por módulo. O que entrou:
