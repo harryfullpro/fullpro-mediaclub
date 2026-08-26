@@ -4703,27 +4703,27 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
    O "?" mora logo acima do besouro e some nas telas que ainda nao tem
    verbete — botao de ajuda que abre vazio e pior que botao nenhum.
    ========================================================================== */
+/* Interrogacao de texto, sem chapa nem borda: e um sinal, nao um controle
+   que precise anunciar area de clique. A caixa de 42px continua ali para o
+   alvo de toque — so nao aparece. */
 .fp-ajuda-btn {
   position: fixed;
   right: 18px;
-  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 50px);
+  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 48px);
   z-index: 100050;
   width: 42px; height: 42px;
   display: none; align-items: center; justify-content: center;
-  border-radius: 50%;
-  background: var(--bg-elev);
-  border: 1px solid var(--border-hi);
+  border: 0; background: none; padding: 0;
   color: var(--text-dim);
   cursor: pointer;
   opacity: .55;
-  box-shadow: 0 6px 18px rgba(0,0,0,.35);
-  transition: opacity .15s, color .15s, border-color .15s, transform .15s;
+  font-family: inherit; font-size: 23px; font-weight: 700; line-height: 1;
+  transition: opacity .15s, color .15s, transform .15s;
 }
 .fp-ajuda-btn:hover, .fp-ajuda-btn:focus-visible {
-  opacity: 1; color: var(--primary-hi); border-color: var(--primary);
+  opacity: 1; color: var(--primary-hi);
   transform: translateY(-1px);
 }
-.fp-ajuda-btn svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 body.fp-sem-sessao .fp-ajuda-btn { display: none !important; }
 
 .fp-ajuda-painel {
@@ -4775,7 +4775,9 @@ body.fp-sem-sessao .fp-ajuda-btn { display: none !important; }
 
 /* O bloqueio existe so para engolir cliques: a sombra do buraco escurece,
    mas sombra nao captura evento. */
-.fp-tut-bloqueio { position: fixed; inset: 0; z-index: 100290; display: none; }
+/* Engole todo clique da tela. Nao avanca o passo ao ser clicado, de
+   proposito: durante o tutorial os unicos alvos vivos sao Sair e Proximo. */
+.fp-tut-bloqueio { position: fixed; inset: 0; z-index: 100290; display: none; cursor: default; }
 .fp-tut-bloqueio.show { display: block; }
 .fp-tut-buraco {
   position: fixed; z-index: 100300; display: none; pointer-events: none;
@@ -4812,8 +4814,7 @@ body.fp-sem-sessao .fp-ajuda-btn { display: none !important; }
 .fp-tut-btn.fp-tut-ok:hover { background: var(--primary-hi); border-color: var(--primary-hi); }
 
 @media (max-width: 600px) {
-  .fp-ajuda-btn { width: 38px; height: 38px; right: 12px; bottom: calc(max(12px, env(safe-area-inset-bottom)) + 46px); }
-  .fp-ajuda-btn svg { width: 19px; height: 19px; }
+  .fp-ajuda-btn { width: 38px; height: 38px; right: 12px; bottom: calc(max(12px, env(safe-area-inset-bottom)) + 44px); font-size: 21px; }
   .fp-ajuda-painel { right: 12px; left: 12px; width: auto; bottom: calc(max(12px, env(safe-area-inset-bottom)) + 92px); }
 }
 
@@ -6687,16 +6688,12 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 <button id="fpAjudaBtn" class="fp-ajuda-btn" type="button" data-tip="Como usar esta tela"
         aria-label="Como usar esta tela" aria-expanded="false" aria-controls="fpAjudaPainel"
         onclick="fpAjudaAlternar()">
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <circle cx="12" cy="12" r="9.5"/>
-    <path d="M9.2 9.3a2.9 2.9 0 0 1 5 1.9c0 1.9-2.4 2.2-2.4 3.9"/>
-    <path d="M11.9 17.6h.02"/>
-  </svg>
+  <span aria-hidden="true">?</span>
 </button>
 <div id="fpAjudaPainel" class="fp-ajuda-painel" role="dialog" aria-label="Ajuda da tela"></div>
 
 <!-- Tutorial guiado: bloqueio de cliques, retângulo vazado e cartão do passo -->
-<div id="fpTutBloqueio" class="fp-tut-bloqueio" onclick="fpTutProximo()" aria-hidden="true"></div>
+<div id="fpTutBloqueio" class="fp-tut-bloqueio" aria-hidden="true"></div>
 <div id="fpTutBuraco" class="fp-tut-buraco" aria-hidden="true"></div>
 <div id="fpTutCaixa" class="fp-tut-caixa" role="dialog" aria-modal="true" aria-label="Tutorial da tela"></div>
 
@@ -21119,20 +21116,20 @@ const FP_AJUDA = {
     titulo: 'Dashboard de fotos',
     intro: 'O retrato do catálogo: quanto já tem foto, como está a fila e o que saiu do estúdio no mês.',
     itens: [
-      'Os quatro números do topo olham o <b>catálogo ativo inteiro</b>. "Fotos este mês" conta só o que subiu por este painel — foto que já estava no Drive antes não entra.',
+      'Os quatro números do topo olham o <b>catálogo ativo inteiro</b>. "Fotos este mês" conta só o que subiu por este painel.',
       '<b>Fila por prioridade</b> mostra como os produtos sem foto estão distribuídos. Emergencial fura a fila.',
-      '<b>Sem foto e com mais estoque parado</b> é por onde começar: é dinheiro parado esperando foto, e dá para definir a prioridade ali mesmo.',
-      '<b>Sincronizar catálogo</b> puxa o Bling. A data embaixo do botão diz quando isso rodou pela última vez.'
+      '<b>Sem foto e com mais estoque parado</b> é por onde começar: é estoque parado esperando foto. Dá para definir a prioridade ali mesmo.',
+      '<b>Sincronizar catálogo</b> puxa nome, SKU e estoque do Bling. A data embaixo diz quando isso rodou pela última vez.'
     ],
     passos: [
       { alvo: '#fotoPanorama .stats-grid', titulo: 'Os números do catálogo',
-        texto: 'Com foto, sem foto, nota média das avaliações e quantas fotos subiram este mês. A linha pequena embaixo de cada número dá o contexto dele.' },
+        texto: 'Com foto, sem foto, a nota média das avaliações e quantas fotos subiram este mês.' },
       { alvo: '#fotoPanorama [data-tut="fila"]', titulo: 'A fila por prioridade',
-        texto: 'Quanto tem em cada faixa. Se "Sem prioridade" está grande, é sinal de que ninguém classificou a fila ainda — e o estúdio vai fotografar no escuro.' },
+        texto: 'Quanto tem em cada faixa. Se "Sem prioridade" está grande, ninguém classificou a fila ainda — e o estúdio vai fotografar no escuro.' },
       { alvo: '#fotoPanorama [data-tut="estoque"]', titulo: 'Por onde começar',
-        texto: 'Os 8 produtos sem foto com mais estoque parado. Dá para definir a prioridade direto aqui, sem abrir a Produção.' },
+        texto: 'Os 8 produtos sem foto com mais estoque parado. Dá para definir a prioridade direto aqui.' },
       { alvo: '#fotoSincBloco', titulo: 'Sincronizar catálogo',
-        texto: 'Puxa nome, SKU e estoque do Bling. Leva alguns minutos e mostra o progresso — pode deixar rodando e continuar trabalhando.' }
+        texto: 'Puxa nome, SKU e estoque do Bling. Leva alguns minutos: pode deixar rodando e continuar trabalhando.' }
     ]
   },
 
@@ -21140,23 +21137,23 @@ const FP_AJUDA = {
     titulo: 'Produção de fotos',
     intro: 'A fila do estúdio. É aqui que se decide o que vai ser fotografado antes.',
     itens: [
-      'As abas separam a fila: <b>Na fila</b> é o que tem prioridade definida, <b>Sem prioridade</b> é o que ninguém classificou ainda.',
-      '<b>Clique em qualquer lugar da linha</b> para selecionar — não precisa acertar a caixinha. Com Shift, seleciona um intervalo inteiro.',
+      'As abas separam a fila: <b>Na fila</b> é o que já tem prioridade, <b>Sem prioridade</b> é o que ninguém classificou ainda.',
+      'Clique na linha para selecionar o produto. Com Shift, seleciona um intervalo inteiro.',
       'Com produtos selecionados, a barra do topo aplica <b>prioridade em massa</b> ou remove da listagem.',
-      'O botão de prioridade de cada linha muda um produto só. <b>Emergencial</b> fura a fila e pisca na listagem.',
-      'O menu <b>…</b> no fim da linha tem enviar fotos, tirar da listagem e o resto.'
+      'O botão de prioridade da linha muda um produto só. <b>Emergencial</b> fura a fila.',
+      'O menu <b>…</b> no fim da linha tem enviar fotos e tirar da listagem.'
     ],
     passos: [
       { alvo: '#view-foto-producao .filter-bar', titulo: 'As abas da fila',
         texto: 'Na fila, Sem prioridade, Emergenciais, Já fotografados e Fora de linha. O número ao lado de cada aba é quanto tem nela.' },
       { alvo: '#view-foto-producao .fp-busca', titulo: 'Busca por nome ou SKU',
         texto: 'Filtra dentro da aba em que você está. Serve para achar um produto específico sem sair da fila.' },
-      { alvo: '#fotoProdLista .fp-prod-linha', titulo: 'Clique na linha para selecionar',
-        texto: 'Qualquer lugar da linha marca o produto — a caixinha tem 16px e errar era rotina. Com Shift, seleciona do último marcado até aqui.' },
+      { alvo: '#fotoProdLista .fp-prod-linha', titulo: 'Selecionar produtos',
+        texto: 'Clique na linha para marcar o produto. Com Shift, marca do último marcado até aqui.' },
       { alvo: '#fotoProdLoteBarra .fp-prod-lote', titulo: 'Ações em massa',
-        texto: 'Com produtos marcados, esta barra define a prioridade de todos de uma vez ou tira todos da listagem. Ela fica sempre visível e acompanha a rolagem.' },
+        texto: 'Com produtos marcados, define a prioridade de todos de uma vez ou tira todos da listagem.' },
       { alvo: '#fotoProdLista .fp-prod-linha .fp-prio', titulo: 'Prioridade de um produto',
-        texto: 'Baixa, média, alta e emergencial. O emergencial fura a fila e ganha um triângulo piscando — use com parcimônia, senão ninguém olha mais para ele.' },
+        texto: 'Baixa, média, alta e emergencial. O emergencial fura a fila — use só quando for para hoje.' },
       { alvo: '#fotoProdLista .fp-prod-linha .fp-menu-btn', titulo: 'O menu da linha',
         texto: 'Enviar fotos, remover da listagem e as demais ações daquele produto.' }
     ]
@@ -21168,8 +21165,8 @@ const FP_AJUDA = {
     itens: [
       'As abas separam <b>com foto</b>, <b>sem avaliação</b> e as que <b>precisam refazer</b>.',
       '<b>Ordenar por</b> nome, estoque ou avaliação. Clicar de novo no mesmo critério inverte a ordem.',
-      '<b>Avaliar</b> dá nota de 1 a 5 para a foto. Nota baixa marca o produto para refazer e ele volta para a fila da Produção.',
-      '"Mostrar mais" carrega só o próximo bloco — as fotos que já estão na tela não recarregam.'
+      '<b>Avaliar</b> dá nota de 1 a 5 para a foto. Nota baixa devolve o produto para a fila da Produção, marcado para refazer.',
+      '"Mostrar mais" carrega o próximo bloco de produtos.'
     ],
     passos: [
       { alvo: '#view-foto-galeria .filter-bar', titulo: 'As abas da galeria',
@@ -21177,9 +21174,9 @@ const FP_AJUDA = {
       { alvo: '#fotoGalOrdena', titulo: 'Ordenar a listagem',
         texto: 'Nome, estoque ou avaliação. Por estoque, as fotos dos produtos que mais vendem aparecem primeiro.' },
       { alvo: '#fotoGalLista .fp-prod-linha', titulo: 'Avaliar uma foto',
-        texto: 'Abre a miniatura ampliada e a nota de 1 a 5. Nota baixa devolve o produto para a fila marcado como "refazer".' },
+        texto: 'Abre a foto ampliada e a nota de 1 a 5. Nota baixa devolve o produto para a fila, marcado para refazer.' },
       { alvo: '#fotoGalMais', titulo: 'Mostrar mais',
-        texto: 'Carrega o próximo bloco e anexa no fim — o que já está na tela não pisca nem recarrega.' }
+        texto: 'Carrega o próximo bloco de produtos no fim da listagem.' }
     ]
   },
 
@@ -21196,9 +21193,9 @@ const FP_AJUDA = {
       { alvo: '#fotoSepTopo .filter-bar', titulo: 'Tamanho do lote',
         texto: 'Quantos produtos vão para a bancada de uma vez. Pedir 20 devolve 20 — os emergenciais ocupam vaga dentro desse número.' },
       { alvo: '#fotoSepLogicaBtn', titulo: 'Ver lógica',
-        texto: 'Abre a explicação de como o lote foi montado: quem entrou, por qual faixa e por quê.' },
+        texto: 'Mostra como o lote foi montado: quem entrou, por qual faixa e por quê.' },
       { alvo: '#fotoSepLista', titulo: 'O que entrou neste lote',
-        texto: 'A prévia do que vai ser separado. Mudou de ideia sobre o tamanho? Troque em cima e a lista se refaz na hora.' },
+        texto: 'A prévia do que vai ser separado. Mudou de ideia sobre o tamanho? Troque em cima e a lista se refaz.' },
       { alvo: '#fotoSepGerar', titulo: 'Gerar a lista',
         texto: 'Fecha o lote e devolve um PDF com link público. A partir daqui os produtos aparecem em Fotografia em lote.' }
     ]
@@ -21209,14 +21206,14 @@ const FP_AJUDA = {
     intro: 'Os produtos do último lote separado, prontos para receber foto.',
     itens: [
       'A lista é o lote aberto. Se não houver nenhum, monte um em <b>Separação</b>.',
-      'O botão de <b>upload</b> em cada linha envia a foto direto para a pasta daquele SKU no Drive — não precisa renomear arquivo nem procurar pasta.',
+      'O botão de <b>upload</b> em cada linha envia a foto para a pasta daquele SKU no Drive — não precisa renomear o arquivo.',
       'Foto enviada aqui já conta no "Fotos este mês" do Dashboard e aparece na Galeria para ser avaliada.'
     ],
     passos: [
       { alvo: '#fotoLoteTopo', titulo: 'O lote aberto',
         texto: 'Quando foi montado, por quem e quantos itens tem.' },
       { alvo: '#fotoLoteLista', titulo: 'Enviar a foto do produto',
-        texto: 'O botão de upload de cada linha manda o arquivo direto para a pasta do SKU no Drive. O painel cuida do nome e do lugar.' }
+        texto: 'O botão de upload de cada linha manda o arquivo para a pasta do SKU no Drive. Não precisa renomear nem procurar pasta.' }
     ]
   }
 };
@@ -21310,6 +21307,10 @@ function fpTutAbrir(chave) {
   document.getElementById('fpTutBuraco').classList.add('show');
   document.getElementById('fpTutCaixa').classList.add('show');
   document.addEventListener('keydown', fpTutTecla, true);
+  /* O clique ja morre no bloqueio, mas o Tab passeia por cima dele: sem isto o
+     foco cai num botao da listagem que o operador nao esta vendo, e Enter
+     dispara a acao. */
+  document.addEventListener('focusin', fpTutPrenderFoco, true);
   window.addEventListener('resize', fpTutReposicionar);
   document.querySelector('main')?.addEventListener('scroll', fpTutReposicionar, { passive: true });
   fpTutIr(0);
@@ -21319,9 +21320,19 @@ function fpTutFechar() {
   _tutAtivo = false;
   ['fpTutBloqueio', 'fpTutBuraco', 'fpTutCaixa'].forEach(id => document.getElementById(id)?.classList.remove('show'));
   document.removeEventListener('keydown', fpTutTecla, true);
+  document.removeEventListener('focusin', fpTutPrenderFoco, true);
   window.removeEventListener('resize', fpTutReposicionar);
   document.querySelector('main')?.removeEventListener('scroll', fpTutReposicionar);
   if (_tutFocoAnterior && document.contains(_tutFocoAnterior)) { try { _tutFocoAnterior.focus(); } catch (e) {} }
+}
+
+function fpTutPrenderFoco(ev) {
+  if (!_tutAtivo) return;
+  const caixa = document.getElementById('fpTutCaixa');
+  if (caixa && !caixa.contains(ev.target)) {
+    ev.stopPropagation();
+    (caixa.querySelector('.fp-tut-ok') || caixa).focus();
+  }
 }
 
 function fpTutTecla(ev) {
