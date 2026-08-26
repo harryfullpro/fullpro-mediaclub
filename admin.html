@@ -3468,7 +3468,14 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
-[tabindex]:focus-visible,
+/* `[tabindex="0"]`, nunca `[tabindex]` solto: o seletor largo pegava tambem os
+   `tabindex="-1"`, que existem para receber foco por programa e nao pela
+   navegacao. O <main> e um deles — e como `[tabindex]:focus-visible` (0,2,0)
+   ganha de `main:focus-visible` (0,1,1), o anel vermelho contornava a area de
+   conteudo INTEIRA. Aparecia depois de um shift+clique na listagem: o
+   preventDefault do intervalo impede a linha de tomar o foco, ele sobe para o
+   <main>, e a proxima tecla acende o anel. */
+[tabindex="0"]:focus-visible,
 .nav-item:focus-visible,
 .action-btn:focus-visible,
 .fp-icon-btn:focus-visible,
@@ -3479,8 +3486,10 @@ textarea:focus-visible,
      silhueta do elemento; por dentro ele so risca a propria borda. */
   outline-offset: -1px !important;
 }
-/* o <main> so recebe foco via "pular para o conteudo"; nao precisa de anel */
-main:focus, main:focus-visible { outline: none !important; }
+/* Foco que chega por programa nao desenha anel: quem nao pode ser alcancado
+   pelo Tab nao esta navegando pelo teclado. */
+main:focus, main:focus-visible,
+[tabindex="-1"]:focus, [tabindex="-1"]:focus-visible { outline: none !important; }
 .fp-skip {
   position: absolute; left: 8px; top: -60px; z-index: 100400;
   background: var(--bg-card); color: var(--text);
