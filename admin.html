@@ -18202,11 +18202,12 @@ async function fpLoteConcluir() {
    ═══════════════════════════════════════════════════════════════════════ */
 let _galFiltro = 'todos', _galBusca = '', _galMostra = FP_FOTO_PAGINA;
 let _galOrdem = null;   // ordem congelada, mesma regra da Produção
-/* Ordenação da galeria. O padrão reproduz o que a tela sempre fez: sem nota
-   primeiro, porque ela existe para avaliar, não para admirar. */
-let _galOrdenar = 'avaliacao', _galDir = 1;
+/* Ordenação da galeria. O padrão é nome de A a Z — decisão do dono: procurar
+   um produto pelo nome é o que mais se faz aqui, e a ordem por avaliação (que
+   era o padrão antigo) continua a um clique. */
+let _galOrdenar = 'nome', _galDir = 1;
 
-const FP_GAL_ORDENS = [['avaliacao', 'Avaliação'], ['nome', 'Nome'], ['estoque', 'Estoque']];
+const FP_GAL_ORDENS = [['nome', 'Nome'], ['estoque', 'Estoque'], ['avaliacao', 'Avaliação']];
 
 function fpGalComparador() {
   const dir = _galDir;
