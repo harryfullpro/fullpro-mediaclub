@@ -8713,13 +8713,20 @@ function fpUsrAbrir() {
   if (!menu || !btn) return;
   fpUsrPintar();
   const r = btn.getBoundingClientRect();
+  /* Botão sem layout (painel ainda escondido) daria rect zerado e o menu
+     nasceria fora da tela. */
+  if (!r.width) return;
+  menu.style.top = '';
   menu.style.left = r.left + 'px';
   menu.style.bottom = (window.innerHeight - r.top + 8) + 'px';
   menu.classList.add('show');
   btn.setAttribute('aria-expanded', 'true');
-  /* Não deixa o menu vazar pela direita quando a barra está recolhida. */
+
   const m = menu.getBoundingClientRect();
+  /* Não vaza pela direita com a barra recolhida... */
   if (m.right > window.innerWidth - 8) menu.style.left = Math.max(8, window.innerWidth - 8 - m.width) + 'px';
+  /* ...nem pelo topo em janela baixa: aí ele desce e ancora pelo topo. */
+  if (m.top < 8) { menu.style.bottom = 'auto'; menu.style.top = '8px'; }
 }
 
 function fpUsrFechar() {
