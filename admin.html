@@ -4874,6 +4874,23 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-lote-link.neutro { color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px; }
 .fp-prod-vazio { padding: 26px 12px; text-align: center; color: var(--text-muted); font-size: 13px; }
 
+/* Ordenacao da listagem: texto, sem caixa e sem seletor nativo. O criterio
+   ativo fica no tom de leitura e carrega a seta do sentido; clicar nele de novo
+   inverte. */
+.fp-ordena { display: flex; align-items: center; gap: 14px; padding: 2px 0 13px; flex-wrap: wrap; }
+.fp-ordena:empty { display: none; }
+.fp-ordena .fp-ordena-rot { font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--text-muted); }
+.fp-ordena button {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: none; border: 0; padding: 2px 0; cursor: pointer;
+  font: inherit; font-size: 12.5px; font-weight: 600; color: var(--text-muted);
+  transition: color .12s ease;
+}
+.fp-ordena button:hover { color: var(--text); }
+.fp-ordena button.on { color: var(--text); font-weight: 700; }
+.fp-ordena button svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.fp-ordena button.sobe svg { transform: rotate(180deg); }
+
 /* Composição do lote por prioridade. Substitui o "· 1 emergencial" no texto:
    a proporção de cada cor diz mais, e de relance, do que a contagem de um
    nível só. */
@@ -6200,6 +6217,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
         <span class="fp-busca"><button type="button" class="fp-busca-lupa" aria-label="Buscar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20.5 20.5L16.7 16.7"/></svg></button><input type="search" id="fotoGalBusca" placeholder="Nome ou SKU" aria-label="Buscar produto na galeria"><button type="button" class="fp-busca-x" aria-label="Limpar busca"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button></span>
         <span id="fotoGalCount" class="fp-lista-contagem"></span>
       </div>
+      <div id="fotoGalOrdena" class="fp-ordena"></div>
       <div id="fotoGalLista" class="fp-prod"></div>
       <div id="fotoGalMais" style="text-align:center;margin-top:14px"></div>
     </div>
@@ -18096,6 +18114,41 @@ async function fpLoteConcluir() {
    ═══════════════════════════════════════════════════════════════════════ */
 let _galFiltro = 'todos', _galBusca = '', _galMostra = FP_FOTO_PAGINA;
 let _galOrdem = null;   // ordem congelada, mesma regra da Produção
+/* Ordenação da galeria. O padrão reproduz o que a tela sempre fez: sem nota
+   primeiro, porque ela existe para avaliar, não para admirar. */
+let _galOrdenar = 'avaliacao', _galDir = 1;
+
+const FP_GAL_ORDENS = [['avaliacao', 'Avaliação'], ['nome', 'Nome'], ['estoque', 'Estoque']];
+
+function fpGalComparador() {
+  const dir = _galDir;
+  const porNome = (a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR');
+  if (_galOrdenar === 'nome') return (a, b) => dir * porNome(a, b);
+  if (_galOrdenar === 'estoque') return (a, b) => dir * ((Number(b.estoque) || 0) - (Number(a.estoque) || 0)) || porNome(a, b);
+  /* Sem nota vale -1: fica antes do 0 e é o primeiro a aparecer. */
+  return (a, b) => dir * ((a.nota == null ? -1 : a.nota) - (b.nota == null ? -1 : b.nota)) || porNome(a, b);
+}
+
+/* Clicar no critério que já está ativo inverte o sentido. */
+function fpGalOrdenar(campo) {
+  if (campo === _galOrdenar) _galDir = -_galDir;
+  else { _galOrdenar = campo; _galDir = 1; }
+  _galMostra = FP_FOTO_PAGINA;
+  renderFotoGaleria(true);
+}
+
+function fpGalOrdenaBarra(vazia) {
+  const el = document.getElementById('fotoGalOrdena');
+  if (!el) return;
+  if (vazia) { el.innerHTML = ''; return; }      // sem lista, ordenar o quê?
+  el.innerHTML = '<span class="fp-ordena-rot">Ordenar por</span>'
+    + FP_GAL_ORDENS.map(([k, rot]) => {
+        const ativo = k === _galOrdenar;
+        return '<button type="button" class="' + (ativo ? 'on' : '') + (ativo && _galDir < 0 ? ' sobe' : '')
+          + '" onclick="fpGalOrdenar(\'' + k + '\')" aria-pressed="' + ativo + '">' + rot
+          + (ativo ? '<svg viewBox="0 0 24 24" aria-hidden="true">' + FP_ICONES.baixo + '</svg>' : '') + '</button>';
+      }).join('');
+}
 
 const FP_ESTRELA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.4l6.5-.9z"/></svg>';
 
@@ -18139,14 +18192,14 @@ function renderFotoGaleria(refazerOrdem, desde) {
     else if (_galFiltro === 'refazer') lista = lista.filter(p => p.refazer);
     if (_galBusca) lista = lista.filter(p => (p.nome || '').toLowerCase().includes(_galBusca) || (p.sku || '').toLowerCase().includes(_galBusca));
     /* Sem nota primeiro: a tela existe para avaliar, não para admirar. */
-    lista = lista.slice().sort((a, b) => (a.nota == null ? 0 : 1) - (b.nota == null ? 0 : 1)
-      || (a.nota || 0) - (b.nota || 0) || String(a.nome || '').localeCompare(String(b.nome || '')));
+    lista = lista.slice().sort(fpGalComparador());
     _galOrdem = lista.map(x => x.sku);
   } else {
     const porSku = new Map(FOTO_PRODUTOS.map(x => [x.sku, x]));
     lista = _galOrdem.map(sku => porSku.get(sku)).filter(Boolean);
   }
 
+  fpGalOrdenaBarra(!lista.length);
   const conta = document.getElementById('fotoGalCount');
   if (conta) conta.textContent = lista.length ? (lista.length === 1 ? '1 produto' : lista.length.toLocaleString('pt-BR') + ' produtos') : '';
 
