@@ -345,28 +345,38 @@
     margin-bottom: 18px;
     flex-wrap: wrap;
   }
-  /* Aba com sublinhado, nao pilula: a pastilha preenchida repetida seis vezes
-     numa linha e o que mais entrega interface montada por template. Aqui o
-     que marca o filtro ativo e o peso do texto e um fio embaixo. */
+  /* Aba com sublinhado, nao pilula. A primeira versao ficou apagada demais:
+     texto miudo e cinza, fio de 1px. O peso voltou pela tipografia e pela
+     contagem ao lado do rotulo — a barra passa a informar, nao so enfeitar —,
+     e o conjunto se apoia num fio que atravessa a linha inteira. */
+  .filter-bar:has(.filter-btn) { border-bottom: 1px solid var(--border); gap: 24px; }
   .filter-btn {
     position: relative;
-    padding: 5px 1px 8px;
+    padding: 6px 1px 11px;
+    margin-bottom: -1px;
     background: none;
     border: 0;
-    color: var(--text-muted);
-    font-size: 13.5px;
+    color: var(--text-dim);
+    font-size: 14px;
     cursor: pointer;
     font-weight: 600;
+    letter-spacing: -.01em;
     transition: color .14s ease;
     font-family: inherit;
   }
   .filter-btn:hover { color: var(--text); }
-  .filter-btn.active { color: var(--text); }
+  .filter-btn.active { color: var(--text); font-weight: 700; }
   .filter-btn.active::after {
     content: '';
-    position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
-    background: var(--primary); border-radius: 2px;
+    position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+    background: var(--primary); border-radius: 3px 3px 0 0;
   }
+  .filter-btn .fp-conta {
+    margin-left: 7px; font-size: 11.5px; font-weight: 700;
+    color: var(--text-muted); font-variant-numeric: tabular-nums;
+  }
+  .filter-btn.active .fp-conta { color: var(--primary); }
+  .filter-btn .fp-conta:empty { display: none; }
 
   @media (max-width: 600px) { .filter-bar { gap: 16px; } }
   .filter-btn.active:hover { background: #3f51c4; border-color: #3f51c4; }
@@ -3338,23 +3348,24 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
    texto. Era pílula com fundo e borda — a mesma moldura que saiu do resto do
    painel. Vale para todas as telas que usam este componente. */
 .fp-busca {
-  display: flex; align-items: center; gap: 8px;
-  padding: 5px 2px 7px; min-height: 32px;
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px 2px 10px; min-height: 32px;
   background: none; border: 0;
-  border-bottom: 1px solid var(--border); border-radius: 0;
+  border-bottom: 2px solid var(--border-hi); border-radius: 0;
   max-width: 320px; flex: 1 1 200px;
   transition: border-color .14s ease;
 }
+.fp-busca:hover { border-bottom-color: var(--text-muted); }
 .fp-busca:focus-within { border-bottom-color: var(--primary); }
 /* traco, nao preenchimento: sem isto o icone vira uma mancha preta sobre
    fundo preto — foi o que aconteceu ao reescrever este bloco. */
 .fp-busca svg {
-  flex: 0 0 auto; width: 15px; height: 15px; color: var(--text-muted);
+  flex: 0 0 auto; width: 16px; height: 16px; color: var(--text-dim);
   fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
 }
 .fp-busca input {
   flex: 1; background: transparent; border: none; outline: none;
-  color: var(--text); font-size: 13.5px; font-family: inherit; min-width: 0;
+  color: var(--text); font-size: 14px; font-weight: 500; font-family: inherit; min-width: 0;
 }
 .fp-busca input::placeholder { color: var(--text-muted); }
 .fp-busca input::-webkit-search-cancel-button { display: none; }
@@ -15316,6 +15327,20 @@ function fpBuscaLigar(id, aplicar) {
   pintar();
 }
 
+/* Escreve a contagem ao lado do rótulo de cada filtro. Um número por aba é o
+   que faz a barra valer o espaço que ocupa: o operador vê onde está o
+   trabalho antes de clicar. Respeita a busca em curso, senão o número da aba
+   contradiz a lista que está na tela. */
+function fpFiltroContagens(seletor, contas) {
+  document.querySelectorAll(seletor).forEach(b => {
+    const chave = b.dataset.fpfiltro || b.dataset.fpgal;
+    let n = contas[chave];
+    let selo = b.querySelector('.fp-conta');
+    if (!selo) { selo = document.createElement('span'); selo.className = 'fp-conta'; b.appendChild(selo); }
+    selo.textContent = (n == null) ? '' : n.toLocaleString('pt-BR');
+  });
+}
+
 /* ---------- listagem de Produção ---------- */
 function fpProdFiltrar(f) {
   _prodFiltro = f || 'fila'; _prodMostra = FP_FOTO_PAGINA; _prodSel.clear();
@@ -15375,6 +15400,17 @@ function renderFotoProducao(refazerOrdem) {
   }
   const conta = document.getElementById('fotoProdCount');
   if (conta) conta.textContent = lista.length ? (lista.length === 1 ? '1 produto' : lista.length.toLocaleString('pt-BR') + ' produtos') : '';
+
+  const cabe = p => !_prodBusca
+    || (p.nome || '').toLowerCase().includes(_prodBusca) || (p.sku || '').toLowerCase().includes(_prodBusca);
+  const vivos = FOTO_PRODUTOS.filter(cabe);
+  fpFiltroContagens('[data-fpfiltro]', {
+    fila:        vivos.filter(p => !p.excluido && (!p.tem_foto || p.refazer)).length,
+    pendente:    vivos.filter(p => !p.excluido && !p.tem_foto && p.prioridade == null).length,
+    emergencial: vivos.filter(p => !p.excluido && p.prioridade === 5).length,
+    comfoto:     vivos.filter(p => !p.excluido && p.tem_foto).length,
+    fora:        vivos.filter(p => p.excluido).length,
+  });
 
   if (!lista.length) {
     box.innerHTML = '<div class="fp-prod-vazio">' + (FOTO_PRODUTOS.length
@@ -17350,6 +17386,15 @@ function renderFotoGaleria(refazerOrdem) {
 
   const conta = document.getElementById('fotoGalCount');
   if (conta) conta.textContent = lista.length ? (lista.length === 1 ? '1 produto' : lista.length.toLocaleString('pt-BR') + ' produtos') : '';
+
+  const cabeG = p => !_galBusca
+    || (p.nome || '').toLowerCase().includes(_galBusca) || (p.sku || '').toLowerCase().includes(_galBusca);
+  const comFoto = FOTO_PRODUTOS.filter(p => !p.excluido && p.tem_foto && cabeG(p));
+  fpFiltroContagens('[data-fpgal]', {
+    todos:   comFoto.length,
+    semnota: comFoto.filter(p => p.nota == null).length,
+    refazer: comFoto.filter(p => p.refazer).length,
+  });
 
   if (!lista.length) {
     box.innerHTML = '<div class="fp-prod-vazio">' + (FOTO_PRODUTOS.length
