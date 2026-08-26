@@ -9,7 +9,7 @@ O dono mandou uma referência por módulo. O que entrou:
 | Check-in / Check-out | relógio | caixa marcada | era o terceiro relógio da barra |
 | Projetos | livro aberto | duas folhas | o único ícone que não falava de arquivo, e Projetos é uma pilha deles |
 | Edição | lápis | tira de filme com play e lápis | o lápis sozinho dizia só "editar" |
-| Clips | rolo de filme | a marca do Mercado Livre | é para onde os vídeos vão |
+| Clips | rolo de filme | as duas mãos do Mercado Livre | é para onde os vídeos vão |
 | Debriefing | balão com três pontos | balão com interrogação | era idêntico ao de Templates a 18px |
 | Fotografia em lote | câmera | camadas empilhadas | a câmera repetia o assunto do bloco FOTOGRAFIA inteiro |
 | Metas | relógio | alvo de três anéis | relógio fala de prazo, não de meta |
@@ -33,14 +33,18 @@ para ver o que o operador vê de verdade. O que reprovou assim:
   com play chegou a entrar no lugar — e o dono cortou: *"o icone do clips
   precisa ser a logotipo do mercado livre"*.
 
-  **O que fez a marca funcionar foi a elipse.** Com o contorno em volta, o olho
-  reconhece a marca pela silhueta e a mão só precisa ser uma massa diagonal no
-  lugar certo — ela não tem mais que carregar sozinha o reconhecimento. O aperto
-  vai a **2,2 de traço contra 1,8 da elipse**: é a mão que tem de virar massa, e
-  a elipse que tem de ficar fina para não fechar o vão entre as duas.
+  A elipse da marca chegou a entrar em volta, para o olho reconhecer pela
+  silhueta — e o dono cortou de novo: *"tira o circulo em volta do icone e deixa
+  só as duas mãos se cumprimentando"*.
 
-  Fica como método: **quando a referência é uma marca e o miolo não sobrevive ao
-  tamanho, desenhe a moldura da marca e deixe o miolo ser massa.**
+  **O que fez as mãos funcionarem sozinhas foi tamanho e peso.** Elas ocupam a
+  caixa inteira (antes eram miúdas dentro da elipse) e vão a **2,4 de traço
+  contra 1,8 do resto da barra**. O erro das duas primeiras tentativas não foi o
+  assunto, foi a escala: desenho pequeno e fino no meio de um `viewBox` sobrando
+  vira rabisco no tamanho real.
+
+  Fica como método: **ícone que não lê raramente precisa de outro assunto —
+  precisa de mais massa e menos inflexão.**
 - **Duas bolhas no Debriefing.** Divididas em 18px, nenhuma das duas sobra espaço
   para a pergunta ser lida. Uma bolha só, com a interrogação grande.
 - **A flecha do alvo em Metas.** Empurra o alvo para o canto e vira um risco
