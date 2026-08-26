@@ -5255,6 +5255,9 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    ja deu errado uma vez: a regra de -40px da tela larga vinha antes desta no
    arquivo e perdia na cascata, deixando 8px de sobra (medidos). */
 .fp-lote-slot { position: sticky; top: calc(-1 * var(--pad-topo)); height: 0; z-index: 6; }
+/* Marca de altura zero: existe so para dizer onde a barra ESTARIA se nao
+   estivesse grudada. Ver fpLoteSombra. */
+.fp-lote-sentinela { height: 0; margin: 0; padding: 0; pointer-events: none; }
 /* O respiro entre as abas e o primeiro produto e a casa da barra: sem ele, ela
    aparecia em cima da primeira linha e a escondia por inteiro.
    PADDING, nao margin: a margem da barra de filtros e a da lista colapsariam
@@ -16639,20 +16642,31 @@ function fpProdLoteBarra() {
   fpLoteSombra();
 }
 
-/* `position: sticky` nao avisa quando gruda. O teste e comparar o topo do
-   slot com o ponto onde ele PARA de rolar: quando os dois batem, ele encostou.
-   Vale para qualquer .fp-lote-slot da pagina, e o `top` sai do CSS em vez de
-   estar repetido aqui — ele muda por media query. */
+/* `position: sticky` nao avisa quando gruda, e comparar o topo do slot com o
+   `top` do CSS nao funciona: medido, o slot para em 0 e nao nos -32px que a
+   regra pede — quem manda no ponto de parada e a caixa que o contem, nao so a
+   propriedade. Entao a conta nao depende de saber onde ele para.
+
+   Uma sentinela de altura zero fica logo acima do slot e continua rolando
+   normalmente. Enquanto os dois estao na mesma altura, o slot esta no lugar
+   dele; quando a sentinela sobe e o slot fica para tras, ele grudou. */
 let _loteSombraLigada = false;
 
+function fpLoteSentinela(slot) {
+  const antes = slot.previousElementSibling;
+  if (antes && antes.classList.contains('fp-lote-sentinela')) return antes;
+  const s = document.createElement('div');
+  s.className = 'fp-lote-sentinela';
+  s.setAttribute('aria-hidden', 'true');
+  slot.parentNode.insertBefore(s, slot);
+  return s;
+}
+
 function fpLoteSombra() {
-  const main = document.querySelector('main');
-  if (!main) return;
-  const base = main.getBoundingClientRect().top;
   document.querySelectorAll('.fp-lote-slot').forEach(slot => {
     if (!slot.firstElementChild) { slot.classList.remove('grudada'); return; }
-    const topo = parseFloat(getComputedStyle(slot).top) || 0;
-    slot.classList.toggle('grudada', slot.getBoundingClientRect().top <= base + topo + 1);
+    const s = fpLoteSentinela(slot);
+    slot.classList.toggle('grudada', s.getBoundingClientRect().top < slot.getBoundingClientRect().top - 1);
   });
 }
 
