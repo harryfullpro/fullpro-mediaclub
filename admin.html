@@ -7109,6 +7109,10 @@ function fpRevelarPainel() {
     try { if (typeof window.fpApplyUserModules === 'function') { window.fpApplyUserModules(); filtrou = true; } } catch (e2) {}
   }
   if (filtrou) document.body.classList.add('fp-menu-filtrado');
+  /* O contador de emergenciais do menu. Aqui, e nao no fim do initApp: e uma
+     contagem de 300ms, e no fim do initApp ela so chegava depois das quinze
+     leituras do boot — o menu passava dois segundos sem o numero. */
+  try { fpFotoBadgeCarregar(); } catch (e) { console.warn('badge de emergenciais', e); }
   document.getElementById('login').style.display = 'none';
   document.getElementById('app').style.display = 'grid';
   document.body.classList.remove('fp-sem-sessao');   // libera o botão do besouro
@@ -23758,9 +23762,6 @@ async function initApp() {
 
   // Atualiza a aba Integrações (Bling/TikTok/IG/YT) com o status compartilhado
   if (typeof renderIntegracoes === 'function') renderIntegracoes();
-
-  /* O contador de emergenciais do menu, sem esperar ninguém abrir a Produção. */
-  fpFotoBadgeCarregar();
 
   // Menções: observadores de foco/aba + popup ao abrir o painel
   attachMentionWatchers();
