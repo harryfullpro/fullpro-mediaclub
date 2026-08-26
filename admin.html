@@ -4863,12 +4863,16 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   background: none; border: 0; color: var(--fp-lote-cor);
   transition: opacity .12s ease;
 }
-.fp-lote-p:hover { opacity: .7; text-decoration: underline; text-underline-offset: 3px; }
+.fp-lote-p:hover:not(:disabled) { opacity: .7; text-decoration: underline; text-underline-offset: 3px; }
+/* Sem selecao a barra continua na tela, apagada: mostra o que da para fazer
+   assim que houver algo selecionado, sem prometer que da para clicar agora. */
+.fp-prod-lote .apagado, .fp-prod-lote b.apagado { opacity: .42; }
+.fp-lote-p:disabled, .fp-lote-link:disabled { cursor: default; }
 .fp-lote-link {
   display: inline-flex; align-items: center; gap: 5px;
   background: none; border: 0; padding: 0 2px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600;
 }
-.fp-lote-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.fp-lote-link:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
 .fp-lote-link svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
 .fp-lote-link.perigo { color: var(--primary); }
 .fp-lote-link.neutro { color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px; }
@@ -15919,10 +15923,17 @@ function fpProdLoteBarra() {
   const naTela = [...document.querySelectorAll('#fotoProdLista .fp-prod-check')].map(c => c.dataset.sku);
   [..._prodSel].forEach(sku => { if (!naTela.includes(sku)) _prodSel.delete(sku); });
   const n = _prodSel.size;
-  if (!n) { alvo.innerHTML = ''; return; }
+  /* A barra nao some mais quando nao ha selecao: a fileira ja esta reservada
+     acima da listagem e ficava vazia, o que so mostrava um buraco. Sem selecao
+     ela aparece apagada, com as acoes travadas — e "Selecionar todos" continua
+     a mao, que e justamente o atalho de quem ainda nao selecionou nada.
+     Sem NENHUMA linha na tela, ai sim ela some: nao ha o que selecionar. */
+  if (!naTela.length) { alvo.innerHTML = ''; return; }
+  const vazia = !n;
+  const trava = vazia ? ' disabled' : '';
 
   const todosFora = [..._prodSel].every(sku => { const p = fpFotoProduto(sku); return p && p.excluido; });
-  const bt = (k, rot) => '<button class="fp-lote-p" type="button"'
+  const bt = (k, rot) => '<button class="fp-lote-p" type="button"' + trava
     + ' style="--fp-lote-cor:' + fpPrioCor(k) + '" onclick="fpProdLotePrioridade(' + k + ')">'
     + rot + '</button>';
   /* A lixeira do menu de acoes, e nao um X proprio: e o mesmo gesto, tem que
@@ -15935,18 +15946,20 @@ function fpProdLoteBarra() {
      direita e "Definir prioridade" encostava no vermelho do remover. */
   alvo.innerHTML = '<div class="fp-prod-lote">'
     + '<span class="fp-lote-esq">'
-    + '<b>' + n + (n === 1 ? ' selecionado' : ' selecionados') + '</b>'
+    + '<b' + (vazia ? ' class="apagado"' : '') + '>'
+    + (vazia ? 'Nenhum selecionado' : n + (n === 1 ? ' selecionado' : ' selecionados')) + '</b>'
     + (n < naTela.length
         ? '<button class="fp-lote-link neutro" type="button" onclick="fpProdLoteTodos()">Selecionar todos (' + naTela.length + ')</button>'
         : '')
-    + '<button class="fp-lote-link neutro" type="button" onclick="fpProdLoteLimpar()">Limpar seleção</button>'
+    + (vazia ? ''
+        : '<button class="fp-lote-link neutro" type="button" onclick="fpProdLoteLimpar()">Limpar seleção</button>')
     + '</span>'
-    + '<span class="fp-prod-lote-acoes">'
+    + '<span class="fp-prod-lote-acoes' + (vazia ? ' apagado' : '') + '">'
     + '<span class="fp-prod-lote-rot">Definir prioridade</span>'
     + bt(1, 'Baixa') + bt(2, 'Média') + bt(3, 'Alta') + bt(5, 'Emergencial')
     + '</span>'
-    + '<span class="fp-lote-dir">'
-    + '<button class="fp-lote-link perigo" type="button" onclick="'
+    + '<span class="fp-lote-dir' + (vazia ? ' apagado' : '') + '">'
+    + '<button class="fp-lote-link perigo" type="button"' + trava + ' onclick="'
     + (todosFora ? 'fpProdLoteRestaurar()">' + iconeVolta + 'Voltar para a listagem'
                  : 'fpProdLoteExcluir()">' + iconeLixo + 'Remover da listagem')
     + '</button></span></div>';
