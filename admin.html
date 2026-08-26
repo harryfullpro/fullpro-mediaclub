@@ -56,6 +56,9 @@
     --bg-elev: #1c1c22;
     --border: #26262e;
     --border-hi: #34343e;
+    /* Distancia entre colunas das grades de metrica e da dupla fila+animacao.
+       Token porque as duas TEM que andar juntas, senao a tela desalinha. */
+    --fp-col-gap: 24px;
     --text: #f5f5f7;
     --text-dim: #a1a1aa;
     --text-muted: #9494a0;
@@ -325,17 +328,25 @@
   .page-head p { color: var(--text-dim); font-size: 14px; margin-top: 6px; }
 
   /* Stats */
+  /* A distancia entre colunas e um token porque duas grades dependem dela: a das
+     metricas e a .fp-dash-duo, que precisa terminar exatamente onde termina o
+     segundo cartao. Mudar uma sem a outra desalinha a tela. */
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-    margin-bottom: 28px;
+    gap: var(--fp-col-gap);
+    /* Metrica sem caixa: o fio embaixo assenta a fileira, do mesmo jeito que a
+       barra de abas. Container em volta de numero e o que mais entrega
+       interface montada por template. */
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 20px;
+    margin-bottom: 26px;
   }
   /* Fila por prioridade e a animacao dividem a linha ao meio. Com 1fr 1fr e o
      MESMO gap da grade de cartoes, a coluna da esquerda termina exatamente onde
      termina o segundo cartao (2c+g nos dois casos) e a direita comeca onde
      comeca o terceiro. A altura vem da fila; a animacao se estica. */
-  .fp-dash-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: stretch; }
+  .fp-dash-duo { display: grid; grid-template-columns: 1fr 1fr; gap: var(--fp-col-gap); align-items: stretch; }
   .fp-dash-anim { position: relative; min-height: 220px; color: var(--text); pointer-events: none; }
   /* Absoluta para a animacao nunca ditar a altura da linha — quem manda e a fila. */
   .fp-dash-anim svg { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -345,15 +356,15 @@
     .fp-dash-duo { grid-template-columns: 1fr; }
     .fp-dash-anim { display: none; }
   }
-  .stat-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px;
+  .stat-card { padding: 0; }
+  .stat-card .label {
+    font-size: 11px; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: .12em; font-weight: 700; margin-bottom: 10px;
   }
-  .stat-card .label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-  .stat-card .value { font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase; font-size: 32px; line-height: 1; }
-  .stat-card.primary { border-color: rgba(255,45,45,.4); background: linear-gradient(135deg, rgba(255,45,45,.08), var(--bg-card)); }
+  /* Sem moldura, o numero e quem carrega o peso: 32 -> 38px. */
+  .stat-card .value { font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase; font-size: 38px; line-height: 1; letter-spacing: -.015em; }
+  /* Destaque vai na cor do numero, nunca num fundo colorido atras dele. */
+  .stat-card.primary .value { color: var(--primary); }
   .stat-card .value small { font-size: 14px; color: var(--text-dim); font-family: 'FullPro Sans'; margin-left: 4px; }
 
   /* Filters */
@@ -461,6 +472,20 @@
     font-family: inherit;
   }
   .action-btn:hover { border-color: var(--border-hi); }
+  /* Sincronizacao em curso: rotulo verde e um fio que enche de 0 a 100% na base
+     do proprio botao. Sem caixa nova, sem deslocar nada de lugar.
+     `.fp-sinc:disabled` para vencer o opacity .45 de :disabled — o botao esta
+     travado, mas tem que continuar legivel: e ele que informa o progresso. */
+  .action-btn.fp-sinc, .action-btn.fp-sinc:disabled {
+    position: relative; overflow: hidden; opacity: 1; cursor: default;
+    color: var(--success); border-color: rgba(31,210,122,.4);
+  }
+  .fp-sinc-pct { margin-left: 8px; font-variant-numeric: tabular-nums; opacity: .72; }
+  .fp-sinc-barra { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(31,210,122,.16); }
+  .fp-sinc-barra i { display: block; height: 100%; width: 0; background: var(--success); transition: width .35s ease; }
+  .fp-sinc-bloco { text-align: right; }
+  .fp-sinc-quando { margin-top: 7px; font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .fp-sinc-quando:empty { display: none; }
   /* Verde mais vivo que o --success, que é o tom de estado nos selos e ficava
      apagado num botão de ação. */
   .action-btn.approve, .action-btn.whats {
@@ -2139,7 +2164,6 @@
   /* Cards & elevations: sharper borders on light */
   [data-theme="light"] .cal-card,
   [data-theme="light"] .edit-card,
-  [data-theme="light"] .stat-card,
   [data-theme="light"] .modal-content { box-shadow: 0 1px 3px rgba(0,0,0,.06); }
   [data-theme="light"] .edit-meta-item { background: #f7f7f9; }
   [data-theme="light"] .edit-script-section { background: #f7f7f9; }
@@ -2684,9 +2708,8 @@
   @media (min-width: 1600px) {
     main { padding: 40px 48px; }
     main > div { max-width: 1400px; margin-left: auto; margin-right: auto; }
-    .stats-grid { gap: 18px; }
-    .stat-card { padding: 24px; }
-    .stat-card .value { font-size: 36px; }
+    :root { --fp-col-gap: 30px; }
+    .stat-card .value { font-size: 44px; }
     .page-head h1 { font-size: 40px; }
   }
 
@@ -2756,9 +2779,8 @@
     .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
     .stats-grid { grid-template-columns: 1fr 1fr !important; }
     .dash-kpi-row { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
-    .stat-card { padding: 14px; }
-    .stat-card .value { font-size: 26px; }
-    .stat-card .label { font-size: 11px; }
+    .stat-card .value { font-size: 28px; }
+    .stat-card .label { font-size: 10.5px; margin-bottom: 7px; }
 
     /* Page head */
     .page-head h1 { font-size: 26px; }
@@ -2851,8 +2873,7 @@
     main { padding: 12px; }
     .stats-grid { grid-template-columns: 1fr; gap: 8px; }
     .dash-kpi-row { grid-template-columns: 1fr !important; }
-    .stat-card { padding: 12px; }
-    .stat-card .value { font-size: 24px; }
+    .stat-card .value { font-size: 26px; }
     .page-head h1 { font-size: 22px; }
 
     .filter-bar { gap: 16px; }
@@ -5042,7 +5063,10 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
           <h1>Dashboard</h1>
           <p id="dashSub">Visão geral de todas as áreas do Media Club.</p>
         </div>
-        <button class="action-btn" id="fotoSyncBtn" style="display:none" onclick="fpFotoSincronizar()">Sincronizar catálogo</button>
+        <div class="fp-sinc-bloco" id="fotoSincBloco" style="display:none">
+          <button class="action-btn" id="fotoSyncBtn" onclick="fpFotoSincronizar()">Sincronizar catálogo</button>
+          <div class="fp-sinc-quando" id="fotoSyncQuando"></div>
+        </div>
       </div>
       <!-- Switch de frente. Só aparece para quem tem vídeo E foto; quem tem uma
            frente só cai direto no painel dela. Ver fpDashAplicar. -->
@@ -18431,6 +18455,26 @@ function fpPanoramaHtml(d) {
    por cima da outra fora de ordem. */
 let _panoramaVez = 0;
 
+/* Tamanho do catálogo, como o banco vê. É a régua da barra de progresso da
+   sincronização: sem ela, não há como transformar "gravei 700" em porcentagem. */
+let _fotoTotalBanco = 0;
+
+function fpFotoDataHora(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function fpFotoCarimbo(iso) {
+  const el = document.getElementById('fotoSyncQuando');
+  if (!el) return;
+  const q = fpFotoDataHora(iso);
+  /* Sem data no banco não vira "atualizado em —": some. Carimbo vazio informa
+     menos que nenhum carimbo. */
+  el.textContent = q ? 'Última atualização: ' + q : '';
+}
+
 async function renderFotoPanorama() {
   const box = document.getElementById('fotoPanorama');
   if (!box) return;
@@ -18461,6 +18505,8 @@ async function renderFotoPanorama() {
   }
 
   /* Passada 2: o dado no lugar do esqueleto. */
+  _fotoTotalBanco = Number(data.total_catalogo) || 0;
+  fpFotoCarimbo(data.atualizado_em);
   box.innerHTML = fpPanoramaHtml(data);
   fpDriveCarregar(((data.sem_foto_estoque) || []).map(p => p.sku), box);
 
@@ -18477,35 +18523,79 @@ function fpPanoramaRecarregar() {
   renderFotoPanorama();
 }
 
+/* ── Progresso no próprio botão ──
+   A barra nunca volta atrás: a leitura do Bling é retomável e uma página pode
+   gravar menos que a anterior, o que faria a porcentagem recuar e parecer erro.
+   A régua é o tamanho do catálogo que o banco já conhece — não há total
+   antecipado na API do Bling, então é estimativa, e por isso a fase do Bling
+   para em 85%: o número não pode bater 100% antes de a conferência do Drive
+   terminar. */
+let _sincPct = 0;
+
+function fpSincIniciar(btn) {
+  if (!btn) return;
+  _sincPct = 0;
+  btn.disabled = true;
+  btn.classList.add('fp-sinc');
+  btn.innerHTML = '<span>Atualizando</span><span class="fp-sinc-pct">0%</span>'
+    + '<span class="fp-sinc-barra"><i></i></span>';
+}
+
+function fpSincAndar(btn, pct) {
+  if (!btn || !btn.classList.contains('fp-sinc')) return;
+  _sincPct = Math.max(_sincPct, Math.min(100, pct));
+  const barra = btn.querySelector('.fp-sinc-barra i');
+  const rot = btn.querySelector('.fp-sinc-pct');
+  if (barra) barra.style.width = _sincPct.toFixed(1) + '%';
+  if (rot) rot.textContent = Math.round(_sincPct) + '%';
+}
+
+function fpSincEncerrar(btn) {
+  if (!btn) return;
+  btn.classList.remove('fp-sinc');
+  btn.disabled = false;
+  btn.textContent = 'Sincronizar catálogo';
+}
+
 /* Sincronização: varre o catálogo do Bling e depois confere as pastas do
    Drive. É demorado e o botão precisa dizer isso. */
 async function fpFotoSincronizar() {
   const btn = document.getElementById('fotoSyncBtn');
   const sessao = localStorage.getItem('fp_session');
   if (!sessao) { fpToast('Entre de novo no painel.', 'erro'); return; }
-  if (btn) { btn.disabled = true; btn.textContent = 'Lendo o Bling…'; }
+  fpSincIniciar(btn);
+  /* Piso de 300 para uma base vazia não fazer a primeira página marcar 100%. */
+  const regua = Math.max(300, _fotoTotalBanco || FOTO_PRODUTOS.length || 2500);
   try {
     let pagina = 1, total = 0, voltas = 0;
+    fpSincAndar(btn, 3);
     while (voltas++ < 40) {
       const { data, error } = await sb.functions.invoke('bling-sync', { body: { action: 'sincronizar', sessao, pagina_inicial: pagina } });
       if (error) throw error;
       if (data && data.erro) throw new Error(data.erro);
       total += (data && data.gravados) || 0;
-      if (btn) btn.textContent = 'Lendo o Bling… ' + total.toLocaleString('pt-BR');
+      fpSincAndar(btn, 3 + Math.min(1, total / regua) * 82);
       if (!data || !data.proxima_pagina) break;
       pagina = data.proxima_pagina;
     }
-    if (btn) btn.textContent = 'Conferindo o Drive…';
+    /* O Bling acabou: fecha a fase em 85 mesmo que a estimativa tenha ficado
+       curta, senão a barra salta de 12% para 88% e parece defeito. */
+    fpSincAndar(btn, 85);
     const { data: d2, error: e2 } = await sb.functions.invoke('bling-sync', { body: { action: 'drive', sessao } });
     if (e2) throw e2;
     if (d2 && d2.erro) throw new Error(d2.erro);
+    fpSincAndar(btn, 96);
     await fpFotoCarregar(true);
+    fpSincAndar(btn, 100);
     renderFotoPanorama();
     fpToast(total.toLocaleString('pt-BR') + ' produtos sincronizados · ' + ((d2 && d2.casados) || 0) + ' com pasta no Drive.', 'ok', { duracao: 7000 });
+    /* Meio segundo com a barra cheia antes de o botão voltar ao normal: sem
+       isso o 100% nunca é visto. */
+    await new Promise(r => setTimeout(r, 600));
   } catch (e) {
     fpToast('Sincronização falhou: ' + (e.message || e), 'erro', { duracao: 8000 });
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'Sincronizar catálogo'; }
+    fpSincEncerrar(btn);
   }
 }
 
@@ -20674,7 +20764,7 @@ function fpDashTrocar(frente, gravar) {
   const bv = document.getElementById('dashBtnVideo'), bf = document.getElementById('dashBtnFoto');
   if (bv) bv.classList.toggle('active', !foto);
   if (bf) bf.classList.toggle('active', foto);
-  const sinc = document.getElementById('fotoSyncBtn');
+  const sinc = document.getElementById('fotoSincBloco');
   if (sinc) sinc.style.display = foto ? '' : 'none';
   const sub = document.getElementById('dashSub');
   if (sub) sub.textContent = foto

@@ -545,6 +545,10 @@ as $$
     'p2',   (select count(*) from mc_photo_products where excluido is not true and tem_foto is not true and prioridade = 2),
     'p1',   (select count(*) from mc_photo_products where excluido is not true and tem_foto is not true and prioridade = 1),
     'pend', (select count(*) from mc_photo_products where excluido is not true and tem_foto is not true and prioridade is null),
+    -- régua da barra de progresso da sincronização
+    'total_catalogo', (select count(*) from mc_photo_products),
+    -- a sincronização tem duas fases; vale a mais recente das duas
+    'atualizado_em',  (select greatest(max(sincronizado_em), max(drive_checado_em)) from mc_photo_products),
     -- o início do mês vem do navegador, para respeitar o fuso de quem olha
     'fotos_mes',    (select count(*) from mc_photo_files where created_at >= p_inicio_mes),
     'produtos_mes', (select count(distinct sku) from mc_photo_files where created_at >= p_inicio_mes),
