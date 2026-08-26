@@ -1029,6 +1029,9 @@
   }
   .fp-icon-btn:hover { background: var(--bg-elev); color: var(--text); }
   .fp-icon-btn svg { width: 18px; height: 18px; }
+  .fp-icon-btn.fp-ib-upload { color: #7aa5ff; }
+  .fp-icon-btn.fp-ib-upload:hover { background: rgba(59,130,246,.16); color: #a9c4ff; }
+  .fp-icon-btn.fp-ib-upload svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .fp-icon-btn.fp-ib-pink { color: #ec4899; }
   .fp-icon-btn.fp-ib-pink:hover { background: rgba(236,72,153,.14); color: #ec4899; }
   .fp-icon-btn.fp-ib-danger { color: var(--danger); }
@@ -17590,7 +17593,10 @@ async function renderFotoLote() {
       + fpProdEstoqueHtml(i.estoque)
       + '<span class="fp-prod-fim">' + fpPrioHtml(i.sku, i.prioridade, false)
       + '<span class="fp-lote-estado" data-sku="' + escHtml(i.sku) + '">' + (pronto ? '<span class="fp-nota tem">✓ enviada</span>' : '') + '</span>'
-      + '<label class="action-btn view" style="cursor:pointer;margin:0">Enviar fotos'
+      + '<label class="fp-icon-btn fp-ib-upload" data-tip="Enviar fotos deste produto"'
+      + ' aria-label="Enviar fotos de ' + escHtml(i.nome || i.sku) + '" tabindex="0">'
+      + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>'
+      + '<path d="M7 9l5-5 5 5"/><path d="M12 4v12"/></svg>'
       + '<input type="file" accept="image/*" multiple style="display:none" onchange="fpLoteEscolher(\'' + fpJs(i.sku) + '\',this)"></label>'
       + '</span></div>';
   }).join('');
