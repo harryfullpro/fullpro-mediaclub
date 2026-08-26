@@ -17409,7 +17409,8 @@ async function fpGalAbrirFotos(sku) {
      diferentes para o mesmo arquivo, e só o primeiro está no cache. */
   fpVisorPara(0, fpDriveImgUrl(sku, false));     // a foto grande vem primeiro
   fpVisorTira();                                 // depois a tira
-  fpVisorAdiantar(token);                        // e por último as seguintes
+  /* o adiantamento das seguintes é disparado pelo onload da foto grande,
+     em fpVisorPara — nunca antes dela estar na tela */
 }
 
 function fpVisorTira() {
@@ -17431,11 +17432,25 @@ function fpVisorMarcarTira() {
   if (tira[_visorI]) tira[_visorI].scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
 }
 
-/* Adianta as fotos grandes na ordem, uma de cada vez a partir da atual.
-   Em série de propósito: em paralelo elas competem entre si e a próxima —
-   que é a que o operador vai pedir — chega junto com a última. */
+/* Adianta as PRÓXIMAS fotos, uma de cada vez, e só depois que a foto da tela
+   já apareceu.
+
+   Adiantar as 12 de uma vez foi um tiro no pé: o navegador abre ~6 conexões
+   por servidor, então a imagem que o operador está olhando ia para o fim da
+   fila atrás de onze irmãs em tamanho grande. Medido: 24,8s de mediana por
+   imagem com tudo junto, contra 0,4s isolada. Três à frente cobrem o clique
+   seguinte sem disputar banda com o presente. */
+const FP_VISOR_ADIANTA = 3;
+let _visorAdiantando = false;
+
 async function fpVisorAdiantar(token) {
-  for (let d = 1; d <= _visorFotos.length; d++) {
+  if (_visorAdiantando) return;
+  _visorAdiantando = true;
+  try { await fpVisorAdiantarSerie(token); } finally { _visorAdiantando = false; }
+}
+
+async function fpVisorAdiantarSerie(token) {
+  for (let d = 1; d <= Math.min(FP_VISOR_ADIANTA, _visorFotos.length - 1); d++) {
     if (token !== _visorToken) return;
     const f = _visorFotos[(_visorI + d) % _visorFotos.length];
     const url = fpVisorSrc(f, true).url;
@@ -17524,6 +17539,7 @@ function fpVisorPara(k, previaUrl) {
   const pronta = _visorCache.get(alvo.url);
   if (pronta && pronta.complete && pronta.naturalWidth) {
     img.src = alvo.url;                          // já adiantada: entra sem piscar
+    fpVisorAdiantar(_visorToken);
   } else {
     const previa = previaUrl || fpVisorSrc(f, false).url;
     if (previa) { img.src = previa; img.classList.add('previa'); }
@@ -17535,6 +17551,7 @@ function fpVisorPara(k, previaUrl) {
         if (meu !== _visorImgToken) return;
         img.src = url;
         img.classList.remove('previa');
+        fpVisorAdiantar(_visorToken);
       };
       grande.onerror = () => {
         if (meu !== _visorImgToken) return;
