@@ -18417,10 +18417,6 @@ async function renderFotoPanorama() {
      de um clique de prioridade não pode piscar a tela inteira. */
   if (!box.innerHTML.trim()) box.innerHTML = fpPanoramaHtml(null);
 
-  /* O catálogo não segura mais o painel: quem precisa dele são as outras telas
-     da seção e a edição de prioridade. Vai em segundo plano. */
-  fpFotoCarregar().catch(e => console.warn('catálogo de fotos', e));
-
   /* "Este mês" conta o que passou pelo painel: mc_photo_files só tem foto
      enviada por aqui. Foto que já estava no Drive antes deste módulo não
      entra — e não deve, senão o número do mês vira o acervo inteiro. O início
@@ -18443,6 +18439,12 @@ async function renderFotoPanorama() {
   /* Passada 2: o dado no lugar do esqueleto. */
   box.innerHTML = fpPanoramaHtml(data);
   fpDriveCarregar(((data.sem_foto_estoque) || []).map(p => p.sku), box);
+
+  /* Só agora o catálogo, e sem segurar nada: são 2.566 linhas em três páginas
+     que dividiriam banda com a chamada do painel — medido, atrasava o número
+     que o operador está esperando de 0,3s para 1,6s. Quem precisa dele são as
+     outras telas da seção e a edição de prioridade. */
+  fpFotoCarregar().catch(e => console.warn('catálogo de fotos', e));
 }
 
 function fpPanoramaRecarregar() {
