@@ -3346,7 +3346,12 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
   transition: border-color .14s ease;
 }
 .fp-busca:focus-within { border-bottom-color: var(--primary); }
-.fp-busca svg { flex: 0 0 auto; width: 15px; height: 15px; color: var(--text-muted); }
+/* traco, nao preenchimento: sem isto o icone vira uma mancha preta sobre
+   fundo preto — foi o que aconteceu ao reescrever este bloco. */
+.fp-busca svg {
+  flex: 0 0 auto; width: 15px; height: 15px; color: var(--text-muted);
+  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
 .fp-busca input {
   flex: 1; background: transparent; border: none; outline: none;
   color: var(--text); font-size: 13.5px; font-family: inherit; min-width: 0;
