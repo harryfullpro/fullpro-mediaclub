@@ -1099,9 +1099,9 @@
     /* Tons da prancheta. Azul de nanquim no claro, azul frio no escuro — o
        vermelho da marca fica so no brilho que passeia, senao a tela de entrar
        vira um alerta. */
-    --bp-fina: rgba(28,52,96,.055);
-    --bp-grossa: rgba(28,52,96,.10);
-    --bp-tec: rgba(28,52,96,.13);
+    --bp-fina: rgba(150,190,255,.07);
+    --bp-grossa: rgba(150,190,255,.13);
+    --bp-tec: rgba(150,190,255,.17);
     position: relative;
     min-height: 100vh;
     display: flex;
@@ -1112,9 +1112,9 @@
     overflow: hidden;
   }
   [data-theme="light"] .login {
-    --bp-fina: rgba(28,52,96,.07);
-    --bp-grossa: rgba(28,52,96,.13);
-    --bp-tec: rgba(28,52,96,.16);
+    --bp-fina: rgba(28,52,96,.075);
+    --bp-grossa: rgba(28,52,96,.14);
+    --bp-tec: rgba(28,52,96,.19);
   }
   .login-fundo { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
   /* Papel milimetrado: malha fina de 24px e a grossa de 120px por cima. A
@@ -1142,12 +1142,12 @@
   .login-brilho { position: absolute; border-radius: 50%; filter: blur(80px); will-change: transform; }
   .login-b1 {
     width: 48vw; height: 48vw; min-width: 380px; min-height: 380px;
-    background: rgba(255,45,45,.22); top: -14%; left: -10%;
+    background: rgba(255,45,45,.13); top: -14%; left: -10%;
     animation: fpLoginDeriva1 40s ease-in-out infinite;
   }
   .login-b2 {
     width: 42vw; height: 42vw; min-width: 320px; min-height: 320px;
-    background: rgba(52,104,220,.16); bottom: -16%; right: -8%;
+    background: rgba(52,104,220,.11); bottom: -16%; right: -8%;
     animation: fpLoginDeriva2 52s ease-in-out infinite;
   }
   [data-theme="light"] .login-b1 { background: rgba(255,45,45,.13); }
