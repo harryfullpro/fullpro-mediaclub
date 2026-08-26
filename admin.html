@@ -21311,6 +21311,7 @@ function fpTutAbrir(chave) {
      foco cai num botao da listagem que o operador nao esta vendo, e Enter
      dispara a acao. */
   document.addEventListener('focusin', fpTutPrenderFoco, true);
+  fpTutInerte(true);
   window.addEventListener('resize', fpTutReposicionar);
   document.querySelector('main')?.addEventListener('scroll', fpTutReposicionar, { passive: true });
   fpTutIr(0);
@@ -21321,17 +21322,34 @@ function fpTutFechar() {
   ['fpTutBloqueio', 'fpTutBuraco', 'fpTutCaixa'].forEach(id => document.getElementById(id)?.classList.remove('show'));
   document.removeEventListener('keydown', fpTutTecla, true);
   document.removeEventListener('focusin', fpTutPrenderFoco, true);
+  fpTutInerte(false);
   window.removeEventListener('resize', fpTutReposicionar);
   document.querySelector('main')?.removeEventListener('scroll', fpTutReposicionar);
   if (_tutFocoAnterior && document.contains(_tutFocoAnterior)) { try { _tutFocoAnterior.focus(); } catch (e) {} }
 }
 
+/* Fora do cartao, nada existe: `inert` tira do caminho do clique, do Tab e do
+   leitor de tela de uma vez so. O cartao e os dois botoes flutuantes moram
+   fora do #app, entao entram na lista a mao. */
+function fpTutInerte(v) {
+  ['app', 'fpAjudaBtn', 'fpBugBtn'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { try { el.inert = v; } catch (e) {} }
+  });
+}
+
+/* Rede de seguranca para navegador sem `inert`. O foco tem de ser devolvido
+   FORA do despacho do proprio evento: chamar .focus() durante o focusin e
+   engolido pelo navegador (medido — o foco continuava no botao da listagem). */
 function fpTutPrenderFoco(ev) {
   if (!_tutAtivo) return;
   const caixa = document.getElementById('fpTutCaixa');
   if (caixa && !caixa.contains(ev.target)) {
     ev.stopPropagation();
-    (caixa.querySelector('.fp-tut-ok') || caixa).focus();
+    setTimeout(() => {
+      if (!_tutAtivo) return;
+      (caixa.querySelector('.fp-tut-ok') || caixa).focus();
+    }, 0);
   }
 }
 
