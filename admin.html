@@ -215,11 +215,8 @@
   .shell.collapsed .nav-label,
   .shell.collapsed .brand-txt,
   .shell.collapsed .count,
-  .shell.collapsed .theme-toggle span,
-  .shell.collapsed .theme-switch,
-  .shell.collapsed .theme-ico.ico-sun { display: none; }
+  .shell.collapsed .fp-tema-est { display: none; }
   .shell.collapsed .nav-section { color: transparent; }
-  .shell.collapsed .theme-toggle { padding: 8px; justify-content: center; }
   .nav-item {
     padding: 5px 14px;
     color: var(--text-dim);
@@ -249,11 +246,8 @@
   .shell.hover-mode .nav-label,
   .shell.hover-mode .brand-txt,
   .shell.hover-mode .count,
-  .shell.hover-mode .theme-toggle span,
-  .shell.hover-mode .theme-switch,
-  .shell.hover-mode .theme-ico.ico-sun { display: none; }
+  .shell.hover-mode .fp-tema-est { display: none; }
   .shell.hover-mode .nav-section { color: transparent; }
-  .shell.hover-mode .theme-toggle { padding: 8px; justify-content: center; }
   .shell.hover-mode .nav-item { padding: 6px; justify-content: center; }
   .shell.hover-mode .brand { justify-content: center; }
   .shell.hover-mode .brand-mark { width: 36px; height: 36px; }
@@ -267,11 +261,8 @@
   .shell.hover-mode .sidebar.hover-open .nav-label,
   .shell.hover-mode .sidebar.hover-open .brand-txt,
   .shell.hover-mode .sidebar.hover-open .count,
-  .shell.hover-mode .sidebar.hover-open .theme-toggle span,
-  .shell.hover-mode .sidebar.hover-open .theme-switch,
-  .shell.hover-mode .sidebar.hover-open .theme-ico.ico-sun { display: revert; }
+  .shell.hover-mode .sidebar.hover-open .fp-tema-est { display: revert; }
   .shell.hover-mode .sidebar.hover-open .nav-section { color: var(--text-muted); }
-  .shell.hover-mode .sidebar.hover-open .theme-toggle { padding: 8px 12px; justify-content: center; }
   .shell.hover-mode .sidebar.hover-open .nav-item { padding: 5px 14px; justify-content: flex-start; }
   .shell.hover-mode .sidebar.hover-open .brand { justify-content: flex-start; }
   .shell.hover-mode .sidebar.hover-open .brand-mark { width: 130px; height: 36px; }
@@ -302,28 +293,19 @@
   /* sidebar-foot defined in sidebar block above */
   .nav-section { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; padding: 5px 14px 2px; height: 18px; flex-shrink: 0; overflow: hidden; }
   .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  .theme-toggle {
-    display: flex; align-items: center; gap: 0; padding: 6px 12px;
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
-    margin-bottom: 4px; cursor: pointer; justify-content: center; flex-shrink: 0;
+  /* O tema virou uma linha do menu, igual as vizinhas do rodape: mesma altura,
+     mesmo icone em currentColor, mesmo hover. A caixa com pilula azul era o
+     unico elemento do painel com desenho proprio — e a pilula nem seguia a
+     paleta. Quem diz o estado agora e a palavra a direita, e o icone troca
+     junto: lua no escuro, sol no claro. Tudo por CSS, sem uma linha de JS. */
+  .fp-tema .fp-tema-est {
+    margin-left: auto; font-size: 11px; font-weight: 600;
+    color: var(--text-muted); letter-spacing: .02em;
   }
-  .theme-toggle svg.theme-ico { width: 16px; height: 16px; flex-shrink: 0; stroke-linecap: round; stroke-linejoin: round; transition: opacity .2s, color .2s; }
-  .theme-toggle .ico-sun { stroke: #ffaa33; fill: none; stroke-width: 1.8; opacity: .4; }
-  .theme-toggle .ico-moon { stroke: #8b9cf7; fill: none; stroke-width: 1.8; opacity: 1; }
-  [data-theme="light"] .theme-toggle .ico-sun { opacity: 1; }
-  [data-theme="light"] .theme-toggle .ico-moon { opacity: .4; }
-  .theme-switch {
-    width: 40px; height: 22px; border-radius: 11px; background: #1e293b;
-    border: 1px solid var(--border); position: relative; transition: background .25s;
-    margin: 0 8px; flex-shrink: 0;
-  }
-  .theme-switch::after {
-    content: ''; position: absolute; top: 2px; left: 2px;
-    width: 16px; height: 16px; border-radius: 50%; background: #8b9cf7;
-    transition: transform .25s, background .25s;
-  }
-  [data-theme="light"] .theme-switch { background: #fef3c7; border-color: #f59e0b; }
-  [data-theme="light"] .theme-switch::after { transform: translateX(18px); background: #f59e0b; }
+  .fp-tema .ico-sol, .fp-tema .est-claro { display: none; }
+  [data-theme="light"] .fp-tema .ico-sol { display: block; }
+  [data-theme="light"] .fp-tema .est-claro { display: inline; }
+  [data-theme="light"] .fp-tema .ico-lua, [data-theme="light"] .fp-tema .est-escuro { display: none; }
 
   /* Main */
   main { padding: var(--pad-topo) 32px; overflow-x: hidden; overflow-y: auto; height: 100vh; }
@@ -3435,7 +3417,7 @@ body.fp-sem-scroll { overflow: hidden; }
   /* logo e rodape tambem encolhem: juntos custavam mais de 200px */
   .sidebar > a:first-child, .sidebar-brand { padding: 10px 12px; }
   .sidebar > a:first-child img, .sidebar-brand img { max-height: 26px; }
-  .theme-toggle { margin-bottom: 2px; padding: 4px 12px; }
+
   .sidebar-foot { padding-top: 4px; }
   .sidebar-foot .nav-item { min-height: 34px; }
 }
@@ -5182,12 +5164,12 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
     </div><!-- /sidebar-nav -->
 
     <div class="sidebar-foot">
-      <div class="theme-toggle" onclick="toggleTheme()">
-        <svg class="theme-ico ico-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-        <div class="theme-switch"></div>
-        <svg class="theme-ico ico-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-        <span style="font-size:11px;color:var(--text-muted);margin-left:6px;letter-spacing:.5px;font-weight:600;text-transform:uppercase">Tema</span>
-      </div>
+      <button class="nav-item fp-tema" type="button" onclick="toggleTheme()" aria-label="Alternar entre tema escuro e claro">
+        <svg class="ico-lua" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        <svg class="ico-sol" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <span class="nav-label">Tema</span>
+        <span class="fp-tema-est"><span class="est-escuro">Escuro</span><span class="est-claro">Claro</span></span>
+      </button>
       <a href="index.html" class="nav-item">
         <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         <span class="nav-label">Ver landing page</span>
