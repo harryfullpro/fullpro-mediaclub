@@ -5292,11 +5292,15 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
       <span class="nav-label">Manutenção</span> <span class="count" id="cntBugs">0</span>
     </button>
     <button class="nav-item" data-view="atualizacoes">
-      <svg viewBox="0 0 24 24"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+      <!-- Nuvem com seta: era um relogio, igual ao de Metas. -->
+      <svg viewBox="0 0 24 24"><path d="M4.6 16.4A5 5 0 0 1 6.5 6.8a6.5 6.5 0 0 1 12.6 1.4 4.6 4.6 0 0 1-1.4 8.6"/><path d="M12 22V12"/><path d="m7.5 16 4.5-4.5 4.5 4.5"/></svg>
       <span class="nav-label">Atualizações</span> <span class="count" id="cntUpd">0</span>
     </button>
     <button class="nav-item" data-view="integracoes">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+      <!-- Nucleo ligado a quatro pontas. A referencia tem cinco nos de
+           tamanhos diferentes; a 18px a assimetria le como desalinho, entao
+           entrou simetrica: mesma ideia, sem parecer torta. -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.6"/><circle cx="5" cy="5" r="2.6"/><circle cx="19" cy="5" r="2.6"/><circle cx="19" cy="19" r="2.6"/><circle cx="5" cy="19" r="2.6"/><path d="m6.9 6.9 3.2 3.2M17.1 6.9l-3.2 3.2M17.1 17.1l-3.2-3.2M6.9 17.1l3.2-3.2"/></svg>
       <span class="nav-label">Integrações</span>
     </button>
     </div><!-- /sidebar-nav -->
