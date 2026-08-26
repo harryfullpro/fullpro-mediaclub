@@ -293,6 +293,9 @@
     background: none; padding: 0; border-radius: 0;
     color: var(--text-muted); font-size: 12px; font-weight: 700;
     transition: color .14s ease;
+    /* Mesma piscada do triangulo de emergencial na listagem: mesmo alarme,
+       mesmo ritmo. Desligada junto com ela em prefers-reduced-motion. */
+    animation: fpPiscaEmerg 1.3s ease-in-out infinite;
   }
   .nav-item:hover .count.urgente,
   .nav-item.active .count.urgente { background: none; color: var(--primary); }
@@ -4736,7 +4739,8 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 }
 @keyframes fpPiscaEmerg { 0%, 100% { opacity: 1; } 50% { opacity: .22; } }
 @media (prefers-reduced-motion: reduce) {
-  .fp-prio[data-n="5"] .fp-prio-emerg { animation: none; }
+  .fp-prio[data-n="5"] .fp-prio-emerg,
+  .nav-item .count.urgente { animation: none; }
 }
 /* Coluna de largura fixa e texto à esquerda: com largura automática cada
    linha empurra a coluna para um lugar diferente e a lista perde as colunas.
