@@ -4697,6 +4697,126 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
 @media (prefers-reduced-motion: reduce) {
   .fp-foto .fp-foto-spin > svg { animation: none; }
 }
+
+/* ==========================================================================
+   AJUDA E TUTORIAL GUIADO (2026-08-26)
+   O "?" mora logo acima do besouro e some nas telas que ainda nao tem
+   verbete — botao de ajuda que abre vazio e pior que botao nenhum.
+   ========================================================================== */
+.fp-ajuda-btn {
+  position: fixed;
+  right: 18px;
+  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 50px);
+  z-index: 100050;
+  width: 42px; height: 42px;
+  display: none; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-hi);
+  color: var(--text-dim);
+  cursor: pointer;
+  opacity: .55;
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);
+  transition: opacity .15s, color .15s, border-color .15s, transform .15s;
+}
+.fp-ajuda-btn:hover, .fp-ajuda-btn:focus-visible {
+  opacity: 1; color: var(--primary-hi); border-color: var(--primary);
+  transform: translateY(-1px);
+}
+.fp-ajuda-btn svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+body.fp-sem-sessao .fp-ajuda-btn { display: none !important; }
+
+.fp-ajuda-painel {
+  position: fixed;
+  right: 18px;
+  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 100px);
+  z-index: 100060;
+  width: min(360px, calc(100vw - 36px));
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  display: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px 18px;
+  box-shadow: 0 18px 44px rgba(0,0,0,.42);
+}
+[data-theme="light"] .fp-ajuda-painel { box-shadow: 0 16px 38px rgba(20,40,80,.16); }
+.fp-ajuda-painel.show { display: block; }
+.fp-ajuda-topo { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
+.fp-ajuda-topo h3 {
+  flex: 1; font-family: 'FullPro Sans', sans-serif; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .06em; font-size: 14px; color: var(--text);
+}
+.fp-ajuda-x {
+  background: none; border: 0; padding: 2px; cursor: pointer; color: var(--text-muted);
+  display: flex; border-radius: 6px;
+}
+.fp-ajuda-x:hover { color: var(--text); }
+.fp-ajuda-x svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.fp-ajuda-intro { font-size: 12.5px; color: var(--text-dim); margin-bottom: 12px; }
+/* Fio a esquerda de cada item, nao marcador redondo: o painel inteiro e
+   listagem por fio, e um bullet aqui seria o unico ponto do sistema. */
+.fp-ajuda-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.fp-ajuda-lista li {
+  font-size: 12.5px; line-height: 1.5; color: var(--text-dim);
+  padding-left: 12px; border-left: 1px solid var(--border-hi);
+}
+.fp-ajuda-lista li b { color: var(--text); font-weight: 700; }
+.fp-ajuda-tut {
+  margin-top: 16px; width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px; border-radius: 9px;
+  background: var(--primary); color: #fff; border: 0;
+  font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.fp-ajuda-tut:hover { background: var(--primary-hi); }
+.fp-ajuda-tut svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+
+/* O bloqueio existe so para engolir cliques: a sombra do buraco escurece,
+   mas sombra nao captura evento. */
+.fp-tut-bloqueio { position: fixed; inset: 0; z-index: 100290; display: none; }
+.fp-tut-bloqueio.show { display: block; }
+.fp-tut-buraco {
+  position: fixed; z-index: 100300; display: none; pointer-events: none;
+  border-radius: 10px;
+  box-shadow: 0 0 0 9999px rgba(6,8,14,.62), 0 0 0 2px var(--primary);
+  transition: top .26s cubic-bezier(.4,0,.2,1), left .26s cubic-bezier(.4,0,.2,1),
+              width .26s cubic-bezier(.4,0,.2,1), height .26s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="light"] .fp-tut-buraco { box-shadow: 0 0 0 9999px rgba(12,18,32,.45), 0 0 0 2px var(--primary); }
+.fp-tut-buraco.show { display: block; }
+.fp-tut-caixa {
+  position: fixed; z-index: 100310; display: none;
+  width: min(320px, calc(100vw - 24px));
+  background: var(--bg-card); border: 1px solid var(--border-hi);
+  border-radius: 12px; padding: 14px 16px 12px;
+  box-shadow: 0 20px 50px rgba(0,0,0,.5);
+  transition: top .26s cubic-bezier(.4,0,.2,1), left .26s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="light"] .fp-tut-caixa { box-shadow: 0 18px 44px rgba(20,40,80,.22); }
+.fp-tut-caixa.show { display: block; }
+.fp-tut-passo { font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--primary); margin-bottom: 5px; }
+.fp-tut-caixa h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+.fp-tut-caixa p { font-size: 12.5px; line-height: 1.5; color: var(--text-dim); margin-bottom: 12px; }
+.fp-tut-pe { display: flex; align-items: center; gap: 8px; }
+.fp-tut-espaco { flex: 1; }
+.fp-tut-pular { background: none; border: 0; color: var(--text-muted); font-family: inherit; font-size: 12px; cursor: pointer; padding: 6px 2px; }
+.fp-tut-pular:hover { color: var(--text); }
+.fp-tut-btn {
+  padding: 7px 14px; border-radius: 8px; font-family: inherit; font-size: 12.5px; font-weight: 600;
+  cursor: pointer; background: none; border: 1px solid var(--border-hi); color: var(--text);
+}
+.fp-tut-btn:hover { border-color: var(--text-muted); }
+.fp-tut-btn.fp-tut-ok { background: var(--primary); border-color: var(--primary); color: #fff; }
+.fp-tut-btn.fp-tut-ok:hover { background: var(--primary-hi); border-color: var(--primary-hi); }
+
+@media (max-width: 600px) {
+  .fp-ajuda-btn { width: 38px; height: 38px; right: 12px; bottom: calc(max(12px, env(safe-area-inset-bottom)) + 46px); }
+  .fp-ajuda-btn svg { width: 19px; height: 19px; }
+  .fp-ajuda-painel { right: 12px; left: 12px; width: auto; bottom: calc(max(12px, env(safe-area-inset-bottom)) + 92px); }
+}
+
 /* ==========================================================================
    MANUTENÇÃO — botão do besouro, relato e listagem (2026-08-20)
    O botão fica acima dos modais de propósito: bug encontrado dentro de um
@@ -6563,6 +6683,23 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   </main>
 </div>
 
+<!-- Ajuda da tela: o "?" mora acima do besouro e só aparece onde há verbete -->
+<button id="fpAjudaBtn" class="fp-ajuda-btn" type="button" data-tip="Como usar esta tela"
+        aria-label="Como usar esta tela" aria-expanded="false" aria-controls="fpAjudaPainel"
+        onclick="fpAjudaAlternar()">
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="9.5"/>
+    <path d="M9.2 9.3a2.9 2.9 0 0 1 5 1.9c0 1.9-2.4 2.2-2.4 3.9"/>
+    <path d="M11.9 17.6h.02"/>
+  </svg>
+</button>
+<div id="fpAjudaPainel" class="fp-ajuda-painel" role="dialog" aria-label="Ajuda da tela"></div>
+
+<!-- Tutorial guiado: bloqueio de cliques, retângulo vazado e cartão do passo -->
+<div id="fpTutBloqueio" class="fp-tut-bloqueio" onclick="fpTutProximo()" aria-hidden="true"></div>
+<div id="fpTutBuraco" class="fp-tut-buraco" aria-hidden="true"></div>
+<div id="fpTutCaixa" class="fp-tut-caixa" role="dialog" aria-modal="true" aria-label="Tutorial da tela"></div>
+
 <!-- Botão do besouro: fica em toda tela e também sobre os popups -->
 <button id="fpBugBtn" class="fp-bug-btn" type="button" data-tip="Reportar bug ou melhoria"
         aria-label="Reportar bug ou melhoria" onclick="fpBugAbrir()">
@@ -7407,6 +7544,10 @@ function fpRevelarPainel() {
   document.getElementById('login').style.display = 'none';
   document.getElementById('app').style.display = 'grid';
   document.body.classList.remove('fp-sem-sessao');   // libera o botão do besouro
+  /* O boot nao passa pelo roteador: quem entra direto num favorito de
+     #foto-producao caia numa tela sem `?` ate trocar de modulo. O atraso e o
+     tempo do primeiro render — os passos apontam para linhas da listagem. */
+  setTimeout(() => { try { fpAjudaAtualizar(); } catch (e) { console.warn('ajuda', e); } }, 900);
 }
 
 async function checkAuth() {
@@ -19261,7 +19402,7 @@ function fpPanoramaHtml(d) {
     + '</div>'
 
     + '<div class="fp-dash-duo">'
-    + '<div class="fp-prod">'
+    + '<div class="fp-prod" data-tut="fila">'
     + '<div class="fp-prod-faixa"><b>Fila por prioridade</b><span class="fp-aviso-sub">'
     + (d ? num(sem) + ' produtos sem foto' : fpSkelTxt('132px', 11)) + '</span></div>' + [
         ['Emergencial', fila[5], 5], ['Alta', fila[3], 3], ['Média', fila[2], 2], ['Baixa', fila[1], 1], ['Sem prioridade', fila.pend, 0],
@@ -19282,7 +19423,7 @@ function fpPanoramaHtml(d) {
           + escHtml(l.criado_por_nome || '') + (l.slack_destino_nome ? ' → ' + escHtml(l.slack_destino_nome) : '') + '</span></span>'
           + '<span class="fp-prod-est">' + (l.tamanho || 0) + ' <small>itens</small></span></div>').join('') + '</div>' : '')
 
-    + ((d && !topo.length) ? '' : '<div class="fp-prod"><div class="fp-prod-faixa"><b>Sem foto e com mais estoque parado</b><span class="fp-aviso-sub">os 8 maiores</span></div>'
+    + ((d && !topo.length) ? '' : '<div class="fp-prod" data-tut="estoque"><div class="fp-prod-faixa"><b>Sem foto e com mais estoque parado</b><span class="fp-aviso-sub">os 8 maiores</span></div>'
     + (d
         ? topo.map(p => '<div class="fp-prod-linha" data-sku="' + escHtml(p.sku) + '">' + fpFotoProdutoHtml(p.sku, p.imagem_bling, 34, 7)
             + '<span class="fp-prod-nome"><b>' + escHtml(p.nome || p.sku) + '</b><span class="fp-prod-sku">' + escHtml(p.sku) + '</span></span>'
@@ -20949,6 +21090,290 @@ window.addEventListener('resize', function () {
   if (fpMenuAberto) { fpMenuAberto.devolverFoco = false; fpMenuFechar(); }
 });
 
+
+/* ==========================================================================
+   AJUDA E TUTORIAL GUIADO (2026-08-26)
+
+   Dois botoes flutuantes: o besouro (reportar bug) e, logo acima, o "?" com
+   as instrucoes da tela em que o operador esta. Dentro do painel de ajuda,
+   "Ver tutorial" acende o passo a passo guiado sobre a propria interface.
+
+   O tutorial abre sozinho na PRIMEIRA vez que a pessoa entra em cada modulo.
+   A marca fica no navegador, com a versao no nome da chave: subir
+   FP_TUT_VERSAO faz todo mundo voltar a ser primeira viagem, que foi
+   exatamente o pedido ao ligar isto.
+
+   Guardar no navegador e nao no banco e escolha consciente: quem trocar de
+   maquina ve o tutorial de novo. O custo disso e um tutorial repetido; o
+   custo do contrario seria uma coluna nova, uma migracao e mais uma politica
+   de RLS para uma preferencia que nao vale um round-trip.
+   ========================================================================== */
+
+const FP_TUT_VERSAO = 1;
+
+/* Um verbete por tela: o texto do painel de ajuda e os passos do guiado.
+   `alvo` e um seletor; passo cujo alvo nao existe na hora e pulado, entao
+   pode-se descrever coisas que so aparecem com dado na tela. */
+const FP_AJUDA = {
+  'dashboard-foto': {
+    titulo: 'Dashboard de fotos',
+    intro: 'O retrato do catálogo: quanto já tem foto, como está a fila e o que saiu do estúdio no mês.',
+    itens: [
+      'Os quatro números do topo olham o <b>catálogo ativo inteiro</b>. "Fotos este mês" conta só o que subiu por este painel — foto que já estava no Drive antes não entra.',
+      '<b>Fila por prioridade</b> mostra como os produtos sem foto estão distribuídos. Emergencial fura a fila.',
+      '<b>Sem foto e com mais estoque parado</b> é por onde começar: é dinheiro parado esperando foto, e dá para definir a prioridade ali mesmo.',
+      '<b>Sincronizar catálogo</b> puxa o Bling. A data embaixo do botão diz quando isso rodou pela última vez.'
+    ],
+    passos: [
+      { alvo: '#fotoPanorama .stats-grid', titulo: 'Os números do catálogo',
+        texto: 'Com foto, sem foto, nota média das avaliações e quantas fotos subiram este mês. A linha pequena embaixo de cada número dá o contexto dele.' },
+      { alvo: '#fotoPanorama [data-tut="fila"]', titulo: 'A fila por prioridade',
+        texto: 'Quanto tem em cada faixa. Se "Sem prioridade" está grande, é sinal de que ninguém classificou a fila ainda — e o estúdio vai fotografar no escuro.' },
+      { alvo: '#fotoPanorama [data-tut="estoque"]', titulo: 'Por onde começar',
+        texto: 'Os 8 produtos sem foto com mais estoque parado. Dá para definir a prioridade direto aqui, sem abrir a Produção.' },
+      { alvo: '#fotoSincBloco', titulo: 'Sincronizar catálogo',
+        texto: 'Puxa nome, SKU e estoque do Bling. Leva alguns minutos e mostra o progresso — pode deixar rodando e continuar trabalhando.' }
+    ]
+  },
+
+  'foto-producao': {
+    titulo: 'Produção de fotos',
+    intro: 'A fila do estúdio. É aqui que se decide o que vai ser fotografado antes.',
+    itens: [
+      'As abas separam a fila: <b>Na fila</b> é o que tem prioridade definida, <b>Sem prioridade</b> é o que ninguém classificou ainda.',
+      '<b>Clique em qualquer lugar da linha</b> para selecionar — não precisa acertar a caixinha. Com Shift, seleciona um intervalo inteiro.',
+      'Com produtos selecionados, a barra do topo aplica <b>prioridade em massa</b> ou remove da listagem.',
+      'O botão de prioridade de cada linha muda um produto só. <b>Emergencial</b> fura a fila e pisca na listagem.',
+      'O menu <b>…</b> no fim da linha tem enviar fotos, tirar da listagem e o resto.'
+    ],
+    passos: [
+      { alvo: '#view-foto-producao .filter-bar', titulo: 'As abas da fila',
+        texto: 'Na fila, Sem prioridade, Emergenciais, Já fotografados e Fora de linha. O número ao lado de cada aba é quanto tem nela.' },
+      { alvo: '#fotoProdBusca', titulo: 'Busca por nome ou SKU',
+        texto: 'Filtra dentro da aba em que você está. Serve para achar um produto específico sem sair da fila.' },
+      { alvo: '#fotoProdLista .fp-prod-linha', titulo: 'Clique na linha para selecionar',
+        texto: 'Qualquer lugar da linha marca o produto — a caixinha tem 16px e errar era rotina. Com Shift, seleciona do último marcado até aqui.' },
+      { alvo: '#fotoProdLoteBarra', titulo: 'Ações em massa',
+        texto: 'Com produtos marcados, esta barra define a prioridade de todos de uma vez ou tira todos da listagem. Ela fica sempre visível e acompanha a rolagem.' },
+      { alvo: '#fotoProdLista .fp-prod-linha .fp-prio', titulo: 'Prioridade de um produto',
+        texto: 'Baixa, média, alta e emergencial. O emergencial fura a fila e ganha um triângulo piscando — use com parcimônia, senão ninguém olha mais para ele.' },
+      { alvo: '#fotoProdLista .fp-prod-linha .fp-menu-btn', titulo: 'O menu da linha',
+        texto: 'Enviar fotos, remover da listagem e as demais ações daquele produto.' }
+    ]
+  },
+
+  'foto-galeria': {
+    titulo: 'Galeria',
+    intro: 'As fotos que já existem e a nota que cada uma recebeu.',
+    itens: [
+      'As abas separam <b>com foto</b>, <b>sem avaliação</b> e as que <b>precisam refazer</b>.',
+      '<b>Ordenar por</b> nome, estoque ou avaliação. Clicar de novo no mesmo critério inverte a ordem.',
+      '<b>Avaliar</b> dá nota de 1 a 5 para a foto. Nota baixa marca o produto para refazer e ele volta para a fila da Produção.',
+      '"Mostrar mais" carrega só o próximo bloco — as fotos que já estão na tela não recarregam.'
+    ],
+    passos: [
+      { alvo: '#view-foto-galeria .filter-bar', titulo: 'As abas da galeria',
+        texto: 'Com foto, Sem avaliação e Precisam refazer. Começar por "Sem avaliação" é o caminho para não deixar foto ruim passar.' },
+      { alvo: '#fotoGalOrdena', titulo: 'Ordenar a listagem',
+        texto: 'Nome, estoque ou avaliação. Por estoque, as fotos dos produtos que mais vendem aparecem primeiro.' },
+      { alvo: '#fotoGalLista .fp-prod-linha', titulo: 'Avaliar uma foto',
+        texto: 'Abre a miniatura ampliada e a nota de 1 a 5. Nota baixa devolve o produto para a fila marcado como "refazer".' },
+      { alvo: '#fotoGalMais', titulo: 'Mostrar mais',
+        texto: 'Carrega o próximo bloco e anexa no fim — o que já está na tela não pisca nem recarrega.' }
+    ]
+  },
+
+  'foto-separacao': {
+    titulo: 'Separação',
+    intro: 'Monta o lote que vai para a bancada e gera a lista para quem vai buscar os produtos.',
+    itens: [
+      'Escolha o <b>tamanho do lote</b>: 10, 15, 20 ou 30 produtos.',
+      'O lote se monta sozinho a partir da fila: <b>emergenciais primeiro</b>, o resto rateado entre alta, média e baixa. "Ver lógica" explica a conta.',
+      '<b>Gerar lista de separação</b> cria um PDF com link público — dá para mandar no WhatsApp de quem vai buscar no estoque.',
+      'Depois de gerado, os produtos do lote aparecem em <b>Fotografia em lote</b>, prontos para receber foto.'
+    ],
+    passos: [
+      { alvo: '#fotoSepTopo .filter-bar', titulo: 'Tamanho do lote',
+        texto: 'Quantos produtos vão para a bancada de uma vez. Pedir 20 devolve 20 — os emergenciais ocupam vaga dentro desse número.' },
+      { alvo: '#fotoSepLogicaBtn', titulo: 'Ver lógica',
+        texto: 'Abre a explicação de como o lote foi montado: quem entrou, por qual faixa e por quê.' },
+      { alvo: '#fotoSepLista', titulo: 'O que entrou neste lote',
+        texto: 'A prévia do que vai ser separado. Mudou de ideia sobre o tamanho? Troque em cima e a lista se refaz na hora.' },
+      { alvo: '#fotoSepGerar', titulo: 'Gerar a lista',
+        texto: 'Fecha o lote e devolve um PDF com link público. A partir daqui os produtos aparecem em Fotografia em lote.' }
+    ]
+  },
+
+  'foto-lote': {
+    titulo: 'Fotografia em lote',
+    intro: 'Os produtos do último lote separado, prontos para receber foto.',
+    itens: [
+      'A lista é o lote aberto. Se não houver nenhum, monte um em <b>Separação</b>.',
+      'O botão de <b>upload</b> em cada linha envia a foto direto para a pasta daquele SKU no Drive — não precisa renomear arquivo nem procurar pasta.',
+      'Foto enviada aqui já conta no "Fotos este mês" do Dashboard e aparece na Galeria para ser avaliada.'
+    ],
+    passos: [
+      { alvo: '#fotoLoteTopo', titulo: 'O lote aberto',
+        texto: 'Quando foi montado, por quem e quantos itens tem.' },
+      { alvo: '#fotoLoteLista', titulo: 'Enviar a foto do produto',
+        texto: 'O botão de upload de cada linha manda o arquivo direto para a pasta do SKU no Drive. O painel cuida do nome e do lugar.' }
+    ]
+  }
+};
+
+/* A chave sai da tela a vista, nao da hash: o Dashboard e uma view so com
+   duas frentes, e a hash pode estar atrasada logo depois do boot. */
+function fpAjudaChave() {
+  const vendo = id => { const el = document.getElementById('view-' + id); return !!el && el.style.display !== 'none'; };
+  if (vendo('dashboard')) return (typeof FP_DASH_FRENTE !== 'undefined' && FP_DASH_FRENTE === 'foto') ? 'dashboard-foto' : null;
+  for (const k of ['foto-producao', 'foto-galeria', 'foto-separacao', 'foto-lote']) if (vendo(k)) return k;
+  return null;
+}
+
+function fpTutChaveGuardada(chave) {
+  const id = (typeof CURRENT_USER !== 'undefined' && CURRENT_USER && CURRENT_USER.id) || 'anon';
+  return 'fp_tut_v' + FP_TUT_VERSAO + ':' + id + ':' + chave;
+}
+
+/* Mostra ou esconde o "?" conforme a tela, e abre o tutorial se for a
+   primeira vez desta pessoa neste modulo. */
+function fpAjudaAtualizar() {
+  const btn = document.getElementById('fpAjudaBtn');
+  if (!btn) return;
+  const chave = fpAjudaChave();
+  btn.style.display = chave ? 'flex' : 'none';
+  if (!chave) { fpAjudaFechar(); return; }
+  if (_ajudaChave && _ajudaChave !== chave) fpAjudaFechar();
+  _ajudaChave = chave;
+  let visto = true;
+  try { visto = !!localStorage.getItem(fpTutChaveGuardada(chave)); } catch (e) {}
+  if (visto || _tutAtivo) return;
+  try { localStorage.setItem(fpTutChaveGuardada(chave), '1'); } catch (e) {}
+  /* Um respiro para a listagem terminar de pintar: o passo 3 aponta para a
+     primeira linha, e ela so existe depois do render. */
+  setTimeout(() => { if (fpAjudaChave() === chave) fpTutAbrir(chave); }, 650);
+}
+
+let _ajudaChave = null, _ajudaAberta = false;
+
+function fpAjudaAlternar() { _ajudaAberta ? fpAjudaFechar() : fpAjudaAbrir(); }
+
+function fpAjudaAbrir() {
+  const chave = fpAjudaChave(); if (!chave) return;
+  const d = FP_AJUDA[chave]; if (!d) return;
+  const p = document.getElementById('fpAjudaPainel');
+  p.innerHTML = '<div class="fp-ajuda-topo"><h3>' + escHtml(d.titulo) + '</h3>'
+    + '<button type="button" class="fp-ajuda-x" aria-label="Fechar ajuda" onclick="fpAjudaFechar()">'
+    + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>'
+    + '<p class="fp-ajuda-intro">' + escHtml(d.intro) + '</p>'
+    + '<ul class="fp-ajuda-lista">' + d.itens.map(i => '<li>' + i + '</li>').join('') + '</ul>'
+    + (d.passos && d.passos.length
+        ? '<button type="button" class="fp-ajuda-tut" onclick="fpAjudaFechar(); fpTutAbrir(\'' + chave + '\')">'
+          + '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/></svg>'
+          + 'Ver tutorial desta tela</button>'
+        : '');
+  p.classList.add('show');
+  document.getElementById('fpAjudaBtn').setAttribute('aria-expanded', 'true');
+  _ajudaAberta = true;
+}
+
+function fpAjudaFechar() {
+  const p = document.getElementById('fpAjudaPainel'); if (!p) return;
+  p.classList.remove('show');
+  const b = document.getElementById('fpAjudaBtn'); if (b) b.setAttribute('aria-expanded', 'false');
+  _ajudaAberta = false;
+}
+
+/* ── Tutorial guiado ─────────────────────────────────────────────────────
+   Um retangulo vazado sobre o elemento e um cartao ao lado. O escurecimento
+   e o box-shadow gigante do proprio buraco: uma sombra so, sem quatro divs
+   de moldura para manter em sincronia. */
+let _tutPassos = [], _tutI = 0, _tutAtivo = false, _tutFocoAnterior = null;
+
+function fpTutAbrir(chave) {
+  const d = FP_AJUDA[chave]; if (!d || !d.passos) return;
+  /* Passo cujo alvo nao esta na tela e descartado agora, nao pulado no meio:
+     assim o contador "2 de 4" nunca mente. */
+  _tutPassos = d.passos.filter(p => { const el = document.querySelector(p.alvo); return el && el.offsetParent !== null; });
+  if (!_tutPassos.length) return;
+  _tutFocoAnterior = document.activeElement;
+  _tutAtivo = true; _tutI = 0;
+  document.getElementById('fpTutBloqueio').classList.add('show');
+  document.getElementById('fpTutBuraco').classList.add('show');
+  document.getElementById('fpTutCaixa').classList.add('show');
+  document.addEventListener('keydown', fpTutTecla, true);
+  window.addEventListener('resize', fpTutReposicionar);
+  document.querySelector('main')?.addEventListener('scroll', fpTutReposicionar, { passive: true });
+  fpTutIr(0);
+}
+
+function fpTutFechar() {
+  _tutAtivo = false;
+  ['fpTutBloqueio', 'fpTutBuraco', 'fpTutCaixa'].forEach(id => document.getElementById(id)?.classList.remove('show'));
+  document.removeEventListener('keydown', fpTutTecla, true);
+  window.removeEventListener('resize', fpTutReposicionar);
+  document.querySelector('main')?.removeEventListener('scroll', fpTutReposicionar);
+  if (_tutFocoAnterior && document.contains(_tutFocoAnterior)) { try { _tutFocoAnterior.focus(); } catch (e) {} }
+}
+
+function fpTutTecla(ev) {
+  if (!_tutAtivo) return;
+  if (ev.key === 'Escape') { ev.preventDefault(); fpTutFechar(); }
+  else if (ev.key === 'ArrowRight') { ev.preventDefault(); fpTutProximo(); }
+  else if (ev.key === 'ArrowLeft') { ev.preventDefault(); fpTutAnterior(); }
+}
+
+function fpTutProximo() { (_tutI >= _tutPassos.length - 1) ? fpTutFechar() : fpTutIr(_tutI + 1); }
+function fpTutAnterior() { if (_tutI > 0) fpTutIr(_tutI - 1); }
+
+function fpTutIr(i) {
+  _tutI = i;
+  const p = _tutPassos[i];
+  const el = document.querySelector(p.alvo);
+  if (!el) { fpTutProximo(); return; }
+  /* Rolagem instantanea, nao suave: com `smooth` a medida sai do lugar
+     enquanto a pagina ainda esta andando e o buraco fica fora do alvo. */
+  el.scrollIntoView({ block: 'center', inline: 'nearest' });
+  const caixa = document.getElementById('fpTutCaixa');
+  caixa.innerHTML = '<div class="fp-tut-passo">Passo ' + (i + 1) + ' de ' + _tutPassos.length + '</div>'
+    + '<h4>' + escHtml(p.titulo) + '</h4><p>' + escHtml(p.texto) + '</p>'
+    + '<div class="fp-tut-pe">'
+    + '<button type="button" class="fp-tut-pular" onclick="fpTutFechar()">Sair</button>'
+    + '<span class="fp-tut-espaco"></span>'
+    + (i > 0 ? '<button type="button" class="fp-tut-btn" onclick="fpTutAnterior()">Anterior</button>' : '')
+    + '<button type="button" class="fp-tut-btn fp-tut-ok" onclick="fpTutProximo()">'
+    + (i === _tutPassos.length - 1 ? 'Concluir' : 'Próximo') + '</button>'
+    + '</div>';
+  requestAnimationFrame(fpTutReposicionar);
+  setTimeout(() => { caixa.querySelector('.fp-tut-ok')?.focus(); }, 30);
+}
+
+function fpTutReposicionar() {
+  if (!_tutAtivo) return;
+  const p = _tutPassos[_tutI]; if (!p) return;
+  const el = document.querySelector(p.alvo); if (!el) return;
+  const r = el.getBoundingClientRect();
+  const folga = 6;
+  const buraco = document.getElementById('fpTutBuraco');
+  buraco.style.left = (r.left - folga) + 'px';
+  buraco.style.top = (r.top - folga) + 'px';
+  buraco.style.width = (r.width + folga * 2) + 'px';
+  buraco.style.height = (r.height + folga * 2) + 'px';
+
+  const caixa = document.getElementById('fpTutCaixa');
+  const cr = caixa.getBoundingClientRect();
+  const vw = window.innerWidth, vh = window.innerHeight;
+  /* Embaixo do alvo se couber, senao em cima. Se nao couber em nenhum dos
+     dois (alvo alto demais), encosta no rodape da janela. */
+  let topo = r.bottom + 14;
+  if (topo + cr.height > vh - 12) topo = r.top - cr.height - 14;
+  if (topo < 12) topo = Math.min(vh - cr.height - 12, Math.max(12, r.bottom + 14));
+  let esq = r.left + r.width / 2 - cr.width / 2;
+  esq = Math.max(12, Math.min(esq, vw - cr.width - 12));
+  caixa.style.top = topo + 'px';
+  caixa.style.left = esq + 'px';
+}
+
 /* ==========================================================================
    GOOGLE DRIVE — foto do produto pela pasta com o nome do SKU
 
@@ -21712,6 +22137,10 @@ function fpDashTrocar(frente, gravar) {
     Promise.all([loadRequests(), loadCheckins(), loadCheckouts(), loadProjects()])
       .then(renderDashboard).catch(e => console.warn('fpDashTrocar', e));
   }
+  /* O Dashboard e uma view so com duas frentes: trocar de aba nao passa pelo
+     roteador, entao o `?` precisa ser avisado aqui. Adiado porque o painel de
+     foto e pintado no mesmo turno e os alvos do tutorial ainda nao existem. */
+  setTimeout(() => { try { fpAjudaAtualizar(); } catch (e) { console.warn('ajuda', e); } }, foto ? 400 : 0);
 }
 
 /* ==========================================
@@ -24428,7 +24857,11 @@ async function initApp() {
     }
 
     // Refresh data for the target view
-    refreshViewData(viewName);
+    /* O `?` e o tutorial vao DEPOIS do refresh: os passos apontam para linhas
+       da listagem, que so existem quando o render termina. */
+    Promise.resolve(refreshViewData(viewName))
+      .catch(e => console.warn('refreshViewData', e))
+      .finally(() => { try { fpAjudaAtualizar(); } catch (e) { console.warn('ajuda', e); } });
 
     // Reabre o popup de menção ao trocar de módulo (se houver menção pendente)
     if (typeof maybeShowMentionPopup === 'function') maybeShowMentionPopup(viewName);
