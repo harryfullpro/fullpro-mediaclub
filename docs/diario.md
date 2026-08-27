@@ -54,6 +54,55 @@ faxina. Faxina que falha não pode custar o acesso de ninguém.
 "senha alterada" e o login seguiria aceitando só a antiga. Passou a usar
 `auth.updateUser`.
 
+### Fechando as políticas
+
+Com o login provado, as políticas viraram `to authenticated`. A permissão de
+quem está **dentro** continua a mesma de antes (`using(true)`) — muda só *quem*
+é dentro. Assim o painel se comporta idêntico e o risco da migração fica no
+mínimo.
+
+A landing mantém exatamente o que usa, que são duas coisas: ler a view de datas
+ocupadas e inserir uma solicitação. O `WITH CHECK` dessa inserção é a primeira
+barreira contra robô — sem ele, `anon` podia inserir uma solicitação **já com
+status `approved`**, ou seja, ocupar a agenda sem passar por ninguém, e mandar
+texto de tamanho arbitrário.
+
+Medido de fora depois, com a chave pública:
+
+| | antes | depois |
+|---|---|---|
+| ler `mc_admin_users` (com hash) | liberado | `[]` |
+| ler clientes da landing | liberado | `[]` |
+| ler projetos, check-ins, bugs | liberado | `[]` |
+| criar administrador | permitido | bloqueado pela política |
+| inserir agendamento aprovado | permitido | bloqueado pela política |
+| landing: ler datas ocupadas | ok | **ok** (26 datas) |
+| landing: gravar solicitação | ok | **ok** (HTTP 201) |
+
+### Três defeitos meus nesta etapa, os três achados por teste
+
+**1. `mc_login_tentativa` ficou chamável por qualquer visitante.** Função em
+Postgres nasce com `EXECUTE` para `PUBLIC`, e `anon` herda dali — meu
+`revoke ... from anon, authenticated` não adiantou nada. Dava para chamar a RPC
+com a chave de outra pessoa e inflar o contador até **trancar a conta dela**: um
+controle de força bruta virando arma de negação de serviço.
+
+**2. A ponte era um oráculo de enumeração.** Devolvia `401` para usuário
+inexistente e `200` com o e-mail para quem já migrou — testado com senha errada,
+o `200` saía igual. Dava para varrer nomes e descobrir quais existem sem acertar
+senha nenhuma. Agora a resposta é sempre `{ok:true}`; o e-mail o navegador monta
+sozinho, e quem recusa é o Auth, com a mesma mensagem para todo mundo.
+
+**3. `mc_public_blocked_dates` tinha `security_invoker=true`.** Ela rodava com os
+privilégios de quem chama; ao fechar as tabelas, a landing parou de enxergar as
+datas ocupadas e **o calendário público ficaria todo livre**. Passou a rodar
+como dona, igual à view de gravações. É seguro e proposital: ela devolve só a
+coluna `date`.
+
+> E um susto que não era: o `HTTP 401` ao inserir uma solicitação era do meu
+> teste, não da landing — eu tinha pedido `Prefer: return=representation`, que
+> exige leitura. A landing insere sem pedir retorno, e responde 201.
+
 ### O que ainda não foi feito
 
 As políticas **continuam abertas**: fechar antes de o login novo estar provado
