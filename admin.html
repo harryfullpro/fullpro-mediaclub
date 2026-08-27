@@ -3160,7 +3160,13 @@
      RESPONSIVE: Mobile (≤900px)
      ============================================ */
   @media (max-width: 900px) {
-    .shell { grid-template-columns: 1fr; }
+    /* `.shell` sozinho (0,1,0) perdia para `.shell.collapsed` e
+       `.shell.hover-mode` (0,2,0), que sao preferencia de COMPUTADOR guardada
+       no localStorage. Quem recolhesse a barra no escritorio levava para o
+       celular uma faixa morta de 68px — 18% da largura de um iPhone —, porque
+       a barra em si ja esta fora da tela (`position: fixed; left: -280px`).
+       Medido a 375px: `68px 307px` em vez de `375px`. */
+    .shell, .shell.collapsed, .shell.hover-mode { grid-template-columns: 1fr; }
     .sidebar {
       display: flex; position: fixed; left: -280px; top: 0; bottom: 0;
       width: 270px; z-index: 200; transition: left .3s cubic-bezier(.4,0,.2,1);
