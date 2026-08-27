@@ -5057,6 +5057,25 @@ body.fp-sem-sessao .fp-ajuda-btn { display: none !important; }
 .fp-ajuda-tour:hover { color: var(--text); }
 .fp-ajuda-tut svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 
+/* ── Pop-up de boas-vindas ───────────────────────────────────────────────
+   Usa a moldura do dialogo da casa (.fp-confirm-ov / .fp-confirm) e acrescenta
+   so a marca no topo. Nao e um tour: e a porta dele. */
+.fp-bemvindo { width: min(520px, 100%); text-align: left; }
+.fp-bemvindo-marca { display: flex; justify-content: center; padding: 2px 0 16px; }
+.fp-bemvindo-marca img { height: 34px; width: auto; display: none; }
+/* A logo segue o tema, como na tela de entrar: a branca no escuro, a preta no
+   claro. Duas imagens e nao um filtro — o filtro cinzava o vermelho da marca. */
+.fp-bv-escuro { display: block !important; }
+[data-theme="light"] .fp-bv-escuro { display: none !important; }
+[data-theme="light"] .fp-bv-claro { display: block !important; }
+.fp-bemvindo .fp-confirm-tit { font-size: 20px; text-align: center; }
+.fp-bemvindo .fp-confirm-msg { text-align: center; }
+.fp-bemvindo .fp-confirm-acoes { justify-content: center; }
+@media (max-width: 600px) {
+  .fp-bemvindo .fp-confirm-acoes { flex-direction: column-reverse; }
+  .fp-bemvindo .fp-confirm-acoes .action-btn { width: 100%; }
+}
+
 /* O bloqueio existe so para engolir cliques: a sombra do buraco escurece,
    mas sombra nao captura evento. */
 /* Engole todo clique da tela. Nao avanca o passo ao ser clicado, de
@@ -5538,6 +5557,15 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-lista tbody td:last-child { background: var(--bg-card); }
 .fp-lista tbody tr:hover td:last-child { background: var(--bg-elev); }
 .fp-lista thead th:last-child { background: var(--bg-elev); z-index: 6; }
+/* A dica do botao (tooltip) tem de passar POR CIMA do cabecalho, e nao o
+   contrario. `position: sticky` cria contexto de empilhamento proprio: a dica
+   nasce dentro da celula de acoes e o `z-index: 200` dela nao vale nada fora
+   dessa celula — ela competia com o cabecalho pelo z-index da CELULA, que era
+   `auto` (0) contra os 5 do `<th>`. Resultado: na primeira linha a dica ficava
+   escondida atras da faixa cinza. Subir a celula acima do cabecalho resolve sem
+   efeito colateral: as duas nunca se sobrepoem de fato, porque o `.table-wrap`
+   nao e area de rolagem vertical e o cabecalho nao chega a cobrir linha. */
+.fp-lista tbody td:last-child { z-index: 7; }
 /* Largura por CLASSE, nao por posicao: escrita como `td:nth-child(2)` a regra
    valia para a segunda coluna de qualquer listagem — e no Clips a segunda
    coluna e o produto, que ficou esmagado em 116px (medido). */
@@ -9075,8 +9103,12 @@ document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile','prefs-notificacoes'].forEach(v => {
-      document.getElementById('view-' + v).style.display = 'none';
+    ['dashboard','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile','prefs-notificacoes'].forEach(v => {
+      /* Guarda obrigatoria: esta lista e escrita a mao e ja ficou dessincronizada
+         do HTML uma vez — com Solicitacoes fundida na Agenda, `view-requests`
+         deixou de existir e o `.style` de null derrubava a funcao inteira. Foi o
+         que quebrou o botao de abrir o projeto. */
+      const el = document.getElementById('view-' + v); if (el) el.style.display = 'none';
     });
     document.getElementById('view-' + btn.dataset.view).style.display = 'block';
     fpResetScroll();
@@ -11779,8 +11811,8 @@ function openProjectDetail(id, tab) {
   switchDetailTab(tab || 'producao');
 
   // Hide all views, show project-detail
-  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile','prefs-notificacoes'].forEach(v => {
-    document.getElementById('view-' + v).style.display = 'none';
+  ['dashboard','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile','prefs-notificacoes'].forEach(v => {
+    const el = document.getElementById('view-' + v); if (el) el.style.display = 'none';
   });
   document.getElementById('view-project-detail').style.display = 'block';
 
@@ -11800,8 +11832,8 @@ function openProjectDetail(id, tab) {
 function backToProjects() {
   stopEngagementAutoRefresh();
   projDetailId = null;
-  ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile','prefs-notificacoes'].forEach(v => {
-    document.getElementById('view-' + v).style.display = 'none';
+  ['dashboard','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile','prefs-notificacoes'].forEach(v => {
+    const el = document.getElementById('view-' + v); if (el) el.style.display = 'none';
   });
   document.getElementById('view-projects').style.display = 'block';
   renderProjects();
@@ -12198,11 +12230,11 @@ function renderShotsReadOnly(shots, si) {
     { sec: 'Performance', items: [['perf-metas','Metas'],['perf-posts','Meus Posts'],['perf-influencers','Influenciadores'],['perf-bonificacao','Bonificação']] },
     { sec: 'Configurações', items: [['templates','Templates WhatsApp'],['export','Exportar'],['users','Usuários'],['manutencao','Manutenção'],['atualizacoes','Atualizações'],['integracoes','Integrações']] }
   ];
-  const FP_ALL_VIEWS = ['dashboard','requests','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile','prefs-notificacoes'];
+  const FP_ALL_VIEWS = ['dashboard','calendar','checkin','projects','project-detail','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile','prefs-notificacoes'];
   /* Preferências pessoais não passam pela permissão de módulo: são do dono da
      conta, como o próprio perfil. */
   const FP_ALWAYS_ON = ['profile','project-detail','prefs-notificacoes'];
-  const FP_NAV_ORDER = ['dashboard','requests','calendar','checkin','projects','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','atualizacoes','integracoes','profile','prefs-notificacoes'];
+  const FP_NAV_ORDER = ['dashboard','calendar','checkin','projects','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','atualizacoes','integracoes','profile','prefs-notificacoes'];
 
   function fpRoleKey(roleStr){
     const r = (roleStr || '').toLowerCase();
@@ -14991,7 +15023,7 @@ async function postDebriefingComment(projectId, parentId) {
   // (In case the JS nav array doesn't include 'debriefing' yet,
   //  we add a one-time MutationObserver approach as a fallback.)
   const origViewIds = [
-    'dashboard','requests','calendar','checkin','projects',
+    'dashboard','calendar','checkin','projects',
     'project-detail','editing','perf-metas','perf-posts',
     'perf-influencers','perf-bonificacao','templates','export','manutencao','atualizacoes',
     'users','profile','debriefing'
@@ -16877,12 +16909,15 @@ function fpAvisoMontar() {
   /* Solicitações: o admin não recebe — ele vive nessa tela o dia todo e o
      aviso viraria paisagem. Para os demais, só conta o que chegou depois
      do último carimbo. */
-  if (!fpAvisoEhAdmin() && fpAvisoVeModulo('requests')) {
+  /* 'requests' nao tem mais item de menu (fundiu na Agenda) e fpAvisoVeModulo
+     procura justamente pelo item — apontando para 'requests' este aviso nunca
+     mais apareceria. */
+  if (!fpAvisoEhAdmin() && fpAvisoVeModulo('calendar')) {
     const desde = prefs.requests_ate ? new Date(prefs.requests_ate).getTime() : 0;
     const novas = (typeof getRequests === 'function' ? getRequests() : [])
       .filter(r => r.status === 'pending' && new Date(r.createdAt || r.created_at || 0).getTime() > desde);
     if (novas.length) pendencias.push({
-      chave: 'req', tipo: 'req', view: 'requests',
+      chave: 'req', tipo: 'req', view: 'calendar',
       titulo: novas.length === 1 ? '1 solicitação nova aguardando' : novas.length + ' solicitações novas aguardando',
       sub: 'Chegaram pela landing e ainda não foram respondidas.',
       icone: '<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/>'
@@ -22118,7 +22153,11 @@ window.addEventListener('resize', function () {
    de RLS para uma preferencia que nao vale um round-trip.
    ========================================================================== */
 
-const FP_TUT_VERSAO = 2;
+/* 3: o primeiro acesso passou a abrir um POP-UP com escolha (tour guiado ou
+   aprender sozinho) em vez de empurrar o tour. Subir a versao e o que faz todo
+   mundo ver a nova entrada — e quem preferir pode dispensar tudo num clique,
+   que e justamente o ponto da mudanca. */
+const FP_TUT_VERSAO = 3;
 
 /* Quem ja viu o que fica no BANCO, na coluna `tutoriais` de mc_admin_users, e
    nao no navegador. "Primeira vez" e um fato da PESSOA: guardado no
@@ -22243,6 +22282,372 @@ const FP_AJUDA = {
     ]
   },
 
+  /* ── Vídeo ───────────────────────────────────────────────────────────── */
+
+  'dashboard-video': {
+    titulo: 'Dashboard de vídeo',
+    intro: 'O retrato da operação de vídeo: o que chegou, o que está em produção e o que vem pela frente.',
+    itens: [
+      'As abas <b>Vídeo</b> e <b>Fotografia</b> trocam a frente do painel. Cada uma carrega os próprios dados.',
+      'Os quatro números do topo são o estado das solicitações: pendentes, aprovadas, do mês e o total.',
+      '<b>Pipeline de projetos</b> mostra quantos projetos existem em cada etapa do fluxo.',
+      '<b>Próximos agendamentos</b> é a agenda dos próximos dias, já com os bloqueios.',
+      '<b>Projetos recentes</b> leva direto ao projeto; "Ver todos" abre a listagem inteira.'
+    ],
+    passos: [
+      { alvo: '#dashFrenteBar', titulo: 'As duas frentes da casa',
+        texto: 'Vídeo e Fotografia são operações diferentes. Trocar aqui troca o painel inteiro.' },
+      { alvo: '#dashboardContent .dash-kpi-row', titulo: 'As solicitações em números',
+        texto: 'Pendentes é o que precisa de resposta. Se estiver acima de zero, alguém está esperando.' },
+      { alvo: '#dashboardContent .cal-card', titulo: 'Pipeline de projetos',
+        texto: 'Quantos projetos estão em cada etapa. Etapa entupida aqui é gargalo lá.' },
+      { alvo: '#dashboardContent .cal-card:last-child', titulo: 'Projetos recentes',
+        texto: 'Os últimos que se moveram. Clique para abrir; "Ver todos" abre a listagem.' }
+    ]
+  },
+
+  'calendar': {
+    titulo: 'Agenda',
+    intro: 'Os pedidos que chegam pela landing page, o calendário do mês e os bloqueios de data — na mesma tela.',
+    itens: [
+      'Os quatro números olham <b>todas</b> as solicitações, não só o mês do calendário.',
+      'No <b>calendário</b>, verde é dia com agendamento aprovado e vermelho é data bloqueada. Clique num dia para ver os detalhes ao lado.',
+      'A <b>listagem</b> abaixo tem tudo: as abas filtram por status, a busca acha por nome, placa ou moto, e clicar no cabeçalho ordena.',
+      'O <b>olho</b> abre a solicitação inteira — é lá que se aprova, rejeita ou põe em stand by. O balão fala no WhatsApp.',
+      '<b>Stand by</b> não é descarte: é fila de retomada, para a moto interessante que ainda não tem produto em estoque.',
+      'Os dois botões do topo <b>bloqueiam uma data</b> (feriado, manutenção) ou criam um agendamento na mão.'
+    ],
+    passos: [
+      { alvo: '#view-calendar .stats-grid', titulo: 'O estado das solicitações',
+        texto: 'Pendentes é o que precisa de resposta hoje. Este mês e Total dão o volume.' },
+      { alvo: '#calGrid', titulo: 'O calendário do mês',
+        texto: 'Verde = dia com aprovado. Vermelho = data bloqueada. Clique num dia para abrir os detalhes ao lado.' },
+      { alvo: '#dateViewer', titulo: 'Detalhes do dia',
+        texto: 'Quem vem, com qual moto e em que modalidade. Se o dia estiver bloqueado, o motivo aparece aqui.' },
+      { alvo: '#view-calendar .filter-bar', titulo: 'Filtrar e buscar',
+        texto: 'As abas filtram por status e a busca acha por nome, placa ou moto. A contagem à direita diz quantas sobraram.' },
+      { alvo: '#reqTable thead', titulo: 'Ordenar a listagem',
+        texto: 'Clique num título para ordenar por ele; clique de novo para inverter.' },
+      { alvo: '#reqTable tbody tr', titulo: 'Responder uma solicitação',
+        texto: 'O olho abre o pedido inteiro — aprovar, rejeitar ou stand by acontece lá dentro. O balão abre o WhatsApp da pessoa.' }
+    ]
+  },
+
+  'checkin': {
+    titulo: 'Check-in / Check-out',
+    intro: 'A entrada e a saída da moto no estúdio, registradas no mesmo lugar.',
+    itens: [
+      'A aba <b>Hoje</b> traz as motos do dia, com entrada e saída no mesmo cartão.',
+      '<b>Outros</b> é para corrigir registro antigo ou adiantar o de outro dia — a moto que chega à noite para gravar amanhã.',
+      'No <b>check-in</b> entram as fotos do estado da moto e as observações. É o que protege o estúdio depois.',
+      'No <b>check-out</b> é obrigatório confirmar o <b>brinde entregue</b>: a categoria vem do agendamento, mas o produto sai do estoque do Bling.',
+      'Salvar a saída <b>baixa uma unidade</b> de cada brinde no estoque.'
+    ],
+    passos: [
+      { alvo: '#view-checkin .filter-bar', titulo: 'Hoje e Outros dias',
+        texto: 'Hoje é o dia de trabalho. Outros serve para corrigir um registro antigo ou adiantar o de amanhã.' },
+      { alvo: '#ciFormWrap', titulo: 'A moto do dia',
+        texto: 'Cada cartão tem a entrada e a saída da mesma moto. Sem check-in, não há check-out.' }
+    ]
+  },
+
+  'projects': {
+    titulo: 'Projetos',
+    intro: 'Cada produção de vídeo, do planejamento até a publicação.',
+    itens: [
+      'Os quatro números são o pipeline: em produção, em edição, a publicar e o total.',
+      'As <b>abas</b> filtram por etapa e a <b>busca</b> acha por nome do projeto, moto ou produto.',
+      'A barra <b>Destino</b> filtra por onde o vídeo vai sair (YouTube, Shorts, TikTok…) e acumula: pode marcar vários.',
+      'O <b>status</b> da linha muda a etapa na hora, sem abrir o projeto.',
+      'Na linha: o <b>olho</b> abre o resumo, o <b>lápis</b> abre o projeto para editar, e <b>avaliar</b> aparece nos projetos a publicar.',
+      'Clique num título de coluna para ordenar. O status ordena pela <b>etapa do fluxo</b>, não pelo alfabeto.'
+    ],
+    passos: [
+      { alvo: '#view-projects .stats-grid', titulo: 'O pipeline em números',
+        texto: 'Quantos projetos estão em cada etapa. É o retrato da fila de vídeo.' },
+      { alvo: '#view-projects .filter-bar', titulo: 'Abas, busca e contagem',
+        texto: 'As abas filtram por etapa; a busca acha por projeto, moto ou produto.' },
+      { alvo: '#projDestSlot .fp-prod-lote', titulo: 'Filtrar por destino',
+        texto: 'Onde o vídeo vai sair. Este filtro acumula e é independente da etapa — dá para ver só os Shorts em edição.' },
+      { alvo: '#projectsList table.fp-lista thead', titulo: 'Ordenar a listagem',
+        texto: 'Clique num título para ordenar; de novo inverte. Status ordena pela etapa do fluxo, não pelo alfabeto.' },
+      { alvo: '#projectsList .proj-status-select', titulo: 'Mudar a etapa',
+        texto: 'A pílula de status muda a etapa do projeto na própria linha, sem abrir nada.' },
+      { alvo: '#projectsList tbody tr td:last-child', titulo: 'As ações da linha',
+        texto: 'Ver o resumo, abrir para editar, abrir o arquivo de publicação e excluir.' }
+    ]
+  },
+
+  'editing': {
+    titulo: 'Edição',
+    intro: 'A fila da pós-produção: o que está sendo editado e o que já está pronto para publicar.',
+    itens: [
+      'As abas são as etapas: <b>Em edição</b>, <b>A publicar</b> e <b>Todos</b> (o pipeline inteiro).',
+      'A coluna <b>Roteiro</b> diz o que o roteiro é — "7 cenas", "PDF" ou "Texto" — e o botão abre.',
+      'A barra do <b>Total no pipeline</b> mostra a proporção do que já saiu da edição.',
+      'O <b>balão</b> da linha guarda a observação do projeto: é por onde editor e gestor conversam sem sair da tela.',
+      'O status da linha move o projeto para <b>A publicar</b> ou <b>Concluído</b>.'
+    ],
+    passos: [
+      { alvo: '#editDashboard', titulo: 'O pipeline da pós',
+        texto: 'Em edição, a publicar e o total. A barra mostra a proporção do que já saiu da edição.' },
+      { alvo: '#view-editing .filter-bar', titulo: 'As abas da etapa',
+        texto: 'Em edição, A publicar e Todos. A busca acha por projeto, moto ou produto.' },
+      { alvo: '#editingList table.fp-lista thead', titulo: 'A coluna Roteiro',
+        texto: 'Diz o que o roteiro é em uma palavra e abre no formato certo: cenas, PDF ou texto.' },
+      { alvo: '#editingList tbody tr td:last-child', titulo: 'Observação e projeto',
+        texto: 'O balão abre a observação do projeto; o olho abre o projeto completo.' }
+    ]
+  },
+
+  'clips': {
+    titulo: 'Clips',
+    intro: 'Os vídeos curtos de produto para o Mercado Livre, um por SKU.',
+    itens: [
+      'As abas separam por etapa e a busca acha por nome do clip, produto ou <b>SKU</b>.',
+      'A coluna <b>Produto</b> traz a foto, o SKU, o preço e o <b>estoque atual</b> — vindos do Bling.',
+      '<b>Gravado</b> só aparece quando o clip vai para concluído: a data é registrada nesse momento.',
+      'O ícone dourado abre o <b>anúncio no Mercado Livre</b>, quando o link está preenchido.',
+      'O status da linha muda a etapa sem abrir o clip.'
+    ],
+    passos: [
+      { alvo: '#clipsList .filter-bar', titulo: 'Abas, busca e contagem',
+        texto: 'Filtra por etapa; a busca acha por clip, produto ou SKU.' },
+      { alvo: '#clipsList table.fp-lista thead', titulo: 'As colunas do clip',
+        texto: 'Produto traz foto, SKU, preço e estoque do Bling. Gravado é a data em que o clip foi concluído.' },
+      { alvo: '#clipsList .proj-status-select', titulo: 'Mudar a etapa',
+        texto: 'Ao marcar como concluído, a data de gravação é registrada automaticamente.' }
+    ]
+  },
+
+  'debriefing': {
+    titulo: 'Debriefing',
+    intro: 'As avaliações e os comentários dos vídeos já publicados. É aqui que a equipe aprende com o que saiu.',
+    itens: [
+      'O cartão do topo é a <b>nota média do mês</b>, com quantas avaliações e comentários entraram.',
+      'As setas ao lado navegam entre os meses; <b>Mês atual</b> volta para hoje.',
+      'Os filtros restringem por <b>plataforma</b> e por <b>status</b>, e mudam a ordem da lista.',
+      'Em cada projeto, <b>Adicionar avaliação / comentário</b> deixa a nota e o texto.',
+      'Escrever <b>@nome</b> no comentário notifica a pessoa dentro do painel.'
+    ],
+    passos: [
+      { alvo: '#debriefingAvgCard', titulo: 'A nota do mês',
+        texto: 'A média das avaliações do mês, com o total de avaliações e comentários.' },
+      { alvo: '#debriefingMonthLabel', titulo: 'Navegar entre os meses',
+        texto: 'As setas trocam o mês; "Mês atual" traz de volta para hoje.' },
+      { alvo: '#debriefingFilterPlatform', titulo: 'Filtros da lista',
+        texto: 'Plataforma, status e ordem. Serve para olhar só o que saiu no YouTube, por exemplo.' },
+      { alvo: '#debriefingList', titulo: 'Avaliar e comentar',
+        texto: 'Cada projeto aceita nota e comentário. Escrever @nome notifica a pessoa no painel.' }
+    ]
+  },
+
+  /* ── Performance ─────────────────────────────────────────────────────── */
+
+  'perf-metas': {
+    titulo: 'Metas',
+    intro: 'As metas do mês da equipe e a projeção do caixa coletivo.',
+    itens: [
+      '<b>Volume de conteúdo</b> compara o que foi entregue com a meta do mês, em vídeos longos e curtos.',
+      'O <b>caixa coletivo</b> é a projeção de fim de mês a partir do que já foi entregue.',
+      'A divisão por função mostra quanto cabe a cada papel na produção.',
+      'Administrador ajusta as metas em <b>Configurar metas</b>.'
+    ],
+    passos: [
+      { alvo: '#perfMetasContent', titulo: 'As metas do mês',
+        texto: 'Volume entregue contra a meta, e a projeção do caixa coletivo a partir disso.' },
+      { alvo: '#perfMetasAdminBtn', titulo: 'Configurar metas',
+        texto: 'Só administrador: define as metas do mês e como o caixa é dividido.' }
+    ]
+  },
+
+  'perf-posts': {
+    titulo: 'Meus Posts',
+    intro: 'O desempenho das publicações que você fez, por plataforma.',
+    itens: [
+      'O <b>período</b> no topo define a janela de tempo de tudo na tela.',
+      '<b>Atualizar</b> busca as métricas novas nas plataformas conectadas.',
+      'Os números do topo somam o período; a lista abaixo é post por post.',
+      'Plataforma sem conexão em <b>Integrações</b> não traz número.'
+    ],
+    passos: [
+      { alvo: '#perfPostPeriod', titulo: 'O período',
+        texto: 'Define a janela de tempo de todos os números da tela.' },
+      { alvo: '#perfPostsDash', titulo: 'O resumo do período',
+        texto: 'A soma de views e interações no período escolhido, por plataforma.' },
+      { alvo: '#perfPostsList', titulo: 'Post por post',
+        texto: 'Cada publicação com os números dela. Plataforma sem conexão em Integrações não traz dado.' }
+    ]
+  },
+
+  'perf-influencers': {
+    titulo: 'Influenciadores',
+    intro: 'As parcerias: cadastro, cupons, envios, conteúdo entregue e o financeiro de cada um.',
+    itens: [
+      'As <b>abas</b> do topo dividem a tela: visão geral, cadastro, cupons, envios, conteúdo e financeiro.',
+      'A <b>visão geral</b> traz o ranking e o resumo das parcerias.',
+      '<b>Cupons</b> liga o código ao influenciador — é como a venda é atribuída.',
+      '<b>Envios</b> acompanha o produto que foi mandado, com status.',
+      '<b>Financeiro</b> junta o que foi combinado e o que já foi pago.'
+    ],
+    passos: [
+      { alvo: '#infHubTabs', titulo: 'As abas do módulo',
+        texto: 'Visão geral, cadastro, cupons, envios, conteúdo e financeiro. Cada aba é uma parte da parceria.' },
+      { alvo: '#infOverviewStats', titulo: 'O resumo das parcerias',
+        texto: 'Quantos parceiros ativos, o alcance e o retorno somados.' },
+      { alvo: '#infRanking', titulo: 'O ranking',
+        texto: 'Quem está entregando mais. Serve para decidir onde investir na próxima campanha.' }
+    ]
+  },
+
+  'perf-bonificacao': {
+    titulo: 'Bonificação',
+    intro: 'As regras de bônus, a projeção do mês e o histórico do que já foi pago.',
+    itens: [
+      '<b>Regras</b> é o combinado: o que gera bônus e quanto.',
+      '<b>Projeção</b> é o quanto o mês corrente vale se terminar assim.',
+      '<b>Histórico</b> guarda os meses fechados.',
+      'Administrador altera as regras em <b>Editar regras</b>; a mudança vale para o mês corrente.'
+    ],
+    passos: [
+      { alvo: '#perfBonusRules', titulo: 'As regras do bônus',
+        texto: 'O que gera bônus e quanto. É o combinado da equipe, escrito.' },
+      { alvo: '#perfBonusProjection', titulo: 'A projeção do mês',
+        texto: 'Quanto o mês corrente vale se terminar como está agora.' },
+      { alvo: '#perfBonusHistory', titulo: 'O histórico',
+        texto: 'Os meses já fechados, para conferência.' }
+    ]
+  },
+
+  /* ── Configurações ───────────────────────────────────────────────────── */
+
+  'templates': {
+    titulo: 'Templates WhatsApp',
+    intro: 'As mensagens prontas que o painel usa para falar com quem agenda.',
+    itens: [
+      'As <b>variáveis</b> do topo são substituídas na hora do envio: {nome}, {data}, {moto}, {brinde}, {placa} e {operador}.',
+      'Cada template tem um uso: confirmação, lembrete, recusa. Editar aqui muda o que sai para todos.',
+      'O botão <b>+</b> cria um template novo.',
+      'Escrever a variável errada faz a mensagem sair com o texto cru — copie da lista de cima.'
+    ],
+    passos: [
+      { alvo: '#view-templates .tpl-vars', titulo: 'As variáveis',
+        texto: 'Trocadas pelo dado real no envio. Copie daqui: variável escrita errada sai como texto cru na mensagem.' },
+      { alvo: '#tplList', titulo: 'As mensagens',
+        texto: 'Cada template tem um uso. O que você editar aqui é o que sai para todos os clientes.' }
+    ]
+  },
+
+  'export': {
+    titulo: 'Exportar',
+    intro: 'Tirar os dados do painel em CSV — e a zona de risco.',
+    itens: [
+      '<b>Baixar CSV</b> gera o arquivo das solicitações para abrir em planilha.',
+      'A <b>zona de risco</b> apaga dados de forma definitiva. Não há desfazer.',
+      'Antes de apagar qualquer coisa, baixe o CSV.'
+    ],
+    passos: [
+      { alvo: '#view-export .cal-card', titulo: 'Baixar em CSV',
+        texto: 'As solicitações em arquivo, para abrir em planilha.' },
+      { alvo: '#fpZonaRisco', titulo: 'Zona de risco',
+        texto: 'O que está aqui apaga de verdade e não tem desfazer. Baixe o CSV antes.' }
+    ]
+  },
+
+  'users': {
+    titulo: 'Usuários',
+    intro: 'Quem tem acesso ao painel e o que cada um pode abrir.',
+    itens: [
+      'A lista traz os operadores cadastrados, com o papel de cada um.',
+      '<b>Permissões</b> escolhe, módulo por módulo, o que a pessoa vê no menu.',
+      '<b>Adicionar usuário</b> cria o acesso com uma senha inicial — a pessoa troca em Conta, no primeiro acesso.',
+      'O papel <b>Administrador</b> vê tudo e não passa pela escolha de módulos.'
+    ],
+    passos: [
+      { alvo: '#usersList', titulo: 'Quem tem acesso',
+        texto: 'Os operadores cadastrados. "Permissões" escolhe módulo por módulo o que cada um vê.' },
+      { alvo: '#newUserName', titulo: 'Adicionar alguém',
+        texto: 'Nome, usuário, telefone, papel e uma senha inicial. A pessoa troca a senha em Conta, no primeiro acesso.' }
+    ]
+  },
+
+  'manutencao': {
+    titulo: 'Manutenção',
+    intro: 'Os relatos de bug e as ideias de melhoria que a equipe enviou pelo besouro — e as cores do painel.',
+    itens: [
+      'Os números do topo são o estado da fila: abertos, em andamento, resolvidos e o total.',
+      'As <b>abas</b> filtram por situação e por tipo (bug ou melhoria).',
+      'Cada relato guarda quem enviou, de qual tela e o que estava acontecendo.',
+      'O <b>seletor de cores</b> personaliza cada cor do painel, por tema, e vale para toda a equipe.'
+    ],
+    passos: [
+      { alvo: '#view-manutencao .stats-grid', titulo: 'A fila de relatos',
+        texto: 'Abertos, em andamento e resolvidos. O que chega pelo besouro cai aqui.' },
+      { alvo: '#bugLista', titulo: 'Cada relato',
+        texto: 'Quem enviou, de qual tela e o que aconteceu. Mudar a situação move o relato de aba.' },
+      { alvo: '#fpCoresPainel', titulo: 'As cores do painel',
+        texto: 'Cada cor de destaque, por tema. O que você salvar aqui vale para toda a equipe.' }
+    ]
+  },
+
+  'atualizacoes': {
+    titulo: 'Atualizações',
+    intro: 'O que mudou no painel, em ordem de data.',
+    itens: [
+      'Cada entrada é uma mudança publicada, com data e descrição.',
+      'O filtro separa por tipo de mudança.',
+      'Administrador publica uma nova entrada pelo botão do topo.'
+    ],
+    passos: [
+      { alvo: '#updLista', titulo: 'O que mudou',
+        texto: 'As mudanças publicadas, da mais recente para a mais antiga.' },
+      { alvo: '#updNovaBtn', titulo: 'Publicar uma novidade',
+        texto: 'Só administrador: escreve uma entrada nova para a equipe ler.' }
+    ]
+  },
+
+  'integracoes': {
+    titulo: 'Integrações',
+    intro: 'As contas de fora que o painel usa: Bling, Drive, TikTok, Instagram e YouTube.',
+    itens: [
+      'A conexão fica <b>no servidor</b>, não no seu navegador: um administrador conecta uma vez e vale para todos.',
+      '<b>Bling</b> traz nome, SKU, preço e estoque dos produtos.',
+      '<b>Drive</b> guarda as fotos, organizadas por pasta de SKU.',
+      'As redes sociais alimentam os números de <b>Meus Posts</b> — sem conexão, não há métrica.',
+      'Conexão vencida aparece com o aviso na própria linha.'
+    ],
+    passos: [
+      { alvo: '#view-integracoes .fp-integr', titulo: 'As contas conectadas',
+        texto: 'A conexão fica no servidor: um administrador conecta uma vez e vale para toda a equipe.' },
+      { alvo: '#blingConnectBtn', titulo: 'Bling',
+        texto: 'É de onde vêm nome, SKU, preço e estoque. Sem ele, a Produção de fotos fica sem catálogo.' },
+      { alvo: '#driveStatusText', titulo: 'Google Drive',
+        texto: 'Onde as fotos moram, uma pasta por SKU. É o que faz o upload e a galeria funcionarem.' }
+    ]
+  },
+
+  'profile': {
+    titulo: 'Meu perfil',
+    intro: 'Seus dados, sua senha, sua chave PIX e as notificações que você recebe.',
+    itens: [
+      'A <b>foto</b> é o que a equipe vê nos comentários e no menu.',
+      '<b>Senha</b>: é aqui que se troca a senha inicial. Faça isso no primeiro acesso.',
+      'A <b>chave PIX</b> é usada nos pagamentos de bonificação — preencha com cuidado.',
+      'As <b>notificações</b> escolhem o que chega para você dentro do painel.',
+      'Só administrador muda o próprio papel.'
+    ],
+    passos: [
+      { alvo: '#profileAvatarPreview', titulo: 'Sua foto',
+        texto: 'É o que a equipe vê nos comentários e no menu do painel.' },
+      { alvo: '#profNewPw', titulo: 'Trocar a senha',
+        texto: 'A senha que você recebeu é provisória. Troque aqui, no primeiro acesso.' },
+      { alvo: '#profPixKey', titulo: 'Sua chave PIX',
+        texto: 'Usada nos pagamentos de bonificação. Confira antes de salvar.' },
+      { alvo: '#profileNotifications', titulo: 'Notificações',
+        texto: 'O que chega para você dentro do painel: menções, avaliações e avisos.' }
+    ]
+  },
+
   'foto-lote': {
     titulo: 'Fotografia em lote',
     intro: 'Os produtos do último lote separado, prontos para receber foto.',
@@ -22264,8 +22669,17 @@ const FP_AJUDA = {
    duas frentes, e a hash pode estar atrasada logo depois do boot. */
 function fpAjudaChave() {
   const vendo = id => { const el = document.getElementById('view-' + id); return !!el && el.style.display !== 'none'; };
-  if (vendo('dashboard')) return (typeof FP_DASH_FRENTE !== 'undefined' && FP_DASH_FRENTE === 'foto') ? 'dashboard-foto' : null;
-  for (const k of ['foto-producao', 'foto-galeria', 'foto-separacao', 'foto-lote']) if (vendo(k)) return k;
+  /* O Dashboard e UMA view com duas frentes, entao ele nao segue a regra geral. */
+  if (vendo('dashboard')) {
+    return (typeof FP_DASH_FRENTE !== 'undefined' && FP_DASH_FRENTE === 'foto') ? 'dashboard-foto' : 'dashboard-video';
+  }
+  /* Para o resto, a chave E o nome da view: acrescentar um verbete em FP_AJUDA
+     e o unico passo para uma tela nova ganhar ajuda. Antes havia uma lista fixa
+     de quatro telas aqui, e ela ficou desatualizada na primeira tela nova. */
+  for (const k in FP_AJUDA) {
+    if (k.slice(0, 10) === 'dashboard-') continue;
+    if (vendo(k)) return k;
+  }
   return null;
 }
 
@@ -22287,7 +22701,7 @@ const FP_TOUR_BOAS_VINDAS = {
     { alvo: '#fpBugBtn', titulo: 'Achou um problema? avise',
       texto: 'O besouro abre o relato de bug ou ideia de melhoria, de qualquer tela e até por cima de um popup — sem perder o que você estava fazendo.' },
     { alvo: '#fpAjudaBtn', titulo: 'Ajuda da tela',
-      texto: 'Nas telas de Fotografia este "?" traz as instruções da tela e o tutorial guiado dela. Pode rever quantas vezes quiser.',
+      texto: 'Em qualquer tela este "?" traz as instruções dela e o tutorial guiado. Pode rever quantas vezes quiser.',
       antes: () => { const b = document.getElementById('fpAjudaBtn'); if (b) { b.dataset.fpTour = '1'; b.style.display = 'flex'; } },
       depois: () => { const b = document.getElementById('fpAjudaBtn'); if (b) { delete b.dataset.fpTour; } try { fpAjudaAtualizar(); } catch (e) {} } },
   ]
@@ -22300,13 +22714,75 @@ let _tutPendente = null;         // tutorial de tela esperando a vez
    o tutorial da tela por cima dele. */
 let _tutGeralPendente = false;
 
-/* Chamado no boot. Se for a primeira vez desta pessoa, o boas-vindas roda e o
-   tutorial da tela entra logo depois. */
+/* ── Pop-up de boas-vindas ───────────────────────────────────────────────
+   Antes o primeiro acesso caia direto no tour guiado, com a tela escurecida e
+   um cartao apontando para o menu — sem nenhum aviso e sem saida clara. Agora
+   abre um pop-up que apresenta o painel e DA A ESCOLHA: fazer o tour ou
+   aprender sozinho.
+
+   Escolher "sozinho" desliga tambem os tutoriais automaticos de cada tela.
+   Deixa-los ligados depois de a pessoa dizer que prefere explorar seria
+   emboscada em cada modulo novo — e a marca `auto-off` e o que registra isso.
+   O "?" continua na tela: nada fica inacessivel, so deixa de ser imposto. */
+function fpBoasVindasPopup(aoFim) {
+  const ja = document.getElementById('fpBemVindoOv');
+  if (ja) ja.remove();
+  const ov = document.createElement('div');
+  ov.id = 'fpBemVindoOv';
+  ov.className = 'fp-confirm-ov';
+  const nome = ((typeof CURRENT_USER !== 'undefined' && CURRENT_USER && CURRENT_USER.name) || '').split(' ')[0];
+  ov.innerHTML = '<div class="fp-confirm fp-bemvindo" role="dialog" aria-modal="true" aria-labelledby="fpBemVindoTit">'
+    + '<div class="fp-bemvindo-marca" aria-hidden="true">'
+    +   '<img src="assets/logo-mediaclub.png?v=2" alt="" class="fp-bv-escuro">'
+    +   '<img src="assets/logo-mediaclub-preto.png?v=2" alt="" class="fp-bv-claro">'
+    + '</div>'
+    + '<h3 class="fp-confirm-tit" id="fpBemVindoTit">'
+    +   (nome ? 'Bem-vindo, ' + escHtml(nome) + '!' : 'Bem-vindo ao Media Club!')
+    + '</h3>'
+    + '<p class="fp-confirm-msg">Este é o painel do estúdio: agenda, projetos, edição, fotografia e as metas da equipe — tudo no mesmo lugar.</p>'
+    + '<p class="fp-confirm-det">Posso te mostrar o painel num tour rápido, com o passo a passo do que existe em cada tela. '
+    +   'Se preferir explorar por conta própria, o botão <b>?</b> no canto da tela traz as instruções e o tutorial de onde você estiver, a qualquer momento.</p>'
+    + '<div class="fp-confirm-acoes">'
+    +   '<button type="button" class="action-btn" id="fpBemVindoSozinho">Explorar por conta própria</button>'
+    +   '<button type="button" class="action-btn approve" id="fpBemVindoTour">Fazer o tour guiado</button>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => ov.classList.add('aberto'));
+  /* Sem `aberto` por rAF a transicao nao roda; e em aba oculta o rAF nao
+     dispara, entao a classe tambem entra por tempo. */
+  setTimeout(() => ov.classList.add('aberto'), 60);
+
+  const fechar = () => { ov.classList.remove('aberto'); setTimeout(() => ov.remove(), 180); };
+  ov.querySelector('#fpBemVindoTour').onclick = () => {
+    fechar();
+    setTimeout(() => fpTutAbrir('boas-vindas', { aoFechar: aoFim }), 220);
+  };
+  ov.querySelector('#fpBemVindoSozinho').onclick = () => {
+    fpTutMarcar('auto-off');
+    fechar();
+    /* Descarta a fila: quem escolheu explorar sozinho nao recebe o tutorial da
+       tela em que estava. */
+    _tutPendente = null;
+    if (aoFim) aoFim();
+  };
+  /* Esc equivale a "explorar sozinho": a escolha menos intrusiva. */
+  const tecla = e => {
+    if (e.key !== 'Escape') return;
+    e.preventDefault();
+    document.removeEventListener('keydown', tecla, true);
+    ov.querySelector('#fpBemVindoSozinho').click();
+  };
+  document.addEventListener('keydown', tecla, true);
+  setTimeout(() => { try { ov.querySelector('#fpBemVindoTour').focus(); } catch (e) {} }, 240);
+}
+
+/* Chamado no boot. Se for a primeira vez desta pessoa, o pop-up abre e o
+   tutorial da tela espera a decisao. */
 function fpBoasVindasTalvez() {
   if (fpTutJaViu('boas-vindas')) { fpTutFilaSoltar(); return; }
   _tutGeralPendente = true;
   fpTutMarcar('boas-vindas');
-  setTimeout(() => fpTutAbrir('boas-vindas', { aoFechar: fpTutFilaSoltar }), 900);
+  setTimeout(() => fpBoasVindasPopup(fpTutFilaSoltar), 900);
 }
 
 function fpTutFilaSoltar() {
@@ -22315,7 +22791,9 @@ function fpTutFilaSoltar() {
   if (c) setTimeout(() => { if (fpAjudaChave() === c) fpTutAbrir(c); }, 400);
 }
 
-function fpBoasVindasRever() { fpAjudaFechar(); fpTutAbrir('boas-vindas'); }
+/* Rever pelo pop-up e nao direto no tour: e a mesma porta do primeiro acesso,
+   entao o dono consegue conferir essa tela quando quiser. */
+function fpBoasVindasRever() { fpAjudaFechar(); fpBoasVindasPopup(null); }
 
 /* Mostra ou esconde o "?" conforme a tela, e abre o tutorial se for a
    primeira vez desta pessoa neste modulo. */
@@ -22328,6 +22806,9 @@ function fpAjudaAtualizar() {
   if (_ajudaChave && _ajudaChave !== chave) fpAjudaFechar();
   _ajudaChave = chave;
   if (fpTutJaViu(chave) || _tutAtivo) return;
+  /* Escolheu explorar por conta propria: nada abre sozinho. O "?" continua na
+     tela e o tutorial da tela segue disponivel dentro dele. */
+  if (fpTutJaViu('auto-off')) return;
   /* Boas-vindas ainda por vir ou rodando: o da tela espera a vez em vez de
      brigar por ela. Dois tours ao mesmo tempo e um por cima do outro. */
   if (_tutGeralPendente || !fpTutJaViu('boas-vindas')) { _tutPendente = chave; return; }
@@ -26115,9 +26596,9 @@ function applyRolePermissions() {
     fotografo:  ['dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','atualizacoes','profile','prefs-notificacoes'],
     /* Assistente Admin cuida das fotos, não do vídeo. */
     assistente: ['dashboard','foto-producao','foto-galeria','foto-separacao','foto-lote','atualizacoes','profile','prefs-notificacoes'],
-    admin: ['dashboard','requests','calendar','checkin','projects','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile','prefs-notificacoes'],
-    filmmaker: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','atualizacoes','profile','prefs-notificacoes'],
-    mecanico: ['dashboard','requests','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-bonificacao','templates','atualizacoes','profile','prefs-notificacoes'],
+    admin: ['dashboard','calendar','checkin','projects','editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile','prefs-notificacoes'],
+    filmmaker: ['dashboard','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-influencers','perf-bonificacao','templates','atualizacoes','profile','prefs-notificacoes'],
+    mecanico: ['dashboard','calendar','checkin','projects','editing','clips','debriefing','perf-metas','perf-posts','perf-bonificacao','templates','atualizacoes','profile','prefs-notificacoes'],
     viewer: ['dashboard','debriefing','atualizacoes','profile','prefs-notificacoes']
   };
 
@@ -26410,7 +26891,7 @@ async function initApp() {
      1. VIEW LIST (must match the forEach arrays in the codebase)
      ------------------------------------------------------------------ */
   const ALL_VIEWS = [
-    'dashboard','requests','calendar','checkin','projects','project-detail',
+    'dashboard','calendar','checkin','projects','project-detail',
     'editing','clips','foto-producao','foto-galeria','foto-separacao','foto-lote',
     'debriefing','perf-metas','perf-posts','perf-influencers',
     'perf-bonificacao','templates','export','users','manutencao','atualizacoes','integracoes','profile',
