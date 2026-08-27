@@ -5365,10 +5365,15 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 /* Largura por CLASSE, nao por posicao: escrita como `td:nth-child(2)` a regra
    valia para a segunda coluna de qualquer listagem — e no Clips a segunda
    coluna e o produto, que ficou esmagado em 116px (medido). */
-.fp-lista td.fp-col-tit { max-width: 320px; }
-/* Observacao e contexto de UMA linha, nunca duas: com duas, a altura muda de
-   projeto para projeto e a varredura da coluna quebra. */
-.fp-lista .fp-sub-1l { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fp-lista td.fp-col-tit { max-width: 270px; }
+/* Toda celula desta tabela tem uma ou duas linhas — nunca tres. E o que
+   mantem as 48 linhas no mesmo ritmo de 63px: uma unica que quebre em duas
+   linhas leva a linha para 80px e a tabela perde a cadencia que faz a
+   varredura funcionar. Titulo e nome de moto compridos cortam com reticencias
+   (o inteiro esta na dica e no detalhe), nao quebram. */
+.fp-lista .fp-1l,
+.fp-lista .fp-sub-1l { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fp-lista td.fp-col-moto { max-width: 190px; }
 /* O produto do Clips precisa de espaco: nome, SKU, preco e estoque numa
    coluna estreita viram uma torre de duas letras por linha. */
 .fp-lista td.fp-col-prod { min-width: 280px; }
@@ -10756,7 +10761,9 @@ function fpMotoHtml(moto) {
   const t = String(moto || '').trim();
   if (!t) return '—';
   const m = t.match(/^(.*?)\s*\(([^()]*)\)\s*$/);
-  return m ? escHtml(m[1]) + '<div class="sub">' + escHtml(m[2]) + '</div>' : escHtml(t);
+  return m
+    ? '<span class="fp-1l" data-tip="' + escHtml(t) + '">' + escHtml(m[1]) + '</span><div class="sub">' + escHtml(m[2]) + '</div>'
+    : '<span class="fp-1l" data-tip="' + escHtml(t) + '">' + escHtml(t) + '</span>';
 }
 
 function fpDestsHtml(dests) {
@@ -10838,13 +10845,13 @@ function renderProjects() {
     const obs = String(p.observations || '').trim();
     const avalia = p.status === 'a_publicar';
     return '<tr>'
-      + '<td class="fp-col-tit" data-rotulo="Projeto"><strong>' + escHtml(p.title || 'Sem título') + '</strong>'
+      + '<td class="fp-col-tit" data-rotulo="Projeto"><strong class="fp-1l" data-tip="' + escHtml(p.title || 'Sem título') + '">' + escHtml(p.title || 'Sem título') + '</strong>'
         + (avalia || obs ? '<div class="sub fp-sub-1l">'
             + (avalia ? '<span id="projNota_' + p.id + '">' + fpProjNotaHtml(p.id, []) + '</span>' + (obs ? ' · ' : '') : '')
             + escHtml(obs) + '</div>' : '')
         + '</td>'
       + '<td data-rotulo="Destinos">' + fpDestsHtml(p.destinations) + '</td>'
-      + '<td data-rotulo="Moto / Produto">' + fpMotoHtml(p.moto) + '</td>'
+      + '<td class="fp-col-moto" data-rotulo="Moto / Produto">' + fpMotoHtml(p.moto) + '</td>'
       + '<td data-rotulo="Data">' + (p.production_date ? prettyDate(p.production_date) : '—') + '</td>'
       + '<td data-rotulo="Custos">' + (custo > 0
           ? '<strong style="color:var(--warning)">R$ ' + formatBRL(custo) + '</strong>'
@@ -12429,7 +12436,7 @@ function renderShotsReadOnly(shots, si) {
     const linhas = lista.map(function(c){
       const obs = (c.observations || '').trim();
       return '<tr>'
-        + '<td class="fp-col-tit" data-rotulo="Clip"><strong>' + esc(c.title || c.product_name || 'Clip') + '</strong>'
+        + '<td class="fp-col-tit" data-rotulo="Clip"><strong class="fp-1l" data-tip="' + esc(c.title || c.product_name || 'Clip') + '">' + esc(c.title || c.product_name || 'Clip') + '</strong>'
           + (obs ? '<div class="sub fp-sub-1l">' + esc(obs) + '</div>' : '') + '</td>'
         + '<td class="fp-col-prod" data-rotulo="Produto">' + productLine(c) + '</td>'
         + '<td data-rotulo="Gravado">' + recordedCell(c) + '</td>'
@@ -22834,10 +22841,10 @@ function renderEditingView() {
     const obs = String(p.observations || '').trim();
     const r = roteiroDe(p);
     return '<tr>'
-      + '<td class="fp-col-tit" data-rotulo="Projeto"><strong>' + escHtml(p.title || 'Sem título') + '</strong>'
+      + '<td class="fp-col-tit" data-rotulo="Projeto"><strong class="fp-1l" data-tip="' + escHtml(p.title || 'Sem título') + '">' + escHtml(p.title || 'Sem título') + '</strong>'
         + (obs ? '<div class="sub fp-sub-1l">' + escHtml(obs) + '</div>' : '') + '</td>'
       + '<td data-rotulo="Destinos">' + fpDestsHtml(p.destinations) + '</td>'
-      + '<td data-rotulo="Moto / Produto">' + fpMotoHtml(p.moto) + '</td>'
+      + '<td class="fp-col-moto" data-rotulo="Moto / Produto">' + fpMotoHtml(p.moto) + '</td>'
       + '<td data-rotulo="Data">' + (p.production_date ? prettyDate(p.production_date) : '—') + '</td>'
       + '<td data-rotulo="Roteiro">' + (r.rot
           ? '<button class="fp-acao-txt" type="button" data-tip="Abrir o roteiro deste projeto" onclick="'
