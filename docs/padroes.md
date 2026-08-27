@@ -546,6 +546,29 @@ nem o estado ativo.
 
 ---
 
+## Realce de linha sangra até a borda: `--pad-lado`
+
+O realce da linha da listagem **não é o fundo dela** — é uma faixa
+(`::before`) atrás, que sangra o recuo do `<main>` para os dois lados e
+encosta na borda da tela. O conteúdo continua alinhado com o resto da página;
+só a marca de "estou aqui" vai até o fim, que é onde o olho corre.
+
+A sangria tem de ser **exatamente** o recuo lateral, e ele muda em quatro
+pontos de corte — por isso `--pad-lado` é token e `main` o usa. Ao mexer no
+recuo de `main`, mexa no token.
+
+Duas coisas obrigatórias:
+
+- **`.fp-prod-linha > * { position: relative; z-index: 1 }`** — sem isso o
+  conteúdo da linha fica debaixo da faixa.
+- **Cancelar a sangria onde a listagem não ocupa a largura da página**
+  (`.fp-dash-duo`, no Dashboard): lá ela invadiria a coluna vizinha.
+
+`main` já tem `overflow-x: hidden`, então a sangria é cortada ali e não inventa
+rolagem horizontal.
+
+---
+
 ## Tokens de espaço: `--pad-topo` e `--fp-col-gap`
 
 O recuo do topo da página e o vão entre colunas de métrica saem de token, não de
