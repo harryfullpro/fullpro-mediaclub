@@ -1,5 +1,111 @@
 # Diário
 
+## 27/08/2026 · "Tu fez tudo errado": o padrão era a página, não a tabela
+
+> *"deixa de ser burro cara, olha a primeira imagem que te pedi e olha a segunda
+> o que tu fez. Eu quero o mesmo padrão da primeira foto nas paginas projetos,
+> edição e clips"*
+
+Eu havia adotado só a tabela — e nem ela por inteiro. Comparando as duas telas
+com `getComputedStyle` (não de memória), os deltas:
+
+| | Solicitações | o que eu tinha feito |
+|---|---|---|
+| moldura | `.table-wrap`: cartão, fio, canto 14px | nenhuma |
+| fundo do `<th>` | `--bg-elev` (faixa cinza) | **branco** (`--bg-soft`) |
+| `<th>` grudado no topo | sim | não |
+| recuo da célula | 14px 16px | 12px, zero nas pontas |
+| altura da linha | 63px, constante | 59 a 109px |
+| status | pílula | `<select>` com borda e seta |
+| barra de filtro | abas neutras + busca + contagem | chips coloridos + 2 selects + botão |
+| métricas | quatro, sem caixa | nenhuma |
+
+**A causa raiz do cabeçalho branco:** `.table-wrap thead th` é quem pinta
+`--bg-elev`. Fora do wrapper vale `th { background: var(--bg-soft) }`, que no
+tema claro é quase branco. Eu tinha tirado o wrapper por causa da regra "sem
+containers" — que vale para **linha de listagem**, não para a moldura da tabela
+de referência.
+
+E o recuo de 12px era o sintoma: eu raspei pixel do recuo para caber sete
+colunas em vez de tirar tralha da linha. Voltou para 14×16 e a largura veio de
+onde devia:
+
+- produtos compatíveis do Bling saíram da linha (era **uma busca de rede por
+  linha, a cada re-render**) e foram para o resumo do projeto;
+- painel de cinco estrelas + botão "avaliar" virou nota compacta na sublinha
+  (`.fp-nota`) — não um sexto ícone, porque cada ícone custa 34px de coluna;
+- selos de destino: no máximo dois e o resto em "+N" (empilhados, três levavam
+  a linha de 63px para 109px);
+- placa da moto na sublinha, como o par Moto/placa de Solicitações. Inteira numa
+  linha, "Kawasaki Versys 650 2026 (TQF0J92)" quebrava em três linhas.
+
+**Nenhuma célula quebra em três linhas.** Título e nome de moto cortam com
+reticências (`.fp-1l`) e o texto inteiro vai em `data-tip`. Foi o que fechou a
+conta: 1211px → 1146px, exatamente a largura útil.
+
+Medido em produção a 1280×860, com a barra lateral aberta:
+
+| tela | colunas | linhas | altura | cabe |
+|---|---|---|---|---|
+| Projetos | 7 | 48 | 63px em todas | 1146/1146 |
+| Edição | 7 | 11 | 63px em todas | 1146/1146 |
+| Clips | 5 | 6 | 69px (miniatura de 40px) | sim |
+| Agenda | 6 | 38 | 63px em todas | 1146/1146 |
+
+### Duas mudanças de comportamento, ditas em voz alta
+
+- **Projetos: status virou aba de escolha única.** Os chips do computador eram
+  múltipla escolha e o `<select>` do celular era escolha única — a mesma tela com
+  duas lógicas. Unifiquei na do celular. O filtro de destino continua múltiplo,
+  porque é outro eixo, e saiu da caixa: virou ação de texto.
+- **Edição ganhou as abas Em edição / A publicar / Todos.** As métricas da tela já
+  falavam de "A publicar" e de "Total no pipeline" sem que houvesse jeito de ver
+  essas listas: o número prometia uma tela que não existia.
+
+### Agenda entrou no mesmo formato
+
+> *"aqui na agenda vamos aplicar também o mesmo padrão que acabamos de aplicar
+> em projetos e etc"*
+
+A página respondia **um dia por vez** e a metade de baixo ficava vazia. Agora tem
+métricas (aprovados, pendentes, bloqueios, dias livres) e, abaixo do calendário,
+a **agenda do mês** em tabela — abas com contagem, busca, cabeçalho ordenável.
+
+Não é o Solicitações de novo: o recorte é o **mês que o calendário está
+mostrando**, e os **bloqueios entram como linha**, porque ocupam data igual a um
+agendamento (o motivo ocupa o lugar do nome, que é a informação que ele tem).
+Navegar de mês redesenha as duas coisas.
+
+"Dias livres" conta **dia útil** sem aprovado e sem bloqueio: contar oito fins de
+semana como vagos daria um número que não significa nada.
+
+Uma aba faltava e a conta denunciou: `13 + 0 + 4 + 3 ≠ 38`. As 18 rejeitadas do
+mês não tinham como aparecer.
+
+### Prancheta animada virou componente
+
+> *"aqui em debriefing, nesse div da nota média, quero que o fundo seja a mesma
+> animação da tela de login e da sidebar"*
+
+`.fp-bp`: papel milimetrado + traçado técnico + dois brilhos que passeiam em 19s
+e 27s (períodos sem divisor comum, para o quadro não repetir). Substituiu um
+gradiente parado de três cores no cartão da nota do Debriefing.
+
+Três coisas não se copiam do login: a **escala** da malha (16px/64px, não
+24px/120px — na altura de uma caixa a do login daria duas linhas e meia), o
+**peso** (sobre o branco de `--bg-card` os valores do login viram papel
+milimetrado de verdade e competem com o número; valem o da barra lateral, um
+terço) e o **traçado**, que é desenhado para 900×160 — o do login entra cortado.
+
+### A lição, que não é sobre CSS
+
+Quando o dono aponta uma referência, a entrega é **aquela** referência, medida
+lado a lado, e não a minha leitura do princípio que ela ilustra. "Sem
+containers" era um princípio verdadeiro aplicado no lugar errado — e o custo foi
+uma tela que parecia certa em tudo, menos no que se vê primeiro.
+
+---
+
 ## 27/08/2026 · Projetos, Edição e Clips viram tabela
 
 > *"eu gostei desse modelo aqui, vamos tornar padrão esse formato de listagem

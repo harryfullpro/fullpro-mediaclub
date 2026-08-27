@@ -93,6 +93,26 @@ não abre o seletor nativo do iOS. No computador segue múltipla escolha pelos c
 Ou seja: Stand by é fila de retomada, não é arquivo morto. Rejeitada continua sendo o
 descarte.
 
+### Agenda mostra o mês, não só o dia
+> *"aqui na agenda vamos aplicar também o mesmo padrão que acabamos de aplicar em
+> projetos e etc"* (27/08/2026)
+
+- Métricas do mês em cima: **aprovados, pendentes, bloqueios e dias livres**
+- Calendário + detalhes do dia, e abaixo a **agenda do mês em tabela** no formato padrão
+- O recorte é o **mês que o calendário mostra** — navegar de mês redesenha a listagem
+- **Bloqueio é linha da tabela**, com o motivo no lugar do nome: ele ocupa data igual a um
+  agendamento
+- "Dias livres" conta **dia útil**: sábado e domingo não entram porque a empresa não opera
+
+### Edição tem abas de etapa
+As métricas já falavam de "A publicar" e de "Total no pipeline" sem que houvesse jeito de
+ver essas listas. Abas: **Em edição · A publicar · Todos** (todos = o pipeline).
+
+### Projetos: status é escolha única
+Os chips do computador eram múltipla escolha e o `<select>` do celular era escolha única —
+a mesma tela com duas lógicas. Ficou a do celular. O **filtro de destino continua
+múltiplo**, porque é outro eixo, e mora fora da barra de abas.
+
 ### Check-in / Check-out gira em torno da data
 > *"quero que mostre somente o do dia"*
 

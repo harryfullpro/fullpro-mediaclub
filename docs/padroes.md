@@ -166,26 +166,103 @@ Aplicar `display: contents` no bloco do título e em `.edit-actions` promove tí
 status e "…" a filhos diretos do flex do cabeçalho — daí `order` e `flex-basis: 100%`
 montam as duas linhas. Mexer no HTML resolveria também, mas mudaria o computador.
 
-### Listagem é tabela: `.fp-lista`
+### Listagem é tabela: `.fp-lista` — e é a página inteira
 
-O formato padrão das listagens é a tabela: cabeçalho ordenável, fio entre as
-linhas, ações na última coluna. Solicitações, Projetos, Edição e Clips usam.
+O padrão das listagens é o **conjunto** da tela de Solicitações, não só a tabela:
+
+1. **Métricas em cima** — `.stats-grid` com `.stat-card` (rótulo miúdo, número grande,
+   sem caixa). Leem o **universo inteiro**, nunca a aba aberta: em Solicitações o "Total"
+   não muda ao clicar em "Pendentes".
+2. **Barra de abas** — `.filter-bar` com `.filter-btn` (texto neutro, sublinhado vermelho
+   na ativa, contagem em `.fp-conta`), campo `.fp-busca` e `.fp-lista-contagem` à direita,
+   tudo sobre um fio que atravessa a linha. Uma escolha por vez.
+3. **A tabela dentro de `<div class="table-wrap fp-lista-wrap">`** — cartão com fio,
+   canto de 14px e **cabeçalho cinza que gruda no topo** ao rolar.
+4. **Status em pílula**, ações em ícone na última coluna.
+
+> Erro cometido em 27/08/2026, e o dono viu na hora: adotei só a tabela e nem ela por
+> inteiro. Fora do `.table-wrap`, o `<th>` pega `--bg-soft` em vez de `--bg-elev` — no tema
+> claro isso é **branco**, ou seja, o cabeçalho perde a faixa cinza e deixa de grudar.
+> Somado a status em `<select>` com borda e seta, chips coloridos na barra de filtro e
+> nenhuma métrica, o resultado era *parecido* com a referência e diferente dela em tudo o
+> que se vê primeiro. **Comparar medindo, não de memória**: `getComputedStyle` das duas
+> telas lado a lado mostrou os sete deltas em um minuto.
 
 Regras que já custaram defeito:
 
-- **Largura de coluna por CLASSE, nunca por `nth-child`.** A mesma posição é
-  uma coluna diferente em cada tela.
-- **Recuo de 12px por célula e zero nas pontas.** Com o padrão de 16px, sete
-  colunas estouram a largura útil e a coluna de ações sai da tela.
-- **Conteúdo longo não entra na linha.** Observação, prévia, PDF e listas vão
-  para o detalhe; na linha cabe um resumo de uma linha (`.sub`).
-- **Nada de patch que procure o cartão no DOM.** Se a decisão depende do dado
-  (qual modal abrir, por exemplo), ela mora no renderizador.
+- **Sem recuo próprio: vale o padrão `14px 16px` de `th, td`.** A primeira versão trocou
+  por 12px com zero nas pontas para caber sete colunas — foi raspar pixel para não mexer
+  no conteúdo, e custou a faixa do cabeçalho. Largura que falta se ganha **tirando tralha
+  da linha**, não do recuo.
+- **Nenhuma célula quebra em três linhas.** Uma linha de 79px no meio de linhas de 63px
+  acaba com a cadência que faz a varredura funcionar. Título e nome de moto cortam com
+  reticências (`.fp-1l`), com o texto inteiro em `data-tip`; a observação vira uma linha
+  só (`.fp-sub-1l`). Placa e telefone vão para a `.sub`, nunca entre parênteses no meio
+  da frase.
+- **Largura de coluna por CLASSE, nunca por `nth-child`** (`.fp-col-tit`, `.fp-col-moto`,
+  `.fp-col-prod`). A mesma posição é uma coluna diferente em cada tela.
+- **Nada de busca de rede por linha.** Os produtos compatíveis do Bling eram uma chamada
+  por projeto a cada re-render, e o bloco mudava a altura da linha quando a resposta
+  chegava. Isso mora no resumo, que só abre quando alguém pede.
+- **Máximo dois selos de destino na linha**, o resto em "+N": empilhados, três levavam a
+  linha de 63px para 109px.
+- **Conteúdo longo e painel de interação vão para o detalhe.** O painel de cinco estrelas
+  com o botão "avaliar" virou nota compacta na sublinha (`.fp-nota`) — e não um sexto
+  ícone de ação, porque cada ícone custa 34px de coluna.
+- **Nada de patch que procure o cartão no DOM.** Se a decisão depende do dado (qual modal
+  abrir, por exemplo), ela mora no renderizador.
 
-Abaixo de 600px a tabela vira lista de blocos com o rótulo da coluna antes do
-valor — daí o `data-rotulo` em cada `<td>`.
+Abaixo de 600px a tabela vira lista de blocos com o rótulo da coluna antes do valor — daí
+o `data-rotulo` em cada `<td>`; e `.fp-lista-wrap` perde a moldura no `@media` de 900px.
+
+**Duas interfaces para o mesmo filtro precisam da mesma regra.** Em Projetos os chips do
+computador eram múltipla escolha e o `<select>` do celular era escolha única — a mesma tela
+com duas lógicas. As abas unificaram na escolha única, que é a do celular. O filtro de
+destino continua múltiplo porque é outro eixo, e mora fora da barra.
+
+**Onde guardar o estado da ordem:** se a tela já tem um `<select>` de ordem (Projetos), o
+clique no cabeçalho **escreve nesse select** — `FP_PROJ_ORD` + `fpProjOrdenar`. Duas fontes
+de ordem discordam na primeira troca. Sem select próprio (Edição, Clips, Agenda), o estado
+é `FP_ORD[tela]` + `fpThOrd`/`fpOrdAplicar`/`fpOrdTrocar`.
+
+**Status ordena pela etapa do fluxo, não pelo alfabeto:** "A publicar" vem depois de
+"Edição" no trabalho e antes no dicionário (`FP_PROJ_ETAPA`).
+
+Telas no formato: Solicitações (referência), Projetos, Edição, Clips e Agenda.
 
 ---
+
+### Prancheta animada: `.fp-bp`
+
+O fundo da tela de entrada e da barra lateral virou componente para caber em caixa —
+usado no cartão de nota média do Debriefing (27/08/2026, a pedido do dono).
+
+```html
+<div class="fp-bp" aria-hidden="true">
+  <div class="fp-bp-grade"></div>
+  <svg class="fp-bp-tec" viewBox="0 0 900 160" preserveAspectRatio="xMidYMid slice">…</svg>
+  <div class="fp-bp-b fp-bp-b1"></div>
+  <div class="fp-bp-b fp-bp-b2"></div>
+</div>
+```
+
+O container precisa de `position: relative`, `overflow: hidden` e **`isolation: isolate`**,
+e o conteúdo precisa subir (`> *:not(.fp-bp) { position: relative; z-index: 1 }`): filho
+estático perde para camada posicionada.
+
+Três coisas que não se copiam do login:
+
+- **Escala da malha.** 16px/64px, não 24px/120px — na altura de uma caixa, a do login
+  daria duas linhas e meia.
+- **Peso.** Sobre o branco de `--bg-card` os valores do login viram papel milimetrado de
+  verdade e competem com o número. Valem o que valem na barra lateral: um terço.
+- **O traçado técnico é desenhado para o formato** (900×160). O do login (1440×900) entra
+  cortado. E quadro com X é gráfico demais para um fundo: mira, arcos e cotas bastam.
+
+Os períodos dos brilhos (19s e 27s) **não têm divisor comum** — é o que impede o fundo de
+repetir o mesmo quadro. E período curto é o que faz parecer vivo: a primeira versão do
+login rodava em 40s/52s, ≈1vw por segundo, e o dono perguntou se a animação tinha ficado
+pronta.
 
 ### Listagem: fios, não caixas
 
