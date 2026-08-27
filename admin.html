@@ -5341,9 +5341,13 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 /* As celulas de acao e de status nao esticam: quem manda na largura e o
    conteudo de verdade (titulo, produto). */
 .fp-lista td:last-child, .fp-lista th:last-child { width: 1%; white-space: nowrap; }
-/* Coluna de destinos estreita de proposito: com tres tags elas empilham em
-   vez de esticar a coluna e comer a largura do titulo. */
-.fp-lista td:nth-child(2) { max-width: 116px; }
+/* Estreita por CLASSE, nao por posicao: escrita como `td:nth-child(2)` ela
+   valia para a segunda coluna de qualquer listagem — e no Clips a segunda
+   coluna e o produto, que ficou esmagado em 116px (medido). */
+.fp-lista td.fp-col-dest { max-width: 116px; }
+/* O produto do Clips precisa de espaco: nome, SKU, preco e estoque numa
+   coluna de 116px viram uma torre de duas letras por linha. */
+.fp-lista td.fp-col-prod { min-width: 300px; }
 .fp-lista .proj-dest-tag { margin-bottom: 2px; }
 
 @media (max-width: 600px) {
@@ -10641,7 +10645,7 @@ function renderProjects() {
         + '<div class="proj-bling" id="projBlingProds_' + p.id + '"></div>'
         + (p.status === 'a_publicar' ? '<div class="proj-rating" id="projRating_' + p.id + '">' + projRatingHtml(p.id, []) + '</div>' : '')
         + '</td>'
-      + '<td data-rotulo="Destinos">' + (dests || '<span class="sub">Sem destino</span>') + '</td>'
+      + '<td class="fp-col-dest" data-rotulo="Destinos">' + (dests || '<span class="sub">Sem destino</span>') + '</td>'
       + '<td data-rotulo="Moto / Produto">' + escHtml(p.moto || '—') + '</td>'
       + '<td data-rotulo="Data">' + (p.production_date ? prettyDate(p.production_date) : '—') + '</td>'
       + '<td data-rotulo="Custos">' + (custo > 0
@@ -12204,7 +12208,7 @@ function renderShotsReadOnly(shots, si) {
         + '<td data-rotulo="Clip"><strong>' + esc(c.title || c.product_name || 'Clip') + '</strong>'
           + (obs ? '<div class="sub">' + esc(obs.slice(0, 110)) + (obs.length > 110 ? '…' : '') + '</div>'
                  : '<div class="sub">Sem observações</div>') + '</td>'
-        + '<td data-rotulo="Produto">' + productLine(c) + '</td>'
+        + '<td class="fp-col-prod" data-rotulo="Produto">' + productLine(c) + '</td>'
         + '<td data-rotulo="Gravado">' + (recordedTag(c) || '<span class="sub">—</span>') + '</td>'
         + '<td data-rotulo="Status">' + statusSelect(c, false) + '</td>'
         + '<td><div class="actions">'
@@ -22588,7 +22592,7 @@ function renderEditingView() {
         + (obs
             ? '<div class="sub">' + escHtml(obs.slice(0, 110)) + (obs.length > 110 ? '…' : '') + '</div>'
             : '') + '</td>'
-      + '<td data-rotulo="Destinos">' + (dests || '<span class="sub">Sem destino</span>') + '</td>'
+      + '<td class="fp-col-dest" data-rotulo="Destinos">' + (dests || '<span class="sub">Sem destino</span>') + '</td>'
       + '<td data-rotulo="Moto / Produto">' + escHtml(p.moto || '—') + '</td>'
       + '<td data-rotulo="Data">' + (p.production_date ? prettyDate(p.production_date) : '—') + '</td>'
       + '<td data-rotulo="Roteiro">' + (r.rot
