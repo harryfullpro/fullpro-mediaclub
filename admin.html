@@ -5188,6 +5188,20 @@ body.fp-sem-sessao .fp-ajuda-btn { display: none !important; }
    principal é o arquivo, e a prévia mostra o desenho. */
 .fp-icones { margin-top: 28px; }
 .fp-ico-nota { font-size: 12px; color: var(--text-muted); margin: 0 0 6px; line-height: 1.5; max-width: 70ch; }
+
+/* ── Listagem de operadores ─────────────────────────────────────────────
+   O acesso em uma palavra, no tom que o estado pede: "Nenhum" é aviso, e não
+   estado neutro — essa pessoa entra no painel e não enxerga módulo nenhum. */
+.fp-usr-acesso { font-size: 12px; font-weight: 600; color: var(--text-dim); white-space: nowrap; }
+.fp-usr-acesso.total { color: var(--text-muted); }
+.fp-usr-acesso.nenhum { color: var(--warning); font-weight: 700; }
+/* Nota do modal de criação: entre fios, como o detalhe do diálogo da casa. */
+.fp-user-nota {
+  margin: 2px 0 4px; padding: 11px 0;
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  font-size: 12px; line-height: 1.55; color: var(--text-muted);
+}
+.fp-user-nota b { color: var(--text-dim); font-weight: 650; }
 .fp-ico-ajuda { margin: 0 0 10px; max-width: 78ch; }
 .fp-ico-ajuda summary {
   font-size: 12px; font-weight: 700; color: var(--text-dim); cursor: pointer;
@@ -7192,28 +7206,78 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
       <div class="page-head">
         <div>
           <h1>Usuários</h1>
-          <p>Gerencie os operadores com acesso ao painel.</p>
+          <p>Quem tem acesso ao painel e o que cada um pode abrir.</p>
+        </div>
+        <button class="fp-new-btn" data-tip="Novo usuário" aria-label="Novo usuário" onclick="fpUserNovoAbrir()">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+
+      <!-- "Sem módulo" é a métrica que importa aqui: operador criado e sem
+           permissão nenhuma entra no painel e não vê nada. Sem esse número,
+           isso só aparece quando a pessoa reclama. -->
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-card">
+          <div class="label">Operadores</div>
+          <div class="value" id="usrStatTotal">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Administradores</div>
+          <div class="value" id="usrStatAdmin">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Acesso parcial</div>
+          <div class="value" id="usrStatParcial">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Sem módulo</div>
+          <div class="value" style="color:var(--warning)" id="usrStatSem">0</div>
         </div>
       </div>
-      <div style="display:grid; grid-template-columns: 1fr 340px; gap:16px; align-items:start">
-        <div class="cal-card">
-          <h3>Operadores cadastrados</h3>
-          <p class="sub">Todos os usuários com acesso ao sistema.</p>
-          <div id="usersList"></div>
-        </div>
-        <div class="cal-card">
-          <h3>Adicionar usuário</h3>
-          <p class="sub">Preencha os dados para criar um novo operador.</p>
-          <div style="display:flex;flex-direction:column;gap:10px">
+
+      <div class="filter-bar">
+        <span class="fp-so-desktop" style="display:contents">
+          <button class="filter-btn active" data-ufilter="todos" onclick="fpUserFiltro('todos')">Todos <span class="fp-conta"></span></button>
+          <button class="filter-btn" data-ufilter="admin" onclick="fpUserFiltro('admin')">Administradores <span class="fp-conta"></span></button>
+          <button class="filter-btn" data-ufilter="operador" onclick="fpUserFiltro('operador')">Operadores <span class="fp-conta"></span></button>
+          <button class="filter-btn" data-ufilter="sem" onclick="fpUserFiltro('sem')">Sem módulo <span class="fp-conta"></span></button>
+        </span>
+        <select class="proj-sort-select fp-so-mobile" id="usrFiltroSelect" aria-label="Filtrar operadores" onchange="fpUserFiltro(this.value)">
+          <option value="todos">Todos</option>
+          <option value="admin">Administradores</option>
+          <option value="operador">Operadores</option>
+          <option value="sem">Sem módulo</option>
+        </select>
+        <label class="fp-busca">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="search" placeholder="Buscar nome, usuário ou cargo" aria-label="Buscar operadores" oninput="fpUserBuscar(this.value)">
+        </label>
+        <span id="usrCount" class="fp-lista-contagem"></span>
+      </div>
+
+      <div id="usersList"></div>
+
+      <!-- Novo usuário: o + do cabeçalho abre aqui, como em Projetos, Clips e
+           Agenda. O formulário fixo na lateral custava 340px de largura numa
+           tela que é listagem, e ficava na frente o tempo todo para uma ação
+           que acontece uma vez por contratação. -->
+      <div class="modal" id="userNovoModal">
+        <div class="modal-content" style="max-width:460px">
+          <div class="modal-head">
+            <h3>Novo usuário</h3>
+            <button class="modal-close" onclick="fpUserNovoFechar()" aria-label="Fechar">&times;</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">
             <input type="text" class="login-input" id="newUserName" placeholder="Nome completo" style="margin:0"/>
             <input type="text" class="login-input" id="newUserUsername" placeholder="Usuário (login)" style="margin:0"/>
             <input type="text" class="login-input" id="newUserPhone" placeholder="Telefone" style="margin:0"/>
-            <input type="text" class="login-input" id="newUserRole" placeholder="Cargo (ex: Operador)" style="margin:0"/>
-            <input type="password" class="login-input" id="newUserPw" placeholder="Senha" style="margin:0"/>
-            <button class="action-btn view" style="width:100%;padding:12px" onclick="createUser()">
-              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-              Criar usuário
-            </button>
+            <input type="text" class="login-input" id="newUserRole" placeholder="Cargo (ex: Fotógrafo)" style="margin:0"/>
+            <input type="password" class="login-input" id="newUserPw" placeholder="Senha inicial" style="margin:0"/>
+            <p class="fp-user-nota">A pessoa troca essa senha em <b>Meu perfil</b>, no primeiro acesso. Depois de criar, defina os módulos dela pelo escudo na listagem — sem isso ela entra e não vê nada.</p>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              <button class="action-btn" type="button" onclick="fpUserNovoFechar()">Cancelar</button>
+              <button class="action-btn approve" type="button" onclick="createUser()">Criar usuário</button>
+            </div>
           </div>
         </div>
       </div>
@@ -8514,22 +8578,148 @@ async function loadUsers() {
   renderUsers(data || []);
 }
 
+/* ── Listagem de operadores ──────────────────────────────────────────────
+   No formato padrão das listagens. O que era botão de texto ("Remover",
+   "Permissões") virou ícone na última coluna, e o formulário fixo da lateral
+   virou modal no + do cabeçalho.
+
+   A coluna ACESSO substitui o rótulo que um patch de DOM colava na célula
+   depois do render (`fpInjectPermUI`). Aquele patch procurava a última célula
+   da linha e pendurava um botão nela — com a tabela nova ele penduraria o
+   botão dentro da coluna de ações, atrás dos ícones. A decisão passou para cá,
+   onde o dado está: é a mesma correção que a coluna Roteiro da Edição. */
+let USUARIOS = [];
+let _usrFiltro = 'todos', _usrBusca = '';
+
+function fpUserEhAdmin(u) {
+  const r = String(u.role || '').toLowerCase();
+  return r === 'admin' || r.indexOf('admin') === 0;
+}
+/* Quantos módulos a pessoa enxerga. Administrador não passa por essa conta —
+   para ele o acesso é total por papel, e `modules` é ignorado. */
+function fpUserModulos(u) {
+  return Array.isArray(u.modules) ? u.modules.length : 0;
+}
+
+function fpUserFiltro(k) {
+  _usrFiltro = k;
+  const sel = document.getElementById('usrFiltroSelect');
+  if (sel && sel.value !== k) sel.value = k;
+  renderUsers(USUARIOS);
+}
+function fpUserBuscar(v) {
+  _usrBusca = String(v || '').trim().toLowerCase();
+  const cx = document.querySelector('#view-users .fp-busca');
+  if (cx) cx.classList.toggle('tem-texto', !!_usrBusca);
+  renderUsers(USUARIOS);
+}
+function fpUserNovoAbrir() {
+  const m = document.getElementById('userNovoModal');
+  if (m) m.classList.add('show');
+  setTimeout(() => { const c = document.getElementById('newUserName'); if (c) try { c.focus(); } catch (e) {} }, 80);
+}
+function fpUserNovoFechar() {
+  const m = document.getElementById('userNovoModal');
+  if (m) m.classList.remove('show');
+}
+window.fpUserFiltro = fpUserFiltro;
+window.fpUserBuscar = fpUserBuscar;
+window.fpUserNovoAbrir = fpUserNovoAbrir;
+window.fpUserNovoFechar = fpUserNovoFechar;
+
 function renderUsers(users) {
   const el = document.getElementById('usersList');
   if (!el) return;
-  if (users.length === 0) {
-    el.innerHTML = '<p style="color:var(--text-muted);font-size:13px">Nenhum usuário cadastrado.</p>';
+  USUARIOS = Array.isArray(users) ? users : [];
+
+  const admins = USUARIOS.filter(fpUserEhAdmin);
+  const operadores = USUARIOS.filter(u => !fpUserEhAdmin(u));
+  const semModulo = operadores.filter(u => fpUserModulos(u) === 0);
+  const num = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  num('usrStatTotal', USUARIOS.length);
+  num('usrStatAdmin', admins.length);
+  num('usrStatParcial', operadores.length - semModulo.length);
+  num('usrStatSem', semModulo.length);
+
+  const daAba = u => _usrFiltro === 'admin' ? fpUserEhAdmin(u)
+    : _usrFiltro === 'operador' ? !fpUserEhAdmin(u)
+    : _usrFiltro === 'sem' ? (!fpUserEhAdmin(u) && fpUserModulos(u) === 0)
+    : true;
+  let lista = USUARIOS.filter(daAba);
+  const naAba = lista.length;
+  if (_usrBusca) {
+    lista = lista.filter(u => ((u.username || '') + ' ' + (u.name || '') + ' ' + (u.role || ''))
+      .toLowerCase().includes(_usrBusca));
+  }
+
+  document.querySelectorAll('#view-users .filter-btn[data-ufilter]').forEach(b => {
+    const k = b.dataset.ufilter;
+    b.classList.toggle('active', k === _usrFiltro);
+    const n = b.querySelector('.fp-conta');
+    if (n) n.textContent = k === 'todos' ? USUARIOS.length
+      : k === 'admin' ? admins.length
+      : k === 'operador' ? operadores.length : semModulo.length;
+  });
+  const cont = document.getElementById('usrCount');
+  if (cont) cont.textContent = lista.length === naAba
+    ? naAba + (naAba === 1 ? ' operador' : ' operadores')
+    : lista.length + ' de ' + naAba;
+
+  const vazio = (t, x) => '<div class="fp-vazio fp-moldura">' + FP_ICO_ATENCAO
+    + '<h3>' + t + '</h3><p>' + x + '</p></div>';
+  if (!lista.length) {
+    el.innerHTML = _usrBusca
+      ? vazio('Nada encontrado para "' + escHtml(_usrBusca) + '"', 'Tente outro nome, usuário ou cargo.')
+      : vazio('Ninguém nesta aba', 'Use o + no topo da tela para criar um operador.');
     return;
   }
-  el.innerHTML = `<table class="data-table" style="width:100%"><thead><tr>
-    <th>Usuário</th><th>Nome</th><th>Cargo</th><th>Telefone</th><th></th>
-  </tr></thead><tbody>${users.map(u => `<tr>
-    <td><strong>${u.username}</strong></td>
-    <td>${u.name || '—'}</td>
-    <td>${u.role || '—'}</td>
-    <td>${u.phone || '—'}</td>
-    <td>${u.id !== CURRENT_USER?.id ? `<button class="action-btn reject" style="padding:4px 10px;font-size:11px" onclick="deleteUser('${u.id}','${u.username}')">Remover</button>` : '<span style="font-size:11px;color:var(--text-muted)">Você</span>'}</td>
-  </tr>`).join('')}</tbody></table>`;
+
+  const ICO_ESCUDO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>';
+  const ICO_LIXO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>';
+
+  const eu = (typeof CURRENT_USER !== 'undefined' && CURRENT_USER) ? CURRENT_USER.id : null;
+  const podeMexer = typeof getUserRole === 'function' && getUserRole() === 'admin';
+
+  const linhas = lista.map(u => {
+    const ehAdmin = fpUserEhAdmin(u);
+    const mods = fpUserModulos(u);
+    const souEu = u.id === eu;
+    /* O acesso em uma palavra. "Nenhum" é aviso, não estado neutro: essa
+       pessoa entra no painel e não vê módulo nenhum. */
+    const acesso = ehAdmin
+      ? '<span class="fp-usr-acesso total">Total</span>'
+      : mods === 0
+        ? '<span class="fp-usr-acesso nenhum">Nenhum</span>'
+        : '<span class="fp-usr-acesso">' + mods + (mods === 1 ? ' módulo' : ' módulos') + '</span>';
+    return '<tr>'
+      + '<td class="fp-col-tit" data-rotulo="Usuário"><strong>' + escHtml(u.username || '—') + '</strong>'
+        + (souEu ? '<div class="sub">você</div>' : '') + '</td>'
+      + '<td data-rotulo="Nome">' + escHtml(u.name || '—') + '</td>'
+      + '<td data-rotulo="Cargo">' + escHtml(u.role || '—') + '</td>'
+      + '<td data-rotulo="Telefone">' + (u.phone ? escHtml(u.phone) : '<span class="sub">—</span>') + '</td>'
+      + '<td data-rotulo="Acesso">' + acesso + '</td>'
+      + '<td><div class="actions">'
+        + (podeMexer && !ehAdmin
+            ? '<button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Escolher os módulos que este operador vê" onclick="fpOpenPermModal(\'' + u.id + '\',\'' + jsStrSeguro(u.username) + '\')">' + ICO_ESCUDO + '</button>'
+            : '')
+        + (podeMexer && !souEu
+            ? '<button class="fp-icon-btn fp-ib-danger fp-tip-left" data-tip="Remover o acesso deste operador" onclick="deleteUser(\'' + u.id + '\',\'' + jsStrSeguro(u.username) + '\')">' + ICO_LIXO + '</button>'
+            : '')
+        + '</div></td>'
+      + '</tr>';
+  }).join('');
+
+  el.innerHTML = '<div class="table-wrap fp-lista-wrap"><table class="fp-lista"><thead><tr>'
+    + '<th>Usuário</th><th>Nome</th><th>Cargo</th><th>Telefone</th>'
+    + '<th>Acesso</th><th>Ações</th>'
+    + '</tr></thead><tbody>' + linhas + '</tbody></table></div>';
+}
+
+/* Nome de usuário vai dentro de um `onclick`, então o escape correto é o de
+   string JS — escapar para HTML aqui devolveria a aspa e quebraria a chamada.
+   (Mesma pegadinha já registrada nos padrões do projeto.) */
+function jsStrSeguro(v) {
+  return String(v == null ? '' : v).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
 async function createUser() {
@@ -8554,12 +8744,11 @@ async function createUser() {
     }
     return;
   }
-  document.getElementById('newUserName').value = '';
-  document.getElementById('newUserUsername').value = '';
-  document.getElementById('newUserPhone').value = '';
-  document.getElementById('newUserRole').value = '';
-  document.getElementById('newUserPw').value = '';
-  fpToast('Usuário criado!', 'ok');
+  ['newUserName','newUserUsername','newUserPhone','newUserRole','newUserPw']
+    .forEach(id => { const c = document.getElementById(id); if (c) c.value = ''; });
+  if (typeof fpUserNovoFechar === 'function') fpUserNovoFechar();
+  /* O aviso diz o passo seguinte: sem módulos, o operador entra e não vê nada. */
+  fpToast('Usuário criado. Defina os módulos dele pelo escudo na listagem.', 'ok', { duracao: 7000 });
   loadUsers();
 }
 
@@ -12477,31 +12666,13 @@ function renderShotsReadOnly(shots, si) {
   }
   window.fpOpenPermModal = fpOpenPermModal;
 
-  function fpInjectPermUI(users){
-    if (!fpIsAdmin()) return;
-    const tbody = document.querySelector('#usersList table tbody');
-    if (!tbody) return;
-    const rows = tbody.querySelectorAll('tr');
-    users.forEach(function(u, i){
-      const row = rows[i]; if (!row) return;
-      const cell = row.lastElementChild; if (!cell) return;
-      if (cell.querySelector('.fp-perm-added')) return;
-      if (fpRoleKey(u.role) === 'admin') {
-        const s = document.createElement('span');
-        s.className = 'fp-perm-added';
-        s.style.cssText = 'font-size:11px;color:var(--text-muted);margin-left:8px';
-        s.textContent = 'Acesso total';
-        cell.appendChild(s);
-      } else {
-        const b = document.createElement('button');
-        b.className = 'action-btn fp-perm-added';
-        b.style.cssText = 'padding:4px 10px;font-size:11px;margin-left:8px;border:1px solid var(--border);background:var(--bg-elev);color:var(--text);border-radius:6px;cursor:pointer';
-        b.textContent = 'Permissões';
-        b.onclick = function(){ fpOpenPermModal(u.id, u.username); };
-        cell.appendChild(b);
-      }
-    });
-  }
+  /* `fpInjectPermUI` foi removido (27/08/2026). Ele procurava a última célula
+     de cada linha da tabela de usuários e pendurava ali um botão "Permissões"
+     ou o rótulo "Acesso total", depois do render. Com a listagem no formato
+     padrão isso penduraria o botão DENTRO da coluna de ações, atrás dos
+     ícones — e a informação de acesso não teria coluna.
+     A decisão passou para `renderUsers`, onde o dado está: coluna ACESSO e
+     ícone de escudo. Mesma correção da coluna Roteiro, na Edição. */
 
   if (typeof applyRolePermissions === 'function') {
     const _origARP = applyRolePermissions;
@@ -12510,13 +12681,6 @@ function renderShotsReadOnly(shots, si) {
       try { fpApplyUserModules(); } catch(e){ console.warn('fpApplyUserModules', e); }
       try { fpNomearSecoes(); } catch(e){ console.warn('fpNomearSecoes', e); }
       try { if (typeof fpDashAplicar === 'function') fpDashAplicar(); } catch(e){ console.warn('fpDashAplicar', e); }
-    };
-  }
-  if (typeof renderUsers === 'function') {
-    const _origRU = renderUsers;
-    renderUsers = function(users){
-      try { _origRU.apply(this, arguments); } catch(e){ if (Array.isArray(users)) console.warn('renderUsers', e); }
-      if (Array.isArray(users)) { try { fpInjectPermUI(users); } catch(e){ console.warn('fpInjectPermUI', e); } }
     };
   }
   window.addEventListener('hashchange', function(){ try { fpGuardView(); } catch(e){} });
