@@ -5325,12 +5325,22 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    ordenavel, fio entre as linhas, acoes na ultima coluna. O que era cartao
    (observacao longa, roteiro, produtos do Bling) mora no detalhe — a listagem
    existe para varrer, nao para ler. */
+/* Recuo menor e ZERO nas pontas: com o padding padrao de 16px, sete colunas
+   estouravam a largura util em 96px (medido) e a coluna de acoes ficava fora
+   da tela — o operador nao via os botoes sem rolar de lado. Tirar o recuo das
+   pontas tambem alinha a tabela com o resto da pagina. */
+.fp-lista th, .fp-lista td { padding: 12px 12px; }
+.fp-lista th:first-child, .fp-lista td:first-child { padding-left: 0; }
+.fp-lista th:last-child, .fp-lista td:last-child { padding-right: 0; }
 .fp-lista th { white-space: nowrap; }
 .fp-lista td { vertical-align: middle; }
 .fp-lista td .sub { display: block; margin-top: 2px; }
 /* As celulas de acao e de status nao esticam: quem manda na largura e o
    conteudo de verdade (titulo, produto). */
 .fp-lista td:last-child, .fp-lista th:last-child { width: 1%; white-space: nowrap; }
+/* Coluna de destinos estreita de proposito: com tres tags elas empilham em
+   vez de esticar a coluna e comer a largura do titulo. */
+.fp-lista td:nth-child(2) { max-width: 116px; }
 .fp-lista .proj-dest-tag { margin-bottom: 2px; }
 
 @media (max-width: 600px) {
