@@ -2429,19 +2429,33 @@
     border: 1px solid var(--border);
     border-radius: 12px;
   }
+  /* Filtro e aba com sublinhado, nunca pilula preenchida — a regra esta em
+     contexto.md. A cor do estado vai no TEXTO e no fio embaixo; o fundo fica
+     de fora, que era o que fazia seis pilulas coloridas competirem com a
+     listagem inteira. */
   .proj-filter-chip {
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 12px;
+    position: relative;
+    padding: 6px 2px 11px;
+    margin-bottom: -1px;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    font-size: 13px;
     font-weight: 600;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text-dim);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
     cursor: pointer;
-    transition: all .15s;
+    transition: color .14s ease;
     white-space: nowrap;
+    font-family: inherit;
   }
-  .proj-filter-chip { text-transform: uppercase; }
+  .proj-filter-chip:hover { color: var(--text); }
+  .proj-filter-chip.active { color: var(--chip-cor, var(--text)); font-weight: 700; }
+  .proj-filter-chip.active::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+    background: var(--chip-cor, var(--primary));
+  }
   .proj-filter-chip:hover { opacity: .85; }
   /* Todos — white/neutral */
 
@@ -2524,99 +2538,46 @@
   }
   .fp-filter-clear:hover { color: var(--text); border-color: var(--text-muted); background: var(--bg-elev); }
   .fp-filter-clear[hidden] { display: none; }
-  .proj-filter-chip[data-pfilter="todos"] { border-color: rgba(255,255,255,.2); color: rgba(255,255,255,.45); }
-  .proj-filter-chip[data-pfilter="todos"]:hover { background: rgba(255,255,255,.04); }
-  .proj-filter-chip[data-pfilter="todos"].active { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); color: #fff; }
-  [data-theme="light"] .proj-filter-chip[data-pfilter="todos"] { border-color: rgba(0,0,0,.15); color: rgba(0,0,0,.35); }
-  [data-theme="light"] .proj-filter-chip[data-pfilter="todos"]:hover { background: rgba(0,0,0,.03); }
-  [data-theme="light"] .proj-filter-chip[data-pfilter="todos"].active { background: rgba(0,0,0,.08); border-color: rgba(0,0,0,.3); color: #222; }
-  .proj-filter-chip[data-pfilter="planejamento"] { border-color: rgba(59,130,246,.3); color: rgba(59,130,246,.6); }
-  .proj-filter-chip[data-pfilter="planejamento"]:hover { background: rgba(59,130,246,.06); }
-  .proj-filter-chip[data-pfilter="planejamento"].active { background: #3b82f6; border-color: #3b82f6; color: #06172e; }
-  .proj-filter-chip[data-pfilter="producao"] { border-color: rgba(245,158,11,.3); color: rgba(245,158,11,.6); }
-  .proj-filter-chip[data-pfilter="producao"]:hover { background: rgba(245,158,11,.06); }
-  .proj-filter-chip[data-pfilter="producao"].active { background: #f59e0b; border-color: #f59e0b; color: #2a1a00; }
-  .proj-filter-chip[data-pfilter="edicao"] { border-color: rgba(168,85,247,.3); color: rgba(168,85,247,.6); }
-  .proj-filter-chip[data-pfilter="edicao"]:hover { background: rgba(168,85,247,.06); }
-  .proj-filter-chip[data-pfilter="edicao"].active { background: #a855f7; border-color: #a855f7; color: #1b0630; }
-  .proj-filter-chip[data-pfilter="a_publicar"] { border-color: rgba(236,72,153,.3); color: rgba(236,72,153,.6); }
-  .proj-filter-chip[data-pfilter="a_publicar"]:hover { background: rgba(236,72,153,.06); }
-  .proj-filter-chip[data-pfilter="a_publicar"].active { background: #ec4899; border-color: #ec4899; color: #2c0416; }
-  .proj-filter-chip[data-pfilter="concluido"] { border-color: rgba(31,210,122,.3); color: rgba(31,210,122,.6); }
-  .proj-filter-chip[data-pfilter="concluido"]:hover { background: rgba(31,210,122,.06); }
-  .proj-filter-chip[data-pfilter="concluido"].active { background: #1fd27a; border-color: #1fd27a; color: #042414; }
-  [data-theme="light"] .proj-filter-chip[data-pfilter="planejamento"].active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
-  [data-theme="light"] .proj-filter-chip[data-pfilter="producao"].active     { background: #f59e0b; border-color: #f59e0b; color: #4a2c00; }
-  [data-theme="light"] .proj-filter-chip[data-pfilter="edicao"].active        { background: #a855f7; border-color: #a855f7; color: #fff; }
-  [data-theme="light"] .proj-filter-chip[data-pfilter="a_publicar"].active    { background: #ec4899; border-color: #ec4899; color: #fff; }
-  [data-theme="light"] .proj-filter-chip[data-pfilter="concluido"].active     { background: #16a34a; border-color: #16a34a; color: #fff; }
-  /* ── Filtros por DESTINO (mesmas cores das tags .proj-dest-tag) ── */
-  .proj-filter-chip[data-dfilter="todos"] { border-color: rgba(255,255,255,.2); color: rgba(255,255,255,.45); }
-  .proj-filter-chip[data-dfilter="todos"]:hover { background: rgba(255,255,255,.04); }
-  .proj-filter-chip[data-dfilter="todos"].active { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); color: #fff; }
-  [data-theme="light"] .proj-filter-chip[data-dfilter="todos"] { border-color: rgba(0,0,0,.15); color: rgba(0,0,0,.35); }
-  [data-theme="light"] .proj-filter-chip[data-dfilter="todos"]:hover { background: rgba(0,0,0,.03); }
-  [data-theme="light"] .proj-filter-chip[data-dfilter="todos"].active { background: rgba(0,0,0,.08); border-color: rgba(0,0,0,.3); color: #222; }
-  /* YouTube — vermelho */
-  .proj-filter-chip[data-dfilter="youtube"] { border-color: rgba(255,68,68,.3); color: rgba(255,68,68,.65); }
-  .proj-filter-chip[data-dfilter="youtube"]:hover { background: rgba(255,68,68,.06); }
-  .proj-filter-chip[data-dfilter="youtube"].active { background: rgba(255,68,68,.15); border-color: #ff4444; color: #ff4444; }
-  /* Shorts — vermelho */
-  .proj-filter-chip[data-dfilter="shorts"] { border-color: rgba(255,68,68,.3); color: rgba(255,68,68,.65); }
-  .proj-filter-chip[data-dfilter="shorts"]:hover { background: rgba(255,68,68,.06); }
-  .proj-filter-chip[data-dfilter="shorts"].active { background: rgba(255,68,68,.15); border-color: #ff4444; color: #ff4444; }
-  /* TikTok — roxo */
-  .proj-filter-chip[data-dfilter="tiktok"] { border-color: rgba(168,85,247,.3); color: rgba(168,85,247,.6); }
-  .proj-filter-chip[data-dfilter="tiktok"]:hover { background: rgba(168,85,247,.06); }
-  .proj-filter-chip[data-dfilter="tiktok"].active { background: rgba(168,85,247,.15); border-color: #a855f7; color: #a855f7; }
-  /* Reels (Instagram) — rosa */
-  .proj-filter-chip[data-dfilter="reels"] { border-color: rgba(225,48,108,.3); color: rgba(225,48,108,.62); }
-  .proj-filter-chip[data-dfilter="reels"]:hover { background: rgba(225,48,108,.06); }
-  .proj-filter-chip[data-dfilter="reels"].active { background: rgba(225,48,108,.15); border-color: #e1306c; color: #e1306c; }
-  /* Clips — amarelo */
-  .proj-filter-chip[data-dfilter="clips"] { border-color: rgba(250,204,21,.3); color: rgba(250,204,21,.7); }
-  .proj-filter-chip[data-dfilter="clips"]:hover { background: rgba(250,204,21,.06); }
-  .proj-filter-chip[data-dfilter="clips"].active { background: rgba(250,204,21,.15); border-color: #facc15; color: #facc15; }
-  [data-theme="light"] .proj-filter-chip[data-dfilter="clips"] { color: #a16207; }
-  [data-theme="light"] .proj-filter-chip[data-dfilter="clips"].active { background: rgba(234,179,8,.12); border-color: #eab308; color: #a16207; }
-  /* Site — neutro */
-  .proj-filter-chip[data-dfilter="site"] { border-color: rgba(255,255,255,.2); color: rgba(224,224,224,.55); }
-  .proj-filter-chip[data-dfilter="site"]:hover { background: rgba(255,255,255,.04); }
-  .proj-filter-chip[data-dfilter="site"].active { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.55); color: #e0e0e0; }
-  [data-theme="light"] .proj-filter-chip[data-dfilter="site"] { border-color: rgba(0,0,0,.15); color: rgba(0,0,0,.4); }
-  [data-theme="light"] .proj-filter-chip[data-dfilter="site"].active { background: rgba(0,0,0,.08); border-color: rgba(0,0,0,.35); color: #444; }
-  /* Ads — azul */
-  .proj-filter-chip[data-dfilter="ads"] { border-color: rgba(59,130,246,.3); color: rgba(59,130,246,.6); }
-  .proj-filter-chip[data-dfilter="ads"]:hover { background: rgba(59,130,246,.06); }
-  .proj-filter-chip[data-dfilter="ads"].active { background: rgba(59,130,246,.15); border-color: #3b82f6; color: #3b82f6; }
+  /* Uma linha por estado: a cor entra como token do proprio chip e as regras
+     de ativo sao as duas de cima. Eram 50 regras de fundo, borda e cor de
+     texto, em dois temas. */
+  .proj-filter-chip[data-pfilter="todos"],
+  .proj-filter-chip[data-dfilter="todos"],
+  .proj-filter-chip[data-dfilter="site"]        { --chip-cor: var(--text); }
+  .proj-filter-chip[data-pfilter="planejamento"],
+  .proj-filter-chip[data-dfilter="ads"]         { --chip-cor: var(--prio-1); }
+  .proj-filter-chip[data-pfilter="producao"]    { --chip-cor: var(--warning); }
+  .proj-filter-chip[data-pfilter="edicao"],
+  .proj-filter-chip[data-dfilter="tiktok"]      { --chip-cor: #a855f7; }
+  .proj-filter-chip[data-pfilter="a_publicar"]  { --chip-cor: #ec4899; }
+  .proj-filter-chip[data-pfilter="concluido"]   { --chip-cor: var(--success); }
+  /* Marca das plataformas: vermelho do YouTube, rosa do Instagram, roxo do
+     TikTok. Sao cor de terceiro, nao do painel — por isso ficam fora do
+     seletor de cores da Manutencao. */
+  .proj-filter-chip[data-dfilter="youtube"],
+  .proj-filter-chip[data-dfilter="shorts"]      { --chip-cor: #ff4444; }
+  .proj-filter-chip[data-dfilter="reels"]       { --chip-cor: #e1306c; }
+  .proj-filter-chip[data-dfilter="clips"]       { --chip-cor: var(--accent); }
+  [data-theme="light"] .proj-filter-chip[data-dfilter="youtube"],
+  [data-theme="light"] .proj-filter-chip[data-dfilter="shorts"] { --chip-cor: #d92d2d; }
+  [data-theme="light"] .proj-filter-chip[data-dfilter="clips"]  { --chip-cor: #a16207; }
 
-  /* ═══════ LIGHT MODE: chips/tags/pills com COR PREENCHIDA (melhor destaque) ═══════ */
-  /* Filtros de status (estado ativo) */
-  /* Filtros de destino (estado ativo) */
-  [data-theme="light"] .proj-filter-chip[data-dfilter="youtube"].active { background: #ef4444; border-color: #ef4444; color: #fff; }
-  [data-theme="light"] .proj-filter-chip[data-dfilter="shorts"].active  { background: #ef4444; border-color: #ef4444; color: #fff; }
-  [data-theme="light"] .proj-filter-chip[data-dfilter="tiktok"].active  { background: #a855f7; border-color: #a855f7; color: #fff; }
-  [data-theme="light"] .proj-filter-chip[data-dfilter="reels"].active   { background: #e1306c; border-color: #e1306c; color: #fff; }
-  [data-theme="light"] .proj-filter-chip[data-dfilter="clips"].active   { background: #eab308; border-color: #eab308; color: #422006; }
-  [data-theme="light"] .proj-filter-chip[data-dfilter="ads"].active     { background: #3b82f6; border-color: #3b82f6; color: #fff; }
-  /* Tags de destino no card */
-  [data-theme="light"] .proj-dest-tag.youtube { background: #b91c1c; border-color: #b91c1c; color: #fff; }
-  [data-theme="light"] .proj-dest-tag.shorts  { background: #b91c1c; border-color: #b91c1c; color: #fff; }
-  [data-theme="light"] .proj-dest-tag.tiktok  { background: #7126ba; border-color: #7126ba; color: #fff; }
-  [data-theme="light"] .proj-dest-tag.reels   { background: #ad1e50; border-color: #ad1e50; color: #fff; }
-  [data-theme="light"] .proj-dest-tag.clips   { background: #eab308; border-color: #eab308; color: #422006; }
-  [data-theme="light"] .proj-dest-tag.site    { background: #64748b; border-color: #64748b; color: #fff; }
-  [data-theme="light"] .proj-dest-tag.ads     { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
-  /* Pill de status (select) */
-  [data-theme="light"] .proj-status-select.planejamento { background-color: #3b82f6; border-color: #3b82f6; color: #fff; }
-  [data-theme="light"] .proj-status-select.producao     { background-color: #f59e0b; border-color: #f59e0b; color: #4a2c00; }
-  [data-theme="light"] .proj-status-select.edicao       { background-color: #a855f7; border-color: #a855f7; color: #fff; }
-  [data-theme="light"] .proj-status-select.a_publicar   { background-color: #ec4899; border-color: #ec4899; color: #fff; }
-  [data-theme="light"] .proj-status-select.concluido    { background-color: #16a34a; border-color: #16a34a; color: #fff; }
-  /* Botões inline dos cards de projeto (Arquivo / editar link / excluir) */
-  [data-theme="light"] .fp-arquivo-link { background: #ec4899 !important; border-color: #ec4899 !important; color: #fff !important; }
-  [data-theme="light"] .fp-arquivo-edit { background: #ec4899 !important; border-color: #ec4899 !important; color: #fff !important; }
-  [data-theme="light"] .fp-del-btn { background: #ef4444 !important; border-color: #ef4444 !important; color: #fff !important; }
+  /* Selo e pilula de status no tema claro: tinta, nao chapa cheia. No escuro
+     eles ja eram assim (16% de fundo com o texto na cor) — o claro tinha uma
+     excecao com fundo solido, e era o unico lugar do painel onde um rotulo
+     virava bloco de cor. */
+  [data-theme="light"] .proj-dest-tag.youtube,
+  [data-theme="light"] .proj-dest-tag.shorts  { background: rgba(185,28,28,.10); border-color: rgba(185,28,28,.28); color: #a11515; }
+  [data-theme="light"] .proj-dest-tag.tiktok  { background: rgba(113,38,186,.10); border-color: rgba(113,38,186,.28); color: #6420a6; }
+  [data-theme="light"] .proj-dest-tag.reels   { background: rgba(173,30,80,.10); border-color: rgba(173,30,80,.28); color: #9a1a47; }
+  [data-theme="light"] .proj-dest-tag.clips   { background: rgba(234,179,8,.14); border-color: rgba(161,98,7,.30); color: #8a5406; }
+  [data-theme="light"] .proj-dest-tag.site    { background: rgba(0,0,0,.05); border-color: rgba(0,0,0,.14); color: #4e4e5a; }
+  [data-theme="light"] .proj-dest-tag.ads     { background: rgba(29,78,216,.10); border-color: rgba(29,78,216,.28); color: #1a45bd; }
+  [data-theme="light"] .proj-status-select.planejamento { background-color: rgba(59,130,246,.10); border-color: rgba(59,130,246,.32); color: #1d4ed8; }
+  [data-theme="light"] .proj-status-select.producao     { background-color: rgba(180,113,8,.10); border-color: rgba(180,113,8,.32); color: #8a5406; }
+  [data-theme="light"] .proj-status-select.edicao       { background-color: rgba(168,85,247,.10); border-color: rgba(168,85,247,.32); color: #6d28d9; }
+  [data-theme="light"] .proj-status-select.a_publicar   { background-color: rgba(236,72,153,.10); border-color: rgba(236,72,153,.32); color: #b3185f; }
+  [data-theme="light"] .proj-status-select.concluido    { background-color: rgba(22,163,74,.10); border-color: rgba(22,163,74,.32); color: #12703a; }
 
   /* ── Botão recolhível do filtro por destino ── */
   .proj-dest-wrap { margin-bottom: 16px; }
