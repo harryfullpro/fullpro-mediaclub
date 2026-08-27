@@ -279,6 +279,25 @@ repetir o mesmo quadro. E período curto é o que faz parecer vivo: a primeira v
 login rodava em 40s/52s, ≈1vw por segundo, e o dono perguntou se a animação tinha ficado
 pronta.
 
+### Por que o ícone é inline e não um arquivo referenciado
+
+Pergunta que apareceu quando o upload deu errado três vezes seguidas: *"não tem como
+só indexar o svg ali?"*. A resposta é não, e vale registrar o porquê.
+
+Com `<img src="icone.svg">` o navegador desenha o arquivo **isolado**: nenhuma CSS da
+página entra. Isso resolveria os conflitos — e quebraria o que importa mais:
+
+- **O ícone deixa de seguir o tema.** Os 21 da barra lateral herdam a cor do menu e
+  ficam vermelhos quando o item está ativo. Ícone preto num arquivo isolado some no
+  tema escuro.
+- **`<use href="externo.svg#id">` não é opção**: navegador nenhum resolve referência
+  externa em `use` sem polyfill.
+- Custa armazenamento de arquivo e um pedido HTTP por ícone.
+
+Inline mantém `currentColor` funcionando, que é o que liga o ícone ao tema. O preço é
+ter de blindar contra a CSS da própria página — resolvido com
+`svg[data-ico-estado^="c"]`, e documentado no diário.
+
 ### Trocar ícone e cor é do dono, não do código
 
 Dois painéis em Manutenção fazem isso: `mc_theme_colors` (cores) e `mc_icons`
