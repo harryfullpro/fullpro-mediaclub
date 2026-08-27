@@ -4668,6 +4668,13 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
     background: none; border: none; border-radius: 0;
     overflow: visible; margin-left: 0; margin-right: 0;
   }
+  /* `.table-wrap table { min-width: 640px }` (logo abaixo, para tabela que
+     rola de lado) vencia `.fp-lista { min-width: 0 }` por especificidade —
+     (0,1,1) contra (0,1,0). Resultado medido a 375px: a tabela virava blocos
+     mas mantinha 640px de largura dentro de um `main` de 307px, e as celulas
+     da direita ficavam fora da tela, sem rolagem para alcanca-las. A tabela de
+     Solicitacoes escapava por usar id (`#reqTable`, especificidade 1,0,1). */
+  .fp-lista-wrap .fp-lista { min-width: 0; }
   #view-requests .table-wrap {
     background: none;
     border: none;
