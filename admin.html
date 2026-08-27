@@ -65,6 +65,10 @@
        precisa do valor NEGADO para encostar no topo: dois numeros soltos
        saem de sincronia na primeira mudanca de breakpoint — e sairam. */
     --pad-topo: 32px;
+    /* Recuo lateral do <main>. Virou token porque o realce da linha precisa
+       sangrar EXATAMENTE esse valor para encostar na borda da tela — e ele
+       muda em quatro pontos de corte. */
+    --pad-lado: 32px;
     --text: #f5f5f7;
     --text-dim: #a1a1aa;
     --text-muted: #9494a0;
@@ -492,7 +496,7 @@
   [data-theme="light"] .fp-tema .ico-lua, [data-theme="light"] .fp-tema .est-escuro { display: none; }
 
   /* Main */
-  main { padding: var(--pad-topo) 32px; overflow-x: hidden; overflow-y: auto; height: 100vh; }
+  main { padding: var(--pad-topo) var(--pad-lado); overflow-x: hidden; overflow-y: auto; height: 100vh; }
   .page-head {
     display: flex;
     justify-content: space-between;
@@ -3006,8 +3010,8 @@
      RESPONSIVE: Ultrawide (>1600px)
      ============================================ */
   @media (min-width: 1600px) {
-    :root { --pad-topo: 40px; }
-    main { padding: var(--pad-topo) 48px; }
+    :root { --pad-topo: 40px; --pad-lado: 48px; }
+    main { padding: var(--pad-topo) var(--pad-lado); }
     main > div { max-width: 1400px; margin-left: auto; margin-right: auto; }
     :root { --fp-col-gap: 30px; }
     .stat-card .value { font-size: 44px; }
@@ -3074,6 +3078,7 @@
       left: 0; box-shadow: 6px 0 24px rgba(0,0,0,.4);
     }
     .mobile-header { display: flex; }
+    :root { --pad-lado: 16px; }
     main { padding: 16px; height: auto; min-height: calc(100vh - 56px); }
 
     /* Stats grid */
@@ -3171,6 +3176,7 @@
      RESPONSIVE: Small mobile (≤480px)
      ============================================ */
   @media (max-width: 480px) {
+    :root { --pad-lado: 12px; }
     main { padding: 12px; }
     .stats-grid { grid-template-columns: 1fr; gap: 8px; }
     .dash-kpi-row { grid-template-columns: 1fr !important; }
@@ -3970,8 +3976,8 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
 
 @media (max-width: 600px) {
   /* --- respiro geral ----------------------------------------------------- */
-  :root { --pad-topo: 14px; }
-  main { padding: var(--pad-topo) 12px 32px; }
+  :root { --pad-topo: 14px; --pad-lado: 12px; }
+  main { padding: var(--pad-topo) var(--pad-lado) 32px; }
   .cal-card, .edit-card, .proj-card { padding: 14px; }
 
   /* --- fileiras de chips: rolam na horizontal em vez de empilhar ---------
@@ -5259,15 +5265,33 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-prod > * + * { border-top: 1px solid var(--border); }
 .fp-prod-linha {
   display: flex; align-items: center; gap: 12px; padding: 12px 0;
+  position: relative;
+}
+/* O realce nao e o fundo da linha: e uma faixa atras dela que sangra o recuo
+   do <main> para os dois lados e encosta na borda da tela. A listagem
+   continua alinhada com o resto da pagina; so a marca de "estou aqui" vai ate
+   o fim, que e onde o olho corre.
+   `main` tem overflow-x: hidden, entao a sangria e cortada ali e nao inventa
+   rolagem horizontal. */
+.fp-prod-linha::before {
+  content: ''; position: absolute; z-index: 0; pointer-events: none;
+  top: 0; bottom: 0;
+  left: calc(-1 * var(--pad-lado)); right: calc(-1 * var(--pad-lado));
+  background: transparent;
   transition: background .12s ease;
 }
-.fp-prod-linha:hover { background: rgba(255,255,255,.03); }
+/* Sem isto o conteudo da linha fica DEBAIXO da faixa. */
+.fp-prod-linha > * { position: relative; z-index: 1; }
+.fp-prod-linha:hover::before { background: rgba(255,255,255,.03); }
+/* No Dashboard a fila divide a linha com a animacao: ali a listagem nao ocupa
+   a largura da pagina e sangrar invadiria a coluna vizinha. */
+.fp-dash-duo .fp-prod-linha::before { left: 0; right: 0; }
 /* Linha com caixa de selecao e clicavel inteira — o cursor precisa dizer isso.
    Quem tem acao propria dentro dela reassume o proprio cursor. */
 .fp-prod-linha:has(.fp-prod-check) { cursor: pointer; }
 .fp-prod-linha:has(.fp-prod-check) .fp-prio,
 .fp-prod-linha:has(.fp-prod-check) .fp-foto { cursor: auto; }
-[data-theme="light"] .fp-prod-linha:hover { background: rgba(0,0,0,.022); }
+[data-theme="light"] .fp-prod-linha:hover::before { background: rgba(0,0,0,.022); }
 .fp-prod-linha.fora { opacity: .5; }
 /* Cabeçalho de bloco, no lugar do <h3> solto. Sem fundo: a listagem fica
    direto sobre o fundo da tela, sem moldura em volta. */
