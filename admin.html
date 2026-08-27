@@ -1167,12 +1167,19 @@
   .rot-help-btn:hover .rot-help-popup { display: block; }
 
   /* Agenda layout: calendar | details (wider) | block (compact) */
-  /* A listagem do mes e uma secao com fio, como o resto: titulo no tipo da
-     casa e a tabela padrao embaixo. */
-  .fp-ag-lista { border-top: 1px solid var(--border); padding-top: 18px; margin-top: 4px; }
-  .fp-ag-lista h3 {
-    font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase;
-    font-size: 13px; letter-spacing: 1px; margin-bottom: 12px;
+  /* Calendario e detalhe do dia em CAIXA, e nao em faixa com fio. Pedido
+     explicito do dono na fusao com Solicitacoes: "quero que esses dois sejam
+     com fundo branco e dentro de um container assim como tá a listagem de
+     solicitações". A regra de "fios, nao caixas" vale para LINHA de listagem;
+     estes dois sao paineis de consulta, do mesmo tipo da moldura da tabela —
+     e por isso usam os mesmos valores do `.table-wrap`: fundo do cartao, fio
+     de 1px e canto de 14px. */
+  .cal-top > .cal-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
   }
   .cal-admin { gap: 18px; }
   .cal-top { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
@@ -4652,7 +4659,7 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
 
    Aqui a mesma tabela vira lista de cards, sem duplicar marcacao: o `<tr>`
    passa a ser flex e cada `<td>` recebe `order` e `flex-basis`. O desktop nao
-   muda — tudo esta escopado em `#view-requests` / `#reqTable` e dentro de
+   muda — tudo esta escopado em `#view-calendar` / `#reqTable` e dentro de
    `@media`. Este bloco fica no fim do arquivo de proposito: as regras
    genericas de tabela do bloco de 900px vem antes e seriam mais fortes.
    ========================================================================== */
@@ -4661,7 +4668,7 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
      Com os chips fora (viraram seletor), o `flex-wrap: nowrap` da regra de
      600px empurrava o campo de busca e a contagem para fora da tela: ficavam
      na mesma fileira rolavel, a direita, invisiveis sem arrastar. */
-  #view-requests .filter-bar {
+  #view-calendar .filter-bar {
     flex-wrap: wrap !important;
     overflow: visible;
     margin-left: 0; margin-right: 0;
@@ -4669,9 +4676,9 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
     padding-bottom: 0;
     gap: 8px;
   }
-  #view-requests .filter-bar > * { flex: 0 1 auto; }
-  #view-requests .filter-bar .fp-busca { flex: 1 1 100%; max-width: none; order: 10; margin-top: 0; }
-  #view-requests .filter-bar .fp-lista-contagem { order: 11; margin: 0 0 0 auto; }
+  #view-calendar .filter-bar > * { flex: 0 1 auto; }
+  #view-calendar .filter-bar .fp-busca { flex: 1 1 100%; max-width: none; order: 10; margin-top: 0; }
+  #view-calendar .filter-bar .fp-lista-contagem { order: 11; margin: 0 0 0 auto; }
   .fp-lista-select {
     flex: 1 1 140px;
     min-width: 0;
@@ -4701,7 +4708,7 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
      da direita ficavam fora da tela, sem rolagem para alcanca-las. A tabela de
      Solicitacoes escapava por usar id (`#reqTable`, especificidade 1,0,1). */
   .fp-lista-wrap .fp-lista { min-width: 0; }
-  #view-requests .table-wrap {
+  #view-calendar .table-wrap {
     background: none;
     border: none;
     border-radius: 0;
@@ -5996,13 +6003,12 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
       <span class="nav-label">Dashboard</span>
     </button>
     <div class="nav-section" data-sec="video">Vídeo</div>
-    <button class="nav-item" data-view="requests">
-      <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
-      <span class="nav-label">Solicitações</span> <span class="count" id="cntReq">0</span>
-    </button>
+    <!-- Solicitacoes foi fundido na Agenda (27/08/2026, a pedido do dono): era
+         a mesma informacao em duas telas, uma em lista e outra em calendario. O
+         contador de pendentes veio junto — ele e o motivo de olhar a tela. -->
     <button class="nav-item" data-view="calendar">
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
-      <span class="nav-label">Agenda</span>
+      <span class="nav-label">Agenda</span> <span class="count" id="cntReq">0</span>
     </button>
     <button class="nav-item" data-view="checkin">
       <!-- Caixa marcada. Era o terceiro relogio da barra. -->
@@ -6202,11 +6208,23 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
     </div>
 
     <!-- REQUESTS VIEW -->
-    <div id="view-requests" style="display:none">
+    <!-- AGENDA — Solicitacoes e calendario na mesma tela ------------------
+         Eram dois modulos sobre o mesmo dado: a listagem dos pedidos da landing
+         e o calendario do mes. Fundidos a pedido do dono. A listagem e a de
+         Solicitacoes, inteira e sem perda (mesmas metricas, abas, busca,
+         colunas, detalhe e WhatsApp); o calendario entrou em cima como
+         visualizacao, dentro de container branco.
+         Os ids continuam os de Solicitacoes (#reqTable, sPending, reqCount…):
+         renderRequests e uma duzia de funcoes leem esses nomes direto. -->
+    <div id="view-calendar" style="display:none">
       <div class="page-head">
         <div>
-          <h1>Solicitações</h1>
-          <p>Gerencie os pedidos recebidos através da landing page.</p>
+          <h1>Agenda</h1>
+          <p>Pedidos recebidos pela landing page, calendário do mês e bloqueios de datas.</p>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button class="fp-new-btn ghost" data-tip="Bloquear data" aria-label="Bloquear data" onclick="fpOpenBlockModal()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="5.6" y1="5.6" x2="18.4" y2="18.4"/></svg></button>
+          <button class="fp-new-btn" data-tip="Novo agendamento" aria-label="Novo agendamento" onclick="openBookingModal()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
         </div>
       </div>
 
@@ -6229,6 +6247,45 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
         </div>
       </div>
 
+      <!-- Calendario e detalhe do dia em CAIXA BRANCA, pedido explicito do dono:
+           "quero que esses dois sejam com fundo branco e dentro de um container
+           assim como tá a listagem de solicitações". A regra de "fios, nao
+           caixas" vale para LINHA de listagem; aqui sao dois paineis de
+           consulta, como a moldura da tabela. -->
+      <div class="cal-admin">
+        <div class="cal-top">
+          <div class="cal-card">
+            <h3>Agenda visual</h3>
+            <p class="sub">Selecione um dia para ver detalhes. Verde = aprovado. Vermelho = bloqueio.</p>
+            <div class="cal-header">
+              <div class="cal-month" id="calMonth">—</div>
+              <div class="cal-nav">
+                <button id="calPrev">‹</button>
+                <button id="calNext">›</button>
+              </div>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+            <div class="cal-legend">
+              <span><i class="i-approved"></i>Aprovado</span>
+              <span><i class="i-blocked"></i>Bloqueado</span>
+            </div>
+          </div>
+
+          <!-- Date viewer -->
+          <div class="cal-card date-viewer" id="dateViewer">
+            <h3>Detalhes do dia</h3>
+            <p class="sub">Selecione uma data na agenda ao lado.</p>
+            <div id="dateViewerContent">
+              <div class="dv-empty">
+                <p>Clique em um dia na agenda para ver os detalhes.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- A listagem de Solicitacoes, sem mudanca -->
       <div class="filter-bar">
         <span class="fp-so-desktop" style="display:contents">
           <button class="filter-btn active" data-filter="all">Todas</button>
@@ -6276,107 +6333,6 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
           </thead>
           <tbody id="reqTableBody"></tbody>
         </table>
-      </div>
-    </div>
-
-    <!-- CALENDAR VIEW -->
-    <div id="view-calendar" style="display:none">
-      <div class="page-head">
-        <div>
-          <h1>Agenda</h1>
-          <p>Gerencie agendamentos e bloqueios de datas.</p>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-          <button class="fp-new-btn ghost" data-tip="Bloquear data" aria-label="Bloquear data" onclick="fpOpenBlockModal()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="5.6" y1="5.6" x2="18.4" y2="18.4"/></svg></button>
-          <button class="fp-new-btn" data-tip="Novo agendamento" aria-label="Novo agendamento" onclick="openBookingModal()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
-        </div>
-      </div>
-
-      <!-- Metricas do mes que o calendario mostra, no padrao da casa: rotulo
-           miudo, numero grande, sem caixa. -->
-      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
-        <div class="stat-card">
-          <div class="label">Aprovados no mês</div>
-          <div class="value" id="agStatAprov">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">Pendentes</div>
-          <div class="value" style="color:var(--primary)" id="agStatPend">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">Bloqueios</div>
-          <div class="value" style="color:var(--warning)" id="agStatBloq">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">Dias livres</div>
-          <div class="value" id="agStatLivres">0</div>
-        </div>
-      </div>
-
-      <div class="cal-admin">
-        <div class="cal-top">
-          <div class="cal-card">
-            <h3>Agenda visual</h3>
-            <p class="sub">Selecione um dia para ver detalhes. Verde = aprovado. Vermelho = bloqueio.</p>
-            <div class="cal-header">
-              <div class="cal-month" id="calMonth">—</div>
-              <div class="cal-nav">
-                <button id="calPrev">‹</button>
-                <button id="calNext">›</button>
-              </div>
-            </div>
-            <div class="cal-grid" id="calGrid"></div>
-            <div class="cal-legend">
-              <span><i class="i-approved"></i>Aprovado</span>
-              <span><i class="i-blocked"></i>Bloqueado</span>
-            </div>
-          </div>
-
-          <!-- Date viewer -->
-          <div class="cal-card date-viewer" id="dateViewer">
-            <h3>Detalhes do dia</h3>
-            <p class="sub">Selecione uma data na agenda ao lado.</p>
-            <div id="dateViewerContent">
-              <div class="dv-empty">
-                <p>Clique em um dia na agenda para ver os detalhes.</p>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- O mes inteiro em listagem, no formato das outras telas. Antes o
-             calendario so respondia um dia por vez e a metade de baixo da
-             pagina ficava vazia: nao havia como ver o mes de uma olhada.
-             O recorte e diferente do de Solicitacoes — aqui e o mes que o
-             calendario mostra, e os bloqueios entram como linha. -->
-        <div class="fp-ag-lista">
-          <h3>Agenda do mês</h3>
-          <div class="filter-bar">
-            <span class="fp-so-desktop" style="display:contents">
-              <button class="filter-btn active" data-agfilter="todos" onclick="fpAgFiltro('todos')">Todos <span class="fp-conta"></span></button>
-              <button class="filter-btn" data-agfilter="approved" onclick="fpAgFiltro('approved')">Aprovados <span class="fp-conta"></span></button>
-              <button class="filter-btn" data-agfilter="pending" onclick="fpAgFiltro('pending')">Pendentes <span class="fp-conta"></span></button>
-              <button class="filter-btn" data-agfilter="standby" onclick="fpAgFiltro('standby')">Stand by <span class="fp-conta"></span></button>
-              <button class="filter-btn" data-agfilter="rejected" onclick="fpAgFiltro('rejected')">Rejeitadas <span class="fp-conta"></span></button>
-              <button class="filter-btn" data-agfilter="bloqueio" onclick="fpAgFiltro('bloqueio')">Bloqueios <span class="fp-conta"></span></button>
-            </span>
-            <select class="proj-sort-select fp-so-mobile" id="agFiltroSelect" aria-label="Filtrar a agenda do mês" onchange="fpAgFiltro(this.value)">
-              <option value="todos">Todos</option>
-              <option value="approved">Aprovados</option>
-              <option value="pending">Pendentes</option>
-              <option value="standby">Stand by</option>
-              <option value="rejected">Rejeitadas</option>
-              <option value="bloqueio">Bloqueios</option>
-            </select>
-            <label class="fp-busca">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="search" placeholder="Buscar nome, placa ou moto" aria-label="Buscar na agenda do mês" oninput="fpAgBuscar(this.value)">
-            </label>
-            <span id="agCount" class="fp-lista-contagem"></span>
-          </div>
-          <div id="agLista"></div>
-        </div>
       </div>
     </div>
 
@@ -9061,9 +9017,9 @@ let currentFilter = 'all';
 /* So as abas da barra de Solicitacoes: o seletor solto pegava tambem as abas
    de Check-in/Check-out, que sao .filter-btn sem data-filter — clicar nelas
    zerava o filtro das solicitacoes e apagava o "active" das quatro abas. */
-document.querySelectorAll('#view-requests .filter-bar .filter-btn[data-filter]').forEach(btn => {
+document.querySelectorAll('#view-calendar .filter-bar .filter-btn[data-filter]').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('#view-requests .filter-bar .filter-btn[data-filter]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#view-calendar .filter-bar .filter-btn[data-filter]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentFilter = btn.dataset.filter;
     renderRequests();
@@ -9166,7 +9122,7 @@ window.buscarRequests = buscarRequests;
    filtra pelo seletor tambem acende o chip correspondente. */
 function filtrarRequestsSelect(valor) {
   currentFilter = valor || 'all';
-  document.querySelectorAll('#view-requests .filter-bar .filter-btn[data-filter]').forEach(b => {
+  document.querySelectorAll('#view-calendar .filter-bar .filter-btn[data-filter]').forEach(b => {
     b.classList.toggle('active', b.dataset.filter === currentFilter);
   });
   renderRequests();
@@ -9404,160 +9360,7 @@ function renderCalendar() {
     `).join('');
   }
 
-  // A listagem do mes segue o cabecalho do calendario.
-  renderAgendaLista();
 }
-
-/* ── Agenda do mes em listagem ───────────────────────────────────────────
-   O calendario responde um dia por vez; esta tabela responde o mes. Recorte
-   diferente do de Solicitacoes: aqui e o mes que o calendario esta mostrando,
-   e os bloqueios entram como linha — eles ocupam data igual a um agendamento.
-   Segue o cabecalho do calendario: navegar de mes redesenha as duas coisas. */
-let AGENDA_FILTRO = 'todos';
-let agendaBusca = '';
-
-function fpAgFiltro(k) {
-  AGENDA_FILTRO = k;
-  const sel = document.getElementById('agFiltroSelect');
-  if (sel && sel.value !== k) sel.value = k;
-  renderAgendaLista();
-}
-function fpAgBuscar(v) {
-  agendaBusca = String(v || '').trim().toLowerCase();
-  const cx = document.querySelector('#view-calendar .fp-busca');
-  if (cx) cx.classList.toggle('tem-texto', !!agendaBusca);
-  renderAgendaLista();
-}
-function fpAgOrdenar(campo) { fpOrdTrocar('agenda', campo, renderAgendaLista); }
-window.fpAgFiltro = fpAgFiltro;
-window.fpAgBuscar = fpAgBuscar;
-window.fpAgOrdenar = fpAgOrdenar;
-
-/* Linhas do mes: agendamentos e bloqueios no mesmo formato. O bloqueio nao tem
-   solicitante nem moto — o motivo ocupa o lugar do nome, que e a informacao
-   que ele tem. */
-function fpAgendaDoMes() {
-  const ano = cMonth.getFullYear(), mes = String(cMonth.getMonth() + 1).padStart(2, '0');
-  const pfx = ano + '-' + mes;
-  const linhas = getRequests()
-    .filter(r => String(r.date || '').startsWith(pfx))
-    .map(r => ({ tipo: 'req', data: r.date, nome: r.nome, sub: r.whatsapp, moto: r.moto, placa: r.placa,
-                 modalidade: r.modalidade, status: r.status, r }));
-  (typeof BLOCKED_DATA !== 'undefined' ? BLOCKED_DATA : [])
-    .filter(b => String(b.date || '').startsWith(pfx))
-    .forEach(b => linhas.push({ tipo: 'bloqueio', data: b.date, nome: b.reason || 'Data bloqueada',
-                                sub: '', moto: '', placa: '', modalidade: '', status: 'bloqueio', b }));
-  return linhas;
-}
-
-function renderAgendaLista() {
-  const el = document.getElementById('agLista');
-  if (!el) return;
-
-  const todas = fpAgendaDoMes();
-
-  // Metricas do mes: leem o mes inteiro, nao a aba aberta.
-  const quantos = st => todas.filter(x => x.status === st).length;
-  const num = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-  const diasNoMes = new Date(cMonth.getFullYear(), cMonth.getMonth() + 1, 0).getDate();
-  /* "Dias livres" conta dia util sem aprovado e sem bloqueio: sabado e domingo
-     nao entram porque a empresa nao opera, e contar 8 fins de semana como
-     vagos daria um numero que nao significa nada. */
-  let livres = 0;
-  for (let d = 1; d <= diasNoMes; d++) {
-    const dt = new Date(cMonth.getFullYear(), cMonth.getMonth(), d);
-    const fds = dt.getDay() === 0 || dt.getDay() === 6;
-    if (fds) continue;
-    const iso = fmtDate(dt);
-    if (todas.some(x => x.data === iso && (x.status === 'approved' || x.status === 'bloqueio'))) continue;
-    livres++;
-  }
-  num('agStatAprov', quantos('approved'));
-  num('agStatPend', quantos('pending'));
-  num('agStatBloq', quantos('bloqueio'));
-  num('agStatLivres', livres);
-
-  document.querySelectorAll('#view-calendar .filter-btn[data-agfilter]').forEach(b => {
-    const k = b.dataset.agfilter;
-    b.classList.toggle('active', k === AGENDA_FILTRO);
-    const n = b.querySelector('.fp-conta');
-    if (n) n.textContent = k === 'todos' ? todas.length : quantos(k);
-  });
-
-  let lista = AGENDA_FILTRO === 'todos' ? todas : todas.filter(x => x.status === AGENDA_FILTRO);
-  const naAba = lista.length;
-  if (agendaBusca) {
-    lista = lista.filter(x => ((x.nome || '') + ' ' + (x.moto || '') + ' ' + (x.placa || ''))
-      .toLowerCase().includes(agendaBusca));
-  }
-  const cont = document.getElementById('agCount');
-  if (cont) cont.textContent = lista.length === naAba
-    ? naAba + (naAba === 1 ? ' registro' : ' registros')
-    : lista.length + ' de ' + naAba;
-
-  const vazio = (t, x) => '<div class="fp-vazio fp-moldura">' + FP_ICO_ATENCAO
-    + '<h3>' + t + '</h3><p>' + x + '</p></div>';
-  if (!lista.length) {
-    el.innerHTML = agendaBusca
-      ? vazio('Nada encontrado para "' + escHtml(agendaBusca) + '"', 'Tente outro nome, placa ou modelo de moto.')
-      : vazio('Nada neste mês', 'Use o + no topo da tela para agendar, ou navegue para outro mês.');
-    return;
-  }
-
-  const ETAPA = ['approved', 'pending', 'standby', 'rejected', 'bloqueio'];
-  const chaves = {
-    data:   x => x.data || '',
-    nome:   x => String(x.nome || '').toLowerCase(),
-    moto:   x => String(x.moto || '').toLowerCase(),
-    status: x => ETAPA.indexOf(x.status),
-  };
-  lista = fpOrdAplicar(lista, chaves, 'agenda');
-
-  const ICO_VER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
-  const ICO_WA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>';
-  const ICO_ABRIR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="5.6" y1="5.6" x2="18.4" y2="18.4"/></svg>';
-
-  const linhas = lista.map(x => {
-    const ehBloq = x.tipo === 'bloqueio';
-    return '<tr>'
-      + '<td data-rotulo="Data"><strong>' + prettyDate(x.data) + '</strong></td>'
-      + '<td class="fp-col-tit" data-rotulo="' + (ehBloq ? 'Motivo' : 'Solicitante') + '">'
-        + '<strong class="fp-1l" data-tip="' + escHtml(x.nome || '') + '">' + escHtml(x.nome || '—') + '</strong>'
-        + (x.sub ? '<div class="sub">' + escHtml(x.sub) + '</div>' : '') + '</td>'
-      + '<td class="fp-col-moto" data-rotulo="Moto">' + (ehBloq ? '<span class="sub">—</span>'
-          : '<span class="fp-1l" data-tip="' + escHtml(x.moto || '') + '">' + escHtml(x.moto || '—') + '</span>'
-            + (x.placa ? '<div class="sub">' + escHtml(x.placa) + '</div>' : '')) + '</td>'
-      + '<td data-rotulo="Modalidade">' + (ehBloq ? '<span class="sub">—</span>'
-          : '<span class="badge ' + x.modalidade + '">' + (x.modalidade === 'estudio' ? 'Estúdio' : 'Retirada') + '</span>') + '</td>'
-      + '<td data-rotulo="Status">' + (ehBloq
-          ? '<span class="badge rejected">Bloqueado</span>'
-          : '<span class="badge ' + x.status + '">' + rotuloReqStatus(x.status) + '</span>') + '</td>'
-      + '<td><div class="actions">'
-        + (ehBloq
-            ? '<button class="fp-icon-btn fp-ib-danger fp-tip-left" data-tip="Desbloquear esta data" onclick="toggleBlock(\'' + x.data + '\')">' + ICO_ABRIR + '</button>'
-            : '<span class="fp-so-desktop" style="display:contents">'
-              + '<button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Ver detalhes" onclick="openDetails(\'' + x.r.id + '\')">' + ICO_VER + '</button>'
-              + '<button class="fp-icon-btn fp-ib-green fp-tip-left" data-tip="WhatsApp" onclick="openWhatsApp(\'' + x.r.id + '\')">' + ICO_WA + '</button>'
-              + '</span>'
-              + '<span class="fp-so-mobile">' + fpMenuHtml([
-                  { rotulo: 'Ver detalhes', icone: 'ver', acao: () => openDetails(x.r.id) },
-                  { rotulo: 'Falar no WhatsApp', icone: 'whatsapp', acao: () => openWhatsApp(x.r.id) },
-                ], { rotulo: 'Ações do agendamento' }) + '</span>')
-        + '</div></td>'
-      + '</tr>';
-  }).join('');
-
-  const th = (rot, campo, dica) => fpThOrd(rot, campo, 'agenda', 'fpAgOrdenar', dica);
-  el.innerHTML = '<div class="table-wrap fp-lista-wrap"><table class="fp-lista"><thead><tr>'
-    + th('Data', 'data', 'Ordenar pela data do agendamento')
-    + th('Solicitante', 'nome')
-    + th('Moto', 'moto')
-    + '<th>Modalidade</th>'
-    + th('Status', 'status', 'Ordenar por etapa: aprovados primeiro')
-    + '<th>Ações</th>'
-    + '</tr></thead><tbody>' + linhas + '</tbody></table></div>';
-}
-window.renderAgendaLista = renderAgendaLista;
 
 /* DATE VIEWER — shows info for selected date */
 let selectedDate = null;
@@ -11128,7 +10931,6 @@ function getFilteredProjects() {
 const FP_ORD = {
   edicao: { campo: 'data', asc: false },
   clips:  { campo: 'criado', asc: false },
-  agenda: { campo: 'data', asc: true },
 };
 
 function fpThOrd(rotulo, campo, qual, fn, dica) {
@@ -12320,7 +12122,9 @@ function renderShotsReadOnly(shots, si) {
 
   const FP_MODULE_GROUPS = [
     { sec: 'Painel', items: [['dashboard','Dashboard']] },
-    { sec: 'Vídeo', items: [['requests','Solicitações'],['calendar','Agenda'],['checkin','Check-in / Check-out'],['projects','Projetos'],['editing','Edição'],['clips','Clips'],['debriefing','Debriefing']] },
+    /* 'requests' saiu da escolha: virou a listagem da Agenda. A chave continua
+       aceita em `modules` de quem ja a tinha (ver fpAllowedSet). */
+    { sec: 'Vídeo', items: [['calendar','Agenda'],['checkin','Check-in / Check-out'],['projects','Projetos'],['editing','Edição'],['clips','Clips'],['debriefing','Debriefing']] },
     { sec: 'Fotografia', items: [['foto-producao','Produção'],['foto-galeria','Galeria'],['foto-separacao','Separação'],['foto-lote','Fotografia em lote']] },
     { sec: 'Performance', items: [['perf-metas','Metas'],['perf-posts','Meus Posts'],['perf-influencers','Influenciadores'],['perf-bonificacao','Bonificação']] },
     { sec: 'Configurações', items: [['templates','Templates WhatsApp'],['export','Exportar'],['users','Usuários'],['manutencao','Manutenção'],['atualizacoes','Atualizações'],['integracoes','Integrações']] }
@@ -12342,7 +12146,12 @@ function renderShotsReadOnly(shots, si) {
   function fpAllowedSet(){
     if (fpIsAdmin()) return null;
     const mods = (CURRENT_USER && Array.isArray(CURRENT_USER.modules)) ? CURRENT_USER.modules : [];
-    return new Set(mods.concat(FP_ALWAYS_ON));
+    const set = new Set(mods.concat(FP_ALWAYS_ON));
+    /* Solicitacoes virou a listagem da Agenda: quem tinha o modulo antigo
+       guardado em `modules` mantem o acesso. Sem esta linha, quem tinha
+       Solicitacoes e nao tinha Agenda perderia a tela na fusao. */
+    if (set.has('requests')) set.add('calendar');
+    return set;
   }
 
   /* As duas frentes da casa. A frente é deduzida dos módulos de trabalho, não
@@ -12362,6 +12171,7 @@ function renderShotsReadOnly(shots, si) {
   }
 
   function fpShowView(view){
+    if (view === 'requests') view = 'calendar';   // apelido, ver switchToView
     FP_ALL_VIEWS.forEach(function(v){ const el = document.getElementById('view-'+v); if (el) el.style.display = 'none'; });
     const t = document.getElementById('view-'+view); if (t) t.style.display = 'block';
     document.querySelectorAll('.nav-item').forEach(function(b){ b.classList.remove('active'); });
@@ -26542,6 +26352,12 @@ async function initApp() {
      2. HELPER: switch to a view by name
      ------------------------------------------------------------------ */
   function switchToView(viewName, pushHistory) {
+    /* Solicitacoes deixou de ser modulo: virou a listagem da Agenda. O nome
+       continua valendo como APELIDO — ha favorito de #requests, o aviso de
+       entrada aponta para 'requests' e as listas de permissao guardam essa
+       chave. Sem isto, qualquer um desses caminhos cairia num id que nao
+       existe mais e a tela abriria em branco. */
+    if (viewName === 'requests') viewName = 'calendar';
     if (!viewName || !ALL_VIEWS.includes(viewName)) viewName = 'dashboard';
 
     // Hide all views
@@ -26608,13 +26424,12 @@ async function initApp() {
           await loadBugs();
           renderBugs();
           break;
-        case 'requests':
-          await loadRequests();
-          renderRequests();
-          break;
+        /* A Agenda desenha as duas coisas com a mesma leitura: o calendario e
+           a listagem que era de Solicitacoes. */
         case 'calendar':
           await loadRequests();
           renderCalendar();
+          renderRequests();
           break;
         case 'checkin':
           await Promise.all([loadRequests(), loadCheckins(), loadCheckouts()]);
