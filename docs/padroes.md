@@ -166,6 +166,27 @@ Aplicar `display: contents` no bloco do título e em `.edit-actions` promove tí
 status e "…" a filhos diretos do flex do cabeçalho — daí `order` e `flex-basis: 100%`
 montam as duas linhas. Mexer no HTML resolveria também, mas mudaria o computador.
 
+### Listagem é tabela: `.fp-lista`
+
+O formato padrão das listagens é a tabela: cabeçalho ordenável, fio entre as
+linhas, ações na última coluna. Solicitações, Projetos, Edição e Clips usam.
+
+Regras que já custaram defeito:
+
+- **Largura de coluna por CLASSE, nunca por `nth-child`.** A mesma posição é
+  uma coluna diferente em cada tela.
+- **Recuo de 12px por célula e zero nas pontas.** Com o padrão de 16px, sete
+  colunas estouram a largura útil e a coluna de ações sai da tela.
+- **Conteúdo longo não entra na linha.** Observação, prévia, PDF e listas vão
+  para o detalhe; na linha cabe um resumo de uma linha (`.sub`).
+- **Nada de patch que procure o cartão no DOM.** Se a decisão depende do dado
+  (qual modal abrir, por exemplo), ela mora no renderizador.
+
+Abaixo de 600px a tabela vira lista de blocos com o rótulo da coluna antes do
+valor — daí o `data-rotulo` em cada `<td>`.
+
+---
+
 ### Listagem: fios, não caixas
 
 Pedido explícito do dono, em duas etapas (25/08/2026). Primeiro tirou a caixa de cada

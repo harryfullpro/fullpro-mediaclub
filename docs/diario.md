@@ -1,5 +1,57 @@
 # Diário
 
+## 27/08/2026 · Projetos, Edição e Clips viram tabela
+
+> *"eu gostei desse modelo aqui, vamos tornar padrão esse formato de listagem
+> para as paginas PROJETOS, EDIÇÃO e CLIPS"*
+
+O formato da tabela de Solicitações virou o padrão: **cabeçalho ordenável, fio
+entre as linhas, ações na última coluna**. Classe `.fp-lista`.
+
+| tela | colunas |
+|---|---|
+| Projetos | Projeto · Destinos · Moto/Produto · Data · Custos · Status · Ações |
+| Edição | Projeto · Destinos · Moto/Produto · Data · Roteiro · Status · Ações |
+| Clips | Clip · Produto · Gravado · Status · Ações |
+
+**O que era cartão foi para o detalhe.** Observação longa, prévia de roteiro,
+PDF embutido e produtos do Bling não cabem numa linha — a listagem existe para
+varrer, e o detalhe para ler. Na Edição, a coluna **Roteiro** diz o que ele *é*
+em uma palavra ("7 cenas", "PDF", "Texto") e o botão abre o modal certo.
+
+### Ordenação: dois arranjos, de propósito
+
+- **Projetos** já tinha um `<select>` de ordem que o celular usa. O cabeçalho
+  **escreve nesse select** e re-renderiza: um estado só. Quatro ordens novas
+  (moto, custo, status) entraram apenas para o cabeçalho e **não** estão no
+  select — ele ficaria com dez opções.
+- **Edição e Clips** não têm select, então ganharam estado próprio com um helper
+  compartilhado.
+
+**Status ordena pela etapa do fluxo, não pelo alfabeto:** "A publicar" vem
+depois de "Edição" no trabalho real e antes dele no dicionário.
+
+### Três defeitos que a conversão revelou
+
+- **A tabela de Projetos estourava a largura em 96px** e a coluna de ações
+  ficava fora da tela — o operador não via os botões sem rolar de lado. Recuo de
+  16px para 12px por célula e zero nas pontas, o que também alinha a tabela com
+  o resto da página.
+- **Largura de coluna por posição vaza.** A regra que estreitava os destinos
+  estava escrita como `td:nth-child(2)` e valia para a segunda coluna de
+  *qualquer* listagem: no Clips a segunda coluna é o produto, que ficou esmagado
+  em 116px — nome, SKU, preço e estoque viraram uma torre de duas letras por
+  linha. Agora é por classe.
+- **Havia um patch que procurava `.edit-card` no DOM** para repontar o botão do
+  roteiro para o modal novo. Sem cartão ele não tinha onde agir — a decisão
+  passou para o renderizador, onde o dado está.
+
+Junto: a **barra de filtro do Clips** era seis pílulas com `style` inline
+montado em JS e virou aba com sublinhado; e as **métricas da Edição** eram três
+caixas com chapa colorida atrás do ícone, o último lugar do painel com isso.
+
+---
+
 ## 27/08/2026 · Carrossel das fotos novas, e a animação vai para o banco
 
 > *"acho que aqui no dash faz mais sentido a gente tirar essa animação e colocar
