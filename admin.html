@@ -9348,7 +9348,8 @@ function renderAgendaLista() {
         + '<strong class="fp-1l" data-tip="' + escHtml(x.nome || '') + '">' + escHtml(x.nome || '—') + '</strong>'
         + (x.sub ? '<div class="sub">' + escHtml(x.sub) + '</div>' : '') + '</td>'
       + '<td class="fp-col-moto" data-rotulo="Moto">' + (ehBloq ? '<span class="sub">—</span>'
-          : escHtml(x.moto || '—') + (x.placa ? '<div class="sub">' + escHtml(x.placa) + '</div>' : '')) + '</td>'
+          : '<span class="fp-1l" data-tip="' + escHtml(x.moto || '') + '">' + escHtml(x.moto || '—') + '</span>'
+            + (x.placa ? '<div class="sub">' + escHtml(x.placa) + '</div>' : '')) + '</td>'
       + '<td data-rotulo="Modalidade">' + (ehBloq ? '<span class="sub">—</span>'
           : '<span class="badge ' + x.modalidade + '">' + (x.modalidade === 'estudio' ? 'Estúdio' : 'Retirada') + '</span>') + '</td>'
       + '<td data-rotulo="Status">' + (ehBloq
