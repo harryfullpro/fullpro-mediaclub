@@ -279,6 +279,25 @@ repetir o mesmo quadro. E período curto é o que faz parecer vivo: a primeira v
 login rodava em 40s/52s, ≈1vw por segundo, e o dono perguntou se a animação tinha ficado
 pronta.
 
+### Quando a caixa É permitida
+
+"Fios, não caixas" vale para **linha de listagem** e para container em volta de lista. Não
+vale para **painel de consulta**: a moldura da tabela (`.table-wrap`) sempre teve fundo,
+fio e canto de 14px, e em 27/08/2026 o dono pediu o mesmo para o calendário e o detalhe do
+dia — *"quero que esses dois sejam com fundo branco e dentro de um container assim como tá
+a listagem de solicitações"*. Aplicar a regra ali foi o mesmo erro de tirar o `.table-wrap`
+da tabela: princípio verdadeiro, lugar errado.
+
+Quando puser dois painéis lado a lado, **iguale a altura** (`align-items: stretch`) e
+centre o conteúdo curto. 397px e 178px lado a lado leem como tela inacabada — em faixa com
+fio a diferença não aparecia, em caixa aparece.
+
+E cuidado com o que decide a simetria: no Dashboard de foto as duas colunas já tinham
+255px, mas o **retângulo visível** da galeria terminava 15px acima do fim da fila porque os
+pontos do carrossel ficam fora do palco. O olho compara as bordas visíveis, não as caixas.
+
+---
+
 ### Listagem: fios, não caixas
 
 Pedido explícito do dono, em duas etapas (25/08/2026). Primeiro tirou a caixa de cada

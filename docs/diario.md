@@ -1,5 +1,106 @@
 # Diário
 
+## 27/08/2026 · Agenda absorve Solicitações, sessão com prazo, galeria refeita
+
+### O carrossel mostrava pasta nova, não pasta com foto nova
+
+> *"aqui na galeria de fotos recentes não tá sendo bem as fotos mais recentes"*
+
+`drive-recentes` ordenava as pastas por **`createdTime`** — e a pasta de SKU
+nasce quando o produto entra no catálogo, meses antes de alguém fotografar.
+Agora é **`modifiedTime desc`**: subir foto numa pasta antiga mexe no
+`modifiedTime` e não no `createdTime`, então é ele que responde "onde entrou
+foto por último". A prova está no próprio dado: **FP-CAR-HAY997-8-1, criada em
+2023-09-18 e fotografada em 19/08/2026** — pela ordem antiga nunca apareceria.
+
+Junto veio o pedido de duas fotos por slide (o espaço é retangular): a função
+passou a devolver `pastas`, cada uma com a **foto 1 e a foto 2** em ordem
+natural de nome. Manteve `fotos` no formato antigo por um ciclo, e o cliente
+normaliza os dois — resposta em cache não deixa o painel em branco.
+Edge function **versão 2**, `verify_jwt: false`.
+
+### Simetria, chapa e "foto cortada" eram três leituras do mesmo lugar
+
+> *"garantir que a altura da galeria e do div fila por prioridade seja a mesma
+> … reduza um pouco a opacidade da sombra … as fotos não estão centralizadas"*
+
+Medindo, dois dos três não eram o que pareciam:
+
+- **As colunas já tinham a mesma altura** (255px cada). O que não fechava era o
+  *retângulo visível* da galeria, 15px acima do fim da fila: os pontos do
+  carrossel ficam fora do palco e ocupam esses 15px. O olho compara as bordas
+  visíveis, não as caixas. A fila passou a reservar essa altura no recuo de
+  baixo e as linhas dividem por igual o que sobra — fecha com qualquer número
+  de linhas. E o palco subiu de 220 para 252px, porque o pedido foi aumentar a
+  galeria, não encurtá-la. Diferença medida depois: **0px**.
+- **A foto não estava cortada embaixo.** As miniaturas do proxy são todas
+  320×320 (medido em toda a amostra); em `object-fit: cover` numa célula de
+  232×240 perdiam **8px na horizontal e zero na vertical**. O "cortado embaixo"
+  era a chapa do rótulo a `.72` escurecendo os 50px de baixo. Virou `contain`
+  (não corta em nenhuma proporção) e a faixa caiu para `.46`, com sombra na
+  letra em vez de chapa forte.
+
+### Solicitações virou a listagem da Agenda
+
+> *"acho que podemos fundir o módulo Solicitações com Agenda… as solicitações
+> devem ir direto pra lá com a mesma funcionalidade"*
+
+Eram dois módulos sobre o mesmo dado. A listagem foi inteira e sem perda
+(métricas, abas, busca, oito colunas, detalhe, WhatsApp), com o calendário em
+cima como visualização. O contador de pendentes foi para o item da Agenda: é o
+motivo de olhar a tela.
+
+**Calendário e detalhe do dia em caixa branca**, pedido explícito — mesmos
+valores do `.table-wrap`. "Fios, não caixas" vale para **linha de listagem**;
+estes dois são painéis de consulta, do mesmo tipo da moldura da tabela. E as
+duas caixas ganharam altura igual: 397 e 178px lado a lado leem como tela
+inacabada, o que em faixa com fio não aparecia.
+
+`requests` continua valendo como **apelido** de `calendar` em `switchToView` e
+`fpShowView` — há favorito de `#requests`, o aviso de entrada aponta para
+`'requests'` e as listas de permissão guardam essa chave. E `fpAllowedSet`
+passou a implicar `calendar` para quem tem `requests` em `modules`: sem isso,
+quem tinha Solicitações e não tinha Agenda perderia a tela na fusão.
+
+Saiu a listagem do mês que eu havia feito horas antes — a de Solicitações a
+substitui com mais colunas e o dado inteiro.
+
+### A tela de login piscava em cada F5, e a sessão não vencia nunca
+
+> *"quando dou reload na página ela meio que carrega a tela de login novamente
+> … quero remover essa regra [de auto login] também"*
+
+A decisão de mostrar login ou painel só acontecia **depois** de uma consulta ao
+banco: meio segundo de tela de entrar em cada recarga, com a sessão já válida no
+navegador. Passou para um **script síncrono no fim do `<head>`** — se há sessão
+viva, o `<html>` recebe `fp-entrando` e o CSS revela o app na primeira pintura.
+A validação contra o banco continua em `checkAuth` e **desfaz** a revelação se o
+id não existir mais (`fpVoltarAoLogin`). O menu segue escondido até a filtragem
+por papel: adiantar a moldura não pode adiantar a lista de módulos.
+
+E o "fica logado para sempre" saiu. Dois prazos:
+
+| prazo | valor | o que pega |
+|---|---|---|
+| inatividade | **12h** | o computador do estúdio aberto de um dia para o outro |
+| máximo | **7 dias** | quem usa todo dia e nunca mais digitaria a senha |
+
+Quem renova o prazo é **toque de gente** (`pointerdown`, `keydown`, volta de
+aba), gravado no máximo a cada 5 min. O relógio de 1 minuto só *confere*: se
+fosse ele a renovar, uma aba esquecida se renovaria sozinha para sempre e a
+inatividade nunca venceria — que é justamente o caso que ela existe para pegar.
+
+Sessão aberta antes do controle não tem prazo gravado e vale como se começasse
+agora: ninguém é deslogado pela atualização em si. `fp_session` continua
+guardando só o id (outras oito partes do arquivo leem essa chave direto); os
+prazos vão em `fp_sessao_meta`.
+
+Testado nos dois sentidos: com `uso` recuado 13h, `FP_SESSAO.ler()` devolve
+`null`, apaga as duas chaves e o F5 seguinte cai na tela de entrar sem
+`fp-entrando`.
+
+---
+
 ## 27/08/2026 · "Tu fez tudo errado": o padrão era a página, não a tabela
 
 > *"deixa de ser burro cara, olha a primeira imagem que te pedi e olha a segunda

@@ -78,7 +78,27 @@ não abre o seletor nativo do iOS. No computador segue múltipla escolha pelos c
 - **Glifo + em azul de sistema, sem caixa** — nada de quadrado preenchido
 - Vale só no celular; no computador segue o botão azul
 
-### Solicitações
+### Agenda = Solicitações + calendário
+Fundidos em 27/08/2026, a pedido: *"podemos fundir o módulo Solicitações com Agenda…
+as solicitações devem ir direto pra lá com a mesma funcionalidade"*. Eram dois módulos
+sobre o mesmo dado.
+
+- A tela é: métricas → **calendário + detalhes do dia em caixa branca** → a listagem de
+  Solicitações inteira (abas, busca, oito colunas, detalhe, WhatsApp)
+- O **contador de pendentes** ficou no item Agenda do menu: é o motivo de olhar a tela
+- `requests` continua valendo como **apelido** de `calendar` (favoritos, aviso de entrada,
+  listas de permissão) e implica acesso à Agenda para quem tinha o módulo antigo
+
+### Sessão tem prazo (o auto login saiu)
+> *"Sempre que o operador sair, ou depois de um determinado tempo, será necessário inserir
+> as credenciais de login novamente"* (27/08/2026)
+
+- **12h de inatividade** e **7 dias no máximo** desde o login
+- Quem renova é toque de gente, não relógio — aba esquecida não se renova sozinha
+- Sair pelo menu apaga na hora
+- Recarregar **não** mostra mais a tela de login: a decisão é síncrona, antes de pintar
+
+### A listagem de Solicitações
 - Ordem padrão: **data de recebimento, da mais recente para a mais antiga**
 - Na linha da tabela, só **Ver detalhes** e **WhatsApp** — mudanças de status acontecem
   dentro do detalhe. Cinco ícones na linha ficaram "meio bagunçado".
