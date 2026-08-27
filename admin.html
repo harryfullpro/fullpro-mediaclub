@@ -5274,7 +5274,14 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    outro cartao — caixa dentro de caixa, o padrao antigo. Agora e listagem com
    fio, como o resto do painel. */
 .fp-integr { max-width: 720px; }
-.fp-integr h3 { padding-top: 6px; }
+/* Ao trocar o container de .cal-card por .fp-integr o titulo perdeu o estilo
+   junto — h3 e .sub eram estilizados PELO cartao. Sao redeclarados aqui, no
+   desenho das faixas de listagem. */
+.fp-integr h3 {
+  font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase;
+  font-size: 13px; letter-spacing: .1em; color: var(--text); padding-top: 6px;
+}
+.fp-integr h3 + .sub { font-size: 12px; color: var(--text-muted); margin: 3px 0 2px; }
 .fp-integr-lin {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 14px 0; border-top: 1px solid var(--border);
