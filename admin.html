@@ -5508,7 +5508,13 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   .fp-lista tbody tr:hover td { background: none; }
   .fp-lista td { display: block; padding: 0; border: 0; font-size: 13px; min-width: 0; }
   .fp-lista td:first-child { flex: 1 1 100%; }
-  .fp-lista td:last-child { margin-left: auto; }
+  /* `width: 1%` na ultima coluna e regra de TABELA (celula de acao nao estica).
+     Vazando para o celular, onde a linha e flex, ela deixava a celula com 3,5px
+     de largura e o botao "…" de 26px saia dela: media a 375px o botao ia de 360
+     a 386, ou seja, 11px fora da tela — e no celular ele e o unico caminho para
+     as acoes da linha. */
+  .fp-lista td:last-child { margin-left: auto; width: auto; }
+  .fp-lista td .actions { justify-content: flex-end; }
   .fp-lista td[data-rotulo]:not(:first-child)::before {
     content: attr(data-rotulo);
     margin-right: 6px;
