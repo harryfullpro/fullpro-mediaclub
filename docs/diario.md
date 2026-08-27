@@ -97,6 +97,19 @@ Três coisas não se copiam do login: a **escala** da malha (16px/64px, não
 milimetrado de verdade e competem com o número; valem o da barra lateral, um
 terço) e o **traçado**, que é desenhado para 900×160 — o do login entra cortado.
 
+### A largura útil muda quando ele recolhe a barra lateral
+
+Todas as medidas de "cabe em 1146" foram feitas com a **barra recolhida**. Com ela
+aberta numa tela de 1280 a largura útil cai para **954px** — e aí Projetos (1138),
+Clips (1057) e Edição (1038) rolam de lado. Solicitações cabe porque suas oito
+colunas são curtas e encolhem sozinhas; as minhas têm título e nome de moto presos
+a um teto que não desce abaixo do min-content.
+
+A saída não foi raspar recuo nem tirar ação: a **coluna de ações gruda na direita**
+(`position: sticky; right: 0`). Rola o que precisa rolar e os botões da linha nunca
+saem de vista. Medido a 954px: Agenda cabe inteira, e nos outros três as ações
+continuam visíveis com a tabela rolada.
+
 ### Três defeitos de celular que só apareceram ao medir a 375px
 
 O `.table-wrap` que devolveu a faixa cinza no computador trouxe herança que não

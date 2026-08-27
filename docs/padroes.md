@@ -199,6 +199,13 @@ Regras que já custaram defeito:
   reticências (`.fp-1l`), com o texto inteiro em `data-tip`; a observação vira uma linha
   só (`.fp-sub-1l`). Placa e telefone vão para a `.sub`, nunca entre parênteses no meio
   da frase.
+- **A coluna de ações gruda na direita** (`position: sticky; right: 0`), com fundo próprio
+  e o do hover. A largura útil muda quando o dono recolhe a barra lateral: medido a 1280px,
+  1146 com a barra recolhida e **954 com ela aberta**. Sete colunas de projeto pedem 1138 —
+  sem a coluna grudada, os botões da linha ficam fora da área visível e só aparecem
+  arrastando, que foi o defeito da primeira conversão. Grudar resolve sem raspar recuo nem
+  tirar ação da linha. Medido a 954: Agenda cabe em 954, Edição pede 1038, Clips 1057 e
+  Projetos 1138 — nos três que rolam, as ações continuam visíveis.
 - **Largura de coluna por CLASSE, nunca por `nth-child`** (`.fp-col-tit`, `.fp-col-moto`,
   `.fp-col-prod`). A mesma posição é uma coluna diferente em cada tela.
 - **Nada de busca de rede por linha.** Os produtos compatíveis do Bling eram uma chamada
