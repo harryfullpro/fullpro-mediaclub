@@ -5443,6 +5443,16 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 /* As celulas de acao e de status nao esticam: quem manda na largura e o
    conteudo de verdade (titulo, produto). */
 .fp-lista td:last-child, .fp-lista th:last-child { width: 1%; white-space: nowrap; }
+/* A coluna de acoes gruda na direita quando a tabela rola de lado. Sete colunas
+   de projeto pedem 1138px e a barra lateral aberta numa tela de 1280 deixa 954
+   (medido): sem isto os botoes da linha ficam fora da area visivel e so
+   aparecem arrastando — o mesmo defeito da primeira conversao, agora resolvido
+   sem raspar recuo nem tirar acao. O `<thead>` ja gruda no topo; a celula do
+   canto acumula as duas ancoras. */
+.fp-lista td:last-child, .fp-lista th:last-child { position: sticky; right: 0; }
+.fp-lista tbody td:last-child { background: var(--bg-card); }
+.fp-lista tbody tr:hover td:last-child { background: var(--bg-elev); }
+.fp-lista thead th:last-child { background: var(--bg-elev); z-index: 6; }
 /* Largura por CLASSE, nao por posicao: escrita como `td:nth-child(2)` a regra
    valia para a segunda coluna de qualquer listagem — e no Clips a segunda
    coluna e o produto, que ficou esmagado em 116px (medido). */
@@ -5513,7 +5523,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
      de largura e o botao "…" de 26px saia dela: media a 375px o botao ia de 360
      a 386, ou seja, 11px fora da tela — e no celular ele e o unico caminho para
      as acoes da linha. */
-  .fp-lista td:last-child { margin-left: auto; width: auto; }
+  .fp-lista td:last-child { margin-left: auto; width: auto; position: static; background: none; }
   .fp-lista td .actions { justify-content: flex-end; }
   .fp-lista td[data-rotulo]:not(:first-child)::before {
     content: attr(data-rotulo);
