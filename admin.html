@@ -5300,7 +5300,10 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    listagens do painel. O que era um botao verde de largura inteira virou
    `.action-btn`, e as acoes da foto viraram texto — trocar a propria foto nao
    e a acao principal da tela. */
-.fp-perfil { max-width: 940px; }
+/* 720px e escolhido: com coluna minima de 232px e vao de 22, e a largura que
+   fecha DUAS colunas. A 940 cabiam tres e as secoes de quatro campos ficavam
+   3+1, com dois buracos por fileira — formulario le melhor em pares. */
+.fp-perfil { max-width: 720px; }
 .fp-perfil .fp-prod-faixa { border-top: 1px solid var(--border); margin-top: 6px; }
 .fp-perfil .fp-prod-faixa:first-child { border-top: 0; margin-top: 0; padding-top: 4px; }
 .fp-perfil-foto { display: flex; align-items: center; gap: 14px; padding: 6px 0 20px; flex-wrap: wrap; }
