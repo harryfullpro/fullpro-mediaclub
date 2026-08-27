@@ -3117,8 +3117,12 @@
     .table-wrap { border-radius: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     table { min-width: 600px; }
     th, td { padding: 10px 12px; font-size: 13px; }
-    th:nth-child(4), td:nth-child(4),
-    th:nth-child(5), td:nth-child(5) { display: none; }
+    /* Esconder a 4a e a 5a coluna de QUALQUER tabela e regra antiga e cega —
+       serve para a tabela de Solicitacoes e mais nada. As listagens novas
+       (.fp-lista) escolhem as proprias colunas e ficam de fora. */
+    table:not(.fp-lista) th:nth-child(4), table:not(.fp-lista) td:nth-child(4),
+    table:not(.fp-lista) th:nth-child(5), table:not(.fp-lista) td:nth-child(5) { display: none; }
+    .fp-lista { min-width: 0; }
 
     /* Calendar */
     .cal-admin { grid-template-columns: 1fr; }
@@ -5316,6 +5320,41 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-prod-linha.fora { opacity: .5; }
 /* Cabeçalho de bloco, no lugar do <h3> solto. Sem fundo: a listagem fica
    direto sobre o fundo da tela, sem moldura em volta. */
+/* ── Listagem em tabela (.fp-lista) ──────────────────────────────────────
+   O formato da tabela de Solicitacoes virou o padrao das listagens: cabecalho
+   ordenavel, fio entre as linhas, acoes na ultima coluna. O que era cartao
+   (observacao longa, roteiro, produtos do Bling) mora no detalhe — a listagem
+   existe para varrer, nao para ler. */
+.fp-lista th { white-space: nowrap; }
+.fp-lista td { vertical-align: middle; }
+.fp-lista td .sub { display: block; margin-top: 2px; }
+/* As celulas de acao e de status nao esticam: quem manda na largura e o
+   conteudo de verdade (titulo, produto). */
+.fp-lista td:last-child, .fp-lista th:last-child { width: 1%; white-space: nowrap; }
+.fp-lista .proj-dest-tag { margin-bottom: 2px; }
+
+@media (max-width: 600px) {
+  /* Tabela vira lista de blocos, com o rotulo da coluna antes do valor. Sem
+     fundo e sem moldura: o fio ja separa, como no resto do painel. */
+  .fp-lista { display: block; width: 100%; }
+  .fp-lista thead { display: none; }
+  .fp-lista tbody { display: block; }
+  .fp-lista tbody tr {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px;
+    padding: 12px 0; border-top: 1px solid var(--border);
+  }
+  .fp-lista tbody tr:hover td { background: none; }
+  .fp-lista td { display: block; padding: 0; border: 0; font-size: 13px; min-width: 0; }
+  .fp-lista td:first-child { flex: 1 1 100%; }
+  .fp-lista td:last-child { margin-left: auto; }
+  .fp-lista td[data-rotulo]:not(:first-child)::before {
+    content: attr(data-rotulo);
+    margin-right: 6px;
+    font-size: 9.5px; font-weight: 800; letter-spacing: .7px;
+    text-transform: uppercase; color: var(--text-muted);
+  }
+}
+
 /* ── Integracoes ────────────────────────────────────────────────────────
    Cada servico era um cartao com fundo, borda e canto arredondado dentro de
    outro cartao — caixa dentro de caixa, o padrao antigo. Agora e listagem com
@@ -10442,8 +10481,70 @@ function getFilteredProjects() {
     case 'date_desc':
       list.sort((a, b) => (b.production_date || '').localeCompare(a.production_date || ''));
       break;
+    /* As quatro de baixo existem so para o cabecalho da tabela: nao estao no
+       <select>, e de proposito — o seletor do celular ficaria com dez opcoes.
+       Mesmo acordo da tabela de Solicitacoes. */
+    case 'moto_az':
+      list.sort((a, b) => (a.moto || '').localeCompare(b.moto || '', 'pt'));
+      break;
+    case 'moto_za':
+      list.sort((a, b) => (b.moto || '').localeCompare(a.moto || '', 'pt'));
+      break;
+    case 'custo_desc':
+      list.sort((a, b) => fpProjCusto(b) - fpProjCusto(a));
+      break;
+    case 'custo_asc':
+      list.sort((a, b) => fpProjCusto(a) - fpProjCusto(b));
+      break;
+    case 'status_asc':
+      list.sort((a, b) => FP_PROJ_ETAPA.indexOf(a.status) - FP_PROJ_ETAPA.indexOf(b.status));
+      break;
+    case 'status_desc':
+      list.sort((a, b) => FP_PROJ_ETAPA.indexOf(b.status) - FP_PROJ_ETAPA.indexOf(a.status));
+      break;
   }
   return list;
+}
+
+/* Status ordena pela ETAPA do fluxo, nao pelo alfabeto: "A publicar" vem
+   depois de "Edicao" no trabalho real, e antes dele no dicionario. */
+const FP_PROJ_ETAPA = ['planejamento', 'producao', 'edicao', 'a_publicar', 'concluido'];
+
+function fpProjCusto(p) {
+  return (p.costs || []).reduce((s, c) => s + (c.value || 0), 0);
+}
+
+/* O cabecalho da tabela e o <select> de ordem sao o MESMO estado: clicar no
+   titulo escreve no select e re-renderiza. Sem isso seriam duas ordens
+   brigando — a do cabecalho e a do seletor que o celular usa. */
+const FP_PROJ_ORD = {
+  titulo:   { asc: 'az',         desc: 'za' },
+  moto:     { asc: 'moto_az',    desc: 'moto_za' },
+  data:     { asc: 'date_asc',   desc: 'date_desc' },
+  custo:    { asc: 'custo_asc',  desc: 'custo_desc' },
+  status:   { asc: 'status_asc', desc: 'status_desc' },
+  recebida: { asc: 'oldest',     desc: 'newest' },
+};
+
+function fpProjOrdenar(campo) {
+  const sel = document.getElementById('projSortSelect');
+  const par = FP_PROJ_ORD[campo];
+  if (!sel || !par) return;
+  sel.value = (sel.value === par.desc) ? par.asc : par.desc;
+  renderProjects();
+}
+
+/* Um <th> ordenavel no desenho da tabela de Solicitacoes. */
+function fpProjTh(rotulo, campo, dica) {
+  const sel = document.getElementById('projSortSelect');
+  const atual = sel ? sel.value : 'newest';
+  const par = FP_PROJ_ORD[campo] || {};
+  const asc = atual === par.asc, desc = atual === par.desc;
+  return '<th class="fp-sortable" data-campo="' + campo + '"'
+    + ' aria-sort="' + (asc ? 'ascending' : desc ? 'descending' : 'none') + '"'
+    + (dica ? ' data-tip="' + escHtml(dica) + '"' : '')
+    + ' onclick="fpProjOrdenar(\'' + campo + '\')">' + escHtml(rotulo)
+    + ' <span class="fp-seta">' + (asc ? '▲' : '▼') + '</span></th>';
 }
 
 function renderProjects() {
@@ -10453,69 +10554,81 @@ function renderProjects() {
   // (as opcoes trazem a contagem de cada status/destino).
   if (typeof fpFiltroStatusPreencher === 'function') fpFiltroStatusPreencher();
   if (typeof fpFiltroDestinoPreencher === 'function') fpFiltroDestinoPreencher();
+
+  const vazio = (titulo, texto) => '<div class="fp-vazio fp-moldura">' + FP_ICO_ATENCAO
+    + '<h3>' + titulo + '</h3><p>' + texto + '</p></div>';
+
   if (PROJECTS.length === 0) {
-    el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum projeto criado ainda. Clique em "+ Novo projeto" para começar.</p></div>';
+    el.innerHTML = vazio('Nenhum projeto ainda', 'Use o + no topo da tela para criar o primeiro.');
     return;
   }
   const filtered = getFilteredProjects();
-  const statusMap = { planejamento: 'Planejamento', producao: 'Em produção', edicao: 'Edição', a_publicar: 'A publicar', concluido: 'Concluído' };
-  const statusBadge = { planejamento: 'pending', producao: 'approved', edicao: 'pending', concluido: 'approved' };
-  const destNames = { youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads' };
-
   if (filtered.length === 0) {
-    el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum projeto encontrado com este filtro.</p></div>';
+    el.innerHTML = vazio('Nenhum projeto com este filtro', 'Troque o status ou o destino na barra acima.');
     return;
   }
 
-  el.innerHTML = filtered.map(p => {
-    const dests = (p.destinations || []).map(d => `<span class="proj-dest-tag ${d}">${destNames[d] || d}</span>`).join('');
-    const linkCount = (p.links || []).length;
-    const photoCount = (p.photos || []).length;
-    const costs = p.costs || [];
-    const totalCost = costs.reduce((s, c) => s + (c.value || 0), 0);
-    return `<div class="proj-card">
-      <div class="proj-card-head">
-        <h4>${escHtml(p.title || 'Sem título')}</h4>
-        <div style="display:flex;align-items:center;gap:2px">
-          <span class="fp-so-desktop" style="display:contents">
-            <button class="fp-icon-btn fp-ib-blue" data-tip="Ver" onclick="openProjectSummary('${p.id}')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-          <button class="fp-icon-btn fp-ib-blue" data-tip="Editar" onclick="openProjectDetail('${p.id}')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
-          ${p.drive_link ? `<a class="fp-icon-btn" data-tip="Arquivos brutos (Drive)" href="${escHtml(p.drive_link)}" target="_blank" rel="noopener"><svg viewBox="0 0 800 741.37"><mask id="fpdrvA" width="168" height="154" x="12" y="18" maskUnits="userSpaceOnUse"><path fill="#fff" d="M63.09 37c14.626-25.333 51.193-25.334 65.819 0l45.033 78c14.626 25.334-3.657 57.001-32.91 57.001H50.967c-29.253 0-47.536-31.667-32.91-57.001Z"/></mask><g mask="url(#fpdrvA)" transform="matrix(4.8140532,0,0,4.8140532,-62.146701,-86.652356)"><path fill="url(#fpdrvB)" d="M206.905 172.02h-91.888l-19.015-32.934 45.944-79.578Z"/><path fill="url(#fpdrvC)" d="M-14.919 172.006 50.04 59.494v.002L31.032 92.422h38.02L115 172.004l-129.918.001Z"/><path fill="url(#fpdrvD)" d="M96.007-20.085 141.954 59.5l-19.011 32.928H31.048Z"/></g><defs><linearGradient id="fpdrvB" x1="193.6" x2="103.09" y1="165.6" y2="111.21" gradientUnits="userSpaceOnUse"><stop offset=".09" stop-color="#ffe921"/><stop offset="1" stop-color="#fec700"/></linearGradient><linearGradient id="fpdrvC" x1="114.4" x2="15.53" y1="181.61" y2="121.8" gradientUnits="userSpaceOnUse"><stop offset=".15" stop-color="#a9a8ff"/><stop offset=".33" stop-color="#6d97ff"/><stop offset=".48" stop-color="#3186ff"/></linearGradient><linearGradient id="fpdrvD" x1="128.88" x2="28.7" y1="37.88" y2="84.64" gradientUnits="userSpaceOnUse"><stop offset=".55" stop-color="#0ebc5f"/><stop offset=".85" stop-color="#78c9ff"/></linearGradient></defs></svg></a>` : ''}
-          ${p.publish_link ? `<a class="fp-icon-btn fp-ib-pink" data-tip="Abrir arquivo" href="${escHtml(p.publish_link)}" target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          </a>` : ''}
-          <button class="fp-icon-btn fp-ib-danger" data-tip="Excluir" onclick="deleteProject('${p.id}')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-          </button>
-          </span>
-          <span class="fp-so-mobile">${fpMenuHtml([
+  const statusMap = { planejamento: 'Planejamento', producao: 'Em produção', edicao: 'Edição', a_publicar: 'A publicar', concluido: 'Concluído' };
+  const destNames = { youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads' };
+
+  const ICO_VER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const ICO_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+  const ICO_LINK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+  const ICO_LIXO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>';
+
+  /* Mesma tabela das Solicitacoes: cabecalho ordenavel, fio entre as linhas e
+     as acoes na ultima coluna. O que era cartao (observacoes, roteiro, produtos
+     do Bling) mora no detalhe — a listagem existe para varrer, nao para ler. */
+  const linhas = filtered.map(p => {
+    const dests = (p.destinations || []).map(d => '<span class="proj-dest-tag ' + d + '">' + (destNames[d] || d) + '</span>').join('');
+    const custo = fpProjCusto(p);
+    const obs = String(p.observations || '').trim();
+    return '<tr>'
+      + '<td data-rotulo="Projeto"><strong>' + escHtml(p.title || 'Sem título') + '</strong>'
+        + (obs ? '<div class="sub">' + escHtml(obs.slice(0, 90)) + (obs.length > 90 ? '…' : '') + '</div>' : '')
+        + '<div class="proj-bling" id="projBlingProds_' + p.id + '"></div>'
+        + (p.status === 'a_publicar' ? '<div class="proj-rating" id="projRating_' + p.id + '">' + projRatingHtml(p.id, []) + '</div>' : '')
+        + '</td>'
+      + '<td data-rotulo="Destinos">' + (dests || '<span class="sub">Sem destino</span>') + '</td>'
+      + '<td data-rotulo="Moto / Produto">' + escHtml(p.moto || '—') + '</td>'
+      + '<td data-rotulo="Data">' + (p.production_date ? prettyDate(p.production_date) : '—') + '</td>'
+      + '<td data-rotulo="Custos">' + (custo > 0
+          ? '<strong style="color:var(--warning)">R$ ' + formatBRL(custo) + '</strong>'
+          : '<span class="sub">R$ 0,00</span>') + '</td>'
+      + '<td data-rotulo="Status"><select class="proj-status-select ' + p.status + '"'
+        + ' data-tip="Mudar a etapa deste projeto"'
+        + ' onchange="quickUpdateProjectStatus(\'' + p.id + '\',this.value)">'
+        + FP_PROJ_ETAPA.map(st => '<option value="' + st + '"' + (p.status === st ? ' selected' : '') + '>' + statusMap[st] + '</option>').join('')
+        + '</select></td>'
+      + '<td><div class="actions">'
+        + '<span class="fp-so-desktop" style="display:contents">'
+        + '<button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Ver resumo" onclick="openProjectSummary(\'' + p.id + '\')">' + ICO_VER + '</button>'
+        + '<button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Abrir e editar" onclick="openProjectDetail(\'' + p.id + '\')">' + ICO_EDIT + '</button>'
+        + (p.publish_link ? '<a class="fp-icon-btn fp-ib-pink fp-tip-left" data-tip="Abrir arquivo para publicação" href="' + escHtml(p.publish_link) + '" target="_blank" rel="noopener">' + ICO_LINK + '</a>' : '')
+        + '<button class="fp-icon-btn fp-ib-danger fp-tip-left" data-tip="Excluir projeto" onclick="deleteProject(\'' + p.id + '\')">' + ICO_LIXO + '</button>'
+        + '</span>'
+        + '<span class="fp-so-mobile">' + fpMenuHtml([
             { rotulo: 'Ver resumo', icone: 'ver', acao: () => openProjectSummary(p.id) },
             { rotulo: 'Abrir / editar', icone: 'editar', acao: () => openProjectDetail(p.id) },
             p.drive_link ? { rotulo: 'Arquivos brutos no Drive', icone: 'pasta', href: p.drive_link } : null,
             p.publish_link ? { rotulo: 'Abrir arquivo para publicação', icone: 'link', href: p.publish_link } : null,
             { sep: true },
             { rotulo: 'Excluir projeto', icone: 'excluir', perigo: true, acao: () => deleteProject(p.id) },
-          ], { rotulo: 'Ações do projeto' })}</span>
-          <select class="proj-status-select ${p.status}" style="margin-left:4px" onchange="quickUpdateProjectStatus('${p.id}',this.value)">
-            ${['planejamento','producao','edicao','a_publicar','concluido'].map(s => `<option value="${s}" ${p.status === s ? 'selected' : ''}>${statusMap[s]}</option>`).join('')}
-          </select>
-        </div>
-      </div>
-      ${p.status === 'a_publicar' ? `<div class="proj-rating" id="projRating_${p.id}">${projRatingHtml(p.id, [])}</div>` : ''}
-      <div class="proj-dests">${dests || '<span style="font-size:11px;color:var(--text-muted)">Sem destino definido</span>'}</div>
-      <div class="proj-meta">
-        <div class="proj-meta-item"><div class="k">Moto / Produto</div><div class="v">${escHtml(p.moto || '—')}</div></div>
-        <div class="proj-meta-item"><div class="k">Data</div><div class="v">${p.production_date ? prettyDate(p.production_date) : '—'}</div></div>
-        <div class="proj-meta-item"><div class="k">Custos</div><div class="v" style="${totalCost > 0 ? 'color:#f59e0b;font-weight:600' : ''}">R$ ${formatBRL(totalCost)}</div></div>
-      </div>
-      <div class="proj-bling" id="projBlingProds_${p.id}" style="margin-top:6px"></div>
-      ${p.observations ? `<div style="font-size:12px;color:var(--text-dim);margin-top:6px;border-top:1px solid var(--border);padding-top:8px">${escHtml(p.observations).substring(0, 200)}${p.observations.length > 200 ? '...' : ''}</div>` : ''}
-    </div>`;
+          ], { rotulo: 'Ações do projeto' }) + '</span>'
+        + '</div></td>'
+      + '</tr>';
   }).join('');
+
+  el.innerHTML = '<table class="fp-lista"><thead><tr>'
+    + fpProjTh('Projeto', 'titulo')
+    + '<th>Destinos</th>'
+    + fpProjTh('Moto / Produto', 'moto')
+    + fpProjTh('Data', 'data', 'Ordenar pela data de produção')
+    + fpProjTh('Custos', 'custo')
+    + fpProjTh('Status', 'status', 'Ordenar pela etapa do fluxo')
+    + '<th>Ações</th>'
+    + '</tr></thead><tbody>' + linhas + '</tbody></table>';
+
 
   // Load compatible Bling products for each project (não em status Edição — só relevante no Planejamento)
   if (isBlingConnected()) {
