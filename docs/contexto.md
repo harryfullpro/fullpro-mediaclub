@@ -227,6 +227,28 @@ Decisões dele, ditas explicitamente:
 - Emergenciais entram no lote escolhido pelo operador e o resto é rateado pela lógica
   percentual definida por ele
 
+### Produção: incluir à mão, e kit (27/08/2026)
+O "+" no topo da Produção inclui na fila um **produto** (um SKU) ou um **kit** (dois ou
+mais SKUs fotografados montados).
+
+- O kit é **uma linha** da fila, com chave própria (`KIT-CFP327-FP757`) que é também o
+  nome da pasta dele no Drive. A foto do kit é do conjunto, não das peças.
+- Avisa quando o item já está na fila, já tem foto, está fora de linha, ou quando um kit
+  igual já existe — e **deixa incluir mesmo assim**, foi pedido explícito. Para kit, isso
+  cria um segundo kit; para produto avulso, devolve o produto à fila (com `refazer`,
+  quando ele já tinha foto). Não há duas linhas para o mesmo SKU: o SKU é a chave da linha
+  e o nome da pasta.
+- Na **lista de separação** o kit se abre em uma linha por peça, com o endereço de cada
+  uma e a marca `[KIT]` — quem separa vai buscar peça, não kit.
+- Linha criada à mão se **apaga** (não vai para "fora de linha"): ela não tem contraparte
+  no Bling para onde voltar.
+
+### Comentário no item da fila (27/08/2026)
+Recado do que não cabe na prioridade: "fotografar com o suporte preto", "a peça chegou
+riscada". Balão ao lado do nome do produto com a contagem e o rosto de quem falou por
+último, apagado; o mouse em cima abre a caixa com o texto. **Vale até a foto ficar
+pronta** — aí o recado sai da tela, mas fica guardado no banco.
+
 ### Papéis novos: Fotógrafo e Assistente Admin.
 O **Assistente Admin.** cuida das fotos, **não do vídeo** — mesmo com "Admin" no nome do
 papel. Os dois papéis têm exatamente o mesmo escopo hoje: a seção de Fotografia,

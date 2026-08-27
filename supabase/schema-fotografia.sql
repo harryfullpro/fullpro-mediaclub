@@ -567,3 +567,89 @@ as $$
 $$;
 
 grant execute on function public.mc_photo_panorama(timestamptz) to anon, authenticated;
+
+
+-- ============================================================================
+-- B6) INCLUSÃO MANUAL NA FILA E KITS  (aplicado em 27/08/2026)
+--
+-- O "+" da tela de Produção inclui na fila um produto avulso ou um KIT — dois
+-- ou mais SKUs fotografados montados.
+--
+-- Por que as colunas nascem em mc_photo_products e não numa tabela nova: a fila
+-- inteira (listagem, prioridade, seleção em lote, separação, upload para o
+-- Drive, galeria) é indexada por `sku`. Uma tabela paralela obrigaria a
+-- bifurcar cada uma dessas funções. Com o kit sendo uma linha com chave própria
+-- (`KIT-CFP327-FP757`, montada a partir das peças), ele herda todo o fluxo de
+-- graça. A chave é também o nome da pasta dele no Drive, e tem que ser: a foto
+-- do kit é do conjunto montado, não de nenhuma das peças.
+--
+-- IMPORTANTE para o bling-sync: ele faz upsert só com as colunas do Bling e
+-- nunca menciona estas. Como todas têm default, o INSERT do lote continua
+-- válido e o ON CONFLICT DO UPDATE não encosta nelas. Linha de kit nunca
+-- aparece no Bling, então a sincronização não a alcança.
+-- ============================================================================
+
+alter table public.mc_photo_products
+  add column if not exists kit_skus   text[],
+  add column if not exists manual     boolean not null default false,
+  add column if not exists criado_por text,
+  add column if not exists criado_em  timestamptz;
+
+comment on column public.mc_photo_products.kit_skus is
+  'SKUs que compõem o kit. NULL = produto normal. A ordem é a que o operador digitou; a comparação de "kit repetido" é feita sobre o conjunto ordenado.';
+comment on column public.mc_photo_products.manual is
+  'true = linha criada à mão pelo botão + da Produção, e não pela sincronização do Bling.';
+
+-- A checagem de duplicado roda em memória, sobre o catálogo já carregado; o
+-- índice serve para as consultas por linha manual (auditoria, limpeza), que são
+-- poucas mas varreriam a tabela inteira sem ele.
+create index if not exists mc_photo_products_manual_idx
+  on public.mc_photo_products (criado_em desc) where manual = true;
+
+
+-- ============================================================================
+-- B7) mc_photo_comments — recado preso a um item da fila  (27/08/2026)
+--
+-- Serve para o que não cabe na prioridade: "fotografar com o suporte preto",
+-- "a peça chegou riscada, esperar reposição". Fica visível na listagem de
+-- Produção até a foto ficar pronta.
+--
+-- `fechado_em` em vez de DELETE: o pedido é que o recado saia da TELA quando a
+-- foto é finalizada, não que ele desapareça do mundo. Apagar tiraria a única
+-- resposta para "por que essa foto foi refeita três vezes". Quem carimba é
+-- fpLoteMarcarFeito, o único ponto por onde um item vira `fotografado`.
+--
+-- `sku` sem foreign key para mc_photo_products de propósito, mesmo motivo do
+-- lote_id: remover um produto do catálogo não pode levar junto o histórico do
+-- que foi conversado sobre ele.
+--
+-- `autor_nome` está desnormalizado ao lado de `autor_id` porque o operador pode
+-- ser apagado (on delete set null) e o recado continua tendo que dizer quem
+-- escreveu. O avatar NÃO é copiado: é um data URI de dezenas de KB e repeti-lo
+-- por comentário engordaria a leitura da listagem inteira — o painel resolve o
+-- rosto pelo id, com o cadastro que já tem em mãos.
+-- ============================================================================
+
+create table if not exists public.mc_photo_comments (
+  id          uuid        primary key default gen_random_uuid(),
+  sku         text        not null,
+  texto       text        not null check (char_length(texto) between 1 and 2000),
+  autor_id    uuid        references public.mc_admin_users(id) on delete set null,
+  autor_nome  text,
+  created_at  timestamptz not null default now(),
+  fechado_em  timestamptz
+);
+
+-- O caminho quente é um só: "todos os recados abertos", lido de uma vez quando a
+-- Produção abre. Parcial porque recado fechado nunca é consultado pela tela.
+create index if not exists mc_photo_comments_abertos_idx
+  on public.mc_photo_comments (sku) where fechado_em is null;
+
+alter table public.mc_photo_comments enable row level security;
+
+-- Mesma regra das outras tabelas do painel desde o fechamento de agosto/2026:
+-- quem está autenticado é operador, e operador vê e escreve. A chave pública
+-- (anon) não alcança nada aqui.
+drop policy if exists mc_photo_comments_operador on public.mc_photo_comments;
+create policy mc_photo_comments_operador on public.mc_photo_comments
+  for all to authenticated using (true) with check (true);

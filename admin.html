@@ -5840,6 +5840,196 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-prod-est small { font-weight: 500; color: var(--text-muted); }
 .fp-prod-fim { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; }
 
+/* ── título da linha: nome + selos ───────────────────────────────────────
+   O <b> do nome já corta com reticências, e ele é `display:block`. Para o
+   balão de comentário ficar AO LADO do nome — e não na linha de baixo — o par
+   vira uma linha flex. O `min-width:0` no <b> não é enfeite: sem ele o item
+   flex nunca encolhe abaixo do próprio conteúdo e o `overflow:hidden` não tem
+   o que cortar, então o nome longo empurraria o selo para fora da tela. */
+.fp-prod-tit { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.fp-prod-tit > b { min-width: 0; flex: 0 1 auto; }
+/* Sub-linha com reticências também: um kit de seis peças escreveria uma
+   linha inteira de SKUs embaixo do nome. */
+.fp-prod-nome > .fp-prod-sku {
+  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Selo de KIT. O nome do kit não diz por si que ali vão várias peças, e a
+   diferença muda o que o estoquista vai buscar. */
+/* `fp-prod-selo-kit`, e nao `fp-prod-kit`: esse nome ja e do montador de kit
+   do Magis5 (display:flex + margin-top:8px). Medido antes de trocar: o selo
+   herdava a margem de 8px e descia 4px em relacao ao nome do produto. */
+.fp-prod-selo-kit {
+  flex: 0 0 auto; font-size: 10px; font-weight: 800; letter-spacing: .09em;
+  text-transform: uppercase; padding: 2px 6px; border-radius: 5px;
+  background: var(--bg-elev); color: var(--text-dim);
+}
+.fp-prod-pecas { color: var(--text-muted); }
+
+/* Realce do item recém-incluído. Pinta a MESMA faixa do hover (o ::before que
+   sangra até a borda da tela), e não o fundo da linha: são a mesma coisa aos
+   olhos, e assim não há dois desenhos de "linha destacada" no arquivo. */
+@keyframes fpRealceFaixa {
+  from { background: color-mix(in srgb, var(--primary) 20%, transparent); }
+  to   { background: transparent; }
+}
+.fp-prod-linha.fp-realce::before { animation: fpRealceFaixa 1.9s ease-out; }
+
+/* ── balão de comentário na linha ────────────────────────────────────────
+   Apagado de propósito: é recado, não é o produto, e ao lado do nome não pode
+   competir com ele. O mouse acende E abre a caixa.
+
+   O par cor/opacidade foi MEDIDO, não escolhido no olho. A primeira versão era
+   `--text-dim` a 50%, e o número de comentários — que é informação, não
+   enfeite — dava 2,7:1 no escuro e 2,3:1 no claro: reprovado em AA. Com
+   `--text-dim` só passa a 80%, que já não parece apagado. Com `--text` a 62%
+   dá 4,7:1 no claro e 6,8:1 no escuro, e continua visivelmente mais fraco que
+   o nome do produto ao lado. */
+.fp-com-badge {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px;
+  margin: 0; padding: 2px 4px; border: 0; border-radius: 6px;
+  background: none; color: var(--text); cursor: pointer;
+  opacity: .62; transition: opacity .12s ease;
+}
+.fp-com-badge:hover, .fp-com-badge:focus-visible { opacity: 1; }
+.fp-com-badge > svg {
+  width: 14px; height: 14px; flex: 0 0 auto;
+  fill: none; stroke: currentColor; stroke-width: 1.9;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.fp-com-n { font-size: 11px; font-weight: 700; line-height: 1; }
+/* userAvatarHtml devolve uma <div> com a cor no style; o tamanho e o recorte
+   são desta classe. 16px é o maior que cabe sem crescer a altura da linha. */
+.fp-com-av {
+  width: 16px; height: 16px; flex: 0 0 auto; border-radius: 50%; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 7.5px; font-weight: 700; color: #fff; line-height: 1;
+}
+
+/* Caixa que abre no hover. Vive no <body> e é `fixed` pelo mesmo motivo do
+   menu "…": dentro da linha ela seria cortada pelo `overflow-x:hidden` do
+   <main>, e a célula com `position` cria contexto de empilhamento próprio. */
+.fp-com-pop {
+  position: fixed; z-index: 3000; width: min(340px, calc(100vw - 24px));
+  max-height: 46vh; overflow-y: auto;
+  padding: 6px 12px; border: 1px solid var(--border); border-radius: 12px;
+  background: var(--bg-card); box-shadow: 0 12px 34px rgba(0,0,0,.32);
+  font-size: 12.5px; line-height: 1.5; color: var(--text-dim);
+}
+.fp-com-item { display: flex; gap: 9px; align-items: flex-start; padding: 9px 0; }
+.fp-com-item + .fp-com-item { border-top: 1px solid var(--border); }
+.fp-com-corpo { flex: 1 1 auto; min-width: 0; }
+.fp-com-quem-nome { font-size: 11.5px; font-weight: 700; color: var(--text); }
+.fp-com-quando { margin-left: 6px; font-size: 11px; font-weight: 500; color: var(--text-muted); }
+/* pre-wrap para a quebra de linha que a pessoa digitou valer; anywhere para
+   um SKU colado sem espaço não estourar a caixa. */
+.fp-com-txt { margin: 2px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.fp-com-pop-av {
+  width: 24px; height: 24px; flex: 0 0 auto; border-radius: 50%; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #fff; line-height: 1;
+}
+.fp-com-x {
+  flex: 0 0 auto; border: 0; background: none; cursor: pointer; line-height: 1;
+  padding: 2px 5px; border-radius: 5px; font-size: 16px; color: var(--text-muted);
+}
+.fp-com-x:hover { color: var(--perigo); }
+
+/* ── modal de comentários ────────────────────────────────────────────── */
+.fp-com-alvo {
+  display: flex; align-items: center; gap: 10px;
+  padding: 4px 0 13px; border-bottom: 1px solid var(--border);
+}
+.fp-com-alvo b { display: block; font-size: 13.5px; font-weight: 650; }
+.fp-com-alvo small {
+  font-size: 11.5px; color: var(--text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.fp-com-lista { max-height: 34vh; overflow-y: auto; }
+
+/* ── modal "incluir na produção" ─────────────────────────────────────── */
+.fp-novo-tipo {
+  display: inline-flex; gap: 4px; padding: 3px;
+  border-radius: 10px; background: var(--bg-elev);
+}
+.fp-novo-tipo button {
+  border: 0; background: none; cursor: pointer; padding: 7px 20px; border-radius: 8px;
+  font-size: 12.5px; font-weight: 650; color: var(--text-muted);
+  transition: background .12s ease, color .12s ease;
+}
+.fp-novo-tipo button.on { background: var(--bg-card); color: var(--text); }
+
+.fp-sku-campo { position: relative; margin-bottom: 12px; }
+.fp-sku-campo > label {
+  display: block; margin-bottom: 5px;
+  font-size: 11.5px; font-weight: 650; color: var(--text-dim);
+}
+.fp-sku-linha { display: flex; align-items: center; gap: 8px; }
+.fp-sku-linha .login-input { margin: 0; flex: 1 1 auto; min-width: 0; }
+.fp-sku-x {
+  flex: 0 0 auto; width: 34px; height: 34px; border-radius: 8px;
+  border: 1px solid var(--border); background: none; cursor: pointer;
+  color: var(--text-muted); font-size: 17px; line-height: 1;
+}
+.fp-sku-x:hover { color: var(--perigo); border-color: var(--perigo); }
+.fp-sku-sug {
+  position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 40;
+  max-height: 224px; overflow-y: auto;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--bg-card);
+  box-shadow: 0 10px 26px rgba(0,0,0,.3);
+}
+.fp-sku-item {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  border: 0; background: none; cursor: pointer; text-align: left;
+  padding: 8px 10px; color: var(--text);
+}
+.fp-sku-item:hover, .fp-sku-item.sel { background: var(--bg-elev); }
+.fp-sku-item > span { min-width: 0; }
+.fp-sku-item b {
+  display: block; font-size: 12.5px; font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fp-sku-item small {
+  font-size: 11px; color: var(--text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.fp-sku-achado { margin-top: 5px; font-size: 11.5px; color: var(--text-muted); }
+.fp-sku-achado.novo { color: var(--warning); }
+
+.fp-novo-prio { display: flex; flex-wrap: wrap; gap: 6px; }
+.fp-novo-prio button {
+  border: 1px solid var(--border); border-radius: 999px; background: none;
+  padding: 6px 14px; font-size: 12px; font-weight: 650;
+  color: var(--text-muted); cursor: pointer;
+  transition: color .12s ease, border-color .12s ease, background .12s ease;
+}
+/* Par de tokens, e não texto branco sobre a própria cor: o amarelo da média
+   com branco em cima dá 1,9:1 no tema claro. */
+.fp-novo-prio button.on {
+  color: var(--fp-chip); border-color: var(--fp-chip);
+  background: color-mix(in srgb, var(--fp-chip) 13%, transparent);
+}
+
+/* Aviso de duplicado. Sem barra colorida na lateral — moldura inteira. */
+.fp-novo-aviso {
+  margin-top: 16px; padding: 12px 14px; border-radius: 10px;
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warning) 32%, transparent);
+  font-size: 12.5px; line-height: 1.55; color: var(--text-dim);
+}
+.fp-novo-aviso[hidden] { display: none; }
+.fp-novo-aviso h4 {
+  display: flex; align-items: center; gap: 6px; margin: 0 0 5px;
+  font-size: 12.5px; font-weight: 750; color: var(--text);
+}
+.fp-novo-aviso h4 svg {
+  width: 15px; height: 15px; flex: 0 0 auto;
+  fill: none; stroke: var(--warning); stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.fp-novo-aviso ul { margin: 0; padding-left: 18px; }
+.fp-novo-aviso li + li { margin-top: 4px; }
+.fp-novo-aviso b { color: var(--text); font-weight: 650; }
+
 /* --- seleção e ações em lote --- */
 .fp-prod-check {
   width: 16px; height: 16px; flex: 0 0 auto; margin: 0; cursor: pointer;
@@ -7520,10 +7710,19 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
     </div>
 
     <div id="view-foto-producao" style="display:none">
-      <div class="page-head"><div>
-        <h1>Produção de fotos</h1>
-        <p>A fila do estúdio. Defina a prioridade de cada produto; o emergencial fura a fila.</p>
-      </div></div>
+      <div class="page-head">
+        <div>
+          <h1>Produção de fotos</h1>
+          <p>A fila do estúdio. Defina a prioridade de cada produto; o emergencial fura a fila.</p>
+        </div>
+        <button class="fp-new-btn" id="fotoProdNovoBtn" style="display:none"
+                data-tip="Incluir produto ou kit" aria-label="Incluir produto ou kit na produção"
+                onclick="fpProdNovoAbrir()">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+      </div>
       <div class="filter-bar">
         <span class="fp-so-desktop" style="display:contents">
           <button class="filter-btn active" data-fpfiltro="fila" data-tip="Produtos sem foto que já têm prioridade definida" onclick="fpProdFiltrar('fila')">Na fila</button>
@@ -7545,6 +7744,70 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
       <div id="fotoProdLoteBarra" class="fp-lote-slot"></div>
       <div id="fotoProdLista" class="fp-prod"></div>
       <div id="fotoProdMais" style="text-align:center;margin-top:14px"></div>
+
+      <!-- Incluir na produção: produto avulso ou KIT.
+           Mora DENTRO da view, como o modal de novo usuário: o botão que abre
+           só existe com esta tela à vista, e o observador de acessibilidade
+           pega qualquer `.modal` que ganhe a classe `show`, esteja onde
+           estiver — foco preso, Esc, clique fora e trava de rolagem de graça. -->
+      <div class="modal" id="fotoProdNovoModal">
+        <div class="modal-content">
+          <div class="modal-head">
+            <h3>Incluir na produção</h3>
+            <button class="modal-close" onclick="fpProdNovoFechar()" aria-label="Fechar">&times;</button>
+          </div>
+          <div class="fp-user-form">
+            <div class="fp-prod-faixa">
+              <b>O que entra na fila</b>
+              <span class="fp-aviso-sub">O kit é fotografado montado, com pasta própria no Drive</span>
+            </div>
+            <div class="fp-novo-tipo" role="group" aria-label="Tipo de item">
+              <button type="button" class="on" data-prodtipo="produto" onclick="fpProdNovoTipo('produto')">Produto</button>
+              <button type="button" data-prodtipo="kit" onclick="fpProdNovoTipo('kit')">Kit</button>
+            </div>
+
+            <div id="fotoProdNovoCampos" style="margin-top:15px"></div>
+
+            <div class="fp-prod-faixa">
+              <b>Prioridade</b>
+              <span class="fp-aviso-sub">Dá para definir depois, na listagem</span>
+            </div>
+            <div class="fp-novo-prio" id="fotoProdNovoPrio"></div>
+
+            <div class="fp-novo-aviso" id="fotoProdNovoAviso" hidden></div>
+
+            <div class="fp-user-pe">
+              <button class="action-btn" type="button" onclick="fpProdNovoFechar()">Cancelar</button>
+              <button class="action-btn approve" type="button" id="fotoProdNovoOk" onclick="fpProdNovoConfirmar()" disabled>Incluir na fila</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comentários de um item da fila -->
+      <div class="modal" id="fotoProdComModal">
+        <div class="modal-content">
+          <div class="modal-head">
+            <h3>Comentários</h3>
+            <button class="modal-close" onclick="fpComFecharModal()" aria-label="Fechar">&times;</button>
+          </div>
+          <div class="fp-user-form">
+            <div class="fp-com-alvo" id="fotoProdComAlvo"></div>
+            <div class="fp-com-lista" id="fotoProdComLista"></div>
+            <div class="block-field" style="margin-top:13px">
+              <label for="fotoProdComTexto">Novo comentário</label>
+              <textarea id="fotoProdComTexto" class="login-input" rows="3" maxlength="2000"
+                        style="margin:0;resize:vertical"
+                        placeholder="ex: fotografar com o suporte preto; a peça chegou riscada"></textarea>
+            </div>
+            <p class="fp-user-nota">O recado fica ao lado do nome do produto na fila <b>até a foto ser finalizada</b>. Depois disso ele sai da tela, mas continua guardado.</p>
+            <div class="fp-user-pe">
+              <button class="action-btn" type="button" onclick="fpComFecharModal()">Fechar</button>
+              <button class="action-btn approve" type="button" id="fotoProdComOk" onclick="fpComEnviar()">Comentar</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div id="view-foto-galeria" style="display:none">
@@ -17871,6 +18134,12 @@ function renderFotoProducao(refazerOrdem, desde) {
   if (!box) return;
   fpBuscaLigar('fotoProdBusca', fpProdBuscarFila);
   const editavel = fpFotoPodeEditar();
+  /* Antes do primeiro `return`: a lista vazia é justamente quando alguém
+     precisa do botão de incluir. */
+  const btnNovo = document.getElementById('fotoProdNovoBtn');
+  if (btnNovo) btnNovo.style.display = editavel ? '' : 'none';
+  fpComLigarHover();
+  fpComCarregar();
   let lista;
   if (refazerOrdem || !_prodOrdem) {
     lista = fpProdSelecionados();
@@ -17909,7 +18178,8 @@ function renderFotoProducao(refazerOrdem, desde) {
   const desenhar = anexar ? visiveis.slice(desde) : visiveis;
   const html = desenhar.map(p => {
     const fora = !!p.excluido, temFoto = !!p.tem_foto;
-    const acoes = [];
+    const ehKit = Array.isArray(p.kit_skus) && p.kit_skus.length > 0;
+    const acoes = [{ rotulo: 'Comentar', icone: 'comentar', acao: () => fpComAbrir(p.sku) }];
     if (fora) acoes.push({ rotulo: 'Voltar para a listagem', icone: 'ver', acao: () => fpProdRestaurar(p.sku) });
     else {
       /* Quem ainda não tem foto recebe a primeira: é envio, com ícone de upload.
@@ -17918,15 +18188,29 @@ function renderFotoProducao(refazerOrdem, desde) {
         ? { rotulo: 'Adicionar fotos', icone: 'mais', acao: () => fpProdAdicionarFotos(p.sku) }
         : { rotulo: 'Enviar fotos', icone: 'enviar', acao: () => fpProdAdicionarFotos(p.sku) });
       if (temFoto) acoes.push({ rotulo: 'Enviar para atualização', icone: 'atualizar', acao: () => fpProdEnviarAtualizacao(p.sku) });
-      acoes.push({ sep: true });
-      acoes.push({ rotulo: 'Remover da listagem', icone: 'excluir', perigo: true, acao: () => fpProdExcluir(p.sku) });
     }
+    /* "Fora de linha" existe para produto do Bling: ele some da fila mas o
+       cadastro continua lá e volta pelo filtro. Linha criada à mão aqui não
+       tem esse outro lado — mandá-la para "fora de linha" seria escondê-la
+       para sempre num filtro que ninguém abre. Ela se apaga. */
+    const destrutiva = p.manual
+      ? { rotulo: ehKit ? 'Apagar kit' : 'Apagar da produção', icone: 'excluir', perigo: true, acao: () => fpProdApagarManual(p.sku) }
+      : fora ? null
+      : { rotulo: 'Remover da listagem', icone: 'excluir', perigo: true, acao: () => fpProdExcluir(p.sku) };
+    if (destrutiva) acoes.push({ sep: true }, destrutiva);
     return '<div class="fp-prod-linha' + (fora ? ' fora' : '') + '" data-sku="' + escHtml(p.sku) + '">'
       + '<input type="checkbox" class="fp-prod-check" data-sku="' + escHtml(p.sku) + '"'
       + (_prodSel.has(p.sku) ? ' checked' : '') + ' aria-label="Selecionar ' + escHtml(p.nome || p.sku) + '">'
       + fpFotoProdutoHtml(p.sku, p.imagem_bling, 38, 8)
-      + '<span class="fp-prod-nome"><b>' + escHtml(p.nome || '(sem nome)') + '</b>'
-      + '<span class="fp-prod-sku">' + escHtml(p.sku) + '</span></span>'
+      + '<span class="fp-prod-nome"><span class="fp-prod-tit">'
+      + (ehKit ? '<span class="fp-prod-selo-kit">Kit</span>' : '')
+      + '<b>' + escHtml(p.nome || '(sem nome)') + '</b>'
+      /* O balão é pintado depois, por fpComPintar: os comentários chegam do
+         banco em paralelo com a listagem e não podem atrasá-la. */
+      + '<span class="fp-com-slot" data-com-sku="' + escHtml(p.sku) + '"></span></span>'
+      + '<span class="fp-prod-sku">' + escHtml(p.sku)
+      + (ehKit ? ' <span class="fp-prod-pecas">· ' + escHtml(p.kit_skus.join(' + ')) + '</span>' : '')
+      + '</span></span>'
       + fpProdEstoqueHtml(p.estoque)
       + '<span class="fp-prod-fim">'
       + (fora ? '<span class="fp-aviso-sub">Fora de linha</span>'
@@ -17997,6 +18281,7 @@ function renderFotoProducao(refazerOrdem, desde) {
   fpProdLoteBarra();
   fpPrioAjustarColuna(box);
   fpDriveCarregar(desenhar.map(p => p.sku), box);
+  fpComPintarTudo(box);
   fpFotoBadgeUrgente();
 }
 
@@ -18049,6 +18334,831 @@ function fpProdEnviarFotos(sku, arquivos) {
     },
   });
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   INCLUIR NA PRODUÇÃO — produto avulso e KIT
+
+   O "+" do topo da tela abre um modal com duas abas. "Produto" pede um SKU;
+   "Kit" pede dois ou mais, com um campo a cada clique, e cria UMA linha na
+   fila para o conjunto.
+
+   POR QUE O KIT É UMA LINHA DE mc_photo_products, e não uma tabela nova
+   --------------------------------------------------------------------
+   A fila inteira — listagem, prioridade, seleção em lote, separação, upload
+   para o Drive, galeria — é indexada por `sku`. Uma tabela paralela obrigaria
+   a bifurcar cada uma dessas funções. Com o kit sendo uma linha com chave
+   própria (`KIT-CFP327-FP757`), ele herda todo o fluxo sem que nada disso
+   saiba que kit existe. A chave é também o nome da pasta dele no Drive, e é
+   assim que tem que ser: a foto do kit é do conjunto montado, não de nenhuma
+   das peças.
+
+   O AVISO DE REPETIDO, E O QUE "INCLUIR MESMO ASSIM" FAZ EM CADA CASO
+   -------------------------------------------------------------------
+   O aviso aparece enquanto o operador digita, e o botão passa a se chamar
+   "Incluir mesmo assim". Daí em diante:
+
+     kit igual já existe  ->  nasce um SEGUNDO kit, com sufixo na chave.
+                              Dois kits das mesmas peças são dois trabalhos
+                              diferentes (cenário, ângulo), e cada um precisa
+                              da própria pasta.
+
+     produto na fila      ->  reaplica a prioridade escolhida aqui.
+     produto com foto     ->  volta para a fila marcado como `refazer`.
+     produto fora de linha->  volta para a listagem.
+
+   NÃO existe uma segunda linha para o mesmo SKU avulso, e isso é decisão, não
+   esquecimento: o SKU É a chave da linha e o nome da pasta do Drive. Duas
+   linhas do mesmo SKU apontariam para a mesma pasta, e a reconciliação com o
+   Drive (que casa por SKU) nunca marcaria a segunda como fotografada — ela
+   ficaria na fila para sempre. O que o operador quer ao insistir é que o
+   produto volte a ser fotografado, e é isso que acontece.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* `linhas` são os campos de SKU na tela. Cada um guarda o que foi digitado e,
+   quando veio da lista de sugestões, o SKU exato que foi escolhido. */
+const _prodNovo = { tipo: 'produto', linhas: [{ texto: '', sku: null }], prio: null, nomeKit: '' };
+
+function fpProdNovoAbrir() {
+  if (!fpFotoPodeEditar()) return;
+  _prodNovo.tipo = 'produto';
+  _prodNovo.linhas = [{ texto: '', sku: null }];
+  _prodNovo.prio = null;
+  _prodNovo.nomeKit = '';
+  /* Sem catálogo não há sugestão nem checagem de repetido — e é justamente a
+     checagem que o dono pediu. Carrega em paralelo e reavalia quando chegar. */
+  if (!FOTO_PRODUTOS.length) fpFotoCarregar().then(function () { fpProdNovoDesenhar(); });
+  fpProdNovoDesenhar();
+  const m = document.getElementById('fotoProdNovoModal');
+  if (m) m.classList.add('show');
+  setTimeout(function () {
+    const i = document.querySelector('#fotoProdNovoCampos .fp-sku-input');
+    if (i) try { i.focus(); } catch (e) {}
+  }, 90);
+}
+
+function fpProdNovoFechar() {
+  const m = document.getElementById('fotoProdNovoModal');
+  if (m) m.classList.remove('show');
+}
+
+function fpProdNovoTipo(t) {
+  if (_prodNovo.tipo === t) return;
+  _prodNovo.tipo = t;
+  /* Kit nasce com dois campos porque kit de um item é produto. Voltando para
+     "Produto", o que foi digitado no primeiro campo é preservado. */
+  if (t === 'kit' && _prodNovo.linhas.length < 2) _prodNovo.linhas.push({ texto: '', sku: null });
+  if (t === 'produto') _prodNovo.linhas = [_prodNovo.linhas[0] || { texto: '', sku: null }];
+  fpProdNovoDesenhar();
+}
+
+function fpProdNovoMaisLinha() {
+  _prodNovo.linhas.push({ texto: '', sku: null });
+  fpProdNovoDesenhar();
+  const campos = document.querySelectorAll('#fotoProdNovoCampos .fp-sku-input');
+  const ultimo = campos[campos.length - 1];
+  if (ultimo) try { ultimo.focus(); } catch (e) {}
+}
+
+function fpProdNovoTirarLinha(i) {
+  _prodNovo.linhas.splice(i, 1);
+  fpProdNovoDesenhar();
+}
+
+/* Redesenho INTEIRO dos campos. Só é chamado quando a estrutura muda (abrir,
+   trocar de aba, somar ou tirar campo) — nunca a cada tecla, senão o cursor
+   do operador seria devolvido ao começo do campo a cada letra. Quem responde
+   à digitação é fpProdNovoAvaliar, que só mexe em texto de apoio. */
+function fpProdNovoDesenhar() {
+  const box = document.getElementById('fotoProdNovoCampos');
+  if (!box) return;
+  const kit = _prodNovo.tipo === 'kit';
+  document.querySelectorAll('#fotoProdNovoModal .fp-novo-tipo button').forEach(function (b) {
+    b.classList.toggle('on', b.dataset.prodtipo === _prodNovo.tipo);
+  });
+
+  let html = '';
+  if (kit) {
+    html += '<div class="fp-sku-campo">'
+      + '<label for="fotoProdNovoNomeKit">Nome do kit <span class="fp-aviso-sub">(opcional)</span></label>'
+      + '<input type="text" class="login-input" id="fotoProdNovoNomeKit" style="margin:0" autocomplete="off"'
+      + ' placeholder="Sem nome, ele é montado com os nomes das peças"'
+      + ' value="' + escHtml(_prodNovo.nomeKit) + '"></div>';
+  }
+  html += _prodNovo.linhas.map(function (l, i) { return fpProdNovoCampoHtml(l, i, kit); }).join('');
+  if (kit) {
+    html += '<button type="button" class="fp-acao-txt" onclick="fpProdNovoMaisLinha()">'
+      + '<svg viewBox="0 0 24 24" aria-hidden="true">' + FP_ICONES.mais + '</svg>Adicionar outro produto ao kit</button>';
+  }
+  box.innerHTML = html;
+
+  const prio = document.getElementById('fotoProdNovoPrio');
+  if (prio) prio.innerHTML = fpProdNovoPrioHtml();
+
+  fpProdNovoLigar();
+  fpProdNovoAvaliar();
+}
+
+function fpProdNovoCampoHtml(l, i, kit) {
+  const rot = kit ? 'Produto ' + (i + 1) + ' do kit' : 'SKU do produto';
+  const podeTirar = kit && _prodNovo.linhas.length > 2;
+  return '<div class="fp-sku-campo" data-i="' + i + '">'
+    + '<label for="fpNovoSku' + i + '">' + rot + '</label>'
+    + '<div class="fp-sku-linha">'
+    +   '<input type="text" class="login-input fp-sku-input" id="fpNovoSku' + i + '"'
+    +   ' autocomplete="off" spellcheck="false" placeholder="Digite o SKU ou o nome do produto"'
+    +   ' value="' + escHtml(l.texto) + '">'
+    +   (podeTirar
+        ? '<button type="button" class="fp-sku-x" data-tip="Tirar do kit" aria-label="Tirar do kit"'
+          + ' onclick="fpProdNovoTirarLinha(' + i + ')">&times;</button>'
+        : '')
+    + '</div>'
+    + '<div class="fp-sku-sug" hidden></div>'
+    + '<div class="fp-sku-achado" hidden></div>'
+    + '</div>';
+}
+
+function fpProdNovoPrioHtml() {
+  const op = [[null, 'Sem prioridade'], [1, FP_PRIO[1]], [2, FP_PRIO[2]], [3, FP_PRIO[3]], [5, FP_PRIO[5]]];
+  return op.map(function (par) {
+    const v = par[0];
+    return '<button type="button" class="' + (_prodNovo.prio === v ? 'on' : '') + '"'
+      + ' style="--fp-chip:' + (v == null ? 'var(--text-dim)' : fpPrioCor(v)) + '"'
+      + ' onclick="fpProdNovoPrio(' + (v == null ? 'null' : v) + ')">' + escHtml(par[1]) + '</button>';
+  }).join('');
+}
+
+function fpProdNovoPrio(v) {
+  _prodNovo.prio = v;
+  const c = document.getElementById('fotoProdNovoPrio');
+  if (c) c.innerHTML = fpProdNovoPrioHtml();
+}
+
+function fpProdNovoLigar() {
+  const box = document.getElementById('fotoProdNovoCampos');
+  if (!box) return;
+  const nk = document.getElementById('fotoProdNovoNomeKit');
+  if (nk) nk.oninput = function () { _prodNovo.nomeKit = nk.value; };
+
+  box.querySelectorAll('.fp-sku-campo[data-i]').forEach(function (campo) {
+    const i = Number(campo.dataset.i);
+    const inp = campo.querySelector('.fp-sku-input');
+    if (!inp) return;
+    inp.oninput = function () {
+      _prodNovo.linhas[i].texto = inp.value;
+      /* Digitou depois de escolher: a escolha anterior deixou de valer. Sem
+         isto, corrigir uma letra manteria o SKU antigo por baixo. */
+      _prodNovo.linhas[i].sku = null;
+      fpProdNovoSugerir(campo, i);
+      fpProdNovoAvaliar();
+    };
+    inp.onfocus = function () { fpProdNovoSugerir(campo, i); };
+    /* O clique numa sugestão tira o foco do campo antes de disparar. Fechar na
+       hora engoliria o clique; 150ms é o suficiente e não deixa a lista aberta
+       depois que a pessoa saiu do campo. */
+    inp.onblur = function () {
+      setTimeout(function () { const s = campo.querySelector('.fp-sku-sug'); if (s) s.hidden = true; }, 150);
+    };
+    inp.onkeydown = function (ev) { fpProdNovoTecla(ev, campo, i); };
+  });
+}
+
+/* Sugestão a partir do catálogo que já está em memória — nenhuma ida à rede
+   por tecla. Ordem: SKU que começa pelo termo, nome que começa, SKU que
+   contém, nome que contém. Kit não entra na lista: kit dentro de kit não é
+   coisa que o estúdio monte, e a chave gerada viraria uma tripa. */
+function fpProdNovoSugerir(campo, i) {
+  const cx = campo.querySelector('.fp-sku-sug');
+  if (!cx) return;
+  const t = String(_prodNovo.linhas[i].texto || '').trim().toLowerCase();
+  if (t.length < 2) { cx.hidden = true; cx.innerHTML = ''; return; }
+
+  const usados = _prodNovo.linhas.map(function (l, k) {
+    return k === i ? null : fpProdNovoResolver(l);
+  }).filter(Boolean);
+
+  const marcados = [];
+  for (let k = 0; k < FOTO_PRODUTOS.length; k++) {
+    const p = FOTO_PRODUTOS[k];
+    if (Array.isArray(p.kit_skus) && p.kit_skus.length) continue;
+    if (usados.indexOf(p.sku) >= 0) continue;
+    const sku = String(p.sku || '').toLowerCase();
+    const nome = String(p.nome || '').toLowerCase();
+    let r = -1;
+    if (sku.indexOf(t) === 0) r = 0;
+    else if (nome.indexOf(t) === 0) r = 1;
+    else if (sku.indexOf(t) > 0) r = 2;
+    else if (nome.indexOf(t) > 0) r = 3;
+    if (r < 0) continue;
+    marcados.push([r, p]);
+  }
+  marcados.sort(function (a, b) { return a[0] - b[0] || String(a[1].sku).localeCompare(String(b[1].sku)); });
+  const lista = marcados.slice(0, 7).map(function (x) { return x[1]; });
+
+  if (!lista.length) { cx.hidden = true; cx.innerHTML = ''; return; }
+  cx.hidden = false;
+  cx.innerHTML = lista.map(function (p) {
+    /* Sem SKU na miniatura de propósito: aqui não roda fpDriveCarregar, e com
+       SKU a caixa ficaria girando até o tempo limite antes de desistir. */
+    return '<button type="button" class="fp-sku-item" data-sku="' + escHtml(p.sku) + '">'
+      + fpFotoProdutoHtml('', p.imagem_bling, 26, 5, { semLightbox: true })
+      + '<span><b>' + escHtml(p.nome || '(sem nome)') + '</b>'
+      + '<small>' + escHtml(p.sku) + (p.excluido ? ' · fora de linha' : '') + '</small></span></button>';
+  }).join('');
+  cx.querySelectorAll('.fp-sku-item').forEach(function (b) {
+    b.onmousedown = function (ev) { ev.preventDefault(); };   // não perder o foco antes do clique
+    b.onclick = function () { fpProdNovoEscolher(i, b.dataset.sku); };
+  });
+}
+
+function fpProdNovoTecla(ev, campo, i) {
+  const cx = campo.querySelector('.fp-sku-sug');
+  const itens = (cx && !cx.hidden) ? Array.from(cx.querySelectorAll('.fp-sku-item')) : [];
+  if (ev.key === 'Escape' && itens.length) { ev.preventDefault(); cx.hidden = true; return; }
+  if (!itens.length) {
+    if (ev.key === 'Enter') { ev.preventDefault(); fpProdNovoConfirmar(); }
+    return;
+  }
+  const atual = itens.findIndex(function (b) { return b.classList.contains('sel'); });
+  if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+    ev.preventDefault();
+    const prox = ev.key === 'ArrowDown'
+      ? (atual + 1) % itens.length
+      : (atual <= 0 ? itens.length - 1 : atual - 1);
+    itens.forEach(function (b, k) { b.classList.toggle('sel', k === prox); });
+    itens[prox].scrollIntoView({ block: 'nearest' });
+  } else if (ev.key === 'Enter') {
+    ev.preventDefault();
+    if (atual >= 0) fpProdNovoEscolher(i, itens[atual].dataset.sku);
+    else fpProdNovoConfirmar();
+  }
+}
+
+function fpProdNovoEscolher(i, sku) {
+  _prodNovo.linhas[i].sku = sku;
+  _prodNovo.linhas[i].texto = sku;
+  const campo = document.querySelector('#fotoProdNovoCampos .fp-sku-campo[data-i="' + i + '"]');
+  if (campo) {
+    const inp = campo.querySelector('.fp-sku-input');
+    if (inp) { inp.value = sku; try { inp.focus(); } catch (e) {} }
+    const s = campo.querySelector('.fp-sku-sug');
+    if (s) { s.hidden = true; s.innerHTML = ''; }
+  }
+  fpProdNovoAvaliar();
+}
+
+/* O que foi digitado vira SKU: o escolhido na lista; ou o texto batendo
+   exatamente com um SKU do catálogo (sem depender de maiúscula); ou o texto
+   cru em maiúsculas — SKU que ainda não veio do Bling. Maiúsculas porque todo
+   SKU da casa é maiúsculo, e sem isso `cfp327` nasceria como uma linha gêmea
+   de `CFP327`, com pasta separada no Drive. */
+function fpProdNovoResolver(l) {
+  const t = String((l && l.texto) || '').trim();
+  if (!t) return null;
+  if (l.sku) return l.sku;
+  const alvo = t.toLowerCase();
+  const exato = FOTO_PRODUTOS.find(function (p) { return String(p.sku || '').toLowerCase() === alvo; });
+  return exato ? exato.sku : t.toUpperCase();
+}
+
+function fpProdNovoEstado(p) {
+  if (p.excluido) return 'fora';
+  if (p.tem_foto && !p.refazer) return 'comfoto';
+  return 'fila';
+}
+
+/* Já existe algo assim no painel? Para produto é a própria linha do SKU. Para
+   kit é qualquer kit com EXATAMENTE o mesmo conjunto de peças — a ordem em
+   que foram digitadas não distingue um kit de outro. */
+function fpProdNovoConflitos(kit, skus) {
+  const achados = [];
+  if (!kit) {
+    const p = fpFotoProduto(skus[0]);
+    if (p) achados.push({ estado: fpProdNovoEstado(p), prod: p });
+    return achados;
+  }
+  const chave = skus.map(function (x) { return String(x).toUpperCase(); }).sort().join('|');
+  FOTO_PRODUTOS.forEach(function (p) {
+    const k = p.kit_skus;
+    if (!Array.isArray(k) || k.length !== skus.length) return;
+    if (k.map(function (x) { return String(x).toUpperCase(); }).sort().join('|') !== chave) return;
+    achados.push({ estado: fpProdNovoEstado(p), prod: p });
+  });
+  return achados;
+}
+
+/* Roda a cada tecla: acha o produto de cada campo, monta o aviso e decide o
+   rótulo do botão. Não redesenha campo nenhum. */
+function fpProdNovoAvaliar() {
+  const kit = _prodNovo.tipo === 'kit';
+  const brutos = _prodNovo.linhas.map(fpProdNovoResolver).filter(Boolean);
+  const skus = brutos.filter(function (s, i) { return brutos.indexOf(s) === i; });
+  const repetidos = brutos.filter(function (s, i) { return brutos.indexOf(s) !== i; })
+    .filter(function (s, i, a) { return a.indexOf(s) === i; });
+
+  document.querySelectorAll('#fotoProdNovoCampos .fp-sku-campo[data-i]').forEach(function (campo) {
+    const i = Number(campo.dataset.i);
+    const el = campo.querySelector('.fp-sku-achado');
+    if (!el) return;
+    const sku = fpProdNovoResolver(_prodNovo.linhas[i]);
+    if (!sku) { el.hidden = true; el.textContent = ''; return; }
+    const p = fpFotoProduto(sku);
+    el.hidden = false;
+    el.classList.toggle('novo', !p);
+    el.textContent = p
+      ? (p.nome || sku)
+      : 'Não está no catálogo — vai entrar na fila como ' + sku;
+  });
+
+  const conflitos = skus.length ? fpProdNovoConflitos(kit, kit ? skus : [skus[0]]) : [];
+  fpProdNovoAviso(conflitos, repetidos, kit);
+
+  const btn = document.getElementById('fotoProdNovoOk');
+  if (btn) {
+    btn.disabled = kit ? skus.length < 2 : !skus.length;
+    btn.textContent = conflitos.length ? 'Incluir mesmo assim'
+      : kit ? 'Incluir kit na fila' : 'Incluir na fila';
+  }
+}
+
+function fpProdNovoAviso(conflitos, repetidos, kit) {
+  const cx = document.getElementById('fotoProdNovoAviso');
+  if (!cx) return;
+  if (!conflitos.length && !repetidos.length) { cx.hidden = true; cx.innerHTML = ''; return; }
+
+  const frase = function (c) {
+    const nome = '<b>' + escHtml(c.prod.nome || c.prod.sku) + '</b>';
+    const outro = 'Incluindo assim mesmo, nasce um segundo kit igual a esse, com pasta própria.';
+    if (c.estado === 'comfoto') {
+      return nome + ' já tem foto pronta'
+        + (c.prod.fotos_qtd ? ' (' + c.prod.fotos_qtd + (c.prod.fotos_qtd === 1 ? ' foto' : ' fotos') + ' no Drive)' : '')
+        + '. ' + (kit ? outro : 'Incluindo assim mesmo, ele volta para a fila marcado para refazer a foto.');
+    }
+    if (c.estado === 'fora') {
+      return nome + ' está fora de linha. '
+        + (kit ? outro : 'Incluindo assim mesmo, ele volta para a listagem e para a fila.');
+    }
+    return nome + ' já está na fila'
+      + (c.prod.prioridade ? ', com prioridade ' + String(FP_PRIO[c.prod.prioridade]).toLowerCase() : ', sem prioridade')
+      + '. ' + (kit ? outro : 'Incluindo assim mesmo, só a prioridade escolhida aqui é reaplicada.');
+  };
+
+  const titulo = conflitos.length
+    ? (kit ? 'Esse kit já existe' : 'Esse produto já está no painel')
+    : 'Confira as peças do kit';
+
+  cx.hidden = false;
+  cx.innerHTML = '<h4>' + FP_ICO_ATENCAO + escHtml(titulo) + '</h4><ul>'
+    + conflitos.map(function (c) { return '<li>' + frase(c) + '</li>'; }).join('')
+    + repetidos.map(function (s) {
+        return '<li>O SKU <b>' + escHtml(s) + '</b> foi digitado mais de uma vez; entra uma vez só.</li>';
+      }).join('')
+    + '</ul>';
+}
+
+async function fpProdNovoConfirmar() {
+  const kit = _prodNovo.tipo === 'kit';
+  const brutos = _prodNovo.linhas.map(fpProdNovoResolver).filter(Boolean);
+  const skus = brutos.filter(function (s, i) { return brutos.indexOf(s) === i; });
+  if (kit ? skus.length < 2 : !skus.length) return;
+
+  const btn = document.getElementById('fotoProdNovoOk');
+  const rotulo = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Incluindo…'; }
+  try {
+    const chave = kit ? await fpProdNovoCriarKit(skus) : await fpProdNovoCriarProduto(skus[0]);
+    const prod = fpFotoProduto(chave);
+    fpProdNovoFechar();
+    /* A ordem da listagem é congelada quando a tela abre; sem soltá-la o item
+       novo não apareceria até alguém trocar de filtro. */
+    _prodOrdem = null;
+    fpProdFiltrar('fila');
+    const achou = fpProdRealcar(chave);
+    fpToast(((prod && prod.nome) || chave) + ' entrou na fila de produção.', 'ok', achou ? undefined : {
+      acao: {
+        texto: 'Ver na lista',
+        onClick: function () {
+          const b = document.getElementById('fotoProdBusca');
+          if (b) { b.value = chave; b.dispatchEvent(new Event('input')); }
+          fpProdBuscarFila(chave, true);
+        },
+      },
+    });
+  } catch (e) {
+    fpToast('Não deu para incluir: ' + (e.message || e), 'erro');
+    if (btn) { btn.disabled = false; btn.textContent = rotulo; }
+  }
+}
+
+async function fpProdNovoCriarProduto(sku) {
+  const quem = CURRENT_USER ? (CURRENT_USER.name || CURRENT_USER.username) : null;
+  const agora = new Date().toISOString();
+  const prod = fpFotoProduto(sku);
+
+  if (prod) {
+    const patch = { excluido: false, excluido_em: null, excluido_por: null, status: 'fila' };
+    /* Já fotografado voltando para a fila é exatamente "enviar para
+       atualização" — mesma marca, para a Galeria e o lote entenderem. */
+    if (prod.tem_foto) patch.refazer = true;
+    /* "Sem prioridade" não apaga a prioridade que a linha já tinha: quem
+       escolheu aquilo foi alguém, e o padrão do modal não é uma decisão. */
+    if (_prodNovo.prio != null) {
+      patch.prioridade = _prodNovo.prio;
+      patch.prioridade_por = quem;
+      patch.prioridade_em = agora;
+    }
+    const r = await sb.from('mc_photo_products').update(patch).eq('sku', sku);
+    if (r.error) throw r.error;
+    Object.assign(prod, patch);
+    return sku;
+  }
+
+  const linha = {
+    sku: sku, nome: sku, manual: true, criado_por: quem, criado_em: agora,
+    status: 'fila', tem_foto: false, fotos_qtd: 0, excluido: false, refazer: false,
+    prioridade: _prodNovo.prio,
+    prioridade_por: _prodNovo.prio != null ? quem : null,
+    prioridade_em: _prodNovo.prio != null ? agora : null,
+  };
+  const r = await sb.from('mc_photo_products').insert(linha);
+  if (r.error) throw r.error;
+  FOTO_PRODUTOS.push(linha);
+  return sku;
+}
+
+async function fpProdNovoCriarKit(skus) {
+  const quem = CURRENT_USER ? (CURRENT_USER.name || CURRENT_USER.username) : null;
+  const agora = new Date().toISOString();
+  const pecas = skus.map(function (s) { return fpFotoProduto(s); });
+  const nome = _prodNovo.nomeKit.trim()
+    || ('Kit: ' + skus.map(function (s, i) {
+          return (pecas[i] && pecas[i].nome) ? pecas[i].nome : s;
+        }).join(' + '));
+  const capa = pecas.find(function (p) { return p && p.imagem_bling; });
+
+  for (let tentativa = 0; tentativa < 5; tentativa++) {
+    const chave = fpProdNovoKitChave(skus, tentativa);
+    const linha = {
+      sku: chave, nome: nome.slice(0, 240), kit_skus: skus,
+      manual: true, criado_por: quem, criado_em: agora,
+      status: 'fila', tem_foto: false, fotos_qtd: 0, excluido: false, refazer: false,
+      imagem_bling: capa ? capa.imagem_bling : null,
+      prioridade: _prodNovo.prio,
+      prioridade_por: _prodNovo.prio != null ? quem : null,
+      prioridade_em: _prodNovo.prio != null ? agora : null,
+    };
+    const r = await sb.from('mc_photo_products').insert(linha);
+    if (!r.error) { FOTO_PRODUTOS.push(linha); return chave; }
+    /* 23505 = chave repetida. Acontece quando dois operadores criam o mesmo
+       kit ao mesmo tempo: o catálogo em memória de um não conhece a linha que
+       o outro acabou de gravar. Tenta o sufixo seguinte em vez de estourar. */
+    if (r.error.code !== '23505') throw r.error;
+  }
+  throw new Error('não achei um nome livre para o kit');
+}
+
+/* A chave é lida por gente: ela aparece na listagem, no PDF da separação e
+   como nome da pasta no Drive. Daí ser montada com os SKUs das peças e não
+   com um número de série. Só maiúsculas, dígitos, ponto, traço e sublinhado:
+   a busca de pasta no Drive é uma query com aspas simples, e um apóstrofo no
+   nome a quebraria. */
+function fpProdNovoKitChave(skus, tentativa) {
+  const limpo = function (x) {
+    return String(x || '').toUpperCase().replace(/[^A-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
+  };
+  let base = 'KIT-' + skus.slice(0, 3).map(limpo).filter(Boolean).join('-');
+  if (skus.length > 3) base += '-MAIS' + (skus.length - 3);
+  if (base.length > 64) base = base.slice(0, 64).replace(/-+$/, '');
+  let chave = base, n = 1;
+  /* O sufixo cobre os dois casos: o kit repetido de propósito ("incluir mesmo
+     assim") e a colisão entre kits diferentes que começam pelas mesmas peças. */
+  while (fpFotoProduto(chave) || n <= (tentativa || 0)) { n++; chave = base + '-' + n; }
+  return chave;
+}
+
+/* Pisca a linha recém-incluída. Devolve false quando ela não está entre as
+   visíveis — a fila tem centenas de itens e a listagem mostra 60 por vez, então
+   um produto sem prioridade cai fora da primeira página. Quem chama oferece
+   o atalho da busca nesse caso. */
+function fpProdRealcar(sku) {
+  const linha = document.querySelector('#fotoProdLista .fp-prod-linha[data-sku="' + CSS.escape(sku) + '"]');
+  if (!linha) return false;
+  try { linha.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+  linha.classList.remove('fp-realce');
+  void linha.offsetWidth;                       // reinicia a animação
+  linha.classList.add('fp-realce');
+  setTimeout(function () { linha.classList.remove('fp-realce'); }, 2100);
+  return true;
+}
+
+/* Linha criada à mão some de vez — ver a nota no menu da listagem. */
+async function fpProdApagarManual(sku) {
+  const prod = fpFotoProduto(sku);
+  if (!prod || !prod.manual) return;
+  const ehKit = Array.isArray(prod.kit_skus) && prod.kit_skus.length > 0;
+  if (!await fpConfirm({
+    titulo: ehKit ? 'Apagar kit' : 'Apagar da produção',
+    mensagem: '"' + (prod.nome || sku) + '" sai do painel de vez.',
+    detalhe: ehKit
+      ? 'O kit foi montado aqui e não existe no Bling: apagar tira a linha e os comentários dela. Fotos que já tenham subido para a pasta ' + sku + ' continuam no Drive.'
+      : 'Essa linha foi criada aqui à mão. Se o SKU existir no Bling, ele volta na próxima sincronização do catálogo.',
+    confirmar: 'Apagar', perigo: true,
+  })) return;
+
+  const r = await sb.from('mc_photo_products').delete().eq('sku', sku);
+  if (r.error) { fpToast('Erro: ' + r.error.message, 'erro'); return; }
+  await sb.from('mc_photo_comments').delete().eq('sku', sku);
+  FOTO_COMENTARIOS.delete(sku);
+  const i = FOTO_PRODUTOS.findIndex(function (p) { return p.sku === sku; });
+  if (i >= 0) FOTO_PRODUTOS.splice(i, 1);
+  _prodSel.delete(sku);
+  _prodOrdem = null;
+  fpFotoRedesenhar();
+  fpToast(ehKit ? 'Kit apagado.' : 'Linha apagada.', 'ok');
+}
+
+window.fpProdNovoAbrir = fpProdNovoAbrir;
+window.fpProdNovoFechar = fpProdNovoFechar;
+window.fpProdNovoTipo = fpProdNovoTipo;
+window.fpProdNovoMaisLinha = fpProdNovoMaisLinha;
+window.fpProdNovoTirarLinha = fpProdNovoTirarLinha;
+window.fpProdNovoPrio = fpProdNovoPrio;
+window.fpProdNovoConfirmar = fpProdNovoConfirmar;
+window.fpProdApagarManual = fpProdApagarManual;
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   COMENTÁRIOS DOS ITENS DA FILA
+
+   Recado preso a um item da produção, para o que não cabe na prioridade:
+   "fotografar com o suporte preto", "a peça chegou riscada". Vive ao lado do
+   nome do produto, discreto, e some quando a foto fica pronta.
+
+   O balão fica com opacidade baixa de propósito: quem lê a fila procura
+   produto, não recado. O mouse em cima acende e abre a caixa com o texto.
+
+   A caixa mora no <body> e é `position: fixed` pelo mesmo motivo do menu
+   "…": dentro da linha ela seria cortada pelo `overflow-x: hidden` do <main>.
+
+   Ao finalizar a foto os recados são FECHADOS, não apagados (fpComFecharDoItem,
+   chamada de fpLoteMarcarFeito). Apagar tiraria a única resposta para "por que
+   essa foto foi refeita três vezes".
+   ═══════════════════════════════════════════════════════════════════════ */
+
+let FOTO_COMENTARIOS = new Map();   // sku -> [comentário], só os abertos
+let FOTO_AUTORES = new Map();       // id do operador -> { name, avatar }
+let _comCarregadoEm = 0, _comCarregando = null, _comSku = null;
+let _comPop = null, _comPopTimer = null;
+
+const FP_ICO_BALAO = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+  + '<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>';
+
+async function fpComCarregar(forcar) {
+  if (!forcar && _comCarregadoEm && Date.now() - _comCarregadoEm < 120000) return;
+  if (_comCarregando) return _comCarregando;
+  _comCarregando = (async function () {
+    try {
+      /* O rosto de quem comentou vem do cadastro, e não copiado no comentário:
+         o avatar é um data URI de dezenas de KB e repeti-lo por linha
+         engordaria a leitura inteira. São poucos operadores; cabe num mapa. */
+      const pedidos = [
+        sb.from('mc_photo_comments').select('*').is('fechado_em', null)
+          .order('created_at', { ascending: true }),
+      ];
+      if (!FOTO_AUTORES.size) pedidos.push(sb.from('mc_admin_users').select('id,name,avatar'));
+      const res = await Promise.all(pedidos);
+      const com = res[0], usr = res[1];
+      if (com.error) throw com.error;
+      if (usr && !usr.error && usr.data) {
+        FOTO_AUTORES = new Map(usr.data.map(function (u) { return [u.id, u]; }));
+      }
+      const mapa = new Map();
+      (com.data || []).forEach(function (c) {
+        if (!mapa.has(c.sku)) mapa.set(c.sku, []);
+        mapa.get(c.sku).push(c);
+      });
+      FOTO_COMENTARIOS = mapa;
+      _comCarregadoEm = Date.now();
+      fpComPintarTudo();
+    } catch (e) {
+      console.warn('comentários da produção', e);
+    }
+  })();
+  try { return await _comCarregando; } finally { _comCarregando = null; }
+}
+
+function fpComAutor(c) {
+  return FOTO_AUTORES.get(c.autor_id) || { name: c.autor_nome || 'Operador', avatar: null };
+}
+
+function fpComBadgeHtml(sku) {
+  const lista = FOTO_COMENTARIOS.get(sku);
+  if (!lista || !lista.length) return '';
+  const autor = fpComAutor(lista[lista.length - 1]);
+  return '<button type="button" class="fp-com-badge" data-com-sku="' + escHtml(sku) + '"'
+    + ' data-tip="Ver comentários" aria-label="' + lista.length
+    + (lista.length === 1 ? ' comentário' : ' comentários') + ' — abrir"'
+    + ' onclick="fpComAbrir(\'' + fpJs(sku) + '\')">'
+    + FP_ICO_BALAO
+    + '<span class="fp-com-n">' + lista.length + '</span>'
+    + userAvatarHtml(autor, '', 'fp-com-av')
+    + '</button>';
+}
+
+function fpComPintar(sku) {
+  document.querySelectorAll('.fp-com-slot[data-com-sku="' + CSS.escape(sku) + '"]')
+    .forEach(function (el) { el.innerHTML = fpComBadgeHtml(sku); });
+}
+
+function fpComPintarTudo(raiz) {
+  (raiz || document).querySelectorAll('.fp-com-slot[data-com-sku]')
+    .forEach(function (el) { el.innerHTML = fpComBadgeHtml(el.dataset.comSku); });
+}
+
+/* Delegação no documento, uma vez só: a listagem é redesenhada a cada clique
+   de prioridade e ouvintes presos ao balão morreriam junto com ele. */
+function fpComLigarHover() {
+  if (document.body.dataset.fpComHover === '1') return;
+  document.body.dataset.fpComHover = '1';
+
+  document.addEventListener('mouseover', function (ev) {
+    if (!ev.target || !ev.target.closest) return;
+    const b = ev.target.closest('.fp-com-badge');
+    if (b) { clearTimeout(_comPopTimer); fpComPopAbrir(b); return; }
+    /* Passar por dentro da própria caixa não pode fechá-la: é assim que se
+       rola uma conversa longa. */
+    if (ev.target.closest('.fp-com-pop')) { clearTimeout(_comPopTimer); return; }
+    fpComPopAgendarFechar();
+  });
+  document.addEventListener('focusin', function (ev) {
+    if (!ev.target || !ev.target.closest) return;
+    const b = ev.target.closest('.fp-com-badge');
+    if (b) { clearTimeout(_comPopTimer); fpComPopAbrir(b); }
+  });
+  /* Rolar ou redimensionar deixaria a caixa solta no meio da tela — mesma
+     regra do menu "…". */
+  window.addEventListener('scroll', fpComPopFechar, true);
+  window.addEventListener('resize', fpComPopFechar);
+}
+
+function fpComPopFechar() {
+  clearTimeout(_comPopTimer);
+  if (_comPop) { _comPop.el.remove(); _comPop = null; }
+}
+
+/* Carência antes de fechar: sem ela, o caminho do balão até a caixa passa por
+   fora dos dois e a caixa fecharia na cara de quem foi lê-la. */
+function fpComPopAgendarFechar() {
+  if (!_comPop) return;
+  clearTimeout(_comPopTimer);
+  _comPopTimer = setTimeout(fpComPopFechar, 220);
+}
+
+function fpComPopAbrir(botao) {
+  const sku = botao.dataset.comSku;
+  if (_comPop && _comPop.botao === botao) return;
+  fpComPopFechar();
+  const lista = FOTO_COMENTARIOS.get(sku);
+  if (!lista || !lista.length) return;
+
+  const el = document.createElement('div');
+  el.className = 'fp-com-pop';
+  el.setAttribute('role', 'note');
+  el.innerHTML = lista.map(function (c) { return fpComItemHtml(c, false); }).join('');
+  document.body.appendChild(el);
+  _comPop = { el: el, botao: botao };
+
+  const r = botao.getBoundingClientRect();
+  const pr = el.getBoundingClientRect();
+  const m = 8;
+  let topo = r.bottom + 7;
+  if (topo + pr.height > innerHeight - m) topo = Math.max(m, r.top - pr.height - 7);
+  let esq = r.left;
+  if (esq + pr.width > innerWidth - m) esq = Math.max(m, innerWidth - pr.width - m);
+  el.style.top = Math.round(topo) + 'px';
+  el.style.left = Math.round(esq) + 'px';
+}
+
+/* O texto vem do teclado de um operador e é interpolado em innerHTML: escapar
+   aqui não é zelo, é a regra da casa (docs/padroes.md). */
+function fpComItemHtml(c, comApagar) {
+  const a = fpComAutor(c);
+  return '<div class="fp-com-item">'
+    + userAvatarHtml(a, '', 'fp-com-pop-av')
+    + '<div class="fp-com-corpo">'
+    +   '<span class="fp-com-quem-nome">' + escHtml(a.name || 'Operador') + '</span>'
+    +   '<span class="fp-com-quando">' + escHtml(timeAgo(c.created_at)) + '</span>'
+    +   '<p class="fp-com-txt">' + escHtml(c.texto) + '</p>'
+    + '</div>'
+    + (comApagar
+      ? '<button type="button" class="fp-com-x" data-tip="Apagar comentário" aria-label="Apagar comentário"'
+        + ' onclick="fpComApagar(\'' + fpJs(c.id) + '\')">&times;</button>'
+      : '')
+    + '</div>';
+}
+
+function fpComAbrir(sku) {
+  fpComPopFechar();
+  _comSku = sku;
+  const prod = fpFotoProduto(sku);
+  const alvo = document.getElementById('fotoProdComAlvo');
+  if (alvo) {
+    alvo.innerHTML = fpFotoProdutoHtml(sku, prod && prod.imagem_bling, 34, 7, { semLightbox: true })
+      + '<span style="min-width:0"><b>' + escHtml((prod && prod.nome) || sku) + '</b>'
+      + '<small>' + escHtml(sku) + '</small></span>';
+  }
+  fpComListaPintar();
+  const t = document.getElementById('fotoProdComTexto');
+  if (t) t.value = '';
+  const m = document.getElementById('fotoProdComModal');
+  if (m) m.classList.add('show');
+  setTimeout(function () { if (t) try { t.focus(); } catch (e) {} }, 90);
+}
+
+function fpComFecharModal() {
+  const m = document.getElementById('fotoProdComModal');
+  if (m) m.classList.remove('show');
+  _comSku = null;
+}
+
+function fpComListaPintar() {
+  const cx = document.getElementById('fotoProdComLista');
+  if (!cx) return;
+  const lista = FOTO_COMENTARIOS.get(_comSku) || [];
+  if (!lista.length) {
+    cx.innerHTML = '<p class="fp-aviso-sub" style="padding:12px 0 2px">Nenhum comentário neste item ainda.</p>';
+    return;
+  }
+  const eu = CURRENT_USER ? CURRENT_USER.id : null;
+  const admin = fpFotoEhAdmin();
+  cx.innerHTML = lista.map(function (c) {
+    return fpComItemHtml(c, admin || !!(c.autor_id && c.autor_id === eu));
+  }).join('');
+}
+
+async function fpComEnviar() {
+  const t = document.getElementById('fotoProdComTexto');
+  const texto = t ? t.value.trim() : '';
+  if (!texto || !_comSku) return;
+  const btn = document.getElementById('fotoProdComOk');
+  if (btn) btn.disabled = true;
+
+  const alvo = _comSku;
+  const r = await sb.from('mc_photo_comments').insert({
+    sku: alvo,
+    texto: texto.slice(0, 2000),
+    autor_id: CURRENT_USER ? CURRENT_USER.id : null,
+    autor_nome: CURRENT_USER ? (CURRENT_USER.name || CURRENT_USER.username) : null,
+  }).select().single();
+  if (btn) btn.disabled = false;
+  if (r.error) { fpToast('Não deu para comentar: ' + r.error.message, 'erro'); return; }
+
+  if (!FOTO_COMENTARIOS.has(alvo)) FOTO_COMENTARIOS.set(alvo, []);
+  FOTO_COMENTARIOS.get(alvo).push(r.data);
+  /* Quem acabou de comentar pode não estar no mapa (cadastro lido antes de
+     ele existir): sem isto o próprio rosto sairia como iniciais genéricas. */
+  if (CURRENT_USER && CURRENT_USER.id && !FOTO_AUTORES.has(CURRENT_USER.id)) {
+    FOTO_AUTORES.set(CURRENT_USER.id, CURRENT_USER);
+  }
+  if (t) t.value = '';
+  fpComListaPintar();
+  fpComPintar(alvo);
+  fpToast('Comentário salvo.', 'ok');
+}
+
+async function fpComApagar(id) {
+  if (!await fpConfirm({
+    titulo: 'Apagar comentário',
+    mensagem: 'O recado sai da fila para todo mundo.',
+    confirmar: 'Apagar', perigo: true,
+  })) return;
+  const r = await sb.from('mc_photo_comments').delete().eq('id', id);
+  if (r.error) { fpToast('Erro: ' + r.error.message, 'erro'); return; }
+  const lista = FOTO_COMENTARIOS.get(_comSku) || [];
+  const i = lista.findIndex(function (c) { return c.id === id; });
+  if (i >= 0) lista.splice(i, 1);
+  if (!lista.length) FOTO_COMENTARIOS.delete(_comSku);
+  fpComListaPintar();
+  fpComPintar(_comSku);
+}
+
+/* Chamada por fpLoteMarcarFeito. A tela é limpa na hora e o banco depois: o
+   recado já cumpriu o prazo dele, e uma falha de rede aqui não pode impedir
+   ninguém de trabalhar — na próxima leitura ele reaparece e some de novo. */
+async function fpComFecharDoItem(sku) {
+  if (!FOTO_COMENTARIOS.has(sku)) return;
+  FOTO_COMENTARIOS.delete(sku);
+  fpComPintar(sku);
+  const r = await sb.from('mc_photo_comments')
+    .update({ fechado_em: new Date().toISOString() })
+    .eq('sku', sku).is('fechado_em', null);
+  if (r.error) console.warn('fechar comentários', r.error);
+}
+
+window.fpComAbrir = fpComAbrir;
+window.fpComFecharModal = fpComFecharModal;
+window.fpComEnviar = fpComEnviar;
+window.fpComApagar = fpComApagar;
+
 
 /* ---------- ações em lote ---------- */
 function fpProdLoteBarra() {
@@ -20097,23 +21207,51 @@ async function fpSepLocalizacoes(itens, aoAndar) {
   return { buscados: faltam.length - falharam, falharam };
 }
 
+/* Um KIT na fila é UM trabalho de foto, mas são VÁRIAS peças na prateleira.
+   Quem separa precisa da linha de cada peça, com o endereço de cada uma: uma
+   linha só, escrita "KIT-CFP327-FP757", mandaria o estoquista adivinhar o que
+   pegar — e o kit não tem localização própria no Bling porque não é produto
+   de lá. Cada peça entra com o nome dela, marcada com [KIT] e herdando a
+   urgência do kit; as peças do mesmo kit saem em sequência. */
+function fpSepExpandirKits(itens) {
+  const fora = [];
+  itens.forEach(i => {
+    const p = fpFotoProduto(i.sku) || {};
+    const pecas = Array.isArray(p.kit_skus) ? p.kit_skus.filter(Boolean) : [];
+    if (!pecas.length) { fora.push(i); return; }
+    pecas.forEach(sku => {
+      const c = fpFotoProduto(sku) || {};
+      fora.push({
+        sku: sku, nome: c.nome || sku, estoque: c.estoque,
+        prioridade: i.prioridade, doKit: p.sku,
+      });
+    });
+  });
+  return fora;
+}
+
 async function fpSepGerar() {
   if (!_sepLote || !_sepLote.itens.length) return;
   const btn = document.getElementById('fotoSepGerar');
   const quem = CURRENT_USER ? (CURRENT_USER.name || CURRENT_USER.username) : '';
   const itens = _sepLote.itens.map(i => ({ sku: i.sku, nome: i.nome, estoque: i.estoque, prioridade: i.prioridade }));
+  /* A partir daqui vale a lista FÍSICA: é ela que vai para a busca de
+     localização e para o PDF. `itens` continua sendo a lista de trabalhos. */
+  const aSeparar = fpSepExpandirKits(itens);
+  const kits = itens.length - aSeparar.filter(i => !i.doKit).length;
 
   if (!await fpConfirm({
     titulo: 'Gerar lista de separação',
-    mensagem: itens.length + ' produtos entram na lista, uma unidade de cada.',
-    detalhe: 'O PDF fica num endereço público: quem tiver o link abre sem senha. Mande só para quem vai separar.',
+    mensagem: aSeparar.length + ' produtos entram na lista, uma unidade de cada.',
+    detalhe: (kits ? kits + (kits === 1 ? ' kit foi aberto' : ' kits foram abertos') + ' nas peças que o compõem. ' : '')
+      + 'O PDF fica num endereço público: quem tiver o link abre sem senha. Mande só para quem vai separar.',
     confirmar: 'Gerar PDF',
   })) return;
 
   const travar = (txt) => { if (btn) { btn.disabled = true; btn.textContent = txt; } };
   travar('Buscando localizações…');
   try {
-    const loc = await fpSepLocalizacoes(itens, (feito, total) => travar('Localização ' + feito + ' de ' + total + '…'));
+    const loc = await fpSepLocalizacoes(aSeparar, (feito, total) => travar('Localização ' + feito + ' de ' + total + '…'));
     if (loc.falharam) {
       fpToast(loc.falharam + ' produto(s) ficaram sem localização — o Bling recusou a consulta. '
         + 'Eles saem na lista como "sem localização" e serão tentados de novo no próximo lote.', 'warn', { duracao: 9000 });
@@ -20123,13 +21261,18 @@ async function fpSepGerar() {
     const agora = new Date();
     const dataBR = agora.toLocaleDateString('pt-BR');
     const horaBR = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    const linhas = itens.map(i => {
+    const linhas = aSeparar.map(i => {
       const p = fpFotoProduto(i.sku) || {};
-      return { qtd: 1, nome: i.nome || i.sku, sku: i.sku, local: p.localizacao || '', urgente: i.prioridade === 5 };
+      return {
+        qtd: 1,
+        nome: (i.doKit ? '[KIT] ' : '') + (i.nome || i.sku),
+        sku: i.sku, local: p.localizacao || '', urgente: i.prioridade === 5,
+      };
     });
     const emerg = linhas.filter(l => l.urgente).length;
     const bytes = fpPdfSeparacao(linhas, {
-      subtitulo: dataBR + ' às ' + horaBR + ' · ' + itens.length + ' itens'
+      subtitulo: dataBR + ' às ' + horaBR + ' · ' + linhas.length + ' itens'
+        + (kits ? ' · ' + kits + (kits === 1 ? ' kit' : ' kits') : '')
         + (emerg ? ' · ' + emerg + ' emergencial' + (emerg > 1 ? 'is' : '') : ''),
       pedido: 'Pedido por ' + (quem || 'equipe') + ' · uma unidade de cada produto',
       rodape: 'FullPro Media Club · lista gerada em ' + dataBR + ' ' + horaBR,
@@ -20282,6 +21425,8 @@ async function fpLoteMarcarFeito(sku, quantas) {
   Object.assign(prod, patch);
   const { error } = await sb.from('mc_photo_products').update(patch).eq('sku', sku);
   if (error) console.warn('marcar fotografado', error);
+  /* O recado tinha prazo: valia até a foto ficar pronta. Aqui ela ficou. */
+  fpComFecharDoItem(sku);
 }
 
 /* Cancelar é para o lote que não aconteceu: a lista foi separada errado, o
@@ -22426,6 +23571,9 @@ const FP_ICONES = {
   baixo:    '<polyline points="6 9 12 15 18 9"/>',
   atualizar:'<path d="M21 12a9 9 0 11-3.2-6.9"/><polyline points="21 3 21 9 15 9"/>',
   estrela:  '<polygon points="12 2 15.09 8.6 22 9.5 17 14.3 18.2 21.3 12 17.9 5.8 21.3 7 14.3 2 9.5 8.91 8.6 12 2"/>',
+  /* Mesmo balão de "observação" do painel de ícones da Manutenção: o desenho
+     de "alguém escreveu algo aqui" já existe, não vale inventar um segundo. */
+  comentar: '<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>',
 };
 
 /* Cada render cria ids novos e as acoes sao closures que seguram o objeto do
@@ -22669,7 +23817,10 @@ const FP_AJUDA = {
       'Clique na linha para selecionar o produto. Com Shift, seleciona um intervalo inteiro.',
       'Com produtos selecionados, a barra do topo aplica <b>prioridade em massa</b> ou remove da listagem.',
       'O botão de prioridade da linha muda um produto só. <b>Emergencial</b> fura a fila.',
-      'O menu <b>…</b> no fim da linha tem enviar fotos e tirar da listagem.'
+      'O menu <b>…</b> no fim da linha tem enviar fotos, comentar e tirar da listagem.',
+      'O <b>+</b> no topo inclui um produto ou um <b>kit</b> na fila. Kit é um conjunto de peças fotografado montado, com pasta própria no Drive.',
+      'Se o item já estiver na fila, já tiver foto, ou se um kit igual já existir, aparece um aviso — e ainda assim dá para incluir.',
+      'O <b>balão</b> ao lado do nome é comentário: o número diz quantos e o rosto é de quem falou por último. Passe o mouse para ler; ele some quando a foto fica pronta.'
     ],
     passos: [
       { alvo: '#view-foto-producao .filter-bar', titulo: 'As abas da fila',
@@ -22683,7 +23834,9 @@ const FP_AJUDA = {
       { alvo: '#fotoProdLista .fp-prod-linha .fp-prio', titulo: 'Prioridade de um produto',
         texto: 'Baixa, média, alta e emergencial. O emergencial fura a fila — use só quando for para hoje.' },
       { alvo: '#fotoProdLista .fp-prod-linha .fp-menu-btn', titulo: 'O menu da linha',
-        texto: 'Enviar fotos, remover da listagem e as demais ações daquele produto.' }
+        texto: 'Enviar fotos, comentar, remover da listagem e as demais ações daquele produto.' },
+      { alvo: '#fotoProdNovoBtn', titulo: 'Incluir produto ou kit',
+        texto: 'Põe na fila um SKU avulso ou um kit — várias peças fotografadas montadas, com pasta própria no Drive. Se já existir algo igual, o painel avisa antes e deixa você decidir.' }
     ]
   },
 

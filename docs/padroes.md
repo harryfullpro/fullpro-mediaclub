@@ -518,6 +518,32 @@ de 19/08 percorreu as 17 telas medindo toda `.badge`, `.proj-dest-tag` e
 - Contraste medido ao final: **0 reprovados WCAG AA nos dois temas**
 - Textos em português, com acento. Nada de *goal*, *pool*, *pace* na interface
 
+## "Apagado" é um número, e o número se mede
+
+Elemento secundário com `opacity` reduzida é pedido recorrente do dono ("com opacidade
+reduzida"). O que **não** pode é o texto dentro dele deixar de ser legível: contagem,
+rótulo e valor são informação e valem AA (4,5:1), mesmo apagados.
+
+A conta é a cor MISTURADA com o fundo, não a cor declarada:
+
+```
+efetiva = cor × opacidade + fundo × (1 − opacidade)
+```
+
+Medido no balão de comentário da Produção, nos dois temas:
+
+| cor base | opacidade | claro | escuro |
+|---|---|---|---|
+| `--text-dim` | 50% | 2,33:1 ✗ | 2,71:1 ✗ |
+| `--text-dim` | 80% | 4,83:1 ✓ | 4,93:1 ✓ (mas já não parece apagado) |
+| `--text` | **62%** | **4,74:1 ✓** | **7,21:1 ✓** |
+
+A saída é **cor mais forte com opacidade menor**, não o contrário: fica mais apagado aos
+olhos e mais legível na medida. Opacidade de ancestral multiplica — some `opacity` de
+todos os pais antes de concluir.
+
+---
+
 ## Drive: dois endereços para o mesmo arquivo
 
 `?action=img&sku=X` e `?action=arquivo&id=Y` devolvem **o mesmo JPEG**, mas são URLs
@@ -601,6 +627,16 @@ Dois casos no mesmo dia:
   Sintoma: campo de busca que não faz absolutamente nada.
 - `.fp-busca` já era o componente de busca de Solicitações. Minhas regras estavam antes no
   arquivo e perdiam para as antigas — estilo aplicado "pela metade", sem aviso nenhum.
+
+E um terceiro, em 27/08, com o agravante de a regra já estar escrita aqui: `.fp-prod-kit`
+é do montador de kit do Magis5 (`display:flex` + `margin-top:8px`). A regra nova vinha
+DEPOIS no arquivo e ganhou no que declarava, mas **herdou a margem**: o selo "KIT" da
+listagem de Produção desceu 4px em relação ao nome do produto. Não dá erro, não dá aviso,
+e só aparece medindo — os outros dois filhos da linha centravam em 663,6 e ele em 667,6.
+Virou `.fp-prod-selo-kit`.
+
+Perder para uma regra que vem DEPOIS é o caso óbvio. O caso traiçoeiro é este: ganhar a
+disputa e ainda assim herdar tudo o que a sua regra não declarou.
 
 ```bash
 grep -n "function fpMinhaFuncao\|\.minha-classe\b" admin.html

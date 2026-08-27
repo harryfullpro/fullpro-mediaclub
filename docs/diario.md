@@ -1,5 +1,92 @@
 # Diário
 
+## 27/08/2026 · Incluir produto ou kit na Produção, e comentário no item da fila
+
+> *"nesse botão + nós vamos incluir na lista de produção um produto ou um kit
+> de produto (…) quero adicionar um aviso caso o usuário tente incluir um sku
+> que já está na fila (…) mas mesmo após o aviso, quero que permita"*
+
+### O kit é uma linha de `mc_photo_products`, não uma tabela nova
+
+A fila inteira — listagem, prioridade, seleção em lote, separação, upload para o
+Drive, galeria — é indexada por `sku`. Uma tabela paralela obrigaria a bifurcar
+cada uma dessas funções. Com o kit sendo uma linha com chave própria
+(`KIT-CFP327-FP757`, gerada a partir das peças), ele herda o fluxo inteiro sem
+que nada disso saiba que kit existe. A chave é também o nome da pasta dele no
+Drive — e tem que ser: a foto do kit é do conjunto montado, não de nenhuma peça.
+
+Colunas novas: `kit_skus text[]`, `manual boolean`, `criado_por`, `criado_em`.
+Todas com default, porque o upsert do `bling-sync` não as menciona e o Postgres
+valida a tupla proposta antes de resolver o `ON CONFLICT`.
+
+### "Incluir mesmo assim" faz coisas diferentes para kit e para produto
+
+O aviso aparece **enquanto se digita** e o botão passa a se chamar "Incluir mesmo
+assim". Daí em diante:
+
+| situação | o que acontece ao insistir |
+|---|---|
+| kit igual já existe | nasce um **segundo** kit, sufixo na chave, pasta própria |
+| produto já na fila | reaplica a prioridade escolhida no modal |
+| produto já com foto | volta para a fila marcado como `refazer` |
+| produto fora de linha | volta para a listagem e para a fila |
+
+**Não existe segunda linha para o mesmo SKU avulso, e isso é decisão.** O SKU é
+a chave da linha *e* o nome da pasta no Drive. Duas linhas do mesmo SKU
+apontariam para a mesma pasta, e a reconciliação com o Drive — que casa por SKU —
+nunca marcaria a segunda como fotografada: ela ficaria na fila para sempre. Quem
+insiste quer o produto fotografado de novo, e é isso que acontece.
+
+### O kit se abre na lista de separação
+
+Um kit é **um** trabalho de foto e **várias** peças na prateleira. `fpSepGerar`
+passou a expandir kits em uma linha por peça (`fpSepExpandirKits`) antes da busca
+de localização e do PDF: cada peça leva o próprio endereço do Bling, marcada com
+`[KIT]`, herdando a urgência do kit e saindo em sequência. Sem isso o estoquista
+receberia uma linha escrita `KIT-CFP327-FP757`, sem localização — o kit não tem
+endereço no Bling porque não é produto de lá.
+
+### Comentário tem prazo
+
+`mc_photo_comments` guarda o recado que não cabe na prioridade ("fotografar com o
+suporte preto", "a peça chegou riscada"). Balão ao lado do nome do produto, com a
+contagem e o rosto de quem falou por último; o mouse em cima abre a caixa com o
+texto.
+
+Ao finalizar a foto os recados são **fechados** (`fechado_em`), não apagados:
+apagar tiraria a única resposta para "por que essa foto foi refeita três vezes".
+Quem carimba é `fpLoteMarcarFeito`, o único ponto por onde um item vira
+`fotografado`.
+
+O avatar **não** é copiado para o comentário: é um data URI de dezenas de KB e
+repeti-lo por linha engordaria a leitura inteira. O rosto é resolvido pelo
+`autor_id` com um mapa de operadores lido uma vez.
+
+### Dois defeitos meus, os dois achados medindo
+
+**1. `.fp-prod-kit` já existia.** É a classe do montador de kit do Magis5
+(`display:flex` + `margin-top:8px`). Minha regra vinha depois e ganhava no que
+declarava, mas herdava a margem: medido, o selo "KIT" descia **4px** em relação ao
+nome do produto — os outros dois filhos da linha centravam em 663,6 e ele em
+667,6. Virou `.fp-prod-selo-kit`. A regra de procurar o nome antes de criar já
+estava escrita em `padroes.md`; eu não a segui.
+
+**2. O balão apagado reprovava em contraste.** `--text-dim` a 50% dava **2,7:1**
+no escuro e **2,3:1** no claro, e a contagem de comentários é informação, não
+enfeite. Com `--text-dim` só passa a 80%, que já não parece apagado. Medido nos
+dois temas, `--text` a **62%** dá 4,7:1 no claro e 7,2:1 no escuro — e continua
+visivelmente mais fraco que o nome ao lado.
+
+### O que não deu para testar
+
+O caminho de escrita ponta a ponta (criar de verdade um kit pelo painel logado)
+não foi exercitado: as políticas agora exigem `authenticated` e eu não faço
+login. Foi conferido de outra forma: o `INSERT` com exatamente as mesmas colunas
+rodou no banco e voltou íntegro (e foi apagado depois), e todos os caminhos de
+gravação do cliente foram exercitados com o `sb` estubado, conferindo o corpo de
+cada chamada. Com a chave pública e sem login, `mc_photo_comments` lê `[]` e
+escreve 401.
+
 ## 27/08/2026 · Login vira Supabase Auth (e o que a chave pública alcançava)
 
 > *"aplicar algumas melhorias de segurança para não permitir vazamento de dados
