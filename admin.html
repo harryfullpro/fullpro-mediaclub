@@ -17232,17 +17232,40 @@ function fpAvisoMontar() {
     });
   }
 
-  const vistas = Array.isArray(fpAvisoPrefs().updates_vistos) ? fpAvisoPrefs().updates_vistos : [];
-  const novidades = (UPDATES || []).filter(u => !vistas.includes(u.id)).slice(0, 6);
+  const novidades = fpNovidadesParaMim().slice(0, 6);
 
   return { pendencias, novidades };
+}
+
+/* O que é novidade PARA QUEM ESTÁ OLHANDO.
+
+   Duas peneiras. A primeira é o carimbo do que a pessoa já fechou. A segunda é
+   a data da conta: nota publicada ANTES de a conta existir não é novidade para
+   ela, é histórico — e sem essa peneira um usuário recém-criado abria o painel
+   com o changelog inteiro na cara, por cima do próprio tour de boas-vindas.
+   Foi o que aconteceu com o primeiro usuário criado pela tela nova.
+
+   A data da conta é o critério certo, e não "é o primeiro acesso": ela vale
+   também para quem já entrou uma vez e ainda não fechou o aviso. O módulo
+   Atualizações continua mostrando tudo — lá o histórico é o assunto. */
+function fpNovidadesParaMim() {
+  const vistas = Array.isArray(fpAvisoPrefs().updates_vistos) ? fpAvisoPrefs().updates_vistos : [];
+  const nasceu = (CURRENT_USER && CURRENT_USER.created_at)
+    ? new Date(CURRENT_USER.created_at).getTime() : 0;
+  return (UPDATES || []).filter(u => {
+    if (vistas.includes(u.id)) return false;
+    if (!nasceu) return true;
+    const quando = new Date(u.publicado_em || u.created_at || 0).getTime();
+    return !quando || quando >= nasceu;
+  });
 }
 
 function fpUpdBadge() {
   const el = document.getElementById('cntUpd');
   if (!el) return;
-  const vistas = Array.isArray(fpAvisoPrefs().updates_vistos) ? fpAvisoPrefs().updates_vistos : [];
-  const n = (UPDATES || []).filter(u => !vistas.includes(u.id)).length;
+  /* Mesma peneira do popup: contador e conteúdo têm de contar a mesma coisa,
+     senão o menu promete uma novidade que não existe do outro lado. */
+  const n = fpNovidadesParaMim().length;
   el.textContent = n;
   el.style.display = n ? '' : 'none';
   el.setAttribute('aria-label', n ? (n === 1 ? '1 atualização nova' : n + ' atualizações novas') : '');
@@ -17333,10 +17356,27 @@ function dismissMentionPopup() { fpAvisoFechar(); }
 function openMentionsNow() { fpAvisoIr('debriefing', 'men'); }
 function showMentionPopup() { fpAvisoAbrir(); }
 
+/* Primeiro acesso tem dono: o de boas-vindas. Enquanto o pop-up de entrada,
+   o tour ou o tutorial da tela estiverem em jogo, este aviso espera — dois
+   diálogos ao mesmo tempo é um por cima do outro, e foi o que aconteceu com o
+   primeiro usuário criado pela tela nova. Ele volta no próximo carregamento,
+   quando houver o que dizer. */
+function fpAvisoBoasVindasNaFrente() {
+  try {
+    if (document.getElementById('fpBemVindoOv')) return true;          // pop-up na tela
+    if (typeof _tutAtivo !== 'undefined' && _tutAtivo) return true;    // tour rodando
+    if (typeof _tutGeralPendente !== 'undefined' && _tutGeralPendente) return true;
+    if (typeof _tutPendente !== 'undefined' && _tutPendente) return true;
+    if (typeof fpTutJaViu === 'function' && !fpTutJaViu('boas-vindas')) return true;
+  } catch (e) {}
+  return false;
+}
+
 /* Chamado no boot e a cada troca de tela. Só abre uma vez por carregamento:
    o pedido foi "ao entrar no painel ou dar um reload", não a cada clique. */
 function maybeShowMentionPopup(currentView) {
   if (!CURRENT_USER || _avisoJaAbriu) return;
+  if (fpAvisoBoasVindasNaFrente()) return;
   const view = currentView || (location.hash ? location.hash.slice(1) : '') || 'dashboard';
   if (view === 'debriefing' || view === 'atualizacoes') return;
   fpAvisoAbrir();
