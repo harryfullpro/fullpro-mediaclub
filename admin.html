@@ -4839,6 +4839,14 @@ body.fp-sem-sessao .fp-ajuda-btn { display: none !important; }
   font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
 }
 .fp-ajuda-tut:hover { background: var(--primary-hi); }
+/* Segundo botao, discreto: rever o tour geral e coisa rara, nao pode competir
+   com o tutorial da tela. */
+.fp-ajuda-tour {
+  margin-top: 8px; width: 100%; padding: 8px; border-radius: 9px;
+  background: none; border: 0; color: var(--text-muted);
+  font-family: inherit; font-size: 12px; cursor: pointer;
+}
+.fp-ajuda-tour:hover { color: var(--text); }
 .fp-ajuda-tut svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 
 /* O bloqueio existe so para engolir cliques: a sombra do buraco escurece,
@@ -5713,7 +5721,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
           <span class="fp-usr-id"><b id="fpUsrNome">—</b><span id="fpUsrSub"></span></span>
         </div>
         <div class="fp-usr-sep"></div>
-        <button class="fp-usr-item" type="button" role="menuitem" onclick="fpUsrIr('profile')">
+        <button class="fp-usr-item" type="button" id="fpUsrConta" role="menuitem" onclick="fpUsrIr('profile')">
           <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           Conta
         </button>
@@ -7694,7 +7702,10 @@ function fpRevelarPainel() {
   /* O boot nao passa pelo roteador: quem entra direto num favorito de
      #foto-producao caia numa tela sem `?` ate trocar de modulo. O atraso e o
      tempo do primeiro render — os passos apontam para linhas da listagem. */
-  setTimeout(() => { try { fpAjudaAtualizar(); } catch (e) { console.warn('ajuda', e); } }, 900);
+  setTimeout(() => {
+    try { fpAjudaAtualizar(); } catch (e) { console.warn('ajuda', e); }
+    try { fpBoasVindasTalvez(); } catch (e) { console.warn('boas-vindas', e); }
+  }, 900);
 }
 
 async function checkAuth() {
@@ -21306,7 +21317,37 @@ window.addEventListener('resize', function () {
    de RLS para uma preferencia que nao vale um round-trip.
    ========================================================================== */
 
-const FP_TUT_VERSAO = 2;   /* 2 em 26/08/2026: todo mundo volta a ser primeira viagem */
+const FP_TUT_VERSAO = 2;
+
+/* Quem ja viu o que fica no BANCO, na coluna `tutoriais` de mc_admin_users, e
+   nao no navegador. "Primeira vez" e um fato da PESSOA: guardado no
+   localStorage, o tour voltava em outro navegador, em janela anonima e em
+   outra maquina — foi exatamente o que aconteceu com o dono.
+   A versao entra no nome da marca, entao subir FP_TUT_VERSAO continua sendo o
+   jeito de fazer todo mundo rever. */
+function fpTutMarcaChave(nome) { return 'v' + FP_TUT_VERSAO + ':' + nome; }
+
+function fpTutJaViu(nome) {
+  /* Sem usuario carregado nao ha o que afirmar — e nesse caso o certo e NAO
+     impor nada, senao o tour dispara para quem ja viu. */
+  const u = (typeof CURRENT_USER !== 'undefined') ? CURRENT_USER : null;
+  if (!u) return true;
+  return !!((u.tutoriais || {})[fpTutMarcaChave(nome)]);
+}
+
+/* Marca ANTES de abrir: se a pessoa recarregar no meio do tour, ele nao
+   recomeça do zero na proxima entrada. */
+async function fpTutMarcar(nome) {
+  const u = (typeof CURRENT_USER !== 'undefined') ? CURRENT_USER : null;
+  if (!u || !u.id) return;
+  u.tutoriais = u.tutoriais || {};
+  if (u.tutoriais[fpTutMarcaChave(nome)]) return;
+  u.tutoriais[fpTutMarcaChave(nome)] = 1;
+  try {
+    const { error } = await sb.from('mc_admin_users').update({ tutoriais: u.tutoriais }).eq('id', u.id);
+    if (error) throw error;
+  } catch (e) { console.warn('marcar tutorial', e); }
+}
 
 /* Um verbete por tela: o texto do painel de ajuda e os passos do guiado.
    `alvo` e um seletor; passo cujo alvo nao existe na hora e pulado, entao
@@ -21427,10 +21468,46 @@ function fpAjudaChave() {
   return null;
 }
 
-function fpTutChaveGuardada(chave) {
-  const id = (typeof CURRENT_USER !== 'undefined' && CURRENT_USER && CURRENT_USER.id) || 'anon';
-  return 'fp_tut_v' + FP_TUT_VERSAO + ':' + id + ':' + chave;
+/* ── Tour de boas-vindas ─────────────────────────────────────────────────
+   Roda uma vez na vida, antes de qualquer tutorial de tela. Mostra o que
+   existe em TODAS as telas: o menu, as preferencias, a conta (e a senha), o
+   besouro e o botao de ajuda. */
+const FP_TOUR_BOAS_VINDAS = {
+  titulo: 'Boas-vindas',
+  passos: [
+    { alvo: '.sidebar-nav', titulo: 'O menu do painel',
+      texto: 'Tudo o que você pode abrir está aqui, separado por área. Só aparecem os módulos liberados para você.' },
+    { alvo: '#fpUsrBtn', titulo: 'Suas preferências',
+      texto: 'Sua foto abre o menu com tema claro ou escuro, idioma, notificações e a saída.' },
+    { alvo: '#fpUsrConta', titulo: 'Sua conta e a senha',
+      texto: 'Em Conta ficam seus dados — e é onde você troca a senha padrão que recebeu. Faça isso no primeiro acesso.',
+      antes: () => { try { fpUsrAbrir(); } catch (e) {} },
+      depois: () => { try { fpUsrFechar(); } catch (e) {} } },
+    { alvo: '#fpBugBtn', titulo: 'Achou um problema? avise',
+      texto: 'O besouro abre o relato de bug ou ideia de melhoria, de qualquer tela e até por cima de um popup — sem perder o que você estava fazendo.' },
+    { alvo: '#fpAjudaBtn', titulo: 'Ajuda da tela',
+      texto: 'Nas telas de Fotografia este "?" traz as instruções da tela e o tutorial guiado dela. Pode rever quantas vezes quiser.',
+      antes: () => { const b = document.getElementById('fpAjudaBtn'); if (b) { b.dataset.fpTour = '1'; b.style.display = 'flex'; } },
+      depois: () => { const b = document.getElementById('fpAjudaBtn'); if (b) { delete b.dataset.fpTour; } try { fpAjudaAtualizar(); } catch (e) {} } },
+  ]
+};
+
+let _tutPendente = null;   // tutorial de tela esperando o boas-vindas acabar
+
+/* Chamado no boot. Se for a primeira vez desta pessoa, o boas-vindas roda e o
+   tutorial da tela entra logo depois. */
+function fpBoasVindasTalvez() {
+  if (fpTutJaViu('boas-vindas')) { fpTutFilaSoltar(); return; }
+  fpTutMarcar('boas-vindas');
+  setTimeout(() => fpTutAbrir('boas-vindas', { aoFechar: fpTutFilaSoltar }), 900);
 }
+
+function fpTutFilaSoltar() {
+  const c = _tutPendente; _tutPendente = null;
+  if (c) setTimeout(() => { if (fpAjudaChave() === c) fpTutAbrir(c); }, 400);
+}
+
+function fpBoasVindasRever() { fpAjudaFechar(); fpTutAbrir('boas-vindas'); }
 
 /* Mostra ou esconde o "?" conforme a tela, e abre o tutorial se for a
    primeira vez desta pessoa neste modulo. */
@@ -21438,15 +21515,16 @@ function fpAjudaAtualizar() {
   const btn = document.getElementById('fpAjudaBtn');
   if (!btn) return;
   const chave = fpAjudaChave();
-  btn.style.display = chave ? 'flex' : 'none';
+  if (!btn.dataset.fpTour) btn.style.display = chave ? 'flex' : 'none';
   if (!chave) { fpAjudaFechar(); return; }
   if (_ajudaChave && _ajudaChave !== chave) fpAjudaFechar();
   _ajudaChave = chave;
-  let visto = true;
-  try { visto = !!localStorage.getItem(fpTutChaveGuardada(chave)); } catch (e) {}
-  if (visto || _tutAtivo) return;
-  try { localStorage.setItem(fpTutChaveGuardada(chave), '1'); } catch (e) {}
-  /* Um respiro para a listagem terminar de pintar: o passo 3 aponta para a
+  if (fpTutJaViu(chave) || _tutAtivo) return;
+  /* Boas-vindas ainda por vir: o da tela espera a vez em vez de brigar por
+     ela. Dois tours ao mesmo tempo e um por cima do outro. */
+  if (!fpTutJaViu('boas-vindas')) { _tutPendente = chave; return; }
+  fpTutMarcar(chave);
+  /* Um respiro para a listagem terminar de pintar: os passos apontam para a
      primeira linha, e ela so existe depois do render. */
   setTimeout(() => { if (fpAjudaChave() === chave) fpTutAbrir(chave); }, 650);
 }
@@ -21468,7 +21546,9 @@ function fpAjudaAbrir() {
         ? '<button type="button" class="fp-ajuda-tut" onclick="fpAjudaFechar(); fpTutAbrir(\'' + chave + '\')">'
           + '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="m10 8.5 5.5 3.5-5.5 3.5z"/></svg>'
           + 'Ver tutorial desta tela</button>'
-        : '');
+        : '')
+    + '<button type="button" class="fp-ajuda-tour" onclick="fpBoasVindasRever()">'
+    + 'Rever o tour de boas-vindas</button>';
   p.classList.add('show');
   document.getElementById('fpAjudaBtn').setAttribute('aria-expanded', 'true');
   _ajudaAberta = true;
@@ -21485,16 +21565,22 @@ function fpAjudaFechar() {
    Um retangulo vazado sobre o elemento e um cartao ao lado. O escurecimento
    e o box-shadow gigante do proprio buraco: uma sombra so, sem quatro divs
    de moldura para manter em sincronia. */
-let _tutPassos = [], _tutI = 0, _tutAtivo = false, _tutFocoAnterior = null;
+let _tutPassos = [], _tutI = 0, _tutAtivo = false, _tutFocoAnterior = null, _tutAoFechar = null;
 
-function fpTutAbrir(chave) {
-  const d = FP_AJUDA[chave]; if (!d || !d.passos) return;
+function fpTutAbrir(chave, opcoes) {
+  const d = (chave === 'boas-vindas') ? FP_TOUR_BOAS_VINDAS : FP_AJUDA[chave];
+  if (!d || !d.passos) return;
+  _tutAoFechar = (opcoes && opcoes.aoFechar) || null;
   /* Passo cujo alvo nao esta na tela e descartado agora, nao pulado no meio:
      assim o contador "2 de 4" nunca mente. */
   /* Nao basta existir: o slot da barra de acoes em massa tem altura 0 e um
      `offsetParent` valido — apontar para ele abria um buraco de 12px em cima
      de nada (medido). O alvo tem de ter area. */
   _tutPassos = d.passos.filter(p => {
+    /* Passo com `antes` so existe DEPOIS do preparo (o item do menu do usuario
+       nem esta na tela antes de abrir o menu). Nesses o alvo e aceito de
+       antemao — o proprio fpTutIr pula se na hora nao houver nada. */
+    if (p.antes) return true;
     const el = document.querySelector(p.alvo);
     if (!el || el.offsetParent === null) return false;
     const r = el.getBoundingClientRect();
@@ -21518,6 +21604,9 @@ function fpTutAbrir(chave) {
 }
 
 function fpTutFechar() {
+  /* O passo pode ter aberto algo para poder apontar (o menu do usuario, por
+     exemplo). Sair no meio tem de desfazer isso. */
+  try { _tutPassos[_tutI] && _tutPassos[_tutI].depois && _tutPassos[_tutI].depois(); } catch (e) {}
   _tutAtivo = false;
   ['fpTutBloqueio', 'fpTutBuraco', 'fpTutCaixa'].forEach(id => document.getElementById(id)?.classList.remove('show'));
   document.removeEventListener('keydown', fpTutTecla, true);
@@ -21526,6 +21615,8 @@ function fpTutFechar() {
   window.removeEventListener('resize', fpTutReposicionar);
   document.querySelector('main')?.removeEventListener('scroll', fpTutReposicionar);
   if (_tutFocoAnterior && document.contains(_tutFocoAnterior)) { try { _tutFocoAnterior.focus(); } catch (e) {} }
+  const fim = _tutAoFechar; _tutAoFechar = null;
+  if (fim) { try { fim(); } catch (e) { console.warn('fim do tour', e); } }
 }
 
 /* Fora do cartao, nada existe: `inert` tira do caminho do clique, do Tab e do
@@ -21564,8 +21655,13 @@ function fpTutProximo() { (_tutI >= _tutPassos.length - 1) ? fpTutFechar() : fpT
 function fpTutAnterior() { if (_tutI > 0) fpTutIr(_tutI - 1); }
 
 function fpTutIr(i) {
+  /* Desfaz o passo que sai antes de preparar o que entra: os dois podem mexer
+     na mesma coisa (abrir e fechar o menu do usuario, por exemplo). */
+  const ant = _tutPassos[_tutI];
+  if (ant && ant !== _tutPassos[i] && ant.depois) { try { ant.depois(); } catch (e) {} }
   _tutI = i;
   const p = _tutPassos[i];
+  if (p.antes) { try { p.antes(); } catch (e) {} }
   const el = document.querySelector(p.alvo);
   if (!el) { fpTutProximo(); return; }
   /* Rolagem instantanea, nao suave: com `smooth` a medida sai do lugar
