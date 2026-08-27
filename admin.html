@@ -5182,6 +5182,49 @@ body.fp-sem-sessao .fp-ajuda-btn { display: none !important; }
 }
 .fp-cor-voltar:hover { color: var(--text); }
 .fp-cor-voltar svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* ── Painel de ícones ────────────────────────────────────────────────────
+   Aproveita a moldura do painel de cores (.fp-cores-topo, .fp-cores-abas,
+   .fp-cores-pe e o próprio .fp-cor-pick). O que muda é a linha: aqui o campo
+   principal é o arquivo, e a prévia mostra o desenho. */
+.fp-icones { margin-top: 28px; }
+.fp-ico-nota { font-size: 12px; color: var(--text-muted); margin: 0 0 6px; line-height: 1.5; max-width: 70ch; }
+.fp-ico-grade { display: grid; gap: 0; }
+.fp-ico-linha {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 11px 0; border-bottom: 1px solid var(--border);
+}
+/* Chapa neutra atrás da prévia: ícone claro sobre fundo claro (ou o contrário)
+   desaparece, e o dono precisa VER o que subiu antes de salvar. */
+.fp-ico-caixa {
+  width: 40px; height: 40px; flex-shrink: 0; border-radius: 9px;
+  display: grid; place-items: center;
+  background: var(--bg-elev); border: 1px solid var(--border);
+}
+.fp-ico-previa { width: 22px; height: 22px; color: var(--text-dim); }
+.fp-ico-txt { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fp-ico-nome { font-size: 12.5px; font-weight: 600; color: var(--text); }
+.fp-ico-onde { font-size: 11px; color: var(--text-muted); }
+.fp-ico-subir { flex-shrink: 0; }
+.fp-ico-subir > span {
+  display: inline-flex; align-items: center; min-height: 30px; padding: 0 12px;
+  background: var(--bg-elev); border: 1px solid var(--border-hi); border-radius: 6px;
+  color: var(--text); font-size: 12px; font-weight: 650; cursor: pointer;
+}
+.fp-ico-subir > span:hover { border-color: var(--text-muted); }
+.fp-ico-orig {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--text-muted); cursor: pointer; white-space: nowrap;
+}
+.fp-ico-linha.mudou .fp-ico-nome::after {
+  content: 'trocado'; margin-left: 7px; font-size: 9.5px; font-weight: 800;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--primary);
+}
+@media (max-width: 700px) {
+  .fp-ico-txt { flex: 1 1 100%; order: 1; }
+  .fp-ico-caixa { order: 0; }
+  .fp-ico-linha .fp-cor-pick, .fp-ico-subir, .fp-ico-orig { order: 2; }
+}
+
 .fp-cor-linha.mudou .fp-cor-nome::after {
   content: '•'; color: var(--primary); margin-left: 6px; font-size: 15px; line-height: 0;
 }
@@ -7311,6 +7354,7 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
 
       <!-- Seletor de cores de destaque: montado por fpCoresRender() -->
       <div id="fpCoresPainel" class="fp-cores"></div>
+      <div id="fpIconesPainel" class="fp-cores fp-icones"></div>
     </div>
 
     <div id="view-atualizacoes" style="display:none">
@@ -8272,8 +8316,12 @@ function fpRevelarPainel() {
      ao banco confirmar. Sem o cache, o painel abria no vermelho de fabrica e
      trocava de cor na cara de quem estava olhando. */
   try { fpCoresCarregar(); } catch (e) { console.warn('cores de destaque', e); }
+  /* Icones escolhidos pelo dono. Mesmo motivo das cores: o cache do navegador
+     ja pintou, esta chamada vai ao banco confirmar. */
+  try { fpIconesCarregar(); } catch (e) { console.warn('icones do painel', e); }
   /* De novo aqui porque agora ha usuario: ver o comentario em fpCoresRender. */
   try { fpCoresRender(); } catch (e) { console.warn('cores de destaque', e); }
+  try { fpIconesRender(); } catch (e) { console.warn('icones do painel', e); }
   document.getElementById('login').style.display = 'none';
   document.getElementById('app').style.display = 'grid';
   document.body.classList.remove('fp-sem-sessao');   // libera o botão do besouro
@@ -23325,6 +23373,450 @@ async function fpCoresSalvar() {
     fpToast('Cores salvas. Quem abrir o painel agora já vê.', 'ok');
   } catch (e) {
     console.warn('salvar cores', e);
+    fpToast('Não deu para salvar: ' + (e.message || e), 'erro');
+  }
+}
+
+
+
+/* ==========================================================================
+   ÍCONES DO PAINEL (2026-08-27)
+
+   O mesmo acordo das cores: quem escolhe é o dono, dentro do painel, e vale
+   para toda a equipe. Vive em `mc_icons` — uma linha por ícone trocado.
+
+   Por que existe: os ícones estão como <svg> inline espalhados pelo arquivo, e
+   trocar um significava pedir uma alteração de código. Só numa tarde foram
+   onze trocas de ícone da barra lateral, uma a uma.
+
+   Como um ícone é trocado sem editar o HTML de origem:
+
+   1. O catálogo abaixo diz ONDE cada ícone mora — por SELETOR (barra lateral,
+      botões flutuantes) ou por ASSINATURA do desenho (as ações das listagens,
+      que são strings montadas dentro de cada render e aparecem em dezenas de
+      lugares).
+   2. `fpIconesMarcar()` carimba `data-ico` nos <svg> que casam, guardando o
+      original para poder voltar atrás.
+   3. `fpIconesAplicar()` troca o conteúdo de quem tem ícone próprio e escreve
+      uma folha de estilo com a cor de cada um.
+   4. Um observador re-carimba o que as listagens recriam a cada render.
+
+   A assinatura é o que faz um ícone de ação ser trocado em TODA aparição de
+   uma vez — inclusive no menu "…" do celular, que usa o mesmo desenho.
+
+   SEGURANÇA: SVG é conteúdo executável. O arquivo enviado passa por
+   `fpIcoHigienizar` antes de qualquer coisa — fora `script`, `foreignObject`,
+   `image`, `use`, `animate`, todo atributo `on*` e todo `href`. Fica só
+   geometria. O que vai para o banco é o markup já limpo.
+   ========================================================================== */
+
+/* Desenhos das ações, na forma exata em que aparecem hoje. Servem de
+   assinatura (para encontrar) e de padrão (para restaurar). */
+const FP_ICO_ACOES = {
+  ver:      '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+  editar:   '<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>',
+  excluir:  '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>',
+  link:     '<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>',
+  roteiro:  '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+  pasta:    '<path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>',
+  observacao: '<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>',
+  whatsapp: '<path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/>',
+  bloquear: '<circle cx="12" cy="12" r="9"/><line x1="5.6" y1="5.6" x2="18.4" y2="18.4"/>',
+  mais:     '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+};
+
+const FP_ICO_NAV = [
+  ['dashboard', 'Dashboard'], ['calendar', 'Agenda'], ['checkin', 'Check-in / Check-out'],
+  ['projects', 'Projetos'], ['editing', 'Edição'], ['clips', 'Clips'], ['debriefing', 'Debriefing'],
+  ['foto-producao', 'Produção'], ['foto-galeria', 'Galeria'], ['foto-separacao', 'Separação'],
+  ['foto-lote', 'Fotografia em lote'], ['perf-metas', 'Metas'], ['perf-posts', 'Meus Posts'],
+  ['perf-influencers', 'Influenciadores'], ['perf-bonificacao', 'Bonificação'],
+  ['templates', 'Templates WhatsApp'], ['export', 'Exportar'], ['users', 'Usuários'],
+  ['manutencao', 'Manutenção'], ['atualizacoes', 'Atualizações'], ['integracoes', 'Integrações'],
+];
+
+const FP_ICO_GRUPOS = [
+  { titulo: 'Menu lateral', itens: FP_ICO_NAV.map(([v, rot]) => ({
+      chave: 'nav-' + v, nome: rot, onde: 'Item "' + rot + '" no menu lateral',
+      sel: '.nav-item[data-view="' + v + '"] > svg' })) },
+
+  { titulo: 'Ações das listagens', nota: 'Trocar aqui vale para todas as telas de uma vez — e também para o menu "…" do celular, que usa o mesmo desenho.', itens: [
+      { chave: 'acao-ver',      nome: 'Ver',        onde: 'Abrir o resumo ou os detalhes de uma linha', assin: FP_ICO_ACOES.ver },
+      { chave: 'acao-editar',   nome: 'Editar',     onde: 'Abrir a linha para edição', assin: FP_ICO_ACOES.editar },
+      { chave: 'acao-excluir',  nome: 'Excluir',    onde: 'Remover uma linha; ação destrutiva', assin: FP_ICO_ACOES.excluir },
+      { chave: 'acao-link',     nome: 'Link',       onde: 'Abrir arquivo de publicação ou anúncio, em outra aba', assin: FP_ICO_ACOES.link },
+      { chave: 'acao-roteiro',  nome: 'Roteiro',    onde: 'Abrir o roteiro do projeto, na Edição', assin: FP_ICO_ACOES.roteiro },
+      { chave: 'acao-observacao', nome: 'Observação', onde: 'Abrir a observação do projeto', assin: FP_ICO_ACOES.observacao },
+      { chave: 'acao-whatsapp', nome: 'WhatsApp',   onde: 'Falar com quem agendou', assin: FP_ICO_ACOES.whatsapp },
+      { chave: 'acao-pasta',    nome: 'Pasta',      onde: 'Abrir a pasta do Drive', assin: FP_ICO_ACOES.pasta },
+  ]},
+
+  { titulo: 'Botões de cabeçalho e flutuantes', itens: [
+      { chave: 'btn-novo',     nome: 'Novo',      onde: 'O + azul no canto das telas (novo projeto, clip, agendamento)', sel: '.fp-new-btn:not(.ghost) > svg' },
+      { chave: 'btn-bloquear', nome: 'Bloquear',  onde: 'Bloquear data, na Agenda', assin: FP_ICO_ACOES.bloquear },
+      { chave: 'flut-bug',     nome: 'Reportar',  onde: 'O besouro flutuante, em todas as telas', sel: '#fpBugBtn > svg' },
+  ]},
+];
+
+const FP_ICO_ITENS = FP_ICO_GRUPOS.reduce((a, g) => a.concat(g.itens), []);
+const FP_ICO_POR_CHAVE = FP_ICO_ITENS.reduce((m, i) => { m[i.chave] = i; return m; }, {});
+
+/* Ícone escolhido pelo dono: chave -> { svg, viewbox, cor, original }. */
+let FP_ICONES_ESCOLHIDOS = {};
+/* Desenho de fábrica, capturado do próprio DOM na primeira vez que o ícone é
+   visto. Guardar o elemento inteiro (e não só o conteúdo) é o que permite
+   voltar atrás sem saber quais atributos ele tinha. */
+const FP_ICO_PADRAO = {};
+let _iconesSujo = false, _iconesObs = null;
+
+function fpIcoNormalizar(html) {
+  return String(html || '').replace(/\s+/g, ' ').replace(/> </g, '><').trim().toLowerCase();
+}
+
+/* Índice assinatura -> chave, montado uma vez. */
+const FP_ICO_ASSIN = (() => {
+  const m = {};
+  FP_ICO_ITENS.forEach(i => { if (i.assin) m[fpIcoNormalizar(i.assin)] = i.chave; });
+  return m;
+})();
+
+/* ---------- higienização do arquivo enviado ---------- */
+
+const FP_ICO_TAGS_OK = new Set(['g','path','circle','ellipse','rect','line','polyline','polygon',
+  'defs','clippath','mask','lineargradient','radialgradient','stop','symbol','text','tspan']);
+
+function fpIcoHigienizar(texto) {
+  const bruto = String(texto || '').trim();
+  if (!bruto) return { erro: 'Arquivo vazio.' };
+  if (bruto.length > 60000) return { erro: 'SVG grande demais (limite de 60 KB).' };
+  let doc;
+  try { doc = new DOMParser().parseFromString(bruto, 'image/svg+xml'); }
+  catch (e) { return { erro: 'Não deu para ler o arquivo.' }; }
+  if (doc.querySelector('parsererror')) return { erro: 'O arquivo não é um SVG válido.' };
+  const raiz = doc.documentElement;
+  if (!raiz || raiz.nodeName.toLowerCase() !== 'svg') return { erro: 'O arquivo precisa começar com <svg>.' };
+
+  /* Poda: o que não for geometria sai. `use` e `image` saem junto — os dois
+     puxam conteúdo de fora, que é o caminho de sempre. */
+  const podar = no => {
+    [...no.children].forEach(f => {
+      if (!FP_ICO_TAGS_OK.has(f.nodeName.toLowerCase())) { f.remove(); return; }
+      [...f.attributes].forEach(a => {
+        const n = a.name.toLowerCase();
+        if (n.indexOf('on') === 0 || n === 'href' || n.indexOf('xlink') === 0) f.removeAttribute(a.name);
+        else if (n === 'style' && /url\s*\(|expression|javascript:/i.test(a.value)) f.removeAttribute(a.name);
+      });
+      podar(f);
+    });
+  };
+  podar(raiz);
+
+  const dentro = raiz.innerHTML.trim();
+  if (!dentro) return { erro: 'O SVG não tem desenho nenhum depois da limpeza.' };
+
+  /* Os atributos de traço vivem no <svg> de origem e se perderiam ao guardar só
+     o conteúdo. Vão para um <g> em volta, que carrega o desenho inteiro. */
+  const carrega = ['fill','stroke','stroke-width','stroke-linecap','stroke-linejoin','fill-rule','clip-rule','opacity'];
+  const attrs = carrega.filter(a => raiz.getAttribute(a) != null)
+    .map(a => a + '="' + String(raiz.getAttribute(a)).replace(/"/g, '&quot;') + '"').join(' ');
+
+  return {
+    svg: '<g ' + attrs + '>' + dentro + '</g>',
+    viewbox: raiz.getAttribute('viewBox') || ('0 0 ' + (parseFloat(raiz.getAttribute('width')) || 24)
+             + ' ' + (parseFloat(raiz.getAttribute('height')) || 24)),
+  };
+}
+
+/* Troca toda cor fixa por `currentColor`, para o seletor de cor funcionar em
+   qualquer arquivo. Fica de fora quando o dono marca "manter as cores do
+   arquivo" — é o caso de uma logo colorida. */
+function fpIcoNeutralizarCores(svgHtml) {
+  const cx = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  cx.innerHTML = svgHtml;
+  cx.querySelectorAll('*').forEach(el => {
+    ['fill', 'stroke'].forEach(p => {
+      const v = String(el.getAttribute(p) || '').trim().toLowerCase();
+      if (v && v !== 'none' && v !== 'currentcolor') el.setAttribute(p, 'currentColor');
+    });
+    const st = el.getAttribute('style');
+    if (st && /fill|stroke/i.test(st)) {
+      el.setAttribute('style', st.replace(/(fill|stroke)\s*:\s*([^;]+)/gi,
+        (m, prop, val) => /none/i.test(val) ? m : prop + ':currentColor'));
+    }
+  });
+  return cx.innerHTML;
+}
+
+/* ---------- carimbar e aplicar ---------- */
+
+function fpIconesMarcar(raiz) {
+  const base = raiz || document;
+  /* Por seletor: barra lateral e botões fixos. */
+  FP_ICO_ITENS.forEach(i => {
+    if (!i.sel) return;
+    base.querySelectorAll(i.sel).forEach(sv => {
+      if (!sv.dataset.ico) sv.dataset.ico = i.chave;
+    });
+  });
+  /* Por assinatura: as ações, que são strings montadas dentro de cada render e
+     não têm âncora estável nenhuma. */
+  base.querySelectorAll('svg:not([data-ico])').forEach(sv => {
+    const chave = FP_ICO_ASSIN[fpIcoNormalizar(sv.innerHTML)];
+    if (chave) sv.dataset.ico = chave;
+  });
+  /* Guarda o de fábrica na primeira vez que cada chave aparece. */
+  base.querySelectorAll('[data-ico]').forEach(sv => {
+    const k = sv.dataset.ico;
+    if (!FP_ICO_PADRAO[k] && !sv.dataset.icoEstado) {
+      FP_ICO_PADRAO[k] = { inner: sv.innerHTML, viewbox: sv.getAttribute('viewBox') || '0 0 24 24' };
+    }
+  });
+}
+
+function fpIconesAplicar(raiz) {
+  fpIconesMarcar(raiz);
+
+  /* Cor: folha própria, como nas cores do painel. `color` porque os desenhos
+     usam `currentColor` — é o que faz um ícone só mudar de cor sem tocar no
+     resto. */
+  let css = '';
+  for (const k in FP_ICONES_ESCOLHIDOS) {
+    const c = FP_ICONES_ESCOLHIDOS[k] && FP_ICONES_ESCOLHIDOS[k].cor;
+    if (c) css += '[data-ico="' + k + '"]{color:' + c + ' !important;}';
+  }
+  let folha = document.getElementById('fpIconesCustom');
+  if (!folha) { folha = document.createElement('style'); folha.id = 'fpIconesCustom'; document.head.appendChild(folha); }
+  if (folha.textContent !== css) folha.textContent = css;
+
+  (raiz || document).querySelectorAll('[data-ico]').forEach(sv => {
+    const k = sv.dataset.ico;
+    const esc = FP_ICONES_ESCOLHIDOS[k];
+    const querCustom = !!(esc && esc.svg);
+    const estado = querCustom ? ('c' + (esc.atualizado || '')) : 'p';
+    if (sv.dataset.icoEstado === estado) return;   // já está como deveria
+    if (querCustom) {
+      if (!FP_ICO_PADRAO[k]) FP_ICO_PADRAO[k] = { inner: sv.innerHTML, viewbox: sv.getAttribute('viewBox') || '0 0 24 24' };
+      /* Os atributos de traço do <svg> de destino atrapalhariam o desenho novo
+         (um stroke-width herdado, por exemplo). O <g> do arquivo carrega os
+         dele; aqui o destino fica neutro. */
+      ['fill','stroke','stroke-width','stroke-linecap','stroke-linejoin'].forEach(a => sv.removeAttribute(a));
+      sv.setAttribute('viewBox', esc.viewbox || '0 0 24 24');
+      sv.innerHTML = esc.svg;
+    } else if (FP_ICO_PADRAO[k]) {
+      sv.setAttribute('viewBox', FP_ICO_PADRAO[k].viewbox);
+      sv.innerHTML = FP_ICO_PADRAO[k].inner;
+    }
+    sv.dataset.icoEstado = estado;
+  });
+}
+
+/* As listagens recriam os botões a cada render, e o ícone novo se perderia.
+   Observador com folga: junta as mudanças de um quadro e re-carimba uma vez. */
+function fpIconesObservar() {
+  if (_iconesObs || typeof MutationObserver === 'undefined') return;
+  let agendado = false;
+  _iconesObs = new MutationObserver(() => {
+    if (agendado) return;
+    agendado = true;
+    setTimeout(() => { agendado = false; try { fpIconesAplicar(); } catch (e) {} }, 120);
+  });
+  const alvo = document.getElementById('app') || document.body;
+  _iconesObs.observe(alvo, { childList: true, subtree: true });
+}
+
+/* Cache no navegador, pelo mesmo motivo das cores: sem ele o painel abre com o
+   ícone de fábrica e troca na cara de quem está olhando. */
+function fpIconesCache(gravar) {
+  try {
+    if (gravar) { localStorage.setItem('fp_icones', JSON.stringify(FP_ICONES_ESCOLHIDOS)); return; }
+    const c = localStorage.getItem('fp_icones');
+    if (c) FP_ICONES_ESCOLHIDOS = JSON.parse(c) || {};
+  } catch (e) {}
+}
+
+async function fpIconesCarregar() {
+  fpIconesCache(false);
+  fpIconesAplicar();
+  fpIconesObservar();
+  try {
+    const { data, error } = await sb.from('mc_icons').select('chave,svg,viewbox,cor,original,updated_at');
+    if (error) throw error;
+    const novo = {};
+    (data || []).forEach(r => {
+      if (!FP_ICO_POR_CHAVE[r.chave]) return;      // ícone que saiu do catálogo
+      novo[r.chave] = { svg: r.svg || '', viewbox: r.viewbox || '0 0 24 24',
+                        cor: r.cor || '', original: !!r.original, atualizado: r.updated_at || '' };
+    });
+    FP_ICONES_ESCOLHIDOS = novo;
+    fpIconesCache(true);
+    fpIconesAplicar();
+    fpIconesRender();
+  } catch (e) { console.warn('carregar ícones', e); }
+}
+
+/* ---------- painel ---------- */
+
+let _iconesGrupo = 0;
+
+function fpIconesRender() {
+  const box = document.getElementById('fpIconesPainel');
+  if (!box) return;
+  if (typeof CURRENT_USER === 'undefined' || !CURRENT_USER) return;   // mesmo cuidado do painel de cores
+  if (typeof getUserRole === 'function' && getUserRole() !== 'admin') { box.innerHTML = ''; return; }
+
+  const trocados = Object.keys(FP_ICONES_ESCOLHIDOS).filter(k => FP_ICONES_ESCOLHIDOS[k] &&
+    (FP_ICONES_ESCOLHIDOS[k].svg || FP_ICONES_ESCOLHIDOS[k].cor)).length;
+  const g = FP_ICO_GRUPOS[_iconesGrupo] || FP_ICO_GRUPOS[0];
+
+  const linha = it => {
+    const esc = FP_ICONES_ESCOLHIDOS[it.chave] || {};
+    const mudou = !!(esc.svg || esc.cor);
+    const desenho = esc.svg || (FP_ICO_PADRAO[it.chave] && FP_ICO_PADRAO[it.chave].inner) || it.assin || '';
+    const vb = esc.svg ? (esc.viewbox || '0 0 24 24') : ((FP_ICO_PADRAO[it.chave] && FP_ICO_PADRAO[it.chave].viewbox) || '0 0 24 24');
+    /* A prévia não leva `data-ico`: se levasse, o observador a trocaria junto e
+       o painel passaria a mostrar o ícone aplicado no lugar do que está sendo
+       editado. */
+    const previa = '<svg class="fp-ico-previa" viewBox="' + escHtml(vb) + '" aria-hidden="true"'
+      + (esc.svg ? '' : ' fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"')
+      + (esc.cor ? ' style="color:' + escHtml(esc.cor) + '"' : '') + '>' + desenho + '</svg>';
+    return '<div class="fp-ico-linha' + (mudou ? ' mudou' : '') + '">'
+      + '<span class="fp-ico-caixa">' + previa + '</span>'
+      + '<span class="fp-ico-txt"><span class="fp-ico-nome">' + escHtml(it.nome) + '</span>'
+      +   '<span class="fp-ico-onde">' + escHtml(it.onde) + '</span></span>'
+      + '<input type="color" class="fp-cor-pick" value="' + escHtml(esc.cor || '#888888') + '"'
+      +   ' aria-label="Cor do ícone ' + escHtml(it.nome) + '"'
+      +   ' oninput="fpIconesCor(\'' + it.chave + '\', this.value)">'
+      + '<label class="fp-ico-subir">'
+      +   '<input type="file" accept=".svg,image/svg+xml" hidden onchange="fpIconesArquivo(\'' + it.chave + '\', this)">'
+      +   '<span>' + (esc.svg ? 'Trocar SVG' : 'Subir SVG') + '</span></label>'
+      + (esc.svg
+          ? '<label class="fp-ico-orig" data-tip="Mantém as cores do arquivo em vez de usar a cor escolhida aqui">'
+            + '<input type="checkbox"' + (esc.original ? ' checked' : '')
+            + ' onchange="fpIconesOriginal(\'' + it.chave + '\', this.checked)"> cores do arquivo</label>'
+          : '')
+      + (mudou
+          ? '<button class="fp-cor-voltar" type="button" data-tip="Voltar ao ícone de fábrica"'
+            + ' aria-label="Voltar ' + escHtml(it.nome) + ' ao padrão" onclick="fpIconesRestaurarUm(\'' + it.chave + '\')">'
+            + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3.2-6.9"/><polyline points="3 3 3 9 9 9"/></svg></button>'
+          : '<span style="width:27px;flex-shrink:0"></span>')
+      + '</div>';
+  };
+
+  box.innerHTML = '<div class="fp-cores-topo">'
+    + '<h2>Ícones do painel</h2>'
+    + '<div class="fp-cores-abas">'
+    + FP_ICO_GRUPOS.map((x, i) => '<button class="filter-btn' + (i === _iconesGrupo ? ' active' : '') + '" type="button"'
+        + ' onclick="fpIconesGrupo(' + i + ')">' + escHtml(x.titulo) + '</button>').join('')
+    + '</div></div>'
+    + (g.nota ? '<p class="fp-ico-nota">' + escHtml(g.nota) + '</p>' : '')
+    + '<div class="fp-ico-grade">' + g.itens.map(linha).join('') + '</div>'
+    + '<div class="fp-cores-pe">'
+    + '<span class="fp-cores-aviso">' + (_iconesSujo
+        ? 'Você está vendo os ícones novos nesta tela. Salvar aplica para toda a equipe.'
+        : (trocados ? trocados + (trocados === 1 ? ' ícone fora do padrão.' : ' ícones fora do padrão.')
+                    : 'Todos os ícones no padrão de fábrica.')) + '</span>'
+    + '<button class="action-btn" type="button" onclick="fpIconesRestaurarTudo()">Restaurar padrões</button>'
+    + '<button class="action-btn approve" type="button" onclick="fpIconesSalvar()"'
+    + (_iconesSujo ? '' : ' disabled') + '>Salvar ícones</button>'
+    + '</div>';
+}
+
+function fpIconesGrupo(i) { _iconesGrupo = i; fpIconesRender(); }
+
+function fpIconesEntrada(chave) {
+  FP_ICONES_ESCOLHIDOS[chave] = FP_ICONES_ESCOLHIDOS[chave] || { svg: '', viewbox: '0 0 24 24', cor: '', original: false };
+  return FP_ICONES_ESCOLHIDOS[chave];
+}
+
+function fpIconesCor(chave, valor) {
+  const e = fpIconesEntrada(chave);
+  e.cor = String(valor || '').trim().toLowerCase();
+  e.atualizado = String(Date.now());
+  _iconesSujo = true;
+  fpIconesAplicar(); fpIconesRender();
+}
+
+function fpIconesOriginal(chave, manter) {
+  const e = fpIconesEntrada(chave);
+  if (!e.bruto) { e.original = !!manter; }
+  else {
+    e.original = !!manter;
+    e.svg = manter ? e.bruto : fpIcoNeutralizarCores(e.bruto);
+  }
+  e.atualizado = String(Date.now());
+  _iconesSujo = true;
+  fpIconesAplicar(); fpIconesRender();
+}
+
+function fpIconesArquivo(chave, input) {
+  const arq = input && input.files && input.files[0];
+  if (!arq) return;
+  const leitor = new FileReader();
+  leitor.onload = () => {
+    const r = fpIcoHigienizar(leitor.result);
+    input.value = '';
+    if (r.erro) { fpToast(r.erro, 'erro'); return; }
+    const e = fpIconesEntrada(chave);
+    /* `bruto` guarda o desenho como veio (já limpo) para que marcar e desmarcar
+       "cores do arquivo" não perca as cores originais no caminho. */
+    e.bruto = r.svg;
+    e.viewbox = r.viewbox;
+    e.svg = e.original ? r.svg : fpIcoNeutralizarCores(r.svg);
+    e.atualizado = String(Date.now());
+    _iconesSujo = true;
+    fpIconesAplicar(); fpIconesRender();
+    fpToast('Ícone trocado nesta tela. Salve para valer para a equipe.', 'ok');
+  };
+  leitor.onerror = () => fpToast('Não deu para ler o arquivo.', 'erro');
+  leitor.readAsText(arq);
+}
+
+function fpIconesRestaurarUm(chave) {
+  delete FP_ICONES_ESCOLHIDOS[chave];
+  _iconesSujo = true;
+  fpIconesAplicar(); fpIconesRender();
+}
+
+async function fpIconesRestaurarTudo() {
+  if (!await fpConfirm({
+    titulo: 'Restaurar os ícones de fábrica',
+    mensagem: 'Todos os ícones trocados voltam ao desenho original.',
+    confirmar: 'Restaurar', perigo: true })) return;
+  FP_ICONES_ESCOLHIDOS = {};
+  _iconesSujo = true;
+  fpIconesAplicar(); fpIconesRender();
+}
+
+async function fpIconesSalvar() {
+  try {
+    const quem = (typeof CURRENT_USER !== 'undefined' && CURRENT_USER && CURRENT_USER.name) || '';
+    const agora = new Date().toISOString();
+    const linhas = [];
+    for (const k in FP_ICONES_ESCOLHIDOS) {
+      const e = FP_ICONES_ESCOLHIDOS[k];
+      if (!e || (!e.svg && !e.cor)) continue;
+      linhas.push({ chave: k, svg: e.svg || null, viewbox: e.viewbox || '0 0 24 24',
+                    cor: e.cor || null, original: !!e.original, updated_at: agora, updated_by: quem });
+    }
+    /* Apaga o que voltou ao padrão: linha sobrando no banco seria um ícone
+       trocado que ninguém mais vê no painel. */
+    const manter = linhas.map(l => l.chave);
+    const { data: existentes } = await sb.from('mc_icons').select('chave');
+    const sobrando = (existentes || []).map(r => r.chave).filter(k => manter.indexOf(k) === -1);
+    if (sobrando.length) {
+      const { error } = await sb.from('mc_icons').delete().in('chave', sobrando);
+      if (error) throw error;
+    }
+    if (linhas.length) {
+      const { error } = await sb.from('mc_icons').upsert(linhas, { onConflict: 'chave' });
+      if (error) throw error;
+    }
+    _iconesSujo = false;
+    fpIconesCache(true);
+    fpIconesRender();
+    fpToast('Ícones salvos. Quem abrir o painel agora já vê.', 'ok');
+  } catch (e) {
+    console.warn('salvar ícones', e);
     fpToast('Não deu para salvar: ' + (e.message || e), 'erro');
   }
 }
