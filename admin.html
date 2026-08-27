@@ -8610,9 +8610,15 @@ document.getElementById('loginBtn').onclick = async () => {
         falhar('Sem conexão com o servidor. Tente de novo.');
         return;
       }
-      if (!ponte || ponte.erro) { falhar((ponte && ponte.erro) || 'Usuário ou senha inválidos.'); return; }
+      /* A ponte só reclama de coisa que não é sobre a senha (limite de
+         tentativas, servidor fora). Ela nunca diz se o usuário existe: dizer
+         isso seria um oráculo de nomes — testado, a versão anterior devolvia
+         200 com o e-mail para usuário existente e 401 para inexistente, e dava
+         para varrer nomes sem acertar senha nenhuma. Quem recusa é o Auth,
+         logo abaixo, com a mesma mensagem para todo mundo. */
+      if (ponte && ponte.erro) { falhar(ponte.erro); return; }
       ({ data: ses, error: erro } = await sb.auth.signInWithPassword({
-        email: ponte.email, password: senha,
+        email: fpLoginEmail(usuario), password: senha,
       }));
     }
 
