@@ -189,9 +189,18 @@
     display: flex; flex-direction: column; gap: 1px;
   }
   .sidebar-nav::-webkit-scrollbar { display: none; }
+  /* Sessao viva no navegador: o painel abre direto, sem passar pela tela de
+     entrar. A decisao e tomada por um script sincrono no fim do <head>, antes
+     de pintar — a validacao no banco continua acontecendo depois e derruba a
+     sessao se o id nao existir mais. O `!important` no #app e porque a
+     marcacao trava `style="display:none"` em linha. */
+  html.fp-entrando #login { display: none; }
+  html.fp-entrando #app { display: grid !important; }
   /* O menu nasce invisivel e so aparece depois da filtragem por papel/modulos
      (fpRevelarPainel). Sem isso, quem tem acesso parcial ve a casa toda por um
-     instante. O rodape fica de fora — se a filtragem falhar, ainda da pra sair. */
+     instante — e com a revelacao adiantada acima, esta e a garantia de que
+     adiantar a moldura nao adianta a lista de modulos. O rodape fica de fora:
+     se a filtragem falhar, ainda da pra sair. */
   .sidebar-nav { visibility: hidden; }
   body.fp-menu-filtrado .sidebar-nav { visibility: visible; }
   .sidebar-foot { flex-shrink: 0; padding: 6px 12px 10px; border-top: 1px solid var(--border); }
@@ -5840,6 +5849,82 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   .fp-visor-topo h3 { font-size: 14px; }
 }
 </style>
+<script>
+/* =============================================================================
+   Sessao do painel — decidida ANTES de pintar a tela.
+
+   Dois problemas resolvidos aqui:
+
+   1. A cada F5 o painel abria na TELA DE ENTRAR e trocava para o app quando a
+      consulta ao banco voltava: meio segundo de tela de login com a sessao ja
+      valida no navegador. Agora a decisao e sincrona e nao toca a rede — se ha
+      sessao viva, o `<html>` recebe `fp-entrando` e o CSS revela o app na
+      primeira pintura. A validacao contra o banco continua em checkAuth() e
+      derruba a sessao se o id nao existir mais.
+
+   2. "Fica logado para sempre" era a regra do comeco do projeto e saiu por
+      pedido do dono. A sessao passou a ter dois prazos:
+        - INATIVIDADE (12h): 12 horas sem ninguem tocar no painel e ela cai.
+          Pega o computador do estudio que ficou aberto de um dia para o outro.
+        - MAXIMA (7 dias): desde o login, mesmo usando todo dia. Sem este teto,
+          quem entra diariamente nunca digitaria a senha de novo — que e
+          justamente a regra que estamos removendo.
+      Sair pelo menu apaga na hora.
+
+   `fp_session` continua guardando so o id da linha de mc_admin_users: outras
+   oito partes do arquivo leem essa chave direto. Os prazos vao em
+   `fp_sessao_meta`.
+============================================================================= */
+window.FP_SESSAO = (function () {
+  var INATIVIDADE = 12 * 60 * 60 * 1000;
+  var MAXIMA = 7 * 24 * 60 * 60 * 1000;
+  var ULTIMO_TOQUE = 0;
+
+  function meta() {
+    try { return JSON.parse(localStorage.getItem('fp_sessao_meta') || 'null'); }
+    catch (e) { return null; }
+  }
+  function gravar(m) {
+    try { localStorage.setItem('fp_sessao_meta', JSON.stringify(m)); } catch (e) {}
+  }
+  function fechar() {
+    try { localStorage.removeItem('fp_session'); localStorage.removeItem('fp_sessao_meta'); } catch (e) {}
+  }
+  /* Devolve o id se a sessao vale, e null se nao — apagando o que venceu, para
+     nenhuma das outras leituras de `fp_session` usar id morto. */
+  function ler() {
+    var id;
+    try { id = localStorage.getItem('fp_session'); } catch (e) { return null; }
+    if (!id) return null;
+    var m = meta(), agora = Date.now();
+    /* Sessao aberta antes deste controle nao tem prazo gravado: vale como se
+       tivesse comecado agora. Ninguem e deslogado pela atualizacao em si. */
+    if (!m || !m.em) { m = { em: agora, uso: agora }; gravar(m); return id; }
+    if (agora - (m.uso || 0) > INATIVIDADE) { fechar(); return null; }
+    if (agora - m.em > MAXIMA) { fechar(); return null; }
+    return id;
+  }
+  function abrir(id) {
+    var agora = Date.now();
+    try { localStorage.setItem('fp_session', id); } catch (e) {}
+    gravar({ em: agora, uso: agora });
+  }
+  /* Marca uso de GENTE, nunca de aba aberta: se um relogio renovasse o prazo, a
+     inatividade nunca venceria numa aba esquecida — que e o caso que ela
+     existe para pegar. Escreve no maximo a cada 5 min. */
+  function tocar() {
+    var agora = Date.now();
+    if (agora - ULTIMO_TOQUE < 5 * 60 * 1000) return;
+    var m = meta();
+    if (!m || !m.em) return;
+    ULTIMO_TOQUE = agora;
+    m.uso = agora;
+    gravar(m);
+  }
+  return { INATIVIDADE: INATIVIDADE, MAXIMA: MAXIMA, ler: ler, abrir: abrir, tocar: tocar, fechar: fechar };
+})();
+if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando');
+</script>
 </head>
 <body class="fp-sem-sessao">
 
@@ -8139,14 +8224,63 @@ function fpRevelarPainel() {
   }, 900);
 }
 
+/* O app pode ja estar na tela (classe `fp-entrando`, decidida no <head>). Se a
+   sessao nao valer, e preciso DESFAZER isso — senao fica a moldura do painel
+   sem dados e sem caminho de volta para o login. */
+function fpVoltarAoLogin(recado) {
+  document.documentElement.classList.remove('fp-entrando');
+  const login = document.getElementById('login');
+  const app = document.getElementById('app');
+  if (login) login.style.display = '';
+  if (app) app.style.display = 'none';
+  document.body.classList.add('fp-sem-sessao');
+  if (recado) { const e = document.getElementById('loginErr'); if (e) e.textContent = recado; }
+  const u = document.getElementById('loginUser');
+  if (u) setTimeout(() => { try { u.focus(); } catch (e) {} }, 60);
+}
+
 async function checkAuth() {
-  const sid = localStorage.getItem('fp_session');
-  if (!sid) return;
+  /* Expirou com a aba aberta: o recado fica no sessionStorage porque o unico
+     jeito de derrubar a sessao de dentro do painel e recarregar. */
+  let expirou = null;
+  try {
+    if (sessionStorage.getItem('fp_sessao_expirou')) {
+      expirou = 'Sua sessão expirou. Entre de novo para continuar.';
+      sessionStorage.removeItem('fp_sessao_expirou');
+    }
+  } catch (e) {}
+
+  const sid = FP_SESSAO.ler();
+  if (!sid) { fpVoltarAoLogin(expirou); return; }
   const { data, error } = await sb.from('mc_admin_users').select('*').eq('id', sid).single();
-  if (error || !data) { localStorage.removeItem('fp_session'); return; }
+  if (error || !data) {
+    FP_SESSAO.fechar();
+    fpVoltarAoLogin('Sua sessão não é mais válida. Entre de novo.');
+    return;
+  }
   CURRENT_USER = data;
+  FP_SESSAO.tocar();
   fpRevelarPainel();
+  fpSessaoVigiarLigar();
   await initApp();
+}
+
+/* Vigia o prazo com a aba aberta. O relogio so CONFERE — quem renova o prazo e
+   o toque de gente (pointerdown/keydown/volta de aba), senao uma aba esquecida
+   se renovaria sozinha para sempre e a inatividade nunca venceria. */
+let _sessaoVigia = null;
+function fpSessaoVigiarLigar() {
+  if (_sessaoVigia) return;
+  const tocar = () => FP_SESSAO.tocar();
+  window.addEventListener('pointerdown', tocar, { passive: true });
+  window.addEventListener('keydown', tocar, { passive: true });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) tocar(); });
+  _sessaoVigia = setInterval(() => {
+    if (!CURRENT_USER || FP_SESSAO.ler()) return;
+    FP_SESSAO.fechar();
+    try { sessionStorage.setItem('fp_sessao_expirou', '1'); } catch (e) {}
+    location.reload();
+  }, 60 * 1000);
 }
 
 document.getElementById('loginBtn').onclick = async () => {
@@ -8163,8 +8297,9 @@ document.getElementById('loginBtn').onclick = async () => {
     return;
   }
   CURRENT_USER = data;
-  localStorage.setItem('fp_session', data.id);
+  FP_SESSAO.abrir(data.id);
   fpRevelarPainel();
+  fpSessaoVigiarLigar();
   await initApp();
 };
 
@@ -8174,7 +8309,9 @@ document.getElementById('loginBtn').onclick = async () => {
   });
 });
 document.getElementById('logoutBtn')?.addEventListener('click', () => {
-  localStorage.removeItem('fp_session');
+  /* Apaga id E prazo: guardar so o id de volta deixaria a proxima visita
+     entrando pelo caminho de "sessao sem prazo gravado", que vale como nova. */
+  FP_SESSAO.fechar();
   CURRENT_USER = null;
   location.reload();
 });
