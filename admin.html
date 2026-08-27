@@ -5295,6 +5295,26 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-prod-linha.fora { opacity: .5; }
 /* Cabeçalho de bloco, no lugar do <h3> solto. Sem fundo: a listagem fica
    direto sobre o fundo da tela, sem moldura em volta. */
+/* ── Meu perfil ──────────────────────────────────────────────────────────
+   Sem cartao: as secoes se separam por faixa de titulo e fio, como as
+   listagens do painel. O que era um botao verde de largura inteira virou
+   `.action-btn`, e as acoes da foto viraram texto — trocar a propria foto nao
+   e a acao principal da tela. */
+.fp-perfil { max-width: 940px; }
+.fp-perfil .fp-prod-faixa { border-top: 1px solid var(--border); margin-top: 6px; }
+.fp-perfil .fp-prod-faixa:first-child { border-top: 0; margin-top: 0; padding-top: 4px; }
+.fp-perfil-foto { display: flex; align-items: center; gap: 14px; padding: 6px 0 20px; flex-wrap: wrap; }
+/* Coluna minima de 240px: em tela larga sao tres ou quatro campos por
+   fileira, no celular vira uma. Sem numero de colunas fixo em lugar nenhum. */
+.fp-perfil-grade {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(232px, 1fr));
+  gap: 14px 22px; padding-bottom: 20px;
+}
+.fp-perfil-pe { display: flex; gap: 10px; padding-bottom: 24px; }
+.fp-perfil .block-field input[disabled] { opacity: .6; cursor: default; }
+.fp-acao-txt.perigo { color: var(--perigo); }
+.fp-acao-txt.perigo:hover { color: var(--perigo); opacity: .8; }
+
 .fp-prod-faixa {
   display: flex; align-items: baseline; gap: 10px; padding: 20px 0 8px;
 }
@@ -6612,100 +6632,94 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
       <div class="page-head">
         <div>
           <h1>Meu perfil</h1>
-          <p>Atualize suas informações pessoais e senha de acesso.</p>
+          <p>Seus dados, sua chave PIX e a senha de acesso.</p>
         </div>
       </div>
       <div id="profileNotifications"></div>
-      <div class="cal-card" style="max-width:480px">
-        <h3>Informações do operador</h3>
-        <p class="sub">Seus dados são usados nas mensagens e no registro de atividades.</p>
-        <div style="display:flex;align-items:center;gap:16px;margin:4px 0 18px">
+
+      <div class="fp-perfil">
+        <div class="fp-prod-faixa"><b>Foto</b><span class="fp-aviso-sub">Aparece nos comentários do debriefing</span></div>
+        <div class="fp-perfil-foto">
           <div id="profileAvatarPreview" class="profile-avatar-preview">?</div>
-          <div style="display:flex;flex-direction:column;gap:7px">
-            <div style="font-size:11px;color:var(--text-muted)">Foto exibida nos comentários do debriefing.</div>
-            <div style="display:flex;gap:8px">
-              <input type="file" id="profileAvatarFile" accept="image/*" style="display:none" onchange="onProfileAvatarPick(this)"/>
-              <button type="button" class="action-btn view" style="padding:7px 14px;font-size:12px" onclick="document.getElementById('profileAvatarFile').click()">
-                <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                Alterar foto
-              </button>
-              <button type="button" id="profileAvatarRemove" style="display:none;padding:7px 14px;font-size:12px;border-radius:8px;background:none;border:1px solid rgba(255,77,77,.3);color:var(--danger);cursor:pointer" onclick="removeProfileAvatar()">Remover</button>
-            </div>
-          </div>
+          <input type="file" id="profileAvatarFile" accept="image/*" style="display:none" onchange="onProfileAvatarPick(this)"/>
+          <button type="button" class="fp-acao-txt" data-tip="Enviar uma foto do seu computador"
+                  onclick="document.getElementById('profileAvatarFile').click()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Alterar foto
+          </button>
+          <button type="button" class="fp-acao-txt perigo" id="profileAvatarRemove" style="display:none"
+                  data-tip="Volta para as iniciais do seu nome" onclick="removeProfileAvatar()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+            Remover
+          </button>
         </div>
-        <div style="display:flex;flex-direction:column;gap:10px">
+
+        <div class="fp-prod-faixa"><b>Informações do operador</b><span class="fp-aviso-sub">Usadas nas mensagens e no registro de atividades</span></div>
+        <div class="fp-perfil-grade">
           <div class="block-field">
-            <label>Nome completo</label>
+            <label for="profName">Nome completo</label>
             <input type="text" class="login-input" id="profName" style="margin:0"/>
           </div>
           <div class="block-field">
-            <label>Usuário (login)</label>
+            <label for="profUsername">Usuário (login)</label>
             <input type="text" class="login-input" id="profUsername" style="margin:0" disabled/>
           </div>
           <div class="block-field">
-            <label>Telefone</label>
+            <label for="profPhone">Telefone</label>
             <input type="text" class="login-input" id="profPhone" style="margin:0"/>
           </div>
           <div class="block-field">
-            <label>Cargo</label>
+            <label for="profRole">Cargo</label>
             <input type="text" class="login-input" id="profRole" style="margin:0"/>
           </div>
-          <hr style="border:none;border-top:1px solid var(--border);margin:16px 0 12px"/>
-          <h3 style="font-size:14px;margin-bottom:2px">Dados PIX</h3>
-          <p class="sub">Usado para gerar o código PIX copia e cola ao enviar custos.</p>
-          <div style="display:grid;grid-template-columns:140px 1fr;gap:10px">
-            <div class="block-field">
-              <label>Tipo da chave</label>
-              <select class="login-input" id="profPixType" style="margin:0">
-                <option value="">Selecione</option>
-                <option value="cpf">CPF</option>
-                <option value="cnpj">CNPJ</option>
-                <option value="phone">Telefone</option>
-                <option value="email">E-mail</option>
-                <option value="random">Chave aleatória</option>
-              </select>
-            </div>
-            <div class="block-field">
-              <label>Chave PIX</label>
-              <input type="text" class="login-input" id="profPixKey" style="margin:0" placeholder="Sua chave PIX"/>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div class="block-field">
-              <label>Nome do titular</label>
-              <input type="text" class="login-input" id="profPixName" style="margin:0" placeholder="Como aparece no PIX"/>
-            </div>
-            <div class="block-field">
-              <label>Cidade</label>
-              <input type="text" class="login-input" id="profPixCity" style="margin:0" placeholder="Ex: Joinville"/>
-            </div>
-          </div>
-          <button class="action-btn approve" style="width:100%;padding:12px;margin-top:4px" onclick="saveProfile()">
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-            Salvar informações
-          </button>
         </div>
-        <hr style="border:none;border-top:1px solid var(--border);margin:20px 0 16px"/>
-        <h3>Alterar senha</h3>
-        <p class="sub">Deixe em branco se não quiser alterar.</p>
-        <div style="display:flex;flex-direction:column;gap:10px">
+
+        <div class="fp-prod-faixa"><b>Dados PIX</b><span class="fp-aviso-sub">Geram o código copia e cola ao enviar custos</span></div>
+        <div class="fp-perfil-grade">
           <div class="block-field">
-            <label>Nova senha</label>
+            <label for="profPixType">Tipo da chave</label>
+            <select class="login-input" id="profPixType" style="margin:0">
+              <option value="">Selecione</option>
+              <option value="cpf">CPF</option>
+              <option value="cnpj">CNPJ</option>
+              <option value="phone">Telefone</option>
+              <option value="email">E-mail</option>
+              <option value="random">Chave aleatória</option>
+            </select>
+          </div>
+          <div class="block-field">
+            <label for="profPixKey">Chave PIX</label>
+            <input type="text" class="login-input" id="profPixKey" style="margin:0" placeholder="Sua chave PIX"/>
+          </div>
+          <div class="block-field">
+            <label for="profPixName">Nome do titular</label>
+            <input type="text" class="login-input" id="profPixName" style="margin:0" placeholder="Como aparece no PIX"/>
+          </div>
+          <div class="block-field">
+            <label for="profPixCity">Cidade</label>
+            <input type="text" class="login-input" id="profPixCity" style="margin:0" placeholder="Ex: Joinville"/>
+          </div>
+        </div>
+        <div class="fp-perfil-pe">
+          <button class="action-btn approve" type="button" data-tip="Grava nome, telefone, cargo e os dados PIX" onclick="saveProfile()">Salvar informações</button>
+        </div>
+
+        <div class="fp-prod-faixa"><b>Senha de acesso</b><span class="fp-aviso-sub">Deixe em branco para manter a atual</span></div>
+        <div class="fp-perfil-grade">
+          <div class="block-field">
+            <label for="profNewPw">Nova senha</label>
             <input type="password" class="login-input" id="profNewPw" placeholder="Nova senha" style="margin:0"/>
           </div>
           <div class="block-field">
-            <label>Confirmar nova senha</label>
+            <label for="profConfirmPw">Confirmar nova senha</label>
             <input type="password" class="login-input" id="profConfirmPw" placeholder="Repita a nova senha" style="margin:0"/>
           </div>
-          <button class="action-btn view" style="width:100%;padding:12px" onclick="changePassword()">
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-            Alterar senha
-          </button>
+        </div>
+        <div class="fp-perfil-pe">
+          <button class="action-btn" type="button" data-tip="Troca sua senha de acesso ao painel" onclick="changePassword()">Alterar senha</button>
         </div>
       </div>
     </div>
-
-    <!-- MANUTENÇÃO VIEW -->
     <div id="view-manutencao" style="display:none">
       <div class="page-head">
         <div>
