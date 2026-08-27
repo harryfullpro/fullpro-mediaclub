@@ -569,20 +569,29 @@
      elas e o fundo do palco aparecendo. */
   .fp-carro-slide {
     position: absolute; inset: 0;
-    display: grid; grid-template-columns: 1fr 1fr; gap: 3px;
+    display: flex; align-items: center; justify-content: center; gap: 3px;
     opacity: 0; transition: opacity .5s ease;
   }
-  /* Pasta com uma foto so nao fica com metade do palco vazia. */
-  .fp-carro-slide.uma { grid-template-columns: 1fr; }
   .fp-carro-slide.on { opacity: 1; }
-  /* `contain`, nao `cover`. As miniaturas que o proxy serve sao todas 320x320
-     (medido em toda a amostra); em `cover`, dentro de uma celula de 232x240,
-     8px eram cortados na horizontal — e o produto de catalogo ocupa a foto de
-     ponta a ponta, entao esses 8px comem peca. Em `contain` nada e cortado,
-     seja qual for a proporcao da origem. */
+  /* As duas fotos ocupam a ALTURA do palco e a largura que a proporcao delas
+     pedir — nao metade do palco cada uma.
+
+     A primeira tentativa foi `cover` em duas celulas de 1fr: as miniaturas do
+     proxy sao todas 320x320 (medido em toda a amostra) e numa celula de 341x252
+     `cover` cortava 89px, 26% da foto. Trocar para `contain` mantendo as
+     celulas de 1fr resolveu o corte e criou outro problema: a foto ficava
+     252x252 centrada numa celula de 341, com 44px de vazio de cada lado — 88px
+     de buraco entre as duas.
+
+     Assim as duas ficam coladas (3px), o par centrado, e o que sobra fica nas
+     bordas de fora, onde le como margem e nao como falha. Nada e cortado, em
+     qualquer proporcao de origem. */
   .fp-carro-slide img {
-    width: 100%; height: 100%; min-width: 0; display: block; object-fit: contain;
+    height: 100%; width: auto; max-width: calc(50% - 2px);
+    min-width: 0; display: block; object-fit: contain;
   }
+  /* Pasta com uma foto so pode usar a largura inteira. */
+  .fp-carro-slide.uma img { max-width: 100%; }
   /* Gradiente só na faixa de baixo: o nome do produto precisa ser legível em
      cima de foto clara e de foto escura, e escurecer a imagem inteira
      estragaria a foto. */
@@ -1216,10 +1225,11 @@
   #dateViewerContent > .dv-block-info,
   #dateViewerContent > .dv-weekend { flex: 1; justify-content: center; }
   .cal-top > .cal-card:first-child { flex: 0 0 340px; max-width: 340px; }
-  #dateViewer { flex: 1 1 400px; min-width: 300px; max-width: 600px; }
-  @media (min-width: 1280px) { #dateViewer { max-width: 680px; } }
-  @media (min-width: 1600px) { #dateViewer { max-width: 820px; } }
-  @media (min-width: 1920px) { #dateViewer { max-width: 960px; } }
+  /* Sem teto de largura: o painel do dia vai ate a borda direita, junto com a
+     listagem que vem abaixo. Os tetos de 600/680/820/960px existiam de quando
+     ele era faixa com fio e ficar largo demais deixava o texto solto; em caixa,
+     parar antes da borda deixa a tela desalinhada com a tabela. */
+  #dateViewer { flex: 1 1 400px; min-width: 300px; max-width: none; }
   @media (max-width: 720px) { .cal-top > .cal-card:first-child { flex: 1 1 100%; max-width: none; } #dateViewer { flex: 1 1 100%; max-width: none; } }
 
   /* Modal */
@@ -1458,6 +1468,16 @@
   [data-theme="light"] .proj-card:hover { background: rgba(0,0,0,.022); }
   .proj-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .proj-card-head h4 { font-size: 15px; font-weight: 600; }
+  /* A mesma cor da tag da linha, agora como token: o rotulo do filtro de
+     destino usa exatamente o tom que a linha mostra. */
+  :root {
+    --dest-youtube: #ff8a8a; --dest-shorts: #ff8a8a; --dest-tiktok: #ce9dfb;
+    --dest-reels: #f77fa5; --dest-clips: #fbdd6a; --dest-site: #e0e0e0; --dest-ads: #8ab4fa;
+  }
+  [data-theme="light"] {
+    --dest-youtube: #a11515; --dest-shorts: #a11515; --dest-tiktok: #6420a6;
+    --dest-reels: #9a1a47; --dest-clips: #8a5406; --dest-site: #4e4e5a; --dest-ads: #1a45bd;
+  }
   .proj-dest-tag {
     display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px;
     font-weight: 600; text-transform: uppercase; letter-spacing: .5px; margin-right: 4px;
@@ -5726,7 +5746,8 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    PADDING, nao margin: a margem da barra de filtros e a da lista colapsariam
    numa so (o slot tem altura zero e nao as separa), e a barra voltava a
    encostar na primeira linha — 7px de sobreposicao, medidos. */
-.fp-lote-slot + .fp-prod { padding-top: 54px; }
+.fp-lote-slot + .fp-prod,
+#projDestSlot + #projectsList { padding-top: 54px; }
 .fp-prod-lote {
   position: absolute; left: 0; right: 0; top: 0;
   /* 1fr auto 1fr: a coluna do meio fica no centro da barra independentemente do
@@ -5753,6 +5774,14 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   transition: opacity .12s ease;
 }
 .fp-lote-p:hover:not(:disabled) { opacity: .7; text-decoration: underline; text-underline-offset: 3px; }
+/* Filtro de destino: sem cor definida, o rotulo herda o tom de leitura. O
+   destino ESCOLHIDO fica sublinhado e cheio; os outros, apagados — o mesmo
+   vocabulario das abas de status, sem pilula nem moldura. */
+.fp-dest-barra .fp-lote-p { color: var(--fp-lote-cor, var(--text-muted)); opacity: .55; }
+.fp-dest-barra .fp-lote-p.on { opacity: 1; font-weight: 750; text-decoration: underline; text-underline-offset: 3px; }
+.fp-dest-barra .fp-lote-p:hover { opacity: .85; }
+.fp-dest-barra .fp-lote-esq svg { color: var(--text-muted); flex-shrink: 0; }
+.fp-dest-barra .fp-prod-lote-acoes { flex-wrap: wrap; row-gap: 2px; }
 /* Sem selecao a barra continua na tela, apagada: mostra o que da para fazer
    assim que houver algo selecionado, sem prometer que da para clicar agora. */
 .fp-prod-lote .apagado, .fp-prod-lote b.apagado { opacity: .42; }
@@ -6680,27 +6709,34 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
         <span id="projCount" class="fp-lista-contagem"></span>
       </div>
 
-      <!-- Project destination filters (recolhível, independente do status) -->
-      <div class="proj-dest-wrap">
-        <button type="button" class="fp-filter-clear" id="projFilterClear" hidden onclick="clearProjFilters()">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          <span id="projFilterClearLabel">Mostrar todos</span>
-        </button>
-        <button class="proj-dest-toggle" id="projDestToggleBtn" onclick="toggleDestFilterPanel()" aria-expanded="false">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          <span>Filtrar por destino</span>
-          <span class="proj-dest-badge" id="projDestBadge" style="display:none">0</span>
-          <svg class="chev" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
-        <div class="proj-filters proj-dest-filters" id="projDestBar" style="display:none;margin-top:10px;margin-bottom:0">
-          <button class="proj-filter-chip active" data-dfilter="todos" onclick="toggleProjDestFilter('todos')">TODOS</button>
-          <button class="proj-filter-chip" data-dfilter="youtube" onclick="toggleProjDestFilter('youtube')">YOUTUBE</button>
-          <button class="proj-filter-chip" data-dfilter="shorts" onclick="toggleProjDestFilter('shorts')">SHORTS</button>
-          <button class="proj-filter-chip" data-dfilter="tiktok" onclick="toggleProjDestFilter('tiktok')">TIKTOK</button>
-          <button class="proj-filter-chip" data-dfilter="reels" onclick="toggleProjDestFilter('reels')">REELS</button>
-          <button class="proj-filter-chip" data-dfilter="clips" onclick="toggleProjDestFilter('clips')">CLIPS</button>
-          <button class="proj-filter-chip" data-dfilter="site" onclick="toggleProjDestFilter('site')">SITE</button>
-          <button class="proj-filter-chip" data-dfilter="ads" onclick="toggleProjDestFilter('ads')">ADS</button>
+      <!-- Filtro por destino: FIXO e no modelo da barra de acoes em massa da
+           Producao (a pedido do dono). Era um botao com moldura que abria um
+           painel: duas interacoes para chegar a um filtro que se usa sempre, e
+           uma caixa branca no meio de uma tela que nao tem mais caixas.
+           Agora e barra grudada no topo, com fio embaixo e sombra so quando
+           gruda — a mesma mecanica de `.fp-lote-slot` (ver fpLoteSombra). -->
+      <div id="projDestSlot" class="fp-lote-slot">
+        <div class="fp-prod-lote fp-dest-barra">
+          <span class="fp-lote-esq">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <span class="fp-prod-lote-rot">Destino</span>
+          </span>
+          <span class="fp-prod-lote-acoes proj-dest-filters" id="projDestBar">
+            <button class="fp-lote-p" data-dfilter="todos" onclick="toggleProjDestFilter('todos')">Todos</button>
+            <button class="fp-lote-p" data-dfilter="youtube" style="--fp-lote-cor:var(--dest-youtube)" onclick="toggleProjDestFilter('youtube')">YouTube</button>
+            <button class="fp-lote-p" data-dfilter="shorts" style="--fp-lote-cor:var(--dest-shorts)" onclick="toggleProjDestFilter('shorts')">Shorts</button>
+            <button class="fp-lote-p" data-dfilter="tiktok" style="--fp-lote-cor:var(--dest-tiktok)" onclick="toggleProjDestFilter('tiktok')">TikTok</button>
+            <button class="fp-lote-p" data-dfilter="reels" style="--fp-lote-cor:var(--dest-reels)" onclick="toggleProjDestFilter('reels')">Reels</button>
+            <button class="fp-lote-p" data-dfilter="clips" style="--fp-lote-cor:var(--dest-clips)" onclick="toggleProjDestFilter('clips')">Clips</button>
+            <button class="fp-lote-p" data-dfilter="site" style="--fp-lote-cor:var(--dest-site)" onclick="toggleProjDestFilter('site')">Site</button>
+            <button class="fp-lote-p" data-dfilter="ads" style="--fp-lote-cor:var(--dest-ads)" onclick="toggleProjDestFilter('ads')">Ads</button>
+          </span>
+          <span class="fp-lote-dir">
+            <button type="button" class="fp-lote-link neutro" id="projFilterClear" hidden onclick="clearProjFilters()">
+              <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <span id="projFilterClearLabel">Mostrar todos</span>
+            </button>
+          </span>
         </div>
       </div>
 
@@ -10870,27 +10906,13 @@ function toggleProjDestFilter(d) {
 // Sincroniza chips + badge + estado do botão com o Set de destinos
 function updateProjDestUI() {
   const size = projActiveDests.size;
-  document.querySelectorAll('.proj-dest-filters .proj-filter-chip[data-dfilter]').forEach(c => {
-    const key = c.dataset.dfilter;
-    if (key === 'todos') c.classList.toggle('active', size === 0);
-    else c.classList.toggle('active', projActiveDests.has(key));
+  document.querySelectorAll('#projDestBar .fp-lote-p[data-dfilter]').forEach(b => {
+    const key = b.dataset.dfilter;
+    const on = (key === 'todos') ? size === 0 : projActiveDests.has(key);
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
-  const badge = document.getElementById('projDestBadge');
-  if (badge) { badge.textContent = String(size); badge.style.display = size > 0 ? 'inline-flex' : 'none'; }
-  const btn = document.getElementById('projDestToggleBtn');
-  if (btn) btn.classList.toggle('has-filter', size > 0);
   if (typeof syncProjFilterUI === 'function') syncProjFilterUI();
-}
-
-// Expande/recolhe a barra de filtro por destino
-function toggleDestFilterPanel() {
-  const bar = document.getElementById('projDestBar');
-  const btn = document.getElementById('projDestToggleBtn');
-  if (!bar || !btn) return;
-  const willOpen = !btn.classList.contains('open');
-  btn.classList.toggle('open', willOpen);
-  bar.style.display = willOpen ? 'flex' : 'none';
-  btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
 }
 
 function getFilteredProjects() {
@@ -11198,6 +11220,11 @@ function renderProjects() {
     + '</tr></thead><tbody>' + linhas + '</tbody></table></div>';
 
   fillProjectRatings(filtered);
+  /* A barra de destino usa a mecanica de `.fp-lote-slot`: a sombra so aparece
+     quando ela gruda no topo. O ouvinte de rolagem e registrado uma vez. */
+  if (typeof updateProjDestUI === 'function') updateProjDestUI();
+  if (typeof fpLoteSombraLigar === 'function') fpLoteSombraLigar();
+  if (typeof fpLoteSombra === 'function') fpLoteSombra();
 }
 
 // Média de estrelas dos projetos "A publicar" (avaliado por 1+ pessoas)
