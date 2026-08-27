@@ -743,15 +743,23 @@
   .block-field input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
     input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
   .chip-reason { font-size: 11px; color: var(--text-muted); margin-left: 2px; }
+  /* ── Fim dos cartoes ────────────────────────────────────────────────────
+     .cal-card, .edit-card, .proj-card e .tpl-card eram quatro caixas com
+     fundo, borda e canto arredondado — o padrao antigo. Agora sao secoes e
+     linhas separadas por fio, como as listagens da Fotografia. A troca e
+     feita aqui, num lugar so: sao 85 usos espalhados por 17 telas.
+     O recuo lateral tambem sai: conteudo dentro de caixa fica afastado da
+     margem duas vezes, e a segunda nao tem motivo. */
   .cal-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 18px;
+    background: none;
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+    padding: 18px 0;
   }
   .cal-card h3 {
     font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase;
-    font-size: 18px;
+    font-size: 13px; letter-spacing: .1em;
     letter-spacing: 1px;
     margin-bottom: 2px;
   }
@@ -1326,10 +1334,11 @@
   .proj-dest-chip:has(input[value="site"]:checked) { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.3); color: #e0e0e0; }
   .proj-dest-chip:has(input[value="ads"]:checked) { background: rgba(59,130,246,.15); border-color: rgba(59,130,246,.5); color: #3b82f6; }
   .proj-card {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
-    padding: 18px; margin-bottom: 12px; transition: border-color .15s;
+    background: none; border: 0; border-top: 1px solid var(--border); border-radius: 0;
+    padding: 16px 0; margin-bottom: 0; transition: background .12s ease;
   }
-  .proj-card:hover { border-color: var(--border-hi); }
+  .proj-card:hover { background: rgba(255,255,255,.03); }
+  [data-theme="light"] .proj-card:hover { background: rgba(0,0,0,.022); }
   .proj-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .proj-card-head h4 { font-size: 15px; font-weight: 600; }
   .proj-dest-tag {
@@ -2654,14 +2663,17 @@
 
   /* Editing module */
   .edit-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px;
-    margin-bottom: 14px;
-    transition: border-color .15s;
+    background: none;
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+    padding: 18px 0;
+    margin-bottom: 0;
+    transition: background .12s ease;
   }
-  .edit-card:hover { border-color: var(--border-hi); }
+  /* Item de listagem: o realce e o mesmo das listagens de Fotografia. */
+  .edit-card:hover { background: rgba(255,255,255,.03); }
+  [data-theme="light"] .edit-card:hover { background: rgba(0,0,0,.022); }
   .edit-card-head {
     display: flex;
     justify-content: space-between;
@@ -2728,10 +2740,11 @@
   /* Templates module */
   .tpl-list { display: flex; flex-direction: column; gap: 12px; }
   .tpl-card {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 18px; transition: border-color .15s;
+    background: none; border: 0; border-top: 1px solid var(--border); border-radius: 0;
+    padding: 16px 0; transition: background .12s ease;
   }
-  .tpl-card:hover { border-color: var(--border-hi); }
+  .tpl-card:hover { background: rgba(255,255,255,.03); }
+  [data-theme="light"] .tpl-card:hover { background: rgba(0,0,0,.022); }
   .tpl-head {
     display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
   }
