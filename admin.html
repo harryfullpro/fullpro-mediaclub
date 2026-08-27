@@ -4121,8 +4121,8 @@ th.fp-sortable[aria-sort="descending"] .fp-seta { opacity: 1; color: var(--seta-
      os mesmos da tela de Edicao, que ja tem o layout dela ajustado; e as
      classes .fp-clip-* sao declaradas depois deste @media, entao sem o id
      elas venceriam por ordem de fonte. */
-  #view-clips .fp-clip-filtros { flex-wrap: nowrap; margin-bottom: 12px; }
-  #view-clips .fp-clip-filtros .fp-so-mobile {
+  #view-clips .filter-bar { margin-bottom: 12px; }
+  #view-clips .filter-bar .fp-so-mobile {
     flex: 0 1 auto; min-width: 0; width: auto !important; margin: 0 !important;
     padding: 8px 22px 8px 10px; font-size: 12px;
   }
@@ -4592,6 +4592,14 @@ body.fp-esta-offline .fp-offline { display: inline-flex; }
   }
 
   /* --- a tabela vira lista de cards -------------------------------------- */
+  /* Vale para as quatro listagens: Solicitacoes e as tres que adotaram o
+     formato (Projetos, Edicao, Clips). No celular a moldura do cartao sai e
+     as linhas viram blocos — sem isto a lista fica dentro de uma caixa
+     arredondada com o fundo do cartao, que e o padrao antigo. */
+  .fp-lista-wrap {
+    background: none; border: none; border-radius: 0;
+    overflow: visible; margin-left: 0; margin-right: 0;
+  }
   #view-requests .table-wrap {
     background: none;
     border: none;
@@ -5334,32 +5342,59 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   background: var(--warning); transition: width .4s ease;
 }
 
-/* ── Listagem em tabela (.fp-lista) ──────────────────────────────────────
-   O formato da tabela de Solicitacoes virou o padrao das listagens: cabecalho
-   ordenavel, fio entre as linhas, acoes na ultima coluna. O que era cartao
-   (observacao longa, roteiro, produtos do Bling) mora no detalhe — a listagem
-   existe para varrer, nao para ler. */
-/* Recuo menor e ZERO nas pontas: com o padding padrao de 16px, sete colunas
-   estouravam a largura util em 96px (medido) e a coluna de acoes ficava fora
-   da tela — o operador nao via os botoes sem rolar de lado. Tirar o recuo das
-   pontas tambem alinha a tabela com o resto da pagina. */
-.fp-lista th, .fp-lista td { padding: 12px 12px; }
-.fp-lista th:first-child, .fp-lista td:first-child { padding-left: 0; }
-.fp-lista th:last-child, .fp-lista td:last-child { padding-right: 0; }
+/* ── Listagem em tabela (.fp-lista) ───────────────────────
+   O formato da tabela de Solicitacoes e o padrao das listagens — e e o
+   formato INTEIRO, nao so a tabela: metricas em cima, barra de abas com busca
+   e contagem, e a tabela dentro de `.table-wrap` (cabecalho cinza que gruda no
+   topo ao rolar, fio entre as linhas, status em pilula, acoes na ultima
+   coluna). O que era cartao (observacao longa, roteiro, produtos do Bling)
+   mora no detalhe: a listagem existe para varrer, nao para ler.
+
+   Por isso aqui NAO ha recuo proprio. A primeira versao trocava o padding
+   padrao (14px 16px) por 12px com zero nas pontas para caber sete colunas, e
+   o resultado foi uma tabela parecida e nao a mesma: fora do `.table-wrap` o
+   cabecalho pegava --bg-soft em vez de --bg-elev (branco no tema claro, sem a
+   faixa cinza) e deixava de grudar no topo. Largura que falta se ganha
+   tirando tralha da linha, nao raspando pixel do recuo. */
 .fp-lista th { white-space: nowrap; }
 .fp-lista td { vertical-align: middle; }
 .fp-lista td .sub { display: block; margin-top: 2px; }
 /* As celulas de acao e de status nao esticam: quem manda na largura e o
    conteudo de verdade (titulo, produto). */
 .fp-lista td:last-child, .fp-lista th:last-child { width: 1%; white-space: nowrap; }
-/* Estreita por CLASSE, nao por posicao: escrita como `td:nth-child(2)` ela
+/* Largura por CLASSE, nao por posicao: escrita como `td:nth-child(2)` a regra
    valia para a segunda coluna de qualquer listagem — e no Clips a segunda
    coluna e o produto, que ficou esmagado em 116px (medido). */
-.fp-lista td.fp-col-dest { max-width: 116px; }
+.fp-lista td.fp-col-tit { max-width: 320px; }
+/* Observacao e contexto de UMA linha, nunca duas: com duas, a altura muda de
+   projeto para projeto e a varredura da coluna quebra. */
+.fp-lista .fp-sub-1l { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* O produto do Clips precisa de espaco: nome, SKU, preco e estoque numa
-   coluna de 116px viram uma torre de duas letras por linha. */
-.fp-lista td.fp-col-prod { min-width: 300px; }
-.fp-lista .proj-dest-tag { margin-bottom: 2px; }
+   coluna estreita viram uma torre de duas letras por linha. */
+.fp-lista td.fp-col-prod { min-width: 280px; }
+/* Destinos deitados, nunca empilhados: tres tags uma embaixo da outra levavam
+   a linha de 63px para 109px (medido). Passando de dois, o resto vira "+N" —
+   o detalhe mostra todos. */
+.fp-lista .fp-dests { display: flex; align-items: center; gap: 4px; }
+.fp-lista .fp-dests .proj-dest-tag { margin: 0; }
+.fp-lista .fp-dests .fp-mais { font-size: 11px; font-weight: 700; color: var(--text-muted); }
+/* Status: a FORMA e a do badge de Solicitacoes (pilula, sem borda, sem seta),
+   mas continua sendo <select> — nestas tres telas a etapa muda na propria
+   linha, o que Solicitacoes nao faz. O aro no hover diz que da para trocar sem
+   mexer no tamanho: uma seta de verdade empurraria a coluna. */
+.fp-lista .proj-status-select {
+  padding: 4px 11px; border: 0; border-radius: 999px;
+  background-image: none; text-align: center; text-align-last: center;
+  min-width: 0;
+}
+.fp-lista .proj-status-select:hover,
+.fp-lista .proj-status-select:focus-visible { box-shadow: inset 0 0 0 1px currentColor; }
+/* Acao escrita dentro da celula (o "7 cenas" do Roteiro) alinhada com o texto
+   das outras colunas. */
+.fp-lista .fp-acao-txt { margin: 0; }
+/* Nota media na sublinha do titulo: o painel de cinco estrelas com o botao
+   "avaliar" nao cabe numa linha de tabela — virou icone de acao. */
+.fp-lista .fp-nota { color: var(--warning); font-weight: 700; }
 
 @media (max-width: 600px) {
   /* Tabela vira lista de blocos, com o rotulo da coluna antes do valor. Sem
@@ -6314,23 +6349,43 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
         <button class="fp-new-btn" data-tip="Criar novo projeto" aria-label="Criar novo projeto" onclick="openProjectDetail()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
       </div>
 
-      <!-- Project filters -->
-      <div class="proj-filters">
-        <!-- DESKTOP: os chips coloridos, como sempre foram -->
+      <!-- Metricas no padrao da listagem de Solicitacoes: rotulo miudo em cima,
+           numero grande embaixo, sem caixa. -->
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-card">
+          <div class="label">Em produção</div>
+          <div class="value" id="projStatProd">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Em edição</div>
+          <div class="value" id="projStatEd">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">A publicar</div>
+          <div class="value" style="color:var(--warning)" id="projStatPub">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Total</div>
+          <div class="value" id="projStatTotal">0</div>
+        </div>
+      </div>
+
+      <!-- Barra de abas: a mesma de Solicitacoes. Os chips coloridos de
+           multipla escolha viraram abas de UMA escolha — que e o que o seletor
+           do celular sempre fez (fpFiltroStatusMudou). Duas interfaces com
+           regras diferentes para o mesmo filtro nao se sustentam.
+           A ordenacao virou clique no cabecalho da tabela; o <select> fica
+           so para o celular, como o reqOrdemSelect de Solicitacoes. -->
+      <div class="filter-bar">
         <span class="fp-so-desktop" style="display:contents">
-          <svg viewBox="0 0 24 24" width="14" height="14" stroke="var(--text-muted)" fill="none" stroke-width="2" style="flex-shrink:0"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-          <button class="proj-filter-chip active" data-pfilter="todos" onclick="toggleProjFilter('todos')" style="text-transform:uppercase">TODOS</button>
-          <button class="proj-filter-chip active" data-pfilter="planejamento" onclick="toggleProjFilter('planejamento')" style="text-transform:uppercase">PLANEJAMENTO</button>
-          <button class="proj-filter-chip active" data-pfilter="producao" onclick="toggleProjFilter('producao')" style="text-transform:uppercase">EM PRODUÇÃO</button>
-          <button class="proj-filter-chip active" data-pfilter="edicao" onclick="toggleProjFilter('edicao')" style="text-transform:uppercase">EDIÇÃO</button>
-          <button class="proj-filter-chip active" data-pfilter="a_publicar" onclick="toggleProjFilter('a_publicar')" style="text-transform:uppercase">A PUBLICAR</button>
-          <button class="proj-filter-chip active" data-pfilter="concluido" onclick="toggleProjFilter('concluido')" style="text-transform:uppercase">CONCLUÍDO</button>
-          <button type="button" class="fp-filter-clear" id="projFilterClear" hidden onclick="clearProjFilters()">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            <span id="projFilterClearLabel">Mostrar todos</span>
-          </button>
+          <button class="filter-btn active" data-pfilter="todos" onclick="fpFiltroStatusMudou('__todos')">Todos <span class="fp-conta"></span></button>
+          <button class="filter-btn" data-pfilter="planejamento" onclick="fpFiltroStatusMudou('planejamento')">Planejamento <span class="fp-conta"></span></button>
+          <button class="filter-btn" data-pfilter="producao" onclick="fpFiltroStatusMudou('producao')">Em produção <span class="fp-conta"></span></button>
+          <button class="filter-btn" data-pfilter="edicao" onclick="fpFiltroStatusMudou('edicao')">Edição <span class="fp-conta"></span></button>
+          <button class="filter-btn" data-pfilter="a_publicar" onclick="fpFiltroStatusMudou('a_publicar')">A publicar <span class="fp-conta"></span></button>
+          <button class="filter-btn" data-pfilter="concluido" onclick="fpFiltroStatusMudou('concluido')">Concluído <span class="fp-conta"></span></button>
         </span>
-        <!-- CELULAR: seletor do proprio sistema, uma escolha por vez -->
+        <!-- CELULAR: seletores do proprio sistema, uma escolha por vez -->
         <select class="proj-sort-select fp-so-mobile" id="projStatusSelect"
                 aria-label="Filtrar por status" onchange="fpFiltroStatusMudou(this.value)">
           <option value="__todos">Todos os status</option>
@@ -6339,7 +6394,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
                 aria-label="Filtrar por destino" onchange="fpFiltroDestinoMudou(this.value)">
           <option value="__todos">Destino</option>
         </select>
-        <select class="proj-sort-select" id="projSortSelect" onchange="renderProjects()">
+        <select class="proj-sort-select fp-so-mobile" id="projSortSelect" aria-label="Ordenar projetos" onchange="renderProjects()">
           <option value="newest">Mais recentes</option>
           <option value="oldest">Mais antigos</option>
           <option value="az">A → Z</option>
@@ -6347,10 +6402,19 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
           <option value="date_asc">Data produção ↑</option>
           <option value="date_desc">Data produção ↓</option>
         </select>
+        <label class="fp-busca">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="search" placeholder="Buscar projeto, moto ou produto" aria-label="Buscar projetos por nome, moto ou produto" oninput="fpProjBuscar(this.value)">
+        </label>
+        <span id="projCount" class="fp-lista-contagem"></span>
       </div>
 
       <!-- Project destination filters (recolhível, independente do status) -->
       <div class="proj-dest-wrap">
+        <button type="button" class="fp-filter-clear" id="projFilterClear" hidden onclick="clearProjFilters()">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span id="projFilterClearLabel">Mostrar todos</span>
+        </button>
         <button class="proj-dest-toggle" id="projDestToggleBtn" onclick="toggleDestFilterPanel()" aria-expanded="false">
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           <span>Filtrar por destino</span>
@@ -6675,6 +6739,28 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
           <div class="value" id="editStatTotal">0</div>
           <div id="editStatBar" class="fp-ed-barra"><div id="editStatBarFill"></div></div>
         </div>
+      </div>
+
+      <!-- Barra no padrao de Solicitacoes. As abas nao sao enfeite: as
+           metricas acima ja falavam de "A publicar" e de "Total no pipeline"
+           sem que houvesse jeito de ver essas listas — o numero prometia uma
+           tela que nao existia. -->
+      <div class="filter-bar">
+        <span class="fp-so-desktop" style="display:contents">
+          <button class="filter-btn active" data-efilter="edicao" onclick="fpEdFiltro('edicao')">Em edição <span class="fp-conta"></span></button>
+          <button class="filter-btn" data-efilter="a_publicar" onclick="fpEdFiltro('a_publicar')">A publicar <span class="fp-conta"></span></button>
+          <button class="filter-btn" data-efilter="pipeline" onclick="fpEdFiltro('pipeline')">Todos <span class="fp-conta"></span></button>
+        </span>
+        <select class="proj-sort-select fp-so-mobile" id="editFiltroSelect" aria-label="Filtrar projetos em edição" onchange="fpEdFiltro(this.value)">
+          <option value="edicao">Em edição</option>
+          <option value="a_publicar">A publicar</option>
+          <option value="pipeline">Todos</option>
+        </select>
+        <label class="fp-busca">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="search" placeholder="Buscar projeto, moto ou produto" aria-label="Buscar projetos em edição" oninput="fpEdBuscar(this.value)">
+        </label>
+        <span id="editCount" class="fp-lista-contagem"></span>
       </div>
 
       <div id="editingList"></div>
@@ -10298,6 +10384,16 @@ const ALL_PROJ_STATUSES = ['planejamento','producao','edicao','a_publicar','conc
 /* Estado inicial mostra TUDO. Abrir a lista ja filtrada fazia a equipe achar
    que projetos tinham sumido (35 de 40 ficavam escondidos sem aviso). */
 let projActiveFilters = new Set(ALL_PROJ_STATUSES);
+/* Busca da listagem de Projetos, como a de Solicitacoes: filtra por titulo,
+   moto/produto e observacao. */
+let projBusca = '';
+function fpProjBuscar(v){
+  projBusca = String(v || '').trim().toLowerCase();
+  const cx = document.querySelector('#view-projects .fp-busca');
+  if (cx) cx.classList.toggle('tem-texto', !!projBusca);
+  renderProjects();
+}
+window.fpProjBuscar = fpProjBuscar;
 const ALL_PROJ_DESTS = ['youtube','shorts','tiktok','reels','clips','site','ads'];
 let projActiveDests = new Set(); // vazio = sem filtro de destino (mostra todos)
 /* Deixa visivel que ha filtro ligado e oferece a saida em um clique. */
@@ -10330,7 +10426,17 @@ function toggleProjFilter(f) {
 function syncProjFilterUI(){
   const todos = ALL_PROJ_STATUSES.every(s => projActiveFilters.has(s));
 
-  // --- chips (computador) ---
+  // --- abas (computador) ---
+  const conta = k => (PROJECTS || []).filter(x => x.status === k).length;
+  document.querySelectorAll('#view-projects .filter-bar .filter-btn[data-pfilter]').forEach(b => {
+    const key = b.dataset.pfilter;
+    const on = (key === 'todos') ? todos : (projActiveFilters.size === 1 && projActiveFilters.has(key));
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    const n = b.querySelector('.fp-conta');
+    if (n) n.textContent = (key === 'todos') ? (PROJECTS || []).length : conta(key);
+  });
+  // Chips coloridos ainda existem no painel de DESTINO, que continua multiplo.
   document.querySelectorAll('.proj-filters .proj-filter-chip[data-pfilter]').forEach(c => {
     const key = c.dataset.pfilter;
     const on = (key === 'todos') ? todos : projActiveFilters.has(key);
@@ -10341,13 +10447,14 @@ function syncProjFilterUI(){
   const limpar = document.getElementById('projFilterClear');
   if (limpar) {
     const nDest = (typeof projActiveDests !== 'undefined') ? projActiveDests.size : 0;
-    limpar.hidden = todos && nDest === 0;
+    /* Antes escondia so quando status E destino estavam abertos. Com o status
+       em ABA de escolha unica, "nao e todos" passou a ser o estado normal e o
+       botao ficaria visivel o tempo todo — agora ele fala apenas pelo destino,
+       que e o filtro que ainda acumula. */
+    limpar.hidden = nDest === 0;
     if (limparLbl) {
-      const partes = [];
-      if (!todos) partes.push(projActiveFilters.size + ' status');
-      if (nDest > 0) partes.push(nDest + (nDest === 1 ? ' destino' : ' destinos'));
-      limparLbl.textContent = partes.length
-        ? 'Filtrando por ' + partes.join(' e ') + ' — mostrar todos'
+      limparLbl.textContent = nDest > 0
+        ? 'Filtrando por ' + nDest + (nDest === 1 ? ' destino' : ' destinos') + ' — mostrar todos'
         : 'Mostrar todos';
     }
   }
@@ -10474,6 +10581,11 @@ function getFilteredProjects() {
     list = list.filter(p => (p.destinations || []).some(d => projActiveDests.has(d)));
   }
 
+  if (projBusca) {
+    list = list.filter(p => ((p.title || '') + ' ' + (p.moto || '') + ' ' + (p.observations || ''))
+      .toLowerCase().includes(projBusca));
+  }
+
   // Sort
   const sortSel = document.getElementById('projSortSelect');
   const sortVal = sortSel ? sortSel.value : 'newest';
@@ -10558,6 +10670,25 @@ function fpOrdTrocar(qual, campo, redesenhar) {
 }
 
 function fpEdOrdenar(campo) { fpOrdTrocar('edicao', campo, renderEditingView); }
+
+/* Aba e busca da tela de Edicao. 'pipeline' = edicao + a publicar, que e o
+   que a metrica "Total no pipeline" sempre contou. */
+let EDIT_FILTER = 'edicao';
+let editBusca = '';
+function fpEdFiltro(k){
+  EDIT_FILTER = k;
+  const sel = document.getElementById('editFiltroSelect');
+  if (sel && sel.value !== k) sel.value = k;
+  renderEditingView();
+}
+function fpEdBuscar(v){
+  editBusca = String(v || '').trim().toLowerCase();
+  const cx = document.querySelector('#view-editing .fp-busca');
+  if (cx) cx.classList.toggle('tem-texto', !!editBusca);
+  renderEditingView();
+}
+window.fpEdFiltro = fpEdFiltro;
+window.fpEdBuscar = fpEdBuscar;
 function fpClipOrdenar(campo) { fpOrdTrocar('clips', campo, window.renderClips); }
 
 /* Status ordena pela ETAPA do fluxo, nao pelo alfabeto: "A publicar" vem
@@ -10601,6 +10732,28 @@ function fpProjTh(rotulo, campo, dica) {
     + ' <span class="fp-seta">' + (asc ? '▲' : '▼') + '</span></th>';
 }
 
+/* Destinos deitados: no maximo dois na linha e o resto em "+N". Empilhados,
+   tres tags levavam a linha de 63px para 109px (medido) e a tabela perdia o
+   ritmo — o detalhe mostra todos. */
+const FP_DEST_NOMES = { youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads' };
+function fpDestsHtml(dests) {
+  const ds = dests || [];
+  if (!ds.length) return '<span class="sub">—</span>';
+  const tags = ds.slice(0, 2)
+    .map(d => '<span class="proj-dest-tag ' + d + '">' + (FP_DEST_NOMES[d] || d) + '</span>').join('');
+  return '<div class="fp-dests">' + tags
+    + (ds.length > 2 ? '<span class="fp-mais" data-tip="' + escHtml(ds.slice(2).map(d => FP_DEST_NOMES[d] || d).join(', ')) + '">+' + (ds.length - 2) + '</span>' : '')
+    + '</div>';
+}
+
+/* A nota media cabe numa linha de tabela; o painel de estrelas com o botao
+   "avaliar" nao — ele mudava a altura da linha e virou icone de acao. */
+function fpProjNotaHtml(arr) {
+  if (!arr || !arr.length) return '';
+  const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
+  return '<span class="fp-nota">★ ' + avg.toFixed(1).replace('.', ',') + ' (' + arr.length + ')</span>';
+}
+
 function renderProjects() {
   const el = document.getElementById('projectsList');
   if (!el) return;
@@ -10609,41 +10762,60 @@ function renderProjects() {
   if (typeof fpFiltroStatusPreencher === 'function') fpFiltroStatusPreencher();
   if (typeof fpFiltroDestinoPreencher === 'function') fpFiltroDestinoPreencher();
 
+  /* Metricas: leem PROJECTS inteiro, nao o filtrado. Sao o retrato do
+     pipeline, nao da aba aberta — como em Solicitacoes, onde "Total" nao muda
+     quando se clica em "Pendentes". */
+  const nDe = st => PROJECTS.filter(p => p.status === st).length;
+  const num = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  num('projStatProd', nDe('producao'));
+  num('projStatEd', nDe('edicao'));
+  num('projStatPub', nDe('a_publicar'));
+  num('projStatTotal', PROJECTS.length);
+
   const vazio = (titulo, texto) => '<div class="fp-vazio fp-moldura">' + FP_ICO_ATENCAO
     + '<h3>' + titulo + '</h3><p>' + texto + '</p></div>';
+
+  const filtered = PROJECTS.length ? getFilteredProjects() : [];
+  const cont = document.getElementById('projCount');
+  if (cont) {
+    cont.textContent = filtered.length === PROJECTS.length
+      ? PROJECTS.length + (PROJECTS.length === 1 ? ' projeto' : ' projetos')
+      : filtered.length + ' de ' + PROJECTS.length;
+  }
 
   if (PROJECTS.length === 0) {
     el.innerHTML = vazio('Nenhum projeto ainda', 'Use o + no topo da tela para criar o primeiro.');
     return;
   }
-  const filtered = getFilteredProjects();
   if (filtered.length === 0) {
-    el.innerHTML = vazio('Nenhum projeto com este filtro', 'Troque o status ou o destino na barra acima.');
+    el.innerHTML = projBusca
+      ? vazio('Nada encontrado para "' + escHtml(projBusca) + '"', 'Tente outro nome de projeto, moto ou produto.')
+      : vazio('Nenhum projeto com este filtro', 'Troque o status na barra acima ou limpe o filtro de destino.');
     return;
   }
 
   const statusMap = { planejamento: 'Planejamento', producao: 'Em produção', edicao: 'Edição', a_publicar: 'A publicar', concluido: 'Concluído' };
-  const destNames = { youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads' };
 
   const ICO_VER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
   const ICO_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
   const ICO_LINK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+  const ICO_ESTRELA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.6 22 9.5 17 14.3 18.2 21.3 12 17.9 5.8 21.3 7 14.3 2 9.5 8.91 8.6 12 2"/></svg>';
   const ICO_LIXO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>';
 
-  /* Mesma tabela das Solicitacoes: cabecalho ordenavel, fio entre as linhas e
-     as acoes na ultima coluna. O que era cartao (observacoes, roteiro, produtos
-     do Bling) mora no detalhe — a listagem existe para varrer, nao para ler. */
+  /* A tabela de Solicitacoes, inteira: dentro do `.table-wrap` (cabecalho
+     cinza que gruda no topo), status em pilula e acoes na ultima coluna. O que
+     era cartao sai da linha: observacao inteira, painel de estrelas e produtos
+     compativeis do Bling moram no resumo e no detalhe. A listagem existe para
+     varrer, nao para ler. */
   const linhas = filtered.map(p => {
-    const dests = (p.destinations || []).map(d => '<span class="proj-dest-tag ' + d + '">' + (destNames[d] || d) + '</span>').join('');
     const custo = fpProjCusto(p);
     const obs = String(p.observations || '').trim();
+    const temSub = obs || p.status === 'a_publicar';
     return '<tr>'
-      + '<td data-rotulo="Projeto"><strong>' + escHtml(p.title || 'Sem título') + '</strong>'
-        + (obs ? '<div class="sub">' + escHtml(obs.slice(0, 90)) + (obs.length > 90 ? '…' : '') + '</div>' : '')
-        + '<div class="proj-bling" id="projBlingProds_' + p.id + '"></div>'
-        + (p.status === 'a_publicar' ? '<div class="proj-rating" id="projRating_' + p.id + '">' + projRatingHtml(p.id, []) + '</div>' : '')
+      + '<td class="fp-col-tit" data-rotulo="Projeto"><strong>' + escHtml(p.title || 'Sem título') + '</strong>'
+        + (temSub ? '<div class="sub fp-sub-1l"><span id="projNota_' + p.id + '"></span>' + escHtml(obs) + '</div>' : '')
         + '</td>'
-      + '<td class="fp-col-dest" data-rotulo="Destinos">' + (dests || '<span class="sub">Sem destino</span>') + '</td>'
+      + '<td data-rotulo="Destinos">' + fpDestsHtml(p.destinations) + '</td>'
       + '<td data-rotulo="Moto / Produto">' + escHtml(p.moto || '—') + '</td>'
       + '<td data-rotulo="Data">' + (p.production_date ? prettyDate(p.production_date) : '—') + '</td>'
       + '<td data-rotulo="Custos">' + (custo > 0
@@ -10658,12 +10830,14 @@ function renderProjects() {
         + '<span class="fp-so-desktop" style="display:contents">'
         + '<button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Ver resumo" onclick="openProjectSummary(\'' + p.id + '\')">' + ICO_VER + '</button>'
         + '<button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Abrir e editar" onclick="openProjectDetail(\'' + p.id + '\')">' + ICO_EDIT + '</button>'
+        + (p.status === 'a_publicar' ? '<button class="fp-icon-btn fp-ib-gold fp-tip-left" data-tip="Avaliar este projeto" onclick="openProjectDetail(\'' + p.id + '\',\'avaliacao\')">' + ICO_ESTRELA + '</button>' : '')
         + (p.publish_link ? '<a class="fp-icon-btn fp-ib-pink fp-tip-left" data-tip="Abrir arquivo para publicação" href="' + escHtml(p.publish_link) + '" target="_blank" rel="noopener">' + ICO_LINK + '</a>' : '')
         + '<button class="fp-icon-btn fp-ib-danger fp-tip-left" data-tip="Excluir projeto" onclick="deleteProject(\'' + p.id + '\')">' + ICO_LIXO + '</button>'
         + '</span>'
         + '<span class="fp-so-mobile">' + fpMenuHtml([
             { rotulo: 'Ver resumo', icone: 'ver', acao: () => openProjectSummary(p.id) },
             { rotulo: 'Abrir / editar', icone: 'editar', acao: () => openProjectDetail(p.id) },
+            p.status === 'a_publicar' ? { rotulo: 'Avaliar projeto', icone: 'estrela', acao: () => openProjectDetail(p.id, 'avaliacao') } : null,
             p.drive_link ? { rotulo: 'Arquivos brutos no Drive', icone: 'pasta', href: p.drive_link } : null,
             p.publish_link ? { rotulo: 'Abrir arquivo para publicação', icone: 'link', href: p.publish_link } : null,
             { sep: true },
@@ -10673,7 +10847,7 @@ function renderProjects() {
       + '</tr>';
   }).join('');
 
-  el.innerHTML = '<table class="fp-lista"><thead><tr>'
+  el.innerHTML = '<div class="table-wrap fp-lista-wrap"><table class="fp-lista"><thead><tr>'
     + fpProjTh('Projeto', 'titulo')
     + '<th>Destinos</th>'
     + fpProjTh('Moto / Produto', 'moto')
@@ -10681,22 +10855,8 @@ function renderProjects() {
     + fpProjTh('Custos', 'custo')
     + fpProjTh('Status', 'status', 'Ordenar pela etapa do fluxo')
     + '<th>Ações</th>'
-    + '</tr></thead><tbody>' + linhas + '</tbody></table>';
+    + '</tr></thead><tbody>' + linhas + '</tbody></table></div>';
 
-
-  // Load compatible Bling products for each project (não em status Edição — só relevante no Planejamento)
-  if (isBlingConnected()) {
-    filtered.forEach(p => {
-      if (p.moto && p.status !== 'edicao') {
-        const cId = 'projBlingProds_' + p.id;
-        const el = document.getElementById(cId);
-        if (el) {
-          el.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:4px 0"><svg width="12" height="12" viewBox="0 0 24 24" style="vertical-align:-1px;margin-right:4px;animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="30 70"/></svg>Buscando produtos…</div>';
-          blingFindCompatible(p.moto).then(prods => renderCompatibleProductsCollapsed(prods, cId));
-        }
-      }
-    });
-  }
   fillProjectRatings(filtered);
 }
 
@@ -10713,23 +10873,13 @@ async function fillProjectRatings(projects) {
   const agg = {};
   rows.forEach(r => { if (r.rating) (agg[r.project_id] = agg[r.project_id] || []).push(r.rating); });
   aPub.forEach(p => {
-    const el = document.getElementById('projRating_' + p.id);
-    if (el) el.innerHTML = projRatingHtml(p.id, agg[p.id] || []);
+    const el = document.getElementById('projNota_' + p.id);
+    if (!el) return;
+    const html = fpProjNotaHtml(agg[p.id] || []);
+    el.innerHTML = html;
+    /* Separador so quando ha as duas coisas: nota e observacao. */
+    if (html && el.nextSibling && String(el.nextSibling.textContent || '').trim()) el.innerHTML = html + ' · ';
   });
-}
-
-function projRatingHtml(projectId, arr) {
-  arr = arr || [];
-  if (!arr.length) {
-    const empty = [1,2,3,4,5].map(() => '<span class="prj-star">\u2605</span>').join('');
-    return '<div class="proj-rating-inline"><div class="proj-rating-stars">' + empty +
-      '</div><button class="proj-rating-btn" onclick="event.stopPropagation();openProjectDetail(\'' + projectId + '\',\'avaliacao\')">avaliar</button></div>';
-  }
-  const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
-  const rounded = Math.round(avg);
-  const stars = [1,2,3,4,5].map(n => '<span class="prj-star' + (n <= rounded ? ' on' : '') + '">\u2605</span>').join('');
-  return '<div class="proj-rating-inline"><div class="proj-rating-stars">' + stars +
-    '</div><span class="proj-rating-num">' + avg.toFixed(1) + '</span><span class="proj-rating-count">(' + arr.length + ')</span></div>';
 }
 
 function summaryHtml(p) {
@@ -10747,6 +10897,7 @@ function summaryHtml(p) {
 
   /* ---- PRODUÇÃO ---- */
   let prod = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'+dests+'</div>';
+  prod += '<div id="fpSumBling"></div>';
   prod += '<div class="fp-sum-grid">'
     + field('Moto / Produto', escHtml(p.moto||'—'))
     + field('Data produção', p.production_date?prettyDate(p.production_date):'—')
@@ -10857,6 +11008,17 @@ async function openProjectSummary(id) {
   document.getElementById('fpSumTitle').textContent = p.title || 'Sem título';
   document.getElementById('fpSumStatus').innerHTML = '<span style="flex-shrink:0;font-size: 11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:4px 10px;border-radius:20px;background:'+c+'22;border:1px solid '+c+';color:'+c+'">'+(statusMap[p.status]||p.status)+'</span>';
   document.getElementById('fpSumBody').innerHTML = summaryHtml(p);
+  /* Produtos compativeis do Bling: eram buscados uma vez POR LINHA da
+     listagem — uma chamada por projeto a cada re-render, e um bloco que
+     mudava a altura da linha quando a resposta chegava. Agora acontece aqui,
+     quando alguem de fato abre o projeto. */
+  const bl = document.getElementById('fpSumBling');
+  if (bl && p.moto && typeof isBlingConnected === 'function' && isBlingConnected()) {
+    bl.innerHTML = '<div class="fp-sum-sec-label" style="margin-top:2px">Produtos compatíveis</div>'
+      + '<div id="fpSumBlingProds" style="font-size:12px;color:var(--text-dim);padding-bottom:8px">Buscando no Bling…</div>';
+    blingFindCompatible(p.moto).then(prods => renderCompatibleProductsCollapsed(prods, 'fpSumBlingProds'))
+      .catch(() => { const e = document.getElementById('fpSumBlingProds'); if (e) e.textContent = 'Não foi possível buscar no Bling.'; });
+  }
   document.getElementById('fpSumEdit').onclick = function(){ closeProjectSummary(); openProjectDetail(id); };
   document.getElementById('fpSumOverlay').classList.add('open');
   try {
@@ -12036,8 +12198,22 @@ function renderShotsReadOnly(shots, si) {
   const CLIP_STATUS = { planejamento:'Planejamento', edicao:'Edição', a_publicar:'A publicar', concluido:'Concluído' };
   const CLIP_STATUS_KEYS = ['planejamento','edicao','concluido'];
   let CLIP_FILTER = 'todos';
+  let CLIP_BUSCA = '';
   window.fpSetClipFilter = function(k){ CLIP_FILTER = k; if (typeof renderClips === 'function') renderClips(); };
-  function fpClipFilterBar(all){
+  /* Busca sem re-render do campo: a barra e remontada a cada render, entao o
+     valor volta pelo `value` e o foco e devolvido depois de pintar. */
+  window.fpClipBuscar = function(v){
+    CLIP_BUSCA = String(v || '').trim();
+    if (typeof renderClips === 'function') renderClips();
+    const inp = document.querySelector('#clipFiltros .fp-busca input');
+    if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+  };
+  function fpClipFilterBar(all, mostrados){
+    const total = all.length;
+    const n = (mostrados == null) ? total : mostrados;
+    const contagem = (n === total)
+      ? total + (total === 1 ? ' clip' : ' clips')
+      : n + ' de ' + total;
     const defs = [['todos','Todos','',''],['planejamento','Planejamento','#3b82f6','59,130,246'],['edicao','Edição','#a855f7','168,85,247'],['concluido','Concluído','#1fd27a','31,210,122']];
     const conta = function(k){ return (k === 'todos') ? all.length : all.filter(function(c){ return c.status === k; }).length; };
     // Computador: os chips coloridos de sempre. Celular: seletor nativo do
@@ -12063,9 +12239,17 @@ function renderShotsReadOnly(shots, si) {
     const opcoes = defs.map(function(d){
       return '<option value="' + d[0] + '"' + (CLIP_FILTER === d[0] ? ' selected' : '') + '>' + d[1] + ' (' + conta(d[0]) + ')</option>';
     }).join('');
-    return '<div class="fp-clip-filtros">'
+    /* A barra e a mesma de Solicitacoes: abas, campo de busca e contagem
+       sobre um fio que atravessa a linha. Antes era `.fp-clip-filtros`, um
+       container proprio sem fio e sem contagem — parecido, nao igual. */
+    return '<div class="filter-bar" id="clipFiltros">'
       + '<span class="fp-so-desktop" style="display:contents">' + chips + '</span>'
       + '<select class="proj-sort-select fp-so-mobile" aria-label="Filtrar clips por status" onchange="fpSetClipFilter(this.value)">' + opcoes + '</select>'
+      + '<label class="fp-busca' + (CLIP_BUSCA ? ' tem-texto' : '') + '">'
+      +   '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'
+      +   '<input type="search" value="' + esc(CLIP_BUSCA) + '" placeholder="Buscar clip, produto ou SKU" aria-label="Buscar clips por nome, produto ou SKU" oninput="fpClipBuscar(this.value)">'
+      + '</label>'
+      + '<span class="fp-lista-contagem">' + contagem + '</span>'
       + '</div>';
   }
 
@@ -12128,6 +12312,16 @@ function renderShotsReadOnly(shots, si) {
   };
 
   // ---------- Helpers de UI ----------
+  /* Na linha da tabela: data em cima, hora na sublinha — o mesmo par de
+     "Agendada"/"Recebida" em Solicitacoes. A pilula verde com a frase inteira
+     ("Gravado em 27/08/2026 - 10:03", ~200px) fica no detalhe. */
+  function recordedCell(c){
+    if (c.status !== 'concluido' || !c.recorded_at) return '<span class="sub">—</span>';
+    const d = new Date(c.recorded_at);
+    const p2 = function(n){ return String(n).padStart(2,'0'); };
+    return '<strong>' + p2(d.getDate()) + '/' + p2(d.getMonth()+1) + '/' + d.getFullYear() + '</strong>'
+      + '<div class="sub">' + p2(d.getHours()) + ':' + p2(d.getMinutes()) + '</div>';
+  }
   function recordedTag(c){
     if (c.status !== 'concluido' || !c.recorded_at) return '';
     const d = new Date(c.recorded_at);
@@ -12138,7 +12332,7 @@ function renderShotsReadOnly(shots, si) {
   function statusSelect(c, fromDetail){
     let opts = '';
     CLIP_STATUS_KEYS.forEach(function(k){ opts += '<option value="' + k + '"' + (c.status === k ? ' selected' : '') + '>' + CLIP_STATUS[k] + '</option>'; });
-    return '<select class="proj-status-select ' + esc(c.status||'planejamento') + '" style="min-width:120px" onchange="fpClipStatusChange(\'' + c.id + '\',this.value,' + (fromDetail?'true':'false') + ')">' + opts + '</select>';
+    return '<select class="proj-status-select ' + esc(c.status||'planejamento') + '" data-tip="Mudar a etapa deste clip" onchange="fpClipStatusChange(\'' + c.id + '\',this.value,' + (fromDetail?'true':'false') + ')">' + opts + '</select>';
   }
   function mlLinkEl(c){
     if (c.ml_link && String(c.ml_link).trim()){
@@ -12150,7 +12344,7 @@ function renderShotsReadOnly(shots, si) {
   function productLine(c){
     // O data-drive-sku e o gancho: se houver pasta com esse SKU no Drive, a
     // foto de la substitui o conteudo desta caixa (ver fpDriveAplicar).
-    const img = fpFotoProdutoHtml(c.sku, c.product_image, 46, 8);
+    const img = fpFotoProdutoHtml(c.sku, c.product_image, 40, 8);
     const price = c.product_price != null ? 'R$ ' + brl(c.product_price) : '—';
     const stock = c.product_stock != null ? c.product_stock : '—';
     const stkColor = (typeof c.product_stock === 'number') ? (c.product_stock > 3 ? 'var(--success)' : 'var(--warning)') : 'var(--text-dim)';
@@ -12167,7 +12361,14 @@ function renderShotsReadOnly(shots, si) {
   function renderClips(){
     const el = document.getElementById('clipsList'); if (!el) return;
     const all = window.CLIPS || [];
-    const clips = (CLIP_FILTER === 'todos') ? all : all.filter(function(c){ return c.status === CLIP_FILTER; });
+    let clips = (CLIP_FILTER === 'todos') ? all : all.filter(function(c){ return c.status === CLIP_FILTER; });
+    if (CLIP_BUSCA){
+      const q = CLIP_BUSCA.toLowerCase();
+      clips = clips.filter(function(c){
+        return ((c.title||'') + ' ' + (c.product_name||'') + ' ' + (c.sku||'') + ' ' + (c.observations||''))
+          .toLowerCase().indexOf(q) !== -1;
+      });
+    }
 
     const vazio = function(titulo, texto){
       return '<div class="fp-vazio fp-moldura">' + (typeof FP_ICO_ATENCAO !== 'undefined' ? FP_ICO_ATENCAO : '')
@@ -12178,7 +12379,9 @@ function renderShotsReadOnly(shots, si) {
       return;
     }
     if (!clips.length){
-      el.innerHTML = fpClipFilterBar(all) + vazio('Nenhum clip com esse status', 'Troque o filtro acima.');
+      el.innerHTML = fpClipFilterBar(all, 0) + (CLIP_BUSCA
+        ? vazio('Nada encontrado para "' + esc(CLIP_BUSCA) + '"', 'Tente outro nome de clip, produto ou SKU.')
+        : vazio('Nenhum clip com esse status', 'Troque o filtro acima.'));
       return;
     }
 
@@ -12203,11 +12406,10 @@ function renderShotsReadOnly(shots, si) {
     const linhas = lista.map(function(c){
       const obs = (c.observations || '').trim();
       return '<tr>'
-        + '<td data-rotulo="Clip"><strong>' + esc(c.title || c.product_name || 'Clip') + '</strong>'
-          + (obs ? '<div class="sub">' + esc(obs.slice(0, 110)) + (obs.length > 110 ? '…' : '') + '</div>'
-                 : '<div class="sub">Sem observações</div>') + '</td>'
+        + '<td class="fp-col-tit" data-rotulo="Clip"><strong>' + esc(c.title || c.product_name || 'Clip') + '</strong>'
+          + (obs ? '<div class="sub fp-sub-1l">' + esc(obs) + '</div>' : '') + '</td>'
         + '<td class="fp-col-prod" data-rotulo="Produto">' + productLine(c) + '</td>'
-        + '<td data-rotulo="Gravado">' + (recordedTag(c) || '<span class="sub">—</span>') + '</td>'
+        + '<td data-rotulo="Gravado">' + recordedCell(c) + '</td>'
         + '<td data-rotulo="Status">' + statusSelect(c, false) + '</td>'
         + '<td><div class="actions">'
           + '<span class="fp-so-desktop" style="display:contents">'
@@ -12225,14 +12427,14 @@ function renderShotsReadOnly(shots, si) {
         + '</tr>';
     }).join('');
 
-    el.innerHTML = fpClipFilterBar(all)
-      + '<table class="fp-lista"><thead><tr>'
+    el.innerHTML = fpClipFilterBar(all, clips.length)
+      + '<div class="table-wrap fp-lista-wrap"><table class="fp-lista"><thead><tr>'
       + th('Clip', 'titulo')
       + th('Produto', 'produto')
       + '<th>Gravado</th>'
       + th('Status', 'status', 'Ordenar pela etapa do fluxo')
       + '<th>Ações</th>'
-      + '</tr></thead><tbody>' + linhas + '</tbody></table>';
+      + '</tr></thead><tbody>' + linhas + '</tbody></table></div>';
 
     // Foto do Drive por SKU, quando a pasta existir.
     if (typeof fpDriveCarregar === 'function') {
@@ -21360,6 +21562,7 @@ const FP_ICONES = {
   enviar:   '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
   baixo:    '<polyline points="6 9 12 15 18 9"/>',
   atualizar:'<path d="M21 12a9 9 0 11-3.2-6.9"/><polyline points="21 3 21 9 15 9"/>',
+  estrela:  '<polygon points="12 2 15.09 8.6 22 9.5 17 14.3 18.2 21.3 12 17.9 5.8 21.3 7 14.3 2 9.5 8.91 8.6 12 2"/>',
 };
 
 /* Cada render cria ids novos e as acoes sao closures que seguram o objeto do
@@ -22531,12 +22734,32 @@ window.fpDriveVerificar = fpDriveVerificar;
 function renderEditingView() {
   const el = document.getElementById('editingList');
   if (!el) return;
-  const editProjects = PROJECTS.filter(p => p.status === 'edicao');
 
-  // Stats
-  const edicaoCount = editProjects.length;
+  // Stats: sempre o pipeline inteiro, nao a aba aberta.
+  const edicaoCount = PROJECTS.filter(p => p.status === 'edicao').length;
   const publicarCount = PROJECTS.filter(p => p.status === 'a_publicar').length;
   const totalPipeline = edicaoCount + publicarCount;
+
+  const daAba = p => EDIT_FILTER === 'pipeline'
+    ? (p.status === 'edicao' || p.status === 'a_publicar')
+    : p.status === EDIT_FILTER;
+  let editProjects = PROJECTS.filter(daAba);
+  const naAba = editProjects.length;
+  if (editBusca) {
+    editProjects = editProjects.filter(p => ((p.title || '') + ' ' + (p.moto || '') + ' ' + (p.observations || ''))
+      .toLowerCase().includes(editBusca));
+  }
+
+  document.querySelectorAll('#view-editing .filter-btn[data-efilter]').forEach(b => {
+    const k = b.dataset.efilter;
+    b.classList.toggle('active', k === EDIT_FILTER);
+    const n = b.querySelector('.fp-conta');
+    if (n) n.textContent = k === 'edicao' ? edicaoCount : k === 'a_publicar' ? publicarCount : totalPipeline;
+  });
+  const cont = document.getElementById('editCount');
+  if (cont) cont.textContent = editProjects.length === naAba
+    ? naAba + (naAba === 1 ? ' projeto' : ' projetos')
+    : editProjects.length + ' de ' + naAba;
   const eEd = document.getElementById('editStatEdicao');
   const ePub = document.getElementById('editStatPublicar');
   const eTot = document.getElementById('editStatTotal');
@@ -22547,13 +22770,16 @@ function renderEditingView() {
   if (eBar) eBar.style.width = totalPipeline > 0 ? Math.round((publicarCount / totalPipeline) * 100) + '%' : '0%';
 
   if (!editProjects.length) {
-    el.innerHTML = '<div class="fp-vazio fp-moldura">' + FP_ICO_ATENCAO
-      + '<h3>Nada em edição agora</h3>'
-      + '<p>Projetos entram aqui quando o status vira Edição, em Projetos.</p></div>';
+    const vazio = (t, x) => '<div class="fp-vazio fp-moldura">' + FP_ICO_ATENCAO
+      + '<h3>' + t + '</h3><p>' + x + '</p></div>';
+    el.innerHTML = editBusca
+      ? vazio('Nada encontrado para "' + escHtml(editBusca) + '"', 'Tente outro nome de projeto, moto ou produto.')
+      : EDIT_FILTER === 'a_publicar'
+        ? vazio('Nada a publicar agora', 'Projetos chegam aqui quando saem da edição.')
+        : vazio('Nada em edição agora', 'Projetos entram aqui quando o status vira Edição, em Projetos.');
     return;
   }
 
-  const destNames = { youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads' };
   const ICO_ROT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
   const ICO_VER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
   const ICO_LINK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
@@ -22582,15 +22808,12 @@ function renderEditingView() {
   const lista = fpOrdAplicar(editProjects, chaves, 'edicao');
 
   const linhas = lista.map(p => {
-    const dests = (p.destinations || []).map(d => '<span class="proj-dest-tag ' + d + '">' + (destNames[d] || d) + '</span>').join('');
     const obs = String(p.observations || '').trim();
     const r = roteiroDe(p);
     return '<tr>'
-      + '<td data-rotulo="Projeto"><strong>' + escHtml(p.title || 'Sem título') + '</strong>'
-        + (obs
-            ? '<div class="sub">' + escHtml(obs.slice(0, 110)) + (obs.length > 110 ? '…' : '') + '</div>'
-            : '') + '</td>'
-      + '<td class="fp-col-dest" data-rotulo="Destinos">' + (dests || '<span class="sub">Sem destino</span>') + '</td>'
+      + '<td class="fp-col-tit" data-rotulo="Projeto"><strong>' + escHtml(p.title || 'Sem título') + '</strong>'
+        + (obs ? '<div class="sub fp-sub-1l">' + escHtml(obs) + '</div>' : '') + '</td>'
+      + '<td data-rotulo="Destinos">' + fpDestsHtml(p.destinations) + '</td>'
       + '<td data-rotulo="Moto / Produto">' + escHtml(p.moto || '—') + '</td>'
       + '<td data-rotulo="Data">' + (p.production_date ? prettyDate(p.production_date) : '—') + '</td>'
       + '<td data-rotulo="Roteiro">' + (r.rot
@@ -22618,7 +22841,7 @@ function renderEditingView() {
       + '</tr>';
   }).join('');
 
-  el.innerHTML = '<table class="fp-lista"><thead><tr>'
+  el.innerHTML = '<div class="table-wrap fp-lista-wrap"><table class="fp-lista"><thead><tr>'
     + fpThOrd('Projeto', 'titulo', 'edicao', 'fpEdOrdenar')
     + '<th>Destinos</th>'
     + fpThOrd('Moto / Produto', 'moto', 'edicao', 'fpEdOrdenar')
@@ -22626,7 +22849,7 @@ function renderEditingView() {
     + fpThOrd('Roteiro', 'roteiro', 'edicao', 'fpEdOrdenar')
     + '<th>Status</th>'
     + '<th>Ações</th>'
-    + '</tr></thead><tbody>' + linhas + '</tbody></table>';
+    + '</tr></thead><tbody>' + linhas + '</tbody></table></div>';
 }
 function buildObsModal() {
   if (_obsModalBuilt) return; _obsModalBuilt = true;
