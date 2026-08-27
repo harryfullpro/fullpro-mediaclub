@@ -5195,6 +5195,20 @@ body.fp-sem-sessao .fp-ajuda-btn { display: none !important; }
 .fp-usr-acesso { font-size: 12px; font-weight: 600; color: var(--text-dim); white-space: nowrap; }
 .fp-usr-acesso.total { color: var(--text-muted); }
 .fp-usr-acesso.nenhum { color: var(--warning); font-weight: 700; }
+/* Formulário do modal, no desenho do Meu perfil. O recuo lateral acompanha o
+   do cabeçalho do modal (24px), senão o campo nasce desalinhado do título. */
+.fp-user-form { padding: 0 24px 22px; }
+.fp-user-form .fp-prod-faixa { border-top: 1px solid var(--border); padding: 16px 0 8px; }
+.fp-user-form .fp-prod-faixa:first-child { border-top: 0; padding-top: 6px; }
+/* Coluna mínima menor que a do perfil (232px): dentro de um modal de 560px
+   aquela medida só cabia uma vez e a grade virava pilha. */
+.fp-user-grade {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(196px, 1fr));
+  gap: 12px 18px;
+}
+.fp-user-form .login-input { padding: 9px 11px; font-size: 13.5px; border-radius: 8px; }
+.fp-user-pe { display: flex; gap: 8px; justify-content: flex-end; padding-top: 16px; }
+
 /* Nota do modal de criação: entre fios, como o detalhe do diálogo da casa. */
 .fp-user-nota {
   margin: 2px 0 4px; padding: 11px 0;
@@ -7262,19 +7276,54 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
            tela que é listagem, e ficava na frente o tempo todo para uma ação
            que acontece uma vez por contratação. -->
       <div class="modal" id="userNovoModal">
-        <div class="modal-content" style="max-width:460px">
+        <div class="modal-content">
           <div class="modal-head">
             <h3>Novo usuário</h3>
             <button class="modal-close" onclick="fpUserNovoFechar()" aria-label="Fechar">&times;</button>
           </div>
-          <div style="display:flex;flex-direction:column;gap:10px;padding-top:4px">
-            <input type="text" class="login-input" id="newUserName" placeholder="Nome completo" style="margin:0"/>
-            <input type="text" class="login-input" id="newUserUsername" placeholder="Usuário (login)" style="margin:0"/>
-            <input type="text" class="login-input" id="newUserPhone" placeholder="Telefone" style="margin:0"/>
-            <input type="text" class="login-input" id="newUserRole" placeholder="Cargo (ex: Fotógrafo)" style="margin:0"/>
-            <input type="password" class="login-input" id="newUserPw" placeholder="Senha inicial" style="margin:0"/>
+          <!-- Mesmo desenho de formulário do Meu perfil: seção com fio, rótulo
+               em cima de cada campo e grade que se acomoda à largura. Antes
+               eram cinco caixas cinzas empilhadas dentro de outra caixa, com o
+               rótulo só no placeholder — que some no instante em que a pessoa
+               digita, justamente quando ela precisa conferir. -->
+          <div class="fp-user-form">
+            <div class="fp-prod-faixa">
+              <b>Dados do operador</b>
+              <span class="fp-aviso-sub">Usados nas mensagens e no registro de atividades</span>
+            </div>
+            <div class="fp-user-grade">
+              <div class="block-field">
+                <label for="newUserName">Nome completo</label>
+                <input type="text" class="login-input" id="newUserName" style="margin:0" autocomplete="off"/>
+              </div>
+              <div class="block-field">
+                <label for="newUserUsername">Usuário (login)</label>
+                <input type="text" class="login-input" id="newUserUsername" style="margin:0" autocomplete="off" placeholder="minúsculas, sem espaço"/>
+              </div>
+              <div class="block-field">
+                <label for="newUserPhone">Telefone</label>
+                <input type="text" class="login-input" id="newUserPhone" style="margin:0" autocomplete="off"/>
+              </div>
+              <div class="block-field">
+                <label for="newUserRole">Cargo</label>
+                <input type="text" class="login-input" id="newUserRole" style="margin:0" autocomplete="off" placeholder="ex: Fotógrafo"/>
+              </div>
+            </div>
+
+            <div class="fp-prod-faixa">
+              <b>Senha inicial</b>
+              <span class="fp-aviso-sub">Mínimo de 4 caracteres</span>
+            </div>
+            <div class="fp-user-grade">
+              <div class="block-field">
+                <label for="newUserPw">Senha</label>
+                <input type="password" class="login-input" id="newUserPw" style="margin:0" autocomplete="new-password"/>
+              </div>
+            </div>
+
             <p class="fp-user-nota">A pessoa troca essa senha em <b>Meu perfil</b>, no primeiro acesso. Depois de criar, defina os módulos dela pelo escudo na listagem — sem isso ela entra e não vê nada.</p>
-            <div style="display:flex;gap:8px;justify-content:flex-end">
+
+            <div class="fp-user-pe">
               <button class="action-btn" type="button" onclick="fpUserNovoFechar()">Cancelar</button>
               <button class="action-btn approve" type="button" onclick="createUser()">Criar usuário</button>
             </div>
