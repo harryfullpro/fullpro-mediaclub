@@ -1182,7 +1182,18 @@
     padding: 18px 20px;
   }
   .cal-admin { gap: 18px; }
-  .cal-top { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  /* Duas caixas lado a lado com alturas diferentes (397 e 178px, medido) leem
+     como tela inacabada — enquanto eram faixas com fio, a diferenca nao
+     aparecia. `stretch` iguala as duas, e o conteudo do detalhe do dia se
+     centra na altura que sobrar. */
+  .cal-top { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+  #dateViewer { display: flex; flex-direction: column; }
+  #dateViewerContent { flex: 1; display: flex; flex-direction: column; }
+  /* Estado curto (vazio, bloqueio, fim de semana) ocupa a altura toda e centra;
+     com agendamentos, a lista manda e o `justify-content` nao tem efeito. */
+  #dateViewerContent > .dv-empty,
+  #dateViewerContent > .dv-block-info,
+  #dateViewerContent > .dv-weekend { flex: 1; justify-content: center; }
   .cal-top > .cal-card:first-child { flex: 0 0 340px; max-width: 340px; }
   #dateViewer { flex: 1 1 400px; min-width: 300px; max-width: 600px; }
   @media (min-width: 1280px) { #dateViewer { max-width: 680px; } }
