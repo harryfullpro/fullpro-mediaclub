@@ -1,5 +1,108 @@
 # Diário
 
+## 27/08/2026 · Ajuda em todas as telas, boas-vindas com escolha, painel de ícones
+
+### O "?" saiu da Fotografia
+
+> *"quero expandir o botão de ajuda e tutorial para todas as outras páginas"*
+
+**18 verbetes novos** em `FP_AJUDA`: dashboard de vídeo, Agenda, Check-in,
+Projetos, Edição, Clips, Debriefing, as quatro de Performance, Templates,
+Exportar, Usuários, Manutenção, Atualizações, Integrações e Meu perfil.
+
+Os seletores dos passos foram **levantados no DOM em produção**, tela por tela,
+antes de escrever qualquer coisa — passo que aponta para elemento inexistente é
+descartado em silêncio, e um tutorial de dois passos onde deviam ser cinco não
+dá erro nenhum.
+
+E `fpAjudaChave()` deixou de ter lista fixa de quatro telas: **a chave é o nome
+da view**. Acrescentar um verbete passou a ser o único passo para uma tela nova
+ganhar ajuda — a lista fixa ficou desatualizada na primeira tela nova que
+apareceu.
+
+### O primeiro acesso agora pergunta antes
+
+> *"no primeiro acesso do usuário, abra um pop-up de boas vindas ao invés de
+> abrir direto o tour guiado, e quero dar opção para o usuário iniciar o tour
+> guiado ou aprender sozinho"*
+
+Antes o primeiro acesso caía direto no tour: tela escurecida, cartão apontando
+para o menu, sem aviso e sem saída clara. Agora abre um pop-up que apresenta o
+painel e dá a escolha.
+
+**Escolher "explorar por conta própria" desliga também os tutoriais automáticos
+de cada tela** (marca `auto-off`). Deixá-los ligados depois de a pessoa dizer
+que prefere explorar seria emboscada em cada módulo novo. O `?` continua na
+tela: nada fica inacessível, só deixa de ser imposto. Esc equivale a "sozinho".
+
+`FP_TUT_VERSAO` 2 → 3, para todo mundo ver a nova entrada. Quem não quiser nada
+dispensa tudo num clique — que é justamente o ponto da mudança.
+
+### Dois defeitos que a fusão da Agenda tinha deixado
+
+**O botão de abrir o projeto estava morto.** `openProjectDetail` percorre uma
+lista de views **escrita à mão** e fazia `.style` no `getElementById` sem
+guarda. Com Solicitações fundida na Agenda, `view-requests` deixou de existir, o
+`null` derrubava a função inteira e o lápis não abria nada. Guarda nos três
+laços crus e `'requests'` fora das listas — a mesma causa derrubaria
+`backToProjects` e o roteador antigo do menu.
+
+**A dica do botão ficava atrás do cabeçalho da tabela.** A coluna de ações, ao
+virar `position: sticky`, passou a criar **contexto de empilhamento próprio**: o
+`z-index: 200` da dica não vale fora da célula, e quem competia com o cabeçalho
+era a *célula*, com `z-index: auto` contra os 5 do `<th>`.
+
+De passagem: o aviso de entrada de solicitações pendentes procurava o item de
+menu `'requests'`, que não existe mais — nunca mais apareceria.
+
+### Painel de ícones: subir o SVG e escolher a cor
+
+> *"a mesma coisa que tu fez com as cores do site, quero que tu faça com os
+> ícones… um painel onde eu mesmo possa subir o svg que quero"*
+
+Vive em `mc_icons`, uma linha por ícone trocado. O motivo é concreto: só numa
+tarde foram **onze trocas de ícone da barra lateral, uma a uma**, cada uma
+passando por mim.
+
+**Como um ícone é trocado sem editar o HTML de origem.** O catálogo diz onde
+cada ícone mora, de duas formas:
+
+- por **seletor** — barra lateral (21), o `+` azul, o besouro flutuante;
+- por **assinatura do desenho** — as ações das listagens, que são strings
+  montadas dentro de cada render e não têm âncora estável nenhuma.
+
+A assinatura é o que faz uma troca valer em toda aparição de uma vez. Medido em
+Projetos: `acao-ver` aparece **171 vezes**, `acao-whatsapp` 104, `acao-excluir`
+57, `acao-editar` 54 — inclusive dentro do menu "…" do celular, que usa o mesmo
+desenho. Uma troca, 171 lugares.
+
+O desenho de fábrica é **capturado do próprio DOM** na primeira vez que o ícone
+aparece: não há uma segunda lista de SVGs para manter em sincronia com o HTML.
+
+**A armadilha que custou uma volta:** comparar a assinatura escrita à mão com o
+`innerHTML` do elemento nunca casa — o navegador expande `<path .../>` para
+`<path ...></path>` ao ler de volta. As duas pontas têm de passar pelo mesmo
+serializador. Medido com o mesmo desenho nas duas pontas: igualdade direta
+falsa, igualdade via DOM verdadeira. Sem isso, o grupo "Ações das listagens" não
+trocava nada e não dava erro.
+
+**Segurança, porque SVG é conteúdo executável** e este vai para o banco e é
+renderizado para a equipe inteira. `fpIcoHigienizar` roda antes de tudo.
+Testado com um SVG malicioso bem formado: `script`, `foreignObject`, `image`,
+`use`, `<a href="javascript:">`, `animate`, `onclick`, `xlink:href` e
+`style="fill:url(#x)"` — **todos removidos**, sobrando só a geometria. Limite de
+60 KB.
+
+Dois detalhes que só aparecem ao fazer:
+
+- Os atributos de traço (`fill`, `stroke`, `stroke-width`…) vivem no `<svg>` de
+  origem e se perderiam ao guardar só o conteúdo. Vão para um `<g>` em volta.
+- Para o seletor de cor funcionar em **qualquer** arquivo, toda cor fixa vira
+  `currentColor`. Logo colorida tem escape: a caixa "cores do arquivo" guarda o
+  desenho como veio.
+
+---
+
 ## 27/08/2026 · Agenda absorve Solicitações, sessão com prazo, galeria refeita
 
 ### O carrossel mostrava pasta nova, não pasta com foto nova

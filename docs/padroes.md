@@ -279,6 +279,31 @@ repetir o mesmo quadro. E período curto é o que faz parecer vivo: a primeira v
 login rodava em 40s/52s, ≈1vw por segundo, e o dono perguntou se a animação tinha ficado
 pronta.
 
+### Trocar ícone e cor é do dono, não do código
+
+Dois painéis em Manutenção fazem isso: `mc_theme_colors` (cores) e `mc_icons`
+(ícones). A regra que os dois seguem: **preferência visual da casa mora no servidor
+e é editável pelo dono**, porque cada troca dessas passando por código é um pedido,
+um deploy e uma espera. Só numa tarde foram onze trocas de ícone, uma a uma.
+
+Ao acrescentar um ícone ao catálogo (`FP_ICO_GRUPOS`), escolha o gancho:
+
+- **seletor** quando o ícone tem endereço estável no HTML (barra lateral, botão fixo);
+- **assinatura do desenho** quando ele é string montada dentro de um render. A
+  assinatura troca todas as aparições de uma vez — `acao-ver` são 171 lugares.
+
+Duas coisas que não são óbvias:
+
+1. **Assinatura tem de passar pelo mesmo serializador das duas pontas.** O navegador
+   expande `<path .../>` para `<path ...></path>` no `innerHTML`; comparar com a string
+   escrita à mão nunca casa, e não dá erro.
+2. **SVG enviado é conteúdo executável.** Higienize antes de guardar: fora `script`,
+   `foreignObject`, `image`, `use`, `animate`, todo `on*` e todo `href`. E transfira os
+   atributos de traço do `<svg>` de origem para um `<g>`, senão o desenho perde o stroke
+   ao ser guardado sem a raiz.
+
+---
+
 ### Quando a caixa É permitida
 
 "Fios, não caixas" vale para **linha de listagem** e para container em volta de lista. Não
