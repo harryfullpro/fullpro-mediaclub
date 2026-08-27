@@ -215,6 +215,14 @@ Regras que já custaram defeito:
 Abaixo de 600px a tabela vira lista de blocos com o rótulo da coluna antes do valor — daí
 o `data-rotulo` em cada `<td>`; e `.fp-lista-wrap` perde a moldura no `@media` de 900px.
 
+**Especificidade de classe atravessa `@media`.** Ao pôr as tabelas novas dentro do
+`.table-wrap` elas herdaram duas regras de computador que a regra de celular não conseguia
+desfazer: `.table-wrap table { min-width: 640px }` (0,1,1) vencia `.fp-lista { min-width: 0 }`
+(0,1,0), e `td:last-child { width: 1% }` deixava a célula de ação com 3,5px na linha flex do
+celular — com o botão "…" 11px fora da tela. Solicitações escapava dos dois por usar id
+(`#reqTable`, 1,0,1). **Regra de celular precisa de especificidade igual ou maior que a de
+computador**, senão não pega nada e não dá erro. Medir a 375px, não confiar no `@media`.
+
 **Duas interfaces para o mesmo filtro precisam da mesma regra.** Em Projetos os chips do
 computador eram múltipla escolha e o `<select>` do celular era escolha única — a mesma tela
 com duas lógicas. As abas unificaram na escolha única, que é a do celular. O filtro de

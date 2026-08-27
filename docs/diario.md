@@ -97,6 +97,31 @@ Três coisas não se copiam do login: a **escala** da malha (16px/64px, não
 milimetrado de verdade e competem com o número; valem o da barra lateral, um
 terço) e o **traçado**, que é desenhado para 900×160 — o do login entra cortado.
 
+### Três defeitos de celular que só apareceram ao medir a 375px
+
+O `.table-wrap` que devolveu a faixa cinza no computador trouxe herança que não
+servia para o celular. Todos medidos, nenhum visível "no olho" numa lida rápida:
+
+- **`.table-wrap table { min-width: 640px }`** (regra de tabela que rola de lado)
+  vencia `.fp-lista { min-width: 0 }` por especificidade — (0,1,1) contra (0,1,0).
+  A tabela virava blocos e mantinha 640px dentro de um `main` de 307px: as
+  células da direita ficavam fora da tela **e sem rolagem para alcançá-las**.
+  Solicitações escapava por usar id (`#reqTable`, 1,0,1).
+- **`width: 1%` na última coluna** é regra de tabela (célula de ação não estica).
+  Na linha flex do celular deixava a célula com 3,5px e o botão "…" de 26px
+  vazava: de 360 a 386, ou seja, 11px fora da tela — e no celular esse botão é o
+  **único** caminho para as ações da linha.
+- **A barra recolhida no computador roubava 68px da tela do celular.** `.shell`
+  (0,1,0) perdia para `.shell.collapsed` / `.shell.hover-mode` (0,2,0), que são
+  preferência de desktop guardada no `localStorage`. Quem recolhia a barra no
+  escritório levava para o celular uma faixa morta de 68px — 18% da largura de um
+  iPhone — com a barra em si já fora da tela. Esse é **anterior** às tabelas e
+  valia para o painel inteiro.
+
+O padrão que os três compartilham: **especificidade de classe atravessa `@media`**.
+Regra de celular escrita com menos especificidade que a de computador não pega
+nada, e não dá erro.
+
 ### A lição, que não é sobre CSS
 
 Quando o dono aponta uma referência, a entrega é **aquela** referência, medida
