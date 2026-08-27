@@ -203,6 +203,39 @@ miniaturas são 320×320, então essa margem existe quase sempre — em cinza cl
 ela virava um retângulo em volta de foto de produto em fundo branco; no branco
 do cartão ela é a própria mesa da foto.
 
+### Usuários no formato padrão
+
+Eram duas caixas lado a lado: a lista numa e um formulário fixo de 340px na
+outra. O formulário virou modal no **+** do cabeçalho, como em Projetos, Clips e
+Agenda — ele custava largura numa tela que é listagem e ficava na frente o tempo
+todo para uma ação que acontece uma vez por contratação.
+
+A métrica que faltava é **"Sem módulo"**: operador criado e sem permissão entra
+no painel e não vê nada, e isso só aparecia quando a pessoa reclamava. Tem aba
+própria e cor de atenção. "Remover" e "Permissões" viraram ícone na última
+coluna, e o acesso ganhou coluna — Total, N módulos ou **Nenhum**.
+
+**O patch de DOM saiu.** `fpInjectPermUI` procurava a última célula de cada linha
+e pendurava ali o botão "Permissões" depois do render; com a tabela nova ele
+enfiaria o botão dentro da coluna de ações, atrás dos ícones. A decisão passou
+para `renderUsers`, onde o dado está — mesma correção da coluna Roteiro na
+Edição.
+
+Dois defeitos que a reescrita revelou, os dois escondidos por um `catch`:
+
+- **O roteador apagava a lista logo depois de carregá-la.** `case 'users'` fazia
+  `await loadUsers()` (que já renderiza) e em seguida `renderUsers()` **sem
+  argumento**. O embrulho que eu removi engolia o `TypeError` em silêncio; sem
+  ele, a chamada sem lista limpava a tela.
+- **`loadUsers` não trazia `modules`.** A coluna Acesso e a métrica "Sem módulo"
+  saem dele — a tela diria "Nenhum" para a equipe inteira.
+
+Medido: 6 colunas, 6 linhas a 62–63px, cabe em 1174px, e as ações certas por
+papel (o próprio usuário sem nenhuma, administrador só com a lixeira, operador
+com escudo e lixeira).
+
+---
+
 ### O ícone "sumido": três causas empilhadas, todas minhas
 
 Ele subiu o arquivo e o ícone ficou irreconhecível. A imagem sugeria máscara de
