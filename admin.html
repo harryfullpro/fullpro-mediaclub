@@ -542,11 +542,22 @@
     position: relative; flex: 1; min-height: 220px; overflow: hidden;
     border-radius: 10px; background: var(--bg-elev);
   }
-  .fp-carro-palco img {
-    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  /* Duas fotos por slide, da mesma pasta. O espaco no Dashboard e retangular
+     (perto de 2:1) e uma foto so, em `object-fit: cover`, era recortada nas
+     laterais — justamente onde o produto costuma estar. Duas lado a lado
+     ocupam o retangulo em duas molduras quase quadradas. O fio de 3px entre
+     elas e o fundo do palco aparecendo. */
+  .fp-carro-slide {
+    position: absolute; inset: 0;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 3px;
     opacity: 0; transition: opacity .5s ease;
   }
-  .fp-carro-palco img.on { opacity: 1; }
+  /* Pasta com uma foto so nao fica com metade do palco vazia. */
+  .fp-carro-slide.uma { grid-template-columns: 1fr; }
+  .fp-carro-slide.on { opacity: 1; }
+  .fp-carro-slide img {
+    width: 100%; height: 100%; min-width: 0; display: block; object-fit: cover;
+  }
   /* Gradiente só na faixa de baixo: o nome do produto precisa ser legível em
      cima de foto clara e de foto escura, e escurecer a imagem inteira
      estragaria a foto. */
@@ -22830,16 +22841,21 @@ async function fpCoresSalvar() {
    Ela está guardada no banco, em mc_guardados (chave `anim-fluxo-foto`), para
    ser reaproveitada em outro lugar.
 
-   De onde vêm as fotos: a função `drive-recentes` devolve as 20 pastas de SKU
-   criadas mais recentemente no Drive e, de cada uma, a PRIMEIRA foto — a mesma
-   que a listagem usa como miniatura. A ordem de exibição é sorteada a cada
-   abertura, então duas visitas seguidas não mostram a mesma sequência.
+   De onde vêm as fotos: a função `drive-recentes` devolve as **20 pastas de SKU
+   modificadas mais recentemente** no Drive e, de cada uma, as **duas primeiras
+   fotos**. A ordem das pastas é sorteada a cada abertura, então duas visitas
+   seguidas não mostram a mesma sequência.
+
+   Por que modificação e não criação: a pasta de SKU nasce quando o produto
+   entra no catálogo, meses antes de alguém fotografar. Ordenado por criação, o
+   carrossel mostrava pasta nova — não pasta com foto nova. (Exemplo real:
+   FP-CAR-HAY997-8-1, criada em 2023 e fotografada em 19/08/2026.)
    ========================================================================== */
 
 const FP_RECENTES_URL = ((window.FULLPRO_CONFIG && window.FULLPRO_CONFIG.SUPABASE_URL) || '')
   .replace(/\/+$/, '') + '/functions/v1/drive-recentes';
 
-let _carroFotos = [], _carroI = 0, _carroTimer = null, _carroVez = 0;
+let _carroPastas = [], _carroI = 0, _carroTimer = null, _carroVez = 0;
 
 function fpCarrosselParar() { if (_carroTimer) { clearInterval(_carroTimer); _carroTimer = null; } }
 
@@ -22855,6 +22871,20 @@ function fpEmbaralhar(a) {
   return v;
 }
 
+/* A função passou a devolver `pastas` (com um array de fotos em cada). Uma
+   resposta antiga em cache — ou a versão anterior da função — traz só `fotos`
+   com uma foto por item; aqui ela é normalizada para o formato novo em vez de
+   deixar o painel em branco. */
+function fpCarrosselNormalizar(d) {
+  if (d && Array.isArray(d.pastas) && d.pastas.length) {
+    return d.pastas.filter(p => p && Array.isArray(p.fotos) && p.fotos.length);
+  }
+  return ((d && d.fotos) || []).map(f => ({
+    sku: f.sku, modificado_em: f.criado_em,
+    fotos: [{ thumb: f.thumb, cheia: f.cheia, file_name: f.file_name }],
+  }));
+}
+
 async function fpCarrosselCarregar() {
   const box = document.getElementById('fotoCarrossel');
   if (!box) return;
@@ -22867,8 +22897,8 @@ async function fpCarrosselCarregar() {
     });
     const d = await r.json();
     if (vez !== _carroVez) return;                 // o painel foi repintado no meio
-    _carroFotos = fpEmbaralhar((d && d.fotos) || []);
-    if (!_carroFotos.length) {
+    _carroPastas = fpEmbaralhar(fpCarrosselNormalizar(d));
+    if (!_carroPastas.length) {
       box.innerHTML = '<div class="fp-carro-vazio">Nenhuma foto nova no Drive ainda.</div>';
       return;
     }
@@ -22882,45 +22912,49 @@ async function fpCarrosselCarregar() {
 
 function fpCarrosselPintar() {
   const box = document.getElementById('fotoCarrossel');
-  if (!box || !_carroFotos.length) return;
+  if (!box || !_carroPastas.length) return;
   const seta = (lado, d, rot) => '<button class="fp-carro-seta ' + lado + '" type="button" data-tip="' + rot
     + '" aria-label="' + rot + '" onclick="fpCarrosselAndar(' + d + ')">'
     + '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="' + (d < 0 ? '15 18 9 12 15 6' : '9 18 15 12 9 6') + '"/></svg></button>';
 
-  /* Todas as <img> no DOM de uma vez, com loading=lazy: trocar o `src` a cada
-     passo fazia a foto sumir e reaparecer, e o navegador rebaixava tudo de
-     novo ao voltar. Assim a troca é só de opacidade. */
+  /* Todos os slides no DOM de uma vez, com loading=lazy fora do primeiro:
+     trocar o `src` a cada passo fazia a foto sumir e reaparecer, e o navegador
+     rebaixava tudo de novo ao voltar. Assim a troca é só de opacidade. */
   box.innerHTML = '<div class="fp-carro-palco">'
-    + _carroFotos.map((f, i) => '<img src="' + escHtml(f.thumb) + '" alt="' + escHtml(f.sku)
-        + '" class="' + (i === 0 ? 'on' : '') + '" loading="' + (i === 0 ? 'eager' : 'lazy') + '">').join('')
+    + _carroPastas.map((p, i) => '<div class="fp-carro-slide'
+        + (p.fotos.length < 2 ? ' uma' : '') + (i === 0 ? ' on' : '') + '">'
+        + p.fotos.slice(0, 2).map((f, n) => '<img src="' + escHtml(f.thumb)
+            + '" alt="' + escHtml(p.sku) + ' — foto ' + (n + 1)
+            + '" loading="' + (i === 0 ? 'eager' : 'lazy') + '">').join('')
+        + '</div>').join('')
     + '<a class="fp-carro-rot" id="fpCarroRot" target="_blank" rel="noopener"'
     + ' data-tip="Abrir a pasta deste produto no Drive"></a>'
-    + seta('ant', -1, 'Foto anterior') + seta('prox', 1, 'Próxima foto')
+    + seta('ant', -1, 'Pasta anterior') + seta('prox', 1, 'Próxima pasta')
     + '</div>'
     + '<div class="fp-carro-pontos">'
-    + _carroFotos.map((f, i) => '<button class="fp-carro-ponto' + (i === 0 ? ' on' : '') + '" type="button"'
-        + ' data-tip="' + escHtml(f.sku) + '" aria-label="Foto ' + (i + 1) + ' de ' + _carroFotos.length
+    + _carroPastas.map((p, i) => '<button class="fp-carro-ponto' + (i === 0 ? ' on' : '') + '" type="button"'
+        + ' data-tip="' + escHtml(p.sku) + '" aria-label="Pasta ' + (i + 1) + ' de ' + _carroPastas.length
         + '" onclick="fpCarrosselIr(' + i + ')"></button>').join('')
     + '</div>';
   fpCarrosselIr(0);
   /* Quem pediu menos animação não recebe troca automática. */
-  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && _carroFotos.length > 1) {
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && _carroPastas.length > 1) {
     _carroTimer = setInterval(() => fpCarrosselAndar(1), 4500);
   }
 }
 
 function fpCarrosselIr(i) {
   const box = document.getElementById('fotoCarrossel');
-  if (!box || !_carroFotos.length) return;
-  _carroI = ((i % _carroFotos.length) + _carroFotos.length) % _carroFotos.length;
-  const f = _carroFotos[_carroI];
-  box.querySelectorAll('.fp-carro-palco img').forEach((im, n) => im.classList.toggle('on', n === _carroI));
-  box.querySelectorAll('.fp-carro-ponto').forEach((p, n) => p.classList.toggle('on', n === _carroI));
+  if (!box || !_carroPastas.length) return;
+  _carroI = ((i % _carroPastas.length) + _carroPastas.length) % _carroPastas.length;
+  const p = _carroPastas[_carroI];
+  box.querySelectorAll('.fp-carro-slide').forEach((el, n) => el.classList.toggle('on', n === _carroI));
+  box.querySelectorAll('.fp-carro-ponto').forEach((d, n) => d.classList.toggle('on', n === _carroI));
   const rot = document.getElementById('fpCarroRot');
   if (rot) {
-    const quando = f.criado_em ? new Date(f.criado_em).toLocaleDateString('pt-BR') : '';
-    rot.innerHTML = '<span>' + escHtml(f.sku) + '</span>' + (quando ? '<small>' + quando + '</small>' : '');
-    rot.href = FP_DRIVE_URL + '?action=open&sku=' + encodeURIComponent(f.sku);
+    const quando = p.modificado_em ? new Date(p.modificado_em).toLocaleDateString('pt-BR') : '';
+    rot.innerHTML = '<span>' + escHtml(p.sku) + '</span>' + (quando ? '<small>' + quando + '</small>' : '');
+    rot.href = FP_DRIVE_URL + '?action=open&sku=' + encodeURIComponent(p.sku);
   }
 }
 

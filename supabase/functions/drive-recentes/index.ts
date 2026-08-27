@@ -1,12 +1,21 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 /* =============================================================================
-   drive-recentes — as pastas de SKU criadas mais recentemente no Drive, com a
-   PRIMEIRA foto de cada uma.
+   drive-recentes — as pastas de SKU MODIFICADAS mais recentemente no Drive, com
+   as DUAS primeiras fotos de cada uma.
 
    Serve o carrossel do Dashboard de fotos: o que o estúdio acabou de produzir.
-   "Recente" é a data de criação da PASTA (createdTime), e a foto é a primeira
-   em ordem natural — a mesma que a listagem usa como miniatura.
+
+   "Recente" é `modifiedTime` da PASTA, não `createdTime`. A primeira versão
+   ordenava por criação e o dono viu na hora que não eram as fotos mais
+   recentes: a pasta de SKU é criada quando o produto entra no catálogo, que
+   pode ser meses antes de alguém fotografar. Subir foto numa pasta antiga mexe
+   no `modifiedTime` dela e não no `createdTime` — logo é o `modifiedTime` que
+   responde "onde entrou foto por último".
+
+   Duas fotos por pasta porque o espaço no Dashboard é retangular: uma foto só,
+   em `object-fit: cover`, era recortada nas laterais. Vão a foto 1 e a foto 2
+   em ordem natural de nome — as mesmas que a listagem mostra primeiro.
 
    Por que uma função separada e não uma ação nova no drive-proxy: o proxy tem
    ~700 linhas e mexer nele para acrescentar uma leitura significa reimplantar
@@ -18,7 +27,8 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
    navegador. Esta função devolve só as URLs.
 
    Secrets: GOOGLE_SA_JSON, DRIVE_ROOT_FOLDER_ID (os mesmos do drive-proxy).
-     GET ?action=recentes[&n=20]
+     GET ?n=20  →  { configurado, total, pastas: [{ sku, modificado_em,
+                     criado_em, fotos: [{ file_id, file_name, thumb, cheia }] }] }
 ============================================================================= */
 
 const CORS = {
@@ -124,12 +134,14 @@ Deno.serve(async (req: Request) => {
 
     const quantas = Math.min(40, Math.max(1, Number(url.searchParams.get('n') || 20)));
 
-    /* orderBy createdTime desc: a pasta nova e a que o estudio acabou de
-       fotografar. Nome nao serve — o SKU nao tem ordem cronologica. */
+    /* orderBy modifiedTime desc: a pasta onde entrou foto por ultimo. Por
+       createdTime vinha a pasta criada por ultimo, que e outra coisa — o SKU
+       entra no catalogo antes de alguem fotografar. Nome nao serve: SKU nao tem
+       ordem cronologica. */
     const pastas = await driveGet('/files', {
       q: `'${RAIZ}' in parents and mimeType = '${PASTA_MIME}' and trashed = false`,
-      fields: 'files(id,name,createdTime)',
-      orderBy: 'createdTime desc',
+      fields: 'files(id,name,createdTime,modifiedTime)',
+      orderBy: 'modifiedTime desc',
       pageSize: String(quantas),
     });
     const lista: any[] = Array.isArray(pastas.files) ? pastas.files : [];
@@ -138,7 +150,12 @@ Deno.serve(async (req: Request) => {
        1 dia no navegador. Aqui vao so as URLs. */
     const base = (SB_URL || url.origin).replace(/\/+$/, '') + '/functions/v1/drive-proxy';
 
-    const fotos: any[] = [];
+    const urls = (id: string) => ({
+      thumb: `${base}?action=arquivo&id=${encodeURIComponent(id)}`,
+      cheia: `${base}?action=arquivo&id=${encodeURIComponent(id)}&full=1`,
+    });
+
+    const saida: any[] = [];
     /* Quatro por vez: o Drive limita requisicoes por segundo e 20 pastas em
        paralelo levam 429. */
     for (let i = 0; i < lista.length; i += 4) {
@@ -149,24 +166,34 @@ Deno.serve(async (req: Request) => {
             q: `'${p.id}' in parents and mimeType contains 'image/' and trashed = false`,
             fields: 'files(id,name)',
             orderBy: 'name_natural',
-            pageSize: '1',
+            pageSize: '2',
           });
-          const a = arq.files?.[0];
-          if (!a) return null;          // pasta criada e ainda sem foto
+          const arquivos: any[] = Array.isArray(arq.files) ? arq.files : [];
+          if (!arquivos.length) return null;   // pasta mexida e ainda sem foto
           return {
             sku: p.name,
+            modificado_em: p.modifiedTime,
             criado_em: p.createdTime,
-            file_id: a.id,
-            file_name: a.name,
-            thumb: `${base}?action=arquivo&id=${encodeURIComponent(a.id)}`,
-            cheia: `${base}?action=arquivo&id=${encodeURIComponent(a.id)}&full=1`,
+            fotos: arquivos.map((a) => ({ file_id: a.id, file_name: a.name, ...urls(a.id) })),
           };
         } catch (_e) { return null; }   // pasta ilegivel nao derruba o resto
       }));
-      res.forEach((r) => { if (r) fotos.push(r); });
+      res.forEach((r) => { if (r) saida.push(r); });
     }
 
-    const dados = { configurado: true, total: fotos.length, fotos };
+    /* `pastas` e a resposta; `fotos` continua saindo com a primeira foto de
+       cada pasta no formato antigo, para o painel nao ficar em branco na
+       janela entre este deploy e o dele. */
+    const dados = {
+      configurado: true,
+      total: saida.length,
+      pastas: saida,
+      fotos: saida.map((p) => ({
+        sku: p.sku, criado_em: p.modificado_em,
+        file_id: p.fotos[0].file_id, file_name: p.fotos[0].file_name,
+        thumb: p.fotos[0].thumb, cheia: p.fotos[0].cheia,
+      })),
+    };
     cache = { em: Date.now(), dados };
     return json(dados);
   } catch (err) {
