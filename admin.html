@@ -21492,17 +21492,24 @@ const FP_TOUR_BOAS_VINDAS = {
   ]
 };
 
-let _tutPendente = null;   // tutorial de tela esperando o boas-vindas acabar
+let _tutPendente = null;         // tutorial de tela esperando a vez
+/* Bandeira propria, e nao "ja viu o boas-vindas": a marca e gravada ANTES de
+   abrir (para o tour nao recomeçar se a pessoa recarregar no meio), entao a
+   chamada seguinte de fpAjudaAtualizar via o boas-vindas como visto e soltava
+   o tutorial da tela por cima dele. */
+let _tutGeralPendente = false;
 
 /* Chamado no boot. Se for a primeira vez desta pessoa, o boas-vindas roda e o
    tutorial da tela entra logo depois. */
 function fpBoasVindasTalvez() {
   if (fpTutJaViu('boas-vindas')) { fpTutFilaSoltar(); return; }
+  _tutGeralPendente = true;
   fpTutMarcar('boas-vindas');
   setTimeout(() => fpTutAbrir('boas-vindas', { aoFechar: fpTutFilaSoltar }), 900);
 }
 
 function fpTutFilaSoltar() {
+  _tutGeralPendente = false;
   const c = _tutPendente; _tutPendente = null;
   if (c) setTimeout(() => { if (fpAjudaChave() === c) fpTutAbrir(c); }, 400);
 }
@@ -21520,9 +21527,9 @@ function fpAjudaAtualizar() {
   if (_ajudaChave && _ajudaChave !== chave) fpAjudaFechar();
   _ajudaChave = chave;
   if (fpTutJaViu(chave) || _tutAtivo) return;
-  /* Boas-vindas ainda por vir: o da tela espera a vez em vez de brigar por
-     ela. Dois tours ao mesmo tempo e um por cima do outro. */
-  if (!fpTutJaViu('boas-vindas')) { _tutPendente = chave; return; }
+  /* Boas-vindas ainda por vir ou rodando: o da tela espera a vez em vez de
+     brigar por ela. Dois tours ao mesmo tempo e um por cima do outro. */
+  if (_tutGeralPendente || !fpTutJaViu('boas-vindas')) { _tutPendente = chave; return; }
   fpTutMarcar(chave);
   /* Um respiro para a listagem terminar de pintar: os passos apontam para a
      primeira linha, e ela so existe depois do render. */
@@ -21568,14 +21575,19 @@ function fpAjudaFechar() {
 let _tutPassos = [], _tutI = 0, _tutAtivo = false, _tutFocoAnterior = null, _tutAoFechar = null;
 
 function fpTutAbrir(chave, opcoes) {
+  const fim = (opcoes && opcoes.aoFechar) || null;
   const d = (chave === 'boas-vindas') ? FP_TOUR_BOAS_VINDAS : FP_AJUDA[chave];
-  if (!d || !d.passos) return;
-  _tutAoFechar = (opcoes && opcoes.aoFechar) || null;
+  /* Desistir tambem tem de avisar quem esperava: sem isto, um tour sem passo
+     visivel deixa o da tela preso na fila para sempre. */
+  if (!d || !d.passos) { if (fim) fim(); return; }
+  _tutAoFechar = fim;
   /* Passo cujo alvo nao esta na tela e descartado agora, nao pulado no meio:
      assim o contador "2 de 4" nunca mente. */
   /* Nao basta existir: o slot da barra de acoes em massa tem altura 0 e um
      `offsetParent` valido — apontar para ele abria um buraco de 12px em cima
      de nada (medido). O alvo tem de ter area. */
+  /* Ja ha um tour na tela: o novo espera, nao empurra. */
+  if (_tutAtivo) { if (fim) fim(); return; }
   _tutPassos = d.passos.filter(p => {
     /* Passo com `antes` so existe DEPOIS do preparo (o item do menu do usuario
        nem esta na tela antes de abrir o menu). Nesses o alvo e aceito de
@@ -21592,7 +21604,7 @@ function fpTutAbrir(chave, opcoes) {
     const r = el.getBoundingClientRect();
     return r.width > 4 && r.height > 4;
   });
-  if (!_tutPassos.length) return;
+  if (!_tutPassos.length) { _tutAoFechar = null; if (fim) fim(); return; }
   _tutFocoAnterior = document.activeElement;
   _tutAtivo = true; _tutI = 0;
   document.getElementById('fpTutBloqueio').classList.add('show');
