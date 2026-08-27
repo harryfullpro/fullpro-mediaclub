@@ -40,6 +40,56 @@ Medindo, dois dos três não eram o que pareciam:
   (não corta em nenhuma proporção) e a faixa caiu para `.46`, com sombra na
   letra em vez de chapa forte.
 
+### O corte da foto tinha duas fases
+
+Ele voltou dizendo que a foto continuava cortada e as alturas diferentes. A tela
+dele era **anterior ao deploy** do `contain` — medido na largura real dele
+(1830px, 1400 úteis): `difBordas: 0` e `object-fit: contain`. Mas ele estava
+certo sobre haver problema, só não era o que parecia:
+
+1. `cover` numa célula de **341×252** cortava **89px, 26% da foto** — muito pior
+   do que os 8px que eu havia medido a 1280.
+2. `contain` com células de `1fr` matou o corte e criou buraco: a foto quadrada
+   fica **252×252 centrada em 341**, ou seja 44px de vazio de cada lado e
+   **88px de buraco entre as duas**.
+
+Correção: as duas fotos ocupam a **altura** do palco e a largura que a proporção
+pedir, coladas por 3px, o par centrado. Nada cortado, e o que sobra vai para as
+bordas de fora. Medido: 252 + 3 + 252, margem de 89px simétrica.
+
+E o fundo do palco passou de `--bg-elev` para `--bg-card`: **38 das 40**
+miniaturas são 320×320, então essa margem existe quase sempre — em cinza claro
+ela virava um retângulo em volta de foto de produto em fundo branco; no branco
+do cartão ela é a própria mesa da foto.
+
+### Filtro por destino: fixo, no modelo da barra de ações em massa
+
+> *"esse filtro por destino vamos deixar fixo e no mesmo modelo que fizemos com
+> a barra de ações em massa lá em produção"*
+
+Era um botão com moldura que abria um painel: duas interações para um filtro que
+se usa sempre, e uma caixa branca no meio de uma tela que não tem mais caixas.
+Virou barra grudada no topo com fio embaixo e sombra só quando gruda — a mesma
+mecânica de `.fp-lote-slot` / `fpLoteSombra`, com o respiro de 54px reservado no
+`#projectsList`. O rótulo de cada destino leva **o tom exato da tag da linha**,
+agora em token (`--dest-*`).
+
+Um defeito achado aí: **`display: inline-flex` da classe `.fp-lote-link` vence o
+`[hidden] { display: none }` do navegador**, então o "Mostrar todos" ficava na
+tela sem filtro nenhum aplicado. Precisou de `.fp-lote-link[hidden]`.
+
+> Não deu para observar a sombra aparecendo na rolagem: a aba do painel de
+> navegação deste ambiente reporta `document.hidden: true` e não despacha evento
+> de `scroll` (mesmo artefato que já tinha derrubado o `requestAnimationFrame`).
+> O que ficou verificado é a lógica: com a barra grudada, `fpLoteSombra()` marca
+> `grudada` e a sombra entra em transição.
+
+### "Detalhes do dia" até a borda
+
+Os tetos de largura (600/680/820/960px) eram de quando o painel era faixa com
+fio. Em caixa, parar antes da borda deixava a tela desalinhada com a tabela
+abaixo. Sem teto: borda direita do painel **1745px**, igual à da tabela.
+
 ### Solicitações virou a listagem da Agenda
 
 > *"acho que podemos fundir o módulo Solicitações com Agenda… as solicitações
