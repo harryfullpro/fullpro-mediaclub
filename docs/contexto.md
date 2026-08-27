@@ -253,6 +253,12 @@ O WhatsApp do rodapé (47 3466-6977) é o da **loja**, e continua como está.
 Área em branco enquanto a rede responde não é aceitável. A tela abre com a
 estrutura montada e uma barra em animação no lugar exato de cada número.
 
+### Primeira vez é da pessoa, não do navegador
+Quem já viu cada tutorial fica em `mc_admin_users.tutoriais`. Um tour de
+boas-vindas roda uma vez na vida, antes do tutorial da tela, e mostra menu,
+preferências, Conta (onde se troca a senha padrão), o besouro e o `?`. Depois
+disso tudo é opcional: o `?` reabre o tutorial da tela e o tour geral.
+
 ### Toda tela de foto explica a si mesma
 O `?` flutuante traz as instruções da tela e um tutorial guiado que abre sozinho
 na primeira visita de cada pessoa a cada módulo. Hoje cobre Dashboard de fotos,

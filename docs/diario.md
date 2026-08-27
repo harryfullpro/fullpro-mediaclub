@@ -1,5 +1,57 @@
 # Diário
 
+## 26/08/2026 · Tour de boas-vindas, e o motivo de o tutorial voltar
+
+> *"Hoje fui entrar e recebi o tutorial novamente. Quero garantir que seja
+> imposto o tour guiado somente na primeira vez que o usuário acessa de fato."*
+
+**A causa: quem já viu estava no `localStorage`.** "Primeira vez" é um fato da
+**pessoa**, não do navegador — em outra máquina, em outro navegador ou numa
+janela anônima, tudo voltava a ser primeira viagem. A marca passou para a coluna
+`tutoriais` de `mc_admin_users`. Subir `FP_TUT_VERSAO` continua sendo o jeito de
+fazer todo mundo rever.
+
+**Tour de boas-vindas**, uma vez na vida, antes de qualquer tutorial de tela:
+
+1. o menu lateral e o que ele mostra de acordo com a permissão;
+2. as preferências no botão da foto — tema, idioma, notificações;
+3. **a Conta, dizendo com todas as letras que é ali que se troca a senha
+   padrão**;
+4. o besouro, que reporta bug de qualquer tela e até por cima de um popup;
+5. o `?`, explicando que os tutoriais das telas podem ser revistos quando quiser.
+
+O painel do `?` ganhou "Rever o tour de boas-vindas", discreto, abaixo do
+tutorial da tela.
+
+### Três defeitos que o tour geral revelou
+
+- **O tutorial da tela abria por cima do boas-vindas.** A marca é gravada
+  *antes* de abrir (para o tour não recomeçar se a pessoa recarregar no meio),
+  e a chamada seguinte de `fpAjudaAtualizar` então via o boas-vindas como "já
+  visto" e soltava o da tela. Quem controla a fila agora é uma bandeira própria,
+  viva só enquanto o tour geral está pendente ou rodando.
+- **`offsetParent` não é teste de visibilidade.** Para elemento
+  `position: fixed` ele é **sempre** `null` — e foi o que derrubou o passo do
+  besouro: o botão estava na tela, com 42×42, e mesmo assim era descartado. O
+  teste virou área real mais `display` e `visibility`.
+- **Desistir de abrir um tour não avisava quem esperava.** Sem passo visível,
+  sem verbete ou com outro tour já na tela, o da tela ficava preso na fila para
+  sempre.
+
+**Passo com preparo.** Os passos ganharam `antes` e `depois`: o da Conta **abre**
+o menu do usuário para poder apontar o item, e fecha ao sair — inclusive quando
+se sai no meio, senão o menu fica aberto. Esses passos não passam pelo filtro de
+alvo visível (o item nem está na tela antes do preparo): são aceitos de antemão
+e o próprio `fpTutIr` pula se na hora não houver nada.
+
+**Armadilha de medição, de novo.** O passo do menu lateral aparecia como
+descartado nos meus testes: o painel do navegador estava com viewport de
+**0×0**, e tudo dimensionado em `vh` computa zero. Com a janela emulada em
+1280×860, os cinco passos aparecem e cada recorte casa com seu alvo. Antes de
+culpar o código, confira `innerHeight`.
+
+---
+
 ## 26/08/2026 · O seletor cobre o painel inteiro, e a Fotografia ganha dicas
 
 > *"amplia esse controle de cores para todas as cores do site com uma descrição

@@ -104,6 +104,15 @@ ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 
 ## Supabase
 
+### `mc_admin_users.tutoriais`
+jsonb com as marcas de tutorial já visto, no formato `"v<versão>:<nome>": 1`.
+Para fazer todo mundo rever, o caminho normal é subir `FP_TUT_VERSAO` no
+`admin.html`. Para zerar de vez:
+
+```sql
+update public.mc_admin_users set tutoriais = '{}'::jsonb;
+```
+
 ### `mc_theme_colors`
 Uma linha por tema (`claro` / `escuro`), coluna `cores` jsonb com `token -> hex`.
 Só os realces; mapa vazio = tudo no padrão de fábrica. RLS liberando `anon` para
