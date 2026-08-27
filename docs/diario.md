@@ -93,6 +93,44 @@ Testado com um SVG malicioso bem formado: `script`, `foreignObject`, `image`,
 `style="fill:url(#x)"` — **todos removidos**, sobrando só a geometria. Limite de
 60 KB.
 
+### O borrão: achatar cor destrói ícone de duas cores
+
+> *"subi um svg personalizado mas olha como ficou"*
+
+A logo do Mercado Livre subiu e virou uma **mancha cinza sem forma**. A causa foi
+uma decisão minha: achatar toda cor em `currentColor` por padrão, para o seletor
+de cor funcionar em qualquer arquivo.
+
+Parte daquele desenho é **knockout** — uma forma clara POR CIMA da escura, que é
+o que desenha as mãos. Achatando as duas na mesma cor, a de cima deixa de
+recortar a de baixo e sobra a silhueta maciça. O padrão certo não é uma
+preferência fixa: **é o desenho que decide**. `fpIcoCoresDistintas` conta as
+cores e, de duas para cima, o ícone nasce com as do arquivo (e o seletor de cor
+fica desligado, com a razão na dica).
+
+Duas exportações comuns quebrariam do mesmo jeito, tratadas junto — as duas
+verificadas com um arquivo de exemplo de cada:
+
+- **Illustrator** põe as cores numa folha de estilo interna e liga por
+  `class="st0"`. A folha não sobrevive à higienização (CSS aceita `url()` e
+  `@import`) e o desenho chegaria **sem cor nenhuma**. Agora as cores são lidas
+  do navegador e escritas como atributo antes da poda — só em elemento com
+  `class`, senão o valor calculado (preto) destruiria a herança de
+  `currentColor` de que o resto do sistema depende.
+- **Figma com sombra** exporta `filter="url(#f0)"`. O `<filter>` sai na poda, e
+  um filtro apontando para o que não existe faz o elemento **não renderizar** —
+  é o que a especificação manda. Sumiria o desenho inteiro, sem erro. O atributo
+  sai junto com o filtro.
+
+O painel ganhou **prévia no tamanho real de uso (18px)** ao lado da ampliada —
+desenho que funciona a 40px vira mancha a 18px, e é a 18px que ele vai viver — e
+um "Como exportar o SVG" com as regras que valem.
+
+> E o validador me enganou no meio disso: o comentário que eu tinha escrito
+> continha a palavra `style` entre sinais de menor/maior, e a checagem de chaves
+> do CSS varre o arquivo por essa marca — acusou um bloco desbalanceado que não
+> existia. Mesma armadilha de agosto, mesma correção: não escrever a marca.
+
 Dois detalhes que só aparecem ao fazer:
 
 - Os atributos de traço (`fill`, `stroke`, `stroke-width`…) vivem no `<svg>` de
