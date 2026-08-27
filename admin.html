@@ -5797,6 +5797,10 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   background: none; border: 0; padding: 0 2px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600;
 }
 .fp-lote-link:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
+/* `display: inline-flex` da classe vence o `[hidden] { display: none }` do
+   navegador: sem esta linha, o "Mostrar todos" do filtro de destino ficava na
+   tela mesmo sem filtro nenhum aplicado. */
+.fp-lote-link[hidden] { display: none; }
 .fp-lote-link svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
 .fp-lote-link.perigo { color: var(--primary); }
 .fp-lote-link.neutro { color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px; }
