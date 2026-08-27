@@ -533,14 +533,61 @@
      termina o segundo cartao (2c+g nos dois casos) e a direita comeca onde
      comeca o terceiro. A altura vem da fila; a animacao se estica. */
   .fp-dash-duo { display: grid; grid-template-columns: 1fr 1fr; gap: var(--fp-col-gap); align-items: stretch; }
-  .fp-dash-anim { position: relative; min-height: 220px; color: var(--text); pointer-events: none; }
-  /* Absoluta para a animacao nunca ditar a altura da linha — quem manda e a fila. */
-  .fp-dash-anim svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  /* ── Carrossel das fotos novas (Dashboard de fotos) ───────────────────────
+     Substituiu a animação vetorial que ficava aqui. A animação era bonita mas
+     não dizia nada; este espaço mostra o que o estúdio acabou de produzir.
+     A animação está guardada em mc_guardados (chave anim-fluxo-foto). */
+  .fp-dash-carro { position: relative; min-height: 220px; display: flex; flex-direction: column; }
+  .fp-carro-palco {
+    position: relative; flex: 1; min-height: 220px; overflow: hidden;
+    border-radius: 10px; background: var(--bg-elev);
+  }
+  .fp-carro-palco img {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    opacity: 0; transition: opacity .5s ease;
+  }
+  .fp-carro-palco img.on { opacity: 1; }
+  /* Gradiente só na faixa de baixo: o nome do produto precisa ser legível em
+     cima de foto clara e de foto escura, e escurecer a imagem inteira
+     estragaria a foto. */
+  .fp-carro-rot {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 26px 12px 10px;
+    background: linear-gradient(transparent, rgba(0,0,0,.72));
+    color: #fff; font-size: 12px; font-weight: 600; letter-spacing: .01em;
+    display: flex; align-items: baseline; gap: 8px;
+    text-decoration: none;
+  }
+  .fp-carro-rot small { font-weight: 500; opacity: .75; font-size: 11px; margin-left: auto; }
+  .fp-carro-seta {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.42); border: 0; color: #fff; cursor: pointer;
+    opacity: 0; transition: opacity .15s ease;
+  }
+  .fp-carro-palco:hover .fp-carro-seta, .fp-carro-seta:focus-visible { opacity: 1; }
+  .fp-carro-seta.ant { left: 8px; }
+  .fp-carro-seta.prox { right: 8px; }
+  .fp-carro-seta svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  /* Pontos fora do palco: dentro, competem com a foto. */
+  .fp-carro-pontos { display: flex; gap: 5px; justify-content: center; padding: 10px 0 0; }
+  .fp-carro-ponto {
+    width: 5px; height: 5px; border-radius: 50%; padding: 0;
+    background: var(--border-hi); border: 0; cursor: pointer; transition: background .15s ease;
+  }
+  .fp-carro-ponto.on { background: var(--primary); }
+  .fp-carro-vazio {
+    flex: 1; display: flex; align-items: center; justify-content: center; text-align: center;
+    font-size: 12px; color: var(--text-muted); padding: 20px;
+  }
   @media (max-width: 1000px) {
-    /* Sem largura para duas colunas, a animacao e enfeite: sai de cena em vez de
-       empurrar a fila para baixo da dobra. */
+    .fp-dash-carro { display: none; }
+  }
+  @media (max-width: 1000px) {
+    /* Sem largura para duas colunas, o carrossel e complemento: sai de cena em
+       vez de empurrar a fila para baixo da dobra. */
     .fp-dash-duo { grid-template-columns: 1fr; }
-    .fp-dash-anim { display: none; }
   }
   .stat-card { padding: 0; }
   .stat-card .label {
@@ -19522,95 +19569,12 @@ async function fpNotaGravar(sku, nota, comentario) {
 }
 
 /* ═══════════════ PANORAMA ═══════════════ */
-/* A animação do fluxo de fotografia, ao lado da fila. Vazia = a fila ocupa a
-   linha inteira (ver .fp-dash-duo). */
-const FP_ANIM_FOTO = `<svg id="fpAnimFluxo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 260" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Fluxo da foto do produto: catálogo, mesa, captura, edição e ângulos finais" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block;pointer-events:none">
-<style>
-#fpAnimFluxo *{animation-duration:16s;animation-iteration-count:infinite;animation-fill-mode:both;animation-timing-function:cubic-bezier(.25,.8,.25,1);vector-effect:non-scaling-stroke}
-#fpAnimFluxo .fpAnimSc{opacity:0;animation-timing-function:linear}
-#fpAnimFluxo .fpAnimDr{stroke-dasharray:100;stroke-dashoffset:100}
-#fpAnimFluxo .fpAnimRa{opacity:.22;stroke-dasharray:5 11;animation-name:fpAnimRa;animation-timing-function:linear}
-#fpAnimFluxo .fpAnimG1{animation-name:fpAnimW1}
-#fpAnimFluxo .fpAnimG23{animation-name:fpAnimW2}
-#fpAnimFluxo .fpAnimG4{animation-name:fpAnimW3}
-#fpAnimFluxo .fpAnimG5{animation-name:fpAnimW4}
-#fpAnimFluxo .fpAnimCur{animation-name:fpAnimCur}
-#fpAnimFluxo .fpAnimRw{animation-name:fpAnimRw}
-#fpAnimFluxo .fpAnimD1{animation-name:fpAnimD1}
-#fpAnimFluxo .fpAnimBn{animation-name:fpAnimBn}
-#fpAnimFluxo .fpAnimD2{animation-name:fpAnimD2}
-#fpAnimFluxo .fpAnimTk{animation-name:fpAnimTk}
-#fpAnimFluxo .fpAnimCm{animation-name:fpAnimCm}
-#fpAnimFluxo .fpAnimCo{animation-name:fpAnimCo}
-#fpAnimFluxo .fpAnimFl{animation-name:fpAnimFl;animation-timing-function:ease-out}
-#fpAnimFluxo .fpAnimSh{animation-name:fpAnimSh}
-#fpAnimFluxo .fpAnimMo{animation-name:fpAnimMo}
-#fpAnimFluxo .fpAnimPh{animation-name:fpAnimPh}
-#fpAnimFluxo .fpAnimCr{animation-name:fpAnimCr}
-#fpAnimFluxo .fpAnimKb{animation-name:fpAnimKb;animation-timing-function:cubic-bezier(.55,.05,.35,1)}
-#fpAnimFluxo .fpAnimHr{animation-name:fpAnimHr}
-#fpAnimFluxo .fpAnimCk{animation-name:fpAnimCk}
-#fpAnimFluxo .fpAnimT1{animation-name:fpAnimT1}
-#fpAnimFluxo .fpAnimT2{animation-name:fpAnimT1;animation-delay:.22s}
-#fpAnimFluxo .fpAnimT3{animation-name:fpAnimT1;animation-delay:.45s}
-@keyframes fpAnimRa{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-192}}
-@keyframes fpAnimW1{0%,19%{opacity:1}21%,97.5%{opacity:0}99.5%,100%{opacity:1}}
-@keyframes fpAnimW2{0%,19%{opacity:0}21%,54%{opacity:1}56%,100%{opacity:0}}
-@keyframes fpAnimW3{0%,54%{opacity:0}56%,76.5%{opacity:1}78.5%,100%{opacity:0}}
-@keyframes fpAnimW4{0%,76.5%{opacity:0}78.5%,97.5%{opacity:1}99.5%,100%{opacity:0}}
-@keyframes fpAnimCur{0%,1.5%{transform:translate(170px,46px)}5.5%,6.2%{transform:translate(0,0) scale(1)}6.8%{transform:translate(0,0) scale(.92)}7.4%,13%{transform:translate(0,0) scale(1)}17.5%,100%{transform:translate(170px,46px)}}
-@keyframes fpAnimRw{0%,7.2%{stroke-dashoffset:100}16%,24%{stroke-dashoffset:0}26%,100%{stroke-dashoffset:100}}
-@keyframes fpAnimD1{0%,8%{transform:translate(-240px,0) scale(1)}14%{transform:translate(4px,0) scale(.55)}18.2%{transform:translate(4px,0) scale(.55);animation-timing-function:cubic-bezier(.55,0,.85,.45)}21%{transform:translate(400px,0) scale(1)}26%,100%{transform:translate(-240px,0) scale(1)}}
-@keyframes fpAnimBn{0%,19.5%{stroke-dashoffset:100}24%,58%{stroke-dashoffset:0}60%,100%{stroke-dashoffset:100}}
-@keyframes fpAnimD2{0%,21.5%{transform:translate(-300px,-8px)}26.5%{transform:translate(0,-8px);animation-timing-function:cubic-bezier(.6,0,.85,.5)}28%,58%{transform:translate(0,0)}60%,100%{transform:translate(-300px,-8px)}}
-@keyframes fpAnimTk{0%,27.6%{opacity:0;transform:scale(.6)}29%{opacity:.9;transform:scale(1)}31.5%,58%{opacity:0;transform:scale(1.3)}60%,100%{opacity:0;transform:scale(.6)}}
-@keyframes fpAnimCm{0%,28%{transform:translate(0,-120px) scale(1)}34%,40.5%{transform:translate(0,0) scale(1)}41.3%{transform:translate(0,0) scale(.955)}43.5%,58%{transform:translate(0,0) scale(1)}60%,100%{transform:translate(0,-120px) scale(1)}}
-@keyframes fpAnimCo{0%,35%{opacity:0;transform:scale(1.35)}39%,58%{opacity:.9;transform:scale(1)}60%,100%{opacity:0;transform:scale(1.35)}}
-@keyframes fpAnimFl{0%,40.6%{opacity:0;transform:scale(.4)}41.3%{opacity:.85;transform:scale(1)}45.5%,58%{opacity:0;transform:scale(2.4)}60%,100%{opacity:0;transform:scale(.4)}}
-@keyframes fpAnimSh{0%,50%{transform:translateX(0);animation-timing-function:cubic-bezier(.55,0,.85,.45)}54.5%,58%{transform:translateX(310px)}60%,100%{transform:translateX(0)}}
-@keyframes fpAnimMo{0%,54%{transform:translateX(260px)}59%,80%{transform:translateX(0)}82%,100%{transform:translateX(260px)}}
-@keyframes fpAnimPh{0%,56%{transform:translateX(-330px)}62%{transform:translateX(0)}74.5%{transform:translateX(0);animation-timing-function:cubic-bezier(.55,0,.85,.45)}79%,84%{transform:translateX(330px)}86%,100%{transform:translateX(-330px)}}
-@keyframes fpAnimCr{0%,63%{opacity:0;transform:scale(1.3)}65%{opacity:1;transform:scale(1.12)}67.5%,84%{opacity:1;transform:scale(.97)}86%,100%{opacity:0;transform:scale(1.3)}}
-@keyframes fpAnimKb{0%,68%{transform:translateX(0)}74%,84%{transform:translateX(90px)}86%,100%{transform:translateX(0)}}
-@keyframes fpAnimHr{0%{transform:translateX(0)}2%,76.5%{transform:translateX(-290px)}82%,100%{transform:translateX(0)}}
-@keyframes fpAnimCk{0%{stroke-dashoffset:0}2%,82%{stroke-dashoffset:100}86%,100%{stroke-dashoffset:0}}
-@keyframes fpAnimT1{0%{opacity:1;transform:translateY(0)}2%,84%{opacity:0;transform:translateY(7px)}86.5%,100%{opacity:1;transform:translateY(0)}}
-@media (prefers-reduced-motion:reduce){#fpAnimFluxo *{animation:none!important}#fpAnimFluxo .fpAnimG23{opacity:1}#fpAnimFluxo .fpAnimDr{stroke-dashoffset:0}}
-</style>
-<defs>
-<clipPath id="fpAnimClip"><rect width="460" height="260"/></clipPath>
-<g id="fpAnimPeca"><path vector-effect="non-scaling-stroke" d="M-32 -6L30 -12a6 12 0 0 1 0 24L-32 12a3.5 9 0 0 1 0-18z"/><ellipse vector-effect="non-scaling-stroke" cx="33" cy="0" rx="2.4" ry="6.5"/><path vector-effect="non-scaling-stroke" d="M-22 -7v19M-33 0l-19-5M-33 8l-18-5M-52 -5l1 8"/></g>
-</defs>
-<g clip-path="url(#fpAnimClip)">
-<path class="fpAnimRa" d="M4 228H456"/>
-<g class="fpAnimSc fpAnimG1">
-<g opacity=".3"><rect x="100" y="56" width="260" height="44" rx="6"/><path d="M116 78h184"/><rect x="100" y="160" width="260" height="44" rx="6"/><path d="M116 182h184"/></g>
-<path class="fpAnimDr fpAnimRw" pathLength="100" d="M106 108h248a6 6 0 0 1 6 6v32a6 6 0 0 1-6 6H106a6 6 0 0 1-6-6v-32a6 6 0 0 1 6-6zM116 114h48a4 4 0 0 1 4 4v24a4 4 0 0 1-4 4h-48a4 4 0 0 1-4-4v-24a4 4 0 0 1 4-4zM182 124h150M182 138h108"/>
-<g transform="translate(140 130)"><g class="fpAnimD1"><use href="#fpAnimPeca"/></g></g>
-<g transform="translate(306 132)"><path class="fpAnimCur" d="M0 0v15.5l3.9-3.7 2.9 6.2 2.8-1.3-2.9-6.1 5.2-.5z"/></g>
-</g>
-<g class="fpAnimSc fpAnimG23">
-<path class="fpAnimDr fpAnimBn" pathLength="100" d="M120 186h220M150 186v28M310 186v28M166 186v-7M278 186v-7"/>
-<g class="fpAnimSh">
-<g transform="translate(230 174)"><g class="fpAnimD2"><use href="#fpAnimPeca"/></g></g>
-<g transform="translate(222 172)"><path class="fpAnimCo" d="M-58 -10v-10h12M58 -10v-10h-12M-58 10v10h12M58 10v10h-12"/></g>
-</g>
-<g transform="translate(230 187)"><path class="fpAnimTk" opacity="0" d="M-36 -1l-6-6M36 -1l6-6"/></g>
-<g transform="translate(222 66)"><g class="fpAnimCm"><rect x="-40" y="-22" width="80" height="44" rx="7"/><rect x="-12" y="-31" width="24" height="9" rx="3"/><circle r="13.5"/><circle r="5.5"/></g></g>
-<g transform="translate(222 66)"><circle class="fpAnimFl" opacity="0" r="18"/></g>
-</g>
-<g class="fpAnimSc fpAnimG4">
-<g class="fpAnimMo"><rect x="130" y="64" width="200" height="126" rx="8"/><path d="M130 84h200M230 190v24M202 214h56M180 172h100"/><g transform="translate(185 172)"><circle class="fpAnimKb" r="4.5"/></g></g>
-<g transform="translate(230 126)"><g class="fpAnimPh"><rect x="-48" y="-36" width="96" height="72" rx="4"/><use href="#fpAnimPeca" transform="translate(6 0) scale(.8)"/><path class="fpAnimCr" d="M-38 -12v-12h12M38 -12v-12h-12M-38 12v12h12M38 12v12h-12"/></g></g>
-</g>
-<g class="fpAnimSc fpAnimG5">
-<g transform="translate(80 130)"><g class="fpAnimHr"><rect x="-60" y="-45" width="120" height="90" rx="5"/><use href="#fpAnimPeca" transform="translate(8 0)"/><path class="fpAnimDr fpAnimCk" pathLength="100" d="M32 26l6 6 11-13"/></g></g>
-<g transform="translate(198 130)"><g class="fpAnimT1"><rect x="-42" y="-31.5" width="84" height="63" rx="4"/><use href="#fpAnimPeca" transform="translate(5 0) scale(.6)"/></g></g>
-<g transform="translate(298 130)"><g class="fpAnimT2"><rect x="-42" y="-31.5" width="84" height="63" rx="4"/><g transform="translate(8 0)"><path d="M-26 -6L16 -13a5.5 13 0 0 1 0 26L-26 8a3.5 7 0 0 1 0-14z"/><ellipse cx="18.5" cy="0" rx="2.6" ry="7.5"/><path d="M-27 -1l-11-4M-27 6l-10-3M-38 -5l1 8"/></g></g></g>
-<g transform="translate(398 130)"><g class="fpAnimT3"><rect x="-42" y="-31.5" width="84" height="63" rx="4"/><circle r="13"/><circle r="6.5"/></g></g>
-</g>
-</g>
-</svg>`;
+/* A animacao vetorial do fluxo da foto (cinco cenas em linha branca) morava
+   aqui e rodava ao lado da Fila por prioridade. Saiu em 27/08/2026: o espaco
+   passou a mostrar as fotos novas do Drive, que dizem algo. O SVG inteiro esta
+   guardado no banco, em mc_guardados, chave `anim-fluxo-foto` — nao foi
+   jogado fora, so tirado do caminho. */
+
 
 /* Uma barra em animação no lugar exato do número. */
 function fpSkelTxt(larg, alt) {
@@ -19667,7 +19631,7 @@ function fpPanoramaHtml(d) {
     /* A animação é decorativa: fora do alcance do leitor de tela e do cursor.
        Com a constante vazia, o grid de uma coluna devolve a linha inteira à
        fila, sem buraco. */
-    + '<div class="fp-dash-anim" aria-hidden="true">' + FP_ANIM_FOTO + '</div>'
+    + '<div class="fp-dash-carro" id="fotoCarrossel"></div>'
     + '</div>'
 
     + (lotes.length ? '<div class="fp-prod"><div class="fp-prod-faixa"><b>Lotes em aberto</b></div>'
@@ -19758,6 +19722,10 @@ async function renderFotoPanorama() {
   fpFotoCarimbo(data.atualizado_em);
   box.innerHTML = fpPanoramaHtml(data);
   fpDriveCarregar(((data.sem_foto_estoque) || []).map(p => p.sku), box);
+  /* Depois do painel pintado, e sem segurar nada: a leitura do Drive leva
+     alguns segundos e o numero que o operador espera nao pode esperar por
+     foto de enfeite. */
+  fpCarrosselCarregar().catch(e => console.warn('carrossel', e));
 
   /* Só agora o catálogo, e sem segurar nada: são 2.566 linhas em três páginas
      que dividiriam banda com a chamada do painel — medido, atrasava o número
@@ -22090,6 +22058,119 @@ async function fpCoresSalvar() {
   } catch (e) {
     console.warn('salvar cores', e);
     fpToast('Não deu para salvar: ' + (e.message || e), 'erro');
+  }
+}
+
+
+/* ==========================================================================
+   CARROSSEL DAS FOTOS NOVAS (Dashboard de fotos, 2026-08-27)
+
+   Tomou o lugar da animação vetorial do fluxo da foto. A animação era bonita e
+   não dizia nada; o espaço agora mostra o que o estúdio acabou de produzir.
+   Ela está guardada no banco, em mc_guardados (chave `anim-fluxo-foto`), para
+   ser reaproveitada em outro lugar.
+
+   De onde vêm as fotos: a função `drive-recentes` devolve as 20 pastas de SKU
+   criadas mais recentemente no Drive e, de cada uma, a PRIMEIRA foto — a mesma
+   que a listagem usa como miniatura. A ordem de exibição é sorteada a cada
+   abertura, então duas visitas seguidas não mostram a mesma sequência.
+   ========================================================================== */
+
+const FP_RECENTES_URL = ((window.FULLPRO_CONFIG && window.FULLPRO_CONFIG.SUPABASE_URL) || '')
+  .replace(/\/+$/, '') + '/functions/v1/drive-recentes';
+
+let _carroFotos = [], _carroI = 0, _carroTimer = null, _carroVez = 0;
+
+function fpCarrosselParar() { if (_carroTimer) { clearInterval(_carroTimer); _carroTimer = null; } }
+
+/* Sorteio de Fisher-Yates. `sort(() => Math.random() - .5)` parece embaralhar e
+   não embaralha: a ordem depende do algoritmo de ordenação e as primeiras
+   posições ficam viciadas. */
+function fpEmbaralhar(a) {
+  const v = a.slice();
+  for (let i = v.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [v[i], v[j]] = [v[j], v[i]];
+  }
+  return v;
+}
+
+async function fpCarrosselCarregar() {
+  const box = document.getElementById('fotoCarrossel');
+  if (!box) return;
+  const vez = ++_carroVez;
+  fpCarrosselParar();
+  box.innerHTML = '<div class="fp-carro-palco"></div><div class="fp-carro-pontos"></div>';
+  try {
+    const r = await fetch(FP_RECENTES_URL + '?n=20', {
+      headers: { Authorization: 'Bearer ' + (window.FULLPRO_CONFIG || {}).SUPABASE_ANON_KEY }
+    });
+    const d = await r.json();
+    if (vez !== _carroVez) return;                 // o painel foi repintado no meio
+    _carroFotos = fpEmbaralhar((d && d.fotos) || []);
+    if (!_carroFotos.length) {
+      box.innerHTML = '<div class="fp-carro-vazio">Nenhuma foto nova no Drive ainda.</div>';
+      return;
+    }
+    _carroI = 0;
+    fpCarrosselPintar();
+  } catch (e) {
+    console.warn('carrossel de fotos', e);
+    if (vez === _carroVez) box.innerHTML = '<div class="fp-carro-vazio">Não deu para ler as fotos do Drive.</div>';
+  }
+}
+
+function fpCarrosselPintar() {
+  const box = document.getElementById('fotoCarrossel');
+  if (!box || !_carroFotos.length) return;
+  const seta = (lado, d, rot) => '<button class="fp-carro-seta ' + lado + '" type="button" data-tip="' + rot
+    + '" aria-label="' + rot + '" onclick="fpCarrosselAndar(' + d + ')">'
+    + '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="' + (d < 0 ? '15 18 9 12 15 6' : '9 18 15 12 9 6') + '"/></svg></button>';
+
+  /* Todas as <img> no DOM de uma vez, com loading=lazy: trocar o `src` a cada
+     passo fazia a foto sumir e reaparecer, e o navegador rebaixava tudo de
+     novo ao voltar. Assim a troca é só de opacidade. */
+  box.innerHTML = '<div class="fp-carro-palco">'
+    + _carroFotos.map((f, i) => '<img src="' + escHtml(f.thumb) + '" alt="' + escHtml(f.sku)
+        + '" class="' + (i === 0 ? 'on' : '') + '" loading="' + (i === 0 ? 'eager' : 'lazy') + '">').join('')
+    + '<a class="fp-carro-rot" id="fpCarroRot" target="_blank" rel="noopener"'
+    + ' data-tip="Abrir a pasta deste produto no Drive"></a>'
+    + seta('ant', -1, 'Foto anterior') + seta('prox', 1, 'Próxima foto')
+    + '</div>'
+    + '<div class="fp-carro-pontos">'
+    + _carroFotos.map((f, i) => '<button class="fp-carro-ponto' + (i === 0 ? ' on' : '') + '" type="button"'
+        + ' data-tip="' + escHtml(f.sku) + '" aria-label="Foto ' + (i + 1) + ' de ' + _carroFotos.length
+        + '" onclick="fpCarrosselIr(' + i + ')"></button>').join('')
+    + '</div>';
+  fpCarrosselIr(0);
+  /* Quem pediu menos animação não recebe troca automática. */
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && _carroFotos.length > 1) {
+    _carroTimer = setInterval(() => fpCarrosselAndar(1), 4500);
+  }
+}
+
+function fpCarrosselIr(i) {
+  const box = document.getElementById('fotoCarrossel');
+  if (!box || !_carroFotos.length) return;
+  _carroI = ((i % _carroFotos.length) + _carroFotos.length) % _carroFotos.length;
+  const f = _carroFotos[_carroI];
+  box.querySelectorAll('.fp-carro-palco img').forEach((im, n) => im.classList.toggle('on', n === _carroI));
+  box.querySelectorAll('.fp-carro-ponto').forEach((p, n) => p.classList.toggle('on', n === _carroI));
+  const rot = document.getElementById('fpCarroRot');
+  if (rot) {
+    const quando = f.criado_em ? new Date(f.criado_em).toLocaleDateString('pt-BR') : '';
+    rot.innerHTML = '<span>' + escHtml(f.sku) + '</span>' + (quando ? '<small>' + quando + '</small>' : '');
+    rot.href = FP_DRIVE_URL + '?action=open&sku=' + encodeURIComponent(f.sku);
+  }
+}
+
+/* Clicar na seta reinicia o relógio: se não reiniciasse, a troca automática
+   poderia cair 200 ms depois do clique e passar duas fotos de uma vez. */
+function fpCarrosselAndar(d) {
+  fpCarrosselIr(_carroI + d);
+  if (_carroTimer) {
+    clearInterval(_carroTimer);
+    _carroTimer = setInterval(() => fpCarrosselAndar(1), 4500);
   }
 }
 
