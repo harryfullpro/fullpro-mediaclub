@@ -1,5 +1,68 @@
 # Diário
 
+## 27/08/2026 · Login vira Supabase Auth (e o que a chave pública alcançava)
+
+> *"aplicar algumas melhorias de segurança para não permitir vazamento de dados
+> ou ações de bot no meu site"*
+
+Medido **de fora**, com a chave publishable e sem estar logado:
+
+| | resultado |
+|---|---|
+| `mc_admin_users` | legível inteira, com `password_hash` (SHA-256 **sem sal**) |
+| criar/alterar operador | permitido — políticas `ALL … using(true)` para `anon` |
+| clientes da landing | nome, WhatsApp e placa legíveis |
+| financeiro | 3.852 lançamentos, 152 boletos legíveis |
+
+A raiz não era política mal escrita: **`anon` era a única identidade que
+existe**. Qualquer regra que deixasse o painel funcionar deixava um estranho
+funcionar igual. Por isso o login veio primeiro — sem ele não há o que fechar.
+
+### Migração preguiçosa, porque não há conversão possível
+
+Os hashes guardados são SHA-256 sem sal; o Auth usa bcrypt. Não dá para
+converter um no outro, e ninguém tem as senhas em claro. O único instante em que
+a senha em claro existe é **quando a pessoa digita** — então é nesse instante que
+a conta do Auth nasce, com a mesma senha. Ninguém troca de senha, ninguém
+percebe, e da segunda entrada em diante a ponte nem é chamada.
+
+A ponte (`mc-login`, chave de serviço) **nunca devolve token**: quem autentica é
+o navegador. Devolver sessão criaria um segundo caminho de autenticação para
+manter em pé.
+
+### Três defeitos meus, os três achados por medição
+
+**1. O limite de tentativas não limitava nada.** A primeira versão contava em
+memória, dentro da função. Testado: **14 tentativas seguidas passaram todas** —
+cada requisição cai num isolate diferente e o contador nasce zerado em cada um.
+Contador de segurança que não conta é pior que nenhum, porque dá a impressão de
+proteção. Refeito com contador no banco (`mc_login_tentativa`, upsert atômico):
+barra na 13ª, por IP e por conta.
+
+**2. `password_hash` era `NOT NULL`.** A ponte apaga o hash depois de migrar — e
+a restrição rejeitava. Resultado na primeira entrada real do dono: a conta do
+Auth foi criada **com a senha certa**, a gravação inteira falhou, a conta ficou
+órfã e ele não entrava mais. Eu deveria ter conferido a restrição antes de
+escrever `null` na coluna.
+
+A correção não foi só derrubar o `NOT NULL`. As duas gravações eram uma só;
+agora são **duas**, e por um motivo: o vínculo é essencial, apagar o hash é
+faxina. Faxina que falha não pode custar o acesso de ninguém.
+
+**3. Trocar a senha no perfil ia quebrar em silêncio.** Continuava gravando o
+`password_hash`, que depois da migração não é mais consultado — a tela diria
+"senha alterada" e o login seguiria aceitando só a antiga. Passou a usar
+`auth.updateUser`.
+
+### O que ainda não foi feito
+
+As políticas **continuam abertas**: fechar antes de o login novo estar provado
+trancaria todo mundo do lado de fora. E as tabelas `mc_fin_*` são de outra
+ferramenta do dono, que usa a mesma chave pública — enquanto ela não tiver via
+própria, o financeiro segue legível.
+
+---
+
 ## 27/08/2026 · Ajuda em todas as telas, boas-vindas com escolha, painel de ícones
 
 ### O "?" saiu da Fotografia
