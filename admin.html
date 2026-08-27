@@ -560,7 +560,13 @@
      tinha que ceder, e o pedido foi aumentar a galeria. */
   .fp-carro-palco {
     position: relative; flex: 1; min-height: 252px; overflow: hidden;
-    border-radius: 10px; background: var(--bg-elev);
+    border-radius: 10px;
+    /* Fundo do CARTAO, nao --bg-elev. As miniaturas sao 320x320 (38 de 40
+       medidas) e, com o par colado ocupando a altura, sobram 89px de margem de
+       cada lado. Em --bg-elev essa margem aparecia como um retangulo cinza
+       claro em volta de foto de produto em fundo branco; no branco do cartao
+       ela vira a propria mesa da foto e desaparece. */
+    background: var(--bg-card);
   }
   /* Duas fotos por slide, da mesma pasta. O espaco no Dashboard e retangular
      (perto de 2:1) e uma foto so, em `object-fit: cover`, era recortada nas
