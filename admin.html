@@ -18724,29 +18724,36 @@ async function fpProdNovoConfirmar() {
   const btn = document.getElementById('fotoProdNovoOk');
   const rotulo = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = 'Incluindo…'; }
+
+  /* O try cobre SÓ a gravação. Se ele envolvesse também o que vem depois,
+     qualquer tropeço de tela viraria "não deu para incluir" — e quem lesse
+     isso incluiria de novo, agora de verdade em duplicata. */
+  let chave = null;
   try {
-    const chave = kit ? await fpProdNovoCriarKit(skus) : await fpProdNovoCriarProduto(skus[0]);
-    const prod = fpFotoProduto(chave);
-    fpProdNovoFechar();
-    /* A ordem da listagem é congelada quando a tela abre; sem soltá-la o item
-       novo não apareceria até alguém trocar de filtro. */
-    _prodOrdem = null;
-    fpProdFiltrar('fila');
-    const achou = fpProdRealcar(chave);
-    fpToast(((prod && prod.nome) || chave) + ' entrou na fila de produção.', 'ok', achou ? undefined : {
-      acao: {
-        texto: 'Ver na lista',
-        onClick: function () {
-          const b = document.getElementById('fotoProdBusca');
-          if (b) { b.value = chave; b.dispatchEvent(new Event('input')); }
-          fpProdBuscarFila(chave, true);
-        },
-      },
-    });
+    chave = kit ? await fpProdNovoCriarKit(skus) : await fpProdNovoCriarProduto(skus[0]);
   } catch (e) {
     fpToast('Não deu para incluir: ' + (e.message || e), 'erro');
     if (btn) { btn.disabled = false; btn.textContent = rotulo; }
+    return;
   }
+
+  const prod = fpFotoProduto(chave);
+  fpProdNovoFechar();
+  /* A ordem da listagem é congelada quando a tela abre; sem soltá-la o item
+     novo não apareceria até alguém trocar de filtro. */
+  _prodOrdem = null;
+  fpProdFiltrar('fila');
+  const achou = fpProdRealcar(chave);
+  fpToast(((prod && prod.nome) || chave) + ' entrou na fila de produção.', 'ok', achou ? undefined : {
+    acao: {
+      texto: 'Ver na lista',
+      onClick: function () {
+        const b = document.getElementById('fotoProdBusca');
+        if (b) { b.value = chave; b.dispatchEvent(new Event('input')); }
+        fpProdBuscarFila(chave, true);
+      },
+    },
+  });
 }
 
 async function fpProdNovoCriarProduto(sku) {
@@ -19126,6 +19133,10 @@ async function fpComEnviar() {
 }
 
 async function fpComApagar(id) {
+  /* O alvo é guardado ANTES do diálogo: `_comSku` é estado do modal e some se
+     ele fechar no meio, e aí a limpeza da tela cairia no item errado. */
+  const alvo = _comSku;
+  if (!alvo) return;
   if (!await fpConfirm({
     titulo: 'Apagar comentário',
     mensagem: 'O recado sai da fila para todo mundo.',
@@ -19133,12 +19144,12 @@ async function fpComApagar(id) {
   })) return;
   const r = await sb.from('mc_photo_comments').delete().eq('id', id);
   if (r.error) { fpToast('Erro: ' + r.error.message, 'erro'); return; }
-  const lista = FOTO_COMENTARIOS.get(_comSku) || [];
+  const lista = FOTO_COMENTARIOS.get(alvo) || [];
   const i = lista.findIndex(function (c) { return c.id === id; });
   if (i >= 0) lista.splice(i, 1);
-  if (!lista.length) FOTO_COMENTARIOS.delete(_comSku);
+  if (!lista.length) FOTO_COMENTARIOS.delete(alvo);
   fpComListaPintar();
-  fpComPintar(_comSku);
+  fpComPintar(alvo);
 }
 
 /* Chamada por fpLoteMarcarFeito. A tela é limpa na hora e o banco depois: o
