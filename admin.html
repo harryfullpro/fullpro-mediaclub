@@ -23558,6 +23558,49 @@ function fpIcoResolverFolha(raiz) {
   raiz.querySelectorAll('[class]').forEach(e => e.removeAttribute('class'));
 }
 
+/* Enquadra o desenho num viewBox QUADRADO e justo.
+
+   A caixa do ícone é quadrada (18px). Um arquivo exportado com viewBox
+   681,43 × 470,07 — medido, foi o que subiu — é encaixado por dentro: o desenho
+   ocupa a largura e sobra faixa vazia em cima e embaixo, então ele aparece
+   menor e desalinhado com os vizinhos. Margem grande no arquivo dá no mesmo.
+
+   Aqui o desenho é medido de verdade (`getBBox`, com o SVG preso ao documento,
+   que é a única forma de o navegador calcular) e o viewBox é reescrito como um
+   quadrado centrado nele. O traço entra na conta: `getBBox` devolve a geometria
+   e ignora a espessura, então metade do traço ficaria fora do quadro. */
+function fpIcoEnquadrar(dentro, viewbox) {
+  const berco = document.createElement('div');
+  berco.setAttribute('aria-hidden', 'true');
+  berco.style.cssText = 'position:absolute;left:-9999px;top:0;width:10px;height:10px;overflow:hidden';
+  const sv = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  sv.setAttribute('viewBox', viewbox);
+  sv.innerHTML = dentro;
+  berco.appendChild(sv);
+  document.body.appendChild(berco);
+  let saida = viewbox;
+  try {
+    const bb = sv.getBBox();
+    if (bb.width > 0 && bb.height > 0) {
+      let traco = 0;
+      sv.querySelectorAll('*').forEach(el => {
+        const t = String(el.getAttribute('stroke') || '').trim().toLowerCase();
+        if (!t || t === 'none') return;
+        const w = parseFloat(el.getAttribute('stroke-width') || '1');
+        if (isFinite(w)) traco = Math.max(traco, w);
+      });
+      const folga = 0.06;                              // respiro igual de todo lado
+      const lado = Math.max(bb.width, bb.height) + traco;
+      const total = lado * (1 + folga * 2);
+      const cx = bb.x + bb.width / 2, cy = bb.y + bb.height / 2;
+      const r = n => Math.round(n * 100) / 100;
+      saida = r(cx - total / 2) + ' ' + r(cy - total / 2) + ' ' + r(total) + ' ' + r(total);
+    }
+  } catch (e) { /* sem medida, fica o viewBox do arquivo */ }
+  berco.remove();
+  return saida;
+}
+
 function fpIcoHigienizar(texto) {
   const bruto = String(texto || '').trim();
   if (!bruto) return { erro: 'Arquivo vazio.' };
@@ -23636,6 +23679,12 @@ function fpIcoHigienizar(texto) {
     });
   }
 
+  /* Classe órfã: a folha de estilo nunca sobrevive à higienização, então
+     `class="cls-1"` que reste não liga a nada — e o desenho fica sem o fill que
+     estava na folha, renderizando no preto padrão. Melhor tirar o atributo
+     morto do que guardá-lo no banco. */
+  raiz.querySelectorAll('[class]').forEach(e => e.removeAttribute('class'));
+
   const dentro = raiz.innerHTML.trim();
   if (!dentro) return { erro: 'O SVG não tem desenho nenhum depois da limpeza.' };
 
@@ -23645,9 +23694,20 @@ function fpIcoHigienizar(texto) {
   const attrs = carrega.filter(a => raiz.getAttribute(a) != null)
     .map(a => a + '="' + String(raiz.getAttribute(a)).replace(/"/g, '&quot;') + '"').join(' ');
 
+  let corpo = '<g ' + attrs + '>' + dentro + '</g>';
+  /* Sem NENHUMA cor declarada, o padrão do SVG é preto — não `currentColor`.
+     Um ícone assim ignora o tema e o seletor de cor, e fica preto no escuro.
+     É o caso de arquivo cujas cores viviam numa folha de estilo que não
+     sobreviveu. Declarar `currentColor` no <g> devolve o ícone ao tema. */
+  if (fpIcoCoresDistintas(corpo) === 0 && raiz.getAttribute('fill') == null && raiz.getAttribute('stroke') == null) {
+    corpo = '<g fill="currentColor">' + dentro + '</g>';
+  }
+  const vbQuadrado = fpIcoEnquadrar(corpo, vbTexto);
+
   return {
-    svg: '<g ' + attrs + '>' + dentro + '</g>',
-    viewbox: vbTexto,
+    svg: corpo,
+    viewbox: vbQuadrado,
+    enquadrou: vbQuadrado !== vbTexto,
     fundoRemovido: fundo,
     recortesQuebrados: removidos.length,
   };
@@ -23794,7 +23854,15 @@ async function fpIconesCarregar() {
     const novo = {};
     (data || []).forEach(r => {
       if (!FP_ICO_POR_CHAVE[r.chave]) return;      // ícone que saiu do catálogo
-      novo[r.chave] = { svg: r.svg || '', bruto: r.bruto || '', viewbox: r.viewbox || '0 0 24 24',
+      /* Ícone guardado antes do enquadramento automático continua com o
+         viewBox retangular do arquivo — e retangular dentro de caixa quadrada
+         aparece menor que os vizinhos. Enquadra na leitura, sem precisar de
+         novo upload nem de escrita no banco. */
+      let vb = r.viewbox || '0 0 24 24';
+      const n = vb.trim().split(/[\s,]+/).map(Number);
+      const quadrado = n.length === 4 && Math.abs(n[2] - n[3]) < Math.max(n[2], n[3]) * 0.02;
+      if (!quadrado && r.svg) { try { vb = fpIcoEnquadrar(r.svg, vb); } catch (e) {} }
+      novo[r.chave] = { svg: r.svg || '', bruto: r.bruto || '', viewbox: vb,
                         cor: r.cor || '', original: !!r.original, atualizado: r.updated_at || '' };
     });
     FP_ICONES_ESCOLHIDOS = novo;
@@ -23945,6 +24013,7 @@ function fpIconesArquivo(chave, input) {
     _iconesSujo = true;
     fpIconesAplicar(); fpIconesRender();
     const notas = [];
+    if (r.enquadrou) notas.push('enquadrei o desenho num quadrado, no tamanho dos vizinhos');
     if (r.fundoRemovido) notas.push('tirei o fundo chapado da prancheta');
     if (r.recortesQuebrados) notas.push('soltei ' + r.recortesQuebrados + ' recorte(s) que apontavam para nada');
     if (e.original) notas.push('desenho de ' + nCores + ' cores, mantive as do arquivo');
