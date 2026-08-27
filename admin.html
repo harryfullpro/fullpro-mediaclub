@@ -23592,6 +23592,50 @@ function fpIcoHigienizar(texto) {
   };
   podar(raiz);
 
+  const vbTexto = raiz.getAttribute('viewBox') || ('0 0 ' + (parseFloat(raiz.getAttribute('width')) || 24)
+    + ' ' + (parseFloat(raiz.getAttribute('height')) || 24));
+
+  /* Referência quebrada some com o desenho, e não dá erro.
+     `clip-path` e `mask` apontando para um id que a poda levou embora — ou para
+     um recorte que ficou VAZIO porque o conteúdo dele era `use` — fazem o
+     navegador recortar tudo. Some o ícone inteiro. Mesma família do `filter`. */
+  const removidos = [];
+  raiz.querySelectorAll('[clip-path],[mask]').forEach(el => {
+    ['clip-path', 'mask'].forEach(attr => {
+      const v = el.getAttribute(attr) || '';
+      const m = v.match(/url\(\s*#([^)\s"']+)/);
+      if (!m) return;
+      let alvo = null;
+      try { alvo = raiz.querySelector('[id="' + m[1].replace(/"/g, '') + '"]'); } catch (e) {}
+      if (!alvo || !alvo.children.length) { el.removeAttribute(attr); removidos.push(attr); }
+    });
+  });
+
+  /* Fundo chapado do Illustrator: a prancheta branca sai junto no export, como
+     um <rect> do tamanho do viewBox. Ele é invisível no editor (branco sobre
+     branco) e no painel vira uma chapa por cima do ícone — foi o que fez o
+     desenho do Debriefing virar um borrão. Ícone não tem fundo: sai. */
+  let fundo = 0;
+  const nums = vbTexto.trim().split(/[\s,]+/).map(Number);
+  if (nums.length === 4 && nums[2] > 0 && nums[3] > 0) {
+    const [vx, vy, vw, vh] = nums;
+    const cobre = r => {
+      const x = parseFloat(r.getAttribute('x') || '0'), y = parseFloat(r.getAttribute('y') || '0');
+      const w = parseFloat(r.getAttribute('width') || '0'), h = parseFloat(r.getAttribute('height') || '0');
+      if (!(w > 0 && h > 0)) return false;
+      return w >= vw * 0.95 && h >= vh * 0.95 && x <= vx + vw * 0.05 && y <= vy + vh * 0.05;
+    };
+    [...raiz.querySelectorAll('rect')].forEach(r => {
+      /* Só o que estiver DENTRO de defs/clipPath fica: lá o retângulo é o
+         recorte, não um fundo pintado. */
+      if (r.closest('defs, clipPath, mask')) return;
+      const preenche = String(r.getAttribute('fill') || '').trim().toLowerCase();
+      if (preenche === 'none') return;
+      if (!cobre(r)) return;
+      r.remove(); fundo++;
+    });
+  }
+
   const dentro = raiz.innerHTML.trim();
   if (!dentro) return { erro: 'O SVG não tem desenho nenhum depois da limpeza.' };
 
@@ -23603,8 +23647,9 @@ function fpIcoHigienizar(texto) {
 
   return {
     svg: '<g ' + attrs + '>' + dentro + '</g>',
-    viewbox: raiz.getAttribute('viewBox') || ('0 0 ' + (parseFloat(raiz.getAttribute('width')) || 24)
-             + ' ' + (parseFloat(raiz.getAttribute('height')) || 24)),
+    viewbox: vbTexto,
+    fundoRemovido: fundo,
+    recortesQuebrados: removidos.length,
   };
 }
 
@@ -23828,6 +23873,9 @@ function fpIconesRender() {
     +   '<li><b>Sem sombra, blur ou outro filtro</b> — saem na limpeza, e o desenho iria com eles.</li>'
     +   '<li><b>Achate símbolos e instâncias</b> (o "expandir" do editor). Referência para outro arquivo ou para um símbolo é removida.</li>'
     +   '<li><b>Uma cor</b> se você quiser controlar a cor aqui pelo seletor. <b>Duas ou mais</b> e o painel mantém as cores do arquivo — foi o que fez a logo do Mercado Livre virar um borrão quando o padrão era achatar tudo.</li>'
+    +   '<li><b>Libere a máscara de recorte</b> antes de exportar (Objeto › Máscara de recorte › Liberar) e apague o retângulo que sobra. Recorte que aponta para nada faz o navegador esconder o desenho inteiro.</li>'
+    +   '<li><b>Sem fundo.</b> A prancheta branca do Illustrator sai no arquivo como um retângulo do tamanho do desenho — invisível no editor, chapa por cima do ícone aqui. O painel tira sozinho quando reconhece, mas apagar antes é mais seguro.</li>'
+    +   '<li>No Illustrator, exporte com <b>Estilo: Atributos de apresentação</b> (não "Elementos de estilo" nem "Classes CSS") e <b>Responsivo desmarcado</b>. E use Objeto › Prancheta › <b>Ajustar aos limites da ilustração</b> para o viewBox sair justo.</li>'
     +   '<li>Até <b>60 KB</b>. Folha de estilo interna do Illustrator é resolvida automaticamente, e <code>script</code>, <code>image</code> e <code>use</code> são removidos.</li>'
     +   '</ul></details>'
     + '<div class="fp-ico-grade">' + g.itens.map(linha).join('') + '</div>'
@@ -23896,9 +23944,14 @@ function fpIconesArquivo(chave, input) {
     e.atualizado = String(Date.now());
     _iconesSujo = true;
     fpIconesAplicar(); fpIconesRender();
-    fpToast(e.original
-      ? 'Desenho de ' + nCores + ' cores: mantive as cores do arquivo. Desmarque "cores do arquivo" para pintar de uma cor só.'
-      : 'Ícone trocado nesta tela. Salve para valer para a equipe.', 'ok', { duracao: e.original ? 7000 : 0 });
+    const notas = [];
+    if (r.fundoRemovido) notas.push('tirei o fundo chapado da prancheta');
+    if (r.recortesQuebrados) notas.push('soltei ' + r.recortesQuebrados + ' recorte(s) que apontavam para nada');
+    if (e.original) notas.push('desenho de ' + nCores + ' cores, mantive as do arquivo');
+    fpToast(notas.length
+      ? 'Ícone trocado — ' + notas.join('; ') + '.'
+      : 'Ícone trocado nesta tela. Salve para valer para a equipe.',
+      'ok', { duracao: notas.length ? 8000 : 0 });
   };
   leitor.onerror = () => fpToast('Não deu para ler o arquivo.', 'erro');
   leitor.readAsText(arq);
