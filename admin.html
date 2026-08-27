@@ -6233,6 +6233,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
               <button class="filter-btn" data-agfilter="approved" onclick="fpAgFiltro('approved')">Aprovados <span class="fp-conta"></span></button>
               <button class="filter-btn" data-agfilter="pending" onclick="fpAgFiltro('pending')">Pendentes <span class="fp-conta"></span></button>
               <button class="filter-btn" data-agfilter="standby" onclick="fpAgFiltro('standby')">Stand by <span class="fp-conta"></span></button>
+              <button class="filter-btn" data-agfilter="rejected" onclick="fpAgFiltro('rejected')">Rejeitadas <span class="fp-conta"></span></button>
               <button class="filter-btn" data-agfilter="bloqueio" onclick="fpAgFiltro('bloqueio')">Bloqueios <span class="fp-conta"></span></button>
             </span>
             <select class="proj-sort-select fp-so-mobile" id="agFiltroSelect" aria-label="Filtrar a agenda do mês" onchange="fpAgFiltro(this.value)">
@@ -6240,6 +6241,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
               <option value="approved">Aprovados</option>
               <option value="pending">Pendentes</option>
               <option value="standby">Stand by</option>
+              <option value="rejected">Rejeitadas</option>
               <option value="bloqueio">Bloqueios</option>
             </select>
             <label class="fp-busca">
