@@ -23473,10 +23473,22 @@ function fpIcoNormalizar(html) {
   return String(html || '').replace(/\s+/g, ' ').replace(/> </g, '><').trim().toLowerCase();
 }
 
-/* Índice assinatura -> chave, montado uma vez. */
+/* Índice assinatura -> chave, montado uma vez.
+
+   As duas pontas TÊM de passar pelo mesmo serializador. Comparando a string
+   crua com o `innerHTML` do elemento, nada casava: o navegador expande
+   `<path .../>` para `<path ...></path>` ao ler de volta, e a assinatura escrita
+   à mão vem auto-fechada. Medido: igualdade direta falsa, igualdade via DOM
+   verdadeira, com o mesmo desenho nas duas pontas. */
+function fpIcoAssinatura(html) {
+  const tmp = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  tmp.innerHTML = String(html || '');
+  return fpIcoNormalizar(tmp.innerHTML);
+}
+
 const FP_ICO_ASSIN = (() => {
   const m = {};
-  FP_ICO_ITENS.forEach(i => { if (i.assin) m[fpIcoNormalizar(i.assin)] = i.chave; });
+  FP_ICO_ITENS.forEach(i => { if (i.assin) m[fpIcoAssinatura(i.assin)] = i.chave; });
   return m;
 })();
 
