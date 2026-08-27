@@ -5188,6 +5188,27 @@ body.fp-sem-sessao .fp-ajuda-btn { display: none !important; }
    principal é o arquivo, e a prévia mostra o desenho. */
 .fp-icones { margin-top: 28px; }
 .fp-ico-nota { font-size: 12px; color: var(--text-muted); margin: 0 0 6px; line-height: 1.5; max-width: 70ch; }
+.fp-ico-ajuda { margin: 0 0 10px; max-width: 78ch; }
+.fp-ico-ajuda summary {
+  font-size: 12px; font-weight: 700; color: var(--text-dim); cursor: pointer;
+  padding: 6px 0; list-style: none;
+}
+.fp-ico-ajuda summary::-webkit-details-marker { display: none; }
+.fp-ico-ajuda summary::before { content: '▸ '; color: var(--text-muted); }
+.fp-ico-ajuda[open] summary::before { content: '▾ '; }
+.fp-ico-ajuda summary:hover { color: var(--text); }
+.fp-ico-ajuda ul { margin: 2px 0 10px; padding-left: 18px; display: grid; gap: 6px; }
+.fp-ico-ajuda li { font-size: 11.5px; color: var(--text-muted); line-height: 1.55; }
+.fp-ico-ajuda b { color: var(--text-dim); font-weight: 650; }
+.fp-ico-ajuda code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px;
+  background: var(--bg-elev); padding: 1px 4px; border-radius: 4px;
+}
+/* Prévia no tamanho real de uso, ao lado da ampliada: desenho que funciona a
+   40px vira mancha a 18px, e e a 18px que ele vai viver. */
+.fp-ico-caixa-real { width: 30px; height: 30px; }
+.fp-ico-previa-real { width: 18px; height: 18px; color: var(--text-dim); }
+.fp-cor-pick:disabled { opacity: .4; cursor: not-allowed; }
 .fp-ico-grade { display: grid; gap: 0; }
 .fp-ico-linha {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
@@ -23497,6 +23518,46 @@ const FP_ICO_ASSIN = (() => {
 const FP_ICO_TAGS_OK = new Set(['g','path','circle','ellipse','rect','line','polyline','polygon',
   'defs','clippath','mask','lineargradient','radialgradient','stop','symbol','text','tspan']);
 
+/* Exportação do Illustrator (e o "Presentation attributes: CSS" do Figma) põe
+   as cores numa folha de estilo interna e liga por `class="st0"`. (O nome da
+   tag não vai escrito aqui de propósito: a checagem de chaves do CSS varre o
+   arquivo por essa marca e um comentário com ela dentro de um script já
+   estragou a conta uma vez.) A folha não
+   sobrevive à higienização — CSS aceita `url()` e `@import`, e não vou guardar
+   isso no banco. Sem tratamento, o desenho chega sem cor nenhuma e some.
+
+   Aqui as cores são LIDAS do navegador e escritas como atributo em cada
+   elemento, antes da poda. Só para quem tem `class`: em elemento sem classe o
+   valor calculado seria o padrão (preto), e escrevê-lo destruiria a herança de
+   `currentColor` que o resto do sistema usa. */
+function fpIcoResolverFolha(raiz) {
+  if (!raiz.querySelector('style')) return;
+  const berco = document.createElement('div');
+  berco.setAttribute('aria-hidden', 'true');
+  berco.style.cssText = 'position:absolute;left:-9999px;top:0;width:1px;height:1px;overflow:hidden';
+  const clone = raiz.cloneNode(true);
+  berco.appendChild(clone);
+  document.body.appendChild(berco);
+  try {
+    const comClasse = [...clone.querySelectorAll('[class]')];
+    const origem = [...raiz.querySelectorAll('[class]')];
+    comClasse.forEach((el, i) => {
+      const alvo = origem[i];
+      if (!alvo) return;
+      const cs = getComputedStyle(el);
+      ['fill', 'stroke', 'stroke-width', 'fill-rule', 'opacity'].forEach(prop => {
+        const v = cs.getPropertyValue(prop);
+        if (v && v !== 'none' || prop === 'fill' || prop === 'stroke') {
+          if (v) alvo.setAttribute(prop, v.trim());
+        }
+      });
+    });
+  } catch (e) { /* sem estilo calculado, segue sem cor — melhor que quebrar */ }
+  berco.remove();
+  raiz.querySelectorAll('style').forEach(e => e.remove());
+  raiz.querySelectorAll('[class]').forEach(e => e.removeAttribute('class'));
+}
+
 function fpIcoHigienizar(texto) {
   const bruto = String(texto || '').trim();
   if (!bruto) return { erro: 'Arquivo vazio.' };
@@ -23508,6 +23569,9 @@ function fpIcoHigienizar(texto) {
   const raiz = doc.documentElement;
   if (!raiz || raiz.nodeName.toLowerCase() !== 'svg') return { erro: 'O arquivo precisa começar com <svg>.' };
 
+  /* Antes de podar: resolve a folha interna, senão a cor morre com ela. */
+  fpIcoResolverFolha(raiz);
+
   /* Poda: o que não for geometria sai. `use` e `image` saem junto — os dois
      puxam conteúdo de fora, que é o caminho de sempre. */
   const podar = no => {
@@ -23516,6 +23580,11 @@ function fpIcoHigienizar(texto) {
       [...f.attributes].forEach(a => {
         const n = a.name.toLowerCase();
         if (n.indexOf('on') === 0 || n === 'href' || n.indexOf('xlink') === 0) f.removeAttribute(a.name);
+        /* `<filter>` não está na lista de permitidas, então sombra e blur saem —
+           e um `filter="url(#f0)"` apontando para o que não existe mais faz o
+           elemento NÃO renderizar (é o que a especificação manda). Some o
+           desenho inteiro, sem erro. O atributo sai junto com o filtro. */
+        else if (n === 'filter') f.removeAttribute(a.name);
         else if (n === 'style' && /url\s*\(|expression|javascript:/i.test(a.value)) f.removeAttribute(a.name);
       });
       podar(f);
@@ -23539,9 +23608,33 @@ function fpIcoHigienizar(texto) {
   };
 }
 
+/* Quantas cores DISTINTAS o desenho usa. É o que decide se achatar tudo em
+   `currentColor` ajuda ou destrói.
+
+   Aprendido na prática: a logo do Mercado Livre subiu e virou um borrão cinza
+   sem forma. Ela tem duas cores, e parte do desenho é knockout — uma forma
+   clara POR CIMA da escura, que é o que desenha as mãos. Achatando as duas na
+   mesma cor, a forma de cima deixa de recortar a de baixo e sobra a silhueta
+   maciça. Desenho de duas cores ou mais nasce com as cores do arquivo. */
+function fpIcoCoresDistintas(svgHtml) {
+  const cx = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  cx.innerHTML = String(svgHtml || '');
+  const cores = new Set();
+  cx.querySelectorAll('*').forEach(el => {
+    ['fill', 'stroke'].forEach(p => {
+      let v = String(el.getAttribute(p) || '').trim().toLowerCase();
+      const st = String(el.getAttribute('style') || '');
+      const m = st.match(new RegExp('(?:^|;)\\s*' + p + '\\s*:\\s*([^;]+)'));
+      if (m) v = m[1].trim().toLowerCase();
+      if (v && v !== 'none' && v !== 'currentcolor' && v !== 'inherit') cores.add(v);
+    });
+  });
+  return cores.size;
+}
+
 /* Troca toda cor fixa por `currentColor`, para o seletor de cor funcionar em
-   qualquer arquivo. Fica de fora quando o dono marca "manter as cores do
-   arquivo" — é o caso de uma logo colorida. */
+   qualquer arquivo. Fica de fora quando o desenho tem duas cores ou mais (ver
+   fpIcoCoresDistintas) ou quando o dono marca "cores do arquivo". */
 function fpIcoNeutralizarCores(svgHtml) {
   const cx = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   cx.innerHTML = svgHtml;
@@ -23651,12 +23744,12 @@ async function fpIconesCarregar() {
   fpIconesAplicar();
   fpIconesObservar();
   try {
-    const { data, error } = await sb.from('mc_icons').select('chave,svg,viewbox,cor,original,updated_at');
+    const { data, error } = await sb.from('mc_icons').select('chave,svg,bruto,viewbox,cor,original,updated_at');
     if (error) throw error;
     const novo = {};
     (data || []).forEach(r => {
       if (!FP_ICO_POR_CHAVE[r.chave]) return;      // ícone que saiu do catálogo
-      novo[r.chave] = { svg: r.svg || '', viewbox: r.viewbox || '0 0 24 24',
+      novo[r.chave] = { svg: r.svg || '', bruto: r.bruto || '', viewbox: r.viewbox || '0 0 24 24',
                         cor: r.cor || '', original: !!r.original, atualizado: r.updated_at || '' };
     });
     FP_ICONES_ESCOLHIDOS = novo;
@@ -23688,21 +23781,27 @@ function fpIconesRender() {
     /* A prévia não leva `data-ico`: se levasse, o observador a trocaria junto e
        o painel passaria a mostrar o ícone aplicado no lugar do que está sendo
        editado. */
-    const previa = '<svg class="fp-ico-previa" viewBox="' + escHtml(vb) + '" aria-hidden="true"'
+    /* Duas prévias: uma no TAMANHO REAL de uso (18px) e uma ampliada. Julgar
+       ícone só no grande já custou caro — desenho que funciona a 40px vira
+       mancha a 18px, e é a 18px que ele vai viver. */
+    const svgPrevia = cls => '<svg class="' + cls + '" viewBox="' + escHtml(vb) + '" aria-hidden="true"'
       + (esc.svg ? '' : ' fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"')
-      + (esc.cor ? ' style="color:' + escHtml(esc.cor) + '"' : '') + '>' + desenho + '</svg>';
+      + (esc.cor && !esc.original ? ' style="color:' + escHtml(esc.cor) + '"' : '') + '>' + desenho + '</svg>';
     return '<div class="fp-ico-linha' + (mudou ? ' mudou' : '') + '">'
-      + '<span class="fp-ico-caixa">' + previa + '</span>'
+      + '<span class="fp-ico-caixa">' + svgPrevia('fp-ico-previa') + '</span>'
+      + '<span class="fp-ico-caixa fp-ico-caixa-real" data-tip="Tamanho real de uso">' + svgPrevia('fp-ico-previa-real') + '</span>'
       + '<span class="fp-ico-txt"><span class="fp-ico-nome">' + escHtml(it.nome) + '</span>'
-      +   '<span class="fp-ico-onde">' + escHtml(it.onde) + '</span></span>'
+      +   '<span class="fp-ico-onde">' + escHtml(it.onde)
+      +     (esc.original ? ' · usando as cores do arquivo' : '') + '</span></span>'
       + '<input type="color" class="fp-cor-pick" value="' + escHtml(esc.cor || '#888888') + '"'
       +   ' aria-label="Cor do ícone ' + escHtml(it.nome) + '"'
+      +   (esc.original ? ' disabled data-tip="Este ícone está usando as cores do arquivo"' : '')
       +   ' oninput="fpIconesCor(\'' + it.chave + '\', this.value)">'
       + '<label class="fp-ico-subir">'
       +   '<input type="file" accept=".svg,image/svg+xml" hidden onchange="fpIconesArquivo(\'' + it.chave + '\', this)">'
       +   '<span>' + (esc.svg ? 'Trocar SVG' : 'Subir SVG') + '</span></label>'
       + (esc.svg
-          ? '<label class="fp-ico-orig" data-tip="Mantém as cores do arquivo em vez de usar a cor escolhida aqui">'
+          ? '<label class="fp-ico-orig" data-tip="Marcado, o desenho fica com as cores do próprio arquivo. Desmarcado, ele vira de uma cor só e obedece ao seletor ao lado.">'
             + '<input type="checkbox"' + (esc.original ? ' checked' : '')
             + ' onchange="fpIconesOriginal(\'' + it.chave + '\', this.checked)"> cores do arquivo</label>'
           : '')
@@ -23721,6 +23820,16 @@ function fpIconesRender() {
         + ' onclick="fpIconesGrupo(' + i + ')">' + escHtml(x.titulo) + '</button>').join('')
     + '</div></div>'
     + (g.nota ? '<p class="fp-ico-nota">' + escHtml(g.nota) + '</p>' : '')
+    + '<details class="fp-ico-ajuda"><summary>Como exportar o SVG</summary>'
+    +   '<ul>'
+    +   '<li><b>viewBox quadrado</b> e desenho ocupando quase toda a área. O ícone é usado a 18px num quadrado — viewBox retangular deixa sobra de um lado, e desenho pequeno no meio da área fica menor que os vizinhos.</li>'
+    +   '<li><b>Traço na escala do viewBox.</b> Espessura 2 num viewBox de 24 é o padrão da casa; a mesma espessura 2 num viewBox de 512 vira um fio invisível.</li>'
+    +   '<li><b>Converta texto em curvas.</b> A fonte do seu computador não vem no arquivo.</li>'
+    +   '<li><b>Sem sombra, blur ou outro filtro</b> — saem na limpeza, e o desenho iria com eles.</li>'
+    +   '<li><b>Achate símbolos e instâncias</b> (o "expandir" do editor). Referência para outro arquivo ou para um símbolo é removida.</li>'
+    +   '<li><b>Uma cor</b> se você quiser controlar a cor aqui pelo seletor. <b>Duas ou mais</b> e o painel mantém as cores do arquivo — foi o que fez a logo do Mercado Livre virar um borrão quando o padrão era achatar tudo.</li>'
+    +   '<li>Até <b>60 KB</b>. Folha de estilo interna do Illustrator é resolvida automaticamente, e <code>script</code>, <code>image</code> e <code>use</code> são removidos.</li>'
+    +   '</ul></details>'
     + '<div class="fp-ico-grade">' + g.itens.map(linha).join('') + '</div>'
     + '<div class="fp-cores-pe">'
     + '<span class="fp-cores-aviso">' + (_iconesSujo
@@ -23750,10 +23859,16 @@ function fpIconesCor(chave, valor) {
 
 function fpIconesOriginal(chave, manter) {
   const e = fpIconesEntrada(chave);
-  if (!e.bruto) { e.original = !!manter; }
-  else {
-    e.original = !!manter;
+  e.original = !!manter;
+  /* Sem `bruto` (o ícone veio do banco nesta visita) só dá para achatar, nunca
+     desachatar: a cor original não existe mais no que foi guardado. Nesse caso
+     o aviso é honesto em vez de fingir que voltou. */
+  if (e.bruto) {
     e.svg = manter ? e.bruto : fpIcoNeutralizarCores(e.bruto);
+  } else if (manter) {
+    fpToast('As cores originais não estão mais guardadas neste ícone. Suba o arquivo de novo para recuperá-las.', 'warn');
+  } else if (e.svg) {
+    e.svg = fpIcoNeutralizarCores(e.svg);
   }
   e.atualizado = String(Date.now());
   _iconesSujo = true;
@@ -23773,11 +23888,17 @@ function fpIconesArquivo(chave, input) {
        "cores do arquivo" não perca as cores originais no caminho. */
     e.bruto = r.svg;
     e.viewbox = r.viewbox;
+    /* Quem decide o padrão é o desenho, não uma preferência fixa: achatar as
+       cores de uma logo de duas cores a destrói (ver fpIcoCoresDistintas). */
+    const nCores = fpIcoCoresDistintas(r.svg);
+    e.original = nCores >= 2;
     e.svg = e.original ? r.svg : fpIcoNeutralizarCores(r.svg);
     e.atualizado = String(Date.now());
     _iconesSujo = true;
     fpIconesAplicar(); fpIconesRender();
-    fpToast('Ícone trocado nesta tela. Salve para valer para a equipe.', 'ok');
+    fpToast(e.original
+      ? 'Desenho de ' + nCores + ' cores: mantive as cores do arquivo. Desmarque "cores do arquivo" para pintar de uma cor só.'
+      : 'Ícone trocado nesta tela. Salve para valer para a equipe.', 'ok', { duracao: e.original ? 7000 : 0 });
   };
   leitor.onerror = () => fpToast('Não deu para ler o arquivo.', 'erro');
   leitor.readAsText(arq);
@@ -23807,7 +23928,8 @@ async function fpIconesSalvar() {
     for (const k in FP_ICONES_ESCOLHIDOS) {
       const e = FP_ICONES_ESCOLHIDOS[k];
       if (!e || (!e.svg && !e.cor)) continue;
-      linhas.push({ chave: k, svg: e.svg || null, viewbox: e.viewbox || '0 0 24 24',
+      linhas.push({ chave: k, svg: e.svg || null, bruto: e.bruto || null,
+                    viewbox: e.viewbox || '0 0 24 24',
                     cor: e.cor || null, original: !!e.original, updated_at: agora, updated_by: quem });
     }
     /* Apaga o que voltou ao padrão: linha sobrando no banco seria um ícone
