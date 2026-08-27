@@ -8494,11 +8494,25 @@ async function checkAuth() {
     }
   } catch (e) {}
 
+  /* O prazo é meu (12h de inatividade, 7 dias no máximo); a sessão é do
+     Supabase Auth. Os dois têm de valer: o prazo vencido derruba mesmo com a
+     sessão do Auth viva, e sessão do Auth ausente derruba mesmo dentro do
+     prazo. */
   const sid = FP_SESSAO.ler();
-  if (!sid) { fpVoltarAoLogin(expirou); return; }
-  const { data, error } = await sb.from('mc_admin_users').select('*').eq('id', sid).single();
-  if (error || !data) {
+  if (!sid) { try { await sb.auth.signOut(); } catch (e) {} fpVoltarAoLogin(expirou); return; }
+
+  let sessao = null;
+  try { sessao = (await sb.auth.getSession()).data.session; } catch (e) {}
+  if (!sessao || !sessao.user) {
     FP_SESSAO.fechar();
+    fpVoltarAoLogin('Sua sessão não é mais válida. Entre de novo.');
+    return;
+  }
+
+  const data = await fpCarregarPerfil(sessao.user.id);
+  if (!data) {
+    FP_SESSAO.fechar();
+    try { await sb.auth.signOut(); } catch (e) {}
     fpVoltarAoLogin('Sua sessão não é mais válida. Entre de novo.');
     return;
   }
@@ -8519,32 +8533,111 @@ function fpSessaoVigiarLigar() {
   window.addEventListener('pointerdown', tocar, { passive: true });
   window.addEventListener('keydown', tocar, { passive: true });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tocar(); });
-  _sessaoVigia = setInterval(() => {
+  _sessaoVigia = setInterval(async () => {
     if (!CURRENT_USER || FP_SESSAO.ler()) return;
     FP_SESSAO.fechar();
     try { sessionStorage.setItem('fp_sessao_expirou', '1'); } catch (e) {}
+    /* Encerrar no Auth também: o prazo da casa vencendo tem de derrubar de
+       verdade, e não só apagar a marca local. */
+    try { await sb.auth.signOut(); } catch (e) {}
     location.reload();
   }, 60 * 1000);
 }
 
-document.getElementById('loginBtn').onclick = async () => {
-  const username = document.getElementById('loginUser').value.trim().toLowerCase();
-  const pw = document.getElementById('loginPw').value;
-  const errEl = document.getElementById('loginErr');
-  errEl.textContent = '';
-  if (!username || !pw) { errEl.textContent = 'Preencha usuário e senha.'; return; }
+/* ── Entrada pelo Supabase Auth ──────────────────────────────────────────
+   O painel entrava lendo `mc_admin_users` direto do navegador, com a chave
+   publishable, e comparando o SHA-256 da senha. Medido de fora, sem estar
+   logado: a tabela inteira era legível, com o hash de todo mundo, e as
+   políticas `using(true)` ainda deixavam INSERT — dava para criar um
+   administrador. Enquanto `anon` fosse a única identidade que existe, nenhuma
+   política podia fechar nada sem fechar também para o painel.
 
-  const pwHash = await hashPw(pw);
-  const { data, error } = await sb.from('mc_admin_users').select('*').eq('username', username).eq('password_hash', pwHash).single();
-  if (error || !data) {
-    errEl.textContent = 'Usuário ou senha inválidos.';
-    return;
+   Agora quem entra vira `authenticated` de verdade, e é isso que permite às
+   políticas separarem operador de visitante.
+
+   O e-mail é um endereço técnico: o painel continua entrando por USUÁRIO, e o
+   Auth exige um e-mail. Não há caixa postal — trocar senha é pela tela de
+   Usuários. */
+const FP_LOGIN_DOMINIO = 'painel.fullpro.com.br';
+const FP_LOGIN_PONTE = ((window.FULLPRO_CONFIG && window.FULLPRO_CONFIG.SUPABASE_URL) || '')
+  .replace(/\/+$/, '') + '/functions/v1/mc-login';
+
+function fpLoginEmail(usuario) { return String(usuario || '').trim().toLowerCase() + '@' + FP_LOGIN_DOMINIO; }
+
+/* Carrega o perfil do operador já autenticado. É a única leitura de
+   mc_admin_users que sobra no navegador, e agora ela roda como `authenticated`. */
+async function fpCarregarPerfil(authUid) {
+  const { data, error } = await sb.from('mc_admin_users').select('*').eq('auth_uid', authUid).maybeSingle();
+  if (error || !data) return null;
+  return data;
+}
+
+document.getElementById('loginBtn').onclick = async () => {
+  const usuario = document.getElementById('loginUser').value.trim().toLowerCase();
+  const senha = document.getElementById('loginPw').value;
+  const errEl = document.getElementById('loginErr');
+  const btn = document.getElementById('loginBtn');
+  errEl.textContent = '';
+  if (!usuario || !senha) { errEl.textContent = 'Preencha usuário e senha.'; return; }
+
+  const rotulo = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Entrando…';
+  const falhar = msg => { errEl.textContent = msg; btn.disabled = false; btn.textContent = rotulo; };
+
+  try {
+    /* 1. Tentativa direta: quem já entrou uma vez depois da migração passa
+          por aqui e nem toca na ponte. */
+    let { data: ses, error: erro } = await sb.auth.signInWithPassword({
+      email: fpLoginEmail(usuario), password: senha,
+    });
+
+    /* 2. Falhou: pode ser alguém que ainda está na senha antiga. A ponte
+          confere o hash no servidor e cria a conta com a MESMA senha. Ela
+          nunca devolve token — quem autentica é o navegador, logo abaixo. */
+    if (erro) {
+      let ponte = null;
+      try {
+        const r = await fetch(FP_LOGIN_PONTE, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + (window.FULLPRO_CONFIG || {}).SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({ usuario, senha }),
+        });
+        ponte = await r.json();
+      } catch (e) {
+        falhar('Sem conexão com o servidor. Tente de novo.');
+        return;
+      }
+      if (!ponte || ponte.erro) { falhar((ponte && ponte.erro) || 'Usuário ou senha inválidos.'); return; }
+      ({ data: ses, error: erro } = await sb.auth.signInWithPassword({
+        email: ponte.email, password: senha,
+      }));
+    }
+
+    if (erro || !ses || !ses.session) { falhar('Usuário ou senha inválidos.'); return; }
+
+    const perfil = await fpCarregarPerfil(ses.user.id);
+    if (!perfil) {
+      await sb.auth.signOut();
+      falhar('Sua conta entrou, mas o cadastro de operador não foi encontrado. Avise um administrador.');
+      return;
+    }
+
+    CURRENT_USER = perfil;
+    /* `fp_session` continua guardando o id do OPERADOR: oito partes do arquivo
+       leem essa chave para saber quem está agindo. O prazo de 12h/7 dias segue
+       valendo por cima da sessão do Auth. */
+    FP_SESSAO.abrir(perfil.id);
+    btn.disabled = false; btn.textContent = rotulo;
+    fpRevelarPainel();
+    fpSessaoVigiarLigar();
+    await initApp();
+  } catch (e) {
+    console.warn('login', e);
+    falhar('Não foi possível entrar agora. Tente de novo.');
   }
-  CURRENT_USER = data;
-  FP_SESSAO.abrir(data.id);
-  fpRevelarPainel();
-  fpSessaoVigiarLigar();
-  await initApp();
 };
 
 ['loginUser','loginPw'].forEach(id => {
@@ -8552,11 +8645,14 @@ document.getElementById('loginBtn').onclick = async () => {
     if (e.key === 'Enter') document.getElementById('loginBtn').click();
   });
 });
-document.getElementById('logoutBtn')?.addEventListener('click', () => {
+document.getElementById('logoutBtn')?.addEventListener('click', async () => {
   /* Apaga id E prazo: guardar so o id de volta deixaria a proxima visita
-     entrando pelo caminho de "sessao sem prazo gravado", que vale como nova. */
+     entrando pelo caminho de "sessao sem prazo gravado", que vale como nova.
+     E encerra a sessão do Auth — sem isso o token continuaria válido no
+     navegador e o painel voltaria sozinho no próximo carregamento. */
   FP_SESSAO.fechar();
   CURRENT_USER = null;
+  try { await sb.auth.signOut(); } catch (e) {}
   location.reload();
 });
 
@@ -8612,12 +8708,25 @@ async function changePassword() {
   if (pw1.length < 4) { fpToast('A senha deve ter no mínimo 4 caracteres.', 'warn'); return; }
   if (pw1 !== pw2) { fpToast('As senhas não conferem.', 'info'); return; }
 
-  const pwHash = await hashPw(pw1);
-  const { error } = await sb.from('mc_admin_users').update({ password_hash: pwHash }).eq('id', CURRENT_USER.id);
-  if (error) { fpToast('Erro ao alterar senha: ' + error.message, 'erro'); return; }
+  /* Quem manda na senha agora é o Supabase Auth. Continuar gravando o
+     `password_hash` aqui seria pior que não fazer nada: a tela diria "senha
+     alterada" e o login seguiria aceitando só a antiga, porque a ponte de
+     migração só olha o hash de quem ainda não tem conta no Auth.
+
+     O `password_hash` continua sendo escrito só para quem ainda não migrou —
+     caso raro (a pessoa teria de trocar a senha antes de entrar uma vez), mas
+     deixá-lo sem tratamento travaria essa pessoa fora do painel. */
+  if (CURRENT_USER && CURRENT_USER.auth_uid) {
+    const { error } = await sb.auth.updateUser({ password: pw1 });
+    if (error) { fpToast('Erro ao alterar senha: ' + error.message, 'erro'); return; }
+  } else {
+    const pwHash = await hashPw(pw1);
+    const { error } = await sb.from('mc_admin_users').update({ password_hash: pwHash }).eq('id', CURRENT_USER.id);
+    if (error) { fpToast('Erro ao alterar senha: ' + error.message, 'erro'); return; }
+  }
   document.getElementById('profNewPw').value = '';
   document.getElementById('profConfirmPw').value = '';
-  fpToast('Senha alterada com sucesso!', 'ok');
+  fpToast('Senha alterada. Ela já vale no próximo acesso.', 'ok');
 }
 
 /* USERS */
@@ -8789,6 +8898,10 @@ async function createUser() {
   if (pw.length < 4) { fpToast('A senha deve ter no mínimo 4 caracteres.', 'warn'); return; }
   if (!/^[a-z0-9._-]+$/.test(username)) { fpToast('O usuário deve conter apenas letras minúsculas, números, ponto, hífen ou underline.', 'warn'); return; }
 
+  /* A senha inicial entra no formato antigo de propósito: na primeira vez que
+     a pessoa entrar, a ponte (mc-login) confere esse hash, cria a conta no
+     Supabase Auth com a MESMA senha e apaga o hash. É o mesmo caminho que a
+     equipe inteira percorreu na migração — um caminho só para manter. */
   const pwHash = await hashPw(pw);
   const { error } = await sb.from('mc_admin_users').insert({ username, password_hash: pwHash, name, phone, role });
   if (error) {
