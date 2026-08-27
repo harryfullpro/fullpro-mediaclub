@@ -1,5 +1,23 @@
 # Diário
 
+## 26/08/2026 · Meu perfil sai do cartão
+
+O cartão de 480px saiu. As seções se separam por **faixa de título e fio**,
+como as listagens do painel, e os campos ficam em pares.
+
+- **O verde de largura inteira virou `.action-btn`.** Salvar um formulário não
+  precisa de uma barra do tamanho da tela.
+- **As ações da foto viraram texto.** Trocar a própria foto não é a ação
+  principal da tela — e o azul do "Alterar foto" e a borda vermelha do
+  "Remover" eram os dois únicos botões do painel com desenho próprio.
+- **720px de largura, escolhido e não chutado:** com coluna mínima de 232px e
+  vão de 22, é a largura que fecha **duas** colunas. A 940 cabiam três, e as
+  seções de quatro campos ficavam 3+1 — dois buracos por fileira. Formulário lê
+  melhor em pares.
+- Cada ação ganhou dica no hover e cada rótulo ganhou `for` ligando ao campo.
+
+---
+
 ## 26/08/2026 · Tour de boas-vindas, e o motivo de o tutorial voltar
 
 > *"Hoje fui entrar e recebi o tutorial novamente. Quero garantir que seja
