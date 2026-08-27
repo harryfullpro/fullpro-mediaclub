@@ -1,5 +1,100 @@
 # Diário
 
+## 27/08/2026 · Carrossel das fotos novas, e a animação vai para o banco
+
+> *"acho que aqui no dash faz mais sentido a gente tirar essa animação e colocar
+> algo mais útil (…) Guarde essa animação no banco de dados pois vou pensar onde
+> podemos usá-la posteriormente"*
+
+O espaço ao lado da Fila por prioridade mostra agora **as 20 pastas de SKU
+criadas mais recentemente no Drive**, com a **primeira foto de cada uma** — a
+mesma que a listagem usa como miniatura. A ordem é sorteada a cada abertura.
+
+**A animação não foi jogada fora.** O SVG inteiro (8.876 caracteres) está em
+`mc_guardados`, chave `anim-fluxo-foto`, com título e descrição do que ela
+mostrava. Tabela nova, criada para isso: peça pronta que sai do painel e ninguém
+quer perder.
+
+### `drive-recentes`, função nova
+
+Lista as pastas por `createdTime desc` e busca a primeira imagem de cada,
+**quatro por vez** — 20 em paralelo levam 429 do Google —, com **dez minutos de
+cache** no isolate. Sem o cache, cada operador que abrisse o Dashboard pagaria
+21 idas ao Drive.
+
+Os **bytes** continuam saindo do `drive-proxy`: ele já tem a guarda de "só
+arquivo de pasta filha da raiz" e o cache de um dia no navegador. A função nova
+devolve só URLs.
+
+Por que não uma ação nova no `drive-proxy`: ele tem ~700 linhas e acrescentar
+uma leitura ali significa reimplantar tudo. O preço é a duplicação do JWT da
+conta de serviço, consciente.
+
+### Quatro decisões do carrossel
+
+- **Todas as `<img>` no DOM de uma vez, trocando opacidade.** Trocar o `src` a
+  cada passo fazia a foto sumir e reaparecer, e o navegador rebaixava tudo de
+  novo ao voltar.
+- **Fisher-Yates, não `sort(() => Math.random() - .5)`.** O segundo parece
+  embaralhar e não embaralha: a ordem depende do algoritmo de ordenação e as
+  primeiras posições ficam viciadas.
+- **Clicar na seta reinicia o relógio**, senão a troca automática pode cair
+  200ms depois do clique e passar duas fotos de uma vez.
+- **`prefers-reduced-motion` desliga a troca automática.**
+
+Carregado **depois** do painel pintado: a leitura do Drive leva alguns segundos
+e o número que o operador espera não pode esperar por foto.
+
+**Pendência que eu criei:** existe uma pasta `ZZ-TESTE-UPLOAD-CLAUDE` no Drive,
+de um teste de upload meu, e ela é a mais recente — aparece no carrossel. Apagar
+a pasta no Drive resolve.
+
+---
+
+## 26/08/2026 · Fim dos cartões nas telas de vídeo, performance e configurações
+
+`.cal-card`, `.edit-card`, `.proj-card` e `.tpl-card` eram quatro caixas com
+fundo, borda e canto arredondado — o padrão antigo. Agora são **seções e itens
+separados por fio**, como as listagens da Fotografia, com o mesmo realce de
+hover.
+
+Feito **num lugar só**, e não tela a tela: são **85 usos** espalhados por 17
+telas. Os títulos de seção desceram de 18px para 13px com espaçamento, o mesmo
+desenho das faixas das listagens.
+
+### Projetos: filtro é aba, não pílula
+
+A regra já estava em `contexto.md` e Projetos era a tela que a contrariava —
+seis pílulas de cor cheia competindo com a listagem inteira. Agora a cor do
+estado vai no **texto e no fio embaixo**.
+
+O mapa de cor virou **um token por chip** (`--chip-cor`) com duas regras de
+ativo em cima; eram 50 regras de fundo, borda e cor de texto nos dois temas.
+Planejamento, produção e concluído passaram a puxar `--prio-1`, `--warning` e
+`--success`, então seguem o seletor de cores da Manutenção. Só a marca das
+plataformas fica fixa — é cor de terceiro.
+
+**Selo de destino e pílula de status no tema claro** tinham chapa de cor cheia,
+o único lugar do painel onde um rótulo virava bloco solido. Viraram tinta, como
+já eram no escuro.
+
+### Integrações
+
+Cada serviço era um cartão **dentro de outro cartão**. Virou listagem com fio,
+na largura da página; o recado de como a conexão funciona perdeu a chapa azul; e
+saíram 14 blocos de `style` inline, trocados por cinco classes.
+
+**Armadilha:** trocar o container de `.cal-card` por uma classe própria levou o
+estilo do título com ele — `h3` e `.sub` eram estilizados **pelo cartão**, e o
+subtítulo ficou maior que o título até eu redeclarar.
+
+**O que ainda não foi revisto tela a tela:** Agenda, Edição, Debriefing,
+Influenciadores e Bonificação ganharam o fio no lugar do cartão, mas ainda têm
+`style` inline e botões com cor própria no HTML gerado por JS. O container era o
+que mais entregava idade; o resto é acabamento.
+
+---
+
 ## 26/08/2026 · Meu perfil sai do cartão
 
 O cartão de 480px saiu. As seções se separam por **faixa de título e fio**,

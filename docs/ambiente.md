@@ -104,6 +104,21 @@ ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 
 ## Supabase
 
+### `drive-recentes` (edge function)
+`GET /functions/v1/drive-recentes?n=20` — as pastas de SKU criadas mais
+recentemente no Drive, com a primeira foto de cada. Usa os mesmos secrets do
+`drive-proxy` (`GOOGLE_SA_JSON`, `DRIVE_ROOT_FOLDER_ID`) e devolve só URLs; os
+bytes saem do `drive-proxy?action=arquivo`. Dez minutos de cache no isolate.
+Fonte em `supabase/functions/drive-recentes/index.ts`.
+
+### `mc_guardados`
+Peças prontas que saíram do painel e ninguém quer perder. Hoje tem a animação do
+fluxo da foto (`anim-fluxo-foto`), que rodava no Dashboard de fotos.
+
+```sql
+select titulo, length(conteudo) from public.mc_guardados;
+```
+
 ### `mc_admin_users.tutoriais`
 jsonb com as marcas de tutorial já visto, no formato `"v<versão>:<nome>": 1`.
 Para fazer todo mundo rever, o caminho normal é subir `FP_TUT_VERSAO` no
