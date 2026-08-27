@@ -203,6 +203,49 @@ miniaturas são 320×320, então essa margem existe quase sempre — em cinza cl
 ela virava um retângulo em volta de foto de produto em fundo branco; no branco
 do cartão ela é a própria mesa da foto.
 
+### O ícone "sumido": três causas empilhadas, todas minhas
+
+Ele subiu o arquivo e o ícone ficou irreconhecível. A imagem sugeria máscara de
+recorte; **inspecionar o que foi salvo em `mc_icons` mostrou outra coisa**:
+
+| | viewBox guardado | proporção |
+|---|---|---|
+| `nav-clips` | 681,43 × 470,07 | 1,45 : 1 |
+| `nav-debriefing` | 511,02 × 448,96 | 1,14 : 1 |
+
+**1. viewBox retangular numa caixa quadrada.** O ícone vive num quadrado de
+18px. Um viewBox 1,45:1 é encaixado por dentro: o desenho ocupa a largura e
+sobra faixa vazia em cima e embaixo — ele aparece menor e desalinhado dos
+vizinhos. Agora o desenho é medido de verdade (`getBBox`, com o SVG **preso ao
+documento**, que é a única forma de o navegador calcular) e o viewBox é
+reescrito como um quadrado centrado nele, com 6% de respiro. A espessura do
+traço entra na conta — `getBBox` devolve a geometria e ignora o traço, então
+metade dele ficaria fora do quadro. Ícone já salvo é enquadrado **na leitura**,
+sem novo upload e sem escrita no banco.
+
+**2. `fill: none` herdado da folha de estilo da tela.** `.nav-item svg` manda
+`fill: none; stroke: currentColor`. Tirar os *atributos* do `<svg>` de destino ao
+aplicar um ícone próprio não basta: **regra de folha vence atributo**, e o valor
+desce por herança. Um desenho preenchido chegava com `fill: none` e aparecia só
+pelo traço — 1 unidade num viewBox de 763, ou seja **0,02px** na tela. Medido:
+`fillCalc: "none"`. A base passou a ser preenchimento na cor do lugar, via
+`svg[data-ico-estado^="c"]`; quem tem atributo próprio no `<g>` continua
+mandando, porque **atributo do próprio elemento vence valor herdado** — ícone de
+traço e logo colorida seguem intactos.
+
+**3. Classe órfã.** A folha de estilo interna nunca sobrevive à higienização,
+então um `class="cls-1"` que reste não liga a nada — e o desenho fica sem o fill
+que morava lá, caindo no preto padrão do SVG. O atributo morto passou a sair, e
+desenho sem nenhuma cor declarada ganha `fill="currentColor"` no `<g>`.
+
+**O que não dá para consertar de fora:** um arquivo subido pelo pipeline antigo
+teve as cores perdidas junto com a folha de estilo. Não há o que recuperar — a
+logo do Mercado Livre virou silhueta maciça porque a separação entre as duas
+cores deixou de existir no que foi guardado. Re-subir resolve; hoje o
+Illustrator é tratado na entrada.
+
+---
+
 ### Filtro por destino: fixo, no modelo da barra de ações em massa
 
 > *"esse filtro por destino vamos deixar fixo e no mesmo modelo que fizemos com
