@@ -638,8 +638,11 @@
   .filter-btn.active::after {
     content: '';
     position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
-    background: var(--primary); border-radius: 3px 3px 0 0;
+    /* --chip-cor deixa a aba levar a cor do estado (Clips usa isso). Sem a
+       variavel, o vermelho da marca, como sempre foi. */
+    background: var(--chip-cor, var(--primary)); border-radius: 3px 3px 0 0;
   }
+  .filter-btn.active[style*="--chip-cor"] { color: var(--chip-cor); }
   .filter-btn .fp-conta {
     margin-left: 7px; font-size: 11.5px; font-weight: 700;
     color: var(--text-muted); font-variant-numeric: tabular-nums;
@@ -10516,6 +10519,45 @@ function getFilteredProjects() {
   return list;
 }
 
+/* Ordem das listagens em tabela que NAO tem <select> proprio (Edicao e
+   Clips). Projetos nao usa isto: lá o estado e o proprio select, para nao
+   haver duas ordens brigando. */
+const FP_ORD = {
+  edicao: { campo: 'data', asc: false },
+  clips:  { campo: 'criado', asc: false },
+};
+
+function fpThOrd(rotulo, campo, qual, fn, dica) {
+  const e = FP_ORD[qual], meu = e.campo === campo;
+  return '<th class="fp-sortable" data-campo="' + campo + '"'
+    + ' aria-sort="' + (meu ? (e.asc ? 'ascending' : 'descending') : 'none') + '"'
+    + (dica ? ' data-tip="' + escHtml(dica) + '"' : '')
+    + ' onclick="' + fn + '(\'' + campo + '\')">' + escHtml(rotulo)
+    + ' <span class="fp-seta">' + (meu ? (e.asc ? '▲' : '▼') : '▲') + '</span></th>';
+}
+
+function fpOrdAplicar(lista, chaves, qual) {
+  const e = FP_ORD[qual], k = chaves[e.campo];
+  if (!k) return lista;
+  return lista.slice().sort((a, b) => {
+    const va = k(a), vb = k(b);
+    if (va < vb) return e.asc ? -1 : 1;
+    if (va > vb) return e.asc ? 1 : -1;
+    return 0;
+  });
+}
+
+/* Primeiro clique num campo novo ordena crescente; no mesmo campo, inverte. */
+function fpOrdTrocar(qual, campo, redesenhar) {
+  const e = FP_ORD[qual];
+  if (e.campo === campo) e.asc = !e.asc;
+  else { e.campo = campo; e.asc = true; }
+  redesenhar();
+}
+
+function fpEdOrdenar(campo) { fpOrdTrocar('edicao', campo, renderEditingView); }
+function fpClipOrdenar(campo) { fpOrdTrocar('clips', campo, window.renderClips); }
+
 /* Status ordena pela ETAPA do fluxo, nao pelo alfabeto: "A publicar" vem
    depois de "Edicao" no trabalho real, e antes dele no dicionario. */
 const FP_PROJ_ETAPA = ['planejamento', 'producao', 'edicao', 'a_publicar', 'concluido'];
@@ -11952,6 +11994,11 @@ function renderShotsReadOnly(shots, si) {
   function fpInjectRoteiroPreviews(){
     if (typeof PROJECTS === 'undefined' || !PROJECTS) return;
     const projs = PROJECTS.filter(function(p){ return p.status === 'edicao'; });
+    /* A Edicao virou tabela: nao existe mais `.edit-card`. A previa do roteiro
+       saiu da listagem (linha de tabela nao e lugar de previa) e a decisao de
+       qual modal abrir passou para o proprio renderEditingView, onde o dado
+       esta. Este laco fica inerte de proposito — a funcao ainda e chamada por
+       um wrapper de renderEditingView. */
     const cards = document.querySelectorAll('#editingList .edit-card');
     cards.forEach(function(card, i){
       const p = projs[i]; if (!p) return;
@@ -12003,7 +12050,13 @@ function renderShotsReadOnly(shots, si) {
       } else {
         style = active ? ('border:1px solid ' + col + ';background:' + col + ';color:#fff') : ('border:1px solid rgba(' + rgb + ',.45);background:rgba(' + rgb + ',.12);color:' + col);
       }
-      return '<button onclick="fpSetClipFilter(\'' + k + '\')" style="padding:7px 14px;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;border-radius:8px;cursor:pointer;font-family:inherit;' + style + '">' + d[1] + ' <span style="opacity:.75">(' + cnt + ')</span></button>';
+      /* Aba com sublinhado, nao pilula preenchida — mesma regra do resto do
+         painel. A cor do estado vai no texto e no fio, e `style` deixou de
+         existir aqui. */
+      return '<button type="button" class="filter-btn' + (active ? ' active' : '') + '"'
+        + ' style="--chip-cor:' + (k === 'todos' ? 'var(--text)' : col) + '"'
+        + ' onclick="fpSetClipFilter(\'' + k + '\')">' + d[1]
+        + ' <span class="fp-conta">' + cnt + '</span></button>';
     }).join('');
     const opcoes = defs.map(function(d){
       return '<option value="' + d[0] + '"' + (CLIP_FILTER === d[0] ? ' selected' : '') + '>' + d[1] + ' (' + conta(d[0]) + ')</option>';
@@ -12113,50 +12166,75 @@ function renderShotsReadOnly(shots, si) {
     const el = document.getElementById('clipsList'); if (!el) return;
     const all = window.CLIPS || [];
     const clips = (CLIP_FILTER === 'todos') ? all : all.filter(function(c){ return c.status === CLIP_FILTER; });
+
+    const vazio = function(titulo, texto){
+      return '<div class="fp-vazio fp-moldura">' + (typeof FP_ICO_ATENCAO !== 'undefined' ? FP_ICO_ATENCAO : '')
+        + '<h3>' + titulo + '</h3><p>' + texto + '</p></div>';
+    };
     if (!all.length){
-      el.innerHTML = '<div style="background:var(--bg-elev);border:1px dashed var(--border);border-radius:14px;padding:40px 20px;text-align:center;color:var(--text-muted)">'
-        + '<svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.3" style="opacity:.5;margin-bottom:10px"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></svg>'
-        + '<div style="font-size:13px">Nenhum clip ainda. Clique em <strong>+ Novo clip</strong> para vincular um produto.</div></div>';
+      el.innerHTML = vazio('Nenhum clip ainda', 'Use o + no topo da tela para vincular um produto.');
       return;
     }
-    if (!clips.length){ el.innerHTML = fpClipFilterBar(all) + '<div style="background:var(--bg-elev);border:1px dashed var(--border);border-radius:14px;padding:30px 20px;text-align:center;color:var(--text-muted);font-size:13px">Nenhum clip com esse status.</div>'; return; }
-    el.innerHTML = fpClipFilterBar(all) + clips.map(function(c){
+    if (!clips.length){
+      el.innerHTML = fpClipFilterBar(all) + vazio('Nenhum clip com esse status', 'Troque o filtro acima.');
+      return;
+    }
+
+    const chaves = {
+      titulo:  function(c){ return String(c.title || c.product_name || '').toLowerCase(); },
+      produto: function(c){ return String(c.product_name || c.sku || '').toLowerCase(); },
+      status:  function(c){ return CLIP_STATUS_KEYS.indexOf(c.status); },
+      criado:  function(c){ return c.created_at || ''; },
+    };
+    const lista = (typeof fpOrdAplicar === 'function') ? fpOrdAplicar(clips, chaves, 'clips') : clips;
+    const th = function(rot, campo, dica){
+      return (typeof fpThOrd === 'function')
+        ? fpThOrd(rot, campo, 'clips', 'fpClipOrdenar', dica)
+        : '<th>' + rot + '</th>';
+    };
+
+    const ICO_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+    const ICO_LIXO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>';
+
+    /* Linha de tabela nao e lugar de observacao inteira: aqui vai o comeco e o
+       resto abre em "Abrir". */
+    const linhas = lista.map(function(c){
       const obs = (c.observations || '').trim();
-      return '<div class="edit-card fp-clip-card">'
-        + '<div class="edit-card-head">'
-        +   '<div style="min-width:0">'
-        +     '<div style="display:flex;align-items:center;gap:6px;min-width:0">'
-        +       '<h4 style="margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis">' + esc(c.title || c.product_name || 'Clip') + '</h4>'
-        +       '<span class="fp-so-desktop" style="display:contents">' + mlLinkEl(c) + '</span>'
-        +     '</div>'
-        +     (recordedTag(c) ? '<div style="margin-top:6px">' + recordedTag(c) + '</div>' : '')
-        +   '</div>'
-        +   '<div class="edit-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
-        +     '<span class="fp-so-desktop" style="display:contents">'
-        +       '<button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Abrir" onclick="fpOpenClipDetail(\'' + c.id + '\')">'
-        +         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
-        +     '</span>'
-        +     statusSelect(c, false)
-        +     '<span class="fp-so-mobile">' + fpMenuHtml([
-                { rotulo: 'Abrir / editar', icone: 'editar', acao: function(){ fpOpenClipDetail(c.id); } },
-                (c.ml_link && String(c.ml_link).trim()) ? { rotulo: 'Ver anúncio no Mercado Livre', icone: 'link', href: c.ml_link } : null,
-                { sep: true },
-                { rotulo: 'Excluir clip', icone: 'excluir', perigo: true, acao: function(){ fpDeleteClip(c.id); } },
-              ], { rotulo: 'Ações do clip' }) + '</span>'
-        +   '</div>'
-        + '</div>'
-        + '<div class="fp-clip-prod">' + productLine(c) + '</div>'
-        + '<div class="fp-clip-obs">'
-        +   '<div class="fp-clip-obs-lbl">Observações para o vídeo</div>'
-        +   (obs
-            ? '<div class="fp-obs-cortada" style="font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.55">' + fpLinkify(esc(obs)) + '</div>'
-            : '<div style="font-size:12px;color:var(--text-muted);font-style:italic">Sem observações. Clique em "Abrir" para adicionar tópicos.</div>')
-        + '</div>'
-        + '</div>';
+      return '<tr>'
+        + '<td data-rotulo="Clip"><strong>' + esc(c.title || c.product_name || 'Clip') + '</strong>'
+          + (obs ? '<div class="sub">' + esc(obs.slice(0, 110)) + (obs.length > 110 ? '…' : '') + '</div>'
+                 : '<div class="sub">Sem observações</div>') + '</td>'
+        + '<td data-rotulo="Produto">' + productLine(c) + '</td>'
+        + '<td data-rotulo="Gravado">' + (recordedTag(c) || '<span class="sub">—</span>') + '</td>'
+        + '<td data-rotulo="Status">' + statusSelect(c, false) + '</td>'
+        + '<td><div class="actions">'
+          + '<span class="fp-so-desktop" style="display:contents">'
+          + mlLinkEl(c)
+          + '<button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Abrir e editar o clip" onclick="fpOpenClipDetail(\'' + c.id + '\')">' + ICO_EDIT + '</button>'
+          + '<button class="fp-icon-btn fp-ib-danger fp-tip-left" data-tip="Excluir clip" onclick="fpDeleteClip(\'' + c.id + '\')">' + ICO_LIXO + '</button>'
+          + '</span>'
+          + '<span class="fp-so-mobile">' + fpMenuHtml([
+              { rotulo: 'Abrir / editar', icone: 'editar', acao: function(){ fpOpenClipDetail(c.id); } },
+              (c.ml_link && String(c.ml_link).trim()) ? { rotulo: 'Ver anúncio no Mercado Livre', icone: 'link', href: c.ml_link } : null,
+              { sep: true },
+              { rotulo: 'Excluir clip', icone: 'excluir', perigo: true, acao: function(){ fpDeleteClip(c.id); } },
+            ], { rotulo: 'Ações do clip' }) + '</span>'
+          + '</div></td>'
+        + '</tr>';
     }).join('');
+
+    el.innerHTML = fpClipFilterBar(all)
+      + '<table class="fp-lista"><thead><tr>'
+      + th('Clip', 'titulo')
+      + th('Produto', 'produto')
+      + '<th>Gravado</th>'
+      + th('Status', 'status', 'Ordenar pela etapa do fluxo')
+      + '<th>Ações</th>'
+      + '</tr></thead><tbody>' + linhas + '</tbody></table>';
+
     // Foto do Drive por SKU, quando a pasta existir.
     if (typeof fpDriveCarregar === 'function') {
-      fpDriveCarregar(clips.map(function(c){ return c.sku; }), el);
+      fpDriveCarregar(lista.map(function(c){ return c.sku; }), el);
     }
   }
   window.renderClips = renderClips;
@@ -22449,12 +22527,12 @@ window.fpDriveVerificar = fpDriveVerificar;
 
 /* EDITING MODULE */
 function renderEditingView() {
-  const editProjects = PROJECTS.filter(p => p.status === 'edicao');
   const el = document.getElementById('editingList');
   if (!el) return;
+  const editProjects = PROJECTS.filter(p => p.status === 'edicao');
 
   // Stats
-  const edicaoCount = PROJECTS.filter(p => p.status === 'edicao').length;
+  const edicaoCount = editProjects.length;
   const publicarCount = PROJECTS.filter(p => p.status === 'a_publicar').length;
   const totalPipeline = edicaoCount + publicarCount;
   const eEd = document.getElementById('editStatEdicao');
@@ -22466,123 +22544,88 @@ function renderEditingView() {
   if (eTot) eTot.textContent = totalPipeline;
   if (eBar) eBar.style.width = totalPipeline > 0 ? Math.round((publicarCount / totalPipeline) * 100) + '%' : '0%';
 
-  if (editProjects.length === 0) {
-    el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Nenhum projeto em fase de edição no momento.</p></div>';
+  if (!editProjects.length) {
+    el.innerHTML = '<div class="fp-vazio fp-moldura">' + FP_ICO_ATENCAO
+      + '<h3>Nada em edição agora</h3>'
+      + '<p>Projetos entram aqui quando o status vira Edição, em Projetos.</p></div>';
     return;
   }
 
-  const statusMap = { edicao: 'Edição', a_publicar: 'A publicar', concluido: 'Concluído' };
   const destNames = { youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads' };
+  const ICO_ROT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
+  const ICO_VER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const ICO_LINK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+  const ICO_OBS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>';
 
-  el.innerHTML = editProjects.map(p => {
-    const dests = (p.destinations || []).map(d => `<span class="proj-dest-tag ${d}">${destNames[d] || d}</span>`).join('');
-    const links = p.links || [];
-    const photos = p.photos || [];
-    const hasPdf = p.script_file && p.script_file.data && p.script_file.name && p.script_file.name.toLowerCase().endsWith('.pdf');
-    const hasScript = p.script_text && p.script_text.trim().length > 0;
-    const hasScenes = Array.isArray(p.script_scenes) && p.script_scenes.length > 0;
+  /* O que o roteiro E, em uma palavra. O botao abre o modal de cenas quando
+     existem cenas, e o roteiro antigo quando nao. Antes havia um patch que
+     procurava `.edit-card` no DOM para repontar esse botao — com a tabela nao
+     ha cartao, entao a decisao passou para ca, onde o dado esta. */
+  const roteiroDe = p => {
+    const cenas = (typeof fpScenesOf === 'function' ? fpScenesOf(p) : (p.script_scenes || [])) || [];
+    if (cenas.length) return { rot: cenas.length + (cenas.length === 1 ? ' cena' : ' cenas'), abre: 'fpOpenRoteiroModal' };
+    if (p.script_file && p.script_file.data && String(p.script_file.name || '').toLowerCase().endsWith('.pdf')) {
+      return { rot: 'PDF', abre: 'openEditPdf' };
+    }
+    if (p.script_text && p.script_text.trim()) return { rot: 'Texto', abre: 'openEditRoteiro' };
+    return { rot: '', abre: 'openEditRoteiro' };
+  };
 
-    return `<div class="edit-card">
-      <div class="edit-card-head">
-        <div>
-          <h4>${escHtml(p.title || 'Sem título')}</h4>
-          <div style="display:flex;gap:6px;margin-top:4px;align-items:center;flex-wrap:wrap">${dests || '<span style="font-size:11px;color:var(--text-muted)">Sem destino</span>'}</div>
-        </div>
-        <div class="edit-actions">
-          <span class="fp-so-desktop" style="display:contents">
-            <button class="fp-icon-btn fp-ib-blue" data-tip="Ver roteiro" onclick="openEditRoteiro('${p.id}')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          </button>
-          ${p.publish_link ? `<a class="fp-icon-btn fp-ib-pink" data-tip="Abrir arquivo" href="${escHtml(p.publish_link)}" target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          </a>` : ''}
-          <button class="fp-icon-btn fp-ib-blue" data-tip="Ver completo" onclick="openProjectDetail('${p.id}')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-          </span>
-          <span class="fp-so-mobile">${fpMenuHtml([
-            { rotulo: 'Ver roteiro', icone: 'roteiro', acao: () => openEditRoteiro(p.id) },
+  const chaves = {
+    titulo: p => String(p.title || '').toLowerCase(),
+    moto:   p => String(p.moto || '').toLowerCase(),
+    data:   p => p.production_date || '',
+    roteiro: p => roteiroDe(p).rot,
+  };
+  const lista = fpOrdAplicar(editProjects, chaves, 'edicao');
+
+  const linhas = lista.map(p => {
+    const dests = (p.destinations || []).map(d => '<span class="proj-dest-tag ' + d + '">' + (destNames[d] || d) + '</span>').join('');
+    const obs = String(p.observations || '').trim();
+    const r = roteiroDe(p);
+    return '<tr>'
+      + '<td data-rotulo="Projeto"><strong>' + escHtml(p.title || 'Sem título') + '</strong>'
+        + (obs
+            ? '<div class="sub">' + escHtml(obs.slice(0, 110)) + (obs.length > 110 ? '…' : '') + '</div>'
+            : '') + '</td>'
+      + '<td data-rotulo="Destinos">' + (dests || '<span class="sub">Sem destino</span>') + '</td>'
+      + '<td data-rotulo="Moto / Produto">' + escHtml(p.moto || '—') + '</td>'
+      + '<td data-rotulo="Data">' + (p.production_date ? prettyDate(p.production_date) : '—') + '</td>'
+      + '<td data-rotulo="Roteiro">' + (r.rot
+          ? '<button class="fp-acao-txt" type="button" data-tip="Abrir o roteiro deste projeto" onclick="'
+            + r.abre + '(\'' + p.id + '\')">' + ICO_ROT + r.rot + '</button>'
+          : '<span class="sub">Sem roteiro</span>') + '</td>'
+      + '<td data-rotulo="Status"><select class="proj-status-select ' + p.status + '"'
+        + ' data-tip="Mudar a etapa deste projeto" onchange="editingUpdateStatus(\'' + p.id + '\',this.value)">'
+        + [['edicao','Edição'],['a_publicar','A publicar'],['concluido','Concluído']]
+            .map(([k, rot]) => '<option value="' + k + '"' + (p.status === k ? ' selected' : '') + '>' + rot + '</option>').join('')
+        + '</select></td>'
+      + '<td><div class="actions">'
+        + '<span class="fp-so-desktop" style="display:contents">'
+        + '<button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="' + (obs ? 'Editar a observação' : 'Adicionar observação') + '" onclick="openObsModal(\'' + p.id + '\')">' + ICO_OBS + '</button>'
+        + (p.publish_link ? '<a class="fp-icon-btn fp-ib-pink fp-tip-left" data-tip="Abrir arquivo para publicação" href="' + escHtml(p.publish_link) + '" target="_blank" rel="noopener">' + ICO_LINK + '</a>' : '')
+        + '<button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Abrir o projeto completo" onclick="openProjectDetail(\'' + p.id + '\')">' + ICO_VER + '</button>'
+        + '</span>'
+        + '<span class="fp-so-mobile">' + fpMenuHtml([
+            { rotulo: r.rot ? 'Ver roteiro' : 'Adicionar roteiro', icone: 'roteiro', acao: () => window[r.abre](p.id) },
+            { rotulo: obs ? 'Editar observação' : 'Adicionar observação', icone: 'editar', acao: () => openObsModal(p.id) },
             { rotulo: 'Abrir projeto completo', icone: 'ver', acao: () => openProjectDetail(p.id) },
             p.publish_link ? { rotulo: 'Abrir arquivo para publicação', icone: 'link', href: p.publish_link } : null,
-          ], { rotulo: 'Ações do projeto' })}</span>
-          <select class="proj-status-select ${p.status}" onchange="editingUpdateStatus('${p.id}',this.value)" style="min-width:120px;margin-left:4px">
-            <option value="edicao" ${p.status === 'edicao' ? 'selected' : ''}>Edição</option>
-            <option value="a_publicar" ${p.status === 'a_publicar' ? 'selected' : ''}>A publicar</option>
-            <option value="concluido" ${p.status === 'concluido' ? 'selected' : ''}>Concluído</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="edit-meta-grid">
-        <div class="edit-meta-item"><div class="k">Moto / Produto</div><div class="v">${escHtml(p.moto || '—')}</div></div>
-        <div class="edit-meta-item"><div class="k">Data</div><div class="v">${p.production_date ? prettyDate(p.production_date) : '—'}</div></div>
-        <div class="edit-meta-item"><div class="k">Links</div><div class="v">${links.length} referência${links.length !== 1 ? 's' : ''}</div></div>
-      </div>
-      <div class="edit-obs-section">
-        <div style="display:flex;align-items:center;gap:6px;font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px">
-          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-          Observações
-          ${p.observations ? `<button class="fp-icon-btn" data-tip="Editar observação" onclick="openObsModal('${p.id}')" style="width:24px;height:24px;margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : ''}
-        </div>
-        ${p.observations
-          ? `<div style="font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.55">${fpLinkify(escHtml(p.observations))}</div>`
-          : `<button class="fp-textlink-btn" onclick="openObsModal('${p.id}')">+ Adicionar observação</button>`}
-      </div>
-
-      ${hasPdf ? `
-      <div class="edit-script-section">
-        <div class="section-label">
-          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          Roteiro (PDF)
-        </div>
-        <iframe src="${p.script_file.data}" class="edit-pdf-embed" title="Roteiro PDF"></iframe>
-        <div style="margin-top:8px;text-align:right">
-          <button class="action-btn view" style="padding:6px 14px;font-size:12px" onclick="openEditPdf('${p.id}')">
-            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-            Ampliar roteiro
-          </button>
-        </div>
-      </div>` : hasScript ? `
-      <div class="edit-script-section">
-        <div class="section-label">
-          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
-          Roteiro
-        </div>
-        <div style="font-size:13px;color:var(--text-dim);white-space:pre-wrap;line-height:1.6;max-height:250px;overflow-y:auto">${fpLinkify(escHtml(p.script_text))}</div>
-      </div>` : hasScenes ? `
-      <div class="edit-script-section" style="text-align:center;padding:24px">
-        <svg viewBox="0 0 24 24" width="24" height="24" stroke="var(--text-muted)" fill="none" stroke-width="1.5" style="margin-bottom:6px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <div style="font-size:12px;color:var(--text-muted)">Nenhum roteiro adicionado a este projeto.</div>
-      </div>` : `
-      <div style="display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);font-size:11px;margin:2px 0 4px">
-        <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        Sem roteiro
-      </div>`}
-
-      ${links.length ? `
-      <div style="margin-bottom:10px">
-        <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Links de referência</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px">
-          ${links.map((l, i) => `<a href="${l}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;color:#a78bfa;text-decoration:none;font-size:12px;transition:border-color .15s" onmouseover="this.style.borderColor='#a78bfa'" onmouseout="this.style.borderColor='var(--border)'">
-            <svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" fill="none" stroke-width="2" style="flex-shrink:0"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            Link ${i + 1}
-          </a>`).join('')}
-        </div>
-      </div>` : ''}
-
-      ${photos.length ? `
-      <div>
-        <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px">Fotos (${photos.length})</div>
-        <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px">
-          ${photos.map(ph => `<div style="flex-shrink:0;width:80px;height:80px;border-radius:8px;overflow:hidden;border:1px solid var(--border);cursor:pointer" onclick="openLightbox('${ph}')"><img src="${ph}" style="width:100%;height:100%;object-fit:cover"/></div>`).join('')}
-        </div>
-      </div>` : ''}
-
-    </div>`;
+          ], { rotulo: 'Ações do projeto' }) + '</span>'
+        + '</div></td>'
+      + '</tr>';
   }).join('');
-}
 
-let _obsModalBuilt = false, _obsModalId = null;
+  el.innerHTML = '<table class="fp-lista"><thead><tr>'
+    + fpThOrd('Projeto', 'titulo', 'edicao', 'fpEdOrdenar')
+    + '<th>Destinos</th>'
+    + fpThOrd('Moto / Produto', 'moto', 'edicao', 'fpEdOrdenar')
+    + fpThOrd('Data', 'data', 'edicao', 'fpEdOrdenar', 'Ordenar pela data de produção')
+    + fpThOrd('Roteiro', 'roteiro', 'edicao', 'fpEdOrdenar')
+    + '<th>Status</th>'
+    + '<th>Ações</th>'
+    + '</tr></thead><tbody>' + linhas + '</tbody></table>';
+}
 function buildObsModal() {
   if (_obsModalBuilt) return; _obsModalBuilt = true;
   const st = document.createElement('style');
