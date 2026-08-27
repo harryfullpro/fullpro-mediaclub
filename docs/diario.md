@@ -203,6 +203,49 @@ miniaturas são 320×320, então essa margem existe quase sempre — em cinza cl
 ela virava um retângulo em volta de foto de produto em fundo branco; no branco
 do cartão ela é a própria mesa da foto.
 
+### O primeiro acesso tinha dois donos
+
+> *"criei um novo usuário e apareceu o tour guiado de boas vindas. Mas abriu
+> imediatamente um pop-up de updates"*
+
+Duas causas, cada uma sozinha suficiente:
+
+**1. O aviso de entrada não sabia do boas-vindas.** `maybeShowMentionPopup` só
+checava se já tinha aberto uma vez por carregamento. Agora espera enquanto o
+pop-up estiver na tela, o tour rodando, o tutorial da tela na fila, ou o
+boas-vindas ainda não visto — dois diálogos ao mesmo tempo é um por cima do
+outro. Ele volta no próximo carregamento, quando houver o que dizer.
+
+**2. Para conta nova, todo o changelog contava como novidade.** A peneira agora
+é a **data da conta**: nota publicada antes de a conta existir é histórico, não
+novidade.
+
+Escolhi a data da conta em vez de "carimbar tudo no primeiro acesso" por dois
+motivos concretos: carimbar tem corrida com o `loadUpdates` (o `UPDATES` pode não
+ter chegado aos 900ms em que o boas-vindas abre), e não alcança quem já passou
+por esse momento — como o usuário que o dono acabou de criar.
+
+Conferido contra as seis contas, no banco e na função, com o mesmo resultado:
+
+| conta | criada | já fechou | publicadas antes | **novidades** |
+|---|---|---|---|---|
+| harry | 16/04 | 15 | 0 | 0 |
+| patrik | 16/04 | 0 | 0 | **15** |
+| andre | 05/08 | 15 | 0 | 0 |
+| jose | 25/08 | 0 | 12 | **3** |
+| matheus | 26/08 | 15 | 15 | 0 |
+| **yonan** | **27/08** | **0** | **15** | **0** |
+
+`yonan` é o usuário do relato: eram 15 notas por cima do próprio tour, agora são
+zero. `jose` continua vendo as 3 que saíram depois da conta dele, e `patrik`, que
+está aqui desde antes de todas, continua vendo as 15.
+
+O contador do menu passou a usar a mesma peneira — contador e conteúdo têm de
+contar a mesma coisa, senão o menu promete uma novidade que não existe do outro
+lado. O módulo Atualizações continua mostrando tudo: lá o histórico é o assunto.
+
+---
+
 ### Usuários no formato padrão
 
 Eram duas caixas lado a lado: a lista numa e um formulário fixo de 340px na
