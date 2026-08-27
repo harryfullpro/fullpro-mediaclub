@@ -8573,7 +8573,11 @@ async function changePassword() {
 
 /* USERS */
 async function loadUsers() {
-  const { data, error } = await sb.from('mc_admin_users').select('id, username, name, phone, role, created_at').order('created_at', { ascending: true });
+  /* `modules` entra na leitura: a coluna Acesso e a métrica "Sem módulo" saem
+     dele. Sem isso a tela diria "Nenhum" para a equipe inteira. */
+  const { data, error } = await sb.from('mc_admin_users')
+    .select('id, username, name, phone, role, modules, created_at')
+    .order('created_at', { ascending: true });
   if (error) { console.warn('loadUsers:', error.message); return; }
   renderUsers(data || []);
 }
@@ -8630,7 +8634,9 @@ window.fpUserNovoFechar = fpUserNovoFechar;
 function renderUsers(users) {
   const el = document.getElementById('usersList');
   if (!el) return;
-  USUARIOS = Array.isArray(users) ? users : [];
+  /* Chamada sem lista repinta o que já está em mãos, em vez de esvaziar a
+     tela. Quem carrega é `loadUsers`. */
+  USUARIOS = Array.isArray(users) ? users : USUARIOS;
 
   const admins = USUARIOS.filter(fpUserEhAdmin);
   const operadores = USUARIOS.filter(u => !fpUserEhAdmin(u));
@@ -27997,8 +28003,10 @@ async function initApp() {
           if (typeof renderTemplates === 'function') renderTemplates();
           break;
         case 'users':
+          /* Só `loadUsers`: ele já renderiza. A chamada extra de `renderUsers()`
+             vinha SEM argumento e limpava a listagem recém-desenhada — ficava
+             invisível porque um try/catch em volta engolia o TypeError. */
           await loadUsers();
-          if (typeof renderUsers === 'function') renderUsers();
           break;
         case 'integracoes':
           if (typeof renderIntegracoes === 'function') renderIntegracoes();
