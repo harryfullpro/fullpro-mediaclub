@@ -5392,9 +5392,22 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 /* Acao escrita dentro da celula (o "7 cenas" do Roteiro) alinhada com o texto
    das outras colunas. */
 .fp-lista .fp-acao-txt { margin: 0; }
-/* Nota media na sublinha do titulo: o painel de cinco estrelas com o botao
-   "avaliar" nao cabe numa linha de tabela — virou icone de acao. */
-.fp-lista .fp-nota { color: var(--warning); font-weight: 700; }
+/* Na listagem as tags de destino sao MENORES que no resto do painel: com o
+   tamanho normal, duas tags davam 160px de coluna e a tabela estourava a
+   largura util em 65px (medido). Aqui elas sao referencia rapida, nao rotulo
+   de leitura. */
+.fp-lista .proj-dest-tag { font-size: 10px; padding: 2px 6px; letter-spacing: .3px; }
+/* Nota media na sublinha do titulo. O painel de cinco estrelas com o botao
+   "avaliar" nao cabe numa linha de tabela; um sexto icone de acao tambem nao
+   (a coluna de acoes ja custa 34px por icone). A sublinha resolve os dois: ela
+   ja existe e nao muda a altura da linha. */
+.fp-lista .fp-nota, .fp-lista .fp-nota-btn {
+  background: none; border: 0; padding: 0; margin: 0;
+  font: inherit; font-weight: 700; cursor: pointer;
+}
+.fp-lista .fp-nota { color: var(--warning); }
+.fp-lista .fp-nota-btn { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
+.fp-lista .fp-nota:hover, .fp-lista .fp-nota-btn:hover { color: var(--text); }
 
 @media (max-width: 600px) {
   /* Tabela vira lista de blocos, com o rotulo da coluna antes do valor. Sem
@@ -10736,6 +10749,16 @@ function fpProjTh(rotulo, campo, dica) {
    tres tags levavam a linha de 63px para 109px (medido) e a tabela perdia o
    ritmo — o detalhe mostra todos. */
 const FP_DEST_NOMES = { youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads' };
+/* Moto com a placa na sublinha, como o par Moto/placa de Solicitacoes. Inteira
+   numa linha, "Kawasaki Versys 650 2026 (TQF0J92)" quebrava em tres linhas e
+   levava a linha da tabela de 63px para 80px (medido). */
+function fpMotoHtml(moto) {
+  const t = String(moto || '').trim();
+  if (!t) return '—';
+  const m = t.match(/^(.*?)\s*\(([^()]*)\)\s*$/);
+  return m ? escHtml(m[1]) + '<div class="sub">' + escHtml(m[2]) + '</div>' : escHtml(t);
+}
+
 function fpDestsHtml(dests) {
   const ds = dests || [];
   if (!ds.length) return '<span class="sub">—</span>';
@@ -10748,10 +10771,14 @@ function fpDestsHtml(dests) {
 
 /* A nota media cabe numa linha de tabela; o painel de estrelas com o botao
    "avaliar" nao — ele mudava a altura da linha e virou icone de acao. */
-function fpProjNotaHtml(arr) {
-  if (!arr || !arr.length) return '';
+function fpProjNotaHtml(id, arr) {
+  const abre = ' onclick="event.stopPropagation();openProjectDetail(\'' + id + '\',\'avaliacao\')"';
+  if (!arr || !arr.length) {
+    return '<button type="button" class="fp-nota-btn" data-tip="Avaliar este projeto"' + abre + '>avaliar</button>';
+  }
   const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
-  return '<span class="fp-nota">★ ' + avg.toFixed(1).replace('.', ',') + ' (' + arr.length + ')</span>';
+  return '<button type="button" class="fp-nota" data-tip="Ver e editar as avaliações"' + abre + '>★ '
+    + avg.toFixed(1).replace('.', ',') + ' (' + arr.length + ')</button>';
 }
 
 function renderProjects() {
@@ -10799,7 +10826,6 @@ function renderProjects() {
   const ICO_VER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
   const ICO_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
   const ICO_LINK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
-  const ICO_ESTRELA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.6 22 9.5 17 14.3 18.2 21.3 12 17.9 5.8 21.3 7 14.3 2 9.5 8.91 8.6 12 2"/></svg>';
   const ICO_LIXO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>';
 
   /* A tabela de Solicitacoes, inteira: dentro do `.table-wrap` (cabecalho
@@ -10810,13 +10836,15 @@ function renderProjects() {
   const linhas = filtered.map(p => {
     const custo = fpProjCusto(p);
     const obs = String(p.observations || '').trim();
-    const temSub = obs || p.status === 'a_publicar';
+    const avalia = p.status === 'a_publicar';
     return '<tr>'
       + '<td class="fp-col-tit" data-rotulo="Projeto"><strong>' + escHtml(p.title || 'Sem título') + '</strong>'
-        + (temSub ? '<div class="sub fp-sub-1l"><span id="projNota_' + p.id + '"></span>' + escHtml(obs) + '</div>' : '')
+        + (avalia || obs ? '<div class="sub fp-sub-1l">'
+            + (avalia ? '<span id="projNota_' + p.id + '">' + fpProjNotaHtml(p.id, []) + '</span>' + (obs ? ' · ' : '') : '')
+            + escHtml(obs) + '</div>' : '')
         + '</td>'
       + '<td data-rotulo="Destinos">' + fpDestsHtml(p.destinations) + '</td>'
-      + '<td data-rotulo="Moto / Produto">' + escHtml(p.moto || '—') + '</td>'
+      + '<td data-rotulo="Moto / Produto">' + fpMotoHtml(p.moto) + '</td>'
       + '<td data-rotulo="Data">' + (p.production_date ? prettyDate(p.production_date) : '—') + '</td>'
       + '<td data-rotulo="Custos">' + (custo > 0
           ? '<strong style="color:var(--warning)">R$ ' + formatBRL(custo) + '</strong>'
@@ -10830,7 +10858,6 @@ function renderProjects() {
         + '<span class="fp-so-desktop" style="display:contents">'
         + '<button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Ver resumo" onclick="openProjectSummary(\'' + p.id + '\')">' + ICO_VER + '</button>'
         + '<button class="fp-icon-btn fp-ib-blue fp-tip-left" data-tip="Abrir e editar" onclick="openProjectDetail(\'' + p.id + '\')">' + ICO_EDIT + '</button>'
-        + (p.status === 'a_publicar' ? '<button class="fp-icon-btn fp-ib-gold fp-tip-left" data-tip="Avaliar este projeto" onclick="openProjectDetail(\'' + p.id + '\',\'avaliacao\')">' + ICO_ESTRELA + '</button>' : '')
         + (p.publish_link ? '<a class="fp-icon-btn fp-ib-pink fp-tip-left" data-tip="Abrir arquivo para publicação" href="' + escHtml(p.publish_link) + '" target="_blank" rel="noopener">' + ICO_LINK + '</a>' : '')
         + '<button class="fp-icon-btn fp-ib-danger fp-tip-left" data-tip="Excluir projeto" onclick="deleteProject(\'' + p.id + '\')">' + ICO_LIXO + '</button>'
         + '</span>'
@@ -10874,11 +10901,7 @@ async function fillProjectRatings(projects) {
   rows.forEach(r => { if (r.rating) (agg[r.project_id] = agg[r.project_id] || []).push(r.rating); });
   aPub.forEach(p => {
     const el = document.getElementById('projNota_' + p.id);
-    if (!el) return;
-    const html = fpProjNotaHtml(agg[p.id] || []);
-    el.innerHTML = html;
-    /* Separador so quando ha as duas coisas: nota e observacao. */
-    if (html && el.nextSibling && String(el.nextSibling.textContent || '').trim()) el.innerHTML = html + ' · ';
+    if (el) el.innerHTML = fpProjNotaHtml(p.id, agg[p.id] || []);
   });
 }
 
@@ -22814,7 +22837,7 @@ function renderEditingView() {
       + '<td class="fp-col-tit" data-rotulo="Projeto"><strong>' + escHtml(p.title || 'Sem título') + '</strong>'
         + (obs ? '<div class="sub fp-sub-1l">' + escHtml(obs) + '</div>' : '') + '</td>'
       + '<td data-rotulo="Destinos">' + fpDestsHtml(p.destinations) + '</td>'
-      + '<td data-rotulo="Moto / Produto">' + escHtml(p.moto || '—') + '</td>'
+      + '<td data-rotulo="Moto / Produto">' + fpMotoHtml(p.moto) + '</td>'
       + '<td data-rotulo="Data">' + (p.production_date ? prettyDate(p.production_date) : '—') + '</td>'
       + '<td data-rotulo="Roteiro">' + (r.rot
           ? '<button class="fp-acao-txt" type="button" data-tip="Abrir o roteiro deste projeto" onclick="'
