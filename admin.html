@@ -21582,7 +21582,13 @@ function fpTutAbrir(chave, opcoes) {
        antemao — o proprio fpTutIr pula se na hora nao houver nada. */
     if (p.antes) return true;
     const el = document.querySelector(p.alvo);
-    if (!el || el.offsetParent === null) return false;
+    if (!el) return false;
+    /* `offsetParent` nao serve de teste de visibilidade: para elemento
+       `position: fixed` ele e SEMPRE null, e foi o que derrubou o passo do
+       besouro — o botao estava na tela, com 42x42, e mesmo assim era
+       descartado. Vale area de verdade mais display e visibility. */
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
     const r = el.getBoundingClientRect();
     return r.width > 4 && r.height > 4;
   });
