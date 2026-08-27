@@ -23789,7 +23789,18 @@ function fpIconesAplicar(raiz) {
   /* Cor: folha própria, como nas cores do painel. `color` porque os desenhos
      usam `currentColor` — é o que faz um ícone só mudar de cor sem tocar no
      resto. */
-  let css = '';
+  /* O <svg> de destino é estilizado por CSS da tela — `.nav-item svg` manda
+     `fill: none; stroke: currentColor`. Tirar os ATRIBUTOS do destino ao aplicar
+     um ícone próprio não basta: regra de folha de estilo vence atributo, e o
+     valor desce por herança. Um desenho preenchido chegava com `fill: none` e
+     aparecia só pelo traço — 1 unidade num viewBox de 763, ou seja, 0,02px na
+     tela. Era o ícone "sumido", medido.
+
+     A base aqui é preenchimento na cor do lugar. Quem tem atributo próprio no
+     <g> (o `fill="none" stroke="currentColor"` de um ícone de traço, ou as cores
+     de uma logo) continua mandando: atributo do PRÓPRIO elemento vence valor
+     herdado, então esta regra só pega quem não declarou nada. */
+  let css = 'svg[data-ico-estado^="c"]{fill:currentColor !important;stroke:none !important;}';
   for (const k in FP_ICONES_ESCOLHIDOS) {
     const c = FP_ICONES_ESCOLHIDOS[k] && FP_ICONES_ESCOLHIDOS[k].cor;
     if (c) css += '[data-ico="' + k + '"]{color:' + c + ' !important;}';
@@ -23898,7 +23909,9 @@ function fpIconesRender() {
        ícone só no grande já custou caro — desenho que funciona a 40px vira
        mancha a 18px, e é a 18px que ele vai viver. */
     const svgPrevia = cls => '<svg class="' + cls + '" viewBox="' + escHtml(vb) + '" aria-hidden="true"'
-      + (esc.svg ? '' : ' fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"')
+      /* Mesma marca do ícone aplicado, para a prévia herdar a mesma base de cor
+         e mostrar exatamente o que a tela vai mostrar. */
+      + (esc.svg ? ' data-ico-estado="c"' : ' fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"')
       + (esc.cor && !esc.original ? ' style="color:' + escHtml(esc.cor) + '"' : '') + '>' + desenho + '</svg>';
     return '<div class="fp-ico-linha' + (mudou ? ' mudou' : '') + '">'
       + '<span class="fp-ico-caixa">' + svgPrevia('fp-ico-previa') + '</span>'
