@@ -542,13 +542,24 @@
      termina o segundo cartao (2c+g nos dois casos) e a direita comeca onde
      comeca o terceiro. A altura vem da fila; a animacao se estica. */
   .fp-dash-duo { display: grid; grid-template-columns: 1fr 1fr; gap: var(--fp-col-gap); align-items: stretch; }
+  /* Simetria entre as duas colunas. Medido: as colunas JA tinham a mesma altura
+     (255px cada) — mas o retangulo VISIVEL da galeria terminava 15px acima do
+     fim da fila, porque os pontos do carrossel ficam fora do palco e ocupam
+     esses 15px. O olho compara as duas bordas visiveis, nao as caixas.
+     A fila passa a reservar a altura dos pontos no proprio recuo de baixo, e as
+     linhas dividem por igual o que sobra — assim a ultima linha termina na
+     mesma altura da borda da foto, com qualquer numero de linhas. */
+  .fp-dash-duo .fp-prod { display: flex; flex-direction: column; padding-bottom: 15px; }
+  .fp-dash-duo .fp-prod-linha { flex: 1 1 0; min-height: 0; }
   /* ── Carrossel das fotos novas (Dashboard de fotos) ───────────────────────
      Substituiu a animação vetorial que ficava aqui. A animação era bonita mas
      não dizia nada; este espaço mostra o que o estúdio acabou de produzir.
      A animação está guardada em mc_guardados (chave anim-fluxo-foto). */
   .fp-dash-carro { position: relative; min-height: 220px; display: flex; flex-direction: column; }
+  /* 252px e nao 220: para a fila e a galeria fecharem na mesma linha alguem
+     tinha que ceder, e o pedido foi aumentar a galeria. */
   .fp-carro-palco {
-    position: relative; flex: 1; min-height: 220px; overflow: hidden;
+    position: relative; flex: 1; min-height: 252px; overflow: hidden;
     border-radius: 10px; background: var(--bg-elev);
   }
   /* Duas fotos por slide, da mesma pasta. O espaco no Dashboard e retangular
@@ -564,17 +575,27 @@
   /* Pasta com uma foto so nao fica com metade do palco vazia. */
   .fp-carro-slide.uma { grid-template-columns: 1fr; }
   .fp-carro-slide.on { opacity: 1; }
+  /* `contain`, nao `cover`. As miniaturas que o proxy serve sao todas 320x320
+     (medido em toda a amostra); em `cover`, dentro de uma celula de 232x240,
+     8px eram cortados na horizontal — e o produto de catalogo ocupa a foto de
+     ponta a ponta, entao esses 8px comem peca. Em `contain` nada e cortado,
+     seja qual for a proporcao da origem. */
   .fp-carro-slide img {
-    width: 100%; height: 100%; min-width: 0; display: block; object-fit: cover;
+    width: 100%; height: 100%; min-width: 0; display: block; object-fit: contain;
   }
   /* Gradiente só na faixa de baixo: o nome do produto precisa ser legível em
      cima de foto clara e de foto escura, e escurecer a imagem inteira
      estragaria a foto. */
+  /* Faixa mais leve. A .72 ela escurecia os 50px de baixo da foto o bastante
+     para o produto parecer cortado ali — era isso, e nao recorte de imagem, o
+     que se via. Agora o escuro se concentra na ultima faixa e a legibilidade do
+     texto se apoia tambem na sombra da letra, nao so na chapa. */
   .fp-carro-rot {
     position: absolute; left: 0; right: 0; bottom: 0;
     padding: 26px 12px 10px;
-    background: linear-gradient(transparent, rgba(0,0,0,.72));
+    background: linear-gradient(transparent, rgba(0,0,0,.06) 45%, rgba(0,0,0,.46));
     color: #fff; font-size: 12px; font-weight: 600; letter-spacing: .01em;
+    text-shadow: 0 1px 3px rgba(0,0,0,.65);
     display: flex; align-items: baseline; gap: 8px;
     text-decoration: none;
   }
