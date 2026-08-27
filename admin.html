@@ -5269,6 +5269,30 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-prod-linha.fora { opacity: .5; }
 /* Cabeçalho de bloco, no lugar do <h3> solto. Sem fundo: a listagem fica
    direto sobre o fundo da tela, sem moldura em volta. */
+/* ── Integracoes ────────────────────────────────────────────────────────
+   Cada servico era um cartao com fundo, borda e canto arredondado dentro de
+   outro cartao — caixa dentro de caixa, o padrao antigo. Agora e listagem com
+   fio, como o resto do painel. */
+.fp-integr { max-width: 720px; }
+.fp-integr h3 { padding-top: 6px; }
+.fp-integr-lin {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 0; border-top: 1px solid var(--border);
+  transition: background .12s ease;
+}
+.fp-integr-lin-livre { display: block; }
+.fp-integr-id { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.fp-integr-nome { font-size: 13px; font-weight: 600; color: var(--text); }
+.fp-integr-sub { font-size: 11px; color: var(--text-dim); }
+/* Recado de como a conexao funciona: sem chapa azul e sem moldura arredondada
+   — fio a esquerda nao entra (regra do dono), entao e so o icone na cor de
+   destaque e o texto. */
+.fp-integr-nota {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 0 0 18px; font-size: 12px; color: var(--text-dim); line-height: 1.55;
+}
+.fp-integr-nota svg { flex-shrink: 0; margin-top: 2px; width: 16px; height: 16px; color: var(--text-muted); }
+
 /* ── Meu perfil ──────────────────────────────────────────────────────────
    Sem cartao: as secoes se separam por faixa de titulo e fio, como as
    listagens do painel. O que era um botao verde de largura inteira virou
@@ -6439,63 +6463,63 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
           <p>Conexões de APIs e serviços do painel — valem para toda a equipe.</p>
         </div>
       </div>
-      <div class="cal-card" style="max-width:640px">
-        <div style="display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:10px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);margin-bottom:16px">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#3b82f6" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <div style="font-size:12px;color:var(--text);line-height:1.5">A conexão fica salva <strong>no servidor</strong>, não no seu navegador. Basta um administrador conectar uma vez e a integração passa a funcionar para <strong>todos os usuários</strong> do painel.</div>
+      <div class="fp-integr">
+        <div class="fp-integr-nota">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <div>A conexão fica salva <strong>no servidor</strong>, não no seu navegador. Basta um administrador conectar uma vez e a integração passa a funcionar para <strong>todos os usuários</strong> do painel.</div>
         </div>
         <h3>Contas conectadas</h3>
         <p class="sub">Conecte, atualize métricas e busque produtos do Bling em nome de toda a equipe.</p>
         <div style="display:flex;flex-direction:column;gap:10px">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border)">
-            <div style="display:flex;align-items:center;gap:10px">
+          <div class="fp-integr-lin">
+            <div class="fp-integr-id">
               <img src="tiktok_2.png" width="24" height="24" style="object-fit:contain"/>
               <div>
-                <div style="font-size:13px;font-weight:600;color:var(--text)">TikTok</div>
-                <div style="font-size:11px;color:var(--text-dim)" id="tkStatusText">Verificando...</div>
+                <div class="fp-integr-nome">TikTok</div>
+                <div class="fp-integr-sub" id="tkStatusText">Verificando...</div>
               </div>
             </div>
-            <button id="tkConnectBtn" class="action-btn approve" style="padding:6px 14px;font-size:11px" onclick="connectTikTok()">Conectar</button>
+            <button id="tkConnectBtn" class="action-btn approve" onclick="connectTikTok()">Conectar</button>
           </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border)">
-            <div style="display:flex;align-items:center;gap:10px">
+          <div class="fp-integr-lin">
+            <div class="fp-integr-id">
               <svg viewBox="0 0 24 24" width="24" height="24" fill="none"><rect x="2" y="2" width="20" height="20" rx="4" fill="#2196F3"/><path d="M7 7h4v10H7zm6 3h4v7h-4z" fill="#fff"/></svg>
               <div>
-                <div style="font-size:13px;font-weight:600;color:var(--text)">Bling ERP</div>
-                <div style="font-size:11px;color:var(--text-dim)" id="blingStatusText">Verificando...</div>
+                <div class="fp-integr-nome">Bling ERP</div>
+                <div class="fp-integr-sub" id="blingStatusText">Verificando...</div>
               </div>
             </div>
-            <button id="blingConnectBtn" class="action-btn approve" style="padding:6px 14px;font-size:11px" onclick="connectBling()">Conectar</button>
+            <button id="blingConnectBtn" class="action-btn approve" onclick="connectBling()">Conectar</button>
           </div>
-          <div style="padding:12px 14px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border)">
+          <div class="fp-integr-lin fp-integr-lin-livre">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-              <div style="display:flex;align-items:center;gap:10px;min-width:0">
+              <div class="fp-integr-id">
                 <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="#0066da" d="M4.5 20.5 1 14.5l6-10.5h7l-6 10.5z"/><path fill="#00ac47" d="m8 4 6 10.5h7L15 4z"/><path fill="#ffba00" d="M4.5 20.5h15l3.5-6H8z"/></svg>
                 <div style="min-width:0">
-                  <div style="font-size:13px;font-weight:600;color:var(--text)">Google Drive — fotos por SKU</div>
-                  <div style="font-size:11px;color:var(--text-dim)" id="driveStatusText">Verificando...</div>
+                  <div class="fp-integr-nome">Google Drive — fotos por SKU</div>
+                  <div class="fp-integr-sub" id="driveStatusText">Verificando...</div>
                 </div>
               </div>
-              <button class="action-btn view" style="padding:6px 14px;font-size:11px" onclick="fpDriveVerificar(true)">Verificar</button>
+              <button class="action-btn" onclick="fpDriveVerificar(true)">Verificar</button>
             </div>
             <div id="driveStatusDetalhe" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--bg-elev);border:1px solid var(--border);font-size:11.5px;line-height:1.6;color:var(--text-dim)"></div>
           </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border)">
-            <div style="display:flex;align-items:center;gap:10px">
+          <div class="fp-integr-lin">
+            <div class="fp-integr-id">
               <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#e1306c" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="#e1306c" stroke="none"/></svg>
               <div>
-                <div style="font-size:13px;font-weight:600;color:var(--text)">Instagram</div>
-                <div style="font-size:11px;color:var(--text-dim)" id="igStatusText">Verificando...</div>
+                <div class="fp-integr-nome">Instagram</div>
+                <div class="fp-integr-sub" id="igStatusText">Verificando...</div>
               </div>
             </div>
             <span style="font-size:11px;color:var(--text-dim);padding:6px 14px">config.js</span>
           </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border)">
-            <div style="display:flex;align-items:center;gap:10px">
+          <div class="fp-integr-lin">
+            <div class="fp-integr-id">
               <svg viewBox="0 0 24 24" width="24" height="24" fill="red"><path d="M23.5 6.19a3.02 3.02 0 00-2.12-2.14C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.38.55A3.02 3.02 0 00.5 6.19 31.6 31.6 0 000 12a31.6 31.6 0 00.5 5.81 3.02 3.02 0 002.12 2.14c1.88.55 9.38.55 9.38.55s7.5 0 9.38-.55a3.02 3.02 0 002.12-2.14A31.6 31.6 0 0024 12a31.6 31.6 0 00-.5-5.81z"/><path d="M9.75 15.02l6.25-3.02-6.25-3.02v6.04z" fill="#fff"/></svg>
               <div>
-                <div style="font-size:13px;font-weight:600;color:var(--text)">YouTube</div>
-                <div style="font-size:11px;color:var(--text-dim)" id="ytStatusText">Verificando...</div>
+                <div class="fp-integr-nome">YouTube</div>
+                <div class="fp-integr-sub" id="ytStatusText">Verificando...</div>
               </div>
             </div>
             <span style="font-size:11px;color:var(--text-dim);padding:6px 14px">config.js</span>
