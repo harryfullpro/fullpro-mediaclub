@@ -36,6 +36,22 @@ nada mais.
   regra do título, mas a meta diz "abaixo de 10 min". A tela mostra a duração ao
   lado em vez de decidir sozinha.
 
+### `bling-proxy`: falta o passo 2 (a function ainda aceita anônimo)
+Em 28/08/2026 o painel passou a mandar `Authorization: Bearer <jwt da sessão>`
+em todas as chamadas do Bling (commit `7bf2152`), mas **a function ignora esse
+cabeçalho**. Ela continua pegando o token do ERP em `mc_integrations`, renovando
+sozinha e respondendo a qualquer requisição anônima — inclusive `stock-move`,
+que escreve estoque, e `contact`, que lê dado de cliente. A URL está no
+`admin.html` e o repositório é público.
+
+O passo 2 é a function passar a exigir operador. A divisão em dois passos foi
+deliberada: fazer os dois de uma vez derrubaria as ~780 chamadas/dia na hora.
+**Antes de dar o passo 2, conferir no log das edge functions que as chamadas
+estão chegando com o cabeçalho.**
+
+⚠️ `bling-proxy.ts` **não está no repositório** — só `bling-sync.ts`. O código
+dessa function vive apenas no Supabase. Baixar antes de mexer.
+
 ### O token do TikTok venceu em 18/08/2026
 `mc_integrations.provider = 'tiktok'`, `expires_at = 2026-08-18`. O coletor
 detecta e avisa, mas enquanto isso **nenhum vídeo do TikTok entra na contagem de
