@@ -948,17 +948,17 @@
      com agendamento aprovado não mudava nada — o verde cobria o amarelo e o
      operador não via onde tinha clicado. */
   .cal-day.selected {
-    border-color: var(--accent);
-    background: rgba(255,207,51,.16);
+    border-color: var(--azul);
+    background: rgba(var(--azul-rgb), .16);
     font-weight: 700;
-    box-shadow: inset 0 0 0 1px rgba(255,207,51,.35);
+    box-shadow: inset 0 0 0 1px rgba(var(--azul-rgb), .35);
   }
-  /* E o dia selecionado responde ao mouse reforçando o próprio amarelo, em vez
+  /* E o dia selecionado responde ao mouse reforçando o próprio azul, em vez
      de cair na regra geral de hover (que troca a borda para vermelho). */
   .cal-day.selected:hover:not(.empty) {
-    border-color: var(--accent);
-    background: rgba(255,207,51,.32);
-    box-shadow: 0 0 0 2px rgba(255,207,51,.22), inset 0 0 0 1px rgba(255,207,51,.5);
+    border-color: var(--azul);
+    background: rgba(var(--azul-rgb), .32);
+    box-shadow: 0 0 0 2px rgba(var(--azul-rgb), .22), inset 0 0 0 1px rgba(var(--azul-rgb), .5);
   }
 
   .list-blocked {
@@ -1581,13 +1581,18 @@
      abaixo so precisa cuidar do alvo de toque.
      A caixa de 42px CONTINUA existindo como alvo de clique; o que sumiu foi o
      fundo. Encolher o alvo junto com o desenho deixaria um alvo de 26px. */
-  :root { --novo-azul: #0A84FF; }
-  [data-theme="light"] { --novo-azul: #007AFF; }
+  /* `--azul`, e nao `--novo-azul`: ele nasceu no botao "novo" e agora tambem
+     pinta o dia selecionado no calendario. Nome preso a um dos usos e o tipo
+     de coisa que faz o proximo achar que precisa de um segundo azul.
+     `--azul-rgb` existe porque `rgba()` precisa dos canais soltos, e nao ha
+     como extrai-los de um hex em CSS puro. */
+  :root { --azul: #0A84FF; --azul-rgb: 10,132,255; }
+  [data-theme="light"] { --azul: #007AFF; --azul-rgb: 0,122,255; }
   .fp-new-btn {
     position: relative; display: inline-flex; align-items: center; justify-content: center;
     width: 42px; height: 42px; padding: 0;
     background: none; border: none; border-radius: 11px; cursor: pointer;
-    color: var(--novo-azul); transition: opacity .12s ease;
+    color: var(--azul); transition: opacity .12s ease;
   }
   .fp-new-btn:hover { opacity: .6; }
   .fp-new-btn:active { opacity: .35; }

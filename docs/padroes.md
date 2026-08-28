@@ -518,6 +518,27 @@ de 19/08 percorreu as 17 telas medindo toda `.badge`, `.proj-dest-tag` e
 - Contraste medido ao final: **0 reprovados WCAG AA nos dois temas**
 - Textos em português, com acento. Nada de *goal*, *pool*, *pace* na interface
 
+## Medir cor depois de trocar de tema: espere a transição
+
+Vários componentes têm `transition: all .15s` (`.cal-day`, entre outros). Trocar
+`data-theme` e ler `getComputedStyle` na mesma avaliação devolve a cor **do
+quadro intermediário** — e uma captura de tela tirada nesse instante mostra a
+mesma mentira. Medi 1,14:1 num elemento que tem 13,73:1.
+
+`void el.offsetHeight` força layout, **não** conclui transição. Espere ~200ms, ou
+meça um tema por avaliação.
+
+E antes de investigar qualquer coisa no navegador local: confira se o servidor
+está de pé. Com ele fora do ar, o `sw.js` (rede primeiro, cache como rede de
+segurança) serve a última cópia boa — e a página fica mostrando uma versão
+antiga do arquivo enquanto você procura um erro que não existe:
+
+```js
+fetch('/admin.html', {cache:'no-store'}).then(r=>r.text()).then(t=>t.length)
+```
+
+---
+
 ## Renomear classe: procure o NOME, não o seletor montado
 
 Renomeei `.fp-new-btn.ghost` para `.vermelho` e procurei por `fp-new-btn ghost` e

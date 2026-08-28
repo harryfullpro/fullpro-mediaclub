@@ -1,5 +1,34 @@
 # Diário
 
+## 27/08/2026 · Dia selecionado do calendário: azul no lugar do amarelo
+
+> *"vamos alterar esse hover select e hover do mouse na data selecionada para a
+> cor azul ao invés do amarelo"*
+
+Duas regras (`.cal-day.selected` e o hover dela) trocaram `--accent` e os
+`rgba(255,207,51,…)` cravados por `--azul`. O token, que nascera `--novo-azul`
+no botão "novo", virou `--azul` — nome preso a um dos usos é o tipo de coisa que
+faz o próximo inventar um segundo azul. Junto veio `--azul-rgb`, porque `rgba()`
+precisa dos canais soltos e não há como extraí-los de um hex em CSS puro.
+
+Medido depois da transição terminar: número do dia sobre o azul **14,1:1** no
+claro e **13,7:1** no escuro; a borda azul contra o card, **4,02:1** e **4,95:1**
+(o piso de elemento gráfico é 3:1).
+
+### Dois enganos de medição meus, nenhum era defeito do código
+
+**O servidor local tinha caído.** O service worker fez o certo — rede primeiro,
+cache como rede de segurança — e me serviu uma cópia de 1.516.339 bytes contra
+1.530.039 em disco. Passei um tempo procurando uma regra CSS que estivesse
+vencendo a minha; não havia nenhuma. Antes de caçar especificidade, conferir se
+o arquivo servido é o arquivo editado.
+
+**`.cal-day` tem `transition: all .15s`.** Trocar `data-theme` e ler
+`getComputedStyle` na mesma avaliação devolve a cor **no meio da transição**.
+Cheguei a medir 1,14:1 e a tirar uma captura com os números do calendário
+invisíveis — os dois eram o quadro intermediário, não o resultado. Esperando
+2s, 13,73:1. `void offsetHeight` força layout, não conclui transição.
+
 ## 27/08/2026 · O "+" virou um segundo símbolo de bloqueio
 
 > *"ta de brincadeira, né / o botão novo agendamento ta com simbolo de bloquear"*
