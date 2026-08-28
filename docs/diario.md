@@ -1,5 +1,43 @@
 # Diário
 
+## 27/08/2026 · O "+" virou um segundo símbolo de bloqueio
+
+> *"ta de brincadeira, né / o botão novo agendamento ta com simbolo de bloquear"*
+
+Renomear `.fp-new-btn.ghost` para `.vermelho` quebrou o botão de novo
+agendamento: ele passou a mostrar o ⊘ do botão vizinho.
+
+**O código-fonte estava certo** — o HTML dos dois botões nunca mudou. Quem
+trocava era o painel de ícones da Manutenção, em tempo de execução. No registro
+dele havia:
+
+```js
+{ chave: 'btn-novo', sel: '.fp-new-btn:not(.ghost) > svg' }
+```
+
+Com `.ghost` extinto, esse seletor passou a casar com **os dois** botões. E
+`fpIconesMarcar` guarda como "desenho de fábrica" de cada chave o **primeiro que
+encontra em ordem de documento** — que é o de bloquear. Daí em diante todo
+`btn-novo` era pintado com o ⊘.
+
+**Por que meu grep não pegou.** Procurei por `fp-new-btn ghost` e por
+`.fp-new-btn.ghost`. A ocorrência estava escrita `:not(.ghost)` — a mesma classe
+em outra forma. Procurar pelo seletor montado, e não pelo NOME da classe, é a
+falha.
+
+Agora cada botão tem **seletor próprio** (`:not(.vermelho)` e `.vermelho`), em
+vez de um definido pela ausência do outro: assim renomear a variante não faz o
+seletor de um invadir o outro.
+
+Nada a limpar no banco — `mc_icons` tinha só três ícones de menu, e o padrão de
+fábrica vive em memória. O recarregar já corrige.
+
+No mesmo passe, a pedido: o card do calendário perdeu o título "Agenda visual" e
+a linha "Selecione um dia para ver detalhes…". A legenda no pé já diz o que verde
+e vermelho significam — era a mesma informação duas vezes. Medido depois: os dois
+cards continuam com a mesma altura (352,1px, diferença 0) e o ano começa a 19px
+do topo, exatamente onde começa o título do card ao lado.
+
 ## 27/08/2026 · Cabeçalho do calendário, e o botão "novo" perde a caixa
 
 > *"quero o nome do mês centralizado, o ano encima, e as setas (…) uma de cada

@@ -6684,9 +6684,11 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
            consulta, como a moldura da tabela. -->
       <div class="cal-admin">
         <div class="cal-top">
-          <div class="cal-card">
-            <h3>Agenda visual</h3>
-            <p class="sub">Selecione um dia para ver detalhes. Verde = aprovado. Vermelho = bloqueio.</p>
+          <!-- Sem titulo nem explicacao, a pedido do dono: "quero so o
+               calendario mesmo". A legenda no pe do card ja diz o que verde e
+               vermelho significam, entao o paragrafo era a mesma informacao
+               duas vezes. -->
+          <div class="cal-card cal-card-limpo">
             <div class="cal-header">
               <span class="cal-ano" id="calAno">—</span>
               <div class="cal-mes-linha">
@@ -25170,8 +25172,15 @@ const FP_ICO_GRUPOS = [
   ]},
 
   { titulo: 'Botões de cabeçalho e flutuantes', itens: [
-      { chave: 'btn-novo',     nome: 'Novo',      onde: 'O + azul no canto das telas (novo projeto, clip, agendamento)', sel: '.fp-new-btn:not(.ghost) > svg' },
-      { chave: 'btn-bloquear', nome: 'Bloquear',  onde: 'Bloquear data, na Agenda', assin: FP_ICO_ACOES.bloquear },
+      /* Os dois botoes do topo da Agenda sao `.fp-new-btn`; o que separa um do
+         outro e a classe da variante. Cada um tem SELETOR PROPRIO, e nao um
+         `:not()` do outro: com o `:not()`, renomear a variante fazia o seletor
+         do "novo" passar a casar TAMBEM com o de bloquear — e como o painel
+         guarda como desenho de fabrica o primeiro que encontra em ordem de
+         documento, o "+" virava um segundo simbolo de bloqueio.
+         Aconteceu em 27/08/2026, ao trocar `.ghost` por `.vermelho`. */
+      { chave: 'btn-novo',     nome: 'Novo',      onde: 'O + azul no canto das telas (novo projeto, clip, agendamento)', sel: '.fp-new-btn:not(.vermelho) > svg' },
+      { chave: 'btn-bloquear', nome: 'Bloquear',  onde: 'Bloquear data, na Agenda', sel: '.fp-new-btn.vermelho > svg', assin: FP_ICO_ACOES.bloquear },
       { chave: 'flut-bug',     nome: 'Reportar',  onde: 'O besouro flutuante, em todas as telas', sel: '#fpBugBtn > svg' },
   ]},
 ];

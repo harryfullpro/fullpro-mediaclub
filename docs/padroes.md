@@ -518,6 +518,33 @@ de 19/08 percorreu as 17 telas medindo toda `.badge`, `.proj-dest-tag` e
 - Contraste medido ao final: **0 reprovados WCAG AA nos dois temas**
 - Textos em português, com acento. Nada de *goal*, *pool*, *pace* na interface
 
+## Renomear classe: procure o NOME, não o seletor montado
+
+Renomeei `.fp-new-btn.ghost` para `.vermelho` e procurei por `fp-new-btn ghost` e
+`.fp-new-btn.ghost`. Passou reto por esta, no registro do painel de ícones:
+
+```js
+sel: '.fp-new-btn:not(.ghost) > svg'
+```
+
+Com a classe extinta o seletor passou a casar com os DOIS botões do topo da
+Agenda, e o painel de ícones — que guarda como desenho de fábrica o primeiro
+elemento em ordem de documento — pintou o "+" com o símbolo de bloquear.
+
+```bash
+grep -n "ghost" admin.html      # o NOME, sem ponto e sem seletor em volta
+```
+
+E a lição de desenho por trás: **seletor definido pela ausência de outra classe
+é frágil**. `:not(.ghost)` só funciona enquanto `.ghost` existir. Dois irmãos que
+precisam ser distinguidos merecem cada um o próprio seletor positivo.
+
+Isto vale em dobro para o registro do painel de ícones (`FP_ICO_ITENS`): ele
+casa por seletor E por assinatura de SVG, roda depois do render e troca innerHTML
+— então um seletor errado ali não dá erro nenhum, só desenha a coisa errada.
+
+---
+
 ## O botão "novo" é só o glifo — em nove telas
 
 `.fp-new-btn` não tem caixa, fundo nem borda: é o **+ em azul** (`--novo-azul`),
