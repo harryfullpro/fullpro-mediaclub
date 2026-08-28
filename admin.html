@@ -5733,13 +5733,58 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    a linha de 63px para 109px (medido). Passando de dois, o resto vira "+N" —
    o detalhe mostra todos. */
 /* ── painel de metas ─────────────────────────────────────────────────────
-   Um card por meta, cada um com o próprio gráfico do acumulado contra o ritmo
-   ideal — foi o pedido de "acompanhar como anda ao longo do tempo". Um gráfico
-   por meta, e não um gráfico com sete linhas: com sete a leitura vira novelo.
+   SEM CAIXA. A primeira versão desta tela era um card por meta, com moldura,
+   raio e fundo — exatamente o "container" que o dono já disse não querer
+   ("eu não quero CONTAINERS NESSA MERDA", em docs/contexto.md). Refeita no
+   idioma que Produção e Projetos já usam: linhas encostadas no fundo da
+   página, separadas por fios de 1px, com a faixa de hover sangrando até a
+   borda da tela.
    ───────────────────────────────────────────────────────────────────────── */
+.fp-metas > * + * { border-top: 1px solid var(--border); }
+.fp-meta-lin {
+  display: flex; align-items: center; gap: 18px; padding: 15px 0;
+  position: relative;
+}
+/* A faixa de realce é atrás da linha e sangra o recuo do <main> para os dois
+   lados — mesma mecânica de .fp-prod-linha. */
+.fp-meta-lin::before {
+  content: ''; position: absolute; z-index: 0; pointer-events: none;
+  top: 0; bottom: 0; left: calc(-1 * var(--pad-lado)); right: calc(-1 * var(--pad-lado));
+  background: transparent; transition: background .12s ease;
+}
+.fp-meta-lin > * { position: relative; z-index: 1; }
+.fp-meta-lin:hover::before { background: rgba(255,255,255,.03); }
+[data-theme="light"] .fp-meta-lin:hover::before { background: rgba(0,0,0,.022); }
+
+.fp-meta-nome { flex: 1 1 auto; min-width: 0; }
+.fp-meta-nome b { display: block; font-size: 13.5px; font-weight: 650; line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fp-meta-nome span { font-size: 11.5px; color: var(--text-muted); line-height: 1.35;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+
+/* O gráfico é o corpo da linha, não um enfeite: é ele que responde "como anda
+   ao longo do tempo". `preserveAspectRatio: none` deixa o eixo do tempo esticar
+   com a largura disponível. */
+.fp-meta-graf { flex: 0 1 210px; height: 40px; display: block; overflow: visible; }
+
+.fp-meta-valor { flex: 0 0 auto; text-align: right; min-width: 84px; }
+.fp-meta-valor b { font-family: 'FullPro Sans', sans-serif; font-size: 26px; line-height: 1; display: block; }
+.fp-meta-valor small { font-size: 11.5px; color: var(--text-muted); }
+
+.fp-meta-barra { flex: 0 0 116px; height: 5px; border-radius: 3px; background: var(--bg-elev); overflow: hidden; }
+.fp-meta-barra span { display: block; height: 100%; border-radius: 3px; transition: width .3s ease; }
+
+.fp-meta-proj { flex: 0 0 92px; text-align: right; font-size: 11.5px; font-weight: 650; }
+.fp-meta-marcar {
+  border: 0; background: none; padding: 0; cursor: pointer;
+  font-size: 11px; font-weight: 700; color: var(--azul);
+}
+.fp-meta-marcar:hover { opacity: .65; }
+
+/* Cabeçalho: também sem caixa — fio embaixo, como a barra de filtros. */
 .fp-meta-cabeca {
-  display: flex; align-items: center; gap: 26px; flex-wrap: wrap;
-  padding: 0 0 16px; border-bottom: 1px solid var(--border); margin-bottom: 18px;
+  display: flex; align-items: baseline; gap: 24px; flex-wrap: wrap;
+  padding: 0 0 14px; border-bottom: 1px solid var(--border); margin-bottom: 2px;
 }
 .fp-meta-cabeca > div:first-child { flex: 1 1 auto; min-width: 0; }
 .fp-meta-cabeca b { display: block; font-size: 14px; font-weight: 700; }
@@ -5749,76 +5794,21 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-meta-placar span { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; }
 .fp-meta-mes { max-width: 190px; }
 
-.fp-meta-grade {
-  display: grid; gap: 14px;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-}
-/* Fio em volta, e não caixa cinza: é a moldura de consulta que o painel usa
-   para tabela, não o "container" que o dono chama de cara de IA. */
-.fp-meta-card {
-  border: 1px solid var(--border); border-radius: 12px; padding: 15px 16px 13px;
-  background: var(--bg-card); display: flex; flex-direction: column; gap: 3px;
-}
-.fp-meta-card.batida { border-color: color-mix(in srgb, var(--success) 45%, transparent); }
-.fp-meta-topo { display: flex; align-items: center; gap: 8px; }
-.fp-meta-topo b { flex: 1 1 auto; min-width: 0; font-size: 13.5px; font-weight: 650;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fp-meta-selo {
-  flex: 0 0 auto; font-size: 9.5px; font-weight: 800; letter-spacing: .07em;
-  text-transform: uppercase; padding: 2px 6px; border-radius: 5px;
-  background: color-mix(in srgb, var(--success) 16%, transparent); color: var(--success);
-}
-.fp-meta-sub { font-size: 11.5px; color: var(--text-muted); line-height: 1.35; min-height: 15px; }
-.fp-meta-num { font-family: 'FullPro Sans', sans-serif; font-size: 30px; line-height: 1.15; margin-top: 6px; }
-.fp-meta-num small { font-family: inherit; font-size: 13px; color: var(--text-muted); }
-.fp-meta-barra { height: 5px; border-radius: 3px; background: var(--bg-elev); overflow: hidden; margin: 7px 0 2px; }
-.fp-meta-barra span { display: block; height: 100%; border-radius: 3px; transition: width .3s ease; }
-/* `preserveAspectRatio: none` no SVG: o gráfico estica com a largura do card e
-   o eixo do tempo continua proporcional. */
-.fp-meta-graf { display: block; width: 100%; height: 44px; margin: 4px 0 2px; overflow: visible; }
-.fp-meta-pe { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.fp-meta-nota, .fp-meta-proj { font-size: 11px; color: var(--text-muted); }
-.fp-meta-proj { font-weight: 650; }
-
-.fp-meta-caixa {
-  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-  margin-top: 18px; padding: 15px 18px; border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
-  background: color-mix(in srgb, var(--success) 7%, transparent);
-}
-.fp-meta-caixa > div:first-child { flex: 1 1 auto; min-width: 0; }
-.fp-meta-caixa b { display: block; font-size: 12px; font-weight: 750; text-transform: uppercase; letter-spacing: .07em; }
-.fp-meta-caixa span { font-size: 12px; color: var(--text-dim); }
-.fp-meta-caixa-valor { font-family: 'FullPro Sans', sans-serif; font-size: 26px; color: var(--success); }
-
-.fp-meta-marcar {
-  border: 0; background: none; padding: 0; cursor: pointer;
-  font-size: 11px; font-weight: 700; color: var(--azul);
-}
-.fp-meta-marcar:hover { opacity: .65; }
-
-.fp-repost-lista { max-height: 46vh; overflow-y: auto; margin: 4px 0 2px; }
-.fp-repost-lin {
-  display: flex; align-items: center; gap: 10px; padding: 9px 2px;
-  border-top: 1px solid var(--border); font-size: 12.5px; cursor: pointer;
-}
-.fp-repost-lin.on { color: var(--azul); }
-.fp-repost-lin input { width: 16px; height: 16px; flex: 0 0 auto; margin: 0; cursor: pointer; }
-.fp-repost-dia { flex: 0 0 62px; color: var(--text-muted); font-size: 11.5px; }
-.fp-repost-tipo {
-  flex: 0 0 auto; font-size: 10px; font-weight: 800; letter-spacing: .06em;
-  text-transform: uppercase; padding: 2px 6px; border-radius: 5px;
-  background: var(--bg-elev); color: var(--text-dim);
-}
-.fp-repost-tit { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fp-repost-lin a { flex: 0 0 auto; font-size: 11px; font-weight: 650; color: var(--azul); text-decoration: none; }
-
-.fp-meta-sobra { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+.fp-meta-sobra { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
 .fp-meta-sobra b { font-size: 12px; font-weight: 700; color: var(--text-dim); }
 .fp-meta-sobra > div { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
-.fp-meta-chip {
-  font-size: 10.5px; font-weight: 650; padding: 3px 8px; border-radius: 999px;
-  background: var(--bg-elev); color: var(--text-muted);
+.fp-meta-chip { font-size: 10.5px; font-weight: 650; padding: 3px 8px; border-radius: 999px;
+  background: var(--bg-elev); color: var(--text-muted); }
+
+/* No celular a linha vira duas: nome em cima, gráfico e números embaixo —
+   210px de gráfico não cabem ao lado de um nome numa tela de 375. */
+@media (max-width: 760px) {
+  .fp-meta-lin { flex-wrap: wrap; gap: 10px 14px; }
+  .fp-meta-nome { flex: 1 1 100%; }
+  .fp-meta-graf { flex: 1 1 100%; height: 46px; order: 3; }
+  .fp-meta-valor { min-width: 0; text-align: left; }
+  .fp-meta-barra { flex: 1 1 auto; }
+  .fp-meta-proj { flex: 0 0 auto; }
 }
 
 /* ── fileira de logotipos de destino ────────────────────────────────────
@@ -27126,7 +27116,7 @@ async function fpMetasCarregar(mes, forcar) {
     try {
       const [ra, rp, rm] = await Promise.all([
         sb.from('mc_metas_alvo').select('*').eq('mes', alvo).order('ordem'),
-        sb.from('mc_pecas').select('id,tipo,titulo,link,plataforma,publicado_em,duracao_seg,metricas,eh_repost,sku')
+        sb.from('mc_pecas').select('id,tipo,titulo,link,plataforma,publicado_em,duracao_seg,metricas,eh_repost,sku,atualizado_em')
           .gte('publicado_em', de).lt('publicado_em', ate).order('publicado_em', { ascending: true }),
         sb.from('mc_metas_alvo').select('mes'),
       ]);
@@ -27185,6 +27175,9 @@ function fpMetaApurar(alvo, janela) {
     return { alvo, modo: 'cadencia', feito: cumpridos, meta: janela.dias, pct,
              sequencia, projecao: janela.corridos ? Math.round(cumpridos / janela.corridos * janela.dias) : 0,
              bateu: cumpridos >= janela.corridos && janela.corridos > 0,
+             /* Cadência também tem ritmo. Sem isto, "0 de 28 dias" saía na cor
+                de quem está indo bem — a cor dizia o contrário do número. */
+             noRitmo: pct >= 80,
              porDia, acum, pecas };
   }
 
@@ -27207,42 +27200,44 @@ function fpMetaGrafico(ap, janela) {
   const x = d => (d - 1) / Math.max(1, janela.dias - 1) * L;
   const y = v => A - (v / teto) * A;
   /* O ideal é a reta que sai de zero e chega no alvo no último dia. Ela é a
-     régua: a linha cheia acima dela quer dizer adiantado. */
+     régua: a linha cheia acima dela quer dizer adiantado.
+     A escala é COMPARTILHADA com a régua de propósito. Escalar pelo próprio
+     máximo mostraria melhor a forma da curva, mas apagaria a única coisa que a
+     tela existe para responder — quanto falta. Com 10 de 30 a linha fica rente
+     ao chão, e é exatamente essa a informação. */
   const ideal = 'M0,' + y(0).toFixed(1) + ' L' + L + ',' + y(ap.modo === 'cadencia' ? janela.dias : ap.meta).toFixed(1);
   const ate = Math.max(1, janela.corridos);
   const pontos = ap.acum.slice(0, ate).map((v, i) => x(i + 1).toFixed(1) + ',' + y(v).toFixed(1));
   const real = pontos.length ? 'M' + pontos.join(' L') : '';
-  const cor = ap.bateu ? 'var(--success)' : (ap.noRitmo || ap.modo === 'cadencia' ? 'var(--azul)' : 'var(--warning)');
+  const cor = ap.bateu ? 'var(--success)' : (ap.noRitmo ? 'var(--azul)' : 'var(--warning)');
+  /* Área embaixo da linha, e não só a linha: com 210px de largura e 40 de
+     altura, um traço de 2px sozinho quase não se vê no meio de uma listagem.
+     A área dá peso sem precisar de moldura em volta. */
+  const area = pontos.length ? 'M0,' + A + ' L' + pontos.join(' L') + ' L' + x(ate).toFixed(1) + ',' + A + ' Z' : '';
   return '<svg class="fp-meta-graf" viewBox="0 0 ' + L + ' ' + A + '" preserveAspectRatio="none" aria-hidden="true">'
-    + '<path d="' + ideal + '" fill="none" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="3 3"/>'
-    + (real ? '<path d="' + real + '" fill="none" stroke="' + cor + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' : '')
+    + (area ? '<path d="' + area + '" fill="' + cor + '" fill-opacity=".22"/>' : '')
+    + '<path d="' + ideal + '" fill="none" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>'
+    + (real ? '<path d="' + real + '" fill="none" stroke="' + cor + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' : '')
     + '</svg>';
 }
 
-function fpMetaCardHtml(ap, janela) {
+function fpMetaLinhaHtml(ap, janela) {
   const a = ap.alvo;
   const cad = ap.modo === 'cadencia';
-  const pctBarra = Math.min(100, ap.pct);
-  const cor = ap.bateu ? 'var(--success)' : (ap.noRitmo || cad ? 'var(--azul)' : 'var(--warning)');
+  const cor = ap.bateu ? 'var(--success)' : (ap.noRitmo ? 'var(--azul)' : 'var(--warning)');
   const valor = cad
-    ? ap.feito + ' <small>de ' + janela.corridos + ' dias</small>'
-    : ap.feito + ' <small>/ ' + ap.meta + '</small>';
-  const rodape = janela.futuro
-    ? '<span class="fp-meta-nota">o mês ainda não começou</span>'
-    : cad
-      ? '<span class="fp-meta-nota">' + (ap.sequencia ? ap.sequencia + (ap.sequencia === 1 ? ' dia seguido' : ' dias seguidos') : 'sequência interrompida') + '</span>'
-        + '<button class="fp-meta-marcar" type="button" onclick="fpRepostAbrir()">marcar</button>'
-      : '<span class="fp-meta-nota">' + ap.pct + '% da meta</span>'
-        + '<span class="fp-meta-proj" style="color:' + (ap.noRitmo ? 'var(--success)' : 'var(--warning)') + '">'
-        + 'projeção ' + ap.projecao + '</span>';
-  return '<div class="fp-meta-card' + (ap.bateu ? ' batida' : '') + '">'
-    + '<div class="fp-meta-topo"><b>' + escHtml(a.rotulo) + '</b>'
-    + (ap.bateu ? '<span class="fp-meta-selo">batida</span>' : '') + '</div>'
-    + '<div class="fp-meta-sub">' + escHtml(a.detalhe || '') + '</div>'
-    + '<div class="fp-meta-num" style="color:' + cor + '">' + valor + '</div>'
-    + '<div class="fp-meta-barra"><span style="width:' + pctBarra + '%;background:' + cor + '"></span></div>'
+    ? '<b style="color:' + cor + '">' + ap.feito + '</b><small>de ' + janela.corridos + ' dias</small>'
+    : '<b style="color:' + cor + '">' + ap.feito + '</b><small>de ' + ap.meta + '</small>';
+  const fim = janela.futuro ? '<span style="color:var(--text-muted)">—</span>'
+    : cad ? '<button class="fp-meta-marcar" type="button" onclick="fpRepostAbrir()">marcar</button>'
+    : '<span style="color:' + (ap.noRitmo ? 'var(--success)' : 'var(--warning)') + '">proj. ' + ap.projecao + '</span>';
+  return '<div class="fp-meta-lin">'
+    + '<span class="fp-meta-nome"><b>' + escHtml(a.rotulo) + '</b>'
+    +   '<span>' + escHtml(a.detalhe || '') + (cad && ap.sequencia ? ' · ' + ap.sequencia + (ap.sequencia === 1 ? ' dia seguido' : ' dias seguidos') : '') + '</span></span>'
     + fpMetaGrafico(ap, janela)
-    + '<div class="fp-meta-pe">' + rodape + '</div>'
+    + '<span class="fp-meta-valor">' + valor + '</span>'
+    + '<span class="fp-meta-barra"><span style="width:' + Math.min(100, ap.pct) + '%;background:' + cor + '"></span></span>'
+    + '<span class="fp-meta-proj">' + fim + '</span>'
     + '</div>';
 }
 
@@ -27280,6 +27275,8 @@ function renderPerfMetas() {
   }
 
   const aps = METAS_ALVOS.map(a => fpMetaApurar(a, janela));
+  const ultimaColeta = METAS_PECAS.reduce((m, p) =>
+    (p.atualizado_em && (!m || p.atualizado_em > m)) ? p.atualizado_em : m, null);
   const batidas = aps.filter(x => x.bateu).length;
   const noRitmo = aps.filter(x => x.bateu || x.noRitmo || (x.modo === 'cadencia' && x.pct >= 90)).length;
 
@@ -27289,25 +27286,25 @@ function renderPerfMetas() {
   const tiposComMeta = new Set(METAS_ALVOS.flatMap(a => a.tipos || []));
   const sobra = METAS_PECAS.filter(p => !p.eh_repost && !tiposComMeta.has(p.tipo));
 
-  const dinheiro = (typeof PERF_GOALS === 'object' && PERF_GOALS) ? PERF_GOALS : {};
-  const porMeta = Number(dinheiro.pool_per_goal) || 0;
+  /* O caixa coletivo saiu daqui a pedido do dono: dinheiro é assunto da tela de
+     Bonificação, e um banner de projeção de pagamento no meio do acompanhamento
+     de produção rouba a leitura do que a tela existe para responder. O valor por
+     meta e o rateio continuam em mc_performance_goals, intocados. */
 
   el.innerHTML =
     '<div class="fp-meta-cabeca">'
     +   '<div><b>Metas da equipe — ' + escHtml(fpMesNome(mes)) + '</b>'
     +     '<span>' + (janela.futuro ? 'o mês ainda não começou'
                      : janela.passado ? 'mês fechado'
-                     : 'dia ' + janela.corridos + ' de ' + janela.dias + ' · ' + (janela.dias - janela.corridos) + ' dias restantes') + '</span></div>'
+                     : 'dia ' + janela.corridos + ' de ' + janela.dias + ' · ' + (janela.dias - janela.corridos) + ' dias restantes')
+             /* Quando a última coleta rodou. Sem isto "tempo real" é palavra:
+                o operador não tem como saber se está vendo o de agora ou o de
+                ontem — e story tem 24h de vida. */
+             + (ultimaColeta ? ' · atualizado ' + escHtml(timeAgo(ultimaColeta)) : '') + '</span></div>'
     +   '<div class="fp-meta-placar"><b>' + batidas + ' de ' + aps.length + '</b><span>metas batidas</span></div>'
     +   '<div class="fp-meta-placar"><b>' + noRitmo + ' de ' + aps.length + '</b><span>no ritmo</span></div>'
     + '</div>'
-    + '<div class="fp-meta-grade">' + aps.map(x => fpMetaCardHtml(x, janela)).join('') + '</div>'
-    + (porMeta ? '<div class="fp-meta-caixa"><div><b>Caixa coletivo — projeção</b>'
-        /* formatBRL devolve SÓ o número — todo chamador do arquivo põe o "R$"
-           na frente. Sem isto o caixa saía "3.400,00", que parece dinheiro mas
-           não é moeda nenhuma. */
-        + '<span>' + noRitmo + ' de ' + aps.length + ' metas no ritmo atual, a R$ ' + formatBRL(porMeta) + ' por meta</span></div>'
-        + '<div class="fp-meta-caixa-valor">R$ ' + formatBRL(noRitmo * porMeta) + '</div></div>' : '')
+    + '<div class="fp-metas">' + aps.map(x => fpMetaLinhaHtml(x, janela)).join('') + '</div>'
     + (sobra.length ? '<div class="fp-meta-sobra"><b>' + sobra.length + (sobra.length === 1 ? ' peça publicada fora das metas' : ' peças publicadas fora das metas') + '</b>'
         + '<div>' + sobra.slice(0, 12).map(p => '<span class="fp-meta-chip" data-tip="' + escHtml((p.titulo || '') + ' · ' + (p.duracao_seg ? Math.round(p.duracao_seg / 60) + ' min' : p.plataforma)) + '">'
         + escHtml(p.tipo) + '</span>').join('') + '</div></div>' : '');

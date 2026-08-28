@@ -1,5 +1,43 @@
 # Diário
 
+## 27/08/2026 · Metas, segunda passada: fora os cards, fora o caixa
+
+> *"remova agora esse caixa coletivo que não tem porque estar ai. Também não
+> gostei desse design que tu fez. repensa algo mais próximo de gráficos
+> atualizados em tempo real e mais parecido com o resto do padrão do site sem
+> container em volta"*
+
+Ele estava certo e a regra já estava escrita: **"eu não quero CONTAINERS NESSA
+MERDA"** está em `contexto.md` desde sempre, e eu tinha feito um card por meta —
+moldura, raio e fundo. Refeito no idioma que Produção e Projetos já usam: linhas
+encostadas no fundo da página, separadas por fios de 1px, com a faixa de hover
+sangrando até a borda da tela.
+
+O **caixa coletivo saiu**. Dinheiro é assunto da tela de Bonificação; um banner
+de projeção de pagamento no meio do acompanhamento de produção rouba a leitura
+do que a tela existe para responder. O valor por meta e o rateio continuam em
+`mc_performance_goals`, intocados.
+
+O gráfico ganhou **área** embaixo da linha: com 210px de largura e 40 de altura,
+um traço de 2px sozinho some no meio de uma listagem sem moldura. E o cabeçalho
+passou a dizer **"atualizado há X"** — sem isso, "tempo real" é palavra: o
+operador não tem como saber se está vendo o de agora ou o de ontem, e story tem
+24h de vida.
+
+### Um defeito que só apareceu com dado real
+
+Agosto foi cadastrado com as mesmas sete metas, a pedido do dono, para ver a
+tela com número de verdade. Aí ficou visível: **"Reposts diários: 0 de 28 dias"
+saía em AZUL** — a cor de quem está indo bem, contradizendo o próprio número. A
+cadência não tinha noção de ritmo, só de "bateu tudo ou não". Agora ela também
+compara com os dias corridos.
+
+### A escala do gráfico é compartilhada de propósito
+
+Com 10 de 30, a linha fica rente ao chão e a régua tracejada sobe longe dela.
+Escalar pelo próprio máximo mostraria melhor a forma da curva — e apagaria a
+única coisa que a tela existe para responder: quanto falta.
+
 ## 27/08/2026 · Metas: modelo novo, coletor das redes e o painel refeito
 
 > *"vamos repaginar essas metas (…) quero um dashboard de metas completo e que
