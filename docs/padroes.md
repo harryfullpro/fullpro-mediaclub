@@ -518,6 +518,25 @@ de 19/08 percorreu as 17 telas medindo toda `.badge`, `.proj-dest-tag` e
 - Contraste medido ao final: **0 reprovados WCAG AA nos dois temas**
 - Textos em português, com acento. Nada de *goal*, *pool*, *pace* na interface
 
+## Um canal visual por informação
+
+O quadradinho do calendário carrega três informações e cada uma tem o SEU canal:
+
+| canal | informação |
+|---|---|
+| `background` | estado — verde aprovado, vermelho bloqueado, cinza livre |
+| `border-color` | seleção |
+| `box-shadow` externo | o ponteiro está aqui |
+
+As três podem valer ao mesmo tempo, e valem: um dia aprovado, selecionado e sob
+o mouse mostra as três de uma vez. Toda vez que dois estados dividiram o mesmo
+canal aqui, um apagou o outro — a seleção pintava o fundo e escondia o "aprovado";
+o hover trocava a borda e o dia aprovado ficava com a borda de bloqueado.
+
+Antes de pintar um estado novo, veja qual canal ainda está livre.
+
+---
+
 ## Hover não mexe em cor que significa alguma coisa
 
 No calendário da Agenda o `background` e o `border-color` de cada dia dizem o

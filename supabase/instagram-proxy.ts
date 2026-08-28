@@ -21,7 +21,7 @@
  *   health                                  -> { ok, configurado: bool }
  *   contas                                  -> { ok, contas: [{id, nome, ig_id}] }
  *   midias    { ig_id, limit? }             -> { ok, midias: [...] }
- *   insights  { media_id, metric }          -> { ok, valor: number }
+ *   insights  { media_id, metric, ig_id }   -> { ok, valor: number }
  *   marcacoes { ig_id, limit? }             -> { ok, midias: [...] }
  *   mencoes   { ig_id, limit? }             -> { ok, midias: [...] }
  *   descoberta{ ig_user_id, handle, inner } -> { ok, midias: [...] }
@@ -30,9 +30,21 @@
  * português; quando o "não" veio da Meta, `meta` traz o código cru para achar o
  * problema no log.
  *
- * verify_jwt está LIGADO: só sessão válida do Supabase Auth chega aqui. Depois
- * do fecho de 28/08/2026, sessão válida é operador — ver mc_eh_operador().
+ * QUEM PODE CHAMAR
+ * `verify_jwt` sozinho NÃO protege: a chave publicável do config.js é aceita como
+ * credencial válida, então qualquer pessoa passaria. É a mesma armadilha que o
+ * comentário da magis5-proxy descreve. Por isso ele fica DESLIGADO aqui e a
+ * checagem é feita no corpo da função, que sabe distinguir os casos.
+ *
+ * A magis5-proxy resolve exigindo o UUID de fp_session. Aqui é diferente, de
+ * propósito: aquele UUID é permanente, não expira, mora no localStorage e ficou
+ * legível sem login enquanto mc_admin_users tinha política aberta — quem coletou
+ * na época continua com ele. Como o painel hoje autentica de verdade pelo
+ * Supabase Auth (ver mc-login), dá para exigir o JWT do usuário e conferir se ele
+ * é operador. Credencial que expira e rotaciona, em vez de um id eterno.
  */
+
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const BASE = 'https://graph.facebook.com/v21.0';
 
@@ -90,6 +102,40 @@ async function tokenDaPagina(igId: string): Promise<string> {
   throw new Error(`nenhuma página vinculada à conta ${igId}`);
 }
 
+/* Confere se quem chamou é operador de verdade.
+   Dois passos, e os dois importam:
+     1. auth.getUser(jwt) — devolve null se o "token" for a chave publicável, um
+        JWT expirado ou lixo. É aqui que a chave pública é barrada.
+     2. mc_admin_users.auth_uid — estar logado não basta; tem que ser operador.
+   A consulta usa a service role porque a política de mc_admin_users, desde
+   28/08/2026, só deixa operador ler a própria tabela. */
+async function operadorOuNulo(req: Request): Promise<{ id: string; role: string } | null> {
+  const cabecalho = req.headers.get('Authorization') ?? '';
+  const jwt = cabecalho.replace(/^Bearer\s+/i, '').trim();
+  if (!jwt) return null;
+
+  const SB_URL = Deno.env.get('SUPABASE_URL') ?? '';
+  const SRK = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+  if (!SB_URL || !SRK) return null;
+
+  try {
+    const admin = createClient(SB_URL, SRK, { auth: { persistSession: false } });
+
+    const { data: { user }, error } = await admin.auth.getUser(jwt);
+    if (error || !user) return null;
+
+    const { data: op } = await admin
+      .from('mc_admin_users')
+      .select('id, role')
+      .eq('auth_uid', user.id)
+      .maybeSingle();
+
+    return op ?? null;
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
@@ -99,8 +145,15 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const action = String(corpo.action ?? url.searchParams.get('action') ?? 'health');
 
+  /* health não expõe nada além de "tem token configurado?" e é o que o painel usa
+     para desenhar o estado da tela — fica aberto de propósito. */
   if (action === 'health') {
     return resposta({ ok: true, configurado: TOKEN.length > 0 });
+  }
+
+  const operador = await operadorOuNulo(req);
+  if (!operador) {
+    return falha('sessão de operador ausente ou inválida — entre de novo no painel', null, 401);
   }
 
   if (!TOKEN) {

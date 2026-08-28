@@ -15,6 +15,38 @@ Medido depois da transição terminar: número do dia sobre o azul **14,1:1** no
 claro e **13,7:1** no escuro; a borda azul contra o card, **4,02:1** e **4,95:1**
 (o piso de elemento gráfico é 3:1).
 
+### Nem a seleção pode recolorir o dia
+
+> *"ainda ta pintando o quadrado de azul cara, eu quero só a borda em azul, um
+> select"*
+
+O mesmo princípio do hover, aplicado à seleção — e eu só tinha aplicado metade
+dele. O dia selecionado ainda pintava o fundo de azul, e o fundo é o canal do
+ESTADO: um dia APROVADO, ao ser clicado, deixava de parecer aprovado.
+
+Agora o quadradinho tem **dois canais separados**:
+
+| canal | o que diz |
+|---|---|
+| fundo | o estado — verde aprovado, vermelho bloqueado, cinza livre |
+| borda | a seleção — azul |
+| contorno externo | o ponteiro está aqui — cinza neutro |
+
+Nenhum pisa no outro, e os três podem aparecer ao mesmo tempo: um dia aprovado,
+selecionado e sob o mouse mostra fundo verde, borda azul e contorno cinza.
+
+O `inset` de 1px continua, mas agora em azul cheio: é a mesma borda engrossada
+por dentro, porque 1px de linha num quadrado de 32px quase não se vê. É sombra e
+não `border-width: 2px` porque largura de borda mexe no espaço interno e faria o
+número dançar 1px ao selecionar.
+
+Medido nos dois temas: a borda azul passa de 3:1 contra TODOS os fundos (pior
+caso 3,01 no vermelho do tema claro e 3,03 no verde do escuro) e dá 4,02/4,49
+contra o card em volta.
+
+O token `--azul-rgb`, que existia só para os fundos com alfa, ficou órfão e saiu
+junto.
+
 ### E o hover não pode recolorir o dia
 
 > *"o hover que eu quero é só um contorno no quadradinho da data, sem alterar a

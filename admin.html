@@ -955,17 +955,23 @@
      com agendamento aprovado não mudava nada — o verde cobria a seleção e o
      operador não via onde tinha clicado. (Dizia "o amarelo"; a seleção virou
      azul em 27/08/2026 e o comentário ficou apontando para a cor errada.) */
+  /* SÓ A BORDA. Sem `background`: o fundo do quadradinho é o canal do ESTADO
+     (verde aprovado, vermelho bloqueado, cinza livre) e a borda é o canal da
+     SELEÇÃO. Pintar o fundo de azul apagava o estado do dia justamente quando
+     o operador clicava nele para olhar.
+     O `inset` é a mesma borda, engrossada por dentro: 1px de linha num quadrado
+     de 32px quase não se vê. É sombra e não `border-width: 2px` porque largura
+     de borda mexe no espaço interno e faria o número dançar 1px ao selecionar. */
   .cal-day.selected {
     border-color: var(--azul);
-    background: rgba(var(--azul-rgb), .16);
     font-weight: 700;
-    box-shadow: inset 0 0 0 1px rgba(var(--azul-rgb), .35);
+    box-shadow: inset 0 0 0 1px var(--azul);
   }
   /* O dia selecionado precisa repetir o próprio anel interno aqui: `box-shadow`
      não se acumula entre regras — a que vence substitui a outra inteira, e sem
      esta linha o anel azul sumiria justamente quando o mouse chegasse. */
   .cal-day.selected:hover:not(.empty) {
-    box-shadow: 0 0 0 2px var(--contorno), inset 0 0 0 1px rgba(var(--azul-rgb), .35);
+    box-shadow: 0 0 0 2px var(--contorno), inset 0 0 0 1px var(--azul);
   }
 
   .list-blocked {
@@ -1589,12 +1595,12 @@
      A caixa de 42px CONTINUA existindo como alvo de clique; o que sumiu foi o
      fundo. Encolher o alvo junto com o desenho deixaria um alvo de 26px. */
   /* `--azul`, e nao `--novo-azul`: ele nasceu no botao "novo" e agora tambem
-     pinta o dia selecionado no calendario. Nome preso a um dos usos e o tipo
-     de coisa que faz o proximo achar que precisa de um segundo azul.
-     `--azul-rgb` existe porque `rgba()` precisa dos canais soltos, e nao ha
-     como extrai-los de um hex em CSS puro. */
-  :root { --azul: #0A84FF; --azul-rgb: 10,132,255; }
-  [data-theme="light"] { --azul: #007AFF; --azul-rgb: 0,122,255; }
+     e a borda do dia selecionado no calendario. Nome preso a um dos usos e o
+     tipo de coisa que faz o proximo achar que precisa de um segundo azul.
+     (Houve um `--azul-rgb` aqui, para os fundos com alfa do dia selecionado.
+     O fundo azul saiu — a selecao virou so a borda — e o token foi junto.) */
+  :root { --azul: #0A84FF; }
+  [data-theme="light"] { --azul: #007AFF; }
   /* Contorno de "o mouse está aqui". Neutro de propósito: derivado da cor do
      texto, nunca de verde/vermelho/azul — se tivesse cor própria, voltaria a
      dizer alguma coisa sobre o estado do dia, que é justamente o que não pode. */
