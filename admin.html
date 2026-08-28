@@ -17106,6 +17106,43 @@ async function savePosts() {
    ════════════════════════════════════════════════════════════ */
 const BLING_PROXY_URL = 'https://xgaaocnuqgcwttrljqep.supabase.co/functions/v1/bling-proxy';
 
+/* Cabeçalhos das chamadas ao bling-proxy.  [FP-BLING-AUTH 28/08/2026]
+
+   Por que existe: a bling-proxy não checava quem chamava. Ela pega o token do ERP
+   em mc_integrations, renova sozinha e devolvia para QUALQUER requisição anônima —
+   inclusive `stock-move`, que escreve estoque. A URL está neste arquivo e o repo
+   é público.
+
+   Este é o primeiro dos dois passos: o painel passa a mandar o JWT da sessão. A
+   function ignora esse cabeçalho hoje; quando o log confirmar que todas as chamadas
+   chegam com ele, a function passa a EXIGIR operador. Fazer os dois de uma vez
+   derrubaria as ~780 chamadas/dia na hora.
+
+   O JWT fica em cache porque duas chamadas (disconnect e status) rodam fora de
+   função async e não podem usar await. onAuthStateChange mantém o cache fresco,
+   inclusive quando o supabase-js renova o token sozinho.
+
+   x-bling-token continua indo por compatibilidade: enquanto a function aceitar os
+   dois, um painel antigo em aba aberta não quebra. */
+let FP_BLING_JWT = null;
+try {
+  sb.auth.getSession().then(function (r) {
+    FP_BLING_JWT = (r && r.data && r.data.session && r.data.session.access_token) || null;
+  }).catch(function () {});
+  sb.auth.onAuthStateChange(function (_evento, sessao) {
+    FP_BLING_JWT = (sessao && sessao.access_token) || null;
+  });
+} catch (e) { console.warn('[bling] não deu para observar a sessão:', e); }
+
+function blingHeaders(extra) {
+  const h = Object.assign({}, extra || {});
+  if (typeof blingAccessToken !== 'undefined' && blingAccessToken) {
+    h['x-bling-token'] = blingAccessToken;
+  }
+  if (FP_BLING_JWT) h['Authorization'] = 'Bearer ' + FP_BLING_JWT;
+  return h;
+}
+
 let blingAccessToken = null;
 let blingRefreshToken = null;
 let blingTokenExpiry = 0;
@@ -17168,7 +17205,7 @@ async function handleBlingCallback() {
   try {
     const res = await fetch(BLING_PROXY_URL + '?action=token', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: blingHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ code })
     });
     const json = await res.json();
@@ -17193,7 +17230,7 @@ async function refreshBlingToken() {
   try {
     const res = await fetch(BLING_PROXY_URL + '?action=refresh', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: blingHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ refresh_token: blingRefreshToken })
     });
     const json = await res.json();
@@ -17222,7 +17259,7 @@ async function blingSearchProducts(query) {
   if (!await ensureBlingToken()) return [];
   try {
     const res = await fetch(BLING_PROXY_URL + '?action=products&nome=' + encodeURIComponent(query), {
-      headers: { 'x-bling-token': blingAccessToken }
+      headers: blingHeaders()
     });
     const json = await res.json();
     return json.data || [];
@@ -17235,7 +17272,7 @@ async function blingSearchBySku(sku) {
   if (!await ensureBlingToken()) return [];
   try {
     const res = await fetch(BLING_PROXY_URL + '?action=products&codigo=' + encodeURIComponent(sku), {
-      headers: { 'x-bling-token': blingAccessToken }
+      headers: blingHeaders()
     });
     const json = await res.json();
     return json.data || [];
@@ -17256,7 +17293,7 @@ async function blingGetAllProducts() {
       let hasMore = true;
       while (hasMore && pagina <= 20) {
         const res = await fetch(BLING_PROXY_URL + `?action=products&pagina=${pagina}&limite=100`, {
-          headers: { 'x-bling-token': blingAccessToken }
+          headers: blingHeaders()
         });
         if (!res.ok) { console.warn('Bling page', pagina, 'status:', res.status); break; }
         const json = await res.json();
@@ -17279,7 +17316,7 @@ async function blingGetProduct(id) {
   if (!await ensureBlingToken()) return null;
   try {
     const res = await fetch(BLING_PROXY_URL + '?action=product&id=' + id, {
-      headers: { 'x-bling-token': blingAccessToken }
+      headers: blingHeaders()
     });
     const json = await res.json();
     return json.data || null;
@@ -17293,7 +17330,7 @@ async function blingGetDeposits() {
   if (!await ensureBlingToken()) return [];
   try {
     const res = await fetch(BLING_PROXY_URL + '?action=deposits', {
-      headers: { 'x-bling-token': blingAccessToken }
+      headers: blingHeaders()
     });
     const json = await res.json();
     blingDeposits = json.data || [];
@@ -17310,7 +17347,7 @@ async function blingStockOut(productId, quantity, obs) {
   try {
     const res = await fetch(BLING_PROXY_URL + '?action=stock-move', {
       method: 'POST',
-      headers: { 'x-bling-token': blingAccessToken, 'Content-Type': 'application/json' },
+      headers: blingHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         produto: { id: productId },
         deposito: { id: depositId },
@@ -17331,7 +17368,7 @@ async function blingGetCompany() {
   if (!await ensureBlingToken()) return null;
   try {
     const res = await fetch(BLING_PROXY_URL + '?action=company', {
-      headers: { 'x-bling-token': blingAccessToken }
+      headers: blingHeaders()
     });
     const json = await res.json();
     blingCompanyInfo = json.data || null;
@@ -17525,7 +17562,7 @@ function updateBlingStatus() {
 
 async function disconnectBling() {
   if (!await fpConfirm({titulo:'Desconectar o Bling ERP', mensagem:'A busca de produtos e a baixa de estoque param de funcionar para toda a equipe.', detalhe:'Para religar, um administrador precisa autorizar de novo no Bling.', confirmar:'Desconectar', perigo:true})) return;
-  fetch(BLING_PROXY_URL + '?action=disconnect', { method: 'POST' }).catch(function(){});
+  fetch(BLING_PROXY_URL + '?action=disconnect', { method: 'POST', headers: blingHeaders() }).catch(function(){});
   clearBlingTokens();
   blingConnected = false;
   blingCompanyInfo = null;
@@ -17538,7 +17575,7 @@ async function disconnectBling() {
 async function refreshIntegrationStatus() {
   try {
     const results = await Promise.all([
-      fetch(BLING_PROXY_URL + '?action=status').then(function(r){ return r.json(); }).catch(function(){ return { connected: false }; }),
+      fetch(BLING_PROXY_URL + '?action=status', { headers: blingHeaders() }).then(function(r){ return r.json(); }).catch(function(){ return { connected: false }; }),
       fetch(TK_PROXY_URL + '?action=status').then(function(r){ return r.json(); }).catch(function(){ return { connected: false }; })
     ]);
     blingConnected = !!(results[0] && results[0].connected);
