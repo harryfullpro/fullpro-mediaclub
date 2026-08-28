@@ -5754,9 +5754,13 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    (`color-mix`), que é o que evita o marrom que sai ao misturar vermelho e
    verde em sRGB.
    Os valores do tema claro NÃO são os mesmos do escuro de propósito: amarelo
-   de verdade sobre #f5f5f7 dá 2,8:1 de contraste num traço de 2px — abaixo do
-   mínimo de 3:1 para elemento gráfico. Medido, o âmbar #a67c00 leva o pior
-   ponto do trajeto para 3,50:1 (o pior no escuro é 6,05:1, no vermelho). */
+   de verdade sobre #f5f5f7 dá 2,8:1 de contraste — abaixo do mínimo de 3:1.
+   Medido, o âmbar #a67c00 leva o pior ponto do trajeto para 3,50:1 (o pior no
+   escuro é 6,05:1, no vermelho).
+   Esses três tokens pintam TRÊS coisas, e o mínimo é o da mais exigente: o
+   traço de 2px e a barra (3:1, elemento gráfico) e o número de 26px em negrito
+   (3:1 de AA para texto grande — 3,50 passa, 4,5 de AAA não). Quem mexer aqui
+   refaz a conta para o número, não só para o traço. */
 :root { --meta-ruim: #ff4d4d; --meta-meio: #ffd23f; --meta-boa: #1fd27a; }
 [data-theme="light"] { --meta-ruim: #c62828; --meta-meio: #a67c00; --meta-boa: #12864f; }
 
@@ -27225,10 +27229,25 @@ function fpMetaApurar(alvo, janela) {
    carrosséis em 31 dias só passa a cobrar a primeira no dia 8; pintar de
    vermelho antes disso seria acusar de atraso quem não está atrasado). */
 function fpMetaRazao(ap, janela) {
-  if (janela.futuro) return null;
-  const meta = ap.modo === 'cadencia' ? janela.dias : ap.meta;
-  if (!meta || !janela.dias) return null;
-  const esperado = meta * (janela.corridos / janela.dias);
+  if (janela.futuro || !janela.dias) return null;
+  if (ap.modo === 'cadencia') {
+    /* Cadência não passa pela conta de cima: como a meta É o número de dias, o
+       "esperado" daria sempre os dias corridos e a guarda de começo de mês
+       nunca valeria — no dia 1 às 00h05, sem repost, a linha sairia vermelha.
+       E o dia de hoje não acabou: não ter repostado às 9 da manhã não é um dia
+       perdido. O denominador só conta hoje depois que hoje foi cumprido. */
+    const hojeFeito = (ap.porDia[janela.corridos] || 0) >= (ap.alvo.alvo || 1);
+    const base = janela.passado ? janela.dias : janela.corridos - (hojeFeito ? 0 : 1);
+    return base > 0 ? ap.feito / base : null;
+  }
+  if (!ap.meta) return null;
+  /* Dia 1 sem nada feito não é atraso, é o mês começando — vale para qualquer
+     alvo, inclusive os grandes, em que o esperado do primeiro dia já passa de
+     uma peça. */
+  if (janela.corridos <= 1 && !ap.feito) return null;
+  const esperado = ap.meta * (janela.corridos / janela.dias);
+  /* Enquanto a meta não cobrou nem uma peça, zero não é atraso: 4 carrosséis
+     em 31 dias só cobram o primeiro no dia 8. */
   if (esperado < 1) return ap.feito ? 1 : null;
   return ap.feito / esperado;
 }
@@ -27237,6 +27256,12 @@ function fpMetaRazao(ap, janela) {
    laranja e o amarelo. `color-mix` resolve o token na hora, então trocar de
    tema repinta sozinho — sem redesenhar a tela. */
 const META_AMARELO = .8;   /* onde o amarelo mora na escala */
+/* `fill`/`stroke` no SVG são atributos de apresentação: navegador que não
+   entenda a função descarta a declaração inteira e volta ao valor inicial —
+   fill preto, stroke nenhum. Some o gráfico, sem erro no console. Por isso a
+   pergunta é feita uma vez e a rampa cai para a âncora mais próxima. */
+const FP_TEM_MIX = typeof CSS !== 'undefined' && CSS.supports
+  && CSS.supports('color', 'color-mix(in oklab, red 50%, blue)');
 function fpMetaCor(razao) {
   if (razao == null) return 'var(--text-muted)';
   const t = Math.max(0, Math.min(1, razao));
@@ -27245,6 +27270,7 @@ function fpMetaCor(razao) {
      ritmo (agosto inteiro, hoje) já apareceria quase amarelo, e a cor diria
      "ok" bem embaixo de um "0 de 7 no ritmo". Do 0,8 até 1 o verde entra
      depressa, que é o que "verde para na projeção" quer dizer. */
+  if (!FP_TEM_MIX) return 'var(' + (t < META_AMARELO / 2 ? '--meta-ruim' : t < 1 ? '--meta-meio' : '--meta-boa') + ')';
   return t <= META_AMARELO
     ? 'color-mix(in oklab, var(--meta-meio) ' + Math.round(t / META_AMARELO * 100) + '%, var(--meta-ruim))'
     : 'color-mix(in oklab, var(--meta-boa) ' + Math.round((t - META_AMARELO) / (1 - META_AMARELO) * 100) + '%, var(--meta-meio))';
@@ -27311,7 +27337,9 @@ function fpMetaLinhaHtml(ap, janela) {
     : '<b style="color:' + cor + '">' + ap.feito + '</b><small>de ' + ap.meta + '</small>';
   const fim = janela.futuro ? '<span style="color:var(--text-muted)">—</span>'
     : cad ? '<button class="fp-meta-marcar" type="button" onclick="fpRepostAbrir()">marcar</button>'
-    : '<span style="color:' + cor + '">proj. ' + ap.projecao + '</span>';
+    /* Mês fechado não tem projeção: "proj. 24" num mês que acabou faz o número
+       parecer promessa quando já é resultado. */
+    : '<span style="color:' + cor + '">' + (janela.passado ? 'fechou em ' : 'proj. ') + ap.projecao + '</span>';
   return '<div class="fp-meta-lin">'
     + '<span class="fp-meta-nome"><b>' + escHtml(a.rotulo) + '</b>'
     +   '<span>' + escHtml(a.detalhe || '') + (cad && ap.sequencia ? ' · ' + ap.sequencia + (ap.sequencia === 1 ? ' dia seguido' : ' dias seguidos') : '') + '</span></span>'
@@ -27373,7 +27401,13 @@ function renderPerfMetas() {
   const ultimaColeta = METAS_PECAS.reduce((m, p) =>
     (p.atualizado_em && (!m || p.atualizado_em > m)) ? p.atualizado_em : m, null);
   const batidas = aps.filter(x => x.bateu).length;
-  const noRitmo = aps.filter(x => x.bateu || x.noRitmo || (x.modo === 'cadencia' && x.pct >= 90)).length;
+  /* O terceiro termo daqui era morto: pct>=90 implica pct>=80, que já é o
+     noRitmo da cadência. Saiu junto com a troca da cor para não virar bug na
+     próxima vez que alguém mexer no limite. */
+  const noRitmo = aps.filter(x => x.bateu || x.noRitmo).length;
+  /* Mês que não começou não tem placar: "0 de 7 no ritmo" em setembro, visto em
+     agosto, é acusação de atraso em quem ainda não teve o dia 1. */
+  const placar = (n) => janela.futuro ? '—' : n + ' de ' + aps.length;
 
   /* Peças que não caíram em meta nenhuma. Existem de propósito na tela: um
      vídeo de 9 minutos não é curto nem 10-15, e sumir da vista faria a equipe
@@ -27396,8 +27430,8 @@ function renderPerfMetas() {
                 o operador não tem como saber se está vendo o de agora ou o de
                 ontem — e story tem 24h de vida. */
              + (ultimaColeta ? ' · atualizado ' + escHtml(timeAgo(ultimaColeta)) : '') + '</span></div>'
-    +   '<div class="fp-meta-placar"><b>' + batidas + ' de ' + aps.length + '</b><span>metas batidas</span></div>'
-    +   '<div class="fp-meta-placar"><b>' + noRitmo + ' de ' + aps.length + '</b><span>no ritmo</span></div>'
+    +   '<div class="fp-meta-placar"><b>' + placar(batidas) + '</b><span>metas batidas</span></div>'
+    +   '<div class="fp-meta-placar"><b>' + placar(noRitmo) + '</b><span>no ritmo</span></div>'
     + '</div>'
     + '<div class="fp-metas">' + aps.map(x => fpMetaLinhaHtml(x, janela)).join('') + '</div>'
     + (sobra.length ? '<div class="fp-meta-sobra"><b>' + sobra.length + (sobra.length === 1 ? ' peça publicada fora das metas' : ' peças publicadas fora das metas') + '</b>'

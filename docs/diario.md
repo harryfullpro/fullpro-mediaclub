@@ -44,6 +44,37 @@ Onze cenários conferidos rodando a apuração de verdade no navegador: mês
 futuro, mês fechado, alvo zero, dia 1 com e sem peça, meta estourada (45 de 30),
 27 de 30 no dia 28, cadência perfeita e cadência com dez reposts em três dias.
 
+**Segunda passada, depois de um painel de agentes tentar derrubar o desenho.**
+Quatro frentes em paralelo (paleta/contraste, consumidores no código, os números
+reais de agosto, e um agente pago para achar furo). O que era furo de verdade e
+foi corrigido:
+
+- **A guarda de começo de mês não cobria cadência.** Como a meta É o número de
+  dias, o esperado dava sempre os dias corridos e `esperado < 1` era
+  aritmeticamente inalcançável: dia 1, 00h05, sem repost, linha vermelha.
+  Cadência agora tem conta própria — e o dia de hoje só entra no denominador
+  depois de cumprido, porque não ter repostado às 9 da manhã não é um dia
+  perdido.
+- **Dia 1 com alvo grande também escapava:** 40 clips em 31 dias já cobram 1,29
+  peça no primeiro dia. Agora dia 1 sem nada feito é neutro para qualquer alvo.
+- **`color-mix` em atributo de apresentação SVG falha para o preto.** Navegador
+  que não entenda a função descarta a declaração e volta ao valor inicial: fill
+  preto, stroke nenhum — o gráfico some sem erro no console. `CSS.supports` é
+  perguntado uma vez e a rampa cai para a âncora mais próxima.
+- **Mês fechado dizia "proj. 24".** Agora diz "fechou em 24": num mês que
+  acabou, aquilo é resultado, não promessa.
+- **Mês futuro tinha placar.** Setembro visto em agosto marcava "0 de 7 no
+  ritmo" — acusação de atraso em quem ainda não teve o dia 1. Vira "—".
+- **Termo morto no contador:** `modo === 'cadencia' && pct >= 90` nunca mudava
+  o resultado (pct≥90 implica pct≥80, que já é o noRitmo da cadência). Saiu
+  agora, para não virar bug na próxima vez que alguém mexer no limite.
+
+O que o painel apontou e ficou como está, de propósito: a rampa vermelho-verde
+é justamente o eixo que o daltônico não separa — mas cada linha traz "X de Y" e
+"proj. N" em texto, então a cor não é o único portador; e no tema claro
+"laranja" e "amarelo" saem como ocre e âmbar, que é física do fundo claro, não
+escolha (dito ao dono).
+
 ## 28/08/2026 · O cabeçalho das Metas passou a ser o cabeçalho de Meus Posts
 
 > *"arrume esses botoes de cima de atualizar e configurar para os padrões de
