@@ -518,6 +518,42 @@ de 19/08 percorreu as 17 telas medindo toda `.badge`, `.proj-dest-tag` e
 - Contraste medido ao final: **0 reprovados WCAG AA nos dois temas**
 - Textos em português, com acento. Nada de *goal*, *pool*, *pace* na interface
 
+## Logotipo de terceiro: quando embutir o arquivo, quando desenhar
+
+Vale para as marcas das plataformas (`FP_DEST_ARTE`, a fonte única).
+
+**Desenhe em SVG** quando a marca for simples (YouTube: retângulo + triângulo)
+ou quando alguma parte dela precisar **seguir o tema**. O corpo da nota do
+TikTok é preto na marca oficial e some no fundo escuro; só SVG resolve, porque
+arquivo de imagem chega com a cor cozida dentro.
+
+**Embuta o arquivo real, em 64px e data URI**, quando a marca tiver gradiente
+ou desenho complicado — Instagram, Mercado Livre, Google Ads. Redesenhá-la à
+mão é errar a marca de alguém, e ninguém revisa isso. 64px dá 3× de folga para
+os 20px em que aparece; os quatro somam 28 KB e não custam requisição.
+
+**Nunca aponte para o arquivo original.** O `Instagram.png` deste repositório
+tem 5001×5001 e 1,3 MB, e era baixado inteiro para desenhar 14 pixels.
+
+**Teste no fundo escuro antes de escolher o arquivo.** PNG de linha com halo
+claro (o globo "www") vira um bloco branco no tema escuro — não aparece em
+nenhuma inspeção de código, só olhando.
+
+**Uma fonte só.** Havia três mapas de logotipo para as mesmas sete marcas.
+Antes de criar o quarto, veja `FP_DEST_ARTE` — a regra de procurar o nome antes
+de criar vale para dado, não só para função e classe.
+
+---
+
+## Caixa do tamanho do ícone dentro de linha de texto pede `line-height: 0`
+
+`.fp-dest-lg` e `.fp-prod-selo-kit` são caixas com a altura exata do desenho.
+Sem `line-height: 0` a entrelinha do texto ao redor empurra a caixa alguns
+pixels para baixo, e ela fica fora do eixo do que está ao lado. Não dá erro e
+não aparece lendo o código — só medindo os `cy` dos irmãos.
+
+---
+
 ## "Apagado" é um número, e o número se mede
 
 Elemento secundário com `opacity` reduzida é pedido recorrente do dono ("com opacidade

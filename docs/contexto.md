@@ -227,6 +227,18 @@ Decisões dele, ditas explicitamente:
 - Emergenciais entram no lote escolhido pelo operador e o resto é rateado pela lógica
   percentual definida por ele
 
+### Destino é logotipo, não palavra (27/08/2026)
+Na listagem de Projetos e de Edição, no resumo do projeto e no Dashboard, o
+destino aparece como o **logotipo da plataforma** — YouTube, Shorts, TikTok,
+Instagram (Reels), Mercado Livre (Clips), Google Ads e o globo do Site. Até
+quatro por linha; o resto vira "+N" com a lista na dica.
+
+A **barra de filtro** por destino continua em texto, de propósito: ali a
+palavra é a coisa certa, e ela ensina qual logotipo é qual na coluna abaixo.
+
+Clips = **Mercado Livre Clips** e Ads = **Google Ads** — não é óbvio pelo nome
+curto, e é o que define qual marca vai em cada um.
+
 ### Produção: incluir à mão, e kit (27/08/2026)
 O "+" no topo da Produção inclui na fila um **produto** (um SKU) ou um **kit** (dois ou
 mais SKUs fotografados montados).

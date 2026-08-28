@@ -1,5 +1,68 @@
 # Diário
 
+## 27/08/2026 · Destino na listagem vira logotipo
+
+> *"vamos mudar aqui a tag destinos que tá como texto e vamos colocar a
+> logotipo de cada destino"*
+
+A coluna Destinos era etiqueta de texto em caixa colorida — `SHORTS  TIKTOK
++1`. Virou o logotipo de cada plataforma. Medido no mesmo viewport (1280×760),
+com a mesma listagem:
+
+| | antes | depois |
+|---|---|---|
+| coluna Destinos | 158,3px | **144,2px** |
+| destinos visíveis antes do "+N" | 2 | **4** |
+| altura da linha | 62,5–63px | 62,5–63px (igual) |
+| tabela / sobra para rolagem | 1063,2 / 109px | **1049 / 95px** |
+
+### Três fontes de arte, cada uma por um motivo
+
+- **SVG embutido** para YouTube e Site: desenho simples, nítido em qualquer
+  tamanho, 442 e 248 bytes.
+- **SVG embutido para o TikTok, por medição.** O `tiktok_2.png` do repositório
+  é a variante VAZADA da nota — sem corpo. Comparado lado a lado com o SVG, de
+  16 a 40px, nos dois temas: o PNG sai lavado em todos. No SVG a nota tem corpo
+  e ele segue o tema (`--dest-nota`: preto no claro, branco no escuro), que é
+  exatamente o que um arquivo de imagem não faz.
+- **PNG de 64px embutido como data URI** para Shorts, Reels (Instagram), Clips
+  (Mercado Livre) e Ads (Google Ads): marcas com gradiente e desenho
+  complicado. Redesenhá-las à mão seria errar a marca de alguém. Somam 28 KB.
+
+O `site.png` (globo "www" azul) foi testado e **reprovado**: tem halo claro e
+vira um bloco branco no tema escuro. Ficou o globo desenhado, que segue o tema.
+
+### O que já existia, e por que virou um mapa só
+
+Havia **três** conjuntos de logotipo para as mesmas marcas: `DEST_ICONS` (os
+cartões de postagem), `platIcons` (Meus Posts) e os `<img>` soltos no HTML
+estático. Todos agora leem de `FP_DEST_ARTE`.
+
+Isso derrubou de vez uma bobagem antiga: o `Instagram.png` tem **5001×5001 e
+1,3 MB**, e era baixado inteiro para desenhar 14 pixels na barra de filtro de
+Meus Posts. Somando os três PNGs que saíram da rede, **1,4 MB a menos** —
+contra 33,5 KB a mais no HTML (+2,3%), que não custa requisição e funciona
+offline.
+
+De quebra, um defeito que apareceu no caminho: na barra de Meus Posts os botões
+**YT e YTS mostravam os dois o logotipo do Shorts** (ambos apontavam para
+`yt_shorts.png`). Agora YT é o play do YouTube e YTS é o Shorts.
+
+### Um defeito meu, achado medindo
+
+`.fp-dest-lg` sem `line-height: 0` ficava alguns pixels abaixo do texto ao
+lado: a caixa tem o tamanho do logotipo, e a entrelinha do texto ao redor a
+empurrava. O mesmo tipo de coisa do selo "KIT" de mais cedo — caixa dentro de
+linha de texto pede a entrelinha zerada.
+
+### O que continua igual
+
+A **barra de filtro** por destino segue em texto, e de propósito: ali a palavra
+é a coisa certa, e ela ensina qual logotipo é qual na coluna logo abaixo.
+
+Os PNGs originais continuam na raiz do repositório — são a fonte das versões de
+64px e ninguém os apaga sem o dono mandar.
+
 ## 27/08/2026 · Incluir produto ou kit na Produção, e comentário no item da fila
 
 > *"nesse botão + nós vamos incluir na lista de produção um produto ou um kit
