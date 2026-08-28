@@ -15,6 +15,33 @@ Medido depois da transição terminar: número do dia sobre o azul **14,1:1** no
 claro e **13,7:1** no escuro; a borda azul contra o card, **4,02:1** e **4,95:1**
 (o piso de elemento gráfico é 3:1).
 
+### E o hover não pode recolorir o dia
+
+> *"o hover que eu quero é só um contorno no quadradinho da data, sem alterar a
+> cor que ele já tem, isso pode confundir o operador"*
+
+Certíssimo, e o problema era maior do que o dia selecionado: a regra **geral** de
+hover trocava `border-color` para `--primary`. Ou seja, passar o mouse num dia
+APROVADO deixava ele com a borda de BLOQUEADO enquanto o ponteiro estivesse em
+cima. O quadradinho mentia sobre o próprio estado.
+
+No calendário, `background` e `border-color` **carregam significado** — verde é
+aprovado, vermelho é bloqueado, azul é o selecionado. O hover não pode encostar
+em nenhum dos dois. Agora ele é só um contorno por `box-shadow`, numa cor neutra
+derivada do texto (`--contorno`), nunca verde/vermelho/azul: cor própria voltaria
+a dizer algo sobre o estado.
+
+Duas sutilezas:
+
+- `box-shadow` **não se acumula entre regras** — a que vence substitui a outra
+  inteira. Por isso o dia selecionado repete o próprio anel interno azul dentro
+  da regra de hover; sem isso o anel sumiria justo quando o mouse chegasse.
+- Contorno por `box-shadow`, e não por `outline`: o `outline` é do anel de foco
+  de teclado, e as duas coisas precisam poder aparecer juntas.
+
+Conferido nos dois temas com os quatro estados (comum, aprovado, bloqueado e
+selecionado): fundo e borda idênticos com e sem o mouse, só o contorno entra.
+
 ### Dois enganos de medição meus, nenhum era defeito do código
 
 **O servidor local tinha caído.** O service worker fez o certo — rede primeiro,

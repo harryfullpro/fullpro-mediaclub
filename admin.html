@@ -931,7 +931,14 @@
     transition: all .15s;
     position: relative;
   }
-  .cal-day:hover:not(.empty) { border-color: var(--primary); }
+  /* O HOVER NÃO MUDA COR NENHUMA DO DIA — só põe um contorno em volta.
+     `background` e `border-color` do quadradinho CARREGAM SIGNIFICADO: verde é
+     aprovado, vermelho é bloqueado, azul é o dia selecionado. A versão antiga
+     trocava a borda para vermelho ao passar o mouse, então um dia APROVADO
+     ficava com a borda de BLOQUEADO enquanto o ponteiro estivesse em cima.
+     Contorno por `box-shadow`, e não por `outline`: o `outline` é do anel de
+     foco de teclado, e as duas coisas precisam poder aparecer juntas. */
+  .cal-day:hover:not(.empty) { box-shadow: 0 0 0 2px var(--contorno); }
   .cal-day.empty { background: transparent; cursor: default; }
   .cal-day.past { opacity: .35; }
   .cal-day.approved {
@@ -954,12 +961,11 @@
     font-weight: 700;
     box-shadow: inset 0 0 0 1px rgba(var(--azul-rgb), .35);
   }
-  /* E o dia selecionado responde ao mouse reforçando o próprio azul, em vez
-     de cair na regra geral de hover (que troca a borda para vermelho). */
+  /* O dia selecionado precisa repetir o próprio anel interno aqui: `box-shadow`
+     não se acumula entre regras — a que vence substitui a outra inteira, e sem
+     esta linha o anel azul sumiria justamente quando o mouse chegasse. */
   .cal-day.selected:hover:not(.empty) {
-    border-color: var(--azul);
-    background: rgba(var(--azul-rgb), .32);
-    box-shadow: 0 0 0 2px rgba(var(--azul-rgb), .22), inset 0 0 0 1px rgba(var(--azul-rgb), .5);
+    box-shadow: 0 0 0 2px var(--contorno), inset 0 0 0 1px rgba(var(--azul-rgb), .35);
   }
 
   .list-blocked {
@@ -1589,6 +1595,10 @@
      como extrai-los de um hex em CSS puro. */
   :root { --azul: #0A84FF; --azul-rgb: 10,132,255; }
   [data-theme="light"] { --azul: #007AFF; --azul-rgb: 0,122,255; }
+  /* Contorno de "o mouse está aqui". Neutro de propósito: derivado da cor do
+     texto, nunca de verde/vermelho/azul — se tivesse cor própria, voltaria a
+     dizer alguma coisa sobre o estado do dia, que é justamente o que não pode. */
+  :root { --contorno: color-mix(in srgb, var(--text) 45%, transparent); }
   .fp-new-btn {
     position: relative; display: inline-flex; align-items: center; justify-content: center;
     width: 42px; height: 42px; padding: 0;

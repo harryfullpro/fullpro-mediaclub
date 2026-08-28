@@ -518,6 +518,29 @@ de 19/08 percorreu as 17 telas medindo toda `.badge`, `.proj-dest-tag` e
 - Contraste medido ao final: **0 reprovados WCAG AA nos dois temas**
 - Textos em português, com acento. Nada de *goal*, *pool*, *pace* na interface
 
+## Hover não mexe em cor que significa alguma coisa
+
+No calendário da Agenda o `background` e o `border-color` de cada dia dizem o
+estado dele: verde é aprovado, vermelho é bloqueado, azul é o selecionado. A
+regra de hover trocava a borda para `--primary` — então um dia aprovado ficava
+com a borda de bloqueado enquanto o ponteiro estivesse em cima.
+
+Onde a cor carrega significado, o retorno do ponteiro é **contorno**, não troca
+de cor: `box-shadow: 0 0 0 2px var(--contorno)`, com `--contorno` derivado da cor
+do texto e portanto neutro. Cor própria no contorno voltaria a dizer algo sobre o
+estado.
+
+Duas armadilhas na implementação:
+
+- **`box-shadow` não se acumula entre regras.** A regra que vence substitui a
+  outra inteira. Um elemento que já usa `box-shadow` para um anel próprio precisa
+  repeti-lo dentro da regra de hover, senão o anel some justamente no hover.
+- **Contorno por `box-shadow`, não por `outline`.** O `outline` é do anel de foco
+  de teclado (`button:focus-visible`), e as duas coisas precisam poder aparecer
+  ao mesmo tempo.
+
+---
+
 ## Medir cor depois de trocar de tema: espere a transição
 
 Vários componentes têm `transition: all .15s` (`.cal-day`, entre outros). Trocar
