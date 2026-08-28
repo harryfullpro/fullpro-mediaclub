@@ -5740,6 +5740,14 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    página, separadas por fios de 1px, com a faixa de hover sangrando até a
    borda da tela.
    ───────────────────────────────────────────────────────────────────────── */
+/* O mês é o único controle desta tela que precisa ser LIDO: em telas de até
+   900px a regra geral do .page-head manda o seletor encolher (`min-width:0`)
+   para o botão não cair sozinho numa segunda linha, e ele some até sobrar só
+   a seta — o operador fica sem saber de que mês são os números na frente
+   dele. 128px é a largura natural da opção mais longa ("Setembro 2026")
+   medida no controle; abaixo disso o texto começa a ser cortado. */
+#perfMetasAdminBtn > select { min-width: 128px; }
+
 .fp-metas > * + * { border-top: 1px solid var(--border); }
 .fp-meta-lin {
   display: flex; align-items: center; gap: 18px; padding: 15px 0;
@@ -5792,7 +5800,6 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-meta-placar { flex: 0 0 auto; text-align: right; }
 .fp-meta-placar b { font-family: 'FullPro Sans', sans-serif; font-size: 22px; line-height: 1.1; }
 .fp-meta-placar span { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; }
-.fp-meta-mes { max-width: 190px; }
 
 .fp-meta-sobra { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
 .fp-meta-sobra b { font-size: 12px; font-weight: 700; color: var(--text-dim); }
@@ -7250,7 +7257,7 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
           <h1>Metas</h1>
           <p>Acompanhe o progresso das metas mensais da equipe.</p>
         </div>
-        <div id="perfMetasAdminBtn"></div>
+        <div id="perfMetasAdminBtn" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div>
       </div>
       <div id="perfMetasContent"></div>
 
@@ -27251,14 +27258,28 @@ function renderPerfMetas() {
 
   if (adminBtn) {
     const meses = METAS_MESES.length ? METAS_MESES : [mes];
+    /* Mesmo desenho de cabeçalho de Meus Posts, a tela irmã dentro de
+       Performance: `select.proj-sort-select` + botões de ícone. O ícone de
+       atualizar é LITERALMENTE o mesmo daquela tela — é a mesma ação, e dois
+       desenhos para a mesma coisa é como uma das duas fica errada depois.
+       (`margin:0` porque .proj-sort-select nasce com `margin-left:auto`, que
+       aqui empurraria o seletor para longe dos botões.) */
     adminBtn.innerHTML =
-      '<select class="fp-lista-select fp-meta-mes" aria-label="Mês das metas" onchange="fpMetasTrocarMes(this.value)">'
+      '<select class="proj-sort-select" style="margin:0" aria-label="Mês das metas"'
+      +   ' onchange="fpMetasTrocarMes(this.value)">'
       + meses.map(m => '<option value="' + m + '"' + (m === mes ? ' selected' : '') + '>' + escHtml(fpMesNome(m)) + '</option>').join('')
       + '</select>'
-      + '<button class="fp-acao-txt" type="button" data-tip="Buscar agora nas redes" onclick="fpMetasAtualizar()">'
-      + '<svg viewBox="0 0 24 24" aria-hidden="true">' + FP_ICONES.atualizar + '</svg>Atualizar</button>'
-      + (isUserAdmin() ? '<button class="fp-acao-txt" type="button" onclick="openPerfGoalsModal()">'
-          + '<svg viewBox="0 0 24 24" aria-hidden="true">' + FP_ICONES.editar + '</svg>Configurar</button>' : '');
+      + '<button class="fp-icon-btn fp-ib-blue" type="button" data-tip="Buscar agora nas redes"'
+      +   ' aria-label="Buscar agora nas redes" onclick="fpMetasAtualizar()">'
+      +   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+      +   '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg></button>'
+      + (isUserAdmin()
+          ? '<button class="fp-icon-btn fp-tip-left" type="button" data-tip="Configurar metas do mês"'
+            + ' aria-label="Configurar metas do mês" onclick="openPerfGoalsModal()">'
+            + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+            + '<circle cx="12" cy="12" r="3"/>'
+            + '<path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 008.6 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 8.6a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>'
+          : '');
   }
 
   if (_metasErro) {

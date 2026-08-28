@@ -1,5 +1,32 @@
 # Diário
 
+## 28/08/2026 · O cabeçalho das Metas passou a ser o cabeçalho de Meus Posts
+
+> *"arrume esses botoes de cima de atualizar e configurar para os padrões de
+> design do site. E também o seletor de mês"*
+
+Metas tinha inventado três controles próprios. Do lado, dentro da mesma
+Performance, **Meus Posts** já tinha a linha pronta: `select.proj-sort-select`
++ botão de ícone, `gap:8px`, tudo no mesmo eixo do título. Agora Metas usa
+essa linha — inclusive o **mesmo SVG** de atualizar, porque é a mesma ação e
+dois desenhos para a mesma coisa é como uma das duas fica errada depois.
+
+Três detalhes que só apareceram medindo:
+
+- O `#perfMetasAdminBtn` era um bloco embrulhando outra `div` flex. Virou ele
+  mesmo a linha de controles, como em Meus Posts — um nível a menos e o mesmo
+  comportamento de wrap.
+- A engrenagem é o último elemento da direita: a dica dela vazava 27px para
+  fora da tela. Ganhou `.fp-tip-left`, que é o que o resto do painel já usa
+  nessa posição.
+- Em ≤900px a regra geral do `.page-head` deixa o seletor encolher até sobrar
+  só a seta — e aí o operador não sabe de que mês são os números na frente
+  dele. `min-width:128px` (largura natural de "Setembro 2026").
+
+Medido nos dois temas: select 30px de altura e os dois botões 34px, todos no
+eixo y=74, folgas de 8px; no escuro os dois botões de atualizar — o de Metas e
+o de Meus Posts — devolvem exatamente a mesma cor, tamanho, raio e path.
+
 ## 27/08/2026 · Metas, segunda passada: fora os cards, fora o caixa
 
 > *"remova agora esse caixa coletivo que não tem porque estar ai. Também não
