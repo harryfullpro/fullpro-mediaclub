@@ -6,6 +6,61 @@ Ordenado por impacto. Atualizar sempre que algo for concluído ou aparecer.
 
 ## Em andamento
 
+### O coletor de metas está no ar mas não roda sozinho — falta secret e cron
+`coletor-pecas` (edge function) traz as peças publicadas de Instagram, YouTube e
+TikTok para `mc_pecas`, e é ele que alimenta o painel de Metas. Testado contra as
+contas reais em 27/08/2026 — `/stories` devolveu 4 stories, `/media` separou 21
+REELS de 4 carrosséis, o YouTube devolveu a duração de cada vídeo. **Mas ele
+ainda não roda sozinho.** Faltam duas coisas, as duas do dono:
+
+1. **Criar os secrets `IG_ACCESS_TOKEN` e `YOUTUBE_API_KEY`** (Supabase → Edge
+   Functions → Secrets), com os valores que hoje estão no `config.js`. Isso
+   também tira os dois de um arquivo que o navegador baixa.
+2. **Agendar de hora em hora** (Supabase → Integrations → Cron). `pg_cron` e
+   `pg_net` estão disponíveis no projeto, não instalados.
+
+**O agendamento não é opcional:** story do Instagram vive 24 horas e `/stories`
+só devolve o que está no ar AGORA. Sem cron, story publicado numa sexta à noite
+simplesmente não existe na segunda — e não há como buscar depois. O botão
+"Atualizar" da tela de Metas cobre o dia a dia de quem está com a aba aberta,
+nada mais.
+
+### Três decisões do dono sobre as metas de setembro
+- **O valor por meta mudou de escala.** O caixa é `metas no ritmo × valor por
+  meta`. Com 3 metas a R$ 850 o teto era R$ 2.550; com 7, é R$ 5.950. O
+  `pool_per_goal` ficou como estava — a conta é que mudou.
+- **A faixa de 10-15 min quase não existe hoje.** No canal inteiro são 10 vídeos
+  nessa faixa; a maioria tem 4 a 9 minutos e não cai em meta nenhuma (aparecem
+  em "peças fora das metas", no pé da tela).
+- **"Pure Sound Triumph Speed 1200" tem 20 minutos.** Conta como pure sound pela
+  regra do título, mas a meta diz "abaixo de 10 min". A tela mostra a duração ao
+  lado em vez de decidir sozinha.
+
+### O token do TikTok venceu em 18/08/2026
+`mc_integrations.provider = 'tiktok'`, `expires_at = 2026-08-18`. O coletor
+detecta e avisa, mas enquanto isso **nenhum vídeo do TikTok entra na contagem de
+vídeos curtos**. Reconectar em Integrações.
+
+### Os cinco operadores ainda não fizeram o primeiro acesso
+patrik, andre, jose, matheus e yonan continuam com o hash antigo. A primeira
+entrada de cada um migra a senha sozinha, pela ponte `mc-login` — a senha é a
+mesma. Só vale avisar que é normal.
+
+### `mc_fin_*` continua legível pela chave pública
+3.852 lançamentos e 152 boletos. As outras 23 tabelas foram fechadas em
+27/08/2026; estas ficaram porque **outra ferramenta do dono usa a mesma chave
+anon** e fechá-las derrubaria essa ferramenta. Falta o dono dizer qual é, para
+ela ganhar via própria.
+
+### Ligar a checagem de senha vazada
+Supabase → Authentication → Password protection. Um clique, nunca dado.
+
+### Os PNGs originais dos logotipos estão parados no repositório
+`Instagram.png` (1,3 MB), `yt_shorts.png`, `tiktok_2.png`, `mercado_livre*.png`,
+`ads*.png`, `site.png` — ~1,9 MB. Desde 27/08/2026 **ninguém os referencia**: os
+logotipos viraram SVG embutido e data URI de 64px em `FP_DEST_ARTE`. Eles são a
+fonte das versões reduzidas; apagar é decisão do dono.
+
 ### Ligar o módulo de kit do Magis5 (falta a chave e um teste real)
 O código está no ar (`magis5-proxy` + aba Produção), mas **nunca falou com o Magis5**.
 Para ligar:
