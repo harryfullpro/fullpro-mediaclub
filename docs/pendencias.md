@@ -28,6 +28,21 @@ simplesmente não existe na segunda — e não há como buscar depois. O botão
 "Atualizar" da tela de Metas cobre o dia a dia de quem está com a aba aberta,
 nada mais.
 
+### `coletor-pecas` aceita qualquer usuário do Auth, não qualquer operador
+A porta dele é `permitido = auth === SRK; if (!permitido && auth) { getUser(auth) }`
+— basta ser um usuário do Supabase Auth, sem passar por `mc_admin_users`. Antes
+isso só disparava uma coleta; agora dispara uma coleta **com as credenciais da
+empresa**, gastando cota da Meta e do Google. O conserto é usar o mesmo
+`operadorOuNulo` da `instagram-proxy`, mantendo a porta do cron por service role.
+Existe 1 linha em `auth.users` que não tem operador correspondente.
+
+### Promover alguém a administrador agora só pelo Supabase
+O gatilho `mc_admin_users_sem_autopromocao` recusa qualquer INSERT/UPDATE vindo
+do cliente que ponha um cargo começando com "admin". Efeito prático: **criar um
+usuário já como "Administrador" pela tela de Usuários vai dar erro**. Promover é
+raro e agora é feito pelo Supabase (SQL ou dashboard) — que é exatamente o
+ponto, porque `role` é editável pela própria pessoa em Meu perfil.
+
 ### Rodar a troca das credenciais e esvaziar o config.js
 A tela de Integrações já conecta Instagram e YouTube, mas **guardar a MESMA
 credencial que já está pública não protege nada**: o `config.js` responde HTTP

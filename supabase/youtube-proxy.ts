@@ -131,7 +131,15 @@ async function api(caminho: string, params: Record<string, string>, chave: strin
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   url.searchParams.set('key', chave);
 
-  const r = await fetch(url.toString());
+  /* A chave vai em ?key=, que é o único jeito que a API aceita. Se o fetch em
+     si falhar, o TypeError do Deno traz a URL inteira na mensagem — e ela iria
+     para o log. Erro de rede é reescrito aqui, sem URL. */
+  let r: Response;
+  try {
+    r = await fetch(url.toString());
+  } catch (e) {
+    throw new Error('não deu para falar com o YouTube (' + (e instanceof Error ? e.name : 'falha de rede') + ')');
+  }
   const j = await r.json().catch(() => ({}));
   if (j?.error) {
     const det = j.error.errors?.[0] ?? {};
@@ -174,7 +182,7 @@ Deno.serve(async (req) => {
   if (action === 'health') {
     /* `versao` é o que deixa conferir, de fora e sem sessão, QUAL código está
        no ar. Sem isso, depois de um deploy só dá para acreditar. */
-    return resposta({ ok: true, versao: 'yt1', configurado: (await credencial()).chave.length > 0 });
+    return resposta({ ok: true, versao: 'yt2', configurado: (await credencial()).chave.length > 0 });
   }
 
   const operador = await operadorOuNulo(req);

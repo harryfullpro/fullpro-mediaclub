@@ -194,7 +194,18 @@ async function graph(caminho: string, params: Record<string, string>, token: str
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   url.searchParams.set('access_token', token);
 
-  const r = await fetch(url.toString());
+  /* O token vai na query string, que é como a Graph exige. Se o PRÓPRIO fetch
+     falhar (DNS, TLS, timeout, reset), o Deno lança um TypeError cuja mensagem
+     inclui a URL inteira — com access_token= dentro. Essa mensagem acabaria no
+     log da função. Por isso o erro de rede é reescrito aqui, sem a URL.
+     E é justo no 'salvar' que isso mais importa: validar credencial recém-colada
+     é a chamada com maior chance de dar erro. */
+  let r: Response;
+  try {
+    r = await fetch(url.toString());
+  } catch (e) {
+    throw new Error('não deu para falar com a Meta (' + (e instanceof Error ? e.name : 'falha de rede') + ')');
+  }
   const j = await r.json().catch(() => ({}));
   if (j?.error) {
     throw new Error(j.error.message ?? 'erro da Meta', { cause: j.error.code ?? null });
@@ -270,7 +281,7 @@ Deno.serve(async (req) => {
   if (action === 'health') {
     /* `versao` é o que deixa conferir, de fora e sem sessão, QUAL código está
        no ar. Sem isso, depois de um deploy só dá para acreditar. */
-    return resposta({ ok: true, versao: 'ig4', configurado: (await credencial()).token.length > 0 });
+    return resposta({ ok: true, versao: 'ig5', configurado: (await credencial()).token.length > 0 });
   }
 
   const operador = await operadorOuNulo(req);

@@ -56,6 +56,45 @@ E o que **não** está resolvido: guardar no servidor a MESMA credencial que já
 pública não protege nada. A ordem certa — gerar nova, colar, revogar a antiga,
 esvaziar o `config.js` — está em `pendencias.md`.
 
+### O "só administrador" era enfeite, e o revisor achou
+
+Um agente pago para derrubar o desenho encontrou o que eu não teria olhado:
+`mc_admin_users` tinha **uma** policy, `FOR ALL TO authenticated`, com USING e
+WITH CHECK iguais a `mc_eh_operador()` — que só pergunta "é operador?". E
+`role` é editável pela própria pessoa em Meu perfil. Ou seja: qualquer operador
+logado dava um PATCH em si mesmo, virava "Administrador" e então trocava a
+credencial da empresa. **Toda a checagem de admin que eu tinha acabado de
+escrever era decorativa.**
+
+Conferido no banco antes de acreditar, e corrigido com um gatilho
+(`mc_admin_users_sem_autopromocao`): cargo que começa com "admin" chegando pelo
+cliente é recusado, e `auth_uid` também não muda por ali. Testado em transação
+que fez rollback — promoção recusada, `auth_uid` recusado, perfil normal passa,
+admin editando o próprio perfil passa.
+
+Junto, duas coisas que a RLS não segurava:
+
+- **`TRUNCATE` ignora RLS.** O GRANT padrão dava TRUNCATE a `anon` e
+  `authenticated` em todas as tabelas do schema — qualquer usuário logado podia
+  esvaziar uma tabela. Revogado (com REFERENCES e TRIGGER, que o PostgREST nunca
+  usa).
+- **`mc_integrations` perdeu todo privilégio** de `anon`/`authenticated`, mais
+  `FORCE ROW LEVEL SECURITY`. Antes o que segurava era só "RLS ligada sem
+  policy" — uma policy permissiva criada por engano meses depois exporia as
+  credenciais das quatro plataformas de uma vez, com 200 OK e sem alarme.
+
+E um vazamento que não vinha do `console.error`: a Graph API exige o token na
+**query string**, e quando o `fetch` em si falha (DNS, TLS, timeout) o Deno
+lança um TypeError cuja mensagem traz a **URL inteira** — com o token dentro —
+que ia para o log da função. Pior no `salvar`, que é a chamada com credencial
+recém-colada e maior chance de erro. Agora o erro de rede é reescrito sem URL,
+nas duas functions.
+
+De quebra, a linha do TikTok parou de mentir: a `tiktok-proxy` já devolvia
+`expires_at` e ninguém olhava — a tela dizia "Conectado" em verde com o token
+**vencido desde 18/08**. Agora diz "Token vencido em 18/08/2026 — reconecte",
+em vermelho.
+
 ## 28/08/2026 · A cor das metas virou a própria distância até a régua
 
 > *"eu quero que a cor dos gráficos seja de acordo com a progressão da meta"* /

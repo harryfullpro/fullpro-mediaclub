@@ -17016,6 +17016,7 @@ let tkTokenExpiry = 0;
 let tkVideoCache = null;
 let tkVideoCacheTime = 0;
 let tkConnected = false; // status compartilhado (servidor), vale p/ toda a equipe
+let tkExpiraEm = null;   // validade do token guardado no servidor
 
 function loadTKTokens() {
   try {
@@ -17855,6 +17856,9 @@ async function refreshIntegrationStatus() {
     ]);
     blingConnected = !!(results[0] && results[0].connected);
     tkConnected = !!(results[1] && results[1].connected);
+    /* A proxy já devolve expires_at e ninguém olhava: a linha dizia "Conectado"
+       em verde com o token morto — medido em 28/08/2026, vencido desde 18/08. */
+    tkExpiraEm = (results[1] && results[1].expires_at) || null;
   } catch (e) { console.warn('[Integracoes] status error:', e); }
 }
 
@@ -17863,8 +17867,14 @@ function updateTKStatus() {
   const tkBtn = document.getElementById('tkConnectBtn');
   if (!tkStatus || !tkBtn) return;
   if (isTKConnected()) {
-    tkStatus.textContent = 'Conectado';
-    tkStatus.style.color = 'var(--success)';
+    /* "Conectado" sozinho é presença, não validade. Token do TikTok expira, e
+       quem lê a tela precisa saber disso ANTES de as métricas pararem. */
+    const venceu = tkExpiraEm && new Date(tkExpiraEm) < new Date();
+    const dias = tkExpiraEm ? Math.round((new Date(tkExpiraEm) - new Date()) / 86400000) : null;
+    tkStatus.textContent = venceu
+      ? 'Token vencido em ' + new Date(tkExpiraEm).toLocaleDateString('pt-BR') + ' — reconecte'
+      : 'Conectado' + (dias != null && dias <= 10 ? ' · vence em ' + dias + (dias === 1 ? ' dia' : ' dias') : '');
+    tkStatus.style.color = venceu ? 'var(--danger)' : (dias != null && dias <= 10 ? 'var(--warning)' : 'var(--success)');
     tkBtn.textContent = 'Desconectar';
     tkBtn.className = 'action-btn reject';
     tkBtn.style.cssText = 'padding:6px 14px;font-size:11px';
