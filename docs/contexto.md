@@ -227,6 +227,26 @@ Decisões dele, ditas explicitamente:
 - Emergenciais entram no lote escolhido pelo operador e o resto é rateado pela lógica
   percentual definida por ele
 
+### Metas: sete por mês, medidas pela API (27/08/2026)
+As metas deixaram de ser três números fixos e viraram **uma linha por meta, por
+mês** (`mc_metas_alvo`). Setembro tem sete; agosto tinha três.
+
+O realizado vem de **`mc_pecas`** — uma linha por peça que foi ao ar, com a data
+que a PLATAFORMA informou. Antes o painel datava pela `production_date`, a data
+da gravação: vídeo gravado em julho e publicado em agosto contava em julho.
+
+O que a API entrega sozinha (medido nas contas reais, não suposto):
+vídeo curto, carrossel e story pelo Instagram; duração e "pure sound" (pelo
+título) pelo YouTube; clips pela tabela própria. **Repost é o único que nenhuma
+API sabe dizer** — vem marcado à mão, num toque, sobre a lista que o coletor já
+trouxe.
+
+O coletor **precisa de cron**: story vive 24h e `/stories` só devolve o que está
+no ar agora. Sem agendamento, story de sexta à noite não existe na segunda.
+
+`mc_performance_goals` continua mandando no dinheiro (valor por meta e rateio) —
+a bonificação não mudou. Mas o teto mudou de escala: 7 metas × o valor, contra 3.
+
 ### Botão "novo" e setas: só o ícone (27/08/2026)
 Nada de quadrado azul preenchido. O botão de adicionar é o **+ em azul, sem
 caixa**, no canto superior direito — o mesmo desenho que o celular já usava. As
