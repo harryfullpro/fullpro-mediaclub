@@ -5936,6 +5936,11 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 /* Recado de como a conexao funciona: sem chapa azul e sem moldura arredondada
    — fio a esquerda nao entra (regra do dono), entao e so o icone na cor de
    destaque e o texto. */
+/* Dois botões numa linha que já é `space-between`: precisam andar juntos como
+   um bloco só, senão o "Verificar" gruda no nome da integração. */
+.fp-integr-acoes { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.fp-integr-acoes .action-btn { padding: 6px 14px; font-size: 11px; }
+
 .fp-integr-nota {
   display: flex; gap: 10px; align-items: flex-start;
   padding: 0 0 18px; font-size: 12px; color: var(--text-dim); line-height: 1.55;
@@ -7522,7 +7527,10 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
                 <div class="fp-integr-sub" id="igStatusText">Verificando...</div>
               </div>
             </div>
-            <span style="font-size:11px;color:var(--text-dim);padding:6px 14px">config.js</span>
+            <div class="fp-integr-acoes">
+              <button class="action-btn" type="button" id="igVerifyBtn" onclick="fpIntegrVerificar('instagram')">Verificar</button>
+              <button class="action-btn approve" type="button" id="igConnectBtn" onclick="fpIntegrAbrir('instagram')">Conectar</button>
+            </div>
           </div>
           <div class="fp-integr-lin">
             <div class="fp-integr-id">
@@ -7532,7 +7540,10 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
                 <div class="fp-integr-sub" id="ytStatusText">Verificando...</div>
               </div>
             </div>
-            <span style="font-size:11px;color:var(--text-dim);padding:6px 14px">config.js</span>
+            <div class="fp-integr-acoes">
+              <button class="action-btn" type="button" id="ytVerifyBtn" onclick="fpIntegrVerificar('youtube')">Verificar</button>
+              <button class="action-btn approve" type="button" id="ytConnectBtn" onclick="fpIntegrAbrir('youtube')">Conectar</button>
+            </div>
           </div>
         </div>
       </div>
@@ -8311,6 +8322,40 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
   </div>
 </div>
 
+
+<!-- Modal Conectar integração (Instagram / YouTube)
+     A credencial é digitada aqui e vai DIRETO para a edge function, que valida
+     na origem e grava em mc_integrations. Ela não passa pelo localStorage, não
+     fica no config.js e não volta em resposta nenhuma. O campo é `password`
+     com autocomplete desligado de propósito: senão o navegador guarda o token
+     no gerenciador de senhas dele e reoferece em outro formulário. -->
+<div class="modal" id="integrModal">
+  <div class="modal-content" style="max-width:560px">
+    <div class="modal-head">
+      <h3 id="integrModalTitulo">Conectar</h3>
+      <button class="modal-close" onclick="fpIntegrFechar()" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="fp-user-form">
+      <div class="fp-prod-faixa">
+        <b id="integrCampoTitulo">Credencial</b>
+        <span class="fp-aviso-sub" id="integrCampoSub">Vale para toda a equipe</span>
+      </div>
+      <div class="block-field">
+        <label for="integrValor" id="integrLabel">Token</label>
+        <input type="password" class="login-input" id="integrValor" style="margin:0"
+               autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+               placeholder="cole aqui"/>
+      </div>
+      <details class="fp-ico-ajuda" id="integrAjuda"></details>
+      <p class="fp-user-nota" id="integrNota"></p>
+      <div class="fp-user-pe">
+        <button class="action-btn" type="button" id="integrDescBtn" onclick="fpIntegrDesconectar()" style="margin-right:auto;display:none">Desconectar</button>
+        <button class="action-btn" type="button" onclick="fpIntegrFechar()">Cancelar</button>
+        <button class="action-btn approve" type="button" id="integrSalvarBtn" onclick="fpIntegrSalvar()">Testar e salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Modal Configurar Metas -->
 <div class="modal" id="perfGoalsModal">
@@ -17734,11 +17779,246 @@ async function disconnectTikTok() {
   updateTKStatus();
 }
 
+/* ── Instagram e YouTube: conexão pelo painel [FP-INTEGR 28/08/2026] ───────
+   Antes estas duas linhas eram um rótulo fixo: "Configurado pelo sistema" se a
+   chave existisse em window.FULLPRO_CONFIG, e ponto. Duas mentiras nisso:
+     1. o rótulo dizia "configurado" com o token vencido há semanas — ele só
+        olhava se a string existia;
+     2. trocar a credencial exigia editar o config.js e redeployar o site, o que
+        não é uma coisa que se faz às onze da noite quando o token expira.
+   Agora a credencial mora em mc_integrations (RLS ligada, sem policy: só as
+   edge functions leem) e é gravada por uma função que a VALIDA na origem antes
+   de gravar. Ver supabase/integr-cred.md.
+   ───────────────────────────────────────────────────────────────────────── */
+const FP_INTEGR_DEF = {
+  instagram: {
+    fn: 'instagram-proxy', nome: 'Instagram', campo: 'token',
+    elStatus: 'igStatusText', elConectar: 'igConnectBtn', elVerificar: 'igVerifyBtn',
+    tituloCampo: 'Token de acesso da Meta',
+    subCampo: 'Token de usuário de longa duração (~60 dias)',
+    label: 'Token',
+    ajuda: [
+      'developers.facebook.com → seu app → Ferramentas → <b>Graph API Explorer</b>.',
+      'Em "Meta App", escolha o app do Media Club; em "User or Page", <b>User Token</b>.',
+      'Marque as permissões <b>instagram_basic</b>, <b>instagram_manage_insights</b>, '
+        + '<b>pages_show_list</b> e <b>pages_read_engagement</b>, e gere o token.',
+      'O token do Explorer dura 1 hora. Troque por um de 60 dias em '
+        + 'Ferramentas → <b>Access Token Debug</b> → <b>Extend Access Token</b>, e cole o estendido aqui.',
+    ],
+    nota: 'O token é de portador: quem tem ele age como a conta, sem senha. Ele vai daqui '
+      + 'direto para o servidor, é conferido na Meta e guardado numa tabela que só as funções '
+      + 'do servidor enxergam — <b>não</b> fica no seu navegador nem no config.js.',
+  },
+  youtube: {
+    fn: 'youtube-proxy', nome: 'YouTube', campo: 'chave',
+    elStatus: 'ytStatusText', elConectar: 'ytConnectBtn', elVerificar: 'ytVerifyBtn',
+    tituloCampo: 'Chave da API do Google',
+    subCampo: 'YouTube Data API v3',
+    label: 'Chave',
+    ajuda: [
+      'console.cloud.google.com → seu projeto → <b>APIs e serviços</b> → <b>Credenciais</b>.',
+      '<b>Criar credenciais</b> → <b>Chave de API</b>.',
+      'Em <b>Restrições de API</b>, deixe só a <b>YouTube Data API v3</b>.',
+      'Em <b>Restrições de aplicativo</b>, escolha <b>Nenhuma</b> ou restrinja por IP. '
+        + '<b>Não</b> use "sites da Web": o painel chama pelo servidor, onde não existe '
+        + 'referenciador, e a chave seria bloqueada.',
+    ],
+    nota: 'A cota é de 10.000 unidades por dia e é compartilhada pelo projeto todo. '
+      + 'Guardada no servidor, ela para de ser baixada por qualquer visitante do site.',
+  },
+};
+
+let FP_INTEGR = { instagram: null, youtube: null };
+let fpIntegrAtual = null;
+
+/* supabase-js só entrega o corpo da resposta quando o status é 2xx. Como as
+   funções respondem 401/403 com o motivo em português no corpo, o corpo é
+   recuperado de error.context — sem isso o operador veria "Edge Function
+   returned a non-2xx status code", que não diz nada a ninguém. */
+async function fpIntegrChamar(prov, action, extra) {
+  const def = FP_INTEGR_DEF[prov];
+  const corpo = Object.assign({ action: action }, extra || {});
+  try {
+    const r = await sb.functions.invoke(def.fn, { body: corpo });
+    if (!r.error) return r.data || { ok: false, erro: 'resposta vazia' };
+    if (r.error.context && typeof r.error.context.json === 'function') {
+      const j = await r.error.context.json().catch(function () { return null; });
+      if (j) return j;
+    }
+    return { ok: false, erro: r.error.message || 'não deu para falar com o servidor' };
+  } catch (e) {
+    return { ok: false, erro: (e && e.message) || 'falha de rede' };
+  }
+}
+
+function fpIntegrDias(iso) {
+  if (!iso) return null;
+  return Math.round((new Date(iso) - new Date()) / 86400000);
+}
+
+/* A frase da linha. Ela tem que responder três coisas diferentes sem enrolar:
+   está conectado? de onde vem a credencial? ela ainda vale? */
+function fpIntegrFrase(prov) {
+  const e = FP_INTEGR[prov];
+  if (!e) return { txt: 'Verificando...', cor: 'var(--text-dim)' };
+  if (e.erroRede) return { txt: e.erroRede, cor: 'var(--warning)' };
+
+  if (!e.conectado) {
+    /* Enquanto a chave velha continuar no config.js, o painel ainda funciona
+       por ela. Dizer só "não conectado" faria o operador achar que está tudo
+       parado; esconder o config.js faria ele achar que está tudo certo. */
+    const aindaNoConfig = prov === 'instagram'
+      ? !!(window.FULLPRO_CONFIG && window.FULLPRO_CONFIG.IG_ACCESS_TOKEN)
+      : !!(window.FULLPRO_CONFIG && window.FULLPRO_CONFIG.YOUTUBE_API_KEY);
+    return aindaNoConfig
+      ? { txt: 'Não conectado — ainda usando a chave pública do config.js', cor: 'var(--warning)' }
+      : { txt: 'Não conectado', cor: 'var(--text-dim)' };
+  }
+
+  const partes = [];
+  partes.push(e.origem === 'painel' ? 'Conectado' : 'Conectado pelo servidor');
+  if (prov === 'instagram' && e.conta) partes.push('@' + e.conta);
+  if (prov === 'youtube' && e.canal) partes.push(e.canal);
+
+  let cor = 'var(--success)';
+  if (e.vale === false) {
+    partes.push('a credencial não está mais valendo');
+    cor = 'var(--danger)';
+  } else {
+    const dias = fpIntegrDias(e.expira_em);
+    if (dias != null) {
+      if (dias < 0) { partes.push('vencido'); cor = 'var(--danger)'; }
+      else if (dias <= 10) { partes.push('vence em ' + dias + (dias === 1 ? ' dia' : ' dias')); cor = 'var(--warning)'; }
+      else partes.push('vence em ' + dias + ' dias');
+    }
+  }
+  return { txt: partes.join(' · '), cor: cor };
+}
+
+function fpIntegrPintar(prov) {
+  const def = FP_INTEGR_DEF[prov];
+  const el = document.getElementById(def.elStatus);
+  const btn = document.getElementById(def.elConectar);
+  const ver = document.getElementById(def.elVerificar);
+  if (!el) return;
+
+  const f = fpIntegrFrase(prov);
+  el.textContent = f.txt;
+  el.style.color = f.cor;
+
+  const e = FP_INTEGR[prov];
+  if (btn) {
+    /* Quem não é administrador não conecta: a credencial vale para a equipe
+       inteira. O servidor recusa de qualquer jeito — o botão some para a
+       pessoa não bater numa porta fechada. */
+    btn.style.display = isUserAdmin() ? '' : 'none';
+    btn.textContent = (e && e.conectado) ? 'Reconectar' : 'Conectar';
+  }
+  if (ver) ver.disabled = !(e && e.conectado);
+}
+
+async function fpIntegrStatus(prov, vivo) {
+  FP_INTEGR[prov] = null;
+  fpIntegrPintar(prov);
+  const r = await fpIntegrChamar(prov, vivo ? 'verificar' : 'status');
+  FP_INTEGR[prov] = r.ok ? r : { conectado: false, erroRede: r.erro };
+  fpIntegrPintar(prov);
+  return FP_INTEGR[prov];
+}
+
+async function fpIntegrVerificar(prov) {
+  const ver = document.getElementById(FP_INTEGR_DEF[prov].elVerificar);
+  if (ver) { ver.disabled = true; ver.textContent = '...'; }
+  const e = await fpIntegrStatus(prov, true);
+  if (ver) ver.textContent = 'Verificar';
+  if (e.erroRede) fpToast(e.erroRede, 'erro');
+  else if (e.vale === false) fpToast(FP_INTEGR_DEF[prov].nome + ': ' + (e.erro_conta || 'a credencial não vale mais'), 'erro');
+  else if (e.conectado) fpToast(FP_INTEGR_DEF[prov].nome + ' respondeu — a credencial está valendo.', 'ok');
+}
+
+function fpIntegrAbrir(prov) {
+  if (!isUserAdmin()) { fpToast('Só administrador conecta integração.', 'info'); return; }
+  const def = FP_INTEGR_DEF[prov];
+  fpIntegrAtual = prov;
+  const e = FP_INTEGR[prov];
+
+  document.getElementById('integrModalTitulo').textContent =
+    ((e && e.conectado) ? 'Reconectar ' : 'Conectar ') + def.nome;
+  document.getElementById('integrCampoTitulo').textContent = def.tituloCampo;
+  document.getElementById('integrCampoSub').textContent = def.subCampo;
+  document.getElementById('integrLabel').textContent = def.label;
+  document.getElementById('integrNota').innerHTML = def.nota;
+  document.getElementById('integrAjuda').innerHTML =
+    '<summary>Onde consigo ' + (prov === 'instagram' ? 'esse token' : 'essa chave') + '?</summary>'
+    + '<ol style="margin:6px 0 0;padding-left:18px;font-size:12px;line-height:1.6;color:var(--text-muted)">'
+    + def.ajuda.map(function (x) { return '<li>' + x + '</li>'; }).join('')
+    + '</ol>';
+
+  const desc = document.getElementById('integrDescBtn');
+  desc.style.display = (e && e.conectado && e.origem === 'painel') ? '' : 'none';
+
+  const campo = document.getElementById('integrValor');
+  campo.value = '';
+  document.getElementById('integrModal').classList.add('show');
+  setTimeout(function () { campo.focus(); }, 60);
+}
+
+function fpIntegrFechar() {
+  /* Limpa o campo ao fechar: token colado não fica pendurado no DOM à espera
+     de quem abrir o inspetor na máquina compartilhada da produção. */
+  const campo = document.getElementById('integrValor');
+  if (campo) campo.value = '';
+  document.getElementById('integrModal').classList.remove('show');
+  fpIntegrAtual = null;
+}
+
+async function fpIntegrSalvar() {
+  const prov = fpIntegrAtual;
+  if (!prov) return;
+  const def = FP_INTEGR_DEF[prov];
+  const campo = document.getElementById('integrValor');
+  const valor = (campo.value || '').trim();
+  if (!valor) { fpToast('Cole ' + (prov === 'instagram' ? 'o token' : 'a chave') + ' antes de salvar.', 'info'); return; }
+
+  const btn = document.getElementById('integrSalvarBtn');
+  btn.disabled = true; btn.textContent = 'Testando...';
+
+  const extra = {};
+  extra[def.campo] = valor;
+  const r = await fpIntegrChamar(prov, 'salvar', extra);
+
+  btn.disabled = false; btn.textContent = 'Testar e salvar';
+  if (!r.ok) { fpToast(r.erro || 'não deu para salvar', 'erro'); return; }
+
+  campo.value = '';
+  FP_INTEGR[prov] = r;
+  fpIntegrPintar(prov);
+  fpIntegrFechar();
+  fpToast(def.nome + ' conectado' + (r.conta ? ' — @' + r.conta : (r.canal ? ' — ' + r.canal : '')) + '.', 'ok');
+}
+
+async function fpIntegrDesconectar() {
+  const prov = fpIntegrAtual;
+  if (!prov) return;
+  const def = FP_INTEGR_DEF[prov];
+  if (!await fpConfirm({
+    titulo: 'Desconectar o ' + def.nome,
+    mensagem: 'As métricas do ' + def.nome + ' param de atualizar para toda a equipe'
+      + (prov === 'instagram' ? ', inclusive a contagem de stories das metas' : '') + '.',
+    detalhe: 'Para religar, um administrador cola a credencial de novo aqui.',
+    confirmar: 'Desconectar', perigo: true,
+  })) return;
+
+  const r = await fpIntegrChamar(prov, 'desconectar');
+  if (!r.ok) { fpToast(r.erro || 'não deu para desconectar', 'erro'); return; }
+  FP_INTEGR[prov] = r;
+  fpIntegrPintar(prov);
+  fpIntegrFechar();
+}
+
 function renderIntegracoes() {
-  const ig = document.getElementById('igStatusText');
-  if (ig) ig.textContent = (window.FULLPRO_CONFIG && window.FULLPRO_CONFIG.IG_ACCESS_TOKEN) ? 'Configurado pelo sistema' : 'Não configurado';
-  const yt = document.getElementById('ytStatusText');
-  if (yt) yt.textContent = (window.FULLPRO_CONFIG && window.FULLPRO_CONFIG.YOUTUBE_API_KEY) ? 'Configurado pelo sistema' : 'Não configurado';
+  fpIntegrStatus('instagram');
+  fpIntegrStatus('youtube');
   updateTKStatus();
   updateBlingStatus();
   fpDriveVerificar(false);

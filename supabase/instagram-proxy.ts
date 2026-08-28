@@ -12,19 +12,33 @@
  * continuaria exposto. Aqui o token de página é resolvido no servidor, guardado
  * em memória entre invocações quentes, e REMOVIDO de qualquer resposta.
  *
- * Secrets (Project Settings → Edge Functions → Secrets):
- *   IG_ACCESS_TOKEN   Long-Lived User Token da Meta. Renove antes dos ~60 dias.
+ * DE ONDE VEM O TOKEN (28/08/2026)
+ *   1. mc_integrations, provider 'instagram' — é o que o painel grava quando um
+ *      administrador reconecta em Integrações. RLS ligada e sem policy: só a
+ *      service role enxerga.
+ *   2. Secret IG_ACCESS_TOKEN — reserva, mantém de pé o que já funcionava antes
+ *      da primeira reconexão pelo painel.
+ * Nessa ordem, nunca o config.js. Ver supabase/integr-cred.md.
+ *
+ * O token da Meta expira em ~60 dias e é o coletor-pecas que segura a meta de
+ * stories, que não dá para recuperar depois (story vive 24h). Reconexão que
+ * depende de lembrar a senha do Supabase é reconexão que não acontece — daí a
+ * tabela, e daí as ações 'status', 'salvar' e 'desconectar' aqui embaixo.
  * IG_USER_ID não é segredo (é um id numérico público) e segue no config.js.
  *
  * Ações — em ?action= ou no corpo {action}, porque o painel chama por
  * sb.functions.invoke(), que sempre manda POST com JSON:
- *   health                                  -> { ok, configurado: bool }
+ *   health                                  -> { ok, configurado: bool }   [aberta]
+ *   status                                  -> { ok, conectado, origem, conta, ... }
+ *   verificar                               -> idem, mas confere na Meta agora
+ *   salvar    { token }                     -> { ok, ... }   [só administrador]
+ *   desconectar                             -> { ok, ... }   [só administrador]
  *   contas                                  -> { ok, contas: [{id, nome, ig_id}] }
  *   midias    { ig_id, limit? }             -> { ok, midias: [...] }
  *   insights  { media_id, metric, ig_id }   -> { ok, valor: number }
  *   marcacoes { ig_id, limit? }             -> { ok, midias: [...] }
  *   mencoes   { ig_id, limit? }             -> { ok, midias: [...] }
- *   descoberta{ ig_user_id, handle, inner } -> { ok, midias: [...] }
+ *   descoberta{ ig_user_id, handle, inner } -> { ok, midias: [...], perfil }
  *
  * TODA resposta traz `ok`. Em falha vem { ok: false, erro } com a frase já em
  * português; quando o "não" veio da Meta, `meta` traz o código cru para achar o
@@ -54,7 +68,113 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const TOKEN = Deno.env.get('IG_ACCESS_TOKEN') ?? '';
+const TOKEN_ENV = Deno.env.get('IG_ACCESS_TOKEN') ?? '';
+const SB_URL = Deno.env.get('SUPABASE_URL') ?? '';
+const SRK = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+let servicoCache: ReturnType<typeof createClient> | null = null;
+function servico() {
+  if (!servicoCache) servicoCache = createClient(SB_URL, SRK, { auth: { persistSession: false } });
+  return servicoCache;
+}
+
+type Cred = {
+  token: string;
+  origem: 'painel' | 'secret' | 'nenhuma';
+  meta: Record<string, unknown>;
+  expira: string | null;
+  atualizado: string | null;
+  em: number;
+};
+
+/* Banco primeiro, secret depois. O cache de 60s existe porque uma chamada de
+   métricas do painel vira várias invocações seguidas — não faz sentido bater na
+   tabela em cada uma. Salvar e desconectar zeram o cache na hora. */
+let credCache: Cred | null = null;
+async function credencial(): Promise<Cred> {
+  if (credCache && Date.now() - credCache.em < 60_000) return credCache;
+
+  let linha: Record<string, any> | null = null;
+  try {
+    const { data } = await servico()
+      .from('mc_integrations')
+      .select('access_token, expires_at, meta, updated_at')
+      .eq('provider', 'instagram')
+      .maybeSingle();
+    linha = data ?? null;
+  } catch (e) {
+    /* Banco fora do ar não pode derrubar o que a secret já resolvia. */
+    console.error('[instagram-proxy] leitura de mc_integrations falhou', e instanceof Error ? e.message : e);
+  }
+
+  credCache = linha?.access_token
+    ? { token: linha.access_token, origem: 'painel', meta: linha.meta ?? {},
+        expira: linha.expires_at ?? null, atualizado: linha.updated_at ?? null, em: Date.now() }
+    : { token: TOKEN_ENV, origem: TOKEN_ENV ? 'secret' : 'nenhuma', meta: {},
+        expira: null, atualizado: null, em: Date.now() };
+  return credCache;
+}
+
+/* Quem é a conta, quando o token não veio do painel (veio da secret) e por
+   isso não há nada gravado sobre ela. Uma chamada por instância quente. */
+let contaCache: { ig_id: string; conta: string | null; pagina: string | null } | null = null;
+async function descobrirConta(token: string, forcar = false) {
+  if (contaCache && !forcar) return contaCache;
+  const j = await graph('me/accounts', {
+    fields: 'id,name,instagram_business_account{id,username}',
+  }, token);
+  const p = (j?.data ?? []).find((x: Record<string, any>) => x?.instagram_business_account?.id);
+  if (!p) throw new Error('nenhuma página com conta profissional do Instagram ligada a este token');
+  contaCache = {
+    ig_id: p.instagram_business_account.id,
+    conta: p.instagram_business_account.username ?? null,
+    pagina: p.name ?? null,
+  };
+  return contaCache;
+}
+
+/* O que a tela pode ver. NUNCA o token — nem inteiro, nem em prefixo.
+   `vivo` força uma ida à Meta: é o que separa "tem credencial guardada" de
+   "a credencial ainda vale", que era a mentira da tela antiga. */
+async function estado(vivo = false) {
+  const c = await credencial();
+  const m = c.meta as Record<string, any>;
+  const base = {
+    conectado: c.token.length > 0,
+    origem: c.origem,
+    conta: m.ig_username ?? null,
+    pagina: m.pagina_nome ?? null,
+    ig_id: m.ig_id ?? null,
+    expira_em: c.expira,
+    atualizado_em: c.atualizado,
+    vale: null as boolean | null,
+    erro_conta: null as string | null,
+  };
+  if (!c.token) return base;
+
+  /* Sem ig_id gravado (token vindo da secret) o painel não consegue pedir
+     mídias. Descobrir aqui evita uma segunda ação só para isso. */
+  if (!base.ig_id || vivo) {
+    try {
+      const d = await descobrirConta(c.token, vivo);
+      base.ig_id = d.ig_id;
+      base.conta = base.conta ?? d.conta;
+      base.pagina = base.pagina ?? d.pagina;
+      base.vale = true;
+    } catch (e) {
+      base.vale = false;
+      base.erro_conta = e instanceof Error ? e.message : 'a Meta não respondeu';
+    }
+  }
+  return base;
+}
+
+/* Mesma regra do painel (isUserAdmin): cargo sem acento, em minúsculas,
+   começando com "admin". "Assistente Admin." não passa, e é proposital. */
+function ehAdmin(op: { role?: string } | null): boolean {
+  const r = (op?.role ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return r.startsWith('admin');
+}
 
 function resposta(corpo: unknown, status = 200): Response {
   return new Response(JSON.stringify(corpo), {
@@ -86,12 +206,12 @@ async function graph(caminho: string, params: Record<string, string>, token: str
    função esfria, e aí é resolvido de novo. Nunca sai daqui. */
 let pageTokenCache: { ig_id: string; token: string } | null = null;
 
-async function tokenDaPagina(igId: string): Promise<string> {
+async function tokenDaPagina(igId: string, usuario: string): Promise<string> {
   if (pageTokenCache?.ig_id === igId) return pageTokenCache.token;
 
   const j = await graph('me/accounts', {
     fields: 'id,name,access_token,instagram_business_account',
-  }, TOKEN);
+  }, usuario);
 
   for (const pagina of j?.data ?? []) {
     if (pagina?.instagram_business_account?.id === igId && pagina?.access_token) {
@@ -145,10 +265,10 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const action = String(corpo.action ?? url.searchParams.get('action') ?? 'health');
 
-  /* health não expõe nada além de "tem token configurado?" e é o que o painel usa
-     para desenhar o estado da tela — fica aberto de propósito. */
+  /* health não expõe nada além de "tem token configurado?" — fica aberto de
+     propósito, é o que responde antes de haver sessão. */
   if (action === 'health') {
-    return resposta({ ok: true, configurado: TOKEN.length > 0 });
+    return resposta({ ok: true, configurado: (await credencial()).token.length > 0 });
   }
 
   const operador = await operadorOuNulo(req);
@@ -156,8 +276,90 @@ Deno.serve(async (req) => {
     return falha('sessão de operador ausente ou inválida — entre de novo no painel', null, 401);
   }
 
+  /* status vem antes da exigência de token: a tela de Integrações precisa
+     justamente do caso "não tem token" para desenhar o botão de conectar. */
+  if (action === 'status' || action === 'verificar') {
+    return resposta({ ok: true, ...(await estado(action === 'verificar')) });
+  }
+
+  if (action === 'salvar' || action === 'desconectar') {
+    if (!ehAdmin(operador)) {
+      return falha('só administrador pode trocar a conexão do Instagram.', null, 403);
+    }
+  }
+
+  if (action === 'salvar') {
+    const token = String(corpo.token ?? '').trim();
+    if (!token) return falha('cole o token antes de salvar.');
+
+    /* Valida ANTES de gravar. Token errado colado por engano não pode derrubar
+       o que já estava funcionando — a linha só é escrita se a Meta aceitar. */
+    let contas: Record<string, any>;
+    try {
+      contas = await graph('me/accounts', {
+        fields: 'id,name,instagram_business_account{id,username}',
+      }, token);
+    } catch (e) {
+      const erro = e instanceof Error ? e.message : 'token recusado';
+      return falha('a Meta recusou esse token: ' + erro, e instanceof Error ? e.cause : null);
+    }
+
+    const pagina = (contas?.data ?? []).find((p: Record<string, any>) => p?.instagram_business_account?.id);
+    if (!pagina) {
+      return falha('o token vale, mas nenhuma página ligada a ele tem conta profissional do Instagram. '
+        + 'Gere o token com a página da FullPro selecionada.');
+    }
+
+    /* Quando expira. Não impede de salvar se a Meta não responder: o token
+       serve hoje, que é o que a validação acima provou. */
+    let expira: string | null = null;
+    let escopos: string[] = [];
+    try {
+      const d = await graph('debug_token', { input_token: token }, token);
+      const dd = d?.data ?? {};
+      if (dd.expires_at) expira = new Date(dd.expires_at * 1000).toISOString();
+      if (Array.isArray(dd.scopes)) escopos = dd.scopes;
+    } catch { /* validade desconhecida não é motivo para recusar */ }
+
+    const igc = pagina.instagram_business_account;
+    const { error } = await servico().from('mc_integrations').upsert({
+      provider: 'instagram',
+      access_token: token,
+      refresh_token: null,
+      expires_at: expira,
+      meta: {
+        ig_id: igc.id,
+        ig_username: igc.username ?? null,
+        pagina_id: pagina.id,
+        pagina_nome: pagina.name ?? null,
+        escopos,
+        salvo_por: operador.id,
+        salvo_em: new Date().toISOString(),
+      },
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'provider' });
+
+    if (error) return falha('não deu para gravar a conexão: ' + error.message);
+
+    credCache = null;
+    contaCache = null;
+    pageTokenCache = null;   /* o token de página velho é de outro usuário */
+    return resposta({ ok: true, ...(await estado()) });
+  }
+
+  if (action === 'desconectar') {
+    const { error } = await servico().from('mc_integrations').delete().eq('provider', 'instagram');
+    if (error) return falha('não deu para desconectar: ' + error.message);
+    credCache = null;
+    contaCache = null;
+    pageTokenCache = null;
+    return resposta({ ok: true, ...(await estado()) });
+  }
+
+  const cred = await credencial();
+  const TOKEN = cred.token;
   if (!TOKEN) {
-    return falha('IG_ACCESS_TOKEN não está configurado nas secrets desta função.');
+    return falha('o Instagram não está conectado. Um administrador conecta em Integrações.');
   }
 
   try {
@@ -183,7 +385,7 @@ Deno.serve(async (req) => {
         if (!igId) return falha('ig_id é obrigatório.');
 
         const limite = String(corpo.limit ?? 50);
-        const token = await tokenDaPagina(igId);
+        const token = await tokenDaPagina(igId, TOKEN);
 
         const borda = action === 'midias' ? 'media'
                     : action === 'marcacoes' ? 'recently_tagged_media'
@@ -206,7 +408,7 @@ Deno.serve(async (req) => {
         if (!mediaId) return falha('media_id é obrigatório.');
         if (!igId) return falha('ig_id é obrigatório (define o token de página).');
 
-        const token = await tokenDaPagina(igId);
+        const token = await tokenDaPagina(igId, TOKEN);
         const j = await graph(`${mediaId}/insights`, { metric }, token);
 
         const primeiro = j?.data?.[0];
@@ -217,9 +419,13 @@ Deno.serve(async (req) => {
       /* business_discovery lê contas de terceiros (influenciadores) e usa o
          token de USUÁRIO, não o de página. */
       case 'descoberta': {
-        const igUserId = String(corpo.ig_user_id ?? '');
+        /* O id é o da NOSSA conta business — é ela que faz a descoberta. Se o
+           painel não mandar, usa o que ficou gravado ao conectar: com isso o
+           navegador não precisa mais carregar IG_USER_ID do config.js. */
+        const igUserId = String(corpo.ig_user_id ?? (cred.meta as Record<string, any>).ig_id ?? '');
         const handle = String(corpo.handle ?? '');
-        if (!igUserId || !handle) return falha('ig_user_id e handle são obrigatórios.');
+        if (!igUserId) return falha('sem id da conta do Instagram — reconecte em Integrações.');
+        if (!handle) return falha('handle é obrigatório.');
 
         const inner = String(
           corpo.inner ?? 'media.limit(50){like_count,comments_count,media_type,timestamp,caption}',
@@ -228,7 +434,12 @@ Deno.serve(async (req) => {
           fields: `business_discovery.username(${handle}){${inner}}`,
         }, TOKEN);
 
-        return resposta({ ok: true, midias: j?.business_discovery?.media?.data ?? [] });
+        /* `perfil` junto das mídias: o Influencer Hub precisa de
+           followers_count e media_count para calcular engajamento e classificar
+           a conta em nano/micro/macro. Devolver só as mídias, como era, deixaria
+           metade daquela tela sem dado. */
+        const bd = j?.business_discovery ?? null;
+        return resposta({ ok: true, midias: bd?.media?.data ?? [], perfil: bd });
       }
 
       default:

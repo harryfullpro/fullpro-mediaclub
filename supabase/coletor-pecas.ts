@@ -36,10 +36,11 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
    à mão no painel, num toque, sobre a lista que esta função já trouxe — bem
    mais barato do que registrar do zero.
 
-   Secrets: SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY (já existem),
-            IG_ACCESS_TOKEN e YOUTUBE_API_KEY (precisam ser criados; hoje eles
-            vivem no config.js, que o navegador baixa — mover para cá também
-            tira os dois de um arquivo público).
+   CREDENCIAIS (28/08/2026): resolvidas em mc_integrations primeiro — é o que o
+            painel grava quando um administrador reconecta em Integrações — e
+            nos secrets IG_ACCESS_TOKEN / YOUTUBE_API_KEY como reserva. Nunca no
+            config.js, que o navegador baixa. Ver supabase/integr-cred.md.
+   Secrets: SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY (já existem).
             YOUTUBE_CHANNEL_ID é opcional (padrão: o canal da FullPro).
 ============================================================================= */
 
@@ -51,8 +52,8 @@ const CORS = {
 
 const SB_URL = Deno.env.get('SUPABASE_URL')!;
 const SRK = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const IG_TOKEN = Deno.env.get('IG_ACCESS_TOKEN') || '';
-const YT_KEY = Deno.env.get('YOUTUBE_API_KEY') || '';
+const IG_TOKEN_ENV = Deno.env.get('IG_ACCESS_TOKEN') || '';
+const YT_KEY_ENV = Deno.env.get('YOUTUBE_API_KEY') || '';
 const YT_CANAL = Deno.env.get('YOUTUBE_CHANNEL_ID') || 'UC3IfjxanbihK-WKcwE9RRAQ';
 
 const GRAPH = 'https://graph.facebook.com/v21.0';
@@ -62,6 +63,23 @@ function json(dados: unknown, status = 200) {
   return new Response(JSON.stringify(dados), {
     status, headers: { ...CORS, 'Content-Type': 'application/json' },
   });
+}
+
+/* De onde vem a credencial: mc_integrations primeiro (é o que o painel grava
+   quando um administrador reconecta em Integrações), secret depois — reserva
+   para não derrubar o que já funcionava. Nunca o config.js, que o navegador
+   baixa. Ver supabase/integr-cred.md.
+   Sem isto, reconectar no painel não mudaria nada AQUI, que é justamente o
+   lugar que não pode parar: story vive 24h e não dá para buscar depois. */
+async function credencial(sb: any, provider: string, reserva: string): Promise<string> {
+  try {
+    const { data } = await sb.from('mc_integrations')
+      .select('access_token').eq('provider', provider).maybeSingle();
+    if (data?.access_token) return data.access_token as string;
+  } catch (e) {
+    console.error('[coletor-pecas] mc_integrations/' + provider, e instanceof Error ? e.message : e);
+  }
+  return reserva;
 }
 
 /* ISO 8601 do YouTube (PT8M8S) para segundos. */
@@ -86,9 +104,9 @@ function tipoYouTube(titulo: string, seg: number | null): string {
 }
 
 /* ---------- Instagram ---------- */
-async function instagram(erros: string[]) {
+async function instagram(IG_TOKEN: string, erros: string[]) {
   const pecas: any[] = [];
-  if (!IG_TOKEN) { erros.push('instagram: falta o secret IG_ACCESS_TOKEN'); return pecas; }
+  if (!IG_TOKEN) { erros.push('instagram: sem token — conecte em Integrações'); return pecas; }
 
   /* O token do usuário não lê mídia: quem lê é o token da PÁGINA que tem a
      conta Instagram business ligada. É o mesmo caminho que o painel já faz. */
@@ -133,9 +151,9 @@ async function instagram(erros: string[]) {
 }
 
 /* ---------- YouTube ---------- */
-async function youtube(erros: string[]) {
+async function youtube(YT_KEY: string, erros: string[]) {
   const pecas: any[] = [];
-  if (!YT_KEY) { erros.push('youtube: falta o secret YOUTUBE_API_KEY'); return pecas; }
+  if (!YT_KEY) { erros.push('youtube: sem chave — conecte em Integrações'); return pecas; }
 
   /* A playlist de uploads do canal é `UU` + o id do canal sem o `UC`. Vem
      assim da própria API; não é truque. */
@@ -237,9 +255,13 @@ Deno.serve(async (req: Request) => {
   if (!permitido) return json({ erro: 'Não autorizado.' }, 401);
 
   const erros: string[] = [];
+  const [igToken, ytChave] = await Promise.all([
+    credencial(sb, 'instagram', IG_TOKEN_ENV),
+    credencial(sb, 'youtube', YT_KEY_ENV),
+  ]);
   const lotes = await Promise.all([
-    instagram(erros).catch((e) => { erros.push('instagram: ' + e.message); return []; }),
-    youtube(erros).catch((e) => { erros.push('youtube: ' + e.message); return []; }),
+    instagram(igToken, erros).catch((e) => { erros.push('instagram: ' + e.message); return []; }),
+    youtube(ytChave, erros).catch((e) => { erros.push('youtube: ' + e.message); return []; }),
     tiktok(sb, erros).catch((e) => { erros.push('tiktok: ' + e.message); return []; }),
     clips(sb, erros).catch((e) => { erros.push('clips: ' + e.message); return []; }),
   ]);
