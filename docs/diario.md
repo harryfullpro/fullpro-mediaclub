@@ -1,5 +1,49 @@
 # Diário
 
+## 28/08/2026 · A cor das metas virou a própria distância até a régua
+
+> *"eu quero que a cor dos gráficos seja de acordo com a progressão da meta"* /
+> *"na verdade, vamos fazer em forma de gradiente, de vermelho para amarelo e
+> amarelo para verde"*
+
+Antes eram três estados fixos — verde se bateu, azul se está no ritmo, âmbar no
+resto. Agora a cor é contínua: `fpMetaCor(razao)` interpola em **oklab** entre
+três âncoras (`--meta-ruim`, `--meta-meio`, `--meta-boa`) via `color-mix`, que
+resolve o token na hora — trocar de tema repinta sozinho, sem redesenhar.
+
+**O amarelo não fica no meio da escala, fica em 0,8.** Amarelo é o "ok" dele, e
+ok é estar perto do ritmo. Com o amarelo em 0,5, agosto (37% do ritmo nos
+curtos) apareceria quase amarelo logo abaixo de um "0 de 7 no ritmo" — a cor
+desmentindo o número ao lado.
+
+**O gráfico é um degradê ao longo do tempo, não uma cor só.** Em cada dia o
+stop tem a cor da distância entre a linha cheia e a régua pontilhada *naquele
+dia*. Um mês que começou mal e recuperou aparece como é: vermelho à esquerda,
+verde à direita. São 28 stops num `<linearGradient gradientUnits="userSpaceOnUse">`
+com `x2` no último dia desenhado — com `objectBoundingBox` o degradê se
+esticaria pela largura inteira do SVG e as cores sairiam do dia em que
+aconteceram.
+
+Duas decisões que não estavam no pedido, mas sem elas a cor mentiria:
+
+- **Começo de mês não é atraso.** Enquanto a meta não cobrou nem uma peça
+  (`alvo * corridos/dias < 1`), a razão é `null` e a linha sai cinza. Uma meta
+  de 4 carrosséis em 31 dias só passa a cobrar a primeira no dia 8; pintar de
+  vermelho antes disso é acusar quem não deve.
+- **A linha da cadência passou a contar DIAS, não peças.** Desenhando peças,
+  dez reposts num sábado subiam a curva como se fossem dez dias cumpridos,
+  enquanto o "0 de 28 dias" ao lado dizia o contrário.
+
+Medido na página, nos dois temas, com os dados reais de agosto: nenhum ponto da
+rampa fica abaixo de 3:1 contra o fundo (mínimo para elemento gráfico). No
+escuro o pior é 6,05:1 (o vermelho); no claro é 3,50:1 — e é por isso que o
+"amarelo" do tema claro é o âmbar `#a67c00` e não amarelo de verdade: amarelo
+sobre `#f5f5f7` dá 2,8:1 num traço de 2px.
+
+Onze cenários conferidos rodando a apuração de verdade no navegador: mês
+futuro, mês fechado, alvo zero, dia 1 com e sem peça, meta estourada (45 de 30),
+27 de 30 no dia 28, cadência perfeita e cadência com dez reposts em três dias.
+
 ## 28/08/2026 · O cabeçalho das Metas passou a ser o cabeçalho de Meus Posts
 
 > *"arrume esses botoes de cima de atualizar e configurar para os padrões de

@@ -5748,6 +5748,18 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    medida no controle; abaixo disso o texto começa a ser cortado. */
 #perfMetasAdminBtn > select { min-width: 128px; }
 
+/* Rampa de progresso: a cor da meta é a própria razão entre o que foi feito e
+   o que o mês já cobrava — vermelho no começo da escala, amarelo no meio,
+   verde em cima da projeção. Três âncoras e o resto é interpolação em oklab
+   (`color-mix`), que é o que evita o marrom que sai ao misturar vermelho e
+   verde em sRGB.
+   Os valores do tema claro NÃO são os mesmos do escuro de propósito: amarelo
+   de verdade sobre #f5f5f7 dá 2,8:1 de contraste num traço de 2px — abaixo do
+   mínimo de 3:1 para elemento gráfico. Medido, o âmbar #a67c00 leva o pior
+   ponto do trajeto para 3,50:1 (o pior no escuro é 6,05:1, no vermelho). */
+:root { --meta-ruim: #ff4d4d; --meta-meio: #ffd23f; --meta-boa: #1fd27a; }
+[data-theme="light"] { --meta-ruim: #c62828; --meta-meio: #a67c00; --meta-boa: #12864f; }
+
 .fp-metas > * + * { border-top: 1px solid var(--border); }
 .fp-meta-lin {
   display: flex; align-items: center; gap: 18px; padding: 15px 0;
@@ -27178,6 +27190,11 @@ function fpMetaApurar(alvo, janela) {
     for (let d = 1; d <= janela.corridos; d++) if (porDia[d] >= alvo.alvo) cumpridos++;
     let sequencia = 0;
     for (let d = janela.corridos; d >= 1; d--) { if (porDia[d] >= alvo.alvo) sequencia++; else break; }
+    /* A linha do gráfico também conta DIAS, não peças. Desenhando peças, dez
+       reposts num sábado subiam a curva como se fossem dez dias cumpridos — a
+       curva contava uma história e o "0 de 28 dias" ao lado contava outra. */
+    const acumDias = []; let c = 0;
+    for (let d = 1; d <= janela.dias; d++) { if (d <= janela.corridos && porDia[d] >= alvo.alvo) c++; acumDias.push(c); }
     const pct = janela.corridos ? Math.round(100 * cumpridos / janela.corridos) : 0;
     return { alvo, modo: 'cadencia', feito: cumpridos, meta: janela.dias, pct,
              sequencia, projecao: janela.corridos ? Math.round(cumpridos / janela.corridos * janela.dias) : 0,
@@ -27185,7 +27202,7 @@ function fpMetaApurar(alvo, janela) {
              /* Cadência também tem ritmo. Sem isto, "0 de 28 dias" saía na cor
                 de quem está indo bem — a cor dizia o contrário do número. */
              noRitmo: pct >= 80,
-             porDia, acum, pecas };
+             porDia, acum: acumDias, pecas };
   }
 
   const feito = pecas.length;
@@ -27199,11 +27216,46 @@ function fpMetaApurar(alvo, janela) {
            bateu: feito >= alvo.alvo, noRitmo: projecao >= alvo.alvo, porDia, acum, pecas };
 }
 
+/* Quanto do que o mês JÁ COBRAVA está feito. 1 é estar em cima da reta ideal;
+   0,5 é metade do ritmo necessário. É a mesma conta nos dois modos: em
+   cadência o esperado até hoje são os dias corridos, e a razão vira a fração
+   de dias cumpridos.
+   Devolve null quando não há veredito a dar — mês que ainda não começou, e o
+   começo de mês em que a meta ainda não cobrou nem uma peça (uma meta de 4
+   carrosséis em 31 dias só passa a cobrar a primeira no dia 8; pintar de
+   vermelho antes disso seria acusar de atraso quem não está atrasado). */
+function fpMetaRazao(ap, janela) {
+  if (janela.futuro) return null;
+  const meta = ap.modo === 'cadencia' ? janela.dias : ap.meta;
+  if (!meta || !janela.dias) return null;
+  const esperado = meta * (janela.corridos / janela.dias);
+  if (esperado < 1) return ap.feito ? 1 : null;
+  return ap.feito / esperado;
+}
+
+/* A rampa contínua. Não são quatro caixinhas: 0,62 tem cor própria, entre o
+   laranja e o amarelo. `color-mix` resolve o token na hora, então trocar de
+   tema repinta sozinho — sem redesenhar a tela. */
+const META_AMARELO = .8;   /* onde o amarelo mora na escala */
+function fpMetaCor(razao) {
+  if (razao == null) return 'var(--text-muted)';
+  const t = Math.max(0, Math.min(1, razao));
+  /* O amarelo NÃO fica no meio da escala. Amarelo é o "ok" do dono, e ok é
+     estar perto do ritmo — 80%. Com o amarelo no meio, quem está a 37% do
+     ritmo (agosto inteiro, hoje) já apareceria quase amarelo, e a cor diria
+     "ok" bem embaixo de um "0 de 7 no ritmo". Do 0,8 até 1 o verde entra
+     depressa, que é o que "verde para na projeção" quer dizer. */
+  return t <= META_AMARELO
+    ? 'color-mix(in oklab, var(--meta-meio) ' + Math.round(t / META_AMARELO * 100) + '%, var(--meta-ruim))'
+    : 'color-mix(in oklab, var(--meta-boa) ' + Math.round((t - META_AMARELO) / (1 - META_AMARELO) * 100) + '%, var(--meta-meio))';
+}
+
 /* Linha do acumulado contra o ritmo ideal. SVG inline, sem biblioteca — é o
    padrão do painel e são 12 linhas. */
 function fpMetaGrafico(ap, janela) {
   const L = 200, A = 44;
-  const teto = Math.max(ap.modo === 'cadencia' ? janela.dias : ap.meta, ...ap.acum, 1);
+  const metaTot = ap.modo === 'cadencia' ? janela.dias : ap.meta;
+  const teto = Math.max(metaTot, ...ap.acum, 1);
   const x = d => (d - 1) / Math.max(1, janela.dias - 1) * L;
   const y = v => A - (v / teto) * A;
   /* O ideal é a reta que sai de zero e chega no alvo no último dia. Ela é a
@@ -27212,32 +27264,54 @@ function fpMetaGrafico(ap, janela) {
      máximo mostraria melhor a forma da curva, mas apagaria a única coisa que a
      tela existe para responder — quanto falta. Com 10 de 30 a linha fica rente
      ao chão, e é exatamente essa a informação. */
-  const ideal = 'M0,' + y(0).toFixed(1) + ' L' + L + ',' + y(ap.modo === 'cadencia' ? janela.dias : ap.meta).toFixed(1);
+  const ideal = 'M0,' + y(0).toFixed(1) + ' L' + L + ',' + y(metaTot).toFixed(1);
   const ate = Math.max(1, janela.corridos);
   const pontos = ap.acum.slice(0, ate).map((v, i) => x(i + 1).toFixed(1) + ',' + y(v).toFixed(1));
   const real = pontos.length ? 'M' + pontos.join(' L') : '';
-  const cor = ap.bateu ? 'var(--success)' : (ap.noRitmo ? 'var(--azul)' : 'var(--warning)');
   /* Área embaixo da linha, e não só a linha: com 210px de largura e 40 de
      altura, um traço de 2px sozinho quase não se vê no meio de uma listagem.
      A área dá peso sem precisar de moldura em volta. */
   const area = pontos.length ? 'M0,' + A + ' L' + pontos.join(' L') + ' L' + x(ate).toFixed(1) + ',' + A + ' Z' : '';
+
+  /* A cor não é uma só: é um degradê ao longo do próprio tempo. Em cada dia a
+     cor é a distância entre a linha cheia e a régua pontilhada NAQUELE dia, e
+     não a nota final do mês. Um mês que começou mal e recuperou aparece como
+     é: vermelho à esquerda, verde à direita. */
+  const id = 'fpmg-' + String(ap.alvo.chave || 'x').replace(/[^a-zA-Z0-9]+/g, '-');
+  const paradas = [];
+  for (let d = 1; d <= ate; d++) {
+    const esperado = metaTot * (d / janela.dias);
+    const feitoAte = ap.acum[d - 1] || 0;
+    const razao = esperado < 1 ? (feitoAte ? 1 : null) : feitoAte / esperado;
+    const off = ate > 1 ? ((d - 1) / (ate - 1) * 100).toFixed(2) : '0';
+    paradas.push('<stop offset="' + off + '%" stop-color="' + fpMetaCor(razao) + '"/>');
+  }
+  /* userSpaceOnUse e x2 no último dia desenhado: com objectBoundingBox o
+     degradê se esticaria pela largura inteira do SVG, e no dia 28 de 31 as
+     cores sairiam do lugar em que os dias acontecem. */
+  const grad = '<defs><linearGradient id="' + id + '" gradientUnits="userSpaceOnUse"'
+    + ' x1="0" y1="0" x2="' + x(ate).toFixed(1) + '" y2="0">' + paradas.join('') + '</linearGradient></defs>';
+
   return '<svg class="fp-meta-graf" viewBox="0 0 ' + L + ' ' + A + '" preserveAspectRatio="none" aria-hidden="true">'
-    + (area ? '<path d="' + area + '" fill="' + cor + '" fill-opacity=".22"/>' : '')
+    + grad
+    + (area ? '<path d="' + area + '" fill="url(#' + id + ')" fill-opacity=".22"/>' : '')
     + '<path d="' + ideal + '" fill="none" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>'
-    + (real ? '<path d="' + real + '" fill="none" stroke="' + cor + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' : '')
+    + (real ? '<path d="' + real + '" fill="none" stroke="url(#' + id + ')" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' : '')
     + '</svg>';
 }
 
 function fpMetaLinhaHtml(ap, janela) {
   const a = ap.alvo;
   const cad = ap.modo === 'cadencia';
-  const cor = ap.bateu ? 'var(--success)' : (ap.noRitmo ? 'var(--azul)' : 'var(--warning)');
+  /* Mesma rampa do gráfico, no ponto de hoje: número, barra e projeção contam
+     a mesma coisa que a ponta direita da linha. */
+  const cor = fpMetaCor(fpMetaRazao(ap, janela));
   const valor = cad
     ? '<b style="color:' + cor + '">' + ap.feito + '</b><small>de ' + janela.corridos + ' dias</small>'
     : '<b style="color:' + cor + '">' + ap.feito + '</b><small>de ' + ap.meta + '</small>';
   const fim = janela.futuro ? '<span style="color:var(--text-muted)">—</span>'
     : cad ? '<button class="fp-meta-marcar" type="button" onclick="fpRepostAbrir()">marcar</button>'
-    : '<span style="color:' + (ap.noRitmo ? 'var(--success)' : 'var(--warning)') + '">proj. ' + ap.projecao + '</span>';
+    : '<span style="color:' + cor + '">proj. ' + ap.projecao + '</span>';
   return '<div class="fp-meta-lin">'
     + '<span class="fp-meta-nome"><b>' + escHtml(a.rotulo) + '</b>'
     +   '<span>' + escHtml(a.detalhe || '') + (cad && ap.sequencia ? ' · ' + ap.sequencia + (ap.sequencia === 1 ? ' dia seguido' : ' dias seguidos') : '') + '</span></span>'

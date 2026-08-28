@@ -584,6 +584,65 @@ antes; só depois a carga entra no painel.
 
 ---
 
+## APLICADO EM PRODUÇÃO — 28/08/2026
+
+Duas cargas, feitas depois da conferência de fotos. **Nenhum código do painel foi
+alterado**; só dados em `mc_photo_products`.
+
+### 1. Kits do Drive
+
+**3.952 kits** carregados (os `completo` de 4.016). O catálogo foi de 2.566 para 6.518
+linhas. Campos gravados:
+
+| Campo | Valor |
+|---|---|
+| `sku` | o nome da pasta (`FP-COL-Z1000 + FP-ESC-TCINZA`) |
+| `nome` | `KIT ` + nomes das peças unidos por ` + ` |
+| `preco` | soma das peças, com o multiplicador `Nx` aplicado à primeira |
+| `estoque` | a peça mais escassa (dividida pela quantidade, quando `Nx`) |
+| `tem_foto` | `true` — **todos os 4.016 conferidos têm foto** |
+| `kit_skus` | as peças |
+| `manual` | `true` (não têm contraparte no Bling; apagam em vez de virar "fora de linha") |
+| `criado_por` | `carga-kits-drive-2026-08-28` |
+
+**A fila não mudou**: seguem 867 sem foto e 461 com estoque. Era o objetivo — nenhuma
+pendência falsa entrou.
+
+Reverter, se preciso:
+```sql
+delete from mc_photo_products where criado_por = 'carga-kits-drive-2026-08-28';
+```
+
+### 2. Prioridades da planilha da equipe
+
+**846 SKUs** marcados (144 Alta, 382 Média, 320 Baixa). Cinco não casaram, por diferença
+de grafia entre a planilha e o Bling (`FP-CLT-UN-32/34` com barra, `FP-COL-S1000RR20+`).
+Os 1.112 de prioridade 0 ficaram **NULL**, por decisão do dono.
+
+Todos levam `prioridade_por = 'planilha da equipe (28/08/2026)'`, então dá para desfazer
+sem tocar em classificação feita à mão:
+```sql
+update mc_photo_products set prioridade = null, prioridade_por = null, prioridade_em = null
+ where prioridade_por = 'planilha da equipe (28/08/2026)';
+```
+
+### O que isso revelou
+
+Das 867 linhas sem foto, só **179 receberam prioridade**. O motivo é estrutural e importa
+para o score: **a planilha ranqueia por venda, e quem mais vende já tem foto.** Os campeões
+de venda não estão na fila — estão no acervo.
+
+A fila de verdade é feita de item com prioridade 0 (vende pouco) e de item marcado NOVO
+(sem histórico). Ou seja: **o critério "quanto vendeu no ano passado" não ordena a fila
+que existe** — ele ordena o catálogo que já foi fotografado.
+
+É exatamente o caso que a modelagem previu e para o qual existe o encolhimento por família
+e a estimativa para item sem histórico. A Separação passou de 75 para 179 itens visíveis;
+os outros 688 continuam invisíveis para o montador de lote enquanto a prioridade 0 for
+NULL.
+
+---
+
 ## Pendências com o dono
 
 1. **Custo de capital mensal** — quanto custa ter R$ 1 parado por mês (CDI + armazenagem).
