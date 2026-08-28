@@ -303,8 +303,6 @@ async function paginaDrive(
 
 /* ------------------------------------------------------------------ sessão --- */
 
-/* SUBSTITUIDA por operadorOuNulo em 28/08/2026. Mantida sem uso ate o
-   caminho legado sair de vez. */
 async function validarSessao(sessao: string): Promise<string> {
   /* O painel não usa Supabase Auth: checar role='authenticated' rejeitaria todo
      mundo e confiar só no verify_jwt liberaria qualquer um com a anon key, que
@@ -552,72 +550,6 @@ async function acaoStatus() {
 
 /* --------------------------------------------------------------------------- */
 
-/* --------------------------------------------------------------- operador ---
-   MIGRACAO DE CREDENCIAL (28/08/2026)
-
-   O esquema antigo era: o painel manda o UUID de mc_admin_users guardado em
-   fp_session, e aqui se confere que ele existe. O problema nao e adivinhacao —
-   o UUID e aleatorio — e sim que ele NUNCA EXPIRA e ja foi publico: antes da
-   mc-login existir, mc_admin_users era legivel inteira sem login. Quem coletou
-   naquela janela tem credencial permanente ate hoje.
-
-   O esquema novo usa o JWT do Supabase Auth, que expira e rotaciona. Atencao:
-   verify_jwt sozinho NAO resolve — a chave publicavel do config.js passa por
-   ele. Por isso a checagem e aqui dentro, em dois passos:
-     1. /auth/v1/user  — o token e de uma pessoa de verdade?
-     2. mc_admin_users.auth_uid — essa pessoa e operador?
-
-   POR ENQUANTO OS DOIS CAMINHOS VALEM, de proposito: derrubar o UUID no mesmo
-   deploy em que o JWT estreia seria trocar as duas pontas as cegas. O console
-   registra qual caminho cada chamada usou; quando o log mostrar so `jwt`,
-   apagar o bloco marcado LEGADO abaixo. */
-async function operadorOuNulo(
-  req: Request,
-  corpo: Record<string, unknown>,
-  url: URL,
-): Promise<{ id: string; via: string } | null> {
-  const SB_URL = Deno.env.get('SUPABASE_URL') || '';
-  const SRK = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-  if (!SB_URL || !SRK) return null;
-
-  const buscarOperador = async (filtro: string) => {
-    const q = await fetch(
-      SB_URL + '/rest/v1/mc_admin_users?select=id,role&' + filtro,
-      { headers: { apikey: SRK, Authorization: 'Bearer ' + SRK } },
-    );
-    const linhas = await q.json();
-    return Array.isArray(linhas) && linhas.length ? linhas[0] : null;
-  };
-
-  /* --- caminho novo: JWT do Supabase Auth --- */
-  const jwt = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim();
-  if (jwt) {
-    try {
-      const u = await fetch(SB_URL + '/auth/v1/user', {
-        headers: { apikey: SRK, Authorization: 'Bearer ' + jwt },
-      });
-      if (u.ok) {
-        const user = await u.json();
-        if (user?.id) {
-          const op = await buscarOperador('auth_uid=eq.' + encodeURIComponent(user.id));
-          if (op) return { id: op.id, via: 'jwt' };
-        }
-      }
-    } catch { /* cai no legado */ }
-  }
-
-  /* --- LEGADO: UUID de fp_session. Apagar quando o log so mostrar `jwt`. --- */
-  const sessao = String(corpo?.sessao || url.searchParams.get('sessao') || '');
-  if (/^[0-9a-f-]{36}$/i.test(sessao)) {
-    try {
-      const op = await buscarOperador('id=eq.' + encodeURIComponent(sessao));
-      if (op) return { id: op.id, via: 'uuid-legado' };
-    } catch { /* cai no null */ }
-  }
-
-  return null;
-}
-
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
@@ -632,19 +564,8 @@ Deno.serve(async (req: Request) => {
   const acao = String(corpo?.action || url.searchParams.get('action') || '');
   const sessao = String(corpo?.sessao || url.searchParams.get('sessao') || '');
 
-  const operador = await operadorOuNulo(req, corpo, url);
-  if (!operador) {
-    return resposta({ erro: 'sessão do painel ausente ou inválida — entre de novo no painel' }, 401);
-  }
-  console.log('[bling-sync] acao=' + acao + ' via=' + operador.via);
-
-  /* A ação `drive` repassa o UUID para drive-proxy?action=varredura, que ainda
-     só aceita esse formato. Enquanto a drive-proxy não migrar, quem chamar por
-     JWT sem mandar `sessao` no corpo não consegue usar essa ação. O painel manda
-     as duas coisas hoje, então na prática ninguém sente. */
-  if (acao === 'drive' && !/^[0-9a-f-]{36}$/i.test(sessao)) {
-    return resposta({ erro: 'esta ação ainda precisa do id de fp_session no corpo' }, 400);
-  }
+  const erroSessao = await validarSessao(sessao);
+  if (erroSessao) return resposta({ erro: erroSessao }, 401);
 
   try {
     if (acao === 'sincronizar') return resposta(await acaoSincronizar(corpo));

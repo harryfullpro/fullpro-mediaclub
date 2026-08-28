@@ -338,6 +338,111 @@ Isso não ordena a fila. **Impede que a fila de "refazer" nasça**, que é melho
 
 ---
 
+## Kits
+
+Kit é **um anúncio que vende duas ou mais peças juntas**. Ele tem foto própria, pasta
+própria no Drive e concorre por tempo de estúdio como qualquer outro item — mas a lógica
+de valor é diferente, porque o kit quase nunca é um produto do Bling.
+
+### Duas famílias, com origens opostas
+
+**Escape.** Base (link pipe ou coletor, específica da moto) + ponteira. A planilha interna
+diz **quais categorias de ponteira servem em cada base**; cada categoria contém ~10
+ponteiras reais, variando modelo e cor. O kit é base × cada ponteira da categoria
+permitida — ordem de milhares de combinações.
+
+**Pastilha.** Dianteira + traseira da mesma moto/ano. A aplicação vem do catálogo do
+fornecedor; não existe em nenhum sistema hoje.
+
+### Onde o kit vive
+
+- **Não está no Bling.** Nenhum dos SKUs de kit existe no catálogo que o painel espelha —
+  verificado, zero de 555 nomes do catálogo interno.
+- **O cadastro está no Magis5**, como composição. **Decisão do dono (28/08/2026):** não
+  integrar o Magis5 só por isso. Custo, preço e estoque do kit saem da **soma das peças**
+  no Bling — o estoque do kit é limitado pela peça mais escassa.
+- **O Drive é o registro real.** ~95% dos kits já têm pasta lá. O catálogo tem 2.566 SKUs
+  e o Drive ~5.500 pastas: as ~2.900 sobrando são, quase certamente, os kits.
+
+**Consequência prática:** não há kit a *gerar* do zero — há kit a *ler*. Enumerar as pastas
+do Drive dá a lista verdadeira, quais já têm foto, e por diferença os que faltam. Hoje o
+`drive-proxy` não sabe listar (só contar e conferir SKUs conhecidos); ganhar essa ação é o
+que destrava a frente de kits.
+
+### Categoria da ponteira — mapa confirmado pelo dono
+
+O nome do produto no Bling carrega a categoria. Equivalências (28/08/2026):
+
+| Na planilha | No nome do Bling | Ponteiras vendáveis | Com foto |
+|---|---|---|---|
+| RACE | `RACE` (sem `EVO` junto) | 32 | 31 |
+| EVO | **`RACE EVO`** | 6 | 6 |
+| TRIOVAL | `TRIOVAL` | 19 | 19 |
+| TRAIL ELITE | `TRAIL ELITE` | 11 | 10 |
+| TRAIL EDITION | **`TRAIL` sem sufixo** | 3 | 2 |
+
+A ordem de teste importa: `RACE EVO` tem que ser avaliado **antes** de `RACE`, e
+`TRAIL ELITE` antes de `TRAIL`, senão a regra mais genérica engole a específica.
+
+### O que fica fora do gerador
+
+- **Open box** (59 itens): cadastro à parte, peça de saldo, normalmente unidade única.
+  Não depende de foto e não entra na listagem. Decisão do dono.
+- **DB Killer** (`FP-ESC-DBK-*`, 9 itens): não é ponteira — é o abafador que vai dentro
+  dela. Família própria, não combina com base.
+- **Ponteiras sem categoria legível** (22, sendo 9 DB Killer e 3 universais): as
+  remanescentes precisam de classificação manual. Oito delas são da Ninja 400 e
+  **compartilham o mesmo nome** (título de anúncio copiado), o que quebra qualquer regra
+  baseada em texto — estão zeradas e sem foto, provavelmente descontinuadas.
+
+### Normalização de SKU das pastilhas
+
+O catálogo do fornecedor não usa a mesma grafia do Bling:
+
+- `FP209/2` no catálogo → **`FP209-2`** no Bling (a barra vira hífen).
+- Sufixo de letra (`FP054G`) é **outra versão da mesma pastilha**, mais barata, com a mesma
+  aplicação. Ou seja: uma aplicação pode render mais de um kit, um por versão.
+
+Sem essa normalização o gerador cria kits apontando para SKU inexistente — e o estúdio
+fotografa a peça errada.
+
+### O terceiro estado de foto
+
+Kit não é "tem foto" ou "não tem". São três:
+
+| Estado | Como entra no score |
+|---|---|
+| Sem anúncio | Déficit total: a combinação nem existe |
+| **Anunciado com foto template** | Déficit **parcial** — vale só o ganho da foto própria sobre a template |
+| Anunciado com foto própria | Fora da fila |
+
+Toda combinação já tem a **foto template** (ponteira com uma conexão de escape), que é
+padrão e já existe. Tratar kit com template como "sem foto" superestimaria o valor e
+encheria a fila de kits que já vendem bem.
+
+### O experimento de calibração que já está pronto
+
+O único parâmetro genuinamente arbitrário do modelo era *quanto da diferença de conversão é
+atribuível à foto*. **Não precisa estimar:** hoje, em produção, existem kits vendendo com
+foto template e kits vendendo com foto própria. Comparar a conversão dos dois grupos —
+controlando por categoria e faixa de preço — mede o valor da foto própria com dados da
+própria empresa, sem esperar nenhuma janela de teste.
+
+Se a diferença for pequena, a conclusão honesta é *quase nenhum kit merece foto própria* —
+e isso libera o estúdio para os produtos sem foto nenhuma. É um resultado tão útil quanto
+o contrário.
+
+### Pendente para fechar a frente de kits
+
+1. Ação de **listagem de pastas** no `drive-proxy` (edge function nova, aditiva).
+2. **Planilha original** dos dois catálogos, em vez do PDF — a leitura atual é por
+   coordenada de pixel e quebra em silêncio se o layout mudar.
+3. Classificar as ponteiras sem categoria que sobraram.
+4. Marcar quais bases aceitam quais categorias (as marcações "X" da planilha ainda não
+   foram lidas — dependem da planilha original).
+
+---
+
 ## Tabelas do sandbox
 
 Prefixo `sb_`, no mesmo projeto Supabase. Nenhuma altera nada existente.
@@ -406,6 +511,72 @@ no score, e a causa raiz é sinal faltando, não indisciplina.
 
 **Não usar** "SKUs fotografados por dia": é a capacidade, é constante por construção, e
 otimizá-la incentiva escolher o item mais fácil de fotografar.
+
+---
+
+## Estado em 28/08/2026 — o que já está feito
+
+### Lido do Drive e registrado no sandbox
+
+A ação `varredura` do `drive-proxy` (que já existia; **não foi preciso publicar nada**)
+devolveu o inventário completo. Ela exige o token de sessão do painel — foi executada pelo
+Chrome do dono, logado, e o próprio navegador gravou no banco.
+
+| Tabela | Conteúdo |
+|---|---|
+| `sb_drive_pastas` | 5.528 pastas do Drive (id + nome) |
+| `sb_kits` | 4.016 kits, com peças separadas, quantidade, tipo e validação contra o catálogo |
+
+**A convenção de nome é `SKU + SKU`**, com o `+` literal entre espaços. O prefixo `Nx`
+é quantidade (278 kits de pastilha usam). A pasta `2x FP209-2` confirma sozinha a regra
+da barra virando hífen.
+
+| Tipo | Kits | Completos | Com peça órfã |
+|---|---|---|---|
+| Escape | 3.596 | 3.585 | 11 |
+| Pastilha | 401 | 367 | 34 |
+| Outro | 19 | 0 | 19 |
+| **Total** | **4.016** | **3.952 (98,4%)** | 64 |
+
+### As 64 peças órfãs — três causas
+
+1. **Sufixo de anotação no nome da pasta**: `FP140G NE`, `FP377 SK`, `FP419 sk`. O que
+   significam `NE` e `SK` ainda não foi respondido pelo dono. Com a regra, ~15 resolvem.
+2. **`Nx` no meio do nome** (`... + 2x FP683`) — o parser só tira quantidade do começo.
+3. **SKU que não existe no catálogo** — o achado de verdade:
+   `FP-CLT-UN-26-28-30` (11 kits), `FP-CLT-UN-32-34` (8), `FP-COL-MT-07` (6),
+   `FP-COL-MT-071621` (4). Renomeados ou fora de linha, com os kits órfãos.
+
+### A planilha da equipe (`docs/anexos/prioridade-fotos-equipe.xlsx`)
+
+Fila já priorizada por alguém da equipe, e **é a fonte de vendas que faltava**:
+1.963 SKUs com unidades vendidas em 12 meses, meses com venda, estoque, preço, data do
+primeiro anúncio, meses no catálogo, categoria (43 delas) e razão contra a média da
+categoria.
+
+| Prio | SKUs | | Observação | SKUs |
+|---|---|---|---|---|
+| 3 (mais vende) | 144 | | sem estoque | 714 |
+| 2 | 384 | | nunca foi anunciado | 170 |
+| 1 | 323 | | vende, mas sem anúncio ativo casado | 70 |
+| 0 (menos vende) | 1.112 | | sem custo cadastrado | 18 |
+| marcados NOVO | 820 | | sem preço de venda | 9 |
+
+Total de 69.391 unidades em 12 meses, **mediana de 4** — a cauda longa que a seção de
+normalização previu. A escala dela (3→0) não é a do painel (1/2/3/5): o mapeamento
+precisa de decisão do dono, porque o painel não tem "0" e deixar NULL reproduz
+exatamente o problema que se quer resolver (montador de lote ignora quem não tem
+prioridade).
+
+> **Os três anexos originais estão em `docs/anexos/`** — a planilha e os dois catálogos em
+> PDF. O PDF é lido por coordenada de pixel; a planilha-fonte ainda não foi entregue.
+
+### Por que os kits ainda não foram para produção
+
+A varredura devolve **nome de pasta, não conteúdo**. Inserir 4.016 kits sem saber quais
+têm foto colocaria a fila de produção em ~4.900 itens, quase todos falsos — a maioria
+dessas pastas tem foto. A conferência de conteúdo (ação `map`, 200 por chamada) roda
+antes; só depois a carga entra no painel.
 
 ---
 

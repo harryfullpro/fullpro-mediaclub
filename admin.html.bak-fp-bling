@@ -5732,73 +5732,6 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 /* Destinos deitados, nunca empilhados: tres tags uma embaixo da outra levavam
    a linha de 63px para 109px (medido). Passando de dois, o resto vira "+N" —
    o detalhe mostra todos. */
-/* ── painel de metas ─────────────────────────────────────────────────────
-   Um card por meta, cada um com o próprio gráfico do acumulado contra o ritmo
-   ideal — foi o pedido de "acompanhar como anda ao longo do tempo". Um gráfico
-   por meta, e não um gráfico com sete linhas: com sete a leitura vira novelo.
-   ───────────────────────────────────────────────────────────────────────── */
-.fp-meta-cabeca {
-  display: flex; align-items: center; gap: 26px; flex-wrap: wrap;
-  padding: 0 0 16px; border-bottom: 1px solid var(--border); margin-bottom: 18px;
-}
-.fp-meta-cabeca > div:first-child { flex: 1 1 auto; min-width: 0; }
-.fp-meta-cabeca b { display: block; font-size: 14px; font-weight: 700; }
-.fp-meta-cabeca span { font-size: 12px; color: var(--text-muted); }
-.fp-meta-placar { flex: 0 0 auto; text-align: right; }
-.fp-meta-placar b { font-family: 'FullPro Sans', sans-serif; font-size: 22px; line-height: 1.1; }
-.fp-meta-placar span { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; }
-.fp-meta-mes { max-width: 190px; }
-
-.fp-meta-grade {
-  display: grid; gap: 14px;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-}
-/* Fio em volta, e não caixa cinza: é a moldura de consulta que o painel usa
-   para tabela, não o "container" que o dono chama de cara de IA. */
-.fp-meta-card {
-  border: 1px solid var(--border); border-radius: 12px; padding: 15px 16px 13px;
-  background: var(--bg-card); display: flex; flex-direction: column; gap: 3px;
-}
-.fp-meta-card.batida { border-color: color-mix(in srgb, var(--success) 45%, transparent); }
-.fp-meta-topo { display: flex; align-items: center; gap: 8px; }
-.fp-meta-topo b { flex: 1 1 auto; min-width: 0; font-size: 13.5px; font-weight: 650;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fp-meta-selo {
-  flex: 0 0 auto; font-size: 9.5px; font-weight: 800; letter-spacing: .07em;
-  text-transform: uppercase; padding: 2px 6px; border-radius: 5px;
-  background: color-mix(in srgb, var(--success) 16%, transparent); color: var(--success);
-}
-.fp-meta-sub { font-size: 11.5px; color: var(--text-muted); line-height: 1.35; min-height: 15px; }
-.fp-meta-num { font-family: 'FullPro Sans', sans-serif; font-size: 30px; line-height: 1.15; margin-top: 6px; }
-.fp-meta-num small { font-family: inherit; font-size: 13px; color: var(--text-muted); }
-.fp-meta-barra { height: 5px; border-radius: 3px; background: var(--bg-elev); overflow: hidden; margin: 7px 0 2px; }
-.fp-meta-barra span { display: block; height: 100%; border-radius: 3px; transition: width .3s ease; }
-/* `preserveAspectRatio: none` no SVG: o gráfico estica com a largura do card e
-   o eixo do tempo continua proporcional. */
-.fp-meta-graf { display: block; width: 100%; height: 44px; margin: 4px 0 2px; overflow: visible; }
-.fp-meta-pe { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-.fp-meta-nota, .fp-meta-proj { font-size: 11px; color: var(--text-muted); }
-.fp-meta-proj { font-weight: 650; }
-
-.fp-meta-caixa {
-  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-  margin-top: 18px; padding: 15px 18px; border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
-  background: color-mix(in srgb, var(--success) 7%, transparent);
-}
-.fp-meta-caixa > div:first-child { flex: 1 1 auto; min-width: 0; }
-.fp-meta-caixa b { display: block; font-size: 12px; font-weight: 750; text-transform: uppercase; letter-spacing: .07em; }
-.fp-meta-caixa span { font-size: 12px; color: var(--text-dim); }
-.fp-meta-caixa-valor { font-family: 'FullPro Sans', sans-serif; font-size: 26px; color: var(--success); }
-
-.fp-meta-sobra { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
-.fp-meta-sobra b { font-size: 12px; font-weight: 700; color: var(--text-dim); }
-.fp-meta-sobra > div { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
-.fp-meta-chip {
-  font-size: 10.5px; font-weight: 650; padding: 3px 8px; border-radius: 999px;
-  background: var(--bg-elev); color: var(--text-muted);
-}
-
 /* ── fileira de logotipos de destino ────────────────────────────────────
    `contain` numa caixa quadrada: as marcas têm proporções diferentes (o
    Shorts é alto, o Mercado Livre é largo) e sem isso uma delas esticaria.
@@ -17173,43 +17106,6 @@ async function savePosts() {
    ════════════════════════════════════════════════════════════ */
 const BLING_PROXY_URL = 'https://xgaaocnuqgcwttrljqep.supabase.co/functions/v1/bling-proxy';
 
-/* Cabeçalhos das chamadas ao bling-proxy.  [FP-BLING-AUTH 28/08/2026]
-
-   Por que existe: a bling-proxy não checava quem chamava. Ela pega o token do ERP
-   em mc_integrations, renova sozinha e devolvia para QUALQUER requisição anônima —
-   inclusive `stock-move`, que escreve estoque. A URL está neste arquivo e o repo
-   é público.
-
-   Este é o primeiro dos dois passos: o painel passa a mandar o JWT da sessão. A
-   function ignora esse cabeçalho hoje; quando o log confirmar que todas as chamadas
-   chegam com ele, a function passa a EXIGIR operador. Fazer os dois de uma vez
-   derrubaria as ~780 chamadas/dia na hora.
-
-   O JWT fica em cache porque duas chamadas (disconnect e status) rodam fora de
-   função async e não podem usar await. onAuthStateChange mantém o cache fresco,
-   inclusive quando o supabase-js renova o token sozinho.
-
-   x-bling-token continua indo por compatibilidade: enquanto a function aceitar os
-   dois, um painel antigo em aba aberta não quebra. */
-let FP_BLING_JWT = null;
-try {
-  sb.auth.getSession().then(function (r) {
-    FP_BLING_JWT = (r && r.data && r.data.session && r.data.session.access_token) || null;
-  }).catch(function () {});
-  sb.auth.onAuthStateChange(function (_evento, sessao) {
-    FP_BLING_JWT = (sessao && sessao.access_token) || null;
-  });
-} catch (e) { console.warn('[bling] não deu para observar a sessão:', e); }
-
-function blingHeaders(extra) {
-  const h = Object.assign({}, extra || {});
-  if (typeof blingAccessToken !== 'undefined' && blingAccessToken) {
-    h['x-bling-token'] = blingAccessToken;
-  }
-  if (FP_BLING_JWT) h['Authorization'] = 'Bearer ' + FP_BLING_JWT;
-  return h;
-}
-
 let blingAccessToken = null;
 let blingRefreshToken = null;
 let blingTokenExpiry = 0;
@@ -17272,7 +17168,7 @@ async function handleBlingCallback() {
   try {
     const res = await fetch(BLING_PROXY_URL + '?action=token', {
       method: 'POST',
-      headers: blingHeaders({ 'Content-Type': 'application/json' }),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code })
     });
     const json = await res.json();
@@ -17297,7 +17193,7 @@ async function refreshBlingToken() {
   try {
     const res = await fetch(BLING_PROXY_URL + '?action=refresh', {
       method: 'POST',
-      headers: blingHeaders({ 'Content-Type': 'application/json' }),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: blingRefreshToken })
     });
     const json = await res.json();
@@ -17326,7 +17222,7 @@ async function blingSearchProducts(query) {
   if (!await ensureBlingToken()) return [];
   try {
     const res = await fetch(BLING_PROXY_URL + '?action=products&nome=' + encodeURIComponent(query), {
-      headers: blingHeaders()
+      headers: { 'x-bling-token': blingAccessToken }
     });
     const json = await res.json();
     return json.data || [];
@@ -17339,7 +17235,7 @@ async function blingSearchBySku(sku) {
   if (!await ensureBlingToken()) return [];
   try {
     const res = await fetch(BLING_PROXY_URL + '?action=products&codigo=' + encodeURIComponent(sku), {
-      headers: blingHeaders()
+      headers: { 'x-bling-token': blingAccessToken }
     });
     const json = await res.json();
     return json.data || [];
@@ -17360,7 +17256,7 @@ async function blingGetAllProducts() {
       let hasMore = true;
       while (hasMore && pagina <= 20) {
         const res = await fetch(BLING_PROXY_URL + `?action=products&pagina=${pagina}&limite=100`, {
-          headers: blingHeaders()
+          headers: { 'x-bling-token': blingAccessToken }
         });
         if (!res.ok) { console.warn('Bling page', pagina, 'status:', res.status); break; }
         const json = await res.json();
@@ -17383,7 +17279,7 @@ async function blingGetProduct(id) {
   if (!await ensureBlingToken()) return null;
   try {
     const res = await fetch(BLING_PROXY_URL + '?action=product&id=' + id, {
-      headers: blingHeaders()
+      headers: { 'x-bling-token': blingAccessToken }
     });
     const json = await res.json();
     return json.data || null;
@@ -17397,7 +17293,7 @@ async function blingGetDeposits() {
   if (!await ensureBlingToken()) return [];
   try {
     const res = await fetch(BLING_PROXY_URL + '?action=deposits', {
-      headers: blingHeaders()
+      headers: { 'x-bling-token': blingAccessToken }
     });
     const json = await res.json();
     blingDeposits = json.data || [];
@@ -17414,7 +17310,7 @@ async function blingStockOut(productId, quantity, obs) {
   try {
     const res = await fetch(BLING_PROXY_URL + '?action=stock-move', {
       method: 'POST',
-      headers: blingHeaders({ 'Content-Type': 'application/json' }),
+      headers: { 'x-bling-token': blingAccessToken, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         produto: { id: productId },
         deposito: { id: depositId },
@@ -17435,7 +17331,7 @@ async function blingGetCompany() {
   if (!await ensureBlingToken()) return null;
   try {
     const res = await fetch(BLING_PROXY_URL + '?action=company', {
-      headers: blingHeaders()
+      headers: { 'x-bling-token': blingAccessToken }
     });
     const json = await res.json();
     blingCompanyInfo = json.data || null;
@@ -17629,7 +17525,7 @@ function updateBlingStatus() {
 
 async function disconnectBling() {
   if (!await fpConfirm({titulo:'Desconectar o Bling ERP', mensagem:'A busca de produtos e a baixa de estoque param de funcionar para toda a equipe.', detalhe:'Para religar, um administrador precisa autorizar de novo no Bling.', confirmar:'Desconectar', perigo:true})) return;
-  fetch(BLING_PROXY_URL + '?action=disconnect', { method: 'POST', headers: blingHeaders() }).catch(function(){});
+  fetch(BLING_PROXY_URL + '?action=disconnect', { method: 'POST' }).catch(function(){});
   clearBlingTokens();
   blingConnected = false;
   blingCompanyInfo = null;
@@ -17642,7 +17538,7 @@ async function disconnectBling() {
 async function refreshIntegrationStatus() {
   try {
     const results = await Promise.all([
-      fetch(BLING_PROXY_URL + '?action=status', { headers: blingHeaders() }).then(function(r){ return r.json(); }).catch(function(){ return { connected: false }; }),
+      fetch(BLING_PROXY_URL + '?action=status').then(function(r){ return r.json(); }).catch(function(){ return { connected: false }; }),
       fetch(TK_PROXY_URL + '?action=status').then(function(r){ return r.json(); }).catch(function(){ return { connected: false }; })
     ]);
     blingConnected = !!(results[0] && results[0].connected);
@@ -26976,10 +26872,6 @@ function setPerfPostFilter(filter) {
 }
 
 function renderPerformance() {
-  /* As metas vêm de duas tabelas próprias (mc_metas_alvo e mc_pecas) e não do
-     array PROJECTS em memória; por isso a carga é assíncrona e a tela é
-     desenhada duas vezes: agora com o que houver, e de novo quando chegar. */
-  fpMetasCarregar().then(renderPerfMetas);
   renderPerfMetas();
   renderPerfPosts();
   renderPerfInfluencers();
@@ -27008,199 +26900,15 @@ function getPublishedThisMonth() {
       results.totalClicks += (pd.clicks || 0);
     });
   });
-  /* Aqui havia um segundo laço, sob o comentário "Also add from project posts",
-     que percorria getAllProjectPosts() — que achata ESTES MESMOS `p.posts` — e
-     somava tudo de novo nos mesmos contadores. Duas consequências medidas:
-     o volume e as views saíam em DOBRO, e como esse segundo laço não tinha
-     filtro de mês nenhum, ele ainda somava o histórico inteiro numa tela que
-     se anuncia como "do mês". Removido em 27/08/2026.
-     Quem quiser o realizado de verdade use mc_pecas (ver renderPerfMetas):
-     lá a data é a da plataforma, não a da gravação. */
+  // Also add from project posts
+  const perfPosts = getAllProjectPosts();
+  perfPosts.forEach(pp => {
+    if (pp.type === 'longo') results.longCount++;
+    else results.shortCount++;
+    results.totalViews += (pp.views || 0);
+    results.totalClicks += (pp.clicks || 0);
+  });
   return results;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
-   METAS — o painel de acompanhamento
-
-   O QUE MUDOU, E POR QUE
-   ----------------------
-   A versão anterior tinha três metas fixas (volume, views, cliques) em colunas
-   de mc_performance_goals, e contava o realizado em getPublishedThisMonth().
-   Três defeitos, todos medidos no código:
-
-     1. CONTAGEM EM DOBRO. A função varria p.destinations e, logo abaixo, sob o
-        comentário "Also add from project posts", varria os MESMOS dados de novo
-        somando nos mesmos contadores. "9L + 23S" era aproximadamente o dobro.
-     2. O segundo laço não filtrava mês nenhum — somava o histórico inteiro numa
-        tela chamada "Metas da equipe — <mês>".
-     3. A data era `production_date`, a data da GRAVAÇÃO. Vídeo gravado em julho
-        e publicado em agosto contava em julho.
-
-   Agora o realizado vem de `mc_pecas`: uma linha por peça que foi ao ar, com a
-   data que a PLATAFORMA informou, trazida pelo coletor (Instagram, YouTube,
-   TikTok) e pelos clips. E os alvos vêm de `mc_metas_alvo`, uma linha por meta
-   — assim setembro pode ter sete metas e agosto três, sem migração nenhuma.
-
-   REPOST É UMA CAMADA, NÃO UM TIPO
-   -------------------------------
-   Nenhuma API diz se uma peça é recompartilhamento. A marca `eh_repost` é posta
-   à mão, e a apuração a trata como SOBREPOSIÇÃO: uma peça marcada sai do balde
-   de origem e entra no de repost. Foi o pedido — "stories que não sejam
-   repost". Guardar como camada, e não trocando o `tipo`, mantém o coletor
-   idempotente: ele reescreve `tipo` a cada passada e apagaria a marca.
-   ═══════════════════════════════════════════════════════════════════════ */
-
-let METAS_MES = null;          // 'YYYY-MM' em exibição
-let METAS_ALVOS = [];          // linhas de mc_metas_alvo do mês
-let METAS_PECAS = [];          // linhas de mc_pecas do mês
-let METAS_MESES = [];          // meses que têm meta cadastrada
-let _metasCarregando = null;
-let _metasErro = null;
-
-function fpMesChave(d) {
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-}
-function fpMesNome(chave) {
-  const M = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho',
-             'Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  const [a, m] = String(chave || '').split('-');
-  return (M[Number(m) - 1] || '?') + ' ' + a;
-}
-
-async function fpMetasCarregar(mes, forcar) {
-  const alvo = mes || METAS_MES || fpMesChave(new Date());
-  if (!forcar && METAS_MES === alvo && METAS_ALVOS.length) return;
-  if (_metasCarregando) return _metasCarregando;
-
-  _metasCarregando = (async () => {
-    METAS_MES = alvo;
-    _metasErro = null;
-    /* O mês é [primeiro dia, primeiro dia do mês seguinte). Comparar por
-       `like '2026-09%'` quebraria com fuso: `publicado_em` é timestamptz e a
-       plataforma devolve em UTC. */
-    const de = alvo + '-01T00:00:00';
-    const [aa, mm] = alvo.split('-').map(Number);
-    const ate = (mm === 12 ? (aa + 1) + '-01' : aa + '-' + String(mm + 1).padStart(2, '0')) + '-01T00:00:00';
-    try {
-      const [ra, rp, rm] = await Promise.all([
-        sb.from('mc_metas_alvo').select('*').eq('mes', alvo).order('ordem'),
-        sb.from('mc_pecas').select('id,tipo,titulo,link,plataforma,publicado_em,duracao_seg,metricas,eh_repost,sku')
-          .gte('publicado_em', de).lt('publicado_em', ate).order('publicado_em', { ascending: true }),
-        sb.from('mc_metas_alvo').select('mes'),
-      ]);
-      if (ra.error) throw ra.error;
-      if (rp.error) throw rp.error;
-      METAS_ALVOS = ra.data || [];
-      METAS_PECAS = rp.data || [];
-      METAS_MESES = [...new Set([...(rm.data || []).map(x => x.mes), fpMesChave(new Date())])].sort();
-    } catch (e) {
-      _metasErro = e.message || String(e);
-      METAS_ALVOS = []; METAS_PECAS = [];
-    }
-  })();
-  try { return await _metasCarregando; } finally { _metasCarregando = null; }
-}
-
-/* Onde o mês está: quantos dias já correram e quantos tem. Mês passado conta
-   inteiro; mês futuro conta zero — sem isso a "projeção" de setembro visto em
-   agosto seria uma divisão por zero disfarçada de meta batida. */
-function fpMetasJanela(mes) {
-  const [a, m] = String(mes).split('-').map(Number);
-  const dias = new Date(a, m, 0).getDate();
-  const hoje = new Date();
-  const atual = fpMesChave(hoje) === mes;
-  const passado = mes < fpMesChave(hoje);
-  return { dias, corridos: atual ? hoje.getDate() : (passado ? dias : 0), atual, passado, futuro: !atual && !passado };
-}
-
-/* A apuração de UMA meta. Devolve também a série acumulada por dia, que é o que
-   desenha o "como anda ao longo do tempo". */
-function fpMetaApurar(alvo, janela) {
-  const tipos = alvo.tipos || [];
-  /* Peça marcada como repost sai do balde de origem: um story que era repost
-     não conta como story. É o que o dono pediu. */
-  const daMeta = p => alvo.chave === 'repost'
-    ? !!p.eh_repost
-    : (!p.eh_repost && tipos.indexOf(p.tipo) >= 0);
-
-  const pecas = METAS_PECAS.filter(daMeta);
-  const dia = p => new Date(p.publicado_em).getDate();
-
-  /* Acumulado por dia do mês, para a linha do gráfico. */
-  const porDia = new Array(janela.dias + 1).fill(0);
-  pecas.forEach(p => { const d = dia(p); if (d >= 1 && d <= janela.dias) porDia[d]++; });
-  const acum = []; let s = 0;
-  for (let d = 1; d <= janela.dias; d++) { s += porDia[d]; acum.push(s); }
-
-  if (alvo.modo === 'cadencia') {
-    /* Cadência: o que importa é o DIA cumprido, não o total. "Reposts diários"
-       com 30 num dia só e nada no resto do mês não é reposte diário. */
-    let cumpridos = 0;
-    for (let d = 1; d <= janela.corridos; d++) if (porDia[d] >= alvo.alvo) cumpridos++;
-    let sequencia = 0;
-    for (let d = janela.corridos; d >= 1; d--) { if (porDia[d] >= alvo.alvo) sequencia++; else break; }
-    const pct = janela.corridos ? Math.round(100 * cumpridos / janela.corridos) : 0;
-    return { alvo, modo: 'cadencia', feito: cumpridos, meta: janela.dias, pct,
-             sequencia, projecao: janela.corridos ? Math.round(cumpridos / janela.corridos * janela.dias) : 0,
-             bateu: cumpridos >= janela.corridos && janela.corridos > 0,
-             porDia, acum, pecas };
-  }
-
-  const feito = pecas.length;
-  const pct = alvo.alvo ? Math.min(999, Math.round(100 * feito / alvo.alvo)) : 0;
-  /* Projeção linear: onde o mês termina se o ritmo de hoje continuar. Só faz
-     sentido com o mês em curso — em mês fechado a projeção É o realizado. */
-  const projecao = janela.futuro ? 0
-    : janela.passado ? feito
-    : (janela.corridos ? Math.round(feito / (janela.corridos / janela.dias)) : 0);
-  return { alvo, modo: 'contagem', feito, meta: alvo.alvo, pct, projecao,
-           bateu: feito >= alvo.alvo, noRitmo: projecao >= alvo.alvo, porDia, acum, pecas };
-}
-
-/* Linha do acumulado contra o ritmo ideal. SVG inline, sem biblioteca — é o
-   padrão do painel e são 12 linhas. */
-function fpMetaGrafico(ap, janela) {
-  const L = 200, A = 44;
-  const teto = Math.max(ap.modo === 'cadencia' ? janela.dias : ap.meta, ...ap.acum, 1);
-  const x = d => (d - 1) / Math.max(1, janela.dias - 1) * L;
-  const y = v => A - (v / teto) * A;
-  /* O ideal é a reta que sai de zero e chega no alvo no último dia. Ela é a
-     régua: a linha cheia acima dela quer dizer adiantado. */
-  const ideal = 'M0,' + y(0).toFixed(1) + ' L' + L + ',' + y(ap.modo === 'cadencia' ? janela.dias : ap.meta).toFixed(1);
-  const ate = Math.max(1, janela.corridos);
-  const pontos = ap.acum.slice(0, ate).map((v, i) => x(i + 1).toFixed(1) + ',' + y(v).toFixed(1));
-  const real = pontos.length ? 'M' + pontos.join(' L') : '';
-  const cor = ap.bateu ? 'var(--success)' : (ap.noRitmo || ap.modo === 'cadencia' ? 'var(--azul)' : 'var(--warning)');
-  return '<svg class="fp-meta-graf" viewBox="0 0 ' + L + ' ' + A + '" preserveAspectRatio="none" aria-hidden="true">'
-    + '<path d="' + ideal + '" fill="none" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="3 3"/>'
-    + (real ? '<path d="' + real + '" fill="none" stroke="' + cor + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' : '')
-    + '</svg>';
-}
-
-function fpMetaCardHtml(ap, janela) {
-  const a = ap.alvo;
-  const cad = ap.modo === 'cadencia';
-  const pctBarra = Math.min(100, ap.pct);
-  const cor = ap.bateu ? 'var(--success)' : (ap.noRitmo || cad ? 'var(--azul)' : 'var(--warning)');
-  const valor = cad
-    ? ap.feito + ' <small>de ' + janela.corridos + ' dias</small>'
-    : ap.feito + ' <small>/ ' + ap.meta + '</small>';
-  const rodape = janela.futuro
-    ? '<span class="fp-meta-nota">o mês ainda não começou</span>'
-    : cad
-      ? '<span class="fp-meta-nota">' + (ap.sequencia ? ap.sequencia + (ap.sequencia === 1 ? ' dia seguido' : ' dias seguidos') : 'sequência interrompida') + '</span>'
-      : '<span class="fp-meta-nota">' + ap.pct + '% da meta</span>'
-        + '<span class="fp-meta-proj" style="color:' + (ap.noRitmo ? 'var(--success)' : 'var(--warning)') + '">'
-        + 'projeção ' + ap.projecao + '</span>';
-  return '<div class="fp-meta-card' + (ap.bateu ? ' batida' : '') + '">'
-    + '<div class="fp-meta-topo"><b>' + escHtml(a.rotulo) + '</b>'
-    + (ap.bateu ? '<span class="fp-meta-selo">batida</span>' : '') + '</div>'
-    + '<div class="fp-meta-sub">' + escHtml(a.detalhe || '') + '</div>'
-    + '<div class="fp-meta-num" style="color:' + cor + '">' + valor + '</div>'
-    + '<div class="fp-meta-barra"><span style="width:' + pctBarra + '%;background:' + cor + '"></span></div>'
-    + fpMetaGrafico(ap, janela)
-    + '<div class="fp-meta-pe">' + rodape + '</div>'
-    + '</div>';
 }
 
 function renderPerfMetas() {
@@ -27208,90 +26916,186 @@ function renderPerfMetas() {
   const adminBtn = document.getElementById('perfMetasAdminBtn');
   if (!el) return;
 
-  const mes = METAS_MES || fpMesChave(new Date());
-  const janela = fpMetasJanela(mes);
-
+  // Admin config button
   if (adminBtn) {
-    const meses = METAS_MESES.length ? METAS_MESES : [mes];
-    adminBtn.innerHTML =
-      '<select class="fp-lista-select fp-meta-mes" aria-label="Mês das metas" onchange="fpMetasTrocarMes(this.value)">'
-      + meses.map(m => '<option value="' + m + '"' + (m === mes ? ' selected' : '') + '>' + escHtml(fpMesNome(m)) + '</option>').join('')
-      + '</select>'
-      + '<button class="fp-acao-txt" type="button" data-tip="Buscar agora nas redes" onclick="fpMetasAtualizar()">'
-      + '<svg viewBox="0 0 24 24" aria-hidden="true">' + FP_ICONES.atualizar + '</svg>Atualizar</button>'
-      + (isUserAdmin() ? '<button class="fp-acao-txt" type="button" onclick="openPerfGoalsModal()">'
-          + '<svg viewBox="0 0 24 24" aria-hidden="true">' + FP_ICONES.editar + '</svg>Configurar</button>' : '');
+    adminBtn.innerHTML = isUserAdmin() ? `<button class="action-btn view" style="padding:10px 16px;font-size:13px" onclick="openPerfGoalsModal()">
+      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2" style="vertical-align:-1px;margin-right:4px"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+      Configurar metas
+    </button>` : '';
   }
 
-  if (_metasErro) {
-    el.innerHTML = '<div class="fp-vazio fp-moldura">' + FP_ICO_ATENCAO
-      + '<h3>Não deu para ler as metas</h3><p>' + escHtml(_metasErro) + '</p></div>';
-    return;
+  const goals = PERF_GOALS || {};
+  const pub = getPublishedThisMonth();
+
+  const longCount = pub.longCount;
+  const shortCount = pub.shortCount;
+  const totalViews = pub.totalViews;
+  const totalClicks = pub.totalClicks;
+
+  const longTarget = goals.volume_long_target || 0;
+  const shortTarget = goals.volume_short_target || 0;
+  const viewsTarget = goals.views_target || 0;
+  const clicksTarget = goals.clicks_target || 0;
+
+  const now = new Date();
+  const dayOfMonth = now.getDate();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const daysLeft = daysInMonth - dayOfMonth;
+  const pace = dayOfMonth > 0 ? dayOfMonth / daysInMonth : 1;
+
+  // Projections
+  const projLong = dayOfMonth > 0 ? Math.round(longCount / pace) : longCount;
+  const projShort = dayOfMonth > 0 ? Math.round(shortCount / pace) : shortCount;
+  const projViews = dayOfMonth > 0 ? Math.round(totalViews / pace) : totalViews;
+  const projClicks = dayOfMonth > 0 ? Math.round(totalClicks / pace) : totalClicks;
+
+  // Percentages
+  const volTarget = longTarget + shortTarget;
+  const volCurrent = longCount + shortCount;
+  const volPct = volTarget > 0 ? Math.min(100, Math.round((volCurrent / volTarget) * 100)) : 0;
+  const viewsPct = viewsTarget > 0 ? Math.min(100, Math.round((totalViews / viewsTarget) * 100)) : 0;
+  const clicksPct = clicksTarget > 0 ? Math.min(100, Math.round((totalClicks / clicksTarget) * 100)) : 0;
+
+  // Projection hits
+  const volProjHit = (projLong + projShort) >= volTarget && volTarget > 0;
+  const viewsProjHit = projViews >= viewsTarget && viewsTarget > 0;
+  const clicksProjHit = projClicks >= clicksTarget && clicksTarget > 0;
+
+  // Goals hit count (projected)
+  const goalsProjected = (volProjHit ? 1 : 0) + (viewsProjHit ? 1 : 0) + (clicksProjHit ? 1 : 0);
+  const totalGoals = 3;
+  const poolPerGoal = goals.pool_per_goal || 500;
+  const projectedPool = goalsProjected * poolPerGoal;
+
+  function fmtK(v) {
+    if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M';
+    if (v >= 1000) return (v / 1000).toFixed(1) + 'k';
+    return v.toLocaleString('pt-BR');
   }
-  if (!METAS_ALVOS.length) {
-    el.innerHTML = '<div class="fp-vazio fp-moldura">' + FP_ICO_ATENCAO
-      + '<h3>Sem metas para ' + escHtml(fpMesNome(mes)) + '</h3>'
-      + '<p>' + (isUserAdmin() ? 'Use “Configurar” para definir as metas deste mês.'
-                               : 'Um administrador ainda não definiu as metas deste mês.') + '</p></div>';
-    return;
-  }
 
-  const aps = METAS_ALVOS.map(a => fpMetaApurar(a, janela));
-  const batidas = aps.filter(x => x.bateu).length;
-  const noRitmo = aps.filter(x => x.bateu || x.noRitmo || (x.modo === 'cadencia' && x.pct >= 90)).length;
+  const monthNames = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
-  /* Peças que não caíram em meta nenhuma. Existem de propósito na tela: um
-     vídeo de 9 minutos não é curto nem 10-15, e sumir da vista faria a equipe
-     achar que o trabalho não foi contado. */
-  const tiposComMeta = new Set(METAS_ALVOS.flatMap(a => a.tipos || []));
-  const sobra = METAS_PECAS.filter(p => !p.eh_repost && !tiposComMeta.has(p.tipo));
+  el.innerHTML = `
+    <!-- Month header -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,45,45,.1);display:flex;align-items:center;justify-content:center">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </div>
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--text)">Metas da equipe — ${monthNames[now.getMonth()]} ${now.getFullYear()}</div>
+        <div style="font-size:12px;color:var(--text-muted)">dia ${dayOfMonth} de ${daysInMonth} · ${daysLeft} dias restantes</div>
+      </div>
+    </div>
 
-  const dinheiro = (typeof PERF_GOALS === 'object' && PERF_GOALS) ? PERF_GOALS : {};
-  const porMeta = Number(dinheiro.pool_per_goal) || 0;
+    <!-- KPI Cards -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:20px 0">
+      <!-- Volume -->
+      <div class="cal-card" style="padding:20px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#3b82f6" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          </div>
+          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Volume de conteúdo</div>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">
+          <span style="font-family:'FullPro Sans';font-size:34px;line-height:1;color:var(--text)">${longCount}L + ${shortCount}S</span>
+          <span style="font-size:13px;color:var(--text-muted)">/ ${longTarget}L + ${shortTarget}S</span>
+        </div>
+        <div style="height:6px;background:var(--bg-elev);border-radius:3px;overflow:hidden;margin-bottom:10px">
+          <div style="height:100%;width:${volPct}%;background:linear-gradient(90deg,#3b82f6,#60a5fa);border-radius:3px;transition:width .4s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:11px;color:var(--text-muted)">${volPct}% atingido</span>
+          <span style="font-size:11px;color:${volProjHit ? 'var(--success)' : 'var(--warning)'};font-weight:600">projeção: ${projLong}L + ${projShort}S ${volProjHit ? '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg>' : ''}</span>
+        </div>
+      </div>
 
-  el.innerHTML =
-    '<div class="fp-meta-cabeca">'
-    +   '<div><b>Metas da equipe — ' + escHtml(fpMesNome(mes)) + '</b>'
-    +     '<span>' + (janela.futuro ? 'o mês ainda não começou'
-                     : janela.passado ? 'mês fechado'
-                     : 'dia ' + janela.corridos + ' de ' + janela.dias + ' · ' + (janela.dias - janela.corridos) + ' dias restantes') + '</span></div>'
-    +   '<div class="fp-meta-placar"><b>' + batidas + ' de ' + aps.length + '</b><span>metas batidas</span></div>'
-    +   '<div class="fp-meta-placar"><b>' + noRitmo + ' de ' + aps.length + '</b><span>no ritmo</span></div>'
-    + '</div>'
-    + '<div class="fp-meta-grade">' + aps.map(x => fpMetaCardHtml(x, janela)).join('') + '</div>'
-    + (porMeta ? '<div class="fp-meta-caixa"><div><b>Caixa coletivo — projeção</b>'
-        /* formatBRL devolve SÓ o número — todo chamador do arquivo põe o "R$"
-           na frente. Sem isto o caixa saía "3.400,00", que parece dinheiro mas
-           não é moeda nenhuma. */
-        + '<span>' + noRitmo + ' de ' + aps.length + ' metas no ritmo atual, a R$ ' + formatBRL(porMeta) + ' por meta</span></div>'
-        + '<div class="fp-meta-caixa-valor">R$ ' + formatBRL(noRitmo * porMeta) + '</div></div>' : '')
-    + (sobra.length ? '<div class="fp-meta-sobra"><b>' + sobra.length + (sobra.length === 1 ? ' peça publicada fora das metas' : ' peças publicadas fora das metas') + '</b>'
-        + '<div>' + sobra.slice(0, 12).map(p => '<span class="fp-meta-chip" data-tip="' + escHtml((p.titulo || '') + ' · ' + (p.duracao_seg ? Math.round(p.duracao_seg / 60) + ' min' : p.plataforma)) + '">'
-        + escHtml(p.tipo) + '</span>').join('') + '</div></div>' : '');
+      <!-- Views -->
+      <div class="cal-card" style="padding:20px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,45,45,.1);display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Views totais</div>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">
+          <span style="font-family:'FullPro Sans';font-size:34px;line-height:1;color:var(--text)">${fmtK(totalViews)}</span>
+          <span style="font-size:13px;color:var(--text-muted)">/ ${fmtK(viewsTarget)}</span>
+        </div>
+        <div style="height:6px;background:var(--bg-elev);border-radius:3px;overflow:hidden;margin-bottom:10px">
+          <div style="height:100%;width:${viewsPct}%;background:linear-gradient(90deg,var(--primary),#ff6b6b);border-radius:3px;transition:width .4s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:11px;color:var(--text-muted)">${viewsPct}% atingido</span>
+          <span style="font-size:11px;color:${viewsProjHit ? 'var(--success)' : 'var(--warning)'};font-weight:600">projeção: ${fmtK(projViews)} ${viewsProjHit ? '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg>' : ''}</span>
+        </div>
+      </div>
+
+      <!-- Cliques -->
+      <div class="cal-card" style="padding:20px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Cliques pro site</div>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">
+          <span style="font-family:'FullPro Sans';font-size:34px;line-height:1;color:var(--text)">${totalClicks.toLocaleString('pt-BR')}</span>
+          <span style="font-size:13px;color:var(--text-muted)">/ ${clicksTarget.toLocaleString('pt-BR')}</span>
+        </div>
+        <div style="height:6px;background:var(--bg-elev);border-radius:3px;overflow:hidden;margin-bottom:10px">
+          <div style="height:100%;width:${clicksPct}%;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:3px;transition:width .4s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:11px;color:var(--text-muted)">${clicksPct}% atingido</span>
+          <span style="font-size:11px;color:${clicksProjHit ? 'var(--success)' : 'var(--warning)'};font-weight:600">projeção: ${projClicks.toLocaleString('pt-BR')} ${clicksProjHit ? '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg>' : ''}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pool coletivo banner -->
+    <div style="background:${goalsProjected >= totalGoals ? 'linear-gradient(135deg,rgba(31,210,122,.08),rgba(31,210,122,.02))' : 'linear-gradient(135deg,rgba(245,158,11,.08),rgba(245,158,11,.02))'};border:1px solid ${goalsProjected >= totalGoals ? 'rgba(31,210,122,.25)' : 'rgba(245,158,11,.25)'};border-radius:14px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:42px;height:42px;border-radius:12px;background:${goalsProjected >= totalGoals ? 'rgba(31,210,122,.12)' : 'rgba(245,158,11,.12)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="${goalsProjected >= totalGoals ? 'var(--success)' : '#f59e0b'}" stroke-width="1.8"><path d="M6 9H4.5a2.5 2.5 0 010-5C7 4 7 7 7 7"/><path d="M18 9h1.5a2.5 2.5 0 000-5C17 4 17 7 17 7"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg>
+        </div>
+        <div>
+          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Caixa coletivo — projeção de fim do mês</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:2px">${goalsProjected} de ${totalGoals} metas no ritmo atual</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:500">caixa projetado</div>
+        <div style="font-family:'FullPro Sans';font-size:32px;color:var(--success);line-height:1;margin-top:2px">R$ ${formatBRL(projectedPool)}</div>
+      </div>
+    </div>
+
+    <!-- Distribution breakdown (admin only) -->
+    ${isUserAdmin() ? `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px">
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#3b82f6;flex-shrink:0"></div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text-muted)">Gravador/Gestor (${goals.dist_gravador || 40}%)</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">R$ ${formatBRL(projectedPool * ((goals.dist_gravador || 40) / 100))}</div>
+        </div>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#a855f7;flex-shrink:0"></div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text-muted)">Editor (${goals.dist_editor || 35}%)</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">R$ ${formatBRL(projectedPool * ((goals.dist_editor || 35) / 100))}</div>
+        </div>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:10px">
+        <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;flex-shrink:0"></div>
+        <div style="flex:1">
+          <div style="font-size:11px;color:var(--text-muted)">Mecânico (${goals.dist_mecanico || 25}%)</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">R$ ${formatBRL(projectedPool * ((goals.dist_mecanico || 25) / 100))}</div>
+        </div>
+      </div>
+    </div>` : ''}
+  `;
 }
-
-function fpMetasTrocarMes(mes) {
-  fpMetasCarregar(mes, true).then(renderPerfMetas);
-}
-window.fpMetasTrocarMes = fpMetasTrocarMes;
-
-/* "Atualizar" chama o coletor com a sessão de quem clicou. Sem isto o painel
-   só veria peça nova quando o cron rodasse — e story tem 24h de vida. */
-async function fpMetasAtualizar() {
-  fpToast('Buscando nas redes…', 'info', { duracao: 2500 });
-  try {
-    const { data, error } = await sb.functions.invoke('coletor-pecas', { body: {} });
-    if (error) throw error;
-    const erros = (data && data.erros) || [];
-    await fpMetasCarregar(METAS_MES, true);
-    renderPerfMetas();
-    if (erros.length) fpToast('Coletei ' + (data.gravadas || 0) + ' peças, com avisos: ' + erros.join(' · '), 'warn', { duracao: 9000 });
-    else fpToast(data.gravadas + ' peças conferidas.', 'ok');
-  } catch (e) {
-    fpToast('Não deu para atualizar: ' + (e.message || e), 'erro');
-  }
-}
-window.fpMetasAtualizar = fpMetasAtualizar;
 
 function fmtKPosts(v) {
   if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M';
@@ -28564,12 +28368,12 @@ async function savePerfGoals() {
     dist_mecanico: parseInt(document.getElementById('distMecanico').value) || 25
   };
 
-  /* `upsert` por MÊS, e não `update` pelo id da linha carregada. O que havia
-     antes atualizava a linha do mês corrente com o `month` novo dentro do
-     payload: escolher setembro no campo não criava linha nenhuma — RENOMEAVA a
-     de agosto, e as metas de agosto desapareciam. */
-  const result = await sb.from('mc_performance_goals')
-    .upsert(payload, { onConflict: 'month' }).select().single();
+  let result;
+  if (PERF_GOALS?.id) {
+    result = await sb.from('mc_performance_goals').update(payload).eq('id', PERF_GOALS.id);
+  } else {
+    result = await sb.from('mc_performance_goals').insert([payload]).select().single();
+  }
 
   if (result.error) { fpToast('Erro ao salvar: ' + result.error.message, 'erro'); return; }
   if (result.data) PERF_GOALS = result.data;
