@@ -432,14 +432,18 @@ Se a diferença for pequena, a conclusão honesta é *quase nenhum kit merece fo
 e isso libera o estúdio para os produtos sem foto nenhuma. É um resultado tão útil quanto
 o contrário.
 
-### Pendente para fechar a frente de kits
+### Geração automática saiu de cena (28/08/2026)
 
-1. Ação de **listagem de pastas** no `drive-proxy` (edge function nova, aditiva).
-2. **Planilha original** dos dois catálogos, em vez do PDF — a leitura atual é por
-   coordenada de pixel e quebra em silêncio se o layout mudar.
-3. Classificar as ponteiras sem categoria que sobraram.
-4. Marcar quais bases aceitam quais categorias (as marcações "X" da planilha ainda não
-   foram lidas — dependem da planilha original).
+Os dois catálogos em PDF (pastilha e ponteira×categoria) existiam para **gerar** as
+combinações de kit. A varredura do Drive tornou isso desnecessário: os kits já existem,
+batizados e catalogados. **Decisão do dono: deixar os catálogos de lado.**
+
+O que a geração automática ainda cobriria — propor o kit de um produto recém-cadastrado —
+volta à mesa quando houver produto novo suficiente para justificar. Os PDFs ficam em
+`docs/anexos/`, e a leitura por coordenada está descrita acima caso seja retomada.
+
+Também **por decisão do dono, os sufixos `NE` e `SK`** dos nomes de pasta ficam sem
+tradução: os ~15 kits afetados seguem marcados como incompletos e não atrapalham nada.
 
 ---
 
@@ -587,7 +591,8 @@ antes; só depois a carga entra no painel.
    há 214 dias" em reais.
 2. **Mapa empresa ↔ conta do ML** — quais dos 5 CNPJs vendem ao consumidor final e qual
    conta do ML corresponde a cada um. Os puramente internos/B2B entram só como cliente a
-   excluir.
+   excluir. (Vendas de 12 meses já existem na planilha da equipe, o que reduz a urgência
+   da extração do Bling.)
 3. **App de desenvolvedor no ML** — criação e autorização são dele (envolvem login e
    credenciais).
 4. **Aval para agendar o `bling-sync`** — pré-requisito, e mexe em algo que já está no ar.

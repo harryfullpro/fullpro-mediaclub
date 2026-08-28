@@ -1,5 +1,90 @@
 # Diário
 
+## 27/08/2026 · Metas: modelo novo, coletor das redes e o painel refeito
+
+> *"vamos repaginar essas metas (…) quero um dashboard de metas completo e que
+> acompanhe em tempo real como anda o cumprimento delas ao longo do tempo"*
+> *"tem como a gente buscar isso automaticamente via api?"*
+
+### O que a leitura do código achou antes de eu tocar em nada
+
+Três defeitos na tela antiga, todos confirmados linha a linha:
+
+1. **Contagem em dobro.** `getPublishedThisMonth` varria `p.destinations` e,
+   sob o comentário *"Also add from project posts"*, varria os MESMOS dados de
+   novo somando nos mesmos contadores. O "9L + 23S" da tela era o dobro.
+2. **O segundo laço não filtrava mês** — somava o histórico inteiro numa tela
+   que se anuncia como "do mês".
+3. **A data era `production_date`**, a data da GRAVAÇÃO. Vídeo gravado em julho
+   e publicado em agosto contava em julho.
+
+E uma armadilha que teria custado caro: `savePerfGoals` fazia
+`update(payload).eq('id', PERF_GOALS.id)` com o `month` DENTRO do payload, e
+`PERF_GOALS` é sempre a linha do mês corrente. **Cadastrar setembro não criaria
+linha nova — renomearia a de agosto.** Virou `upsert` por mês, com índice único
+em `month` para o conflito existir de verdade.
+
+O módulo também estava praticamente sem uso: `mc_performance_posts` tinha **1
+post** (de junho) e `mc_performance_goals`, **1 linha** (junho). Os números que
+apareciam vinham de `mc_projects`.
+
+### A pergunta certa do dono
+
+Ele perguntou se dava para buscar por API em vez de digitar. **Testei contra as
+contas reais antes de desenhar em cima disso:**
+
+| endpoint | resultado |
+|---|---|
+| `/{ig}/stories` | 4 stories nas últimas 24h — funciona |
+| `/{ig}/media` | 21 REELS e 4 CAROUSEL_ALBUM nas 25 últimas |
+| YouTube `contentDetails` | a duração que o painel nunca teve |
+
+Cinco das sete metas que eu tinha dado como "manuais" viraram automáticas. A
+regra do "pure sound" sai do título, como ele pediu — a equipe já escreve
+`| PURE SOUND |`.
+
+**Repost é a única que nenhuma API sabe dizer.** Nem Instagram nem TikTok marcam
+recompartilhamento. Ficou como marca manual, mas o trabalho é RECONHECER e não
+registrar: a lista vem pronta do coletor e o operador só aponta quais foram.
+
+### O modelo
+
+- **`mc_pecas`** — uma linha por peça que foi ao ar, com `publicado_em` vindo da
+  plataforma. `bruto` guarda a resposta da API: a regra de classificação vai
+  mudar, e reclassificar tem que ser reprocessar, não recoletar — story não
+  volta.
+- **`mc_metas_alvo`** — uma linha por meta, por mês. Setembro tem sete e agosto
+  tinha três, sem migração nenhuma.
+- **`mc_performance_goals` continua mandando no dinheiro.** A bonificação não
+  mudou.
+
+`eh_repost` é uma CAMADA, não um tipo: a peça marcada sai do balde de origem e
+entra no de repost. Guardar assim (e não trocando `tipo`) mantém o coletor
+idempotente — ele reescreve `tipo` a cada passada e apagaria a marca.
+
+### Por que o coletor precisa de cron
+
+Story vive 24h e `/stories` só devolve o que está no ar AGORA. Sem agendamento,
+story de sexta à noite não existe na segunda — e não há como buscar depois.
+`pg_cron` e `pg_net` estão disponíveis no projeto.
+
+### O que ficou honesto na tela
+
+- Um gráfico **por meta** (acumulado contra o ritmo ideal), e não um com sete
+  linhas, que viraria novelo.
+- **Peça fora de meta aparece embaixo.** Um vídeo de 9 minutos não é curto nem
+  10-15; sumir da vista faria a equipe achar que o trabalho não foi contado.
+- No canal inteiro há **10 vídeos** na faixa de 10-15 min; a maioria tem 4 a 9.
+  E "Pure Sound Triumph Speed 1200" tem **20 minutos** — conta como pure sound
+  pelo título, e o painel mostra a duração ao lado para o dono decidir.
+- O caixa mudou de escala: 7 metas × R$ 850 = R$ 5.950, contra R$ 2.550 com 3.
+  Não mexi no `pool_per_goal`; avisei.
+
+### Um erro meu, pego no teste
+
+`formatBRL` devolve só o número — todo chamador do arquivo põe o "R$" na frente.
+Esqueci, e o caixa saía "3.400,00": parece dinheiro, não é moeda nenhuma.
+
 ## 27/08/2026 · Dia selecionado do calendário: azul no lugar do amarelo
 
 > *"vamos alterar esse hover select e hover do mouse na data selecionada para a

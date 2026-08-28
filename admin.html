@@ -5791,6 +5791,28 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-meta-caixa span { font-size: 12px; color: var(--text-dim); }
 .fp-meta-caixa-valor { font-family: 'FullPro Sans', sans-serif; font-size: 26px; color: var(--success); }
 
+.fp-meta-marcar {
+  border: 0; background: none; padding: 0; cursor: pointer;
+  font-size: 11px; font-weight: 700; color: var(--azul);
+}
+.fp-meta-marcar:hover { opacity: .65; }
+
+.fp-repost-lista { max-height: 46vh; overflow-y: auto; margin: 4px 0 2px; }
+.fp-repost-lin {
+  display: flex; align-items: center; gap: 10px; padding: 9px 2px;
+  border-top: 1px solid var(--border); font-size: 12.5px; cursor: pointer;
+}
+.fp-repost-lin.on { color: var(--azul); }
+.fp-repost-lin input { width: 16px; height: 16px; flex: 0 0 auto; margin: 0; cursor: pointer; }
+.fp-repost-dia { flex: 0 0 62px; color: var(--text-muted); font-size: 11.5px; }
+.fp-repost-tipo {
+  flex: 0 0 auto; font-size: 10px; font-weight: 800; letter-spacing: .06em;
+  text-transform: uppercase; padding: 2px 6px; border-radius: 5px;
+  background: var(--bg-elev); color: var(--text-dim);
+}
+.fp-repost-tit { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fp-repost-lin a { flex: 0 0 auto; font-size: 11px; font-weight: 650; color: var(--azul); text-decoration: none; }
+
 .fp-meta-sobra { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
 .fp-meta-sobra b { font-size: 12px; font-weight: 700; color: var(--text-dim); }
 .fp-meta-sobra > div { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
@@ -7241,6 +7263,26 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
         <div id="perfMetasAdminBtn"></div>
       </div>
       <div id="perfMetasContent"></div>
+
+      <!-- Marcar repost. Nenhuma API diz se uma peça é recompartilhamento, e é
+           por isso que esta é a única meta que passa pela mão de alguém. Mas o
+           trabalho é RECONHECER, não registrar: a lista já vem pronta do
+           coletor e o operador só aponta quais foram repost. -->
+      <div class="modal" id="repostModal">
+        <div class="modal-content">
+          <div class="modal-head">
+            <h3>Marcar reposts</h3>
+            <button class="modal-close" onclick="fpRepostFechar()" aria-label="Fechar">&times;</button>
+          </div>
+          <div class="fp-user-form">
+            <p class="fp-user-nota">Nem o Instagram nem o TikTok dizem se uma peça é repost. Marque aqui as que foram — a peça marcada <b>sai da meta de origem</b> e entra na de reposts, que é o que você pediu para os stories.</p>
+            <div id="repostLista" class="fp-repost-lista"></div>
+            <div class="fp-user-pe">
+              <button class="action-btn" type="button" onclick="fpRepostFechar()">Fechar</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- MEUS POSTS VIEW -->
@@ -27189,6 +27231,7 @@ function fpMetaCardHtml(ap, janela) {
     ? '<span class="fp-meta-nota">o mês ainda não começou</span>'
     : cad
       ? '<span class="fp-meta-nota">' + (ap.sequencia ? ap.sequencia + (ap.sequencia === 1 ? ' dia seguido' : ' dias seguidos') : 'sequência interrompida') + '</span>'
+        + '<button class="fp-meta-marcar" type="button" onclick="fpRepostAbrir()">marcar</button>'
       : '<span class="fp-meta-nota">' + ap.pct + '% da meta</span>'
         + '<span class="fp-meta-proj" style="color:' + (ap.noRitmo ? 'var(--success)' : 'var(--warning)') + '">'
         + 'projeção ' + ap.projecao + '</span>';
@@ -27269,6 +27312,64 @@ function renderPerfMetas() {
         + '<div>' + sobra.slice(0, 12).map(p => '<span class="fp-meta-chip" data-tip="' + escHtml((p.titulo || '') + ' · ' + (p.duracao_seg ? Math.round(p.duracao_seg / 60) + ' min' : p.plataforma)) + '">'
         + escHtml(p.tipo) + '</span>').join('') + '</div></div>' : '');
 }
+
+/* A lista do mês, do mais novo para o mais velho, com o interruptor de repost.
+   Story primeiro porque é onde o repost mora na prática — mas tudo aparece:
+   um reels recompartilhado também é repost. */
+function fpRepostAbrir() {
+  const cx = document.getElementById('repostLista');
+  const m = document.getElementById('repostModal');
+  if (!cx || !m) return;
+  fpRepostPintar();
+  m.classList.add('show');
+}
+function fpRepostFechar() {
+  const m = document.getElementById('repostModal');
+  if (m) m.classList.remove('show');
+  /* Repintar ao sair: as marcas mudaram a apuração de DUAS metas — a de origem
+     perdeu peça e a de repost ganhou dia. */
+  renderPerfMetas();
+}
+function fpRepostPintar() {
+  const cx = document.getElementById('repostLista');
+  if (!cx) return;
+  const lista = METAS_PECAS.slice().sort((a, b) => String(b.publicado_em).localeCompare(String(a.publicado_em)));
+  if (!lista.length) {
+    cx.innerHTML = '<p class="fp-aviso-sub" style="padding:14px 0">Nenhuma peça neste mês ainda.</p>';
+    return;
+  }
+  const dia = p => new Date(p.publicado_em).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+  cx.innerHTML = lista.map(p =>
+    '<label class="fp-repost-lin' + (p.eh_repost ? ' on' : '') + '">'
+    + '<input type="checkbox"' + (p.eh_repost ? ' checked' : '')
+    + ' onchange="fpRepostMarcar(\'' + fpJs(p.id) + '\', this.checked)">'
+    + '<span class="fp-repost-dia">' + escHtml(dia(p)) + '</span>'
+    + '<span class="fp-repost-tipo">' + escHtml(p.tipo) + '</span>'
+    + '<span class="fp-repost-tit">' + escHtml(p.titulo || '(sem legenda)') + '</span>'
+    + (p.link ? '<a href="' + escHtml(p.link) + '" target="_blank" rel="noopener noreferrer"'
+        + ' onclick="event.stopPropagation()" data-tip="Abrir a peça">ver</a>' : '')
+    + '</label>').join('');
+}
+async function fpRepostMarcar(id, valor) {
+  const p = METAS_PECAS.find(x => x.id === id);
+  if (!p) return;
+  const antes = p.eh_repost;
+  p.eh_repost = !!valor;                       // pinta antes de esperar a rede
+  fpRepostPintar();
+  const patch = {
+    eh_repost: !!valor,
+    repost_por: valor && CURRENT_USER ? CURRENT_USER.id : null,
+    repost_em: valor ? new Date().toISOString() : null,
+  };
+  const { error } = await sb.from('mc_pecas').update(patch).eq('id', id);
+  if (error) {
+    p.eh_repost = antes; fpRepostPintar();
+    fpToast('Não deu para marcar: ' + error.message, 'erro');
+  }
+}
+window.fpRepostAbrir = fpRepostAbrir;
+window.fpRepostFechar = fpRepostFechar;
+window.fpRepostMarcar = fpRepostMarcar;
 
 function fpMetasTrocarMes(mes) {
   fpMetasCarregar(mes, true).then(renderPerfMetas);
