@@ -172,7 +172,9 @@ Deno.serve(async (req) => {
   const action = String(corpo.action ?? url.searchParams.get('action') ?? 'health');
 
   if (action === 'health') {
-    return resposta({ ok: true, configurado: (await credencial()).chave.length > 0 });
+    /* `versao` é o que deixa conferir, de fora e sem sessão, QUAL código está
+       no ar. Sem isso, depois de um deploy só dá para acreditar. */
+    return resposta({ ok: true, versao: 'yt1', configurado: (await credencial()).chave.length > 0 });
   }
 
   const operador = await operadorOuNulo(req);
@@ -180,8 +182,21 @@ Deno.serve(async (req) => {
     return falha('sessão de operador ausente ou inválida — entre de novo no painel', null, 401);
   }
 
-  if (action === 'status') {
-    return resposta({ ok: true, ...(await estado()) });
+  /* 'verificar' existe para a tela poder perguntar a mesma coisa que o
+     Instagram pergunta. Aqui não há validade para conferir: a chave não expira
+     sozinha, então verificar é gastar 1 unidade de cota para ver se ela ainda
+     responde. */
+  if (action === 'status' || action === 'verificar') {
+    const e = await estado();
+    if (action !== 'verificar' || !e.conectado) return resposta({ ok: true, ...e, vale: null });
+    try {
+      const c = await credencial();
+      const j = await api('channels', { part: 'snippet', id: e.canal_id ?? CANAL_PADRAO }, c.chave);
+      const item = (j?.items ?? [])[0];
+      return resposta({ ok: true, ...e, vale: !!item, canal: item?.snippet?.title ?? e.canal });
+    } catch (err) {
+      return resposta({ ok: true, ...e, vale: false, erro_conta: err instanceof Error ? err.message : 'o Google não respondeu' });
+    }
   }
 
   if (action === 'salvar' || action === 'desconectar') {

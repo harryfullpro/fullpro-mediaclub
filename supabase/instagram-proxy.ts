@@ -268,7 +268,9 @@ Deno.serve(async (req) => {
   /* health não expõe nada além de "tem token configurado?" — fica aberto de
      propósito, é o que responde antes de haver sessão. */
   if (action === 'health') {
-    return resposta({ ok: true, configurado: (await credencial()).token.length > 0 });
+    /* `versao` é o que deixa conferir, de fora e sem sessão, QUAL código está
+       no ar. Sem isso, depois de um deploy só dá para acreditar. */
+    return resposta({ ok: true, versao: 'ig4', configurado: (await credencial()).token.length > 0 });
   }
 
   const operador = await operadorOuNulo(req);

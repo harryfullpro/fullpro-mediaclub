@@ -13,9 +13,12 @@ contas reais em 27/08/2026 — `/stories` devolveu 4 stories, `/media` separou 2
 REELS de 4 carrosséis, o YouTube devolveu a duração de cada vídeo. **Mas ele
 ainda não roda sozinho.** Faltam duas coisas, as duas do dono:
 
-1. **Criar os secrets `IG_ACCESS_TOKEN` e `YOUTUBE_API_KEY`** (Supabase → Edge
-   Functions → Secrets), com os valores que hoje estão no `config.js`. Isso
-   também tira os dois de um arquivo que o navegador baixa.
+1. ~~Criar os secrets `IG_ACCESS_TOKEN` e `YOUTUBE_API_KEY`~~ — **resolvido de
+   outro jeito em 28/08/2026**: as duas credenciais agora são conectadas pelo
+   próprio painel (Integrações), gravadas em `mc_integrations` e lidas dali pelo
+   `coletor-pecas`. Não precisa mais mexer em secret. **Falta o dono conectar as
+   duas uma vez** — hoje as duas linhas dizem "não conectado, ainda usando a
+   chave pública do config.js".
 2. **Agendar de hora em hora** (Supabase → Integrations → Cron). `pg_cron` e
    `pg_net` estão disponíveis no projeto, não instalados.
 
@@ -24,6 +27,24 @@ só devolve o que está no ar AGORA. Sem cron, story publicado numa sexta à noi
 simplesmente não existe na segunda — e não há como buscar depois. O botão
 "Atualizar" da tela de Metas cobre o dia a dia de quem está com a aba aberta,
 nada mais.
+
+### Rodar a troca das credenciais e esvaziar o config.js
+A tela de Integrações já conecta Instagram e YouTube, mas **guardar a MESMA
+credencial que já está pública não protege nada**: o `config.js` responde HTTP
+200 sem login em `https://mediaclub.fullpro.com.br/config.js` e está commitado
+no repositório. A ordem que resolve:
+
+1. **Gerar credencial nova** (token da Meta / chave do Google) — a antiga
+   continua valendo até ser revogada.
+2. **Colar as novas em Integrações** e conferir que as duas linhas dizem
+   "Conectado".
+3. **Revogar a antiga** (Meta: invalidar o token; Google: apagar a chave).
+4. **Apagar `IG_ACCESS_TOKEN` e `YOUTUBE_API_KEY` do `config.js`** e subir.
+   `IG_USER_ID` pode ficar: é um id numérico público.
+
+Detalhe do passo 4: o `sw.js` cacheia `/config.js` no `CACHE_SHELL`, então quem
+já abriu o painel continua com a cópia velha até o próximo carregamento com
+rede. Não é vazamento novo, mas confunde a conferência.
 
 ### Três decisões do dono sobre as metas de setembro
 - **O valor por meta mudou de escala.** O caixa é `metas no ritmo × valor por

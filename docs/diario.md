@@ -1,5 +1,61 @@
 # Diário
 
+## 28/08/2026 · Instagram e YouTube saem do config.js e viram botão
+
+> *"mude aqui nas integrações esses que estão no config.js pra eu poder
+> reconectar manualmente"*
+
+As duas linhas eram um rótulo fixo: "Configurado pelo sistema" se a string
+existisse em `window.FULLPRO_CONFIG`. Duas mentiras nisso — dizia "configurado"
+com o token vencido há semanas, e trocar a credencial exigia editar o
+`config.js` e redeployar o site, que não é coisa que se faça às onze da noite.
+
+**O botão só vale se ele mudar alguma coisa.** Por isso o trabalho foi maior do
+que a tela:
+
+- **`mc_integrations`** (RLS ligada, zero policies: só as edge functions leem)
+  passa a guardar as duas credenciais. Quem grava é uma função que **valida na
+  origem antes** — token errado colado por engano não derruba o que funcionava.
+- **`instagram-proxy` v4**: resolve o token em `mc_integrations` → secret, e
+  ganhou `status`, `verificar`, `salvar` e `desconectar`. Salvar e desconectar
+  exigem administrador, com a mesma regra do `isUserAdmin` do painel.
+- **`youtube-proxy`, nova**: mesmo molde. O `salvar` testa a chave **do
+  servidor**, porque chave restrita por referenciador HTTP passa no navegador e
+  falha na edge function — melhor descobrir colando do que de madrugada, e a
+  mensagem já diz o que mudar no console do Google.
+- **`coletor-pecas`** lê as duas de `mc_integrations`. Sem isso, reconectar no
+  painel não mudaria nada no único lugar que não pode parar: story vive 24h.
+- **O navegador parou de falar com a Meta e com o Google.** Sete pontos do
+  painel usavam o token do `config.js` direto — e um deles pedia `me/accounts`,
+  recebia o **token de página** de volta e passava a usar esse também. Agora
+  tudo passa por quatro portas (`fpIgMidias`, `fpIgInsights`, `fpIgDescoberta`,
+  `fpYtStats`), que falam com as functions.
+
+Duas coisas que só apareceram porque um agente foi conferir antes de eu mexer:
+
+- A ação `descoberta` da proxy devolvia **só as mídias** e descartava
+  `followers_count`/`media_count` — exatamente os dois campos de que o
+  Influencer Hub vive. Eu teria derrubado seguidores, engajamento e a
+  classificação nano/micro/macro da base inteira. Agora ela devolve `perfil`.
+- `resolveIGPageToken` não tinha substituto 1:1, porque a proxy **recusa** por
+  princípio devolver o token de página. O caminho certo era o front deixar de
+  precisar dele: `ig_id` vai na chamada e o token de página fica no servidor.
+
+**A reserva.** Enquanto ninguém tiver conectado pelo painel, o caminho velho
+continua valendo, com aviso no console — derrubar as métricas de todo mundo até
+alguém colar um token seria trocar um problema por outro. A linha da tela diz
+isso na cara: *"Não conectado — ainda usando a chave pública do config.js"*.
+
+Medido no navegador, pela reserva (que é o estado de hoje): lista de mídias,
+insights (1.151 views), `fetchIGStats` completo com thumb, `business_discovery`
+com 21.962 seguidores, e o YouTube devolvendo 7.574/367/14 num vídeo e `null`
+num id inexistente. As duas functions respondem `versao: ig4` e `versao: yt1` no
+`health`, que é como se confere de fora qual código está no ar.
+
+E o que **não** está resolvido: guardar no servidor a MESMA credencial que já é
+pública não protege nada. A ordem certa — gerar nova, colar, revogar a antiga,
+esvaziar o `config.js` — está em `pendencias.md`.
+
 ## 28/08/2026 · A cor das metas virou a própria distância até a régua
 
 > *"eu quero que a cor dos gráficos seja de acordo com a progressão da meta"* /

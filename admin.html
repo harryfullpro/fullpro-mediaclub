@@ -16596,19 +16596,10 @@ async function refreshYTStats(dest, ytId) {
 }
 
 async function fetchYTStats(videoId) {
-  const apiKey = window.FULLPRO_CONFIG?.YOUTUBE_API_KEY;
-  if (!apiKey) return null;
+  if (!videoId) return null;
   try {
-    const res = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoId}&key=${apiKey}`);
-    const json = await res.json();
-    if (json.items && json.items.length > 0) {
-      const s = json.items[0].statistics;
-      return {
-        views: parseInt(s.viewCount) || 0,
-        likes: parseInt(s.likeCount) || 0,
-        comments: parseInt(s.commentCount) || 0
-      };
-    }
+    const stats = await fpYtStats([videoId]);
+    if (stats[videoId]) return stats[videoId];
   } catch (e) { console.warn('YT API error:', e); }
   return null;
 }
@@ -16625,6 +16616,143 @@ let igMediaCache = null;
 let igMediaCacheTime = 0;
 let igPageToken = null;   // Page Access Token (resolved from User token)
 let igPageIgId = null;    // IG Business Account ID (resolved from API)
+
+/* ── Instagram e YouTube pelo servidor [FP-IG-PROXY 28/08/2026] ────────────
+   Até aqui o navegador falava direto com a Graph API usando o token do
+   config.js — arquivo que a Vercel serve em HTTP 200 para qualquer visitante.
+   Pior: o painel pedia `me/accounts`, recebia o token DE PÁGINA de volta e
+   passava a usar esse também, do navegador. Dois portadores expostos.
+
+   Agora quem fala com a Meta e com o Google é a edge function, que resolve a
+   credencial em mc_integrations e nunca a devolve. Estas quatro funções são o
+   único caminho: quem precisa de dado do Instagram ou do YouTube chama uma
+   delas.
+
+   A RESERVA, e por que ela existe: enquanto ninguém tiver conectado pelo
+   painel, a credencial só existe no config.js — e derrubar as métricas de todo
+   mundo até alguém colar um token seria trocar um problema por outro. Então,
+   só nesse caso, o caminho velho continua valendo, com aviso no console. Assim
+   que a conexão pelo painel existir, a reserva nunca mais é usada, e as chaves
+   podem sair do config.js (ver supabase/integr-cred.md).
+   ───────────────────────────────────────────────────────────────────────── */
+let _igVia = null;   // { via: 'proxy'|'config'|null, ig_id }
+let _ytVia = null;
+
+async function fpIgVia(recarregar) {
+  if (_igVia && !recarregar) return _igVia;
+  let r = null;
+  try { r = await fpIntegrChamar('instagram', 'status'); } catch (e) { r = null; }
+  if (r && r.ok && r.conectado && r.ig_id) {
+    _igVia = { via: 'proxy', ig_id: r.ig_id };
+  } else if (window.FULLPRO_CONFIG && window.FULLPRO_CONFIG.IG_ACCESS_TOKEN) {
+    console.warn('[IG] usando a chave do config.js — conecte o Instagram em Integrações para tirá-la do ar');
+    _igVia = { via: 'config', ig_id: null };
+  } else {
+    _igVia = { via: null, ig_id: null };
+  }
+  return _igVia;
+}
+
+async function fpYtVia(recarregar) {
+  if (_ytVia && !recarregar) return _ytVia;
+  let r = null;
+  try { r = await fpIntegrChamar('youtube', 'status'); } catch (e) { r = null; }
+  if (r && r.ok && r.conectado) _ytVia = { via: 'proxy' };
+  else if (window.FULLPRO_CONFIG && window.FULLPRO_CONFIG.YOUTUBE_API_KEY) {
+    console.warn('[YT] usando a chave do config.js — conecte o YouTube em Integrações para tirá-la do ar');
+    _ytVia = { via: 'config' };
+  } else _ytVia = { via: null };
+  return _ytVia;
+}
+
+/* Lista de mídias da conta própria. `borda` é 'midias' (o que publicamos),
+   'marcacoes' (recently_tagged_media) ou 'mencoes' (mentioned_media). */
+async function fpIgMidias(borda, limite) {
+  const v = await fpIgVia();
+  if (!v.via) return [];
+  const campos = borda === 'midias'
+    ? 'id,shortcode,permalink,like_count,comments_count,media_type,thumbnail_url,media_url'
+    : 'id,shortcode,permalink,like_count,comments_count';
+  if (v.via === 'proxy') {
+    const r = await fpIntegrChamar('instagram', borda, { ig_id: v.ig_id, limit: limite || 50 });
+    if (!r.ok) { console.warn('[IG] ' + borda + ':', r.erro); return []; }
+    return r.midias || [];
+  }
+  /* reserva */
+  if (!igPageToken || !igPageIgId) { if (!await resolveIGPageToken()) return []; }
+  const borda_ = borda === 'midias' ? 'media' : (borda === 'marcacoes' ? 'recently_tagged_media' : 'mentioned_media');
+  const res = await fetch('https://graph.facebook.com/v21.0/' + igPageIgId + '/' + borda_
+    + '?fields=' + campos + '&limit=' + (limite || 50) + '&access_token=' + igPageToken);
+  const json = await res.json();
+  if (json.error) { console.warn('[IG] ' + borda + ':', json.error.message); return []; }
+  return json.data || [];
+}
+
+async function fpIgInsights(mediaId, metric) {
+  const v = await fpIgVia();
+  if (!v.via || !mediaId) return 0;
+  if (v.via === 'proxy') {
+    const r = await fpIntegrChamar('instagram', 'insights', { media_id: mediaId, metric: metric, ig_id: v.ig_id });
+    return r.ok ? (r.valor || 0) : 0;
+  }
+  if (!igPageToken) { if (!await resolveIGPageToken()) return 0; }
+  const res = await fetch('https://graph.facebook.com/v21.0/' + mediaId + '/insights?metric=' + metric + '&access_token=' + igPageToken);
+  const j = await res.json();
+  const p = j.data && j.data[0];
+  return p ? ((p.values && p.values[0] && p.values[0].value) || (p.total_value && p.total_value.value) || 0) : 0;
+}
+
+/* business_discovery: conta de TERCEIRO (influenciador). Devolve as mídias e o
+   perfil (followers_count/media_count) — o hub precisa dos dois. */
+async function fpIgDescoberta(handle, inner) {
+  const v = await fpIgVia();
+  const h = String(handle || '').replace(/^@/, '').trim();
+  if (!v.via || !h) return null;
+  if (v.via === 'proxy') {
+    const r = await fpIntegrChamar('instagram', 'descoberta', { handle: h, inner: inner });
+    if (!r.ok) { console.warn('[IG] descoberta @' + h + ':', r.erro); return null; }
+    return { midias: r.midias || [], perfil: r.perfil || null };
+  }
+  const igToken = window.FULLPRO_CONFIG && window.FULLPRO_CONFIG.IG_ACCESS_TOKEN;
+  const igUserId = window.FULLPRO_CONFIG && window.FULLPRO_CONFIG.IG_USER_ID;
+  if (!igToken || !igUserId) return null;
+  const res = await fetch('https://graph.facebook.com/v21.0/' + igUserId
+    + '?fields=business_discovery.username(' + h + ')%7B' + inner + '%7D&access_token=' + igToken);
+  if (!res.ok) { console.warn('[IG] descoberta @' + h + ' falhou'); return null; }
+  const data = await res.json();
+  const bd = data.business_discovery || null;
+  return { midias: (bd && bd.media && bd.media.data) || [], perfil: bd };
+}
+
+/* Um pedido para vários vídeos: a API cobra a mesma unidade de cota por id
+   sozinho ou por lote de 50. */
+async function fpYtStats(ids) {
+  const lista = (Array.isArray(ids) ? ids : [ids]).filter(Boolean);
+  if (!lista.length) return {};
+  const v = await fpYtVia();
+  if (!v.via) return {};
+  if (v.via === 'proxy') {
+    const r = await fpIntegrChamar('youtube', 'stats', { ids: lista });
+    return r.ok ? (r.stats || {}) : {};
+  }
+  const apiKey = window.FULLPRO_CONFIG && window.FULLPRO_CONFIG.YOUTUBE_API_KEY;
+  if (!apiKey) return {};
+  try {
+    const res = await fetch('https://www.googleapis.com/youtube/v3/videos?part=statistics&id='
+      + lista.join(',') + '&key=' + apiKey);
+    const json = await res.json();
+    const out = {};
+    (json.items || []).forEach(function (it) {
+      const st = it.statistics || {};
+      out[it.id] = {
+        views: parseInt(st.viewCount) || 0,
+        likes: parseInt(st.likeCount) || 0,
+        comments: parseInt(st.commentCount) || 0,
+      };
+    });
+    return out;
+  } catch (e) { console.warn('YT API error:', e); return {}; }
+}
 
 async function resolveIGPageToken() {
   if (igPageToken && igPageIgId) return true;
@@ -16644,23 +16772,16 @@ async function resolveIGPageToken() {
 }
 
 async function fetchIGStats(shortcode, igUrl) {
-  const userToken = window.FULLPRO_CONFIG?.IG_ACCESS_TOKEN;
-  if (!userToken) return null;
-
-  // Resolve page token + IG ID on first call
-  if (!igPageToken || !igPageIgId) {
-    const ok = await resolveIGPageToken();
-    if (!ok) return null;
-  }
+  const via = await fpIgVia();
+  if (!via.via) return null;
 
   try {
     // Use cache if less than 5 min old
     const now = Date.now();
     if (!igMediaCache || now - igMediaCacheTime > 300000) {
-      const res = await fetch(`https://graph.facebook.com/v21.0/${igPageIgId}/media?fields=id,shortcode,permalink,like_count,comments_count,media_type,thumbnail_url,media_url&limit=50&access_token=${igPageToken}`);
-      const json = await res.json();
-      if (json.error) { console.warn('IG API error:', json.error.message); return null; }
-      igMediaCache = (json.data || []).map(m => ({ ...m, _own: true }));
+      const lista = await fpIgMidias('midias', 50);
+      if (!lista.length && !igMediaCache) return null;
+      igMediaCache = lista.map(m => ({ ...m, _own: true }));
       igMediaCacheTime = now;
     }
 
@@ -16682,12 +16803,7 @@ async function fetchIGStats(shortcode, igUrl) {
     if (media._own && media.id) {
       try {
         const isVideo = media.media_type === 'VIDEO' || media.media_type === 'REEL';
-        const metric = isVideo ? 'views' : 'reach';
-        const insRes = await fetch(`https://graph.facebook.com/v21.0/${media.id}/insights?metric=${metric}&access_token=${igPageToken}`);
-        const insJson = await insRes.json();
-        if (insJson.data && insJson.data[0]) {
-          views = insJson.data[0].values?.[0]?.value || insJson.data[0].total_value?.value || 0;
-        }
+        views = await fpIgInsights(media.id, isVideo ? 'views' : 'reach');
       } catch(e) { console.warn('IG insights error:', e); }
     }
 
@@ -16710,23 +16826,17 @@ async function fetchIGViaDiscovery(shortcode, igUrl) {
     // We need a username — try extracting from stored project data or common collaborators
 
     // Strategy: fetch the page's own recently_tagged media
-    const tagRes = await fetch(`https://graph.facebook.com/v21.0/${igPageIgId}/recently_tagged_media?fields=id,shortcode,permalink,like_count,comments_count&limit=50&access_token=${igPageToken}`);
-    const tagJson = await tagRes.json();
-    if (tagJson.data) {
-      const found = tagJson.data.find(m => m.shortcode === shortcode || (m.permalink && m.permalink.includes(shortcode)));
-      if (found) return found;
-    }
+    const marcadas = await fpIgMidias('marcacoes', 50);
+    const found = marcadas.find(m => m.shortcode === shortcode || (m.permalink && m.permalink.includes(shortcode)));
+    if (found) return found;
   } catch(e) { console.warn('IG tagged_media fallback error:', e); }
 
   try {
     // Strategy 2: try /stories and /live_media endpoints (less likely but worth a shot)
     // Strategy 3: use the mentioned_media endpoint
-    const mentRes = await fetch(`https://graph.facebook.com/v21.0/${igPageIgId}/mentioned_media?fields=id,shortcode,permalink,like_count,comments_count&limit=50&access_token=${igPageToken}`);
-    const mentJson = await mentRes.json();
-    if (mentJson.data) {
-      const found = mentJson.data.find(m => m.shortcode === shortcode || (m.permalink && m.permalink.includes(shortcode)));
-      if (found) return found;
-    }
+    const mencionadas = await fpIgMidias('mencoes', 50);
+    const found = mencionadas.find(m => m.shortcode === shortcode || (m.permalink && m.permalink.includes(shortcode)));
+    if (found) return found;
   } catch(e) { /* silently fail */ }
 
   return null;
@@ -16738,20 +16848,12 @@ async function fetchIGViaDiscovery(shortcode, igUrl) {
 async function fetchIGStatsViaDiscovery(igHandle, dataPub) {
   if (!igHandle) return null;
   const handle = igHandle.replace(/^@/, '').trim();
-  const igToken = window.FULLPRO_CONFIG?.IG_ACCESS_TOKEN;
-  const igUserId = window.FULLPRO_CONFIG?.IG_USER_ID;
-  if (!igToken || !igUserId || !handle) return null;
+  if (!handle) return null;
 
   try {
     const inner = 'media.limit(50){like_count,comments_count,media_type,timestamp,caption}';
-    const url = 'https://graph.facebook.com/v21.0/' + igUserId
-      + '?fields=business_discovery.username(' + handle + ')%7B' + inner + '%7D'
-      + '&access_token=' + igToken;
-
-    const res = await fetch(url);
-    if (!res.ok) { console.warn('[IG] business_discovery media failed for @' + handle); return null; }
-    const data = await res.json();
-    const mediaItems = data.business_discovery?.media?.data || [];
+    const d = await fpIgDescoberta(handle, inner);
+    const mediaItems = (d && d.midias) || [];
     if (mediaItems.length === 0) return null;
 
     let found = null;
@@ -16797,9 +16899,12 @@ async function refreshIGStats(dest, shortcode) {
   const igUrl = p?.posts?.[dest]?.link || '';
   const stats = await fetchIGStats(shortcode, igUrl);
   if (!stats) {
-    const hasToken = !!window.FULLPRO_CONFIG?.IG_ACCESS_TOKEN;
-    if (!hasToken) {
-      fpToast('Configure IG_ACCESS_TOKEN no config.js', 'info');
+    /* Antes isto olhava o config.js e dizia "configure no config.js" — frase
+       errada desde que a credencial saiu de lá, e que mandava o operador
+       procurar num arquivo em que não há mais nada. */
+    const via = await fpIgVia();
+    if (!via.via) {
+      fpToast('O Instagram não está conectado. Um administrador conecta em Integrações.', 'info');
     } else {
       fpToast('Post não encontrado na conta IG da FullPro.\nSe for um post de colaboração (collab), os dados precisam ser preenchidos manualmente.', 'erro');
     }
@@ -17212,7 +17317,10 @@ async function autoRefreshEngagement() {
   const p = PROJECTS.find(x => x.id === projDetailId);
   if (!p || !p.posts) return;
 
-  const apiKey = window.FULLPRO_CONFIG?.YOUTUBE_API_KEY;
+  /* O porteiro era `apiKey` do config.js: sem chave, o post de YouTube era
+     PULADO em silêncio enquanto IG e TikTok continuavam. Agora quem responde
+     "dá para buscar?" é a mesma porta que busca. */
+  const ytLigado = (await fpYtVia()).via !== null;
   let updated = false;
 
   for (const dest of Object.keys(p.posts)) {
@@ -17224,7 +17332,7 @@ async function autoRefreshEngagement() {
     const igShortcode = extractIGShortcode(post.link);
 
     const tkVideoId = post._tkVideoId || extractTKVideoId(post.link);
-    if (ytId && apiKey) {
+    if (ytId && ytLigado) {
       stats = await fetchYTStats(ytId);
     } else if (igShortcode) {
       stats = await fetchIGStats(igShortcode, post.link);
@@ -28021,26 +28129,12 @@ async function loadInfExtras() {
 /* Shared helper: fetch IG profile + media via business_discovery */
 async function fetchIGBusinessDiscovery(igHandleRaw) {
   const igHandle = (igHandleRaw || '').replace(/^@/, '').trim();
-  const igToken = window.FULLPRO_CONFIG?.IG_ACCESS_TOKEN;
-  const igUserId = window.FULLPRO_CONFIG?.IG_USER_ID;
-  if (!igToken || !igUserId || !igHandle) return null;
+  if (!igHandle) return null;
 
   try {
-    // Correct URL format: .username(handle)%7Bfields%7D — only outer braces encoded
     const inner = 'followers_count,media_count,media.limit(25){like_count,comments_count,media_type}';
-    const url = 'https://graph.facebook.com/v21.0/' + igUserId
-      + '?fields=business_discovery.username(' + igHandle + ')%7B' + inner + '%7D'
-      + '&access_token=' + igToken;
-
-    const res = await fetch(url);
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      console.warn(`[IG] @${igHandle} falhou:`, err.error?.message || res.status);
-      return null;
-    }
-
-    const data = await res.json();
-    const bd = data.business_discovery;
+    const d = await fpIgDescoberta(igHandle, inner);
+    const bd = d && d.perfil;
     if (!bd) return null;
 
     const result = {};
