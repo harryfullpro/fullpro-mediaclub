@@ -1,5 +1,57 @@
 # Diário
 
+## 27/08/2026 · Cabeçalho do calendário, e o botão "novo" perde a caixa
+
+> *"quero o nome do mês centralizado, o ano encima, e as setas (…) uma de cada
+> lado do nome do mês (…) sem container, só o ícone < e > na cor vermelho"*
+> *"nos botões de bloquear data e adicionar agendamento (…) remover o container
+> de fundo também, deixar padrão só o ícone"*
+
+### O calendário
+
+Era `AGOSTO 2026` à esquerda e duas setas em caixinha à direita. Virou duas
+linhas: o ano em cima, miúdo e centrado; embaixo `‹  AGOSTO  ›`.
+
+**Primeira versão errada, pega medindo.** Pus o ano DENTRO do bloco central e as
+setas ao lado do bloco inteiro. As setas ficaram **6,2px fora do eixo do nome do
+mês** — entre as duas linhas, parecendo não pertencer a nenhuma. Separando as
+linhas, o `align-items: center` da fileira põe as setas na altura exata do mês.
+Medido depois: mês centrado na linha **0px**, ano e mês entre si **0px**, as duas
+setas contra o mês **0px** e **0px**.
+
+As setas ficam nas **pontas**, e não coladas na palavra: coladas, elas mudariam
+de lugar a cada mês (MARÇO e SETEMBRO têm larguras bem diferentes) e o alvo de
+clique pularia pela tela.
+
+### O botão "novo"
+
+O pedido era para os dois botões da Agenda, mas ele disse **"deixar padrão"** — e
+o CSS do celular já dizia, desde a passagem do iPhone: *"o + em azul, sem caixa,
+no canto superior direito, não um quadrado preenchido"*. Ou seja, o celular já
+era assim e só o desktop mantinha o quadrado azul. Aplicado nos **nove** botões:
+as duas larguras de tela deixam de divergir e a regra do celular passou a cuidar
+só do alvo de toque.
+
+O alvo de clique **continua com 42px**; o que sumiu foi o fundo. Encolher o alvo
+junto com o desenho deixaria um alvo de 26px.
+
+Duas coisas que a retirada da caixa expôs:
+
+- **O "+" de Atualizações era um `+` de TEXTO**, não um SVG. Dentro do quadrado
+  azul passava; sem o fundo sairia com o tamanho da fonte do corpo, menor que os
+  outros oito. Virou o mesmo SVG.
+- **`.fp-new-btn.ghost` virou `.fp-new-btn.vermelho`.** Sem caixa não há mais
+  fantasma nenhum, e nome que descreve o que o botão não é mais engana quem ler
+  depois.
+
+Vermelho da **marca** (`--primary`), não o de ação destrutiva (`--perigo`):
+bloquear uma data não destrói nada, e na mesma tela as setas do calendário já
+usam `--primary` — dois vermelhos quase iguais lado a lado leem como erro de
+cor, não como significado.
+
+Contraste medido nos dois temas, tudo acima do piso de 3:1 de ícone: setas
+4,85/4,87 · bloquear 4,46/5,34 · "+" 3,69/5,43 · ano (que é texto) 5,25/6,02.
+
 ## 27/08/2026 · Destino na listagem vira logotipo
 
 > *"vamos mudar aqui a tag destinos que tá como texto e vamos colocar a

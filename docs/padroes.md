@@ -518,6 +518,41 @@ de 19/08 percorreu as 17 telas medindo toda `.badge`, `.proj-dest-tag` e
 - Contraste medido ao final: **0 reprovados WCAG AA nos dois temas**
 - Textos em português, com acento. Nada de *goal*, *pool*, *pace* na interface
 
+## O botão "novo" é só o glifo — em nove telas
+
+`.fp-new-btn` não tem caixa, fundo nem borda: é o **+ em azul** (`--novo-azul`),
+e a variante `.vermelho` é o ícone em `--primary`. O alvo de clique continua com
+42px (44px no celular) — o que sumiu foi o fundo, não o alvo. Botão novo herda
+tudo disso; não recrie um quadrado preenchido.
+
+O retorno do ponteiro é a **cor esmaecendo** (`opacity`), nunca um fundo no
+hover: fundo no hover devolve a caixa que foi tirada.
+
+Duas armadilhas que a retirada da caixa expôs, e que valem para o próximo:
+
+- **O glifo tem que ser SVG.** O botão de Atualizações usava um `+` de texto;
+  dentro do quadrado azul passava, sem o fundo saía com o tamanho da fonte do
+  corpo, menor que os outros oito.
+- **Ícone de área maior vai menor.** O círculo cortado de "bloquear data" ocupa
+  mais área que o "+" com o mesmo lado; vai 4px menor para os dois pesarem igual
+  ao olho.
+
+---
+
+## Seta ao lado de um título de duas linhas se alinha à LINHA, não ao bloco
+
+No cabeçalho do calendário o ano fica em cima e o mês embaixo. Pôr as setas ao
+lado do bloco inteiro (ano + mês) deixou-as **6,2px fora do eixo do nome do
+mês** — flutuando entre as duas linhas, sem pertencer a nenhuma.
+
+A estrutura certa é o bloco em coluna e a fileira `seta — palavra — seta` como
+uma linha própria: aí o `align-items: center` da fileira resolve sozinho.
+
+E a seta fica na **ponta**, não colada na palavra: colada, ela muda de lugar a
+cada troca de mês (MARÇO contra SETEMBRO) e o alvo de clique pula pela tela.
+
+---
+
 ## Logotipo de terceiro: quando embutir o arquivo, quando desenhar
 
 Vale para as marcas das plataformas (`FP_DEST_ARTE`, a fonte única).

@@ -227,6 +227,14 @@ Decisões dele, ditas explicitamente:
 - Emergenciais entram no lote escolhido pelo operador e o resto é rateado pela lógica
   percentual definida por ele
 
+### Botão "novo" e setas: só o ícone (27/08/2026)
+Nada de quadrado azul preenchido. O botão de adicionar é o **+ em azul, sem
+caixa**, no canto superior direito — o mesmo desenho que o celular já usava. As
+setas de mês do calendário seguem a mesma regra: só o chevron, em vermelho.
+
+No cabeçalho do calendário o **ano fica em cima**, miúdo e centrado, e embaixo
+vem `‹ MÊS ›` com as setas nas pontas.
+
 ### Destino é logotipo, não palavra (27/08/2026)
 Na listagem de Projetos e de Edição, no resumo do projeto e no Dashboard, o
 destino aparece como o **logotipo da plataforma** — YouTube, Shorts, TikTok,
