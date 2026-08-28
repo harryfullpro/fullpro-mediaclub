@@ -945,8 +945,9 @@
   .cal-day.today { font-weight: 700; border-color: var(--border-hi); }
   /* A seleção vem DEPOIS de .approved/.blocked/.today de propósito: com a mesma
      especificidade, quem é declarado por último vence. Antes, clicar num dia
-     com agendamento aprovado não mudava nada — o verde cobria o amarelo e o
-     operador não via onde tinha clicado. */
+     com agendamento aprovado não mudava nada — o verde cobria a seleção e o
+     operador não via onde tinha clicado. (Dizia "o amarelo"; a seleção virou
+     azul em 27/08/2026 e o comentário ficou apontando para a cor errada.) */
   .cal-day.selected {
     border-color: var(--azul);
     background: rgba(var(--azul-rgb), .16);
