@@ -5904,6 +5904,31 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    `align-items: baseline` e não center — é a base do rótulo com a do número que
    amarra a leitura; centrando os dois blocos, o número (o elemento mais alto e
    mais pesado) fica com o centro acima do eixo do resto. */
+/* ── configurar metas ─────────────────────────────────────────────────────
+   Uma meta por bloco, separadas por fio — mesmo idioma das listagens. Nome e
+   alvo na primeira linha porque são o que se vem editar; descrição e gráfico
+   embaixo, que é o que se mexe uma vez por ano. */
+/* A LISTA rola, não o modal inteiro: com sete metas o botão "Salvar" caía
+   911px abaixo da dobra (medido), e a ação principal ficava atrás de um
+   scroll que ninguém sabe que existe. */
+#metasCfgLista { max-height: 46vh; overflow-y: auto; }
+.fp-cfg-meta { padding: 12px 0; border-top: 1px solid var(--border); }
+.fp-cfg-meta:first-child { border-top: 0; }
+.fp-cfg-topo { display: flex; gap: 8px; align-items: center; }
+.fp-cfg-baixo { display: flex; gap: 8px; align-items: center; margin-top: 7px; }
+.fp-cfg-rotulo { flex: 1 1 auto; min-width: 0; margin: 0 !important; font-weight: 650; }
+.fp-cfg-detalhe { flex: 1 1 auto; min-width: 0; margin: 0 !important; font-size: 12px !important; }
+/* Alvo com largura fixa e número tabular: com largura automática cada linha
+   punha o campo num lugar diferente e a coluna sumia. */
+.fp-cfg-alvo { flex: 0 0 76px; margin: 0 !important; text-align: right;
+  font-variant-numeric: tabular-nums; font-weight: 700; }
+.fp-cfg-un { flex: 0 0 46px; font-size: 11px; color: var(--text-muted); }
+.fp-cfg-viz { flex: 0 0 168px; }
+@media (max-width: 560px) {
+  .fp-cfg-baixo { flex-wrap: wrap; }
+  .fp-cfg-viz { flex: 1 1 100%; }
+}
+
 .fp-mp-cab { display: flex; align-items: baseline; gap: 14px; }
 .fp-mp-tit { flex: 1 1 auto; min-width: 0; }
 .fp-mp-tit b { display: block; font-size: 13px; font-weight: 700; line-height: 1.25;
@@ -8725,71 +8750,29 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
 </div>
 
 <!-- Modal Configurar Metas -->
+<!-- Configurar metas do mês.
+     Antes este formulário editava mc_performance_goals — "vídeos longos",
+     "shorts", "views totais", "cliques", valor por meta e distribuição de
+     bônus. Nada disso é o que o dash mostra: o dash lê mc_metas_alvo. Ou seja,
+     mudar um número aqui não mudava nada na tela, e não havia erro para ver.
+     Agora os campos SÃO as metas do dash, na mesma ordem. -->
 <div class="modal" id="perfGoalsModal">
-  <div class="modal-content" style="max-width:560px">
+  <div class="modal-content" style="max-width:620px">
     <div class="modal-head">
-      <h3>Configurar metas mensais</h3>
-      <button class="modal-close" onclick="closePerfGoalsModal()">×</button>
+      <h3 id="metasCfgTitulo">Metas do mês</h3>
+      <button class="modal-close" onclick="closePerfGoalsModal()">&times;</button>
     </div>
-    <div class="modal-body">
-      <div class="book-form">
-        <div class="book-row">
-          <div>
-            <label>Vídeos longos (meta)</label>
-            <input type="number" id="goalLongTarget" min="0" placeholder="0"/>
-          </div>
-          <div>
-            <label>Shorts (meta)</label>
-            <input type="number" id="goalShortTarget" min="0" placeholder="0"/>
-          </div>
-        </div>
-        <div class="book-row">
-          <div>
-            <label>Views totais (meta)</label>
-            <input type="number" id="goalViewsTarget" min="0" placeholder="0"/>
-          </div>
-          <div>
-            <label>Cliques pro site (meta)</label>
-            <input type="number" id="goalClicksTarget" min="0" placeholder="0"/>
-          </div>
-        </div>
-        <div class="book-row">
-          <div>
-            <label>Valor por meta atingido (R$)</label>
-            <input type="text" id="goalPoolValue" placeholder="500,00" oninput="maskCurrency(this)"/>
-          </div>
-          <div>
-            <label>Mês</label>
-            <input type="month" id="goalMonth"/>
-          </div>
-        </div>
-        <hr style="border:none;border-top:1px solid var(--border);margin:16px 0"/>
-        <h4 style="font-size:13px;font-weight:600;margin-bottom:12px">Distribuição de bônus</h4>
-        <div class="book-row">
-          <div>
-            <label>Gravador/Gestor (%)</label>
-            <input type="number" id="distGravador" min="0" max="100" placeholder="40"/>
-          </div>
-          <div>
-            <label>Editor (%)</label>
-            <input type="number" id="distEditor" min="0" max="100" placeholder="35"/>
-          </div>
-        </div>
-        <div class="block-field">
-          <label>Mecânico (%)</label>
-          <input type="number" id="distMecanico" min="0" max="100" placeholder="25" style="width:100%;padding:9px 10px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:12px;font-family:inherit;cursor:pointer"/>
-        </div>
+    <div class="fp-user-form">
+      <div id="metasCfgLista"></div>
+      <p class="fp-user-nota" id="metasCfgNota"></p>
+      <div class="fp-user-pe">
+        <button class="action-btn" type="button" onclick="closePerfGoalsModal()">Cancelar</button>
+        <button class="action-btn approve" type="button" id="metasCfgSalvar" onclick="savePerfGoals()">Salvar metas</button>
       </div>
-    </div>
-    <div class="modal-foot">
-      <button class="action-btn" onclick="closePerfGoalsModal()">Cancelar</button>
-      <button class="action-btn approve" onclick="savePerfGoals()">Salvar metas</button>
     </div>
   </div>
 </div>
 
-<!-- Modal Adicionar Post -->
-<!-- Modal Adicionar Post -->
 <div class="modal" id="perfAddPostModal">
   <div class="modal-content" style="max-width:560px">
     <div class="modal-head">
@@ -29635,21 +29618,73 @@ function renderPerfBonuses() {
   }
 }
 
-/* Modal functions */
-function openPerfGoalsModal() {
-  const goals = PERF_GOALS || {};
-  const now = new Date();
-  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+/* ── Configurar as metas do mês [FP-METAS-CFG 31/08/2026] ─────────────────
+   O formulário anterior editava mc_performance_goals — "vídeos longos",
+   "shorts", "views totais", "cliques", valor por meta e distribuição de bônus.
+   O dash lê mc_metas_alvo. Ou seja: dava para digitar, salvar, ver "Metas
+   salvas!" e nada mudar na tela — sem erro nenhum para desconfiar. Não era bug
+   de gravação, era o formulário de outro modelo.
+   Agora os campos SÃO as metas do dash, na ordem do dash, do mês que está
+   selecionado nele.
+   ───────────────────────────────────────────────────────────────────────── */
+const FP_VIZ_ROTULO = {
+  linha: 'Linha acumulada', semanas: 'Barras por semana', calendario: 'Calendário do mês',
+  sequencia: 'Sequência de dias', semanal: 'Ritmo semanal', slots: 'Vagas a preencher',
+  rosca: 'Rosca de progresso',
+};
 
-  document.getElementById('goalLongTarget').value = goals.volume_long_target || '';
-  document.getElementById('goalShortTarget').value = goals.volume_short_target || '';
-  document.getElementById('goalViewsTarget').value = goals.views_target || '';
-  document.getElementById('goalClicksTarget').value = goals.clicks_target || '';
-  document.getElementById('goalPoolValue').value = formatBRL(goals.pool_per_goal || 500);
-  document.getElementById('goalMonth').value = month;
-  document.getElementById('distGravador').value = goals.dist_gravador || 40;
-  document.getElementById('distEditor').value = goals.dist_editor || 35;
-  document.getElementById('distMecanico').value = goals.dist_mecanico || 25;
+function fpMetasCfgLinhaHtml(a, i) {
+  const viz = a.grafico || '';
+  return '<div class="fp-cfg-meta" data-i="' + i + '">'
+    + '<div class="fp-cfg-topo">'
+    +   '<input type="text" class="login-input fp-cfg-rotulo" value="' + escHtml(a.rotulo || '') + '"'
+    +     ' aria-label="Nome da meta" placeholder="Nome da meta"/>'
+    +   '<input type="number" class="login-input fp-cfg-alvo" value="' + (a.alvo || '') + '" min="1" step="1"'
+    +     ' aria-label="Alvo" placeholder="0"/>'
+    +   '<span class="fp-cfg-un">' + (a.modo === 'cadencia' ? 'por dia' : 'no mês') + '</span>'
+    + '</div>'
+    + '<div class="fp-cfg-baixo">'
+    +   '<input type="text" class="login-input fp-cfg-detalhe" value="' + escHtml(a.detalhe || '') + '"'
+    +     ' aria-label="Descrição" placeholder="onde e o que conta"/>'
+    +   '<select class="proj-sort-select fp-cfg-viz" style="margin:0" aria-label="Gráfico">'
+    +     Object.keys(FP_VIZ_ROTULO).map(function (k) {
+            return '<option value="' + k + '"' + (viz === k ? ' selected' : '') + '>' + FP_VIZ_ROTULO[k] + '</option>';
+          }).join('')
+    +   '</select>'
+    + '</div>'
+    + '</div>';
+}
+
+function openPerfGoalsModal() {
+  const mes = METAS_MES || fpMesChave(new Date());
+  document.getElementById('metasCfgTitulo').textContent = 'Metas de ' + fpMesNome(mes);
+
+  const cx = document.getElementById('metasCfgLista');
+  const nota = document.getElementById('metasCfgNota');
+  const salvar = document.getElementById('metasCfgSalvar');
+
+  if (!METAS_ALVOS.length) {
+    /* Mês sem meta nenhuma: em vez de um formulário vazio (que obriga a
+       inventar chave, tipos e modo à mão, que é coisa de banco), oferece copiar
+       o mês anterior — que é o que se faz na prática. */
+    const anterior = METAS_MESES.filter(function (m) { return m < mes; }).pop();
+    cx.innerHTML = '<p class="fp-aviso-sub" style="padding:16px 0">'
+      + escHtml(fpMesNome(mes)) + ' ainda não tem metas.</p>';
+    nota.innerHTML = anterior
+      ? 'Dá para copiar as metas de <b>' + escHtml(fpMesNome(anterior)) + '</b> e ajustar os números depois.'
+      : 'Não há mês anterior para copiar. As metas de um mês novo são criadas no banco (mc_metas_alvo), porque cada uma precisa dizer QUAIS tipos de peça ela conta.';
+    salvar.textContent = anterior ? 'Copiar de ' + fpMesNome(anterior) : 'Salvar metas';
+    salvar.disabled = !anterior;
+    salvar.dataset.copiarDe = anterior || '';
+  } else {
+    cx.innerHTML = METAS_ALVOS.map(fpMetasCfgLinhaHtml).join('');
+    nota.innerHTML = 'O alvo é o que a meta cobra no mês — em <b>Reposts diários</b> ele é por dia. '
+      + 'Criar meta nova ou trocar o que ela conta é no banco: cada meta precisa dizer quais '
+      + '<b>tipos de peça</b> entram, e isso não é número.';
+    salvar.textContent = 'Salvar metas';
+    salvar.disabled = false;
+    salvar.dataset.copiarDe = '';
+  }
 
   document.getElementById('perfGoalsModal').classList.add('show');
 }
@@ -29971,34 +30006,73 @@ function closePerfBonusConfigModal() { document.getElementById('perfBonusConfigM
 
 /* Save functions */
 async function savePerfGoals() {
-  if (getUserRole() !== 'admin') { fpToast('Apenas administradores podem editar metas.', 'info'); return; }
-  const month = document.getElementById('goalMonth').value;
-  const payload = {
-    month,
-    volume_long_target: parseInt(document.getElementById('goalLongTarget').value) || 0,
-    volume_short_target: parseInt(document.getElementById('goalShortTarget').value) || 0,
-    views_target: parseInt(document.getElementById('goalViewsTarget').value) || 0,
-    clicks_target: parseInt(document.getElementById('goalClicksTarget').value) || 0,
-    pool_per_goal: parseCurrency(document.getElementById('goalPoolValue').value),
-    dist_gravador: parseInt(document.getElementById('distGravador').value) || 40,
-    dist_editor: parseInt(document.getElementById('distEditor').value) || 35,
-    dist_mecanico: parseInt(document.getElementById('distMecanico').value) || 25
-  };
+  if (!isUserAdmin()) { fpToast('Só administrador edita metas.', 'info'); return; }
+  const mes = METAS_MES || fpMesChave(new Date());
+  const btn = document.getElementById('metasCfgSalvar');
+  const copiarDe = btn.dataset.copiarDe || '';
 
-  /* `upsert` por MÊS, e não `update` pelo id da linha carregada. O que havia
-     antes atualizava a linha do mês corrente com o `month` novo dentro do
-     payload: escolher setembro no campo não criava linha nenhuma — RENOMEAVA a
-     de agosto, e as metas de agosto desapareciam. */
-  const result = await sb.from('mc_performance_goals')
-    .upsert(payload, { onConflict: 'month' }).select().single();
+  btn.disabled = true;
+  const antes = btn.textContent;
+  btn.textContent = 'Salvando...';
 
-  if (result.error) { fpToast('Erro ao salvar: ' + result.error.message, 'erro'); return; }
-  if (result.data) PERF_GOALS = result.data;
-  else Object.assign(PERF_GOALS, payload);
+  try {
+    if (copiarDe) {
+      /* Copiar o mês anterior: traz chave, modo, tipos, ordem e gráfico — tudo
+         o que não é número — e só troca o mês. */
+      const { data: base, error: e1 } = await sb.from('mc_metas_alvo')
+        .select('chave,rotulo,detalhe,alvo,modo,tipos,ordem,grafico').eq('mes', copiarDe);
+      if (e1) throw e1;
+      if (!base || !base.length) throw new Error('o mês de origem está vazio');
+      const { error: e2 } = await sb.from('mc_metas_alvo')
+        .upsert(base.map(function (b) { return Object.assign({}, b, { mes: mes }); }),
+                { onConflict: 'mes,chave' });
+      if (e2) throw e2;
+    } else {
+      const linhas = [...document.querySelectorAll('#metasCfgLista .fp-cfg-meta')];
+      const payload = [];
+      for (const el of linhas) {
+        const a = METAS_ALVOS[Number(el.dataset.i)];
+        if (!a) continue;
+        const alvo = parseInt(el.querySelector('.fp-cfg-alvo').value, 10);
+        /* O banco recusa alvo <= 0 (check constraint). Barrar aqui é a
+           diferença entre "digite um número maior que zero" e um erro cru do
+           Postgres na cara do operador. */
+        if (!(alvo > 0)) {
+          fpToast('“' + (a.rotulo || 'meta') + '” precisa de um alvo maior que zero.', 'info');
+          btn.disabled = false; btn.textContent = antes;
+          return;
+        }
+        payload.push({
+          mes: mes,
+          chave: a.chave,
+          rotulo: el.querySelector('.fp-cfg-rotulo').value.trim() || a.rotulo,
+          detalhe: el.querySelector('.fp-cfg-detalhe').value.trim() || null,
+          alvo: alvo,
+          modo: a.modo,
+          tipos: a.tipos,
+          ordem: a.ordem,
+          grafico: el.querySelector('.fp-cfg-viz').value || null,
+        });
+      }
+      if (!payload.length) throw new Error('nada para salvar');
+      /* upsert por (mes,chave), que é o índice único da tabela — e não update
+         por id, para o mesmo formulário servir para criar o mês que falta. */
+      const { error } = await sb.from('mc_metas_alvo').upsert(payload, { onConflict: 'mes,chave' });
+      if (error) throw error;
+    }
 
-  closePerfGoalsModal();
-  renderPerformance();
-  fpToast('Metas salvas!', 'ok');
+    /* Recarregar do banco, não confiar no que foi digitado: se uma policy
+       recusar em silêncio, é aqui que aparece. */
+    await fpMetasCarregar(mes, true);
+    renderPerfMetas();
+    closePerfGoalsModal();
+    fpToast('Metas de ' + fpMesNome(mes) + ' salvas.', 'ok');
+  } catch (e) {
+    fpToast('Não deu para salvar: ' + ((e && e.message) || e), 'erro');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = antes;
+  }
 }
 
 async function savePerfPost() {

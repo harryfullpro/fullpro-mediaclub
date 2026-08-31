@@ -103,8 +103,53 @@ function tipoYouTube(titulo: string, seg: number | null): string {
   return 'longo';
 }
 
+/* Paginação da Graph API. `paging.next` já vem com o token dentro, então é só
+   seguir. O teto de páginas não é medo de loop: é conta de cota — a conta tem
+   153 mídias, ou 4 páginas de 50. Vinte páginas é folga de 6x e ainda avisa
+   quando bater, em vez de cortar em silêncio. */
+async function graphTudo(url0: string, maxPag: number, rotulo: string, erros: string[]) {
+  const itens: any[] = [];
+  let url = url0, pag = 0;
+  while (url && pag < maxPag) {
+    const r = await fetch(url);
+    const j = await r.json().catch(() => ({}));
+    if (j?.error) { erros.push(rotulo + ': ' + j.error.message); break; }
+    for (const it of (j.data || [])) itens.push(it);
+    url = j.paging?.next || '';
+    pag++;
+  }
+  if (url) erros.push(rotulo + ': parei em ' + maxPag + ' páginas — há mais para trás');
+  return itens;
+}
+
+/* A miniatura do story, copiada para o nosso bucket.
+   POR QUE COPIAR: `media_url` e `permalink` de story morrem com o story, em 24
+   horas. O dono aceitou que a classificação repost/próprio seja visual — e para
+   ser visual a imagem tem que existir na hora de olhar, não na hora de coletar.
+   Guardar a URL da Meta seria guardar um link quebrado.
+   `jaTem` evita rebaixar a mesma imagem de hora em hora: story vive 24h, então
+   sem isso seriam ~24 downloads do mesmo arquivo. */
+async function thumbDoStory(sb: any, m: any, jaTem: Set<string>, erros: string[]) {
+  if (jaTem.has(m.id)) return null;
+  const url = m.thumbnail_url || m.media_url;
+  if (!url) return null;
+  const caminho = m.id + '.jpg';
+  try {
+    const r = await fetch(url);
+    if (!r.ok) { erros.push('story ' + m.id + ': imagem não baixou (' + r.status + ')'); return null; }
+    const bin = new Uint8Array(await r.arrayBuffer());
+    const { error } = await sb.storage.from('stories')
+      .upload(caminho, bin, { contentType: 'image/jpeg', upsert: true });
+    if (error) { erros.push('story ' + m.id + ': ' + error.message); return null; }
+    return caminho;
+  } catch (e) {
+    erros.push('story ' + m.id + ': ' + (e instanceof Error ? e.message : 'falhou'));
+    return null;
+  }
+}
+
 /* ---------- Instagram ---------- */
-async function instagram(IG_TOKEN: string, erros: string[]) {
+async function instagram(sb: any, IG_TOKEN: string, erros: string[]) {
   const pecas: any[] = [];
   if (!IG_TOKEN) { erros.push('instagram: sem token — conecte em Integrações'); return pecas; }
 
@@ -118,22 +163,25 @@ async function instagram(IG_TOKEN: string, erros: string[]) {
   const tok = pagina.access_token;
   const igId = pagina.instagram_business_account.id;
 
-  const guardar = (m: any, tipo: string, plataforma = 'instagram') => {
+  const guardar = (m: any, tipo: string, extra?: Record<string, unknown>) => {
     pecas.push({
-      fonte: 'instagram', externo_id: m.id, tipo, plataforma,
+      fonte: 'instagram', externo_id: m.id, tipo, plataforma: 'instagram',
       titulo: (m.caption || '').slice(0, 300) || null,
       link: m.permalink || null,
       publicado_em: m.timestamp,
       duracao_seg: null,
       metricas: { likes: m.like_count ?? null, comments: m.comments_count ?? null },
-      bruto: { media_type: m.media_type, media_product_type: m.media_product_type },
+      bruto: Object.assign({ media_type: m.media_type, media_product_type: m.media_product_type }, extra || {}),
     });
   };
 
-  const rm = await fetch(`${GRAPH}/${igId}/media?fields=id,permalink,caption,timestamp,media_type,media_product_type,like_count,comments_count&limit=50&access_token=${tok}`);
-  const midias = await rm.json();
-  if (midias.error) erros.push('instagram/media: ' + midias.error.message);
-  for (const m of (midias.data || [])) {
+  /* TUDO, não as 50 mais recentes. O dono pediu "todos os vídeos registrados",
+     e o corte em 50 deixava fora o que veio antes — inclusive meses fechados,
+     que é o que dá para comparar. */
+  const midias = await graphTudo(
+    `${GRAPH}/${igId}/media?fields=id,permalink,caption,timestamp,media_type,media_product_type,like_count,comments_count&limit=50&access_token=${tok}`,
+    20, 'instagram/media', erros);
+  for (const m of midias) {
     /* CAROUSEL_ALBUM antes de REELS: um carrossel nunca é REELS, mas a ordem
        deixa a intenção explícita para quem ler depois. */
     if (m.media_type === 'CAROUSEL_ALBUM') guardar(m, 'carrossel');
@@ -141,11 +189,43 @@ async function instagram(IG_TOKEN: string, erros: string[]) {
     else guardar(m, 'outro');
   }
 
-  /* Só as últimas 24h existem aqui. É por isso que esta função é agendada. */
-  const rs = await fetch(`${GRAPH}/${igId}/stories?fields=id,permalink,timestamp,media_type,media_product_type&access_token=${tok}`);
-  const stories = await rs.json();
-  if (stories.error) erros.push('instagram/stories: ' + stories.error.message);
-  for (const m of (stories.data || [])) guardar(m, 'story');
+  /* Stories: só as últimas 24h existem aqui, e é por isso que esta função é
+     agendada de hora em hora. Repost ou próprio, TODOS entram — a classificação
+     é visual e vem depois, no painel. */
+  const jaTem = new Set<string>();
+  try {
+    const { data: comThumb } = await sb.from('mc_pecas')
+      .select('externo_id, bruto').eq('fonte', 'instagram').eq('tipo', 'story');
+    for (const r of (comThumb || [])) if (r?.bruto?.thumb) jaTem.add(r.externo_id);
+  } catch (e) {
+    /* Não saber quais já têm miniatura só custa download repetido — não pode
+       derrubar a coleta dos stories, que é a parte que não dá para refazer. */
+    erros.push('instagram/stories: não deu para ler as miniaturas já guardadas');
+  }
+
+  /* media_url/thumbnail_url na borda /stories: se a Meta recusar os campos, a
+     chamada inteira volta com erro — então há um plano B sem eles, para não
+     perder o story só porque a miniatura não veio. */
+  const campos = 'id,permalink,timestamp,media_type,media_product_type,media_url,thumbnail_url';
+  /* Erros em lista LOCAL: `erros` é compartilhado com o YouTube e o TikTok, que
+     rodam em paralelo — mexer em índice dele apagaria erro de outro coletor. */
+  const errosA: string[] = [];
+  let stories = await graphTudo(`${GRAPH}/${igId}/stories?fields=${campos}&access_token=${tok}`, 5, 'instagram/stories', errosA);
+  if (stories.length) {
+    erros.push(...errosA);
+  } else {
+    const errosB: string[] = [];
+    stories = await graphTudo(`${GRAPH}/${igId}/stories?fields=id,permalink,timestamp,media_type,media_product_type&access_token=${tok}`,
+      5, 'instagram/stories', errosB);
+    /* Se o plano B trouxe story, o "não" do plano A era só sobre os campos de
+       imagem e virou ruído. Se nem o B trouxe, os dois erros importam. */
+    if (!stories.length) erros.push(...errosA, ...errosB);
+  }
+
+  for (const m of stories) {
+    const caminho = await thumbDoStory(sb, m, jaTem, erros);
+    guardar(m, 'story', caminho ? { thumb: caminho } : {});
+  }
 
   return pecas;
 }
@@ -158,19 +238,36 @@ async function youtube(YT_KEY: string, erros: string[]) {
   /* A playlist de uploads do canal é `UU` + o id do canal sem o `UC`. Vem
      assim da própria API; não é truque. */
   const uploads = 'UU' + YT_CANAL.replace(/^UC/, '');
-  const rp = await fetch(`${YT}/playlistItems?part=contentDetails&playlistId=${uploads}&maxResults=50&key=${YT_KEY}`);
-  const lista = await rp.json();
-  if (lista.error) { erros.push('youtube: ' + (lista.error.message || '')); return pecas; }
-  const ids = (lista.items || []).map((i: any) => i.contentDetails?.videoId).filter(Boolean);
+
+  /* O canal inteiro, não a primeira página. playlistItems custa 1 unidade por
+     página de 50 — com 67 vídeos são 2 páginas, 2 unidades. Barato o suficiente
+     para rodar de hora em hora e ainda sobrar cota (o teto é 10.000/dia). */
+  const ids: string[] = [];
+  let token = '', pag = 0;
+  do {
+    const u = `${YT}/playlistItems?part=contentDetails&playlistId=${uploads}&maxResults=50&key=${YT_KEY}`
+      + (token ? '&pageToken=' + token : '');
+    const j = await (await fetch(u)).json().catch(() => ({}));
+    if (j?.error) { erros.push('youtube: ' + (j.error.message || '')); break; }
+    for (const i of (j.items || [])) if (i.contentDetails?.videoId) ids.push(i.contentDetails.videoId);
+    token = j.nextPageToken || '';
+    pag++;
+  } while (token && pag < 20);
+  if (token) erros.push('youtube: parei em 20 páginas de uploads');
   if (!ids.length) return pecas;
 
-  /* Um pedido só para os 50: `videos` aceita ids em lote e é isso que mantém a
-     cota baixa o suficiente para rodar de hora em hora. */
-  const rv = await fetch(`${YT}/videos?part=snippet,contentDetails,statistics&id=${ids.join(',')}&key=${YT_KEY}`);
-  const vids = await rv.json();
-  if (vids.error) { erros.push('youtube/videos: ' + (vids.error.message || '')); return pecas; }
+  /* `videos` aceita 50 ids por pedido e cobra a mesma unidade que cobraria por
+     um id sozinho — daí o lote. */
+  const itens: any[] = [];
+  for (let i = 0; i < ids.length; i += 50) {
+    const lote = ids.slice(i, i + 50);
+    const rv = await fetch(`${YT}/videos?part=snippet,contentDetails,statistics&id=${lote.join(',')}&key=${YT_KEY}`);
+    const vids = await rv.json().catch(() => ({}));
+    if (vids?.error) { erros.push('youtube/videos: ' + (vids.error.message || '')); break; }
+    for (const v of (vids.items || [])) itens.push(v);
+  }
 
-  for (const v of (vids.items || [])) {
+  for (const v of itens) {
     const seg = duracaoSeg(v.contentDetails?.duration);
     const titulo = v.snippet?.title || '';
     pecas.push({
@@ -200,14 +297,29 @@ async function tiktok(sb: any, erros: string[]) {
     erros.push('tiktok: token vencido em ' + String(integ.expires_at).slice(0, 10) + ' — reconectar em Integrações');
     return pecas;
   }
-  const r = await fetch('https://open.tiktokapis.com/v2/video/list/?fields=id,title,create_time,share_url,view_count,like_count,comment_count', {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + integ.access_token, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ max_count: 20 }),
-  });
-  const d = await r.json();
-  if (d.error && d.error.code !== 'ok') { erros.push('tiktok: ' + (d.error.message || d.error.code)); return pecas; }
-  for (const v of (d.data?.videos || [])) {
+  /* 20 é o máximo por pedido; o resto vem seguindo o cursor. Sem isto o TikTok
+     só entregava os 20 últimos e vídeo de mês fechado nunca aparecia. */
+  const videos: any[] = [];
+  let cursor: number | undefined;
+  let volta = 0;
+  while (volta < 10) {
+    const corpo: Record<string, unknown> = { max_count: 20 };
+    if (cursor) corpo.cursor = cursor;
+    const r = await fetch('https://open.tiktokapis.com/v2/video/list/?fields=id,title,create_time,share_url,view_count,like_count,comment_count', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + integ.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(corpo),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (d?.error && d.error.code !== 'ok') { erros.push('tiktok: ' + (d.error.message || d.error.code)); break; }
+    for (const v of (d?.data?.videos || [])) videos.push(v);
+    if (!d?.data?.has_more) break;
+    cursor = d.data.cursor;
+    volta++;
+  }
+  if (volta >= 10) erros.push('tiktok: parei em 10 páginas');
+
+  for (const v of videos) {
     pecas.push({
       fonte: 'tiktok', externo_id: String(v.id), tipo: 'short', plataforma: 'tiktok',
       titulo: (v.title || '').slice(0, 300), link: v.share_url || null,
@@ -285,7 +397,7 @@ Deno.serve(async (req: Request) => {
     credencial(sb, 'youtube', YT_KEY_ENV),
   ]);
   const lotes = await Promise.all([
-    instagram(igToken, erros).catch((e) => { erros.push('instagram: ' + e.message); return []; }),
+    instagram(sb, igToken, erros).catch((e) => { erros.push('instagram: ' + e.message); return []; }),
     youtube(ytChave, erros).catch((e) => { erros.push('youtube: ' + e.message); return []; }),
     tiktok(sb, erros).catch((e) => { erros.push('tiktok: ' + e.message); return []; }),
     clips(sb, erros).catch((e) => { erros.push('clips: ' + e.message); return []; }),
