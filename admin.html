@@ -5904,6 +5904,57 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    `align-items: baseline` e não center — é a base do rótulo com a do número que
    amarra a leitura; centrando os dois blocos, o número (o elemento mais alto e
    mais pesado) fica com o centro acima do eixo do resto. */
+/* ── triagem: próprio ou repost ───────────────────────────────────────────
+   Story quase nunca tem legenda: decidir "próprio ou repost" por texto é
+   impossível, e é por isso que aqui o que manda é a IMAGEM. Cards no formato do
+   story (9:16), grandes o suficiente para reconhecer de relance. */
+.fp-tri-faixa { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  padding: 14px 0 8px; border-top: 1px solid var(--border); }
+.fp-tri-grade + .fp-tri-lista .fp-tri-faixa { margin-top: 4px; }
+.fp-tri-faixa b { font-family: 'FullPro Sans', sans-serif; font-weight: 800;
+  text-transform: uppercase; font-size: 12px; letter-spacing: .09em; color: var(--text); }
+.fp-tri-faixa span { font-size: 11.5px; color: var(--text-muted); }
+
+.fp-tri-cards { display: grid; gap: 10px; max-height: 44vh; overflow-y: auto; padding: 2px 0 4px;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); }
+.fp-tri-card { min-width: 0; }
+.fp-tri-img { position: relative; aspect-ratio: 9 / 16; border-radius: 9px; overflow: hidden;
+  background: var(--bg-elev); display: flex; align-items: center; justify-content: center; }
+.fp-tri-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fp-tri-semimg { font-size: 10.5px; color: var(--text-muted); text-align: center; padding: 0 6px; }
+/* O dia por cima da imagem, com sombra em vez de tarja: a tarja tampava justo o
+   canto onde o story costuma ter o que identifica ele. */
+.fp-tri-dia { position: absolute; left: 6px; bottom: 6px; font-size: 10px; font-weight: 700;
+  color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.9); letter-spacing: .03em; }
+/* Sem imagem, o fundo é claro: branco com sombra fica ilegível e brigava com o
+   "sem imagem" no meio do card. */
+.fp-tri-card.sem-img .fp-tri-dia { color: var(--text-dim); text-shadow: none; }
+.fp-tri-card.sem-img .fp-tri-semimg { margin-bottom: 12px; }
+/* Ainda não olhado: contorno, não cor de alarme. É trabalho pendente, não erro. */
+.fp-tri-card.novo .fp-tri-img { box-shadow: 0 0 0 2px var(--azul); }
+.fp-tri-card.repost .fp-tri-img { box-shadow: 0 0 0 2px var(--warning); }
+
+.fp-tri-acoes { display: flex; gap: 4px; margin-top: 5px; }
+.fp-tri-b { flex: 1 1 0; min-width: 0; border: 1px solid var(--border); background: transparent;
+  color: var(--text-dim); border-radius: 7px; padding: 5px 2px; font: inherit; font-size: 10.5px;
+  font-weight: 700; cursor: pointer; transition: all .12s ease; }
+.fp-tri-b:hover { color: var(--text); border-color: var(--text-muted); }
+.fp-tri-b.on { background: var(--success); border-color: var(--success); color: #fff; }
+.fp-tri-b.on.rep { background: var(--warning); border-color: var(--warning); }
+
+/* As outras peças: linha compacta, porque aí a legenda resolve. */
+.fp-tri-lista { max-height: 34vh; overflow-y: auto; }
+.fp-tri-lin { display: flex; align-items: center; gap: 9px; padding: 8px 0;
+  border-top: 1px solid var(--border); font-size: 12px; cursor: pointer; }
+.fp-tri-lin:first-of-type { border-top: 0; }
+.fp-tri-lin.on { color: var(--warning); }
+.fp-tri-lin input { accent-color: var(--warning); flex: 0 0 auto; }
+.fp-tri-l-dia { flex: 0 0 52px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.fp-tri-l-tipo { flex: 0 0 88px; font-size: 11px; color: var(--text-dim); }
+.fp-tri-l-tit { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; }
+.fp-tri-lin a { flex: 0 0 auto; font-size: 11px; font-weight: 700; color: var(--azul); }
+
 /* ── configurar metas ─────────────────────────────────────────────────────
    Uma meta por bloco, separadas por fio — mesmo idioma das listagens. Nome e
    alvo na primeira linha porque são o que se vem editar; descrição e gráfico
@@ -7674,19 +7725,24 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
       </div>
       <div id="perfMetasContent"></div>
 
-      <!-- Marcar repost. Nenhuma API diz se uma peça é recompartilhamento, e é
-           por isso que esta é a única meta que passa pela mão de alguém. Mas o
-           trabalho é RECONHECER, não registrar: a lista já vem pronta do
-           coletor e o operador só aponta quais foram repost. -->
+      <!-- Triagem: próprio ou repost.
+           Nenhuma API diz se uma peça é recompartilhamento — nem o Instagram
+           nem o TikTok marcam isso. O dono aceitou que a verificação seja
+           VISUAL, e é por isso que o coletor copia a miniatura de cada story
+           para o nosso bucket na hora que o encontra: a URL da Meta morre com o
+           story em 24h, então guardar a URL seria guardar link quebrado.
+           Aqui os stories aparecem como imagem, em grade, e cada um se resolve
+           em um toque. O resto das peças fica na lista compacta embaixo. -->
       <div class="modal" id="repostModal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width:760px">
           <div class="modal-head">
-            <h3>Marcar reposts</h3>
+            <h3>Próprio ou repost</h3>
             <button class="modal-close" onclick="fpRepostFechar()" aria-label="Fechar">&times;</button>
           </div>
           <div class="fp-user-form">
-            <p class="fp-user-nota">Nem o Instagram nem o TikTok dizem se uma peça é repost. Marque aqui as que foram — a peça marcada <b>sai da meta de origem</b> e entra na de reposts, que é o que você pediu para os stories.</p>
-            <div id="repostLista" class="fp-repost-lista"></div>
+            <p class="fp-user-nota">Peça marcada como repost <b>sai da meta de origem</b> e passa a contar em Reposts diários. Story sem miniatura é story que já saiu do ar antes da primeira coleta — a partir de agora a imagem fica guardada.</p>
+            <div id="repostStories" class="fp-tri-grade"></div>
+            <div id="repostLista" class="fp-tri-lista"></div>
             <div class="fp-user-pe">
               <button class="action-btn" type="button" onclick="fpRepostFechar()">Fechar</button>
             </div>
@@ -27892,7 +27948,7 @@ async function fpMetasCarregar(mes, forcar) {
     try {
       const [ra, rp, rm] = await Promise.all([
         sb.from('mc_metas_alvo').select('*').eq('mes', alvo).order('ordem'),
-        sb.from('mc_pecas').select('id,tipo,titulo,link,plataforma,publicado_em,duracao_seg,metricas,eh_repost,sku,atualizado_em')
+        sb.from('mc_pecas').select('id,tipo,titulo,link,plataforma,publicado_em,duracao_seg,metricas,eh_repost,sku,atualizado_em,bruto,classificado_em')
           .gte('publicado_em', de).lt('publicado_em', ate).order('publicado_em', { ascending: true }),
         sb.from('mc_metas_alvo').select('mes'),
       ]);
@@ -28625,12 +28681,21 @@ function renderPerfMetas() {
 /* A lista do mês, do mais novo para o mais velho, com o interruptor de repost.
    Story primeiro porque é onde o repost mora na prática — mas tudo aparece:
    um reels recompartilhado também é repost. */
+/* ── Triagem: próprio ou repost [FP-TRIAGEM 31/08/2026] ───────────────────
+   Nenhuma API diz se uma peça é recompartilhamento. O dono aceitou que a
+   verificação seja VISUAL — e para ser visual a imagem tem que estar aqui, o
+   que só funciona porque o coletor copia a miniatura de cada story para o
+   bucket `stories` na hora que o encontra (a URL da Meta morre em 24h).
+   O bucket é privado: o que a tela usa é signed URL, pedida em lote.
+   ───────────────────────────────────────────────────────────────────────── */
+let _triAssinadas = {};   /* caminho -> url assinada, por sessão de modal */
+
 function fpRepostAbrir() {
-  const cx = document.getElementById('repostLista');
   const m = document.getElementById('repostModal');
-  if (!cx || !m) return;
+  if (!m) return;
   fpRepostPintar();
   m.classList.add('show');
+  fpTriAssinar();
 }
 function fpRepostFechar() {
   const m = document.getElementById('repostModal');
@@ -28639,40 +28704,103 @@ function fpRepostFechar() {
      perdeu peça e a de repost ganhou dia. */
   renderPerfMetas();
 }
-function fpRepostPintar() {
-  const cx = document.getElementById('repostLista');
-  if (!cx) return;
-  const lista = METAS_PECAS.slice().sort((a, b) => String(b.publicado_em).localeCompare(String(a.publicado_em)));
-  if (!lista.length) {
-    cx.innerHTML = '<p class="fp-aviso-sub" style="padding:14px 0">Nenhuma peça neste mês ainda.</p>';
-    return;
+
+/* Uma chamada para todas as miniaturas, não uma por card. */
+async function fpTriAssinar() {
+  const faltam = METAS_PECAS
+    .map(function (p) { return p.bruto && p.bruto.thumb; })
+    .filter(function (c) { return c && !_triAssinadas[c]; });
+  if (!faltam.length) return;
+  try {
+    const { data, error } = await sb.storage.from('stories').createSignedUrls(faltam, 3600);
+    if (error) throw error;
+    (data || []).forEach(function (x) { if (x.path && x.signedUrl) _triAssinadas[x.path] = x.signedUrl; });
+    fpRepostPintar();
+  } catch (e) {
+    console.warn('[triagem] não deu para assinar as miniaturas:', e && e.message);
   }
-  const dia = p => new Date(p.publicado_em).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-  cx.innerHTML = lista.map(p =>
-    '<label class="fp-repost-lin' + (p.eh_repost ? ' on' : '') + '">'
-    + '<input type="checkbox"' + (p.eh_repost ? ' checked' : '')
-    + ' onchange="fpRepostMarcar(\'' + fpJs(p.id) + '\', this.checked)">'
-    + '<span class="fp-repost-dia">' + escHtml(dia(p)) + '</span>'
-    + '<span class="fp-repost-tipo">' + escHtml(p.tipo) + '</span>'
-    + '<span class="fp-repost-tit">' + escHtml(p.titulo || '(sem legenda)') + '</span>'
-    + (p.link ? '<a href="' + escHtml(p.link) + '" target="_blank" rel="noopener noreferrer"'
-        + ' onclick="event.stopPropagation()" data-tip="Abrir a peça">ver</a>' : '')
-    + '</label>').join('');
 }
+
+function fpTriDia(p) {
+  return new Date(p.publicado_em).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+}
+
+function fpTriCardHtml(p) {
+  const cam = p.bruto && p.bruto.thumb;
+  const url = cam ? _triAssinadas[cam] : null;
+  const naoOlhado = !p.classificado_em;
+  return '<div class="fp-tri-card' + (p.eh_repost ? ' repost' : '') + (naoOlhado ? ' novo' : '')
+    + (url ? '' : ' sem-img') + '">'
+    + '<div class="fp-tri-img">'
+    +   (url ? '<img src="' + escHtml(url) + '" alt="story de ' + escHtml(fpTriDia(p)) + '" loading="lazy"/>'
+           : '<span class="fp-tri-semimg">' + (cam ? 'carregando' : 'sem imagem') + '</span>')
+    +   '<span class="fp-tri-dia">' + escHtml(fpTriDia(p)) + '</span>'
+    + '</div>'
+    + '<div class="fp-tri-acoes">'
+    +   '<button type="button" class="fp-tri-b' + (p.classificado_em && !p.eh_repost ? ' on' : '') + '"'
+    +     ' onclick="fpRepostMarcar(\'' + fpJs(p.id) + '\', false)">próprio</button>'
+    +   '<button type="button" class="fp-tri-b' + (p.eh_repost ? ' on rep' : '') + '"'
+    +     ' onclick="fpRepostMarcar(\'' + fpJs(p.id) + '\', true)">repost</button>'
+    + '</div>'
+    + '</div>';
+}
+
+function fpRepostPintar() {
+  const grade = document.getElementById('repostStories');
+  const cx = document.getElementById('repostLista');
+  if (!cx || !grade) return;
+
+  const recente = function (a, b) { return String(b.publicado_em).localeCompare(String(a.publicado_em)); };
+  const stories = METAS_PECAS.filter(function (p) { return p.tipo === 'story'; }).sort(recente);
+  const resto = METAS_PECAS.filter(function (p) { return p.tipo !== 'story'; }).sort(recente);
+
+  /* Stories primeiro e em imagem: é o caso que o dono descreveu, e é o único
+     em que a legenda não ajuda a decidir (story quase nunca tem texto). */
+  const semOlhar = stories.filter(function (p) { return !p.classificado_em; }).length;
+  grade.innerHTML = stories.length
+    ? '<div class="fp-tri-faixa"><b>Stories</b><span>' + stories.length
+      + (stories.length === 1 ? ' story' : ' stories')
+      + (semOlhar ? ' · ' + semOlhar + ' sem olhar' : ' · todos vistos') + '</span></div>'
+      + '<div class="fp-tri-cards">' + stories.map(fpTriCardHtml).join('') + '</div>'
+    : '';
+
+  cx.innerHTML = resto.length
+    ? '<div class="fp-tri-faixa"><b>Outras peças</b><span>vídeos, carrosséis e clips</span></div>'
+      + resto.map(function (p) {
+          return '<label class="fp-tri-lin' + (p.eh_repost ? ' on' : '') + '">'
+            + '<input type="checkbox"' + (p.eh_repost ? ' checked' : '')
+            + ' onchange="fpRepostMarcar(\'' + fpJs(p.id) + '\', this.checked)">'
+            + '<span class="fp-tri-l-dia">' + escHtml(fpTriDia(p)) + '</span>'
+            + '<span class="fp-tri-l-tipo">' + escHtml(p.tipo) + '</span>'
+            + '<span class="fp-tri-l-tit">' + escHtml(p.titulo || '(sem legenda)') + '</span>'
+            + (p.link ? '<a href="' + escHtml(p.link) + '" target="_blank" rel="noopener noreferrer"'
+                + ' onclick="event.stopPropagation()">ver</a>' : '')
+            + '</label>';
+        }).join('')
+    : (stories.length ? '' : '<p class="fp-aviso-sub" style="padding:14px 0">Nenhuma peça neste mês ainda.</p>');
+}
+
 async function fpRepostMarcar(id, valor) {
-  const p = METAS_PECAS.find(x => x.id === id);
+  const p = METAS_PECAS.find(function (x) { return x.id === id; });
   if (!p) return;
-  const antes = p.eh_repost;
-  p.eh_repost = !!valor;                       // pinta antes de esperar a rede
+  const antes = { eh_repost: p.eh_repost, classificado_em: p.classificado_em };
+  p.eh_repost = !!valor;
+  /* Registrar QUE alguém olhou, e não só o que ele decidiu: sem isto "não é
+     repost" e "ninguém conferiu ainda" são o mesmo false no banco, e a tela não
+     consegue dizer quantos stories faltam. */
+  p.classificado_em = new Date().toISOString();
   fpRepostPintar();
-  const patch = {
+  const { error } = await sb.from('mc_pecas').update({
     eh_repost: !!valor,
     repost_por: valor && CURRENT_USER ? CURRENT_USER.id : null,
     repost_em: valor ? new Date().toISOString() : null,
-  };
-  const { error } = await sb.from('mc_pecas').update(patch).eq('id', id);
+    classificado_em: p.classificado_em,
+    classificado_por: CURRENT_USER ? CURRENT_USER.id : null,
+  }).eq('id', id);
   if (error) {
-    p.eh_repost = antes; fpRepostPintar();
+    p.eh_repost = antes.eh_repost;
+    p.classificado_em = antes.classificado_em;
+    fpRepostPintar();
     fpToast('Não deu para marcar: ' + error.message, 'erro');
   }
 }

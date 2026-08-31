@@ -1,5 +1,58 @@
 # Diário
 
+## 31/08/2026 · Mapeamento automático: tudo que foi publicado, e story com cara
+
+> *"preciso que todos os vídeos estejam registrados no nosso painel de metas,
+> assim como reconhecer todos os stories do instagram, seja ele repost ou storie
+> próprio, nem que a verificação disso precise ser visual"*
+
+**"Todos" era mentira.** As três fontes cortavam no primeiro lote — 50 mídias no
+Instagram, 50 vídeos no YouTube, 20 no TikTok — e o que veio antes simplesmente
+não existia no painel, **em silêncio**. Agora as três paginam até o fim, com teto
+e com AVISO quando o teto é atingido: cortar calado é o que fazia parecer que
+estava tudo lá. Resultado medido na primeira rodada: **152 peças** (eram 121) e
+histórico de maio/2025 até agora.
+
+**Story precisa de imagem, e imagem de story morre em 24h.** `media_url` e
+`permalink` de story expiram junto com o story. Guardar a URL seria guardar um
+link quebrado — e a verificação que ele aceitou é justamente VISUAL. Então o
+coletor copia a miniatura para o bucket `stories` (privado; a tela lê por signed
+URL) na hora que encontra o story. Já funcionou: a primeira miniatura entrou na
+rodada de teste. Story que saiu do ar antes da primeira coleta não tem como ter
+imagem, e o card diz isso em vez de mostrar um quadrado quebrado.
+
+**"Não é repost" e "ninguém olhou" eram o mesmo `false`.** Entrou
+`classificado_em`: agora a tela sabe dizer *"6 stories · 4 sem olhar"*. O número
+da meta continua andando (o caso comum é ser próprio mesmo), mas o trabalho
+pendente para de ser invisível.
+
+A triagem virou **grade de cards no formato do story**, com "próprio" e "repost"
+em um toque. Contorno azul = ninguém olhou; âmbar = marcado como repost. As
+outras peças (vídeo, carrossel, clip) seguem na lista compacta, porque ali a
+legenda resolve — story quase nunca tem texto, e era por isso que a lista não
+servia para eles.
+
+### O painel de configurar metas editava outra tabela
+
+> *"e parece que não ta funcionando também, coloquei valores diferentes nisso ai
+> e não atualizou"*
+
+Não era bug de gravação: o formulário escrevia em `mc_performance_goals` —
+"vídeos longos", "shorts", "views totais", "cliques", valor por meta e
+distribuição de bônus — e o dash lê `mc_metas_alvo`. Dava para digitar, salvar,
+ver *"Metas salvas!"* e nada mudar, **sem erro nenhum para desconfiar**.
+
+Agora os campos SÃO as sete metas do dash, na ordem do dash: nome, alvo ("no mês"
+ou "por dia" em cadência), descrição e qual gráfico a meta usa. O valor por meta
+e a distribuição de bônus saíram, como ele já tinha pedido. Mês sem meta oferece
+**copiar o mês anterior**, em vez de um formulário vazio que obrigaria a inventar
+chave, modo e tipos à mão. E a lista rola com o botão Salvar fixo: com sete metas
+ele caía 911px abaixo da dobra.
+
+De passagem, um buraco: a policy de `mc_metas_alvo` era `FOR ALL USING (true)` —
+qualquer usuário logado podia reescrever ou apagar as metas da equipe. Agora ler
+é de operador e escrever é de admin.
+
 ## 31/08/2026 · O coletor passou a rodar sozinho, de hora em hora
 
 > *"quero que o site busque automaticamente de hora em hora os posts nas redes,
