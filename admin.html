@@ -443,8 +443,11 @@
     font-weight: 700;
   }
   .nav-item.active .count { background: var(--primary); color: #fff; }
-  /* Emergenciais: numero solto, sem pilula. A cor e o aviso — cinza quando
-     ninguem esta olhando, vermelho quando o cursor chega no item. */
+  /* Quem espera resposta: numero solto, sem pilula. A cor e o aviso — cinza
+     quando ninguem esta olhando, vermelho quando o cursor chega no item.
+     Vale para o emergencial da Producao e para a solicitacao pendente da
+     Agenda: e o mesmo recado ("tem coisa parada aqui"), entao e o mesmo
+     desenho. A pilula cinza que a Agenda tinha dizia so "existe um numero". */
   .nav-item .count.urgente {
     background: none; padding: 0; border-radius: 0;
     color: var(--text-muted); font-size: 12px; font-weight: 700;
@@ -6567,7 +6570,7 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
          contador de pendentes veio junto — ele e o motivo de olhar a tela. -->
     <button class="nav-item" data-view="calendar">
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
-      <span class="nav-label">Agenda</span> <span class="count" id="cntReq">0</span>
+      <span class="nav-label">Agenda</span> <span class="count urgente" id="cntReq" style="display:none"></span>
     </button>
     <button class="nav-item" data-view="checkin">
       <!-- Caixa marcada. Era o terceiro relogio da barra. -->
@@ -10099,6 +10102,11 @@ function renderStats() {
     badgeReq.setAttribute('aria-label', pending.length
       ? pending.length + (pending.length === 1 ? ' solicitação pendente' : ' solicitações pendentes')
       : '');
+    /* Mesma mecânica da Produção: com a barra recolhida o número some, e com
+       ele o único aviso de que há alguém esperando resposta. A marca vai no
+       item inteiro para o CSS poder piscar o ícone no lugar. */
+    const itemReq = badgeReq.closest('.nav-item');
+    if (itemReq) itemReq.classList.toggle('fp-nav-emerg', !!pending.length);
   }
 }
 
@@ -27724,6 +27732,109 @@ function fpMetaGrafico(ap, janela) {
     + '</svg>';
 }
 
+/* As semanas do mês: 1-7, 8-14, 15-21, 22-28 e o que sobrar. A última quase
+   sempre é curta, e a cota dela é proporcional aos dias que ela tem — senão a
+   régua cobraria uma semana inteira de três dias. */
+function fpMetaSemanas(janela) {
+  const out = [];
+  for (let ini = 1; ini <= janela.dias; ini += 7) {
+    const fim = Math.min(ini + 6, janela.dias);
+    out.push({
+      ini, fim,
+      dias: fim - ini + 1,
+      corridos: Math.max(0, Math.min(janela.corridos, fim) - ini + 1),
+    });
+  }
+  return out;
+}
+
+/* Barras por semana, com a cota da semana marcada em cada coluna.
+   Por que existe: a linha acumulada só diz alguma coisa quando há volume. Com
+   alvo 4 num mês de 31 dias, a curva é um degrau rente ao chão — o operador
+   não consegue ler dela nem quanto falta nem quando o trabalho aconteceu.
+   Semana é a unidade em que essas metas realmente acontecem ("um carrossel por
+   semana", "dez clips por semana"), e a pergunta que elas fazem é "em quais
+   semanas a gente furou?". A barra responde isso; a linha não respondia. */
+function fpMetaGraficoSemanas(ap, janela) {
+  const L = 200, A = 44;
+  const meta = ap.modo === 'cadencia' ? janela.dias : ap.meta;
+
+  const semanas = fpMetaSemanas(janela).map(s => {
+    let feito = 0;
+    for (let d = s.ini; d <= s.fim; d++) feito += (ap.porDia[d] || 0);
+    /* `cota` é o que a semana inteira pede; `cobrado` é o que ela já cobrou,
+       proporcional aos dias que já correram dentro dela. A cor olha o cobrado
+       (senão a semana em curso nasce vermelha), a régua mostra a cota. */
+    const cota = meta ? meta * (s.dias / janela.dias) : 0;
+    const cobrado = meta ? meta * (s.corridos / janela.dias) : 0;
+    return { ...s, feito, cota, cobrado,
+             razao: (s.corridos && cobrado > 0) ? feito / cobrado : null };
+  });
+
+  const teto = Math.max(1, ...semanas.map(s => Math.max(s.feito, s.cota)));
+  const y = v => A - (v / teto) * (A - 4);
+  const colL = L / semanas.length;
+  const vao = 14;   /* barra de ~27px: com 7 ela ficava quase quadrada */
+
+  const partes = semanas.map((s, i) => {
+    const x = i * colL + vao / 2;
+    const w = colL - vao;
+    const futura = s.corridos === 0;
+    const cor = fpMetaCor(s.razao);
+    const dica = 'dia ' + s.ini + '-' + s.fim + ': ' + s.feito
+      + (futura ? ' (semana ainda não começou)' : ' de ' + (Math.round(s.cota * 10) / 10));
+
+    /* Semana que já cobrou e não entregou nada ganha um toco vermelho no chão,
+       em vez de ficar vazia. Ausência não se lê: com três semanas em branco e
+       duas verdes, o gráfico parecia melhor do que o número ao lado dizia. O
+       toco é a falha dita na mesma língua de cor do resto. */
+    const semNada = s.feito === 0 && s.cobrado >= .5;
+    const barra = s.feito > 0
+      ? '<rect x="' + x.toFixed(1) + '" y="' + y(s.feito).toFixed(1) + '" width="' + w.toFixed(1)
+        + '" height="' + Math.max(1.5, A - y(s.feito)).toFixed(1) + '" rx="2" fill="' + cor + '"'
+        + (futura ? ' opacity=".45"' : '') + '/>'
+      : (semNada
+        ? '<rect x="' + x.toFixed(1) + '" y="' + (A - 2.5) + '" width="' + w.toFixed(1)
+          + '" height="2.5" rx="1" fill="' + fpMetaCor(0) + '"/>'
+        : '');
+
+    const regua = s.cota > 0
+      ? '<line x1="' + x.toFixed(1) + '" x2="' + (x + w).toFixed(1) + '" y1="' + y(s.cota).toFixed(1)
+        + '" y2="' + y(s.cota).toFixed(1) + '" stroke="var(--text-muted)" stroke-width="1.5"'
+        + ' stroke-dasharray="3 3" opacity=".55" vector-effect="non-scaling-stroke"/>'
+      : '';
+
+    return '<g><title>' + escHtml(dica) + '</title>'
+      + '<rect x="' + x.toFixed(1) + '" y="0" width="' + w.toFixed(1) + '" height="' + A + '" fill="transparent"/>'
+      + barra + regua + '</g>';
+  }).join('');
+
+  /* Chão: sem ele as colunas vazias não existem visualmente e a semana em
+     branco vira um buraco em vez de um zero. */
+  const chao = '<line x1="0" y1="' + (A - 0.5) + '" x2="' + L + '" y2="' + (A - 0.5)
+    + '" stroke="var(--border)" stroke-width="1" vector-effect="non-scaling-stroke"/>';
+
+  return '<svg class="fp-meta-graf" viewBox="0 0 ' + L + ' ' + A + '" preserveAspectRatio="none" aria-hidden="true">'
+    + chao + partes + '</svg>';
+}
+
+/* Qual dos dois desenhos a meta usa. A escolha é do dono (coluna `grafico` em
+   mc_metas_alvo) porque não sai do alvo: `clips` tem alvo 40, mais que `story`,
+   e mesmo assim é meta de lote — seis clips saem no mesmo dia. A regra de bolso
+   só vale quando ninguém escolheu. */
+function fpMetaEstilo(ap, janela) {
+  const g = ap.alvo && ap.alvo.grafico;
+  if (g === 'linha' || g === 'semanas') return g;
+  if (ap.modo === 'cadencia') return 'linha';
+  return (ap.meta && janela.dias && ap.meta >= janela.dias * 0.6) ? 'linha' : 'semanas';
+}
+
+function fpMetaDesenho(ap, janela) {
+  return fpMetaEstilo(ap, janela) === 'semanas'
+    ? fpMetaGraficoSemanas(ap, janela)
+    : fpMetaGrafico(ap, janela);
+}
+
 function fpMetaLinhaHtml(ap, janela) {
   const a = ap.alvo;
   const cad = ap.modo === 'cadencia';
@@ -27741,7 +27852,7 @@ function fpMetaLinhaHtml(ap, janela) {
   return '<div class="fp-meta-lin">'
     + '<span class="fp-meta-nome"><b>' + escHtml(a.rotulo) + '</b>'
     +   '<span>' + escHtml(a.detalhe || '') + (cad && ap.sequencia ? ' · ' + ap.sequencia + (ap.sequencia === 1 ? ' dia seguido' : ' dias seguidos') : '') + '</span></span>'
-    + fpMetaGrafico(ap, janela)
+    + fpMetaDesenho(ap, janela)
     + '<span class="fp-meta-valor">' + valor + '</span>'
     + '<span class="fp-meta-barra"><span style="width:' + Math.min(100, ap.pct) + '%;background:' + cor + '"></span></span>'
     + '<span class="fp-meta-proj">' + fim + '</span>'

@@ -97,6 +97,14 @@ create table if not exists public.mc_metas_alvo (
   -- Quais `tipo` de mc_pecas contam. Array porque "vídeo curto" é a soma de
   -- três plataformas e o dono pensa nelas como uma coisa só.
   tipos     text[]  not null default '{}',
+  -- Qual gráfico a meta usa na tela. É COLUNA e não regra porque a divisão não
+  -- sai do alvo: `clips` tem alvo 40 (mais que `story`, 30) e ainda assim é
+  -- meta de lote — seis clips saem no mesmo dia. Quem sabe disso é o dono.
+  --   linha   = acumulado contra a régua; só diz algo com volume diário.
+  --   semanas = barras por semana com a cota da semana; para meta de lote ou
+  --             de alvo baixo, em que a linha vira um degrau rente ao chão.
+  --   null    = o painel decide (cadência ou alvo >= 60% dos dias -> linha).
+  grafico   text    check (grafico is null or grafico in ('linha','semanas')),
   ordem     integer not null default 0,
   criado_em timestamptz not null default now()
 );

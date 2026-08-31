@@ -1,5 +1,50 @@
 # Diário
 
+## 31/08/2026 · Cada meta com o gráfico que ela merece, e a agenda parou de usar pílula
+
+> *"eu acho que fica legal a gente manter esse gráfico que você criou só no
+> repost diários, stories próprios e vídeos curtos, que são metas com volume
+> diário. Já as outras metas precisamos de um tipo de gráfico diferente"*
+
+Ele está certo e dá para medir por que: com alvo 4 num mês de 31 dias, a linha
+acumulada é um degrau rente ao chão. Ela não responde quanto falta nem quando o
+trabalho aconteceu — só ocupa 210px.
+
+**As outras metas ganharam barras por semana**, com a cota da semana marcada em
+cada coluna. Semana é a unidade em que essas metas acontecem de verdade ("um
+carrossel por semana", "dez clips por semana"), e a pergunta que elas fazem é
+"em quais semanas a gente furou?". Nos carrosséis de agosto a resposta aparece
+de longe: duas semanas verdes, três em branco.
+
+Três decisões dentro disso:
+
+- **A última semana é curta e a cota dela é proporcional.** Num mês de 31 dias a
+  quinta "semana" tem 3 dias; cobrar uma semana inteira dela seria inventar
+  atraso. A régua daquela coluna desce junto.
+- **A cor olha o que a semana JÁ cobrou, não a cota cheia** — senão a semana em
+  curso nasceria vermelha na segunda-feira de manhã.
+- **Semana que cobrou e não entregou ganha um toco vermelho no chão.** Sem isso,
+  a falha era uma coluna vazia — e ausência não se lê: com três semanas em
+  branco e duas verdes, o gráfico parecia melhor do que o número ao lado dizia.
+
+**A escolha é uma coluna, não uma regra** (`mc_metas_alvo.grafico`). Nenhuma
+heurística acerta essa divisão: `clips` tem alvo 40, mais que `story` (30), e
+mesmo assim é meta de lote. Com o campo null o painel cai numa regra de bolso
+(cadência ou alvo ≥ 60% dos dias → linha), mas quem manda é o dono.
+
+Conferido com seis cenários rodando a apuração de verdade: mês futuro (só as
+cotas, nenhuma barra), mês fechado estourando a meta (5 barras, nenhum toco),
+fevereiro de 28 dias (4 semanas cheias, cota 1,0), alvo zero (nada, sem divisão
+por zero) e os dois lados da regra de bolso.
+
+### A agenda tinha pílula cinza; agora tem o mesmo alarme da produção
+
+O "6" da Agenda era um número dentro de uma pílula cinza — que diz "existe um
+número", não "tem gente esperando resposta". Passou a usar exatamente o que a
+Produção já usava: número solto piscando em cinza, vermelho quando o cursor
+chega no item, e — com a barra recolhida, quando o número some — quem pisca é o
+ícone do módulo. É o mesmo recado, então é o mesmo desenho.
+
 ## 31/08/2026 · O coletor nunca tinha gravado, e agosto estava marcado como repost
 
 > *"já refiz as conexões das redes e ainda mostra zero nos gráficos de agosto"*
