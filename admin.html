@@ -27910,8 +27910,16 @@ async function fpMetasAtualizar() {
     const erros = (data && data.erros) || [];
     await fpMetasCarregar(METAS_MES, true);
     renderPerfMetas();
-    if (erros.length) fpToast('Coletei ' + (data.gravadas || 0) + ' peças, com avisos: ' + erros.join(' · '), 'warn', { duracao: 9000 });
-    else fpToast(data.gravadas + ' peças conferidas.', 'ok');
+    /* ACHEI e GRAVEI são números diferentes, e a diferença é o diagnóstico.
+       Em 31/08/2026 a tela dizia "Coletei 0 peças" enquanto a coleta trazia
+       tudo certo e só a gravação falhava — a frase escondia justamente onde
+       estava o problema. */
+    if (erros.length) {
+      fpToast('Achei ' + (data.encontradas || 0) + ', gravei ' + (data.gravadas || 0)
+        + ' · ' + erros.join(' · '), 'warn', { duracao: 9000 });
+    } else {
+      fpToast(data.gravadas + ' peças conferidas.', 'ok');
+    }
   } catch (e) {
     fpToast('Não deu para atualizar: ' + (e.message || e), 'erro');
   }

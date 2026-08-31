@@ -58,8 +58,18 @@ create table if not exists public.mc_pecas (
   atualizado_em timestamptz not null default now()
 );
 
+/* NÃO volte a pôr `where externo_id is not null` aqui. [31/08/2026]
+   O índice era parcial, e por isso o coletor NUNCA gravou: o painel escreve
+   pelo PostgREST, com upsert(onConflict:'fonte,externo_id'), e o PostgREST não
+   tem como mandar o predicado junto. Sem ele o Postgres não acha árbitro e
+   responde "there is no unique or exclusion constraint matching the ON CONFLICT
+   specification" — toda coleta terminava em "gravadas: 0". Em SQL à mão
+   funcionava, repetindo o WHERE, e foi assim que as linhas de teste entraram:
+   o furo só aparecia pelo caminho de verdade.
+   O parcial também não protegia nada: índice único comum já trata NULL como
+   distinto de NULL, que era a intenção do WHERE. */
 create unique index if not exists mc_pecas_externo_uidx
-  on public.mc_pecas (fonte, externo_id) where externo_id is not null;
+  on public.mc_pecas (fonte, externo_id);
 create index if not exists mc_pecas_periodo_idx
   on public.mc_pecas (publicado_em desc, tipo);
 

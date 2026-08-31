@@ -1,5 +1,36 @@
 # Diário
 
+## 31/08/2026 · O coletor nunca tinha gravado, e agosto estava marcado como repost
+
+> *"já refiz as conexões das redes e ainda mostra zero nos gráficos de agosto"*
+
+As conexões estavam certas — `mc_integrations` tinha `@fullprobr` (página
+FullPro) e o canal FullPro, gravados às 10:25 e 10:27. Eram outras duas coisas,
+independentes, e uma delas era minha.
+
+**1. O índice único de `mc_pecas` era PARCIAL** (`where externo_id is not null`).
+Em SQL à mão funciona, desde que se repita o predicado no `on conflict` — e foi
+exatamente assim que as 26 linhas de teste entraram, o que escondeu o furo. Mas
+o painel grava pelo PostgREST, com `upsert(onConflict:'fonte,externo_id')`, e o
+PostgREST não tem como mandar o predicado. Sem ele o Postgres não acha árbitro:
+
+> there is no unique or exclusion constraint matching the ON CONFLICT specification
+
+Toda coleta terminava em `gravadas: 0`. Trocado por índice único comum — que não
+perde nada, porque índice único já trata NULL como distinto de NULL, que era a
+intenção do WHERE. Conferido antes (0 linhas sem `externo_id`, 0 pares
+duplicados) e testado depois: dois upserts sem predicado viraram 1 linha.
+
+**2. As 25 peças de agosto estavam marcadas como repost** — todas, marcadas uma
+a uma em 28/08 entre 18:22:22 e 18:22:42, ~0,8s por clique. Peça marcada sai da
+meta de origem, por desenho; daí 0 em tudo e 13 dias em "Reposts diários". Com
+o aval dele, desmarcadas as 25: voltaram 10 curtos, 6 clips, 3 stories, 2
+carrosséis, 2 longos, 1 de 10-15 min e 1 pure sound.
+
+**A frase da tela escondia o problema.** Ela dizia "Coletei 0 peças" usando
+`gravadas`, enquanto a coleta trazia tudo certo e só a escrita falhava. Agora
+diz "Achei N, gravei M" — a diferença entre os dois números É o diagnóstico.
+
 ## 28/08/2026 · Instagram e YouTube saem do config.js e viram botão
 
 > *"mude aqui nas integrações esses que estão no config.js pra eu poder
