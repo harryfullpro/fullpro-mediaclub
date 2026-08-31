@@ -77,8 +77,10 @@ ainda não roda sozinho.** Faltam duas coisas, as duas do dono:
    `coletor-pecas`. Não precisa mais mexer em secret. **Falta o dono conectar as
    duas uma vez** — hoje as duas linhas dizem "não conectado, ainda usando a
    chave pública do config.js".
-2. **Agendar de hora em hora** (Supabase → Integrations → Cron). `pg_cron` e
-   `pg_net` estão disponíveis no projeto, não instalados.
+2. ~~Agendar de hora em hora~~ — **FEITO em 31/08/2026**: `pg_cron` e `pg_net`
+   instalados, job `coletor-pecas-hora` no minuto 7 de cada hora. Testado
+   disparando pelo mesmo caminho do cron: `chamado_por: cron`, 121 peças
+   encontradas e 121 gravadas, zero erros.
 
 **O agendamento não é opcional:** story do Instagram vive 24 horas e `/stories`
 só devolve o que está no ar AGORA. Sem cron, story publicado numa sexta à noite
@@ -86,13 +88,12 @@ simplesmente não existe na segunda — e não há como buscar depois. O botão
 "Atualizar" da tela de Metas cobre o dia a dia de quem está com a aba aberta,
 nada mais.
 
-### `coletor-pecas` aceita qualquer usuário do Auth, não qualquer operador
-A porta dele é `permitido = auth === SRK; if (!permitido && auth) { getUser(auth) }`
-— basta ser um usuário do Supabase Auth, sem passar por `mc_admin_users`. Antes
-isso só disparava uma coleta; agora dispara uma coleta **com as credenciais da
-empresa**, gastando cota da Meta e do Google. O conserto é usar o mesmo
-`operadorOuNulo` da `instagram-proxy`, mantendo a porta do cron por service role.
-Existe 1 linha em `auth.users` que não tem operador correspondente.
+### `mc_clips` está vazio e a meta de 40 clips não tem fonte
+`select count(*) from mc_clips where recorded_at is not null` = **0**. Os 6 clips
+que aparecem em agosto são as linhas que entraram à mão no teste. O coletor lê
+`mc_clips` (fonte interna, não é API), então enquanto ninguém registrar clip
+naquela tabela a meta "Produtos com clip" vai ficar parada nos 6. Ou o módulo
+Clips passa a gravar lá, ou a meta precisa de outra fonte.
 
 ### Promover alguém a administrador agora só pelo Supabase
 O gatilho `mc_admin_users_sem_autopromocao` recusa qualquer INSERT/UPDATE vindo

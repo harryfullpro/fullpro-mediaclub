@@ -244,15 +244,40 @@ Deno.serve(async (req: Request) => {
 
   const sb = createClient(SB_URL, SRK, { auth: { persistSession: false } });
 
-  /* Duas portas: o cron entra com a chave de serviço; o botão "Atualizar
-     agora" do painel entra com a sessão de quem clicou. Ninguém mais entra. */
-  const auth = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
-  let permitido = auth === SRK;
-  if (!permitido && auth) {
-    const { data } = await sb.auth.getUser(auth);
-    permitido = !!data?.user;
+  /* TRÊS portas, e nenhuma delas é aberta.
+       1. service role  — máquina, para quem tiver a chave do projeto.
+       2. token do cron — o pg_cron chamando de hora em hora. O token é gerado
+          pelo próprio banco (mc_integrations, provider 'cron_coletor') e só
+          serve para esta função: é bem menos poder que a service role key, que
+          é o que estaria no comando do cron se eu tivesse ido pelo caminho
+          fácil. Trocar é um UPDATE de uma linha.
+       3. JWT de operador — o botão "Atualizar" do painel. "Estar logado" NÃO
+          basta: esta função gasta cota da Meta e do Google com a credencial da
+          empresa, então tem que ser gente da equipe (mc_admin_users). Antes
+          qualquer usuário do Auth passava, e havia 1 usuário sem operador
+          correspondente.
+     verify_jwt fica DESLIGADO no gateway de propósito: o token do cron não é um
+     JWT e seria recusado antes de chegar aqui. Quem separa é este bloco. */
+  const auth = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '').trim();
+  let quem: string | null = null;
+
+  if (auth && auth === SRK) {
+    quem = 'service_role';
+  } else if (auth) {
+    const { data: tk } = await sb.from('mc_integrations')
+      .select('access_token').eq('provider', 'cron_coletor').maybeSingle();
+    if (tk?.access_token && auth === tk.access_token) {
+      quem = 'cron';
+    } else {
+      const { data: u } = await sb.auth.getUser(auth);
+      if (u?.user) {
+        const { data: op } = await sb.from('mc_admin_users')
+          .select('id').eq('auth_uid', u.user.id).maybeSingle();
+        if (op) quem = 'operador';
+      }
+    }
   }
-  if (!permitido) return json({ erro: 'Não autorizado.' }, 401);
+  if (!quem) return json({ erro: 'Não autorizado.' }, 401);
 
   const erros: string[] = [];
   const [igToken, ytChave] = await Promise.all([
@@ -283,5 +308,5 @@ Deno.serve(async (req: Request) => {
   const porTipo: Record<string, number> = {};
   pecas.forEach((p) => { porTipo[p.tipo] = (porTipo[p.tipo] || 0) + 1; });
 
-  return json({ ok: erros.length === 0, encontradas: pecas.length, gravadas, por_tipo: porTipo, erros });
+  return json({ ok: erros.length === 0, chamado_por: quem, encontradas: pecas.length, gravadas, por_tipo: porTipo, erros });
 });

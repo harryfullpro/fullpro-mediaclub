@@ -1,5 +1,46 @@
 # Diário
 
+## 31/08/2026 · O coletor passou a rodar sozinho, de hora em hora
+
+> *"quero que o site busque automaticamente de hora em hora os posts nas redes,
+> registre, vincule ao projeto, e atualize o dash de metas"*
+
+`pg_cron` + `pg_net` instalados, job **`coletor-pecas-hora`** no minuto 7 de cada
+hora — minuto 7 e não 0 porque o topo da hora é onde todo mundo agenda.
+
+**Como o cron se autentica, e por que não é com a service role key.** A função
+aceitava duas portas: service role e JWT de usuário. Pôr a service role key
+dentro do comando do cron é gravar a chave mais poderosa do projeto em texto,
+numa tabela que aparece em qualquer dump — e eu nem tenho essa chave para colar.
+Então o cron ganhou porta própria: um token de 32 bytes que **o banco gerou
+sozinho** (`encode(gen_random_bytes(32),'hex')`), guardado em `mc_integrations`
+(RLS ligada, zero policies, zero privilégio para anon/authenticated). Só serve
+para chamar esta função, e trocar é um UPDATE de uma linha.
+
+Junto, a porta do painel apertou: era **qualquer usuário do Supabase Auth**;
+agora tem que ser operador de `mc_admin_users`. A função gasta cota da Meta e do
+Google com a credencial da empresa — "estar logado" não é a mesma coisa que "é
+da equipe", e havia 1 usuário do Auth sem operador correspondente.
+
+`verify_jwt` foi desligado no gateway de propósito: o token do cron não é um JWT
+e seria recusado antes de chegar ao código. Quem separa é o bloco de dentro, que
+agora conhece três portas e nenhuma aberta.
+
+**Testado pelo caminho de verdade** — disparando `net.http_post` com o mesmo
+comando do cron e lendo `net._http_response`:
+
+> `{"ok":true,"chamado_por":"cron","encontradas":121,"gravadas":121,"erros":[]}`
+
+Foi a primeira coleta que realmente gravou. `mc_pecas` foi de 26 para 130 linhas,
+agosto de 25 para 32 peças (16 curtos, 4 stories, 2 carrosséis, 2 longos, 1 de
+10-15 min, 1 pure sound, 6 clips), e o histórico voltou até março.
+
+Duas coisas que apareceram aí e ficaram anotadas em `pendencias.md`: **`mc_clips`
+está vazio** (0 linhas com `recorded_at`), então a meta de 40 clips não tem fonte
+viva; e a **vinculação da peça ao projeto** ainda não existe — é a outra metade
+do pedido dele e depende de decidir com que sinal casar, porque vincular errado
+suja métrica e bonificação.
+
 ## 31/08/2026 · Cor de Metas: a rampa passa a andar pela borda do gamut
 
 > *"quero te pedir pra analisar as cores de contraste, esses vermelho, laranja,
