@@ -5962,6 +5962,18 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    `align-items: baseline` e não center — é a base do rótulo com a do número que
    amarra a leitura; centrando os dois blocos, o número (o elemento mais alto e
    mais pesado) fica com o centro acima do eixo do resto. */
+/* Contador no canto do botão de ícone: quantos stories esperam confirmação.
+   Sem chapa vermelha — é trabalho pendente, não alarme. */
+.fp-ib-n { position: absolute; top: 1px; right: 1px; min-width: 13px; height: 13px;
+  padding: 0 3px; border-radius: 7px; background: var(--warning); color: #111;
+  font-size: 9px; font-weight: 800; line-height: 13px; text-align: center; }
+.fp-icon-btn { position: relative; }
+
+/* O palpite da máquina, discreto: ele informa, não decide. */
+.fp-tri-palpite { display: block; margin-bottom: 4px; font-size: 9.5px; font-weight: 700;
+  letter-spacing: .02em; color: var(--text-muted); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; cursor: help; }
+
 /* ── triagem: próprio ou repost ───────────────────────────────────────────
    Story quase nunca tem legenda: decidir "próprio ou repost" por texto é
    impossível, e é por isso que aqui o que manda é a IMAGEM. Cards no formato do
@@ -28348,7 +28360,7 @@ async function fpMetasCarregar(mes, forcar) {
     try {
       const [ra, rp, rm] = await Promise.all([
         sb.from('mc_metas_alvo').select('*').eq('mes', alvo).order('ordem'),
-        sb.from('mc_pecas').select('id,tipo,titulo,link,plataforma,publicado_em,duracao_seg,metricas,eh_repost,sku,atualizado_em,bruto,classificado_em')
+        sb.from('mc_pecas').select('id,tipo,titulo,link,plataforma,publicado_em,duracao_seg,metricas,eh_repost,sku,atualizado_em,bruto,classificado_em,auto_repost,auto_motivo')
           .gte('publicado_em', de).lt('publicado_em', ate).order('publicado_em', { ascending: true }),
         sb.from('mc_metas_alvo').select('mes'),
       ]);
@@ -28377,15 +28389,47 @@ function fpMetasJanela(mes) {
   return { dias, corridos: atual ? hoje.getDate() : (passado ? dias : 0), atual, passado, futuro: !atual && !passado };
 }
 
+/* REPOST SÓ NASCE DE GENTE. A máquina nunca inventa um dia de repost, e a razão
+   é medida, não estética:
+
+   1. A API não diz. O nó IG Media tem lista de campos fechada e não existe
+      nada como story_type/reshared_from; `reposts` e `shares` andam no sentido
+      inverso (quantas vezes a NOSSA peça foi repostada por terceiros).
+   2. Pior: a borda /stories da Meta diz, escrito, "New stories created when a
+      user reshares a story will not be returned". O repost mais comum da casa
+      — recompartilhar o story do cliente que marcou a marca — NEM CHEGA aqui.
+   3. E a imagem só separa "imagem centrada em fundo liso" de "quadro cheio" —
+      que é o desenho do post recompartilhado, mas também o de uma promo
+      própria em fundo liso, que está escrita na descrição da meta.
+
+   O que a máquina PODE fazer com segurança é o lado negativo: quadro cheio de
+   ponta a ponta não é post recompartilhado. Então ela DESCARTA sozinha (esses
+   saem da fila) e nunca AFIRMA. O trabalho humano some para a maioria e sobra
+   só no caso ambíguo. */
+function fpEhRepost(p) {
+  return p.classificado_em ? !!p.eh_repost : false;
+}
+/* Resolvido = alguém olhou, OU a máquina descartou pelo lado seguro. */
+function fpStoryResolvido(p) {
+  return !!p.classificado_em || p.auto_repost === false;
+}
+function fpStoriesSemOlhar() {
+  return METAS_PECAS.filter(function (p) {
+    return p.tipo === 'story' && !fpStoryResolvido(p);
+  }).length;
+}
+
 /* A apuração de UMA meta. Devolve também a série acumulada por dia, que é o que
    desenha o "como anda ao longo do tempo". */
 function fpMetaApurar(alvo, janela) {
   const tipos = alvo.tipos || [];
-  /* Peça marcada como repost sai do balde de origem: um story que era repost
-     não conta como story. É o que o dono pediu. */
+  /* REPOST É COISA DE STORY. Antes qualquer peça marcada contava dia de repost —
+     e marcar um reel tirava ele de "vídeos curtos" sem pôr em lugar nenhum
+     visível. O dono definiu a meta olhando os stories do Instagram; é ali que
+     ela vive. */
   const daMeta = p => alvo.chave === 'repost'
-    ? !!p.eh_repost
-    : (!p.eh_repost && tipos.indexOf(p.tipo) >= 0);
+    ? (p.tipo === 'story' && fpEhRepost(p))
+    : (tipos.indexOf(p.tipo) >= 0 && !(p.tipo === 'story' && fpEhRepost(p)));
 
   const pecas = METAS_PECAS.filter(daMeta);
   const dia = p => new Date(p.publicado_em).getDate();
@@ -28786,8 +28830,16 @@ function fpVizSequencia(ap, janela) {
     if ((ap.porDia[d] || 0) >= cota) atual++;
     else { if (d === janela.corridos && janela.atual) continue; break; }
   }
+  /* Quantos stories o número ainda deve a um olho humano. Sem isto o painel
+     apresentaria palpite de imagem com a mesma cara de dado conferido — e o
+     palpite não vê o caso principal (story que recompartilha OUTRO story nem
+     chega na coleta: limitação escrita da borda /stories da Meta). */
+  const porConferir = fpStoriesSemOlhar();
   return '<div class="fp-mp-seq">' + cels + '</div>'
-    + '<div class="fp-mp-pe"><span>dias cumpridos · 1 quadrado = 1 dia</span>'
+    + '<div class="fp-mp-pe"><span>' + (porConferir
+        ? '<button type="button" class="fp-meta-marcar" onclick="fpRepostAbrir()">'
+          + porConferir + (porConferir === 1 ? ' story por conferir' : ' stories por conferir') + '</button>'
+        : 'dias cumpridos · 1 quadrado = 1 dia') + '</span>'
     + '<span>sequência atual <b>' + atual + '</b> · melhor <b>' + melhor + '</b></span></div>';
 }
 
@@ -28915,7 +28967,9 @@ function fpMetaPainelHtml(ap, janela) {
     +   '<span class="fp-mp-tit"><b>' + escHtml(a.rotulo) + '</b><span>' + escHtml(a.detalhe || '') + '</span></span>'
     +   '<span class="fp-mp-val"><b style="color:' + v.cor + '">' + ap.feito + '<i>/' + escHtml(den) + '</i></b>'
     +     '<span class="fp-mp-vd" style="color:' + v.corTxt + '">' + escHtml(v.palavra) + apoio
-    +       (cad && !janela.futuro ? ' <button class="fp-meta-marcar" type="button" onclick="fpRepostAbrir()">marcar</button>' : '')
+    /* Saiu o "marcar": os dias se preenchem sozinhos pelo palpite da imagem, e
+       conferir deixou de ser trabalho de dentro do card — virou um botão no
+       cabeçalho da tela, com quantos faltam. */
     +     '</span></span>'
     + '</div>'
     + '<div class="fp-mp-viz">' + (FP_VIZ_FN[tipo] || fpVizLinha)(ap, janela) + '</div>'
@@ -29031,6 +29085,20 @@ function renderPerfMetas() {
       +   ' aria-label="Buscar agora nas redes" onclick="fpMetasAtualizar()">'
       +   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
       +   '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg></button>'
+      /* Conferir stories: o palpite da imagem preenche os dias sozinho, mas
+         promo própria em fundo liso tem o mesmo desenho de um post
+         recompartilhado — então o número de "por conferir" fica à vista, em vez
+         de escondido num link dentro de um card. */
+      + (function () {
+          const n = fpStoriesSemOlhar();
+          return '<button class="fp-icon-btn' + (n ? ' fp-ib-gold' : '') + '" type="button"'
+            + ' data-tip="' + (n ? n + (n === 1 ? ' story por conferir' : ' stories por conferir')
+                                 : 'Conferir stories: próprio ou repost') + '"'
+            + ' aria-label="Conferir stories" onclick="fpRepostAbrir()">'
+            + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+            + '<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M4 7v10M20 7v10"/></svg>'
+            + (n ? '<span class="fp-ib-n">' + n + '</span>' : '') + '</button>';
+        })()
       + (isUserAdmin()
           ? '<button class="fp-icon-btn fp-tip-left" type="button" data-tip="Configurar metas do mês"'
             + ' aria-label="Configurar metas do mês" onclick="openPerfGoalsModal()">'
@@ -29129,8 +29197,19 @@ function fpTriCardHtml(p) {
   const cam = p.bruto && p.bruto.thumb;
   const url = cam ? _triAssinadas[cam] : null;
   const naoOlhado = !p.classificado_em;
-  return '<div class="fp-tri-card' + (p.eh_repost ? ' repost' : '') + (naoOlhado ? ' novo' : '')
+  const rep = fpEhRepost(p);
+  /* Palpite só aparece enquanto ninguém decidiu: depois de decidido, mostrar o
+     que a máquina achava só semeia dúvida sobre o que já foi resolvido. */
+  /* A frase do palpite diz o que a máquina PODE dizer, e nada além: ela
+     descarta ou levanta suspeita — nunca afirma repost. */
+  const palpite = naoOlhado && p.auto_motivo
+    ? '<span class="fp-tri-palpite" title="' + escHtml(p.auto_motivo) + '">'
+      + (p.auto_repost === false ? 'descartado: quadro cheio'
+         : p.auto_repost === true ? 'suspeita: imagem em fundo liso' : 'sem análise') + '</span>'
+    : '';
+  return '<div class="fp-tri-card' + (rep ? ' repost' : '') + (naoOlhado ? ' novo' : '')
     + (url ? '' : ' sem-img') + '">'
+    + palpite
     + '<div class="fp-tri-img">'
     +   (url ? '<img src="' + escHtml(url) + '" alt="story de ' + escHtml(fpTriDia(p)) + '" loading="lazy"/>'
            : '<span class="fp-tri-semimg">' + (cam ? 'carregando' : 'sem imagem') + '</span>')
@@ -29139,7 +29218,7 @@ function fpTriCardHtml(p) {
     + '<div class="fp-tri-acoes">'
     +   '<button type="button" class="fp-tri-b' + (p.classificado_em && !p.eh_repost ? ' on' : '') + '"'
     +     ' onclick="fpRepostMarcar(\'' + fpJs(p.id) + '\', false)">próprio</button>'
-    +   '<button type="button" class="fp-tri-b' + (p.eh_repost ? ' on rep' : '') + '"'
+    +   '<button type="button" class="fp-tri-b' + (rep ? ' on rep' : '') + '"'
     +     ' onclick="fpRepostMarcar(\'' + fpJs(p.id) + '\', true)">repost</button>'
     + '</div>'
     + '</div>';
@@ -29152,17 +29231,28 @@ function fpRepostPintar() {
 
   const recente = function (a, b) { return String(b.publicado_em).localeCompare(String(a.publicado_em)); };
   const stories = METAS_PECAS.filter(function (p) { return p.tipo === 'story'; }).sort(recente);
-  const resto = METAS_PECAS.filter(function (p) { return p.tipo !== 'story'; }).sort(recente);
+  /* Só story. Repost é coisa de story, e era a lista das outras peças que fazia
+     o operador marcar reel e clip como repost sem querer — 25 de uma vez, na
+     primeira vez que ele abriu isto. */
+  const resto = [];
 
   /* Stories primeiro e em imagem: é o caso que o dono descreveu, e é o único
      em que a legenda não ajuda a decidir (story quase nunca tem texto). */
-  const semOlhar = stories.filter(function (p) { return !p.classificado_em; }).length;
+  /* Ambíguo primeiro: é o único que precisa de olho. O que a máquina descartou
+     e o que já foi decidido ficam depois, para conferência eventual. */
+  stories.sort(function (a, b) {
+    const ra = fpStoryResolvido(a) ? 1 : 0, rb = fpStoryResolvido(b) ? 1 : 0;
+    return ra - rb || recente(a, b);
+  });
+  const semOlhar = stories.filter(function (p) { return !fpStoryResolvido(p); }).length;
+  const descartados = stories.filter(function (p) { return !p.classificado_em && p.auto_repost === false; }).length;
   grade.innerHTML = stories.length
     ? '<div class="fp-tri-faixa"><b>Stories</b><span>' + stories.length
       + (stories.length === 1 ? ' story' : ' stories')
-      + (semOlhar ? ' · ' + semOlhar + ' sem olhar' : ' · todos vistos') + '</span></div>'
+      + (semOlhar ? ' · ' + semOlhar + ' por conferir' : ' · nada pendente')
+      + (descartados ? ' · ' + descartados + ' o painel descartou (quadro cheio)' : '') + '</span></div>'
       + '<div class="fp-tri-cards">' + stories.map(fpTriCardHtml).join('') + '</div>'
-    : '';
+    : '<p class="fp-aviso-sub" style="padding:14px 0">Nenhum story neste mês ainda.</p>';
 
   cx.innerHTML = resto.length
     ? '<div class="fp-tri-faixa"><b>Outras peças</b><span>vídeos, carrosséis e clips</span></div>'

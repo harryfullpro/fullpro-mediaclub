@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
+
 /* =============================================================================
    coletor-pecas — traz do Instagram, do YouTube e do TikTok TUDO que foi
    publicado, e grava uma linha por peça em mc_pecas.
@@ -122,6 +123,89 @@ async function graphTudo(url0: string, maxPag: number, rotulo: string, erros: st
   return itens;
 }
 
+/* ── O story é recompartilhamento? ────────────────────────────────────────
+   NENHUMA API diz isso: nem o Instagram nem o TikTok marcam repost, e a borda
+   /stories devolve só id, tipo, permalink e horário. O sinal que existe é a
+   IMAGEM, porque quem desenha o recompartilhamento é o próprio Instagram: post
+   recompartilhado aparece como uma imagem MENOR centrada sobre fundo liso, com
+   faixas de baixo detalhe em cima e embaixo. Story de câmera preenche o quadro
+   de ponta a ponta.
+
+   O LIMITE, dito aqui para não ser descoberto depois: story promocional PRÓPRIO
+   — produto centrado em fundo liso — tem exatamente esse desenho. A medida
+   distingue "imagem centrada em fundo liso" de "quadro cheio", e não "repost"
+   de "próprio". Por isso o resultado vai para auto_repost (palpite), NUNCA
+   direto para eh_repost (o que vale): quem tem classificado_em manda.
+
+   Guarda as MEDIDAS junto do palpite de propósito. O limiar aqui é o meu
+   melhor chute; com os números dos stories reais dá para acertá-lo depois em
+   vez de continuar chutando. */
+const AM_L = 32, AM_A = 64;   /* grade de amostragem: 32 colunas x 64 linhas */
+
+/* O decodificador entra por import DINÂMICO, dentro de try, e uma vez só.
+   `jpeg-js` é JS puro e deve rodar no edge runtime — mas "deve" não é medida, e
+   import no topo do arquivo que falha derruba a FUNÇÃO INTEIRA. A coleta é
+   obrigação (story vive 24h); medir a imagem é bônus. Se o import quebrar,
+   quebra o bônus. */
+let _jpeg: any = null;
+let _jpegRuim = false;
+async function decodificador() {
+  if (_jpeg || _jpegRuim) return _jpeg;
+  try {
+    const mod = await import('npm:jpeg-js@0.4.4');
+    _jpeg = (mod as any).default ?? mod;
+  } catch {
+    _jpegRuim = true;
+  }
+  return _jpeg;
+}
+
+async function analisarStory(bin: Uint8Array) {
+  const jpeg = await decodificador();
+  if (!jpeg) throw new Error('sem decodificador de imagem nesta função');
+  const img = jpeg.decode(bin, { useTArray: true });
+  const W = img.width, H = img.height, d = img.data;
+  if (!W || !H) throw new Error('imagem vazia');
+
+  const luma = (x: number, y: number) => {
+    const i = (y * W + x) * 4;
+    return 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+  };
+
+  const varLinha: number[] = [];
+  for (let r = 0; r < AM_A; r++) {
+    const y = Math.min(H - 1, Math.floor((r + 0.5) * H / AM_A));
+    const v: number[] = [];
+    let soma = 0;
+    for (let c = 0; c < AM_L; c++) {
+      const x = Math.min(W - 1, Math.floor((c + 0.5) * W / AM_L));
+      const l = luma(x, y); v.push(l); soma += l;
+    }
+    const m = soma / v.length;
+    varLinha.push(v.reduce((acc, x) => acc + (x - m) * (x - m), 0) / v.length);
+  }
+
+  const LISO = 60;      /* variância de linha abaixo disso = linha lisa */
+  let topo = 0; while (topo < AM_A && varLinha[topo] < LISO) topo++;
+  let base = 0; while (base < AM_A && varLinha[AM_A - 1 - base] < LISO) base++;
+  const meio = varLinha.slice(topo, AM_A - base);
+  const varMeio = meio.length ? Math.round(meio.reduce((a, b) => a + b, 0) / meio.length) : 0;
+  const topoPct = Math.round(100 * topo / AM_A);
+  const basePct = Math.round(100 * base / AM_A);
+
+  /* As duas pontas lisas E o miolo com textura. Uma ponta só não serve: story
+     de câmera com céu em cima dá faixa lisa no topo e nada embaixo. */
+  const parece = topoPct >= 8 && basePct >= 8 && varMeio > 200;
+  const motivo = parece
+    ? 'faixa lisa de ' + topoPct + '% em cima e ' + basePct + '% embaixo, com miolo texturizado'
+      + ' — é como o Instagram desenha post recompartilhado (mas promo própria em fundo liso é igual)'
+    : (topoPct < 8 && basePct < 8
+        ? 'imagem preenche o quadro de ponta a ponta (' + topoPct + '%/' + basePct + '%) — cara de story de câmera'
+        : 'só uma ponta lisa (' + topoPct + '%/' + basePct + '%) — não é o desenho do recompartilhamento');
+
+  return { parece, motivo, medidas: { topo_pct: topoPct, base_pct: basePct, var_meio: varMeio } };
+}
+
 /* A miniatura do story, copiada para o nosso bucket.
    POR QUE COPIAR: `media_url` e `permalink` de story morrem com o story, em 24
    horas. O dono aceitou que a classificação repost/próprio seja visual — e para
@@ -141,7 +225,17 @@ async function thumbDoStory(sb: any, m: any, jaTem: Set<string>, erros: string[]
     const { error } = await sb.storage.from('stories')
       .upload(caminho, bin, { contentType: 'image/jpeg', upsert: true });
     if (error) { erros.push('story ' + m.id + ': ' + error.message); return null; }
-    return caminho;
+
+    /* A análise vem de graça: os bytes já estão na mão. Se ela falhar, o story
+       ainda foi guardado — palpite é bônus, coleta é obrigação. */
+    let analise = null;
+    try {
+      analise = await analisarStory(bin);
+    } catch (e) {
+      erros.push('story ' + m.id + ': não deu para medir a imagem ('
+        + (e instanceof Error ? e.message : 'falhou') + ')');
+    }
+    return { caminho, analise };
   } catch (e) {
     erros.push('story ' + m.id + ': ' + (e instanceof Error ? e.message : 'falhou'));
     return null;
@@ -149,7 +243,7 @@ async function thumbDoStory(sb: any, m: any, jaTem: Set<string>, erros: string[]
 }
 
 /* ---------- Instagram ---------- */
-async function instagram(sb: any, IG_TOKEN: string, erros: string[]) {
+async function instagram(sb: any, IG_TOKEN: string, erros: string[], analisados: any[]) {
   const pecas: any[] = [];
   if (!IG_TOKEN) { erros.push('instagram: sem token — conecte em Integrações'); return pecas; }
 
@@ -222,9 +316,16 @@ async function instagram(sb: any, IG_TOKEN: string, erros: string[]) {
     if (!stories.length) erros.push(...errosA, ...errosB);
   }
 
+  /* As análises saem em lista separada: elas viram UPDATE depois do upsert, e
+     não campo do upsert. Se fossem campo, o story que já tem miniatura (e que
+     por isso não é rebaixado nem remedido) teria auto_repost apagado a cada
+     hora — PostgREST preenche com NULL a coluna que não vem no lote. */
   for (const m of stories) {
-    const caminho = await thumbDoStory(sb, m, jaTem, erros);
-    guardar(m, 'story', caminho ? { thumb: caminho } : {});
+    const res = await thumbDoStory(sb, m, jaTem, erros);
+    guardar(m, 'story', res && res.caminho ? { thumb: res.caminho, medidas: res.analise?.medidas } : {});
+    if (res && res.analise) {
+      analisados.push({ externo_id: m.id, parece: res.analise.parece, motivo: res.analise.motivo });
+    }
   }
 
   return pecas;
@@ -392,12 +493,13 @@ Deno.serve(async (req: Request) => {
   if (!quem) return json({ erro: 'Não autorizado.' }, 401);
 
   const erros: string[] = [];
+  const analisados: any[] = [];
   const [igToken, ytChave] = await Promise.all([
     credencial(sb, 'instagram', IG_TOKEN_ENV),
     credencial(sb, 'youtube', YT_KEY_ENV),
   ]);
   const lotes = await Promise.all([
-    instagram(sb, igToken, erros).catch((e) => { erros.push('instagram: ' + e.message); return []; }),
+    instagram(sb, igToken, erros, analisados).catch((e) => { erros.push('instagram: ' + e.message); return []; }),
     youtube(ytChave, erros).catch((e) => { erros.push('youtube: ' + e.message); return []; }),
     tiktok(sb, erros).catch((e) => { erros.push('tiktok: ' + e.message); return []; }),
     clips(sb, erros).catch((e) => { erros.push('clips: ' + e.message); return []; }),
@@ -417,8 +519,22 @@ Deno.serve(async (req: Request) => {
     else gravadas += lote.length;
   }
 
+  /* O palpite vai em UPDATE, um por story analisado, e só onde NINGUÉM olhou:
+     `classificado_em is null`. Assim o coletor pode melhorar o palpite de hora
+     em hora sem desfazer a correção de quem olhou a imagem. */
+  let palpites = 0;
+  for (const a of analisados) {
+    const { error } = await sb.from('mc_pecas')
+      .update({ auto_repost: a.parece, auto_motivo: a.motivo, auto_em: new Date().toISOString() })
+      .eq('fonte', 'instagram').eq('externo_id', a.externo_id)
+      .is('classificado_em', null);
+    if (error) erros.push('palpite ' + a.externo_id + ': ' + error.message);
+    else palpites++;
+  }
+
   const porTipo: Record<string, number> = {};
   pecas.forEach((p) => { porTipo[p.tipo] = (porTipo[p.tipo] || 0) + 1; });
 
-  return json({ ok: erros.length === 0, chamado_por: quem, encontradas: pecas.length, gravadas, por_tipo: porTipo, erros });
+  return json({ ok: erros.length === 0, chamado_por: quem, encontradas: pecas.length, gravadas,
+                stories_analisados: palpites, por_tipo: porTipo, erros });
 });

@@ -123,6 +123,21 @@ usuário já como "Administrador" pela tela de Usuários vai dar erro**. Promove
 raro e agora é feito pelo Supabase (SQL ou dashboard) — que é exatamente o
 ponto, porque `role` é editável pela própria pessoa em Meu perfil.
 
+### Decisão do dono: o que a meta "Reposts diários" vai medir
+A API **não** consegue reconhecer repost, e a limitação é escrita: a borda
+`/stories` avisa que *"New stories created when a user reshares a story will not
+be returned"* — o repost mais comum da casa (recompartilhar story de cliente)
+não chega na coleta. Não há endpoint de arquivo. As opções reais:
+
+1. **Como está hoje:** a máquina descarta o que é claramente story de câmera, e
+   o que sobra é confirmado num toque, com a imagem na tela. Honesto, mas
+   subconta — o reshare de story continua invisível.
+2. **Trocar o que a meta mede** por algo que a API sustenta inteiro, ex. "dias
+   com pelo menos um story publicado". 100% automático, significado diferente.
+3. **Medir fora da API** (arquivo de stories no app do Instagram, na mão).
+
+Enquanto ele não decidir, vale a 1.
+
 ### Rodar a troca das credenciais e esvaziar o config.js
 A tela de Integrações já conecta Instagram e YouTube, mas **guardar a MESMA
 credencial que já está pública não protege nada**: o `config.js` responde HTTP

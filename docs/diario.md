@@ -1,5 +1,56 @@
 # Diário
 
+## 31/08/2026 · Repost de story: a API não diz, e esconde o caso principal
+
+> *"esse reposts diarios quero que seja reconhecido automaticamente pela nossa
+> api. Tire esse botão marcar e mude a lógica para ver arquivos de stories no
+> instagram e deixe preenchido os dias que tiveram reposts"*
+
+Antes de tirar o botão eu fui atrás: se a API não conseguisse, tirar o botão
+deixaria a meta zerada para sempre. Ela não consegue, e por dois motivos — um
+que eu esperava e um que eu não.
+
+**1. Nenhum campo diz.** A lista de campos do nó IG Media é fechada e publicada:
+não existe `story_type`, `reshared_from`, `linked_media` nem `source_media`, e
+`media_product_type` só admite AD, FEED, STORY, REELS. As duas métricas de nome
+tentador andam no sentido **inverso**: `reposts` e `shares` contam quantas vezes
+a NOSSA peça foi repostada por terceiros. Quem lê rápido inverte isso e entrega
+exatamente o botão que mente.
+
+**2. O caso principal nem chega.** A doc da própria borda `/stories` diz,
+verbatim: *"New stories created when a user reshares a story will not be
+returned"*. Ou seja: recompartilhar o story do cliente que marcou a marca — o
+repost mais comum da casa — **não aparece na coleta**. Não é questão de esforço.
+E não existe endpoint de arquivo de stories: 24 horas é tudo que a API tem.
+([doc](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/stories/))
+
+**O que sobra, e é o que ficou no ar.** O sinal que existe é a imagem, porque
+quem desenha o recompartilhamento é o Instagram: post recompartilhado vira uma
+imagem menor centrada em fundo liso, com faixas de baixo detalhe em cima e
+embaixo. Story de câmera preenche o quadro.
+
+Só que esse mesmo desenho é o de uma **promo própria em fundo liso** — que está
+escrita na descrição da meta ("material promocional"). Testei em imagens
+sintéticas dos três casos e o terceiro é indistinguível do segundo.
+
+Então a máquina **nunca afirma repost**. Ela usa só o lado seguro do sinal:
+*quadro cheio de ponta a ponta não é post recompartilhado* → descarta sozinha e
+tira da fila. O lado ambíguo vira **suspeita**, não veredito. Medido num story
+real: topo 0% / base 0% / variância do miolo 4263 → descartado, e o `jpeg-js`
+rodou no edge runtime sem derrubar nada (o import é dinâmico e dentro de try, de
+propósito: coleta é obrigação, medir é bônus).
+
+Resultado prático: o botão "marcar" saiu do card. Sobrou um contador de **por
+conferir** — e a fila agora só tem o que a máquina não conseguiu descartar.
+
+**Duas correções de lógica que vieram junto:**
+
+- **Repost é assunto de STORY.** Antes qualquer peça marcada criava dia de
+  repost, e marcar um reel o tirava de "vídeos curtos" sem pôr em lugar nenhum
+  visível. Foi o que fez 25 peças virarem repost de uma vez no dia 28.
+- **A triagem só mostra story.** Era a lista das outras peças que convidava ao
+  acidente.
+
 ## 31/08/2026 · Dashboard: as duas frentes na gramática de Metas
 
 Terceira tela do dia. As duas frentes (vídeo e fotografia) passaram a usar o
