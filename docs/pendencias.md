@@ -135,8 +135,27 @@ não chega na coleta. Não há endpoint de arquivo. As opções reais:
 2. **Trocar o que a meta mede** por algo que a API sustenta inteiro, ex. "dias
    com pelo menos um story publicado". 100% automático, significado diferente.
 3. **Medir fora da API** (arquivo de stories no app do Instagram, na mão).
+4. **Publicar o story PELO PAINEL** — o caminho que resolve de verdade, e que só
+   apareceu na revisão. Publicando por `POST /{ig-id}/media?media_type=STORIES`,
+   a classificação deixa de ser DETECTADA e passa a ser **declarada no ato**:
+   quem publica diz se é próprio ou repost, e o número fica exato, sem visão
+   computacional nenhuma. Preço: figurinha de link/enquete/localização não é
+   suportada na publicação por API, e o gesto nativo de "recompartilhar story de
+   terceiro" não existe por API — então esse caso continuaria fora. É decisão de
+   FLUXO DE TRABALHO, não de detecção, e depende do módulo de publicação que ele
+   já pediu.
 
 Enquanto ele não decidir, vale a 1.
+
+Detalhes técnicos que atrapalham qualquer uma delas, e que a revisão achou:
+- `/tags` (mídia de terceiros que nos marcou) exigiria a permissão
+  `instagram_manage_comments`, que **não** está nos nossos escopos — e mesmo com
+  ela, "Mentions on Stories are not supported": nunca traz story.
+- Insights por story falham com erro `(#10) Not enough viewers` quando o story
+  teve menos de 5 espectadores.
+- Desde 30/07/2026 o `media_url` pode ser omitido por configuração de download,
+  com orientação de cair para `permalink`/`thumbnail_url` — o coletor já pede
+  `thumbnail_url` primeiro, então isso está coberto.
 
 ### Rodar a troca das credenciais e esvaziar o config.js
 A tela de Integrações já conecta Instagram e YouTube, mas **guardar a MESMA
