@@ -6,21 +6,51 @@ Ordenado por impacto. Atualizar sempre que algo for concluído ou aparecer.
 
 ## Em andamento
 
+### O botão "Configurar metas" não configura as metas da tela
+`openPerfGoalsModal()` / `savePerfGoals()` escrevem em **`mc_performance_goals`** —
+`volume_long_target`, `volume_short_target`, `views_target`, `clicks_target`,
+`pool_per_goal`, `dist_*`. A tela de Metas **não lê nada disso** desde que passou a
+apurar por `mc_metas_alvo` (os alvos) + `mc_pecas` (o realizado). O admin abre a
+engrenagem, salva, vê "Metas salvas!" e a tela não muda.
+
+Hoje quem grava `mc_metas_alvo` é SQL na mão — foi assim que os sete `grafico`
+entraram em 31/08. Falta um CRUD de verdade no modal: uma linha por meta com
+rótulo, detalhe, alvo, modo (contagem/cadência), tipos de peça, ordem e o
+**gráfico** (linha / semanas / calendario / sequencia / semanal / slots / rosca,
+ou vazio para o painel decidir). É o que destrava o dono mudar as metas de
+setembro sem pedir SQL.
+
+O que está em `mc_performance_goals` e ainda é usado de verdade: `pool_per_goal` e
+o rateio `dist_*`, na tela de Bonificação. Esses ficam.
+
 ### Régua de front-end/design: Metas feito, faltam as outras telas
 A tela de **Metas** foi a primeira a passar pelo padrão novo em 31/08/2026 (ver
 `diario.md`). O que dela vale como regra para as próximas:
 
+> **Atenção:** Metas virou grade de **card** por escolha do dono (ver
+> `contexto.md` → "A exceção: Metas"). Isso vale **só lá**. Nas outras telas
+> continua a regra de sempre: sem container, listagem com fio de 1px.
+
 1. **O instrumento tem que ganhar a largura, não o rótulo.** Em Metas era
-   542px de nome contra 210px de gráfico; virou 236 contra 672.
-2. **Uma pergunta por canal.** Se número, barra, projeção e gráfico dizem a
+   542px de nome contra 210px de gráfico.
+2. **Um gráfico por natureza do dado, não um gráfico para tudo.** Sete metas
+   pediram sete tratamentos, e a escolha virou coluna no banco em vez de `if`
+   no código.
+3. **Uma pergunta por canal.** Se número, barra, projeção e gráfico dizem a
    mesma razão, três deles são enfeite.
-3. **Veredito em palavra, não só em cor.** Cor sozinha não passa em
+4. **Veredito em palavra, não só em cor.** Cor sozinha não passa em
    acessibilidade e não consegue dizer duas coisas na mesma linha.
-4. **Fração tipográfica alinhada pela linha de base**, com `tabular-nums`.
-5. **Subtítulo de `.page-head` que repete o `<h1>` sai.** Em Metas custava 130px
+5. **Fração tipográfica alinhada pela linha de base**, com `tabular-nums`.
+6. **Subtítulo de `.page-head` que repete o `<h1>` sai.** Em Metas custava 130px
    no celular. Vale checar tela por tela — é candidato a regra global.
-6. **Medir com canvas, não a olho:** contraste de cada cor de rampa nos dois
-   temas, e desvio de linha de base com sonda `inline-block` de altura 0.
+7. **Medir com canvas, não a olho:** contraste de cada cor nos dois temas, e
+   desvio de linha de base com sonda `inline-block` de altura 0. **Cor com alfa
+   tem que ser COMPOSTA sobre o fundo antes de medir** — sem isso os quatro
+   degraus de uma escala saem com 1,01:1 entre si e você conclui que a escala
+   está quebrada quando é a medição.
+8. **`opacity` não serve para hierarquia de texto:** derruba o contraste do
+   texto junto com o do fundo. Diga "isso ainda não aconteceu" com forma
+   (fundo vazado), não com transparência.
 
 Telas na fila, por uso: Dashboard, Projetos, Produção de fotos, Meus Posts,
 Bonificação, Agenda.

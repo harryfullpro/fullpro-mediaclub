@@ -328,6 +328,23 @@ nada de caixa dentro de caixa. Listagem encostada no fundo da página, separada 
 1px. Filtro em aba com sublinhado, não pílula preenchida. Vermelho de destaque é **o
 mesmo vermelho do hover do menu lateral**, nunca um pastel.
 
+#### A exceção: Metas (31/08/2026)
+> *"minha ideia pra essa tela de metas é ser um tipo power bi com gráficos mais
+> produzidos e únicos pra cada meta"*
+
+Ele viu a tela de Metas refeita como listagem sem caixa e reprovou — *"ficou horrível
+isso aí que tu fez"*. Perguntado qual das duas regras manda, escolheu **grade mista com
+painel**: um gráfico-herói do mês em cima e as metas em painéis de tamanhos diferentes
+embaixo, com moldura.
+
+**A exceção é só de Metas.** Nas outras telas a regra de cima continua valendo — não
+propagar card para Projetos, Produção, Agenda etc. sem ele pedir.
+
+Todo o cromo do painel mora em cinco tokens no topo do bloco `.fp-metas-grade`
+(`--mp-bg`, `--mp-borda`, `--mp-raio`, `--mp-pad`, `--mp-trilho`): zerar os quatro
+primeiros devolve a tela sem moldura sem tocar em mais nada. Foi feito assim de propósito
+— se o card cansar, é uma edição, não uma refatoração.
+
 ### Panorama virou o painel de fotos do Dashboard
 O Dashboard tem duas frentes. Quem tem vídeo **e** foto troca por um switch de
 abas no topo e volta na frente usada por último; quem tem uma frente só não vê o

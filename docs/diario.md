@@ -1,5 +1,109 @@
 # Diário
 
+## 31/08/2026 · Metas vira painel: um gráfico por natureza de meta
+
+Segunda tentativa do mesmo dia. A primeira — listagem sem caixa, eixo de 31 dias
+compartilhado, um desenho só para as sete metas — **foi reprovada pelo dono**:
+
+> *"cara, ficou horrível isso aí que tu fez. Minha ideia pra essa tela de metas
+> é ser um tipo power bi com gráficos mais produzidos e únicos pra cada meta"*
+
+Eu tinha lido a tela como "onde está o furo" e enxugado tudo. Direção oposta à
+dele. A unificação inteira foi descartada.
+
+### A contradição que precisou de decisão dele
+
+Power BI é grade de card com moldura, e a regra do projeto é a oposta ("eu não
+quero CONTAINERS NESSA MERDA"). Perguntado, ele escolheu **grade mista com
+painel**: herói em cima, metas em painéis de tamanhos diferentes embaixo.
+Registrado em `contexto.md` como **exceção só de Metas** — não propagar card para
+as outras telas sem ele pedir. Todo o cromo está em cinco tokens; zerar quatro
+devolve a tela sem moldura.
+
+### Sete metas, sete gráficos — e a escolha é dado, não código
+
+Migração `metas_alvo_grafico_sete_tipos` abriu o CHECK de `mc_metas_alvo.grafico`
+(era só 'linha' e 'semanas'). Em setembro o dono troca sem mexer em código:
+
+| meta | alvo | gráfico | por quê |
+|---|---|---|---|
+| Vídeos curtos | 30 | `linha` | ~1/dia: acumulado contra a régua + barras do dia |
+| Produtos com clip | 40 | `semanas` | lote: a quantidade da semana importa |
+| Stories próprios | 30 | `calendario` | a pergunta é o padrão semanal, não o total |
+| Reposts diários | cadência | `sequencia` | fita de 31 dias + sequência atual e melhor |
+| Carrosséis | 4 | `semanal` | 1 por semana: cumpriu ou não. Quantidade não quer dizer nada — dois na mesma semana não substituem a semana em branco, e barra de altura dupla diria que substituem |
+| Vídeos de 10-15 min | 8 | `slots` | 8 blocos + marcador de onde o ritmo deveria estar |
+| Pure sound | 4 | `rosca` | o número é a notícia; o arco fino é o ritmo |
+
+Herói: **mapa de calor de N metas x 31 dias**. Existe porque nenhum gráfico por
+meta consegue dizer isto — a produção do estúdio é correlacionada (um dia de
+gravação rende short + clip + story juntos), então lendo **para baixo** aparece a
+semana que morreu em tudo.
+
+### Quase tudo é DOM, não SVG
+
+A faixa de tempo precisa esticar (`preserveAspectRatio: none`), e isso deforma
+tudo que não é traço — na versão de listagem uma barra de semana virava um bloco
+de 96x60px a 366px de celular, medido. Com div + porcentagem a barra estica sem
+deformar, o rótulo é texto de verdade e o tema sai dos tokens. SVG ficou só em
+`linha` (curva) e `rosca` (arco).
+
+### O que a medição pegou, e que o olho não pegaria
+
+- **Cor com alfa medida sem compor devolve o RGB puro.** Os quatro degraus do
+  mapa de calor saíram com 1,01:1 entre si na primeira medição — parecia que a
+  escala estava quebrada. Estava quebrada a MEDIÇÃO: `rgba(...,.30)` num canvas
+  transparente lê 139,156,247 igual ao degrau 4. Compondo sobre o card: 1,48 /
+  1,60 / 1,65 / 1,54 no escuro, tudo distinguível.
+- **Tema claro, degrau 1**: `#d2d8f8` dava **1,13:1** contra o degrau 0 — o
+  primeiro degrau da escala não existia. Virou `#c7cff6` (1,23:1).
+- **Tema claro, degrau 3**: número em branco sobre `#7784de` dava **3,42:1**, e
+  número de dia é texto miúdo (4,5:1). Virou `#5b6ad0` (4,75:1), mantendo
+  1,32:1 contra o degrau 4.
+- **Número do dia sobre o degrau 1**: `--text-muted` dava 3,46:1 no escuro e
+  3,73:1 no claro. `--text-dim` também reprovava (4,05:1). Ficou `--text`
+  (9,54 e 11,31).
+- **`opacity` em texto é ferramenta cega**: derrubava o contraste do número
+  junto com o do fundo em três lugares. Saiu — "dia que não chegou" se diz com
+  fundo vazado, que já era o sinal.
+- **`--bg-elev` como "vazio" de gráfico dá 1,08:1 sobre o card.** Slot vazio,
+  trilho de barra e dia não cumprido eram invisíveis: a fileira de oito slots
+  lia como "um bloco laranja flutuando". Virou o token `--mp-trilho` (1,17:1 no
+  escuro, 1,24 no claro).
+- **Barra de 1 peça x semana furada**: as duas saíam como traço de ~3px no chão
+  e liam igual. Barra real ganhou piso de 6px e o toco da semana furada passou a
+  ser **vazado** — ausência se marca, não se pinta.
+- **Célula de calendário quadrada** esticava o painel para 561px e arrastava o
+  vizinho da fileira, que ficava com meio card vazio. Célula deitada de 22px:
+  268px, e o número do dia cabe melhor.
+- **Aro de "hoje" no dia 31 de 31** virava uma coluna de caixas vazadas na borda
+  direita, lendo como moldura. Suprimido quando `corridos === dias`.
+
+Pior texto miúdo depois de tudo: **5,03:1 no escuro e 4,75:1 no claro**.
+
+### Celular: o herói troca de grade
+
+A 390px a célula do mapa de dia fica com 8,2px com rótulo, ou 11,7px sem rótulo
+e sem saber de que meta é a faixa. Nenhuma das duas serve. No celular entra uma
+**segunda grade, por semana**: 5 colunas de ~42px, rótulo inteiro, e a resposta
+que o herói existe para dar continua a mesma. Página: 2018px, sem estouro
+horizontal.
+
+### Conferido
+
+Sete tipos desenhando. Estados: meio de mês (com "hoje" no mapa, no eixo, no
+calendário e na fita), mês fechado (sem projeção), mês futuro (`—/7`, "não
+começou", e o denominador da cadência vira o mês inteiro em vez de `0/0 dias`),
+vazio e erro. 390, 1024, 1440 e 1920px. Claro e escuro.
+
+### Sobrou uma coisa grande, e não é de design
+
+O modal **"Configurar metas"** escreve em `mc_performance_goals`, a tabela
+ANTIGA — `volume_long_target`, `views_target`, `clicks_target`. A tela de Metas
+não lê nada disso desde que passou a usar `mc_metas_alvo` + `mc_pecas`. Ou seja:
+**o botão de engrenagem não configura as metas que a tela mostra.** Hoje o
+`grafico` e os alvos são gravados por SQL. Está em `pendencias.md`.
+
 ## 31/08/2026 · O mês virou a grade: as sete metas num eixo só
 
 Primeira tela a passar pela régua nova de front-end/design. **Substitui as barras
