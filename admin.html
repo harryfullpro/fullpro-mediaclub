@@ -5599,10 +5599,26 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    PRESENTE naquela lista — sem nenhum "Emergencial" à vista, reservar espaço
    para ele deixaria uma faixa vazia até a margem direita.
    Quem mede é fpPrioAjustarColuna, depois do render. */
+/* O RÓTULO usa um par próprio de cor, separado do que pinta as bolinhas.
+   Medido no tema claro sobre card branco, o rótulo com a cor da prioridade
+   reprovava fundo: "Média" (#e8c33c) dava **1,71:1**, "Alta" (#ff8a3d) 2,35 e
+   "Baixa" (#4c8dff) 3,20 — texto de 11,5px exige 4,5:1. No escuro os mesmos
+   valores passam (5,64 a 10,57), então só o claro tem par próprio.
+   Os valores foram buscados no mesmo matiz de cada prioridade, no L mais alto
+   que ainda cumpre 4,5:1: #206ef5, #8b741d e #b95d1b. Emergencial fica com
+   `--primary`, que no claro já dá 4,85.
+   ATENÇÃO: se o seletor de cores da Manutenção mudar `--prio-1/2/3`, estes três
+   têm que ser recalculados — eles não seguem o token automaticamente, e é de
+   propósito: seguir significaria deixar a legibilidade nas mãos de quem escolhe
+   a cor. */
 .fp-prio-rot {
-  font-size: 11.5px; font-weight: 600; color: var(--fp-prio-cor, var(--text-muted));
+  font-size: 11.5px; font-weight: 600;
+  color: var(--fp-prio-txt, var(--fp-prio-cor, var(--text-muted)));
   width: var(--fp-rot-larg, 78px); flex: 0 0 var(--fp-rot-larg, 78px); text-align: left;
 }
+[data-theme="light"] .fp-prio[data-n="1"] { --fp-prio-txt: #206ef5; }
+[data-theme="light"] .fp-prio[data-n="2"] { --fp-prio-txt: #8b741d; }
+[data-theme="light"] .fp-prio[data-n="3"] { --fp-prio-txt: #b95d1b; }
 .fp-prio[data-n="1"] { --fp-prio-cor: var(--prio-1); }
 .fp-prio[data-n="2"] { --fp-prio-cor: var(--prio-2); }
 .fp-prio[data-n="3"] { --fp-prio-cor: var(--prio-3); }
@@ -5826,6 +5842,33 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   --meta-c0-txt: #d92225; --meta-c1-txt: #b6511a; --meta-c2-txt: #a66019; --meta-c3-txt: #1c803f;
 }
 
+/* ── ETAPAS DO PIPELINE: paleta ORDENADA, não arco-íris ───────────────────
+   O pipeline (planejamento → produção → edição → a publicar → concluído) é uma
+   SEQUÊNCIA, e a paleta antiga tratava como categoria solta: #3b82f6, #10b981,
+   #a855f7, #f59e0b, #6b7280. Medido em OKLCH, três defeitos:
+     · L de 0,551 a 0,769 — "A publicar" gritava e "Concluído" sussurrava, sem
+       nenhuma razão no dado;
+     · C de 0,023 a 0,233, dez vezes de diferença;
+     · três matizes em 260, 264 e 275 — planejamento, concluído e saídas eram
+       o mesmo azul, ou seja, não tinham cor nenhuma.
+     · e #6b7280 pintava a legenda "Concluído" de 12px a 3,73:1, que reprova.
+
+   Agora L e matiz andam JUNTOS na ordem do trabalho: escuro/azul no começo,
+   claro/verde na hora de publicar. Segurar L constante foi tentado e medido —
+   dava separação de 1,03 / 1,02 / 1,00 entre vizinhos, e numa barra segmentada,
+   em que os pedaços se tocam, isso é o mesmo que não ter cor.
+   Medido agora: separação 1,53 / 1,45 / 1,40 no escuro e 1,50 / 1,40 / 1,35 no
+   claro; pior contraste sobre o card 3,19 e 3,11 (mínimo de 3:1 para elemento
+   gráfico). O rótulo da legenda é NEUTRO — só a marquinha é colorida —, então
+   a exigência de 4,5:1 de texto miúdo não recai sobre a paleta.
+   `concluído` é neutro de propósito: trabalho entregue tem que recuar. */
+:root {
+  --et-1: #3862c4; --et-2: #298fb5; --et-3: #33b3b0; --et-4: #67d684; --et-5: #8a8e95;
+}
+[data-theme="light"] {
+  --et-1: #1d44a3; --et-2: #1f6c8a; --et-3: #268986; --et-4: #42a55e; --et-5: #64686f;
+}
+
 /* Grade do mapa de calor e das réguas. `--border-hi` medido dá 1,61:1 no
    escuro e 1,53:1 no claro — no tema claro o fio simplesmente não existia.
    Este par ficou igual nos dois temas: 1,85 e 1,97.
@@ -5873,7 +5916,12 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 
 /* ── o painel ────────────────────────────────────────────────────────────
    Os quatro tokens do cromo. Zerar os quatro = tela sem moldura. */
-.fp-metas-grade {
+/* Esta grade nasceu em Metas e agora é DO PAINEL: o Dashboard usa a mesma.
+   `.fp-pgrade` é o nome novo; `.fp-metas-grade` continua valendo para não
+   precisar mexer no JS de Metas. Um sistema só significa que trocar o cromo
+   (ou desligar o card) continua sendo uma edição em um lugar — se fossem duas
+   grades, a segunda sairia de sincronia na primeira mudança. */
+.fp-metas-grade, .fp-pgrade {
   --mp-bg: var(--bg-card);
   --mp-borda: 1px solid var(--border);
   --mp-raio: 10px;
@@ -5896,8 +5944,18 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   background: var(--mp-bg); border: var(--mp-borda); border-radius: var(--mp-raio);
   padding: var(--mp-pad);
 }
+/* Todos os vãos, não só os três que Metas usava: o Dashboard pediu `3` e, sem
+   regra, o painel caía no `span 6` padrão — a fileira não fechava e sobrava
+   meia largura vazia. Vão sem regra é buraco silencioso. */
+.fp-mp[data-col="2"]  { grid-column: span 2; }
+.fp-mp[data-col="3"]  { grid-column: span 3; }
 .fp-mp[data-col="4"]  { grid-column: span 4; }
+.fp-mp[data-col="5"]  { grid-column: span 5; }
+.fp-mp[data-col="6"]  { grid-column: span 6; }
+.fp-mp[data-col="7"]  { grid-column: span 7; }
 .fp-mp[data-col="8"]  { grid-column: span 8; }
+.fp-mp[data-col="9"]  { grid-column: span 9; }
+.fp-mp[data-col="10"] { grid-column: span 10; }
 .fp-mp[data-col="12"] { grid-column: span 12; }
 
 /* Cabeça do painel: rótulo à esquerda, valor à direita, na mesma linha de base.
@@ -6243,9 +6301,14 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    `grid-template-columns: 1fr`, e os painéis viravam faixas de 30px. Faixa do
    meio não pode alcançar o celular. */
 @media (min-width: 761px) and (max-width: 1200px) {
-  .fp-metas-grade { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-  .fp-mp, .fp-mp[data-col="4"] { grid-column: span 3; }
-  .fp-mp[data-col="8"], .fp-mp[data-col="12"], .fp-mh { grid-column: span 6; }
+  .fp-metas-grade, .fp-pgrade { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  /* Traduzindo os vãos de 12 para 6: o que era metade continua metade, o que
+     era um terço vira metade (num grid de 6 não existe terço que feche), e o
+     que era inteiro continua inteiro. */
+  .fp-mp, .fp-mp[data-col="2"], .fp-mp[data-col="3"], .fp-mp[data-col="4"],
+  .fp-mp[data-col="5"], .fp-mp[data-col="6"] { grid-column: span 3; }
+  .fp-mp[data-col="7"], .fp-mp[data-col="8"], .fp-mp[data-col="9"],
+  .fp-mp[data-col="10"], .fp-mp[data-col="12"], .fp-mh { grid-column: span 6; }
   /* O calendário abre inteiro nesta faixa. Com sete metas, a conta de meias e
      inteiras deixa exatamente um buraco de meia largura, e medido a 1024px ele
      caía ao lado do calendário. Calendário largo lê melhor do que meio
@@ -6256,12 +6319,20 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 /* A grade por semana só existe no celular. */
 .fp-mh-sem { display: none; }
 @media (max-width: 760px) {
-  .fp-metas-grade { grid-template-columns: 1fr; gap: 12px;
+  .fp-metas-grade, .fp-pgrade { grid-template-columns: 1fr; gap: 12px;
     --mp-pad: 13px 14px 15px; }
-  .fp-mp, .fp-mp[data-col="4"], .fp-mp[data-col="8"], .fp-mp[data-col="12"], .fp-mh {
-    grid-column: span 1; }
+  .fp-mp, .fp-mp[data-col], .fp-mh { grid-column: span 1; }
   .fp-mp-val b { font-size: 24px; }
   .fp-mh-mes b { font-size: 18px; }
+  /* O placar do herói quebra para a segunda linha do cabeçalho. Com
+     `text-align: right` numa caixa que encolhe para o conteúdo, ele parava num
+     recuo arbitrário no meio da tela — parecia centrado por acidente. Assume a
+     linha inteira e assenta à esquerda, alinhado com o título logo acima.
+     Vale para Metas e para o Dashboard: é o mesmo herói. */
+  .fp-mh-cab { gap: 12px; }
+  .fp-mh-placar { flex: 1 1 100%; text-align: left; }
+  .fp-mh-placar b, .fp-mh-placar span { display: inline-block; vertical-align: baseline; }
+  .fp-mh-placar span { margin: 0 0 0 8px; }
   /* No celular troca a grade: sai a de 31 dias, entra a de 5 semanas. Medido a
      390px, a célula de dia fica com 8,2px com rótulo ou 11,7px sem — pequena
      demais nos dois casos, e sem rótulo ninguém sabe de que meta é a faixa.
@@ -6273,6 +6344,146 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   .fp-mh-sem .fp-mh-dias { height: 14px; }
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DASHBOARD — as duas frentes na mesma gramática de Metas
+   A tela usava `.fp-pgrade`/`.fp-mp` de Metas, então herda cromo, vãos,
+   pontos de corte e escala de tipo. O que vem aqui é só o que Metas não tem.
+
+   O que foi medido no estado anterior (31/08/2026, dados reais):
+     · a 390px, `grid-template-columns: 1fr 1fr` INLINE não colapsava: as duas
+       colunas somavam 469px numa caixa de 366px e a borda direita do painel
+       Frota caía em x=497 num viewport de 390. Dezesseis elementos passavam da
+       borda, sem barra de rolagem, porque o <main> tem `overflow-x: hidden` —
+       o conteúdo era CORTADO EM SILÊNCIO. A fileira de KPI escapava porque
+       tinha classe e media query; os outros grids eram só inline.
+     · nove raios de borda na mesma tela: 14, 12, 10, 8, 6, 5, 3, 2px e 50%
+     · nove corpos de texto: 11, 12, 13, 14, 16, 20, 26, 28, 32px
+     · TODOS os números grandes em peso 400 (Metas usa 850) e nenhum
+       `tabular-nums`
+   Nada aqui usa medida inline: tudo tem classe, e por isso responde.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── o funil: barra segmentada ordenada + legenda ───────────────────────── */
+.fp-funil { display: flex; height: 12px; border-radius: 3px; overflow: hidden;
+  background: var(--mp-trilho); }
+.fp-funil i { display: block; height: 100%; min-width: 2px; }
+/* Legenda: a marquinha é colorida, o rótulo é NEUTRO. Rótulo colorido obrigaria
+   a paleta a cumprir 4,5:1 de texto miúdo, e era ali que o cinza #6b7280
+   reprovava com 3,73:1. */
+.fp-funil-leg { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 11px; }
+.fp-funil-leg span { display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; font-weight: 500; color: var(--text-dim); }
+.fp-funil-leg i { width: 9px; height: 9px; border-radius: 2px; flex: 0 0 auto; }
+.fp-funil-leg b { font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* ── barra de composição empilhada (solicitações) ──────────────────────── */
+.fp-pilha { display: flex; height: 12px; border-radius: 3px; overflow: hidden;
+  background: var(--mp-trilho); }
+.fp-pilha i { display: block; height: 100%; min-width: 2px; }
+
+/* ── linha de fato: rótulo e valor, sem número gigante ─────────────────────
+   Frota tinha três números de 26px para 1, 1 e 0, ocupando meio painel. Um
+   número grande é uma promessa de que o número importa; 1 e 0 não sustentam a
+   promessa. Aqui o valor é do tamanho do texto e o painel fica com o espaço. */
+.fp-fatos > * + * { border-top: 1px solid var(--border); }
+.fp-fato { display: flex; align-items: baseline; gap: 12px; padding: 9px 0; }
+.fp-fato > span:first-child { flex: 1 1 auto; min-width: 0; font-size: 12.5px;
+  color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fp-fato b { flex: 0 0 auto; font-size: 15px; font-weight: 800; letter-spacing: -.01em;
+  font-variant-numeric: tabular-nums; }
+.fp-fato small { flex: 0 0 auto; font-size: 11px; color: var(--text-muted);
+  font-variant-numeric: tabular-nums; }
+
+/* ── linha de listagem DENTRO de painel ────────────────────────────────────
+   A listagem do painel não sangra o recuo do <main> como `.fp-meta-lin`: aqui
+   ela vive dentro de um card, e a faixa de hover tem que parar na borda dele. */
+.fp-plin-lista > * + * { border-top: 1px solid var(--border); }
+.fp-plin { display: flex; align-items: center; gap: 12px; padding: 10px 0;
+  position: relative; }
+.fp-plin::before { content: ''; position: absolute; z-index: 0; pointer-events: none;
+  top: 0; bottom: 0; left: -8px; right: -8px; border-radius: 5px;
+  background: transparent; transition: background .12s ease; }
+.fp-plin > * { position: relative; z-index: 1; }
+.fp-plin:hover::before { background: rgba(255,255,255,.035); }
+[data-theme="light"] .fp-plin:hover::before { background: rgba(0,0,0,.028); }
+.fp-plin-nome { flex: 1 1 auto; min-width: 0; }
+.fp-plin-nome b { display: block; font-size: 13px; font-weight: 650; line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fp-plin-nome span { display: block; font-size: 11px; font-weight: 400; color: var(--text-muted);
+  line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fp-plin-fim { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; }
+/* Etiqueta de etapa: MARQUINHA colorida, rótulo NEUTRO — a mesma regra da
+   legenda do funil, e pelo mesmo motivo. Texto na cor da etapa sobre a própria
+   cor a 18% é contraste baixo por construção: medido, dava 3,32 a 4,49:1 no
+   escuro e chegava a **2,16:1** no claro ("A publicar"), contra os 4,5:1 que
+   texto de 10px exige. Com o rótulo neutro a paleta não precisa cumprir
+   exigência de texto miúdo, e o matiz continua identificando a etapa. */
+.fp-etapa { display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+  padding: 3px 9px 3px 7px; border-radius: 999px; white-space: nowrap;
+  background: var(--mp-trilho); color: var(--text-dim); }
+.fp-etapa::before { content: ''; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--c); flex: 0 0 auto; }
+
+/* ── bloco de data da agenda ──────────────────────────────────────────────
+   O dia da semana entrou: "3 SET." não diz se cai numa segunda ou num sábado, e
+   é isso que decide se dá para atender. */
+.fp-agdata { flex: 0 0 auto; width: 46px; text-align: center; line-height: 1;
+  padding: 5px 0; border-radius: 6px; background: var(--mp-trilho); }
+.fp-agdata b { display: block; font-size: 17px; font-weight: 850; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums; }
+/* --text-muted sobre o trilho do tema claro dá 4,22:1, medido, e 9px é texto
+   miúdo (4,5:1). --text-dim passa. Mesma correção do número do calendário de
+   Metas — o par muted/trilho reprova sempre que aparece. */
+.fp-agdata span { display: block; margin-top: 2px; font-size: 9px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim); }
+
+/* ── a barra de estado do catálogo de fotos ────────────────────────────────
+   Três estados, não uma porcentagem: com foto · sem foto e já triada · sem foto
+   e NÃO triada. A versão anterior mostrava "85,9% do catálogo" e escondia que
+   688 dos 867 que faltam nem foram classificados — que é o trabalho que existe
+   para ser feito hoje. */
+.fp-cat { display: flex; height: 14px; border-radius: 3px; overflow: hidden;
+  background: var(--mp-trilho); }
+.fp-cat i { display: block; height: 100%; min-width: 2px; }
+
+/* ── celular ────────────────────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  .fp-funil-leg { gap: 4px 12px; }
+  .fp-fato b { font-size: 14px; }
+  .fp-agdata { width: 42px; }
+}
+
+/* Trilho opcional dentro de uma linha de fato — usado pela fila de prioridade,
+   em que a categoria tem nome (não é série temporal) e a barra é referência
+   rápida ao lado do número. */
+.fp-fato-tr { flex: 0 0 84px; height: 5px; border-radius: 3px; overflow: hidden;
+  background: var(--mp-trilho); align-self: center; }
+.fp-fato-tr i { display: block; height: 100%; border-radius: 3px; min-width: 2px; }
+
+/* Bloco de chamada: o trabalho que está esperando triagem. Não é um card dentro
+   do card — é uma faixa com o fio em cima, no idioma das listagens. */
+.fp-chamada { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
+  display: flex; align-items: baseline; gap: 12px; }
+.fp-chamada > span:first-child { flex: 1 1 auto; min-width: 0; font-size: 11.5px;
+  color: var(--text-dim); line-height: 1.35; }
+.fp-chamada b { flex: 0 0 auto; font-size: 22px; font-weight: 850; line-height: 1;
+  letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+
+/* ── tira das últimas fotos ────────────────────────────────────────────────
+   Era um grid com `minmax(96px,1fr)` e medida inline. Virou classe para poder
+   responder: no celular a miniatura cai para 72px, senão três colunas de 96px
+   não caberiam nos 338px úteis de dentro do painel. */
+.fp-foto-tira { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.fp-foto-tira > div { min-width: 0; }
+.fp-foto-tira img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px;
+  border: 1px solid var(--border); display: block; background: var(--mp-trilho); }
+.fp-foto-tira > div > span { display: block; margin-top: 4px; font-size: 10.5px;
+  color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 760px) {
+  .fp-foto-tira { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 6px; }
+}
 /* ── fileira de logotipos de destino ────────────────────────────────────
    `contain` numa caixa quadrada: as marcas têm proporções diferentes (o
    Shorts é alto, o Mercado Livre é largo) e sem isso uma delas esticaria.
@@ -23158,81 +23369,199 @@ function fpSkelTxt(larg, alt) {
    disparava outras três consultas. Quase dois segundos de área vazia.
    `d` é o retorno da função, ou null enquanto ela não voltou: aí cada número
    vira uma barra em animação, e a tela já abre com a forma certa. */
+/* ═══════════════════════════════════════════════════════════════════════
+   DASHBOARD · FRENTE DE FOTOGRAFIA
+   Refeito em 31/08/2026 na mesma gramática de Metas e da frente de vídeo.
+   A versão anterior já seguia o idioma de fios do painel — o problema era de
+   HIERARQUIA, e os números reais mostram qual:
+
+     6130 ativos · 5263 com foto · 867 sem foto · e 688 DESSAS 867 nem foram
+     classificadas · fotos este mês: 0
+
+   · O quarto KPI da fileira nobre era "Fotos este mês", que vale 0. Um quarto
+     da atenção da tela para um zero.
+   · "85,9% do catálogo ativo" escondia o que interessa: das 867 que faltam,
+     688 (79%) nem passaram por triagem. Não é falta de foto, é falta de
+     DECISÃO — e é o trabalho que existe para hoje.
+   · A fila punha "sem prioridade: 688" na mesma escala de barras que
+     "emergencial: 1". As quatro prioridades reais viravam slivers de 1px.
+   Agora "sem prioridade" sai da escala e vira chamada de ação, e as quatro
+   prioridades ficam com escala própria, onde se leem.
+   ═══════════════════════════════════════════════════════════════════════ */
+
 function fpPanoramaHtml(d) {
   const n = v => Number(v || 0);
+  const num = v => Number(v || 0).toLocaleString('pt-BR');
   const ativos = n(d && d.ativos), com = n(d && d.com_foto), sem = n(d && d.sem_foto);
   const avaliados = n(d && d.avaliados);
   const media = (d && d.nota_media != null) ? Number(d.nota_media) : null;
   const fila = { 5: n(d && d.p5), 3: n(d && d.p3), 2: n(d && d.p2), 1: n(d && d.p1), pend: n(d && d.pend) };
-  const pct = ativos ? Math.round(com / ativos * 100) : 0;
+  const triados = fila[5] + fila[3] + fila[2] + fila[1];
+  const pct = ativos ? com / ativos : 0;
   const fotosMes = n(d && d.fotos_mes), produtosMes = n(d && d.produtos_mes);
   const recentes = (d && d.recentes) || [];
   const lotes    = (d && d.lotes) || [];
   const topo     = (d && d.sem_foto_estoque) || [];
-  const num = v => v.toLocaleString('pt-BR');
+  const esq = (w, h) => fpSkelTxt(w, h);
 
-  const cartao = (rotulo, valor, extra) => '<div class="stat-card"><div class="label">' + rotulo + '</div>'
-    + '<div class="value">' + valor + '</div>' + (extra ? '<div class="fp-aviso-sub">' + extra + '</div>' : '') + '</div>';
-
-  return '<div class="stats-grid">'
-    + cartao('Com foto',
-        d ? num(com) : fpSkelTxt('92px', 28),
-        d ? pct + '% do catálogo ativo' : fpSkelTxt('118px', 11))
-    + cartao('Sem foto',
-        d ? num(sem) : fpSkelTxt('92px', 28),
-        d ? (fila.pend ? num(fila.pend) + ' sem prioridade' : 'tudo classificado') : fpSkelTxt('104px', 11))
-    + cartao('Nota média',
-        d ? (media == null ? '—' : media.toFixed(1).replace('.', ',') + '/5') : fpSkelTxt('76px', 28),
-        d ? (avaliados ? avaliados + ' produtos avaliados' : 'ainda sem avaliação') : fpSkelTxt('126px', 11))
-    + cartao('Fotos este mês',
-        d ? num(fotosMes) : fpSkelTxt('62px', 28),
-        d ? produtosMes + (produtosMes === 1 ? ' produto' : ' produtos') : fpSkelTxt('82px', 11))
+  /* ── herói: os três estados do catálogo ─────────────────────────────────
+     Com foto · sem foto e já triada · sem foto e NÃO triada. Três estados e não
+     uma porcentagem, porque é a terceira fatia que diz o que fazer hoje. */
+  const fatia = (v, cor, rot) => (ativos && v)
+    ? '<i style="width:' + (v / ativos * 100).toFixed(2) + '%;background:' + cor + '"'
+      + ' title="' + escHtml(rot + ': ' + num(v)) + '"></i>' : '';
+  const heroi = '<div class="fp-mh">'
+    + '<div class="fp-mh-cab">'
+    +   '<div class="fp-mh-mes"><b>Catálogo de fotos</b>'
+    +     '<span>' + (d ? num(ativos) + ' produtos ativos de ' + num(n(d.total_catalogo)) + ' no catálogo'
+                        + (d.atualizado_em ? ' · sincronizado ' + escHtml(timeAgo(d.atualizado_em)) : '')
+                      : esq('260px', 12)) + '</span></div>'
+    +   '<div class="fp-mh-placar"><b>' + (d ? (pct * 100).toFixed(1).replace('.', ',') + '<i>%</i>' : esq('86px', 27)) + '</b>'
+    +     '<span>com foto</span></div>'
     + '</div>'
-
-    + '<div class="fp-dash-duo">'
-    + '<div class="fp-prod" data-tut="fila">'
-    + '<div class="fp-prod-faixa"><b>Fila por prioridade</b><span class="fp-aviso-sub">'
-    + (d ? num(sem) + ' produtos sem foto' : fpSkelTxt('132px', 11)) + '</span></div>' + [
-        ['Emergencial', fila[5], 5], ['Alta', fila[3], 3], ['Média', fila[2], 2], ['Baixa', fila[1], 1], ['Sem prioridade', fila.pend, 0],
-      ].map(([rot, qtd, nivel]) => '<div class="fp-prod-linha"><span class="fp-prod-nome"><b>' + rot + '</b></span>'
-        + '<span class="fp-prod-est">' + (d ? num(qtd) + ' <small>itens</small>' : fpSkelTxt('46px', 12)) + '</span>'
-        + '<span class="fp-prod-fim" style="width:120px"><span style="flex:1;height:5px;border-radius:3px;background:var(--border-hi);overflow:hidden;display:block">'
-        + '<span style="display:block;height:100%;width:' + (d && sem ? Math.round(qtd / sem * 100) : 0) + '%;background:' + fpPrioCor(nivel) + '"></span></span></span></div>').join('')
-    + '</div>'
-    /* A animação é decorativa: fora do alcance do leitor de tela e do cursor.
-       Com a constante vazia, o grid de uma coluna devolve a linha inteira à
-       fila, sem buraco. */
-    + '<div class="fp-dash-carro" id="fotoCarrossel"></div>'
-    + '</div>'
-
-    + (lotes.length ? '<div class="fp-prod"><div class="fp-prod-faixa"><b>Lotes em aberto</b></div>'
-        + lotes.map(l => '<div class="fp-prod-linha"><span class="fp-prod-nome"><b>Lote de '
-          + new Date(l.created_at).toLocaleDateString('pt-BR') + '</b><span class="fp-prod-sku">'
-          + escHtml(l.criado_por_nome || '') + (l.slack_destino_nome ? ' → ' + escHtml(l.slack_destino_nome) : '') + '</span></span>'
-          + '<span class="fp-prod-est">' + (l.tamanho || 0) + ' <small>itens</small></span></div>').join('') + '</div>' : '')
-
-    + ((d && !topo.length) ? '' : '<div class="fp-prod" data-tut="estoque"><div class="fp-prod-faixa"><b>Sem foto e com mais estoque parado</b><span class="fp-aviso-sub">os 8 maiores</span></div>'
     + (d
-        ? topo.map(p => '<div class="fp-prod-linha" data-sku="' + escHtml(p.sku) + '">' + fpFotoProdutoHtml(p.sku, p.imagem_bling, 34, 7)
-            + '<span class="fp-prod-nome"><b>' + escHtml(p.nome || p.sku) + '</b><span class="fp-prod-sku">' + escHtml(p.sku) + '</span></span>'
-            + fpProdEstoqueHtml(p.estoque)
-            + '<span class="fp-prod-fim">' + fpPrioHtml(p.sku, p.prioridade, fpFotoPodeEditar()) + '</span></div>').join('')
-        : Array.from({ length: 8 }, () => '<div class="fp-prod-linha">'
+        ? '<div class="fp-cat">' + fatia(com, 'var(--et-4)', 'Com foto')
+          + fatia(triados, 'var(--et-2)', 'Sem foto, já triadas')
+          + fatia(fila.pend, 'var(--et-1)', 'Sem foto e sem triagem') + '</div>'
+          + '<div class="fp-funil-leg">'
+          + '<span><i style="background:var(--et-4)"></i>Com foto <b>' + num(com) + '</b></span>'
+          + '<span><i style="background:var(--et-2)"></i>Sem foto, já triadas <b>' + num(triados) + '</b></span>'
+          + '<span><i style="background:var(--et-1)"></i>Sem foto e sem triagem <b>' + num(fila.pend) + '</b></span>'
+          + '</div>'
+        : '<div class="fp-cat"></div>')
+    /* O veredito da tela. Não é a porcentagem de cobertura — é a fatia da falta
+       que ninguém decidiu ainda. */
+    + (d && sem
+        ? '<div class="fp-mp-pe" style="margin-top:13px"><span>o que falta decidir</span>'
+          + '<span style="color:' + fpMetaCor(fila.pend / sem > .5 ? .3 : .85, true)
+          + ';font-weight:800;letter-spacing:.03em;text-transform:uppercase">'
+          + num(fila.pend) + ' das ' + num(sem) + ' sem foto não foram triadas</span></div>'
+        : '')
+    + '</div>';
+
+  /* ── fila por prioridade, com escala própria ───────────────────────────── */
+  const nivies = [['Emergencial', fila[5], 5], ['Alta', fila[3], 3], ['Média', fila[2], 2], ['Baixa', fila[1], 1]];
+  const teto = Math.max(1, ...nivies.map(x => x[1]));
+  const painelFila = '<div class="fp-mp" data-col="6">'
+    + '<div class="fp-mp-cab">'
+    +   '<span class="fp-mp-tit"><b>Fila por prioridade</b><span>só o que já foi triado</span></span>'
+    +   '<span class="fp-mp-val"><b>' + (d ? num(triados) : esq('62px', 27)) + '</b>'
+    +     '<span class="fp-mp-vd" style="color:var(--text-muted)">na fila</span></span>'
+    + '</div>'
+    + '<div class="fp-mp-viz" style="justify-content:flex-start">'
+    +   '<div class="fp-fatos">'
+    +   nivies.map(([rot, qtd, nivel]) => '<div class="fp-fato"><span>' + rot + '</span>'
+        + '<span class="fp-fato-tr">' + (d && qtd ? '<i style="width:'
+            + (qtd / teto * 100).toFixed(1) + '%;background:' + fpPrioCor(nivel) + '"></i>' : '') + '</span>'
+        + '<b>' + (d ? num(qtd) : esq('34px', 15)) + '</b></div>').join('')
+    +   '</div>'
+    /* A chamada: 688 sem triagem não entra na escala das barras — na versão
+       anterior ela entrava e achatava as quatro prioridades reais em slivers de
+       1px. Aqui ela é o que é: trabalho de decisão esperando. */
+    +   (d && fila.pend
+        ? '<div class="fp-chamada"><span>produtos sem foto que ainda não receberam prioridade — '
+          + 'é a maior fila do módulo e ela não aparece nas barras acima</span>'
+          + '<b style="color:' + fpMetaCor(.3) + '">' + num(fila.pend) + '</b></div>'
+        : '')
+    + '</div>'
+    + '</div>';
+
+  /* ── nota média, em rosca ──────────────────────────────────────────────── */
+  const R = 38, C = 2 * Math.PI * R;
+  const fracNota = media == null ? 0 : Math.max(0, Math.min(1, media / 5));
+  const corNota = media == null ? 'var(--text-muted)' : fpMetaCor(fracNota);
+  const painelNota = '<div class="fp-mp" data-col="3">'
+    + '<div class="fp-mp-cab"><span class="fp-mp-tit"><b>Nota média</b>'
+    +   '<span>' + (d ? (avaliados ? num(avaliados) + ' avaliados' : 'ainda sem avaliação') : esq('96px', 12)) + '</span></span></div>'
+    + '<div class="fp-mp-viz">'
+    +   '<div class="fp-mp-rosca">'
+    +     '<svg viewBox="0 0 100 100" height="112" aria-hidden="true">'
+    +       '<circle cx="50" cy="50" r="' + R + '" fill="none" stroke="var(--mp-trilho)" stroke-width="11"/>'
+    +       (fracNota ? '<circle cx="50" cy="50" r="' + R + '" fill="none" stroke="' + corNota + '"'
+            + ' stroke-width="11" stroke-linecap="round" stroke-dasharray="' + (C * fracNota).toFixed(2)
+            + ' ' + C.toFixed(2) + '" transform="rotate(-90 50 50)"/>' : '')
+    +     '</svg>'
+    +     '<span class="fp-rosca-num" style="color:' + corNota + '">'
+    +       (media == null ? '—' : media.toFixed(1).replace('.', ',')) + '</span>'
+    +   '</div>'
+    +   '<div class="fp-mp-pe"><span>de 5</span></div>'
+    + '</div>'
+    + '</div>';
+
+  /* ── ritmo do mês ───────────────────────────────────────────────────────
+     Fica na tela mesmo valendo zero, mas em painel pequeno e com a palavra
+     certa: zero aqui é informação ("nada este mês"), e não um KPI de vitrine. */
+  const painelMes = '<div class="fp-mp" data-col="3">'
+    + '<div class="fp-mp-cab">'
+    +   '<span class="fp-mp-tit"><b>Este mês</b><span>fotos enviadas pelo painel</span></span>'
+    + '</div>'
+    + '<div class="fp-mp-viz" style="justify-content:flex-start">'
+    +   '<div class="fp-fatos">'
+    +     '<div class="fp-fato"><span>Fotos</span><b' + (d && !fotosMes ? ' style="color:var(--text-muted)"' : '') + '>'
+    +       (d ? num(fotosMes) : esq('34px', 15)) + '</b></div>'
+    +     '<div class="fp-fato"><span>Produtos atendidos</span><b' + (d && !produtosMes ? ' style="color:var(--text-muted)"' : '') + '>'
+    +       (d ? num(produtosMes) : esq('34px', 15)) + '</b></div>'
+    +   '</div>'
+    +   (d && !fotosMes ? '<div class="fp-mp-pe" style="margin-top:10px"><span>nenhuma foto entrou este mês</span></div>' : '')
+    + '</div>'
+    + '</div>';
+
+  /* ── lotes em aberto, só quando existem ───────────────────────────────── */
+  const painelLotes = lotes.length ? '<div class="fp-mp" data-col="12">'
+    + '<div class="fp-mp-cab"><span class="fp-mp-tit"><b>Lotes em aberto</b>'
+    +   '<span>enviados e ainda não fechados</span></span>'
+    +   '<span class="fp-mp-val"><b>' + num(lotes.length) + '</b></span></div>'
+    + '<div class="fp-mp-viz" style="justify-content:flex-start"><div class="fp-plin-lista">'
+    + lotes.map(l => '<div class="fp-plin"><span class="fp-plin-nome">'
+        + '<b>Lote de ' + new Date(l.created_at).toLocaleDateString('pt-BR') + '</b>'
+        + '<span>' + escHtml(l.criado_por_nome || '')
+        + (l.slack_destino_nome ? ' → ' + escHtml(l.slack_destino_nome) : '') + '</span></span>'
+        + '<span class="fp-plin-fim"><b style="font-size:13px;font-weight:800">' + (l.tamanho || 0)
+        + '</b><small style="font-size:11px;color:var(--text-muted)">itens</small></span></div>').join('')
+    + '</div></div></div>' : '';
+
+  /* ── sem foto e com mais estoque parado: a lista acionável ─────────────── */
+  const painelEstoque = (d && !topo.length) ? '' : '<div class="fp-mp" data-col="12" data-tut="estoque">'
+    + '<div class="fp-mp-cab">'
+    +   '<span class="fp-mp-tit"><b>Sem foto e com mais estoque parado</b>'
+    +     '<span>por onde começar: os 8 maiores</span></span>'
+    +   '<span class="fp-mp-val"><b>' + (d ? num(sem) : esq('72px', 27)) + '</b>'
+    +     '<span class="fp-mp-vd" style="color:var(--text-muted)">sem foto</span></span>'
+    + '</div>'
+    + '<div class="fp-mp-viz" style="justify-content:flex-start"><div class="fp-plin-lista">'
+    + (d
+        ? topo.map(p => '<div class="fp-plin" data-sku="' + escHtml(p.sku) + '">'
+            + fpFotoProdutoHtml(p.sku, p.imagem_bling, 34, 7)
+            + '<span class="fp-plin-nome"><b>' + escHtml(p.nome || p.sku) + '</b>'
+            +   '<span>' + escHtml(p.sku) + '</span></span>'
+            + '<span class="fp-plin-fim">' + fpProdEstoqueHtml(p.estoque)
+            +   fpPrioHtml(p.sku, p.prioridade, fpFotoPodeEditar()) + '</span></div>').join('')
+        : Array.from({ length: 8 }, () => '<div class="fp-plin">'
             + '<span class="fp-skel-txt" style="width:34px;height:34px;border-radius:7px"></span>'
-            + '<span class="fp-prod-nome">' + fpSkelTxt('min(240px, 46vw)', 13) + '<span class="fp-prod-sku">' + fpSkelTxt('88px', 10) + '</span></span>'
-            + '<span class="fp-prod-est">' + fpSkelTxt('52px', 12) + '</span>'
-            + '<span class="fp-prod-fim">' + fpSkelTxt('108px', 14) + '</span></div>').join(''))
-    + '</div>')
+            + '<span class="fp-plin-nome">' + esq('min(240px, 46vw)', 13)
+            + '<span>' + esq('88px', 10) + '</span></span>'
+            + '<span class="fp-plin-fim">' + esq('52px', 12) + esq('108px', 14) + '</span></div>').join(''))
+    + '</div></div></div>';
 
-    + ((d && !recentes.length) ? '' : '<div class="fp-prod-faixa"><b>Últimas 15 fotos enviadas</b></div>'
-    + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px">'
+  /* ── últimas fotos, só quando existem ─────────────────────────────────── */
+  const painelRecentes = (d && !recentes.length) ? '' : '<div class="fp-mp" data-col="12">'
+    + '<div class="fp-mp-cab"><span class="fp-mp-tit"><b>Últimas fotos enviadas</b>'
+    +   '<span>as 15 mais recentes</span></span></div>'
+    + '<div class="fp-mp-viz"><div class="fp-foto-tira">'
     + (d
-        ? recentes.map(f => '<div><img src="' + escHtml(FP_DRIVE_URL + '?action=arquivo&id=' + encodeURIComponent(f.drive_file_id || '')) + '" alt="'
-            + escHtml(f.file_name || '') + '" loading="eager" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--border)">'
-            + '<div class="fp-prod-sku" style="margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escHtml(f.sku || '') + '</div></div>').join('')
-        : Array.from({ length: 15 }, () => '<div><span class="fp-skel-txt" style="width:100%;aspect-ratio:1;height:auto;border-radius:8px"></span>'
-            + '<div style="margin-top:3px">' + fpSkelTxt('64px', 10) + '</div></div>').join(''))
-    + '</div>');
+        ? recentes.map(f => '<div><img src="' + escHtml(FP_DRIVE_URL + '?action=arquivo&id='
+            + encodeURIComponent(f.drive_file_id || '')) + '" alt="' + escHtml(f.file_name || '')
+            + '" loading="lazy"><span>' + escHtml(f.sku || '') + '</span></div>').join('')
+        : Array.from({ length: 15 }, () => '<div><span class="fp-skel-txt"'
+            + ' style="width:100%;aspect-ratio:1;height:auto;border-radius:8px"></span>'
+            + '<span>' + esq('64px', 10) + '</span></div>').join(''))
+    + '</div></div></div>';
+
+  /* A animação do carrossel é decorativa: fora do alcance do leitor de tela e
+     do cursor. Fica no fim, e sem painel — é enfeite honesto, não dado. */
+  return '<div class="fp-pgrade">' + heroi + painelFila + painelNota + painelMes
+    + painelLotes + painelEstoque + painelRecentes + '</div>'
+    + '<div class="fp-dash-carro" id="fotoCarrossel"></div>';
 }
 
 /* Quem chegou por último manda: duas aberturas seguidas não podem pintar uma
@@ -27458,214 +27787,285 @@ function openEditRoteiro(id) {
 
 
 /* DASHBOARD */
+/* ═══════════════════════════════════════════════════════════════════════
+   DASHBOARD · FRENTE DE VÍDEO
+   Refeito em 31/08/2026 na mesma gramática de Metas (`.fp-pgrade` + `.fp-mp`),
+   depois de medir a versão anterior. O que ela tinha e por que saiu:
+
+   · quatro KPI em card com ícone em quadradinho — o padrão mais template que
+     existe em dashboard — e um deles era "Custos totais R$ 230,00", somando
+     TODOS os projetos de TODOS os tempos, ocupando 1/4 da fileira nobre;
+   · "Taxa de conclusão 52%" em rosca, que é um segundo desenho do mesmo dado
+     da barra de pipeline logo acima, e 52% do histórico não é acionável;
+   · Frota com três números de 26px para 1, 1 e 0 — meio painel para um módulo
+     vazio;
+   · "6 pendentes / 112 este mês": o sublabel contava TODAS as solicitações do
+     mês e lia-se "112 pendentes este mês";
+   · e o gargalo real não estava dito em lugar nenhum: 11 dos 22 projetos
+     ativos parados em Edição, metade da produção travada num ponto só.
+
+   O herói agora é o funil com o gargalo NOMEADO, e a tela ganhou a dimensão
+   que não tinha: tempo (projetos por mês de gravação).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const FP_ETAPAS = [
+  { k: 'planejamento', rot: 'Planejamento', cor: 'var(--et-1)' },
+  { k: 'producao',     rot: 'Em produção',  cor: 'var(--et-2)' },
+  { k: 'edicao',       rot: 'Edição',       cor: 'var(--et-3)' },
+  { k: 'a_publicar',   rot: 'A publicar',   cor: 'var(--et-4)' },
+  { k: 'concluido',    rot: 'Concluído',    cor: 'var(--et-5)' },
+];
+const FP_ETAPA_ROT = FP_ETAPAS.reduce((m, e) => (m[e.k] = e.rot, m), {});
+const FP_ETAPA_COR = FP_ETAPAS.reduce((m, e) => (m[e.k] = e.cor, m), {});
+
+/* Onde o trabalho ativo está empilhado. "Ativo" exclui concluído: um gargalo é
+   coisa que ainda está na mão de alguém. */
+function fpDashGargalo(porEtapa) {
+  const ativas = FP_ETAPAS.slice(0, 4);
+  const total = ativas.reduce((s, e) => s + (porEtapa[e.k] || 0), 0);
+  if (!total) return null;
+  const pior = ativas.reduce((a, b) => (porEtapa[b.k] || 0) > (porEtapa[a.k] || 0) ? b : a);
+  const n = porEtapa[pior.k] || 0;
+  return { etapa: pior, n, total, fracao: n / total };
+}
+
+/* Projetos por mês de GRAVAÇÃO (`production_date`), com queda para
+   `created_at` quando a gravação não foi marcada. Não é o mês de publicação de
+   propósito: esta tela é do estúdio, e a pergunta é quanto se gravou. */
+function fpDashPorMes(projs, meses) {
+  const M = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const hoje = new Date();
+  const balde = [];
+  for (let i = meses - 1; i >= 0; i--) {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+    balde.push({ chave: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'),
+                 rot: M[d.getMonth()], n: 0 });
+  }
+  const idx = balde.reduce((m, b, i) => (m[b.chave] = i, m), {});
+  projs.forEach(p => {
+    const bruto = p.production_date || p.created_at;
+    if (!bruto) return;
+    const c = String(bruto).slice(0, 7);
+    if (idx[c] != null) balde[idx[c]].n++;
+  });
+  return balde;
+}
+
+/* Barras por mês. Reaproveita `.fp-mp-barras` de Metas — mesma mecânica de
+   trilho com altura, sem a régua de cota (mês não tem cota). */
+function fpDashBarrasMes(balde) {
+  const teto = Math.max(1, ...balde.map(b => b.n));
+  return '<div class="fp-mp-barras">'
+    + balde.map((b, i) => '<div class="fp-mp-barra" title="' + escHtml(b.rot + ': ' + b.n + (b.n === 1 ? ' projeto' : ' projetos')) + '">'
+        + '<span class="fp-mp-barra-n">' + b.n + '</span>'
+        + '<span class="fp-mp-barra-tr">' + (b.n
+            ? '<i style="height:' + (b.n / teto * 100).toFixed(1) + '%;background:' + (i === balde.length - 1 ? 'var(--et-3)' : 'var(--text-dim)') + '"></i>'
+            : '') + '</span>'
+        + '<span class="fp-mp-barra-r">' + escHtml(b.rot) + '</span>'
+      + '</div>').join('')
+    + '</div>';
+}
+
+const FP_DIA_SEM_CURTO = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+
 function renderDashboard() {
   const el = document.getElementById('dashboardContent');
   if (!el) return;
 
   const reqs = getRequests();
-  const pending = reqs.filter(r => r.status === 'pending').length;
-  const approved = reqs.filter(r => r.status === 'approved').length;
-  const rejected = reqs.filter(r => r.status === 'rejected').length;
-  const standby  = reqs.filter(r => r.status === 'standby').length;
+  const por = st => reqs.filter(r => r.status === st).length;
+  const pend = por('pending'), aprov = por('approved'), rej = por('rejected'), stby = por('standby');
+  const totalReq = reqs.length;
 
-  const now = new Date();
-  const thisMonth = reqs.filter(r => {
-    const d = new Date(r.created_at);
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  }).length;
+  const porEtapa = FP_ETAPAS.reduce((m, e) => (m[e.k] = PROJECTS.filter(p => p.status === e.k).length, m), {});
+  const totalProj = PROJECTS.length;
+  const ativos = FP_ETAPAS.slice(0, 4).reduce((s, e) => s + porEtapa[e.k], 0);
+  const gargalo = fpDashGargalo(porEtapa);
 
-  const blockedCount = BLOCKED.length;
+  const hojeIso = new Date().toISOString().slice(0, 10);
+  const proximos = reqs.filter(r => r.status === 'approved' && r.date && r.date >= hojeIso)
+    .sort((a, b) => String(a.date).localeCompare(String(b.date))).slice(0, 5);
 
-  const upcoming = reqs.filter(r => r.status === 'approved' && r.date >= new Date().toISOString().slice(0, 10))
-    .sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
+  const recentes = [...PROJECTS].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)).slice(0, 6);
+  const emEdicao = PROJECTS.filter(p => p.status === 'edicao')
+    .sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
 
-  const projTotal = PROJECTS.length;
-  const projByStatus = {
-    planejamento: PROJECTS.filter(p => p.status === 'planejamento').length,
-    producao: PROJECTS.filter(p => p.status === 'producao').length,
-    edicao: PROJECTS.filter(p => p.status === 'edicao').length,
-    a_publicar: PROJECTS.filter(p => p.status === 'a_publicar').length,
-    concluido: PROJECTS.filter(p => p.status === 'concluido').length
-  };
+  const custoDe = p => (p.costs || []).reduce((s, c) => s + (Number(c.value) || 0), 0);
+  const custoTotal = PROJECTS.reduce((s, p) => s + custoDe(p), 0);
+  const ciCount = Object.keys(CHECKINS || {}).length;
+  const coCount = Object.keys(CHECKOUTS || {}).length;
+  const emUso = Math.max(0, ciCount - coCount);
 
-  const totalCosts = PROJECTS.reduce((s, p) => s + (p.costs || []).reduce((cs, c) => cs + (c.value || 0), 0), 0);
+  const num = v => Number(v || 0).toLocaleString('pt-BR');
 
-  const ciCount = Object.keys(CHECKINS).length;
-  const coCount = Object.keys(CHECKOUTS).length;
-  const inUse = ciCount - coCount;
+  /* ── herói: o funil, com o gargalo dito em palavra ─────────────────────
+     A concentração vira cor pela mesma rampa de Metas. A régua é 40%: com
+     cinco etapas e trabalho bem distribuído, nenhuma passa disso. Quanto mais
+     acima de 40% uma etapa empilha, mais quente a cor — 50% dá laranja. */
+  const razaoGargalo = gargalo ? Math.min(1, 0.4 / Math.max(0.0001, gargalo.fracao)) : null;
+  const corGargalo = fpMetaCor(razaoGargalo, true);
+  const heroi = '<div class="fp-mh">'
+    + '<div class="fp-mh-cab">'
+    +   '<div class="fp-mh-mes"><b>Produção de vídeo</b>'
+    +     '<span>' + num(totalProj) + ' projetos · ' + num(porEtapa.concluido) + ' concluídos'
+    +       (custoTotal ? ' · R$ ' + formatBRL(custoTotal) + ' em custos' : '') + '</span></div>'
+    +   '<div class="fp-mh-placar"><b>' + num(ativos) + '<i>/' + num(totalProj) + '</i></b>'
+    +     '<span>projetos ativos</span></div>'
+    + '</div>'
+    + (totalProj
+        ? '<div class="fp-funil">'
+          + FP_ETAPAS.filter(e => porEtapa[e.k]).map(e => '<i style="width:'
+              + (porEtapa[e.k] / totalProj * 100).toFixed(2) + '%;background:' + e.cor + '"'
+              + ' title="' + escHtml(e.rot + ': ' + porEtapa[e.k]) + '"></i>').join('')
+          + '</div>'
+          + '<div class="fp-funil-leg">'
+          + FP_ETAPAS.map(e => '<span><i style="background:' + e.cor + '"></i>' + e.rot
+              + ' <b>' + num(porEtapa[e.k]) + '</b></span>').join('')
+          + '</div>'
+        : '')
+    + (gargalo && gargalo.fracao >= 0.34
+        ? '<div class="fp-mp-pe" style="margin-top:13px"><span>onde o trabalho está parado</span>'
+          + '<span style="color:' + corGargalo + ';font-weight:800;letter-spacing:.03em;text-transform:uppercase">'
+          + escHtml(gargalo.etapa.rot) + ' · ' + gargalo.n + ' de ' + gargalo.total + ' ativos</span></div>'
+        : '')
+    + '</div>';
 
-  const statusMap = { planejamento: 'Planejamento', producao: 'Em produção', edicao: 'Edição', a_publicar: 'A publicar', concluido: 'Concluído' };
-  const statusColors = { planejamento: '#3b82f6', producao: '#10b981', edicao: '#a855f7', a_publicar: '#f59e0b', concluido: '#6b7280' };
+  /* ── painel: a etapa que está travando, com os projetos nominais ──────── */
+  const painelGargalo = '<div class="fp-mp" data-col="6">'
+    + '<div class="fp-mp-cab">'
+    +   '<span class="fp-mp-tit"><b>Parado em ' + escHtml(FP_ETAPA_ROT.edicao) + '</b>'
+    +     '<span>' + (emEdicao.length ? 'do mais antigo para o mais novo' : 'nada parado em edição') + '</span></span>'
+    +   '<span class="fp-mp-val"><b style="color:' + corGargalo + '">' + num(emEdicao.length)
+    +     '<i>/' + num(ativos) + '</i></b>'
+    +     '<span class="fp-mp-vd" style="color:' + corGargalo + '">dos ativos</span></span>'
+    + '</div>'
+    + '<div class="fp-mp-viz" style="justify-content:flex-start">'
+    +   (emEdicao.length
+        ? '<div class="fp-plin-lista">' + emEdicao.slice(0, 6).map(p => '<div class="fp-plin">'
+            + '<span class="fp-plin-nome"><b>' + escHtml(p.title || 'Sem título') + '</b>'
+            +   '<span>' + escHtml(p.moto || '—') + '</span></span>'
+            + '<span class="fp-plin-fim">' + fpDestsHtml(p.destinations, { teto: 3, tam: 16 }) + '</span>'
+            + '</div>').join('')
+          + '</div>'
+          + (emEdicao.length > 6 ? '<div class="fp-mp-pe" style="margin-top:10px"><span>e outros '
+              + (emEdicao.length - 6) + '</span></div>' : '')
+        : '<div class="fp-mp-pe"><span>a fila de edição está limpa</span></div>')
+    + '</div>'
+    + '</div>';
 
-  const recentProjects = [...PROJECTS].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)).slice(0, 5);
+  /* ── painel: ritmo de gravação ────────────────────────────────────────── */
+  const balde = fpDashPorMes(PROJECTS, 6);
+  const esteMes = balde[balde.length - 1].n, mesPassado = balde[balde.length - 2].n;
+  const dif = esteMes - mesPassado;
+  const painelRitmo = '<div class="fp-mp" data-col="6">'
+    + '<div class="fp-mp-cab">'
+    +   '<span class="fp-mp-tit"><b>Ritmo de gravação</b><span>projetos por mês de gravação</span></span>'
+    +   '<span class="fp-mp-val"><b>' + num(esteMes) + '</b>'
+    +     '<span class="fp-mp-vd" style="color:' + (dif === 0 ? 'var(--text-muted)' : fpMetaCor(dif > 0 ? 1 : 0.3, true)) + '">'
+    +       (dif === 0 ? 'igual ao mês passado' : (dif > 0 ? '+' : '') + dif + ' vs. mês passado') + '</span></span>'
+    + '</div>'
+    + '<div class="fp-mp-viz">' + fpDashBarrasMes(balde) + '</div>'
+    + '</div>';
 
-  const activeProjects = projByStatus.planejamento + projByStatus.producao + projByStatus.edicao + projByStatus.a_publicar;
-  const completionRate = projTotal > 0 ? Math.round((projByStatus.concluido / projTotal) * 100) : 0;
+  /* ── painel: solicitações da landing ─────────────────────────────────────
+     A composição inteira numa barra empilhada, porque a notícia desta tela não
+     é só "6 esperando": é que 74 das 112 foram recusadas. Rejeitada é neutra
+     de propósito — é trabalho encerrado, tem que recuar. */
+  const fatia = (n, cor, rot) => n ? '<i style="width:' + (n / totalReq * 100).toFixed(2)
+    + '%;background:' + cor + '" title="' + escHtml(rot + ': ' + n) + '"></i>' : '';
+  const painelSolic = '<div class="fp-mp" data-col="4">'
+    + '<div class="fp-mp-cab">'
+    +   '<span class="fp-mp-tit"><b>Solicitações</b><span>da landing page</span></span>'
+    +   '<span class="fp-mp-val"><b style="color:' + (pend ? fpMetaCor(0.45) : 'var(--text)') + '">' + num(pend) + '</b>'
+    +     '<span class="fp-mp-vd" style="color:var(--text-muted)">esperando resposta</span></span>'
+    + '</div>'
+    + '<div class="fp-mp-viz" style="justify-content:flex-start">'
+    +   '<div class="fp-pilha">' + fatia(pend, 'var(--et-1)', 'Pendentes')
+    +     fatia(aprov, 'var(--et-4)', 'Aprovadas') + fatia(stby, 'var(--et-3)', 'Stand by')
+    +     fatia(rej, 'var(--et-5)', 'Rejeitadas') + '</div>'
+    +   '<div class="fp-fatos" style="margin-top:12px">'
+    +     '<div class="fp-fato"><span>Aprovadas</span><b>' + num(aprov) + '</b></div>'
+    +     '<div class="fp-fato"><span>Em stand by</span><b>' + num(stby) + '</b></div>'
+    +     '<div class="fp-fato"><span>Rejeitadas</span><b>' + num(rej) + '</b>'
+    +       '<small>' + (totalReq ? Math.round(rej / totalReq * 100) : 0) + '%</small></div>'
+    +   '</div>'
+    + '</div>'
+    + '</div>';
 
-  // Pipeline segments for visual bar
-  const pipelineOrder = ['planejamento', 'producao', 'edicao', 'a_publicar', 'concluido'];
-  const pipelineSegments = pipelineOrder.map(k => {
-    const pct = projTotal > 0 ? (projByStatus[k] / projTotal * 100) : 0;
-    return { key: k, label: statusMap[k], count: projByStatus[k], pct, color: statusColors[k] };
-  }).filter(s => s.count > 0);
+  /* ── painel: próximos agendamentos ───────────────────────────────────── */
+  const painelAgenda = '<div class="fp-mp" data-col="8">'
+    + '<div class="fp-mp-cab">'
+    +   '<span class="fp-mp-tit"><b>Próximos agendamentos</b>'
+    +     '<span>' + (proximos.length ? 'aprovados, a partir de hoje' : 'nada aprovado à frente') + '</span></span>'
+    +   '<span class="fp-mp-val"><b>' + num(proximos.length) + '</b>'
+    +     '<span class="fp-mp-vd" style="color:var(--text-muted)">'
+    +       (BLOCKED || []).length + (((BLOCKED || []).length === 1) ? ' data bloqueada' : ' datas bloqueadas') + '</span></span>'
+    + '</div>'
+    + '<div class="fp-mp-viz" style="justify-content:flex-start">'
+    +   (proximos.length
+        ? '<div class="fp-plin-lista">' + proximos.map(r => {
+            const d = new Date(String(r.date) + 'T12:00');
+            return '<div class="fp-plin">'
+              + '<span class="fp-agdata"><b>' + d.getDate() + '</b><span>'
+              +   FP_DIA_SEM_CURTO[d.getDay()] + '</span></span>'
+              + '<span class="fp-plin-nome"><b>' + escHtml(r.moto || '—') + '</b>'
+              +   '<span>' + escHtml(r.nome || '') + '</span></span>'
+              + '<span class="fp-plin-fim"><span class="fp-etapa" style="--c:var(--et-2)">'
+              +   escHtml(r.modalidade === 'retirada' ? 'retirada' : 'estúdio') + '</span></span>'
+              + '</div>';
+          }).join('') + '</div>'
+        : '<div class="fp-mp-pe"><span>nenhuma gravação marcada</span></div>')
+    + '</div>'
+    + '</div>';
 
-  el.innerHTML = `
-    <!-- Hero KPI row -->
-    <div class="dash-kpi-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
-      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;align-items:center;gap:14px">
-        <div style="width:46px;height:46px;border-radius:12px;background:rgba(255,45,45,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--primary)" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        </div>
-        <div>
-          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Pendentes</div>
-          <div style="font-family:'FullPro Sans';font-size:32px;line-height:1;color:var(--primary)">${pending}</div>
-          <div style="font-size: 11px;color:var(--text-muted);margin-top:2px">${thisMonth} este mes</div>
-        </div>
-      </div>
-      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;align-items:center;gap:14px">
-        <div style="width:46px;height:46px;border-radius:12px;background:rgba(31,210,122,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        </div>
-        <div>
-          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Aprovadas</div>
-          <div style="font-family:'FullPro Sans';font-size:32px;line-height:1;color:var(--success)">${approved}</div>
-          <div style="font-size: 11px;color:var(--text-muted);margin-top:2px">${rejected} rejeitada${rejected !== 1 ? 's' : ''}${standby ? ' &middot; ' + standby + ' em stand by' : ''}</div>
-        </div>
-      </div>
-      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;align-items:center;gap:14px">
-        <div style="width:46px;height:46px;border-radius:12px;background:rgba(168,85,247,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#a855f7" stroke-width="1.8"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
-        </div>
-        <div>
-          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Projetos ativos</div>
-          <div style="font-family:'FullPro Sans';font-size:32px;line-height:1;color:#a855f7">${activeProjects}</div>
-          <div style="font-size: 11px;color:var(--text-muted);margin-top:2px">${projByStatus.concluido} concluido${projByStatus.concluido !== 1 ? 's' : ''}</div>
-        </div>
-      </div>
-      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;align-items:center;gap:14px">
-        <div style="width:46px;height:46px;border-radius:12px;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#f59e0b" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-        </div>
-        <div>
-          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Custos totais</div>
-          <div style="font-family:'FullPro Sans';font-size:28px;line-height:1;color:#f59e0b">R$ ${formatBRL(totalCosts)}</div>
-        </div>
-      </div>
-    </div>
+  /* ── painel: projetos recentes ─────────────────────────────────────────
+     Sem a barra colorida à esquerda que a versão anterior usava: é o desenho
+     que o dono chama de "cara de IA" e que está proibido no projeto. Quem diz
+     a etapa é a etiqueta, na cor da etapa. */
+  const painelRecentes = '<div class="fp-mp" data-col="8">'
+    + '<div class="fp-mp-cab">'
+    +   '<span class="fp-mp-tit"><b>Projetos recentes</b><span>os 6 últimos criados</span></span>'
+    +   '<span class="fp-mp-val"><b>' + num(totalProj) + '</b>'
+    +     '<span class="fp-mp-vd" style="color:var(--text-muted)">no total</span></span>'
+    + '</div>'
+    + '<div class="fp-mp-viz" style="justify-content:flex-start">'
+    +   (recentes.length
+        ? '<div class="fp-plin-lista">' + recentes.map(p => {
+            const c = custoDe(p);
+            return '<div class="fp-plin">'
+              + '<span class="fp-plin-nome"><b>' + escHtml(p.title || 'Sem título') + '</b>'
+              +   '<span>' + escHtml(p.moto || '—') + (c ? ' · R$ ' + formatBRL(c) : '') + '</span></span>'
+              + '<span class="fp-plin-fim">' + fpDestsHtml(p.destinations, { teto: 3, tam: 16 })
+              +   '<span class="fp-etapa" style="--c:' + FP_ETAPA_COR[p.status] + '">'
+              +   escHtml(FP_ETAPA_ROT[p.status] || p.status || '—') + '</span></span>'
+              + '</div>';
+          }).join('') + '</div>'
+        : '<div class="fp-mp-pe"><span>nenhum projeto ainda</span></div>')
+    + '</div>'
+    + '</div>';
 
-    <!-- Pipeline visual -->
-    <div class="cal-card" style="margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <h3>Pipeline de projetos</h3>
-        <span style="font-size:12px;color:var(--text-muted)">${projTotal} projeto${projTotal !== 1 ? 's' : ''} no total</span>
-      </div>
-      <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--bg-elev);gap:2px;margin-bottom:14px">
-        ${pipelineSegments.map(s => `<div style="height:100%;width:${s.pct}%;background:${s.color};min-width:${s.count > 0 ? '8px' : '0'};transition:width .4s" title="${s.label}: ${s.count}"></div>`).join('')}
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:16px">
-        ${pipelineOrder.map(k => `<div style="display:flex;align-items:center;gap:8px">
-          <div style="width:10px;height:10px;border-radius:3px;background:${statusColors[k]};flex-shrink:0"></div>
-          <span style="font-size:12px;color:var(--text-dim)">${statusMap[k]}</span>
-          <span style="font-size:13px;font-weight:700;color:var(--text)">${projByStatus[k]}</span>
-        </div>`).join('')}
-      </div>
-      ${projTotal > 0 ? `<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:12px">
-        <div style="width:48px;height:48px;position:relative">
-          <svg viewBox="0 0 36 36" width="48" height="48" style="transform:rotate(-90deg)">
-            <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--bg-elev)" stroke-width="3"/>
-            <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--success)" stroke-width="3" stroke-dasharray="${completionRate * 0.974} 100" stroke-linecap="round"/>
-          </svg>
-          <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text)">${completionRate}%</span>
-        </div>
-        <div>
-          <div style="font-size:13px;font-weight:600;color:var(--text)">Taxa de conclusão</div>
-          <div style="font-size:11px;color:var(--text-muted)">${projByStatus.concluido} de ${projTotal} projetos concluidos</div>
-        </div>
-      </div>` : ''}
-    </div>
+  /* ── painel: fatos ────────────────────────────────────────────────────
+     Frota e custos em linha de texto. Eram três números de 26px para 1, 1 e 0
+     mais um "R$ 230,00" de 28px na fileira nobre — número grande é promessa de
+     que o número importa, e esses não sustentam a promessa. */
+  const painelFatos = '<div class="fp-mp" data-col="4">'
+    + '<div class="fp-mp-cab">'
+    +   '<span class="fp-mp-tit"><b>Frota e custos</b><span>o resto do estúdio</span></span>'
+    + '</div>'
+    + '<div class="fp-mp-viz" style="justify-content:flex-start">'
+    +   '<div class="fp-fatos">'
+    +     '<div class="fp-fato"><span>Motos em uso agora</span><b'
+    +       (emUso ? ' style="color:' + fpMetaCor(0.45, true) + '"' : '') + '>' + num(emUso) + '</b></div>'
+    +     '<div class="fp-fato"><span>Entradas registradas</span><b>' + num(ciCount) + '</b></div>'
+    +     '<div class="fp-fato"><span>Saídas registradas</span><b>' + num(coCount) + '</b></div>'
+    +     '<div class="fp-fato"><span>Custos somados</span><b>R$ ' + formatBRL(custoTotal) + '</b>'
+    +       '<small>' + num(PROJECTS.filter(p => custoDe(p) > 0).length) + ' projetos</small></div>'
+    +   '</div>'
+    + '</div>'
+    + '</div>';
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-      <!-- Próximos agendamentos -->
-      <div class="cal-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-          <h3>Proximos agendamentos</h3>
-          ${blockedCount > 0 ? `<span style="font-size: 11px;padding:3px 8px;background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.2);border-radius:6px;color:var(--danger);font-weight:600">${blockedCount} bloqueada${blockedCount > 1 ? 's' : ''}</span>` : ''}
-        </div>
-        ${upcoming.length ? upcoming.map((r, i) => `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;${i < upcoming.length - 1 ? 'border-bottom:1px solid var(--border)' : ''}">
-          <div style="min-width:46px;text-align:center;background:var(--bg-elev);border-radius:10px;padding:8px 10px">
-            <div style="font-family:'FullPro Sans';font-size:20px;line-height:1;color:var(--text)">${new Date(r.date + 'T12:00').getDate()}</div>
-            <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;font-weight:600">${new Date(r.date + 'T12:00').toLocaleDateString('pt-BR', { month: 'short' })}</div>
-          </div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(r.moto)}</div>
-            <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${escHtml(r.placa || '')} · ${escHtml(r.nome)}</div>
-          </div>
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--text-muted)" stroke-width="2" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
-        </div>`).join('') : '<div style="text-align:center;padding:24px 0"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--text-muted)" stroke-width="1.2" style="margin-bottom:6px;opacity:.4"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div style="font-size:12px;color:var(--text-muted)">Nenhum agendamento proximo</div></div>'}
-      </div>
-
-      <!-- Frota -->
-      <div class="cal-card">
-        <h3 style="margin-bottom:14px">Frota</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
-          <div style="text-align:center;padding:14px 8px;background:rgba(31,210,122,.06);border:1px solid rgba(31,210,122,.15);border-radius:10px">
-            <div style="font-family:'FullPro Sans';font-size:26px;color:var(--success);line-height:1">${ciCount}</div>
-            <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-top:4px">Entradas</div>
-          </div>
-          <div style="text-align:center;padding:14px 8px;background:rgba(139,156,247,.06);border:1px solid rgba(139,156,247,.15);border-radius:10px">
-            <div style="font-family:'FullPro Sans';font-size:26px;color:#8b9cf7;line-height:1">${coCount}</div>
-            <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-top:4px">Saídas</div>
-          </div>
-          <div style="text-align:center;padding:14px 8px;background:${inUse > 0 ? 'rgba(245,158,11,.06)' : 'var(--bg-elev)'};border:1px solid ${inUse > 0 ? 'rgba(245,158,11,.15)' : 'var(--border)'};border-radius:10px">
-            <div style="font-family:'FullPro Sans';font-size:26px;color:${inUse > 0 ? '#f59e0b' : 'var(--text-muted)'};line-height:1">${inUse > 0 ? inUse : 0}</div>
-            <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;font-weight:600;margin-top:4px">Em uso</div>
-          </div>
-        </div>
-        <!-- Pós-produção mini -->
-        <div style="padding-top:12px;border-top:1px solid var(--border)">
-          <div style="font-size: 11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">Pós-produção</div>
-          <div style="display:flex;gap:10px">
-            <div style="flex:1;display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.12);border-radius:8px">
-              <div style="width:8px;height:8px;border-radius:50%;background:#a855f7"></div>
-              <span style="font-size:12px;color:var(--text-dim)">Edição</span>
-              <span style="margin-left:auto;font-weight:700;font-size:14px;color:#a855f7">${projByStatus.edicao}</span>
-            </div>
-            <div style="flex:1;display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.12);border-radius:8px">
-              <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b"></div>
-              <span style="font-size:12px;color:var(--text-dim)">A publicar</span>
-              <span style="margin-left:auto;font-weight:700;font-size:14px;color:#f59e0b">${projByStatus.a_publicar}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Projetos recentes -->
-    <div class="cal-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <h3>Projetos recentes</h3>
-        <button class="action-btn view" style="padding:4px 10px;font-size:11px" onclick="switchView('projects')">Ver todos</button>
-      </div>
-      ${recentProjects.length ? `<div style="display:flex;flex-direction:column">
-        ${recentProjects.map((p, i) => {
-          const costs = (p.costs || []).reduce((s, c) => s + (c.value || 0), 0);
-          const dests = fpDestsHtml(p.destinations, { teto: 4, tam: 18 });
-          const sc = statusColors[p.status] || '#6b7280';
-          return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;${i < recentProjects.length - 1 ? 'border-bottom:1px solid var(--border)' : ''};cursor:pointer;transition:opacity .15s" onclick="openProjectDetail('${p.id}')" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-            <div style="width:4px;height:36px;border-radius:2px;background:${sc};flex-shrink:0"></div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.title || 'Sem titulo')}</div>
-              <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap">${dests || '<span style="font-size: 11px;color:var(--text-muted)">Sem destino</span>'}</div>
-            </div>
-            <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-              <span style="font-size: 11px;padding:3px 8px;border-radius:6px;font-weight:600;background:${sc}20;color:${sc}">${statusMap[p.status] || p.status}</span>
-              ${costs > 0 ? `<span style="font-size:11px;color:#f59e0b;font-weight:600">R$ ${formatBRL(costs)}</span>` : ''}
-            </div>
-          </div>`;
-        }).join('')}
-      </div>` : '<div style="text-align:center;padding:24px 0"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--text-muted)" stroke-width="1.2" style="margin-bottom:6px;opacity:.4"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg><div style="font-size:12px;color:var(--text-muted)">Nenhum projeto criado ainda</div></div>'}
-    </div>
-  `;
+  el.innerHTML = '<div class="fp-pgrade">' + heroi + painelGargalo + painelRitmo
+    + painelSolic + painelAgenda + painelRecentes + painelFatos + '</div>';
 }
 
 /* ═══════════════ DASHBOARD DE DUAS FRENTES ═══════════════

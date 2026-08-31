@@ -111,6 +111,19 @@ ssh-add --apple-use-keychain ~/.ssh/id_ed25519
   (await caches.keys()).forEach(k => caches.delete(k));
   ```
 
+- **Laboratório por varredura transitiva — duas armadilhas.** Quando a tela depende de
+  muitas funções (o Dashboard puxou 227), extrair uma a uma é perda de tempo: faça o
+  script varrer o grafo a partir das raízes. Mas:
+  1. **Função de uma linha** (`function f(x) { return y; }`) **não tem linha `}`**. Se a
+     extração procura o `}` na coluna 0, ela corre até a próxima função e engole as
+     declarações do caminho — o sintoma foi `Identifier 'EDIT_FILTER' has already been
+     declared`, e o bloco inteiro morria. Conte profundidade de chaves.
+  2. **Emita em ordem de ARQUIVO, não de grafo.** Uma constante pode usar outra na
+     própria declaração (`FP_ETAPA_ROT` faz `reduce` em `FP_ETAPAS`), e a ordem de
+     descoberta dava `Cannot access 'FP_ETAPAS' before initialization` — erro que só
+     existe no laboratório, e faz procurar bug onde não tem.
+  O mesmo vale para declaração multilinha: pare por profundidade de parênteses, não no
+  primeiro `;`.
 - **Laboratório de medição:** para conferir contraste, alinhamento e altura de linha sem
   login, monte uma página que **extrai** os `<style>` do `<head>` do `admin.html` e o
   trecho de JS da tela, e injeta dados reais lidos do Supabase. Assim o que você mede é o

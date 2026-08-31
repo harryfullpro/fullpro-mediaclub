@@ -1,5 +1,131 @@
 # Diário
 
+## 31/08/2026 · Dashboard: as duas frentes na gramática de Metas
+
+Terceira tela do dia. As duas frentes (vídeo e fotografia) passaram a usar o
+MESMO sistema de painel de Metas — `.fp-pgrade` + `.fp-mp` —, que deixou de ser
+"a grade de Metas" e virou a grade do painel. Um sistema só significa que trocar
+o cromo (ou desligar o card) continua sendo uma edição em um lugar.
+
+### O defeito que ninguém veria no computador
+
+`grid-template-columns: 1fr 1fr` **inline**, sem media query. Medido a 390px:
+
+- as duas colunas somavam **469px dentro de uma caixa de 366px**
+- a borda direita do painel Frota caía em **x=497 num viewport de 390**
+- **16 elementos** passavam da borda direita
+- e não aparecia barra de rolagem, porque o `<main>` tem `overflow-x: hidden`:
+  o conteúdo era **cortado em silêncio**
+
+A fileira de KPI escapava porque tinha classe (`.dash-kpi-row`) e media query no
+CSS; os outros dois grids eram só inline e não tinham onde a regra pegar. Agora
+**nada** na tela usa medida inline. Depois: 0 elementos vazando em 360, 390,
+768, 1024, 1440 e 1920px.
+
+### Cor: a paleta do pipeline não tinha sistema
+
+| hex | uso | contraste | L | C | H |
+|---|---|---|---|---|---|
+| `#a855f7` | projetos ativos | 4,56 | 0,627 | **0,233** | 304 |
+| `#f59e0b` | custos | 8,40 | **0,769** | 0,165 | 70 |
+| `#3b82f6` | planejamento | 4,91 | 0,623 | 0,188 | 260 |
+| `#10b981` | em produção | 7,11 | 0,696 | 0,149 | 162 |
+| `#6b7280` | concluído | **3,73** | **0,551** | **0,023** | 264 |
+| `#8b9cf7` | saídas | 7,04 | 0,717 | 0,134 | 275 |
+
+L de 0,551 a 0,769 (uma etapa gritava, outra sussurrava, sem razão no dado), C
+de 0,023 a 0,233, e **três matizes em 260/264/275** — planejamento, concluído e
+saídas eram o mesmo azul. E `#6b7280` pintava a legenda "Concluído" de 12px a
+3,73:1, que reprova.
+
+**O pipeline é uma SEQUÊNCIA, então a paleta virou ordenada**: L e matiz andam
+juntos, escuro/azul no começo e claro/verde na hora de publicar; `concluído` é
+neutro de propósito, porque trabalho entregue tem que recuar.
+
+Tentei primeiro L constante — o certo para categoria solta — e **a medição
+derrubou**: separação entre vizinhos 1,03 / 1,02 / **1,00**. Numa barra
+segmentada, em que os pedaços se tocam, isso é o mesmo que não ter cor. Com L e
+matiz juntos: 1,53 / 1,45 / 1,40 no escuro e 1,50 / 1,40 / 1,35 no claro.
+
+### A regra que apareceu três vezes: marquinha colorida, rótulo neutro
+
+Texto na cor da categoria sobre a própria cor diluída é contraste baixo por
+construção. Medido nas etiquetas de etapa: 3,32 a 4,49:1 no escuro e **2,16:1**
+no claro ("A publicar"), contra os 4,5:1 que 10px exige. A mesma regra resolveu
+três lugares: legenda do funil, etiqueta de etapa e rótulo de prioridade — a
+cor identifica na marquinha, o texto fica legível.
+
+O rótulo de prioridade (`fpPrioHtml`, código que já existia) reprovava fundo no
+tema claro: **"Média" a 1,71:1**, "Alta" 2,35, "Baixa" 3,20. Ganhou par próprio
+de cor só para texto, buscado no mesmo matiz no L mais alto que cumpre 4,5:1:
+#206ef5, #8b741d, #b95d1b. **Se o seletor de cores da Manutenção mudar
+`--prio-1/2/3`, esses três têm que ser recalculados** — está anotado no CSS.
+
+### Tipografia
+
+Todos os números grandes estavam em **peso 400** (Metas usa 850), sem
+`tabular-nums`, em nove corpos diferentes (11 a 32px) e nove raios de borda na
+mesma tela. Agora herdam a escala de Metas.
+
+### Conteúdo: o hero passou a responder algo
+
+O que saiu, e por quê:
+
+- **"Custos totais R$ 230,00"** ocupava 1/4 da fileira nobre. São R$ 230
+  somando todos os projetos de todos os tempos. Virou uma linha de texto.
+- **"Taxa de conclusão 52%"** em rosca era um segundo desenho do mesmo dado da
+  barra logo acima, e 52% do histórico não é acionável.
+- **Frota** tinha três números de 26px para 1, 1 e 0. Virou quatro linhas de
+  texto — número grande é promessa de que o número importa.
+- **"6 pendentes / 112 este mês"**: o sublabel contava TODAS as solicitações do
+  mês e lia-se "112 pendentes este mês".
+- **A barra colorida à esquerda** dos projetos recentes saiu: é o desenho que o
+  dono chama de "cara de IA" e que está proibido no projeto.
+
+O que entrou:
+
+- **O gargalo, dito em palavra.** 11 dos 22 projetos ativos estão parados em
+  Edição — metade da produção travada num ponto só, e isso não estava dito em
+  lugar nenhum. O herói agora nomeia, e há um painel com os projetos parados,
+  do mais antigo para o mais novo.
+- **Tempo.** A tela não tinha memória: entrou "ritmo de gravação", projetos por
+  mês, com a comparação com o mês passado.
+- **A composição das solicitações** numa barra empilhada, porque a notícia não é
+  só "6 esperando": é que **74 das 112 foram recusadas** (66%).
+- **Dia da semana** nos próximos agendamentos: "3 set." não dizia se caía numa
+  segunda ou num sábado, e é isso que decide se dá para atender.
+
+### Frente de fotografia: era hierarquia, não idioma
+
+Ela já seguia o padrão de fios. O problema estava no que ela destacava:
+
+- o 4º KPI era **"Fotos este mês", que vale 0** — um quarto da atenção da tela
+  para um zero;
+- **"85,9% do catálogo"** escondia o que interessa: das 867 sem foto, **688
+  (79%) nem passaram por triagem**. Não é falta de foto, é falta de decisão;
+- a fila punha "sem prioridade: 688" na mesma escala de barras que
+  "emergencial: 1", e as quatro prioridades reais viravam slivers de 1px.
+
+Agora o herói mostra **três estados** (com foto · sem foto já triada · sem foto
+e não triada) e diz a frase que importa; a fila fica com escala própria; e as
+688 saem da escala e viram chamada de ação.
+
+### Conferido
+
+Pior texto miúdo: **4,87:1 no escuro e 4,52:1 no claro** · pior texto grande
+6,18 e 3,28 (mínimo 3) · **zero falhas de contraste nas duas frentes e nos dois
+temas** · 0 elementos vazando em seis larguras · sem erro de console.
+
+### Armadilha do laboratório, anotada
+
+Montar o laboratório por varredura transitiva de dependências pegou dois
+tropeços que custaram tempo e vão repetir: **função de uma linha**
+(`function f(x){ return y; }`) não tem linha `}` nenhuma, e procurar o `}` na
+coluna 0 engolia tudo até a próxima função — foi o que duplicou `EDIT_FILTER`.
+E emitir por ordem de grafo em vez de **ordem de arquivo** dava "Cannot access
+'FP_ETAPAS' before initialization", porque uma constante usa a outra na própria
+declaração. Os dois estão corrigidos no script e descritos em `ambiente.md`.
+
 ## 31/08/2026 · Mapeamento automático: tudo que foi publicado, e story com cara
 
 > *"preciso que todos os vídeos estejam registrados no nosso painel de metas,

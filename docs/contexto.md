@@ -328,7 +328,7 @@ nada de caixa dentro de caixa. Listagem encostada no fundo da página, separada 
 1px. Filtro em aba com sublinhado, não pílula preenchida. Vermelho de destaque é **o
 mesmo vermelho do hover do menu lateral**, nunca um pastel.
 
-#### A exceção: Metas (31/08/2026)
+#### A exceção: telas de painel (31/08/2026)
 > *"minha ideia pra essa tela de metas é ser um tipo power bi com gráficos mais
 > produzidos e únicos pra cada meta"*
 
@@ -337,8 +337,14 @@ isso aí que tu fez"*. Perguntado qual das duas regras manda, escolheu **grade m
 painel**: um gráfico-herói do mês em cima e as metas em painéis de tamanhos diferentes
 embaixo, com moldura.
 
-**A exceção é só de Metas.** Nas outras telas a regra de cima continua valendo — não
-propagar card para Projetos, Produção, Agenda etc. sem ele pedir.
+**A exceção é de tela de PAINEL, não de listagem.** Vale em Metas e no Dashboard (as
+duas frentes), onde cada bloco é um instrumento diferente e a moldura é o que separa um
+do outro. Em tela de listagem — Projetos, Produção, Agenda, Solicitações — a regra de
+cima continua valendo: sem container, fio de 1px. Não propagar card para lá sem ele
+pedir.
+
+As duas telas de painel dividem o MESMO sistema (`.fp-pgrade` + `.fp-mp`), então o cromo
+é um só. Se o card cansar, desligar continua sendo uma edição em um lugar.
 
 Todo o cromo do painel mora em cinco tokens no topo do bloco `.fp-metas-grade`
 (`--mp-bg`, `--mp-borda`, `--mp-raio`, `--mp-pad`, `--mp-trilho`): zerar os quatro

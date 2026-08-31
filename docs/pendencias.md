@@ -23,13 +23,34 @@ setembro sem pedir SQL.
 O que está em `mc_performance_goals` e ainda é usado de verdade: `pool_per_goal` e
 o rateio `dist_*`, na tela de Bonificação. Esses ficam.
 
-### Régua de front-end/design: Metas feito, faltam as outras telas
+### Régua de front-end/design: Metas e Dashboard feitos, faltam as outras
+Em 31/08/2026 passaram **Metas** e o **Dashboard** (as duas frentes). As duas
+usam o mesmo sistema: `.fp-pgrade` + `.fp-mp`, cromo em cinco tokens.
+
+Regras que saíram do Dashboard e valem para as próximas:
+
+- **Nada de medida de layout inline.** `grid-template-columns` inline não tem
+  onde a media query pegar, e com `overflow-x: hidden` no `<main>` o estouro é
+  cortado em silêncio: ninguém vê o defeito no computador. Se tem grade, tem
+  classe.
+- **Vão sem regra é buraco silencioso.** `data-col="3"` não existia no CSS e o
+  painel caía no padrão `span 6`, deixando meia fileira vazia. Todos os vãos
+  de 2 a 12 estão definidos agora.
+- **Marquinha colorida, rótulo neutro.** Texto na cor da categoria sobre a
+  própria cor diluída é contraste baixo por construção — deu 2,16:1 no claro.
+  Vale para legenda, etiqueta e qualquer chip categórico.
+- **Paleta de sequência é ordenada, não arco-íris.** E L constante NÃO serve em
+  barra segmentada: medido, dá separação 1,00 entre vizinhos.
+- **Número grande é promessa.** Se o valor é 1, 1 e 0, ele não sustenta 26px.
+
+### Telas que ainda faltam na régua
 A tela de **Metas** foi a primeira a passar pelo padrão novo em 31/08/2026 (ver
 `diario.md`). O que dela vale como regra para as próximas:
 
-> **Atenção:** Metas virou grade de **card** por escolha do dono (ver
-> `contexto.md` → "A exceção: Metas"). Isso vale **só lá**. Nas outras telas
-> continua a regra de sempre: sem container, listagem com fio de 1px.
+> **Atenção:** a grade de **card** vale em **Metas e Dashboard** (ver
+> `contexto.md` → "A exceção: telas de painel"). Nas telas de LISTAGEM continua
+> a regra de sempre: sem container, fio de 1px. Card é para tela de painel, em
+> que cada bloco é um instrumento diferente — não para listagem.
 
 1. **O instrumento tem que ganhar a largura, não o rótulo.** Em Metas era
    542px de nome contra 210px de gráfico.
