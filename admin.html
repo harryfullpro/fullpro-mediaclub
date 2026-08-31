@@ -5778,10 +5778,53 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    miúdo, que exige 4,5:1. Por isso existe o segundo par, `--meta-*-txt`, só
    para o veredito escrito: medido, pior ponto 6,03:1 no claro. Quem mexer nos
    tokens de cima refaz as DUAS contas. */
-:root { --meta-ruim: #ff4d4d; --meta-meio: #ffd23f; --meta-boa: #1fd27a; }
-[data-theme="light"] { --meta-ruim: #c62828; --meta-meio: #a67c00; --meta-boa: #12864f; }
-:root { --meta-ruim-txt: var(--meta-ruim); --meta-meio-txt: var(--meta-meio); --meta-boa-txt: var(--meta-boa); }
-[data-theme="light"] { --meta-ruim-txt: #b71c1c; --meta-meio-txt: #6e5100; --meta-boa-txt: #0f6b3f; }
+/* QUATRO PARADAS, NA BORDA DO GAMUT, INTERPOLADAS EM OKLCH (31/08/2026)
+   A rampa anterior tinha três âncoras (#ff4d4d, #ffd23f, #1fd27a) misturadas
+   `in oklab`, e o dono reclamou com razão: *"ta tudo com uma cor meio terrosa,
+   não tem vibração"*. Medido em OKLCH, os dois motivos:
+
+   1. A ÂNCORA DO MEIO ERA A MENOS CROMÁTICA. O amarelo #ffd23f tinha C 0,162
+      contra C 0,215 do vermelho — e a rampa passa por ela. Pior: L 0,879
+      contra 0,673 e 0,761, um caroço claro no meio do trajeto. Claro e fraco
+      ao mesmo tempo é exatamente a sensação de lavado.
+   2. OKLAB CORTA RETO. Linha reta em espaço retangular atravessa o interior do
+      sólido de cor: a croma mínima do trajeto caía para 0,146. Em OKLCH a
+      interpolação é por ÂNGULO de matiz e acompanha a borda: 0,162 no mesmo
+      trajeto. `in oklch` também resolve o marrom do sRGB, que era o motivo
+      original de usar oklab.
+
+   Agora as âncoras são buscadas na borda do gamut sRGB (92% da croma máxima —
+   vivo sem cheiro de cor estourada no limite) com o contraste mínimo exigido
+   já garantido. A zona morta é H70–H90: amarelo em sRGB trava em C≈0,17, e é
+   por isso que entrou a quarta parada no LARANJA vivo (H48, C 0,178), que é
+   onde a rampa antes passava dura.
+
+   Escuro (mín. 3:1 sobre #0a0a0b) · medido 5,16 / 7,37 / 13,25 / 14,17:
+     c0 atrasado feio  L .635 C .231 H 27
+     c1 atrasado       L .715 C .178 H 48
+     c2 no ritmo       L .868 C .163 H 92   (o "ok" amarelo do dono)
+     c3 bateu          L .865 C .219 H 150
+   Claro (mín. 3:1 sobre #f5f5f7) · medido 3,75 / 3,05 / 3,01 / 3,06.
+     No claro o amarelo não sobrevive: em H92 ele trava em C 0,132 e sai OLIVA
+     — esse era o "terroso" do tema claro. O "no ritmo" do claro é âmbar H60. */
+:root {
+  --meta-c0: #f73232; --meta-c1: #f97a29; --meta-c2: #facf38; --meta-c3: #3ff980;
+}
+[data-theme="light"] {
+  --meta-c0: #f22a2c; --meta-c1: #e56823; --meta-c2: #cf7922; --meta-c3: #25a151;
+}
+/* Segundo par, só para o veredito ESCRITO: 10px é texto normal e exige 4,5:1.
+   No escuro a rampa gráfica já passa folgado (pior ponto 5,16), então os
+   tokens são os mesmos. No claro precisa escurecer — e mesmo escurecendo a
+   croma sobe em relação ao que havia (#b71c1c C 0,09 -> #d3272b C 0,215). */
+:root {
+  --meta-c0-txt: var(--meta-c0); --meta-c1-txt: var(--meta-c1);
+  --meta-c2-txt: var(--meta-c2); --meta-c3-txt: var(--meta-c3);
+}
+[data-theme="light"] {
+  /* #d3272b dava 4,48:1, um fio abaixo do mínimo. #d92225 dá 4,57. */
+  --meta-c0-txt: #d92225; --meta-c1-txt: #b6511a; --meta-c2-txt: #a66019; --meta-c3-txt: #1c803f;
+}
 
 /* Grade do mapa de calor e das réguas. `--border-hi` medido dá 1,61:1 no
    escuro e 1,53:1 no claro — no tema claro o fio simplesmente não existia.
@@ -5802,19 +5845,30 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    em cima de --bg-card (#16161a) desaparecia, e o mapa virava pontos soltos no
    vazio em vez de uma grade com células vazias. Medido, #24242c dá 1,35:1 sobre
    o card — presente como grade, longe de competir com o dado. */
+/* SEM ALFA, E COM A CROMA SUBINDO JUNTO COM A ESCADA.
+   Os degraus eram rgba(139,156,247, .30/.52/.76/1). Compostos sobre um card
+   quase preto viravam azul-acinzentado sem croma: alfa baixo sobre fundo escuro
+   sempre puxa para o cinza, e era essa a outra metade do "não tem vibração".
+
+   A primeira tentativa de correção foi pegar a croma MÁXIMA do gamut em cada
+   nível de L — e criou um defeito pior: no violeta a croma máxima pica no meio
+   da escala (C 0,268 em L 0,52 contra 0,122 em L 0,76), então um dia de 1 peça
+   saía MAIS colorido que um de 5. Bump de croma no lugar errado.
+
+   Agora L e croma sobem JUNTAS, e o degrau mais forte fica no pico:
+     escuro  L .33/.42/.51/.60  C .105/.155/.195/.215  (H 270)
+     claro   L .83/.73/.65/.52  C .075/.130/.185/.245
+   No claro a escada corre para baixo em L porque o fundo é claro; nos dois a
+   croma sempre sobe. Medido — separação entre degraus vizinhos (um degrau tem
+   que se distinguir do ANTERIOR, não do fundo): 1,42/1,45/1,46 no escuro e
+   1,43/1,38/1,79 no claro. Degrau 1 contra o card: 1,44 e 1,70. */
 :root {
-  --ativ-0: #24242c; --ativ-1: rgba(139,156,247,.30); --ativ-2: rgba(139,156,247,.52);
-  --ativ-3: rgba(139,156,247,.76); --ativ-4: #8b9cf7;
+  --ativ-0: #24242c; --ativ-1: #212f6a; --ativ-2: #2e41a0;
+  --ativ-3: #3e55d3; --ativ-4: #516efe;
 }
 [data-theme="light"] {
-  /* #d2d8f8 no degrau 1 dava 1,13:1 contra o degrau 0 — o primeiro degrau da
-     escala praticamente não existia. #c7cff6 leva a 1,23:1.
-     #7784de no degrau 3 dava 3,42:1 com o número em branco por cima, e número
-     de dia é texto miúdo (4,5:1). #5b6ad0 leva a 4,75:1 e ainda mantém 1,32:1
-     contra o degrau 4. Todos medidos por canvas COMPONDO sobre o card — medir
-     rgba sem compor devolve o RGB puro e os quatro degraus saem idênticos. */
-  --ativ-0: #e6e6ec; --ativ-1: #c7cff6; --ativ-2: #a6b0ed;
-  --ativ-3: #5b6ad0; --ativ-4: #4657bd;
+  --ativ-0: #e6e6ec; --ativ-1: #b4c6f9; --ativ-2: #88a3f9;
+  --ativ-3: #6583fe; --ativ-4: #3a4cf2;
 }
 
 /* ── o painel ────────────────────────────────────────────────────────────
@@ -5922,11 +5976,15 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-mh-cel[data-n="2"] { background: var(--ativ-2); }
 .fp-mh-cel[data-n="3"] { background: var(--ativ-3); }
 .fp-mh-cel[data-n="4"] { background: var(--ativ-4); }
-/* Dia que ainda não chegou não é dia sem trabalho: fica vazado, não preenchido. */
-.fp-mh-cel.fp-fut { background: none; box-shadow: inset 0 0 0 1px var(--ativ-0); }
+/* No mapa o dia futuro é preenchido como qualquer outro. Ele era vazado, com aro
+   de 1px em --ativ-0 — 1,17:1 sobre o card, medido: a 20 de outubro o terço
+   direito do mapa simplesmente desaparecia e a grade parecia quebrada em vez de
+   "ainda não aconteceu". Quem marca a fronteira é o aro de HOJE, que atravessa
+   as sete faixas e tem contraste de sobra. (No calendário o dia futuro CONTINUA
+   vazado: lá tem número no dia, e o vazado se lê como "dia que existe e ainda
+   não teve nada".) */
 /* Começo de semana: o fio é o que permite ler "a semana 3 morreu". */
 .fp-mh-cel.fp-sem { box-shadow: -2px 0 0 0 var(--meta-grade); }
-.fp-mh-cel.fp-fut.fp-sem { box-shadow: -2px 0 0 0 var(--meta-grade), inset 0 0 0 1px var(--ativ-0); }
 /* Hoje: aro, não preenchimento — preenchimento competiria com a intensidade. */
 .fp-mh-hoje { box-shadow: 0 0 0 1.5px var(--text-dim) !important; }
 /* Régua de dias, embaixo. Só os começos de semana: rótulo em cada um dos 31
@@ -5977,7 +6035,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    uma barra de 1 peça (que também dava ~3px com cota 9): "entregou uma" e "não
    entregou nada" liam igual. Ausência se marca, não se pinta. */
 .fp-mp-barra-tr i.fp-mp-toco { height: 5px; min-height: 0; border-radius: 2px;
-  background: none !important; border: 1.5px solid var(--meta-ruim); }
+  background: none !important; border: 1.5px solid var(--meta-c0); }
 .fp-mp-barra-tr u { position: absolute; left: -2px; right: -2px; height: 0; display: block;
   border-top: 1.5px dashed var(--text-muted); opacity: .85; }
 .fp-mp-barra-r { font-size: 9.5px; font-weight: 500; letter-spacing: .04em; text-align: center;
@@ -6002,14 +6060,16 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
      dia é texto miúdo (4,5:1). --text-dim passa nos dois temas. */
   font-size: 10px; font-weight: 600; color: var(--text-dim);
   font-variant-numeric: tabular-nums; }
-/* O número do dia sobre o degrau 1 ficava em --text-muted: 3,46:1 no escuro e
-   3,73:1 no claro, medidos — reprova nos dois. `--text-dim` também (4,05:1).
-   Com `--text` dá 9,54:1 e 11,31:1. */
+/* Cor do número por degrau. Com a escada nova a regra tem a MESMA forma nos
+   dois temas: os três primeiros degraus levam a cor de texto normal do tema, e
+   só o último inverte. Medido degrau por degrau:
+     escuro  1: 11,47 · 2: 8,11 · 3: 5,58 (com --text) · 4: 4,75 (com escuro)
+     claro   1: 10,21 · 2: 7,13 · 3: 5,17 (com --text) · 4: 6,01 (com branco)
+   No degrau 4 o texto do tema reprova nos dois (3,83 e 2,89) — é ali que vira. */
 .fp-cal-dia[data-n="1"] { background: var(--ativ-1); color: var(--text); }
 .fp-cal-dia[data-n="2"] { background: var(--ativ-2); color: var(--text); }
-.fp-cal-dia[data-n="3"] { background: var(--ativ-3); color: #0a0a0b; }
+.fp-cal-dia[data-n="3"] { background: var(--ativ-3); color: var(--text); }
 .fp-cal-dia[data-n="4"] { background: var(--ativ-4); color: #0a0a0b; }
-[data-theme="light"] .fp-cal-dia[data-n="3"],
 [data-theme="light"] .fp-cal-dia[data-n="4"] { color: #fff; }
 /* Dia que não chegou fica vazado: dia sem trabalho e dia que não existiu ainda
    não são a mesma coisa. */
@@ -6053,7 +6113,10 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-sem-r { font-size: 9.5px; font-weight: 600; letter-spacing: .05em; color: var(--text-muted); line-height: 1.2; }
 .fp-sem-d { font-size: 9px; font-weight: 500; color: var(--text-muted); opacity: .8; line-height: 1;
   font-variant-numeric: tabular-nums; }
-.fp-sem-cel.fp-ok { background: color-mix(in oklab, var(--c) 18%, transparent); }
+/* Mistura com o TRILHO (cor opaca), não com `transparent`: sobre card escuro a
+   mistura com transparente desidrata a croma e o verde virava cinza-esverdeado.
+   E `in oklch`, pelo mesmo motivo da rampa. */
+.fp-sem-cel.fp-ok { background: color-mix(in oklch, var(--c) 22%, var(--mp-trilho)); }
 .fp-sem-cel.fp-ok .fp-sem-ico, .fp-sem-cel.fp-ok .fp-sem-n { color: var(--c); }
 .fp-sem-cel.fp-nao .fp-sem-ico { color: var(--c); }
 .fp-sem-cel.fp-curso { box-shadow: inset 0 0 0 1px var(--border-hi); }
@@ -6097,7 +6160,13 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    num grid de 6 daria 2/3 de largura e desalinharia a fileira — todos os vãos
    dobram de significado, então é mais simples fixar: no meio tudo vale metade
    ou inteiro. */
-@media (max-width: 1200px) {
+/* `min-width: 761px` e não só `max-width: 1200px`: a regra de vão do calendário
+   logo abaixo é `.fp-mp[data-viz="calendario"]` (0,2,0) e vencia por
+   especificidade a regra do celular `.fp-mp` (0,1,0). Resultado medido a 390px:
+   um filho com `span 6` fazia a grade criar SEIS colunas implícitas apesar do
+   `grid-template-columns: 1fr`, e os painéis viravam faixas de 30px. Faixa do
+   meio não pode alcançar o celular. */
+@media (min-width: 761px) and (max-width: 1200px) {
   .fp-metas-grade { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .fp-mp, .fp-mp[data-col="4"] { grid-column: span 3; }
   .fp-mp[data-col="8"], .fp-mp[data-col="12"], .fp-mh { grid-column: span 6; }
@@ -27956,13 +28025,19 @@ function fpMetaRazao(ap, janela) {
 /* A rampa contínua. Não são quatro caixinhas: 0,62 tem cor própria, entre o
    laranja e o amarelo. `color-mix` resolve o token na hora, então trocar de
    tema repinta sozinho — sem redesenhar a tela. */
-const META_AMARELO = .8;   /* onde o amarelo mora na escala */
+/* Onde cada âncora mora na escala. 0,8 continua sendo o "ok": amarelo é o ok do
+   dono, e ok é estar perto do ritmo — com o amarelo no meio, quem está a 37% do
+   ritmo já apareceria quase amarelo. Do 0,8 até 1 o verde entra depressa, que é
+   o que "verde para na projeção" quer dizer. A parada nova é a 0,4, o laranja:
+   ela existe para o trajeto acompanhar a borda do gamut em vez de atravessar a
+   zona de croma baixa. */
+const META_PARADAS = [0, 0.40, 0.80, 1];
 /* `fill`/`stroke` no SVG são atributos de apresentação: navegador que não
    entenda a função descarta a declaração inteira e volta ao valor inicial —
    fill preto, stroke nenhum. Some o gráfico, sem erro no console. Por isso a
    pergunta é feita uma vez e a rampa cai para a âncora mais próxima. */
 const FP_TEM_MIX = typeof CSS !== 'undefined' && CSS.supports
-  && CSS.supports('color', 'color-mix(in oklab, red 50%, blue)');
+  && CSS.supports('color', 'color-mix(in oklch, red 50%, blue)');
 /* fpMetaCor pinta TRÊS coisas com exigências diferentes de contraste: traço e
    preenchimento (3:1, elemento gráfico), o número de 27px em negrito (3:1,
    texto grande) e o veredito de 10px (4,5:1, texto normal). No tema claro o
@@ -27976,10 +28051,20 @@ function fpMetaCor(razao, paraTexto) {
      estar perto do ritmo — 80%. Com o amarelo no meio, quem está a 37% do
      ritmo já apareceria quase amarelo. Do 0,8 até 1 o verde entra depressa,
      que é o que "verde para na projeção" quer dizer. */
-  if (!FP_TEM_MIX) return 'var(' + (t < META_AMARELO / 2 ? '--meta-ruim' + s : t < 1 ? '--meta-meio' + s : '--meta-boa' + s) + ')';
-  return t <= META_AMARELO
-    ? 'color-mix(in oklab, var(--meta-meio' + s + ') ' + Math.round(t / META_AMARELO * 100) + '%, var(--meta-ruim' + s + '))'
-    : 'color-mix(in oklab, var(--meta-boa' + s + ') ' + Math.round((t - META_AMARELO) / (1 - META_AMARELO) * 100) + '%, var(--meta-meio' + s + '))';
+  /* Acha o segmento em que t caiu e mistura só entre as duas âncoras dele —
+     `color-mix` recebe duas cores, então a rampa de quatro paradas é feita de
+     três segmentos. `in oklch` interpola o MATIZ por ângulo e acompanha a borda
+     do gamut; `in oklab` cortava reto pelo interior e derrubava a croma. */
+  let i = 0;
+  while (i < META_PARADAS.length - 2 && t > META_PARADAS[i + 1]) i++;
+  const ini = META_PARADAS[i], fim = META_PARADAS[i + 1];
+  const pct = Math.round((t - ini) / (fim - ini) * 100);
+  const de = '--meta-c' + i + s, para = '--meta-c' + (i + 1) + s;
+  /* `fill`/`stroke` no SVG são atributos de apresentação: navegador que não
+     entenda a função descarta a declaração inteira e volta ao valor inicial —
+     fill preto, stroke nenhum. Por isso a queda é para a âncora mais próxima. */
+  if (!FP_TEM_MIX) return 'var(' + (pct >= 50 ? para : de) + ')';
+  return 'color-mix(in oklch, var(' + para + ') ' + pct + '%, var(' + de + '))';
 }
 
 /* O veredito em palavra. A cor sozinha não dá conta de duas coisas: era ela que
@@ -28100,11 +28185,19 @@ function fpVizLinha(ap, janela) {
      sairiam do lugar em que os dias aconteceram. */
   const grad = '<defs><linearGradient id="' + id + '" gradientUnits="userSpaceOnUse"'
     + ' x1="0" y1="0" x2="' + x(ate).toFixed(1) + '" y2="0">' + paradas.join('') + '</linearGradient></defs>';
-  /* A área é de UMA cor, a do veredito, e fraca. Preenchida com o degradê ela
-     virava uma mancha marrom: vermelho a 18% sobre fundo escuro não é vermelho
-     claro, é marrom. O degradê fica onde ele se lê — no traço. */
-  const area = pts.length ? '<path d="M0,' + CHAO + ' L' + pts.join(' L') + ' L' + x(ate).toFixed(1)
-    + ',' + CHAO + ' Z" fill="' + fpMetaCor(fpMetaRazao(ap, janela)) + '" fill-opacity=".10"/>' : '';
+  /* A área é um DEGRADÊ VERTICAL da cor do veredito, forte junto da curva e
+     sumindo no chão. Achatada em `fill-opacity: .10` ela virava mancha marrom:
+     cor quente a 10% sobre fundo escuro não é cor clara, é lama — some a croma
+     e sobra o cinza do fundo. Com o degradê a cor fica cheia onde ela é vista
+     (a beirada de cima) e desaparece onde só atrapalharia. */
+  const idA = id + '-a';
+  const gradArea = '<defs><linearGradient id="' + idA + '" gradientUnits="userSpaceOnUse"'
+    + ' x1="0" y1="' + TOPO + '" x2="0" y2="' + CHAO + '">'
+    + '<stop offset="0%" stop-color="' + fpMetaCor(fpMetaRazao(ap, janela)) + '" stop-opacity=".42"/>'
+    + '<stop offset="100%" stop-color="' + fpMetaCor(fpMetaRazao(ap, janela)) + '" stop-opacity=".03"/>'
+    + '</linearGradient></defs>';
+  const area = pts.length ? gradArea + '<path d="M0,' + CHAO + ' L' + pts.join(' L') + ' L' + x(ate).toFixed(1)
+    + ',' + CHAO + ' Z" fill="url(#' + idA + ')"/>' : '';
   const curva = pts.length ? '<path d="M' + pts.join(' L') + '" fill="none" stroke="url(#' + id + ')"'
     + ' stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' : '';
 

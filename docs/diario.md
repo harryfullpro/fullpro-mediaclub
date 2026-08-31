@@ -1,5 +1,101 @@
 # Diário
 
+## 31/08/2026 · Cor de Metas: a rampa passa a andar pela borda do gamut
+
+> *"quero te pedir pra analisar as cores de contraste, esses vermelho, laranja,
+> o gráfico gradual com gradiente, ta tudo com uma cor meio terrosa, não tem
+> vibração, ta estranho"*
+
+Ele estava certo, e a medição em OKLCH apontou **três** causas — nenhuma delas
+era "escolher um vermelho mais bonito".
+
+### 1. A âncora do meio era a menos cromática de todas
+
+A rampa tinha três âncoras: `#ff4d4d` (C 0,215) → `#ffd23f` (C **0,162**) →
+`#1fd27a` (C 0,184). O amarelo, por onde a rampa passa inteira, era o ponto de
+menor croma. E a luminosidade pulava 0,673 → **0,879** → 0,761: um caroço claro
+no meio do trajeto. Claro e fraco ao mesmo tempo é exatamente a sensação de
+lavado.
+
+### 2. `oklab` corta reto pelo interior do sólido de cor
+
+Interpolação linear em espaço retangular atravessa o meio do sólido; a croma
+mínima do trajeto caía para **0,146**. Em `oklch` a interpolação é por ÂNGULO de
+matiz e acompanha a borda. `in oklch` também resolve o marrom do sRGB, que era o
+motivo original de usar oklab.
+
+### 3. Alfa baixo sobre fundo escuro sempre puxa para o cinza
+
+Duas coisas viviam de alfa e por isso não tinham cor:
+- os degraus do mapa de calor, `rgba(139,156,247, .30/.52/.76/1)`;
+- a área sob a curva, `fill-opacity: .10` — cor quente a 10% sobre fundo escuro
+  não é cor clara, é lama.
+
+### O que foi feito
+
+**Rampa de quatro paradas, buscadas na borda do gamut** (92% da croma máxima —
+vivo sem cheiro de cor estourada no limite), com o contraste mínimo já garantido
+na busca. A parada nova é a de 0,4, no **laranja vivo** (H48, C 0,178): é
+exatamente onde a rampa antes passava dura.
+
+| | escuro | claro |
+|---|---|---|
+| c0 atrasado feio | L .635 C .231 H 27 | L .620 C .232 H 27 |
+| c1 atrasado | L .715 C .178 H 48 | L .660 C .173 H 45 |
+| c2 no ritmo | L .868 C .163 H 92 | L .657 C .142 H **60** |
+| c3 bateu | L .865 C .219 H 150 | L .625 C .158 H 150 |
+
+No claro o amarelo **não sobrevive**: em H92 ele trava em C 0,132 e sai OLIVA —
+esse era o "terroso" do tema claro. O "no ritmo" do claro virou âmbar H60.
+
+**Resultado medido:** croma mínima do trajeto **0,146 → 0,163** no escuro
+(+11%), e no claro a luminosidade das âncoras ficou quase plana (0,620–0,661) em
+vez de pular.
+
+**Mapa de calor sólido, com L e croma subindo juntas.** A primeira tentativa
+pegou a croma MÁXIMA em cada L e criou um defeito pior: no violeta a croma
+máxima pica no meio da escala (C 0,268 em L 0,52 contra 0,122 em L 0,76), então
+um dia de **1 peça saía mais colorido que um de 5**. Agora L e croma sobem
+juntas e o degrau mais forte fica no pico: escuro L .33/.42/.51/.60 com C
+.105/.155/.195/.215; claro L .83/.73/.65/.52 com C .075/.130/.185/.245.
+Separação entre vizinhos ≥ 1,38 nos dois temas, e a regra de cor do número
+passou a ter a mesma forma nos dois (os três primeiros degraus levam a cor de
+texto do tema, só o último inverte).
+
+**Área da curva em degradê vertical** (0,42 junto da curva → 0,03 no chão), em
+vez de alfa achatado. A cor fica cheia onde ela é vista.
+
+**Célula de semana cumprida** passou a misturar com o TRILHO (cor opaca) e não
+com `transparent`: sobre card escuro a mistura com transparente desidratava a
+croma e o verde virava cinza-esverdeado.
+
+### Dois defeitos que a medição pegou no caminho
+
+- **O terço direito do mapa desaparecia.** Dia futuro era vazado com aro de 1px
+  em `--ativ-0` — 1,17:1 sobre o card. A 20 de agosto a grade parecia quebrada,
+  não "ainda não aconteceu". Agora o dia futuro é preenchido como qualquer
+  outro; quem marca a fronteira é o aro de HOJE, que atravessa as sete faixas.
+  (No calendário o futuro continua vazado — lá tem número no dia.)
+- **A grade quebrou no celular por especificidade.** A regra de faixa média
+  `.fp-mp[data-viz="calendario"] { span 6 }` (0,2,0) vencia a do celular
+  `.fp-mp { span 1 }` (0,1,0). Um filho com `span 6` fazia a grade criar SEIS
+  colunas implícitas apesar do `grid-template-columns: 1fr`, e os painéis
+  viravam faixas de 30px. A faixa média passou a ser
+  `min-width: 761px and max-width: 1200px`.
+
+### Conferido
+
+Pior texto miúdo da tela: **4,69:1 no escuro e 4,87:1 no claro**. Degraus do
+mapa monotônicos em croma nos dois temas. 360, 390, 768, 1024, 1440 e 1920px sem
+estouro horizontal, claro e escuro, sem erro de console.
+
+### O que fica em aberto de propósito
+
+No tema claro as cores quentes são limitadas pelo mínimo de 3:1 sobre branco: o
+laranja mais vivo possível ali é L 0,66 — um laranja "queimado", não um laranja
+brilhante. Dá para ir mais vibrante abaixando o contraste; é decisão do dono, não
+minha.
+
 ## 31/08/2026 · Metas vira painel: um gráfico por natureza de meta
 
 Segunda tentativa do mesmo dia. A primeira — listagem sem caixa, eixo de 31 dias
