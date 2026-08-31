@@ -24,3 +24,12 @@ build/
 # Logs
 *.log
 .claude/
+
+# Laboratorio de design: paginas montadas a partir do admin.html para MEDIR
+# (contraste, alinhamento, altura de linha) sem precisar logar no painel.
+# Nao podem ir para o repositorio: a Vercel serve a raiz inteira, e qualquer
+# `_lab-*.html` no ar viraria uma tela interna publica em mediaclub.fullpro.com.br.
+_lab-*.html
+
+# Backups de arquivo, pelo mesmo motivo.
+*.bak-*

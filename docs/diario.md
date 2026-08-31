@@ -1,5 +1,109 @@
 # Diário
 
+## 31/08/2026 · O mês virou a grade: as sete metas num eixo só
+
+Primeira tela a passar pela régua nova de front-end/design. **Substitui as barras
+por semana de mais cedo hoje** — pelo mesmo motivo que elas foram feitas, e a
+explicação está abaixo.
+
+### O que foi medido antes de mexer
+
+Janela de 1440px, dados reais de agosto, 7 metas e 20 peças:
+
+| | antes | depois |
+|---|---|---|
+| Largura da coluna do nome | 542px (para texto de 121–269px) | 236px |
+| Largura do instrumento | 210px, `flex: 0 1` (não crescia) | 672px, e 956px a 1920 |
+| Encodings da mesma razão por linha | 4 (número, barra 116px, "proj.", gráfico) | 2 (número, palavra) |
+| Desvio do número em relação ao eixo da linha | 9,5px | **0px** (linha de base) |
+| Contraste do "proj." 11,5px no tema claro | 4,04:1 — e 3,50:1 no pior ponto | 6,03–6,47:1 |
+| Contraste do "marcar" no tema claro | 3,69:1 | 6,31:1 |
+| Fio de semana no tema claro | — | 1,97:1 (antes `--border-hi`: 1,53:1) |
+| Altura da linha no celular | 174px | 112px |
+| Altura da página no celular | 1579px | 1070px |
+| Metas visíveis numa tela de iPhone | ~2,2 | ~6 |
+
+A barra de 116x5px preenchia com **exatamente a mesma cor computada** do número
+ao lado (conferido no `oklab()`): não acrescentava dado nenhum. Saiu.
+
+### O mês é a grade
+
+Cada meta tinha eixo próprio — 4 em barras por semana (5 colunas, com chão) e 3
+em área acumulada (31 dias, sem chão). Duas gramáticas empilhadas na mesma
+coluna, e nenhuma comparável com a linha de cima.
+
+Agora as sete dividem **um eixo de 31 dias, alinhado coluna a coluna**. Isso não
+é enfeite: a produção do estúdio é correlacionada — um dia de gravação rende
+short + clip + story juntos. Com o eixo compartilhado dá para ler **para baixo**
+e ver que a semana 3 morreu em tudo. Essa leitura não existia.
+
+### Por que as barras por semana saíram
+
+Elas existiam por um motivo verdadeiro: com alvo 4 em 31 dias a curva acumulada
+é um degrau rente ao chão e não diz nem quanto falta nem quando o trabalho
+aconteceu. A faixa nova resolve **o mesmo problema com mais precisão**: os dois
+carrosséis de agosto aparecem nos dias 15 e 26, não "na semana 3 e na semana 4".
+E os fios das semanas continuam na faixa, então "em quais semanas a gente
+furou?" continua respondida.
+
+### Uma pergunta por canal
+
+O erro da primeira tentativa desta faixa foi empilhar tudo — chão, semanas,
+hoje, régua ideal, área, curva acumulada e um tapete de dias. Sete linhas
+dessas e a tela ficou **mais cheia** do que a que ela substituía. A repartição
+certa:
+
+- **quanto falta** → o número: `10/30`
+- **como anda** → a palavra: `atrasado`
+- **quando aconteceu** → a faixa: uma coluna por dia, mais a cota diária
+  pontilhada e os fios das semanas
+
+Com isso a faixa ficou com uma pergunta só, e as colunas ficaram **neutras**.
+Cheguei a pintá-las pela razão do dia contra a cota — e isso reintroduziu o
+defeito que a palavra tinha acabado de corrigir: com alvo 4 a cota do dia é
+0,13, então **um** carrossel é 7,7x a cota e sai verde-escuro ao lado de um
+número vermelho. Todo dia que produziu algo ficava verde num mês inteiro
+atrasado. Matiz agora é só do veredito.
+
+### O veredito virou palavra
+
+`bateu · adiantado · no ritmo · atrasado · parado`. Antes o resultado de cada
+linha existia **só no matiz** do número: quem não distingue verde de vermelho
+via sete linhas iguais. E a cor não conseguia dizer duas coisas ao mesmo tempo,
+o que produzia barras verdes ao lado de número laranja na mesma linha.
+
+### Tipografia
+
+A FullPro Sans tem 200 a 950 e a tela usava 650–800. Agora o valor é uma fração
+tipográfica: numerador em **850** e denominador em **300**, na mesma linha de
+base, com `tabular-nums` (sem isso a coluna de valores desalinha entre 10, 1 e
+6 — a fonte é proporcional).
+
+### Miudezas do mesmo passo
+
+- O placar do cabeçalho eram dois números idênticos lado a lado ("0 de 7"
+  batidas, "0 de 7" no ritmo). Ficou um só, o resultado; a trajetória é dita
+  por linha, que é onde ela é acionável.
+- Os chips de "fora das metas" mostravam o enum do banco — "longo", "longo".
+  Agora mostram "Vídeo longo".
+- O subtítulo da tela ("Acompanhe o progresso das metas mensais da equipe") saiu:
+  não dizia nada que o `<h1>` e a linha "Agosto 2026 · dia 31 de 31" não digam, e
+  no celular quebrava em quatro linhas — 130px antes da primeira meta.
+  **Candidato a virar regra nas outras telas.**
+- Entre 761 e 1200px a coluna do nome encolhe para 180px: a 1024px o
+  instrumento caía para 256px, quase o tamanho do gráfico antigo. O nome já
+  corta com reticências; a faixa, não.
+- `mc_metas_alvo.grafico` ('linha' / 'semanas') **deixou de ser lido**. A coluna
+  continua no banco, inofensiva — só não escolhe mais nada.
+
+### Conferido
+
+Estados: mês em curso (com o fio de "hoje"), mês fechado (sem projeção), mês
+futuro, e meta batida / adiantada. Temas claro e escuro. 390, 1024, 1440 e
+1920px, sem estouro horizontal. Contrastes acima medidos por canvas, não a olho.
+
+**Ainda não publicado** — esperando o print do iPhone do dono.
+
 ## 31/08/2026 · Cada meta com o gráfico que ela merece, e a agenda parou de usar pílula
 
 > *"eu acho que fica legal a gente manter esse gráfico que você criou só no

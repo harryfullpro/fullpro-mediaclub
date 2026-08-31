@@ -6,6 +6,34 @@ Ordenado por impacto. Atualizar sempre que algo for concluído ou aparecer.
 
 ## Em andamento
 
+### Régua de front-end/design: Metas feito, faltam as outras telas
+A tela de **Metas** foi a primeira a passar pelo padrão novo em 31/08/2026 (ver
+`diario.md`). O que dela vale como regra para as próximas:
+
+1. **O instrumento tem que ganhar a largura, não o rótulo.** Em Metas era
+   542px de nome contra 210px de gráfico; virou 236 contra 672.
+2. **Uma pergunta por canal.** Se número, barra, projeção e gráfico dizem a
+   mesma razão, três deles são enfeite.
+3. **Veredito em palavra, não só em cor.** Cor sozinha não passa em
+   acessibilidade e não consegue dizer duas coisas na mesma linha.
+4. **Fração tipográfica alinhada pela linha de base**, com `tabular-nums`.
+5. **Subtítulo de `.page-head` que repete o `<h1>` sai.** Em Metas custava 130px
+   no celular. Vale checar tela por tela — é candidato a regra global.
+6. **Medir com canvas, não a olho:** contraste de cada cor de rampa nos dois
+   temas, e desvio de linha de base com sonda `inline-block` de altura 0.
+
+Telas na fila, por uso: Dashboard, Projetos, Produção de fotos, Meus Posts,
+Bonificação, Agenda.
+
+### Quatro backups de código estão no repositório e vão para o ar
+`admin.html.bak-fp-bling` (1,5 MB, cópia inteira do painel) e três
+`supabase/*.ts.bak` estão **rastreados no git**. A Vercel serve a raiz, então
+`mediaclub.fullpro.com.br/admin.html.bak-fp-bling` responde. Não há segredo
+neles — o painel é estático e público de qualquer forma — mas é código morto
+servido, e o `.bak` de uma edge function pode mostrar lógica que a versão atual
+já não usa. `git rm --cached` nos quatro resolve; o `.gitignore` já barra novos
+(`*.bak-*` entrou em 31/08).
+
 ### O coletor de metas está no ar mas não roda sozinho — falta secret e cron
 `coletor-pecas` (edge function) traz as peças publicadas de Instagram, YouTube e
 TikTok para `mc_pecas`, e é ele que alimenta o painel de Metas. Testado contra as

@@ -5736,13 +5736,34 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    a linha de 63px para 109px (medido). Passando de dois, o resto vira "+N" —
    o detalhe mostra todos. */
 /* ── painel de metas ─────────────────────────────────────────────────────
-   SEM CAIXA. A primeira versão desta tela era um card por meta, com moldura,
-   raio e fundo — exatamente o "container" que o dono já disse não querer
-   ("eu não quero CONTAINERS NESSA MERDA", em docs/contexto.md). Refeita no
-   idioma que Produção e Projetos já usam: linhas encostadas no fundo da
-   página, separadas por fios de 1px, com a faixa de hover sangrando até a
-   borda da tela.
+   SEM CAIXA, como o resto do painel: linhas encostadas no fundo da página,
+   fio de 1px entre elas, faixa de hover sangrando até a borda da tela.
+
+   O MÊS É A GRADE (2026-08-31)
+   ---------------------------
+   A versão anterior dava a cada meta um eixo próprio: 4 metas em barras por
+   semana (5 colunas, com chão) e 3 em área acumulada (31 dias, sem chão),
+   empilhadas na mesma coluna de 210px. Duas gramáticas, duas bases, duas
+   escalas — e nenhuma delas comparável com a de cima.
+
+   Agora as sete metas dividem UM eixo de 31 dias, alinhado coluna a coluna.
+   Isso não é enfeite: a produção do estúdio é correlacionada — um dia de
+   gravação rende short + clip + story juntos. Com o eixo compartilhado dá
+   para ler PARA BAIXO e ver que a semana 3 morreu em tudo, que é a pergunta
+   que a tela existe para responder e que antes não tinha como fazer.
+
+   Medidas que motivaram o resto:
+     · o nome ocupava 542px para um texto de 120–269px; o instrumento, 210px
+       (18,8% da linha). Invertido: nome 236px, instrumento ~672px em 1440.
+     · a razão era desenhada 4x por linha (número, barra de 116px, "proj." e
+       gráfico). A barra saiu — cor do preenchimento era literalmente a mesma
+       do número, medido no `oklab()` computado.
+     · o número tinha o centro 9,5px acima do eixo da linha (gráfico, barra e
+       proj. em y=216,5; número em 207). Virou uma linha só de base, alinhada.
+     · no celular a linha tinha 174px e a página 1579px para 7 metas. Alvo
+       aqui: ~104px por linha.
    ───────────────────────────────────────────────────────────────────────── */
+
 /* O mês é o único controle desta tela que precisa ser LIDO: em telas de até
    900px a regra geral do .page-head manda o seletor encolher (`min-width:0`)
    para o botão não cair sozinho numa segunda linha, e ele some até sobrar só
@@ -5760,18 +5781,74 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    de verdade sobre #f5f5f7 dá 2,8:1 de contraste — abaixo do mínimo de 3:1.
    Medido, o âmbar #a67c00 leva o pior ponto do trajeto para 3,50:1 (o pior no
    escuro é 6,05:1, no vermelho).
-   Esses três tokens pintam TRÊS coisas, e o mínimo é o da mais exigente: o
-   traço de 2px e a barra (3:1, elemento gráfico) e o número de 26px em negrito
-   (3:1 de AA para texto grande — 3,50 passa, 4,5 de AAA não). Quem mexer aqui
-   refaz a conta para o número, não só para o traço. */
+   3,50:1 passa em AA para TEXTO GRANDE (o número) e para elemento gráfico (o
+   traço), e REPROVA para texto normal — que é o que "proj. 11,5px/650" era.
+   Por isso o veredito curto usa `--meta-*-txt`, uma versão escurecida só para
+   texto miúdo; medido, leva o pior ponto do claro a 4,84:1. Quem mexer nos
+   tokens de cima refaz as duas contas, não só a do traço. */
 :root { --meta-ruim: #ff4d4d; --meta-meio: #ffd23f; --meta-boa: #1fd27a; }
 [data-theme="light"] { --meta-ruim: #c62828; --meta-meio: #a67c00; --meta-boa: #12864f; }
+/* No escuro os tokens já servem a texto miúdo (6,05:1 no pior ponto). */
+:root { --meta-ruim-txt: var(--meta-ruim); --meta-meio-txt: var(--meta-meio); --meta-boa-txt: var(--meta-boa); }
+[data-theme="light"] { --meta-ruim-txt: #b71c1c; --meta-meio-txt: #6e5100; --meta-boa-txt: #0f6b3f; }
 
-.fp-metas > * + * { border-top: 1px solid var(--border); }
-.fp-meta-lin {
-  display: flex; align-items: center; gap: 18px; padding: 15px 0;
-  position: relative;
+/* Fio das semanas na faixa do mês. Não é `--border-hi`: medido, aquele token dá
+   1,61:1 no escuro e 1,53:1 no claro — no tema claro o fio simplesmente não
+   existia, e ele é o que permite ler a grade para baixo. Este par foi escolhido
+   para ficar igual nos dois temas (1,85 e 1,97): presente e quieto.
+   O par do "marcar" é o mesmo de `.fp-link`, que já é o azul acessível do
+   painel — #007AFF dava 3,69:1 no claro num texto de 11px, que reprova. */
+:root { --meta-grade: #3d3d48; --meta-link: #5b9dd9; }
+[data-theme="light"] { --meta-grade: #b0b0bb; --meta-link: #1558b0; }
+
+/* As três colunas vivem num token porque a RÉGUA do mês e as sete linhas têm
+   que ter geometria idêntica — é isso que faz o eixo compartilhado existir.
+   Dois valores soltos sairiam de sincronia no primeiro ponto de corte. */
+.fp-metas { --meta-cols: minmax(0, 236px) minmax(0, 1fr) 168px; --meta-gap: 20px; }
+/* Entre 761 e 1200px a faixa é quem paga a conta: medido a 1024px de janela, a
+   coluna do nome ficava com 236px para um texto de 121–269px enquanto a faixa
+   caía para 256px — quase o tamanho do gráfico antigo. O nome encolhe primeiro
+   porque ele já corta com reticências; a faixa, não. */
+@media (min-width: 761px) and (max-width: 1200px) {
+  .fp-metas { --meta-cols: minmax(0, 180px) minmax(0, 1fr) 148px; }
 }
+.fp-metas > * + * { border-top: 1px solid var(--border); }
+
+/* ── a régua: o eixo do mês, dito uma vez ─────────────────────────────── */
+.fp-metas-regua {
+  display: grid; grid-template-columns: var(--meta-cols); gap: var(--meta-gap);
+  align-items: end; padding: 0 0 5px;
+}
+.fp-metas-regua > :first-child, .fp-metas-regua > :last-child { min-width: 0; }
+/* Os números do eixo são miúdos e técnicos de propósito: são a legenda da
+   grade, não conteúdo. Peso 500 e caixa alta com espacejamento aberto para
+   não competir com o rótulo da meta, que fica logo abaixo. */
+.fp-mr-dias { position: relative; height: 12px; }
+.fp-mr-dias span {
+  position: absolute; top: 0; transform: translateX(-50%);
+  font-size: 9.5px; font-weight: 500; letter-spacing: .07em;
+  color: var(--text-muted); line-height: 1; white-space: nowrap;
+}
+.fp-mr-dias span:first-child { transform: none; }
+.fp-mr-dias span.fp-mr-fim-eixo { transform: translateX(-100%); }
+/* "hoje" é o único rótulo do eixo que não é um número: ele diz onde a régua
+   para de cobrar. Herda a cor do texto normal para se destacar dos dias. */
+.fp-mr-dias span.fp-mr-hoje { color: var(--text-dim); font-weight: 700; }
+.fp-mr-legenda { font-size: 9.5px; font-weight: 500; letter-spacing: .07em;
+  color: var(--text-muted); text-transform: uppercase; text-align: right; }
+
+/* ── a linha da meta ──────────────────────────────────────────────────── */
+/* `align-items: baseline` e não center: o que amarra a linha é a LINHA DE BASE
+   do rótulo com a do número. Com os dois blocos apenas centrados (o que a
+   versão anterior fazia), o número — de longe o elemento mais alto e mais
+   pesado da linha — ficava com o centro 9,5px acima do eixo dos outros quatro
+   elementos, medido. Aqui os dois textos assentam na mesma base e a faixa,
+   que é gráfico e não texto, se centra sozinha. */
+.fp-meta-lin {
+  display: grid; grid-template-columns: var(--meta-cols); gap: var(--meta-gap);
+  align-items: baseline; padding: 13px 0; position: relative;
+}
+.fp-meta-faixa { align-self: center; }
 /* A faixa de realce é atrás da linha e sangra o recuo do <main> para os dois
    lados — mesma mecânica de .fp-prod-linha. */
 .fp-meta-lin::before {
@@ -5779,62 +5856,121 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   top: 0; bottom: 0; left: calc(-1 * var(--pad-lado)); right: calc(-1 * var(--pad-lado));
   background: transparent; transition: background .12s ease;
 }
-.fp-meta-lin > * { position: relative; z-index: 1; }
+.fp-meta-lin > * { position: relative; z-index: 1; min-width: 0; }
 .fp-meta-lin:hover::before { background: rgba(255,255,255,.03); }
 [data-theme="light"] .fp-meta-lin:hover::before { background: rgba(0,0,0,.022); }
 
-.fp-meta-nome { flex: 1 1 auto; min-width: 0; }
-.fp-meta-nome b { display: block; font-size: 13.5px; font-weight: 650; line-height: 1.3;
+.fp-meta-nome b { display: block; font-size: 14px; font-weight: 600; line-height: 1.25;
+  letter-spacing: -.006em;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fp-meta-nome span { font-size: 11.5px; color: var(--text-muted); line-height: 1.35;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.fp-meta-nome span { display: block; font-size: 11.5px; font-weight: 400; line-height: 1.35;
+  color: var(--text-muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* O gráfico é o corpo da linha, não um enfeite: é ele que responde "como anda
-   ao longo do tempo". `preserveAspectRatio: none` deixa o eixo do tempo esticar
-   com a largura disponível. */
-.fp-meta-graf { flex: 0 1 210px; height: 40px; display: block; overflow: visible; }
+/* ── a faixa do mês ───────────────────────────────────────────────────── */
+/* `preserveAspectRatio: none` deixa o eixo do TEMPO esticar com a largura
+   disponível, que é o que se quer. O que não podia esticar eram as marcas: na
+   versão anterior as barras de semana eram <rect> e a 366px de celular uma
+   delas virava um bloco de 96x60px — deixava de ser barra e virava mancha de
+   cor (medido). Aqui tudo é traço com `vector-effect: non-scaling-stroke`, que
+   mantém a espessura em pixels de tela em qualquer largura. */
+.fp-meta-faixa { width: 100%; height: 42px; display: block; overflow: visible; }
 
-.fp-meta-valor { flex: 0 0 auto; text-align: right; min-width: 84px; }
-.fp-meta-valor b { font-family: 'FullPro Sans', sans-serif; font-size: 26px; line-height: 1; display: block; }
-.fp-meta-valor small { font-size: 11.5px; color: var(--text-muted); }
-
-.fp-meta-barra { flex: 0 0 116px; height: 5px; border-radius: 3px; background: var(--bg-elev); overflow: hidden; }
-.fp-meta-barra span { display: block; height: 100%; border-radius: 3px; transition: width .3s ease; }
-
-.fp-meta-proj { flex: 0 0 92px; text-align: right; font-size: 11.5px; font-weight: 650; }
-.fp-meta-marcar {
-  border: 0; background: none; padding: 0; cursor: pointer;
-  font-size: 11px; font-weight: 700; color: var(--azul);
+/* ── o valor: fração tipográfica ──────────────────────────────────────── */
+/* Uma linha de base só, e por isso alinhada com a faixa e o rótulo — o defeito
+   que isto corrige é de 9,5px, medido. `tabular-nums` porque sem ele a coluna
+   de valores desalinha entre 10, 1 e 6: a fonte é proporcional. */
+.fp-meta-fim { text-align: right; }
+.fp-meta-valor {
+  display: block; font-variant-numeric: tabular-nums;
+  font-size: 30px; font-weight: 850; line-height: 1;
+  letter-spacing: -.03em;
 }
-.fp-meta-marcar:hover { opacity: .65; }
+/* O denominador em peso 300 contra um numerador em 850, na mesma família: é a
+   escolha de tipo desta tela. A fonte tem 200 a 950 e a tela usava 650–800 —
+   o contraste de peso é o que faz a fração ser lida como fração, e não como
+   dois números do mesmo tamanho. */
+.fp-meta-valor i {
+  font-style: normal; font-size: 14px; font-weight: 300;
+  letter-spacing: 0; color: var(--text-muted);
+}
+/* O veredito em PALAVRA. Antes o resultado da linha existia só no matiz do
+   número — quem não distingue verde de vermelho via sete linhas iguais. E a
+   cor sozinha não conseguia dizer "o mês está atrasado mas a semana 4 foi
+   boa", o que produzia barras verdes ao lado de um número laranja. */
+.fp-meta-veredito {
+  display: block; margin-top: 4px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; font-style: normal;
+}
+.fp-meta-veredito small {
+  font-size: 10.5px; font-weight: 500; letter-spacing: .04em;
+  color: var(--text-muted); text-transform: none;
+}
+.fp-meta-marcar {
+  border: 0; background: none; padding: 0; cursor: pointer; font: inherit;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .04em;
+  text-transform: none; color: var(--meta-link);
+}
+.fp-meta-marcar:hover { text-decoration: underline; text-underline-offset: 2px; }
 
-/* Cabeçalho: também sem caixa — fio embaixo, como a barra de filtros. */
+/* ── cabeçalho ────────────────────────────────────────────────────────── */
+/* Também sem caixa — fio embaixo, como a barra de filtros. O placar era DOIS
+   números idênticos lado a lado ("0 de 7" / "0 de 7", mesmo corpo e mesmo
+   peso): leem como um par e não como duas perguntas diferentes. Ficou um só,
+   o resultado; a trajetória agora é dita por linha, em palavra. */
 .fp-meta-cabeca {
-  display: flex; align-items: baseline; gap: 24px; flex-wrap: wrap;
-  padding: 0 0 14px; border-bottom: 1px solid var(--border); margin-bottom: 2px;
+  display: flex; align-items: flex-end; gap: 24px; flex-wrap: wrap;
+  padding: 0 0 13px; border-bottom: 1px solid var(--border); margin-bottom: 2px;
 }
 .fp-meta-cabeca > div:first-child { flex: 1 1 auto; min-width: 0; }
-.fp-meta-cabeca b { display: block; font-size: 14px; font-weight: 700; }
-.fp-meta-cabeca span { font-size: 12px; color: var(--text-muted); }
-.fp-meta-placar { flex: 0 0 auto; text-align: right; }
-.fp-meta-placar b { font-family: 'FullPro Sans', sans-serif; font-size: 22px; line-height: 1.1; }
-.fp-meta-placar span { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; }
+.fp-mc-mes b { display: block; font-size: 19px; font-weight: 800; line-height: 1.1;
+  letter-spacing: -.02em; }
+.fp-mc-mes span { display: block; margin-top: 3px; font-size: 12px; font-weight: 400;
+  color: var(--text-muted); }
+.fp-mc-placar { flex: 0 0 auto; text-align: right; }
+.fp-mc-placar b { display: block; font-variant-numeric: tabular-nums;
+  font-size: 30px; font-weight: 850; line-height: 1; letter-spacing: -.03em; }
+.fp-mc-placar b i { font-style: normal; font-size: 14px; font-weight: 300;
+  letter-spacing: 0; color: var(--text-muted); }
+.fp-mc-placar span { display: block; margin-top: 4px; font-size: 10.5px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
 
+/* ── peças fora das metas ─────────────────────────────────────────────── */
 .fp-meta-sobra { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border); }
 .fp-meta-sobra b { font-size: 12px; font-weight: 700; color: var(--text-dim); }
 .fp-meta-sobra > div { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
-.fp-meta-chip { font-size: 10.5px; font-weight: 650; padding: 3px 8px; border-radius: 999px;
+.fp-meta-chip { font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: 999px;
   background: var(--bg-elev); color: var(--text-muted); }
 
-/* No celular a linha vira duas: nome em cima, gráfico e números embaixo —
-   210px de gráfico não cabem ao lado de um nome numa tela de 375. */
+/* ── celular ──────────────────────────────────────────────────────────── */
+/* A linha tinha 174px e a página 1579px para sete metas — o operador via 2,2
+   metas por tela numa tela que existe para mostrar as sete. Aqui o nome e o
+   valor dividem a primeira linha, o detalhe e o veredito a segunda, e a faixa
+   do mês ocupa a largura inteira embaixo: ~104px medidos. */
 @media (max-width: 760px) {
-  .fp-meta-lin { flex-wrap: wrap; gap: 10px 14px; }
-  .fp-meta-nome { flex: 1 1 100%; }
-  .fp-meta-graf { flex: 1 1 100%; height: 46px; order: 3; }
-  .fp-meta-valor { min-width: 0; text-align: left; }
-  .fp-meta-barra { flex: 1 1 auto; }
-  .fp-meta-proj { flex: 0 0 auto; }
+  .fp-metas { --meta-gap: 12px; }
+  /* O placar quebra para a segunda linha do cabeçalho. Com `text-align: right`
+     numa caixa que encolhe para o conteúdo, ele parava num recuo arbitrário no
+     meio da tela — parecia centrado por acidente. Aqui ele assume a linha
+     inteira e assenta à esquerda, alinhado com o mês logo acima. */
+  .fp-meta-cabeca { gap: 14px; }
+  .fp-mc-placar { flex: 1 1 100%; text-align: left; }
+  .fp-mc-placar b, .fp-mc-placar span { display: inline-block; vertical-align: baseline; }
+  .fp-mc-placar span { margin: 0 0 0 8px; }
+  .fp-metas-regua { display: none; }
+  .fp-meta-lin {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'nome valor' 'faixa faixa';
+    align-items: baseline; gap: 6px 12px; padding: 12px 0;
+  }
+  .fp-meta-nome { grid-area: nome; }
+  .fp-meta-fim { grid-area: valor; }
+  .fp-meta-faixa { grid-area: faixa; height: 34px; margin-top: 4px; }
+  /* No celular o veredito volta para o lado do número: empilhado ele criava
+     uma terceira linha de texto só para duas palavras. */
+  .fp-meta-valor { font-size: 26px; }
+  .fp-meta-veredito { margin-top: 2px; }
 }
 
 /* ── fileira de logotipos de destino ────────────────────────────────────
@@ -7279,7 +7415,11 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
       <div class="page-head">
         <div>
           <h1>Metas</h1>
-          <p>Acompanhe o progresso das metas mensais da equipe.</p>
+          <!-- Sem subtítulo. O "Acompanhe o progresso das metas mensais da
+               equipe" não dizia nada que o <h1> e a linha "Agosto 2026 · dia 31
+               de 31" logo abaixo não digam, e no celular ele quebrava em quatro
+               linhas — 130px medidos antes da primeira meta. O texto de
+               apresentação da tela vive no painel de ajuda (`perf-metas`). -->
         </div>
         <div id="perfMetasAdminBtn" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div>
       </div>
@@ -27668,196 +27808,226 @@ const META_AMARELO = .8;   /* onde o amarelo mora na escala */
    pergunta é feita uma vez e a rampa cai para a âncora mais próxima. */
 const FP_TEM_MIX = typeof CSS !== 'undefined' && CSS.supports
   && CSS.supports('color', 'color-mix(in oklab, red 50%, blue)');
-function fpMetaCor(razao) {
+/* fpMetaCor ganhou um segundo parâmetro. A rampa pinta TRÊS coisas com
+   exigências diferentes de contraste: o traço de 2px e o tapete (3:1, elemento
+   gráfico), o número de 30px em negrito (3:1, texto grande) e o veredito de
+   10,5px (4,5:1, texto normal). No tema claro o âmbar da rampa dá 3,50:1 —
+   passa nas duas primeiras e reprova na terceira, que era exatamente o defeito
+   do "proj." de 11,5px da versão anterior (medido: 4,04:1, e 3,50 no pior
+   ponto). `paraTexto` troca para os tokens escurecidos. */
+function fpMetaCor(razao, paraTexto) {
   if (razao == null) return 'var(--text-muted)';
+  const s = paraTexto ? '-txt' : '';
   const t = Math.max(0, Math.min(1, razao));
   /* O amarelo NÃO fica no meio da escala. Amarelo é o "ok" do dono, e ok é
      estar perto do ritmo — 80%. Com o amarelo no meio, quem está a 37% do
-     ritmo (agosto inteiro, hoje) já apareceria quase amarelo, e a cor diria
-     "ok" bem embaixo de um "0 de 7 no ritmo". Do 0,8 até 1 o verde entra
-     depressa, que é o que "verde para na projeção" quer dizer. */
-  if (!FP_TEM_MIX) return 'var(' + (t < META_AMARELO / 2 ? '--meta-ruim' : t < 1 ? '--meta-meio' : '--meta-boa') + ')';
+     ritmo já apareceria quase amarelo, e a cor diria "ok" bem embaixo de um
+     "0 de 7 no ritmo". Do 0,8 até 1 o verde entra depressa, que é o que
+     "verde para na projeção" quer dizer. */
+  if (!FP_TEM_MIX) return 'var(' + (t < META_AMARELO / 2 ? '--meta-ruim' + s : t < 1 ? '--meta-meio' + s : '--meta-boa' + s) + ')';
   return t <= META_AMARELO
-    ? 'color-mix(in oklab, var(--meta-meio) ' + Math.round(t / META_AMARELO * 100) + '%, var(--meta-ruim))'
-    : 'color-mix(in oklab, var(--meta-boa) ' + Math.round((t - META_AMARELO) / (1 - META_AMARELO) * 100) + '%, var(--meta-meio))';
+    ? 'color-mix(in oklab, var(--meta-meio' + s + ') ' + Math.round(t / META_AMARELO * 100) + '%, var(--meta-ruim' + s + '))'
+    : 'color-mix(in oklab, var(--meta-boa' + s + ') ' + Math.round((t - META_AMARELO) / (1 - META_AMARELO) * 100) + '%, var(--meta-meio' + s + '))';
 }
 
-/* Linha do acumulado contra o ritmo ideal. SVG inline, sem biblioteca — é o
-   padrão do painel e são 12 linhas. */
-function fpMetaGrafico(ap, janela) {
-  const L = 200, A = 44;
-  const metaTot = ap.modo === 'cadencia' ? janela.dias : ap.meta;
-  const teto = Math.max(metaTot, ...ap.acum, 1);
-  const x = d => (d - 1) / Math.max(1, janela.dias - 1) * L;
-  const y = v => A - (v / teto) * A;
-  /* O ideal é a reta que sai de zero e chega no alvo no último dia. Ela é a
-     régua: a linha cheia acima dela quer dizer adiantado.
-     A escala é COMPARTILHADA com a régua de propósito. Escalar pelo próprio
-     máximo mostraria melhor a forma da curva, mas apagaria a única coisa que a
-     tela existe para responder — quanto falta. Com 10 de 30 a linha fica rente
-     ao chão, e é exatamente essa a informação. */
-  const ideal = 'M0,' + y(0).toFixed(1) + ' L' + L + ',' + y(metaTot).toFixed(1);
-  const ate = Math.max(1, janela.corridos);
-  const pontos = ap.acum.slice(0, ate).map((v, i) => x(i + 1).toFixed(1) + ',' + y(v).toFixed(1));
-  const real = pontos.length ? 'M' + pontos.join(' L') : '';
-  /* Área embaixo da linha, e não só a linha: com 210px de largura e 40 de
-     altura, um traço de 2px sozinho quase não se vê no meio de uma listagem.
-     A área dá peso sem precisar de moldura em volta. */
-  const area = pontos.length ? 'M0,' + A + ' L' + pontos.join(' L') + ' L' + x(ate).toFixed(1) + ',' + A + ' Z' : '';
+/* ── O VEREDITO EM PALAVRA ───────────────────────────────────────────────
+   Antes o resultado de cada linha existia só no matiz do número. Dois
+   problemas medidos:
+     · quem não distingue verde de vermelho via sete linhas iguais — a cor era
+       o ÚNICO canal do veredito;
+     · a cor não conseguia dizer duas coisas ao mesmo tempo, e a tela precisava:
+       "o mês está atrasado, mas a semana 4 foi boa" saía como barras verdes ao
+       lado de um número laranja, na mesma linha.
+   A palavra resolve os dois. A cor continua, agora como reforço. */
+function fpMetaVeredito(ap, janela) {
+  const razao = fpMetaRazao(ap, janela);
+  const cor = fpMetaCor(razao);
+  /* Cor de TEXTO MIÚDO, não a do traço: o veredito tem 10,5px e texto normal
+     exige 4,5:1. A rampa de cima cai a 3,50:1 no âmbar do tema claro. */
+  const corTxt = razao == null ? 'var(--text-muted)'
+    : fpMetaCor(razao, true);
+  if (janela.futuro) return { palavra: 'não começou', cor: 'var(--text-muted)', corTxt: 'var(--text-muted)' };
+  if (ap.bateu)      return { palavra: 'bateu', cor, corTxt };
+  if (razao == null) return { palavra: 'sem cobrança ainda', cor: 'var(--text-muted)', corTxt: 'var(--text-muted)' };
+  if (!ap.feito)     return { palavra: 'parado', cor, corTxt };
+  if (razao >= 1.15) return { palavra: 'adiantado', cor, corTxt };
+  if (razao >= 0.8)  return { palavra: 'no ritmo', cor, corTxt };
+  return { palavra: 'atrasado', cor, corTxt };
+}
 
-  /* A cor não é uma só: é um degradê ao longo do próprio tempo. Em cada dia a
-     cor é a distância entre a linha cheia e a régua pontilhada NAQUELE dia, e
-     não a nota final do mês. Um mês que começou mal e recuperou aparece como
-     é: vermelho à esquerda, verde à direita. */
-  const id = 'fpmg-' + String(ap.alvo.chave || 'x').replace(/[^a-zA-Z0-9]+/g, '-');
-  const paradas = [];
-  for (let d = 1; d <= ate; d++) {
-    const esperado = metaTot * (d / janela.dias);
-    const feitoAte = ap.acum[d - 1] || 0;
-    const razao = esperado < 1 ? (feitoAte ? 1 : null) : feitoAte / esperado;
-    const off = ate > 1 ? ((d - 1) / (ate - 1) * 100).toFixed(2) : '0';
-    paradas.push('<stop offset="' + off + '%" stop-color="' + fpMetaCor(razao) + '"/>');
+/* ── A FAIXA DO MÊS ──────────────────────────────────────────────────────
+   Um desenho só, no lugar dos dois de antes (área acumulada para as metas de
+   volume, barras por semana para as de lote). Os dois existiam por um motivo
+   real — com alvo 4 em 31 dias a curva fica rente ao chão e não diz nem quanto
+   falta nem quando o trabalho aconteceu — mas custavam duas gramáticas, duas
+   bases e duas escalas empilhadas na mesma coluna, e nenhuma comparável com a
+   linha de cima.
+
+   A FAIXA RESPONDE UMA PERGUNTA SÓ: QUANDO.
+   A primeira tentativa desta faixa empilhou tudo — chão, semanas, hoje, régua
+   ideal, área, curva acumulada e um tapete de dias. Sete linhas dessas e a tela
+   ficou MAIS cheia do que a que ela substituía. O erro era de repartição: o
+   "quanto falta" já está no número (10/30) e o "como anda" já está no veredito
+   (atrasado). Sobrava para a faixa exatamente o que nem número nem palavra
+   conseguem dizer — em que dias o trabalho aconteceu.
+   Então a faixa é uma coluna por dia do mês, e mais nada:
+
+     · uma COLUNA por dia com peça, altura proporcional à quantidade;
+     · o fio da COTA DIÁRIA (alvo ÷ dias do mês): a régua contra a qual a
+       coluna do dia se lê. Para shorts a cota é ~1 peça/dia, para clips 1,3 —
+       o dia 10, com 5 clips, aparece como quase 4x a cota;
+     · fios finos nos dias 8, 15, 22 e 29: as semanas. Como o eixo é o MESMO
+       nas sete linhas, eles deixam ler PARA BAIXO — a semana que morreu morreu
+       em todas as metas ao mesmo tempo, que é como a produção do estúdio
+       realmente funciona (um dia de gravação rende short + clip + story).
+       Essa leitura não existia: cada meta tinha eixo próprio.
+     · o fio de HOJE, onde a régua para de cobrar. Também não existia.
+
+   Tudo é traço com `vector-effect: non-scaling-stroke`. As barras de semana
+   eram <rect> e a 366px de celular uma delas virava um bloco de 96x60px —
+   deixava de ser barra e virava mancha de cor (medido). Traço não estica. */
+function fpMetaFaixa(ap, janela) {
+  const D = janela.dias * 10;          /* 10 unidades por dia */
+  const H = 100, TOPO = 8;
+  const x = d => (d - 0.5) * 10;       /* centro do dia */
+  const xb = d => (d - 1) * 10;        /* borda do dia */
+
+  /* Escala da própria linha: as metas têm unidades diferentes (40 clips e 4
+     carrosséis no mesmo mês), então normalizar por linha é o certo. O que se
+     compara entre linhas é a POSIÇÃO das colunas, não a altura — e essa
+     comparação continua válida. O número exato vai no <title> de cada dia. */
+  const cota = janela.dias ? (ap.modo === 'cadencia' ? (ap.alvo.alvo || 1) : ap.meta / janela.dias) : 0;
+  const teto = Math.max(1, cota, ...ap.porDia);
+  const y = v => H - (v / teto) * (H - TOPO);
+
+  const linha = (x1, y1, x2, y2, cor, extra) =>
+    '<line x1="' + x1.toFixed(1) + '" y1="' + y1.toFixed(1) + '" x2="' + x2.toFixed(1)
+    + '" y2="' + y2.toFixed(1) + '" stroke="' + cor + '" vector-effect="non-scaling-stroke"'
+    + (extra || '') + '/>';
+
+  /* semanas: mesmos cortes de 7 dias que a apuração usa. */
+  let semanas = '';
+  for (let d = 8; d <= janela.dias; d += 7)
+    semanas += linha(xb(d), 0, xb(d), H, 'var(--meta-grade)', ' stroke-width="1"');
+
+  /* hoje: só no mês em curso — em mês fechado o fio ficaria encostado na borda
+     direita fingindo ser moldura. */
+  const hoje = janela.atual && janela.corridos < janela.dias
+    ? linha(x(janela.corridos) + 5, 0, x(janela.corridos) + 5, H, 'var(--text-muted)',
+            ' stroke-width="1" stroke-dasharray="2 2" opacity=".8"')
+    : '';
+
+  /* a cota diária, pontilhada, atravessando o mês inteiro. */
+  const regua = cota > 0
+    ? linha(0, y(cota), D, y(cota), 'var(--text-muted)',
+            ' stroke-width="1" stroke-dasharray="3 4" opacity=".7"')
+    : '';
+
+  /* As colunas são NEUTRAS, de propósito, e isso foi decidido duas vezes.
+     A primeira versão desta faixa pintou cada dia pela razão contra a cota
+     diária — e reintroduziu o defeito que a palavra tinha acabado de corrigir:
+     com alvo 4 em 31 dias a cota do dia é 0,13, então UM carrossel é 7,7x a
+     cota e sai verde-escuro ao lado de um número vermelho. Todo dia que
+     produziu algo ficava verde num mês inteiro atrasado.
+     O matiz agora é reservado ao veredito, e o veredito é dito uma vez por
+     linha (número + palavra). "Quando o trabalho aconteceu" não é uma pergunta
+     de bom ou ruim — é a pergunta que sobra depois das outras duas.
+     Neutro também é o que faz a leitura PARA BAIXO funcionar: sete linhas de
+     marcas na mesma cor deixam ver o padrão do mês; sete linhas em sete tons
+     diferentes, não. */
+  let colunas = '';
+  for (let d = 1; d <= janela.dias; d++) {
+    const n = ap.porDia[d] || 0;
+    if (!n) continue;
+    colunas += '<g><title>' + escHtml('dia ' + d + ': ' + n + (n === 1 ? ' peça' : ' peças')
+        + (cota > 0 ? ' · cota do dia ' + (Math.round(cota * 10) / 10) : '')) + '</title>'
+      + linha(x(d), y(n), x(d), H, 'var(--text-dim)', ' stroke-width="3.5" stroke-linecap="butt"')
+      + '</g>';
   }
-  /* userSpaceOnUse e x2 no último dia desenhado: com objectBoundingBox o
-     degradê se esticaria pela largura inteira do SVG, e no dia 28 de 31 as
-     cores sairiam do lugar em que os dias acontecem. */
-  const grad = '<defs><linearGradient id="' + id + '" gradientUnits="userSpaceOnUse"'
-    + ' x1="0" y1="0" x2="' + x(ate).toFixed(1) + '" y2="0">' + paradas.join('') + '</linearGradient></defs>';
 
-  return '<svg class="fp-meta-graf" viewBox="0 0 ' + L + ' ' + A + '" preserveAspectRatio="none" aria-hidden="true">'
-    + grad
-    + (area ? '<path d="' + area + '" fill="url(#' + id + ')" fill-opacity=".22"/>' : '')
-    + '<path d="' + ideal + '" fill="none" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>'
-    + (real ? '<path d="' + real + '" fill="none" stroke="url(#' + id + ')" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' : '')
-    + '</svg>';
+  /* Mês em curso e nenhuma peça: sem as colunas a faixa fica só com os fios e
+     não se distingue de "meta que não existe". Um traço no chão, na cor da
+     rampa em zero, diz "parado" na mesma língua do resto. */
+  const parado = (!ap.feito && !janela.futuro)
+    ? linha(0, H - 1, x(Math.max(1, janela.corridos)), H - 1, fpMetaCor(0), ' stroke-width="2" opacity=".9"')
+    : '';
+
+  return '<svg class="fp-meta-faixa" viewBox="0 0 ' + D + ' ' + H
+    + '" preserveAspectRatio="none" aria-hidden="true">'
+    + semanas + hoje + regua + colunas + parado + '</svg>';
 }
 
-/* As semanas do mês: 1-7, 8-14, 15-21, 22-28 e o que sobrar. A última quase
-   sempre é curta, e a cota dela é proporcional aos dias que ela tem — senão a
-   régua cobraria uma semana inteira de três dias. */
-function fpMetaSemanas(janela) {
-  const out = [];
-  for (let ini = 1; ini <= janela.dias; ini += 7) {
-    const fim = Math.min(ini + 6, janela.dias);
-    out.push({
-      ini, fim,
-      dias: fim - ini + 1,
-      corridos: Math.max(0, Math.min(janela.corridos, fim) - ini + 1),
-    });
-  }
-  return out;
-}
-
-/* Barras por semana, com a cota da semana marcada em cada coluna.
-   Por que existe: a linha acumulada só diz alguma coisa quando há volume. Com
-   alvo 4 num mês de 31 dias, a curva é um degrau rente ao chão — o operador
-   não consegue ler dela nem quanto falta nem quando o trabalho aconteceu.
-   Semana é a unidade em que essas metas realmente acontecem ("um carrossel por
-   semana", "dez clips por semana"), e a pergunta que elas fazem é "em quais
-   semanas a gente furou?". A barra responde isso; a linha não respondia. */
-function fpMetaGraficoSemanas(ap, janela) {
-  const L = 200, A = 44;
-  const meta = ap.modo === 'cadencia' ? janela.dias : ap.meta;
-
-  const semanas = fpMetaSemanas(janela).map(s => {
-    let feito = 0;
-    for (let d = s.ini; d <= s.fim; d++) feito += (ap.porDia[d] || 0);
-    /* `cota` é o que a semana inteira pede; `cobrado` é o que ela já cobrou,
-       proporcional aos dias que já correram dentro dela. A cor olha o cobrado
-       (senão a semana em curso nasce vermelha), a régua mostra a cota. */
-    const cota = meta ? meta * (s.dias / janela.dias) : 0;
-    const cobrado = meta ? meta * (s.corridos / janela.dias) : 0;
-    return { ...s, feito, cota, cobrado,
-             razao: (s.corridos && cobrado > 0) ? feito / cobrado : null };
-  });
-
-  const teto = Math.max(1, ...semanas.map(s => Math.max(s.feito, s.cota)));
-  const y = v => A - (v / teto) * (A - 4);
-  const colL = L / semanas.length;
-  const vao = 14;   /* barra de ~27px: com 7 ela ficava quase quadrada */
-
-  const partes = semanas.map((s, i) => {
-    const x = i * colL + vao / 2;
-    const w = colL - vao;
-    const futura = s.corridos === 0;
-    const cor = fpMetaCor(s.razao);
-    const dica = 'dia ' + s.ini + '-' + s.fim + ': ' + s.feito
-      + (futura ? ' (semana ainda não começou)' : ' de ' + (Math.round(s.cota * 10) / 10));
-
-    /* Semana que já cobrou e não entregou nada ganha um toco vermelho no chão,
-       em vez de ficar vazia. Ausência não se lê: com três semanas em branco e
-       duas verdes, o gráfico parecia melhor do que o número ao lado dizia. O
-       toco é a falha dita na mesma língua de cor do resto. */
-    const semNada = s.feito === 0 && s.cobrado >= .5;
-    const barra = s.feito > 0
-      ? '<rect x="' + x.toFixed(1) + '" y="' + y(s.feito).toFixed(1) + '" width="' + w.toFixed(1)
-        + '" height="' + Math.max(1.5, A - y(s.feito)).toFixed(1) + '" rx="2" fill="' + cor + '"'
-        + (futura ? ' opacity=".45"' : '') + '/>'
-      : (semNada
-        ? '<rect x="' + x.toFixed(1) + '" y="' + (A - 2.5) + '" width="' + w.toFixed(1)
-          + '" height="2.5" rx="1" fill="' + fpMetaCor(0) + '"/>'
-        : '');
-
-    const regua = s.cota > 0
-      ? '<line x1="' + x.toFixed(1) + '" x2="' + (x + w).toFixed(1) + '" y1="' + y(s.cota).toFixed(1)
-        + '" y2="' + y(s.cota).toFixed(1) + '" stroke="var(--text-muted)" stroke-width="1.5"'
-        + ' stroke-dasharray="3 3" opacity=".55" vector-effect="non-scaling-stroke"/>'
-      : '';
-
-    return '<g><title>' + escHtml(dica) + '</title>'
-      + '<rect x="' + x.toFixed(1) + '" y="0" width="' + w.toFixed(1) + '" height="' + A + '" fill="transparent"/>'
-      + barra + regua + '</g>';
-  }).join('');
-
-  /* Chão: sem ele as colunas vazias não existem visualmente e a semana em
-     branco vira um buraco em vez de um zero. */
-  const chao = '<line x1="0" y1="' + (A - 0.5) + '" x2="' + L + '" y2="' + (A - 0.5)
-    + '" stroke="var(--border)" stroke-width="1" vector-effect="non-scaling-stroke"/>';
-
-  return '<svg class="fp-meta-graf" viewBox="0 0 ' + L + ' ' + A + '" preserveAspectRatio="none" aria-hidden="true">'
-    + chao + partes + '</svg>';
-}
-
-/* Qual dos dois desenhos a meta usa. A escolha é do dono (coluna `grafico` em
-   mc_metas_alvo) porque não sai do alvo: `clips` tem alvo 40, mais que `story`,
-   e mesmo assim é meta de lote — seis clips saem no mesmo dia. A regra de bolso
-   só vale quando ninguém escolheu. */
-function fpMetaEstilo(ap, janela) {
-  const g = ap.alvo && ap.alvo.grafico;
-  if (g === 'linha' || g === 'semanas') return g;
-  if (ap.modo === 'cadencia') return 'linha';
-  return (ap.meta && janela.dias && ap.meta >= janela.dias * 0.6) ? 'linha' : 'semanas';
-}
-
-function fpMetaDesenho(ap, janela) {
-  return fpMetaEstilo(ap, janela) === 'semanas'
-    ? fpMetaGraficoSemanas(ap, janela)
-    : fpMetaGrafico(ap, janela);
+/* A régua do mês, dita UMA vez em cima das sete linhas. Antes cada linha
+   reexplicava o próprio eixo (e em duas gramáticas diferentes); agora o eixo é
+   um só e a legenda também. */
+function fpMetasRegua(janela) {
+  /* Só os começos de semana: 1, 8, 15, 22, 29. O rótulo do ÚLTIMO dia do mês
+     saía a 6,5% de distância do "29" e, medido a 1024px de janela, os dois
+     colidiam num "2931". Ele também não fazia falta — "dia 31 de 31" está no
+     cabeçalho, e o fim do eixo é o fim do mês por definição. */
+  const marcas = [1];
+  for (let d = 8; d <= janela.dias; d += 7) marcas.push(d);
+  /* No dia 31 de 31 o rotulo "hoje" cairia exatamente sobre o "31" — os dois
+     saem no mesmo pixel e viram um borrao. Nesse caso o "hoje" nao aparece: o
+     "dia 31 de 31" do cabecalho ja diz onde o mes esta. */
+  const cabeHoje = janela.atual && janela.corridos < janela.dias;
+  const rot = marcas.map((d, i) => {
+    const pct = (d - 0.5) / janela.dias * 100;
+    const cls = i === 0 ? '' : '';
+    return '<span' + cls + ' style="left:' + pct.toFixed(2) + '%">' + d + '</span>';
+  }).join('')
+  + (cabeHoje
+      ? '<span class="fp-mr-hoje" style="left:' + (janela.corridos / janela.dias * 100).toFixed(2) + '%">hoje</span>'
+      : '');
+  return '<div class="fp-metas-regua">'
+    + '<span class="fp-mr-legenda" style="text-align:left">dia do mês</span>'
+    + '<span class="fp-mr-dias">' + rot + '</span>'
+    + '<span class="fp-mr-legenda">feito / meta</span>'
+    + '</div>';
 }
 
 function fpMetaLinhaHtml(ap, janela) {
   const a = ap.alvo;
   const cad = ap.modo === 'cadencia';
-  /* Mesma rampa do gráfico, no ponto de hoje: número, barra e projeção contam
-     a mesma coisa que a ponta direita da linha. */
-  const cor = fpMetaCor(fpMetaRazao(ap, janela));
-  const valor = cad
-    ? '<b style="color:' + cor + '">' + ap.feito + '</b><small>de ' + janela.corridos + ' dias</small>'
-    : '<b style="color:' + cor + '">' + ap.feito + '</b><small>de ' + ap.meta + '</small>';
-  const fim = janela.futuro ? '<span style="color:var(--text-muted)">—</span>'
-    : cad ? '<button class="fp-meta-marcar" type="button" onclick="fpRepostAbrir()">marcar</button>'
-    /* Mês fechado não tem projeção: "proj. 24" num mês que acabou faz o número
-       parecer promessa quando já é resultado. */
-    : '<span style="color:' + cor + '">' + (janela.passado ? 'fechou em ' : 'proj. ') + ap.projecao + '</span>';
+  const v = fpMetaVeredito(ap, janela);
+  const id = 'fpmg-' + String(a.chave || 'x').replace(/[^a-zA-Z0-9]+/g, '-');
+  /* Fração numa linha de base só: numerador em 850, denominador em 300. Antes
+     eram dois blocos empilhados e o número ficava com o centro 9,5px acima do
+     eixo da linha (medido) — o elemento mais alto da linha era o único fora do
+     lugar. */
+  /* Em cadência o denominador são os dias que o mês JÁ cobrou. Num mês futuro
+     isso é zero, e saía "0/0 dias" — fração sem sentido. Aí o denominador é o
+     mês inteiro, que é o que a meta vai cobrar. */
+  const den = cad ? (janela.futuro ? janela.dias : janela.corridos) + ' dias' : String(ap.meta);
+  /* Sequência e projeção moram no rodapé do valor, em cinza: são apoio, não o
+     veredito. Mês fechado não tem projeção — "proj. 24" num mês que acabou faz
+     resultado parecer promessa. */
+  const apoio = janela.futuro ? ''
+    : cad ? (ap.sequencia ? ap.sequencia + (ap.sequencia === 1 ? ' dia seguido' : ' dias seguidos') : '')
+    : janela.passado ? '' : 'proj. ' + ap.projecao;
   return '<div class="fp-meta-lin">'
     + '<span class="fp-meta-nome"><b>' + escHtml(a.rotulo) + '</b>'
-    +   '<span>' + escHtml(a.detalhe || '') + (cad && ap.sequencia ? ' · ' + ap.sequencia + (ap.sequencia === 1 ? ' dia seguido' : ' dias seguidos') : '') + '</span></span>'
-    + fpMetaDesenho(ap, janela)
-    + '<span class="fp-meta-valor">' + valor + '</span>'
-    + '<span class="fp-meta-barra"><span style="width:' + Math.min(100, ap.pct) + '%;background:' + cor + '"></span></span>'
-    + '<span class="fp-meta-proj">' + fim + '</span>'
+    +   '<span>' + escHtml(a.detalhe || '') + '</span></span>'
+    + fpMetaFaixa(ap, janela, id)
+    + '<span class="fp-meta-fim">'
+    +   '<span class="fp-meta-valor" style="color:' + v.cor + '">' + ap.feito
+    +     '<i>/' + escHtml(den) + '</i></span>'
+    +   '<span class="fp-meta-veredito" style="color:' + v.corTxt + '">' + escHtml(v.palavra)
+    +     (cad && !janela.futuro
+            ? ' <button class="fp-meta-marcar" type="button" onclick="fpRepostAbrir()">marcar</button>'
+            : (apoio ? ' <small>· ' + escHtml(apoio) + '</small>' : ''))
+    +   '</span>'
+    + '</span>'
     + '</div>';
 }
+
+/* Rótulo humano do tipo da peça. Os chips de "fora das metas" mostravam o enum
+   do banco — "longo", "longo" — que é nome de coluna, não nome de coisa. */
+const FP_TIPO_ROTULO = {
+  short: 'Vídeo curto', longo: 'Vídeo longo', longo_10_15: 'Vídeo de 10-15 min',
+  pure_sound: 'Pure sound', carrossel: 'Carrossel', story: 'Story',
+  repost: 'Repost', clip: 'Clip', outro: 'Outro',
+};
 
 function renderPerfMetas() {
   const el = document.getElementById('perfMetasContent');
@@ -27910,13 +28080,6 @@ function renderPerfMetas() {
   const ultimaColeta = METAS_PECAS.reduce((m, p) =>
     (p.atualizado_em && (!m || p.atualizado_em > m)) ? p.atualizado_em : m, null);
   const batidas = aps.filter(x => x.bateu).length;
-  /* O terceiro termo daqui era morto: pct>=90 implica pct>=80, que já é o
-     noRitmo da cadência. Saiu junto com a troca da cor para não virar bug na
-     próxima vez que alguém mexer no limite. */
-  const noRitmo = aps.filter(x => x.bateu || x.noRitmo).length;
-  /* Mês que não começou não tem placar: "0 de 7 no ritmo" em setembro, visto em
-     agosto, é acusação de atraso em quem ainda não teve o dia 1. */
-  const placar = (n) => janela.futuro ? '—' : n + ' de ' + aps.length;
 
   /* Peças que não caíram em meta nenhuma. Existem de propósito na tela: um
      vídeo de 9 minutos não é curto nem 10-15, e sumir da vista faria a equipe
@@ -27929,9 +28092,13 @@ function renderPerfMetas() {
      de produção rouba a leitura do que a tela existe para responder. O valor por
      meta e o rateio continuam em mc_performance_goals, intocados. */
 
+  /* Um placar só. Eram dois números do mesmo corpo e do mesmo peso lado a lado
+     ("0 de 7" batidas, "0 de 7" no ritmo): leem como um par, não como duas
+     perguntas. A trajetória agora é dita linha por linha, em palavra — que é o
+     lugar onde ela é acionável. */
   el.innerHTML =
     '<div class="fp-meta-cabeca">'
-    +   '<div><b>Metas da equipe — ' + escHtml(fpMesNome(mes)) + '</b>'
+    +   '<div class="fp-mc-mes"><b>' + escHtml(fpMesNome(mes)) + '</b>'
     +     '<span>' + (janela.futuro ? 'o mês ainda não começou'
                      : janela.passado ? 'mês fechado'
                      : 'dia ' + janela.corridos + ' de ' + janela.dias + ' · ' + (janela.dias - janela.corridos) + ' dias restantes')
@@ -27939,13 +28106,16 @@ function renderPerfMetas() {
                 o operador não tem como saber se está vendo o de agora ou o de
                 ontem — e story tem 24h de vida. */
              + (ultimaColeta ? ' · atualizado ' + escHtml(timeAgo(ultimaColeta)) : '') + '</span></div>'
-    +   '<div class="fp-meta-placar"><b>' + placar(batidas) + '</b><span>metas batidas</span></div>'
-    +   '<div class="fp-meta-placar"><b>' + placar(noRitmo) + '</b><span>no ritmo</span></div>'
+    +   '<div class="fp-mc-placar"><b>' + (janela.futuro ? '—' : batidas)
+    +     '<i>/' + aps.length + '</i></b><span>metas batidas</span></div>'
     + '</div>'
-    + '<div class="fp-metas">' + aps.map(x => fpMetaLinhaHtml(x, janela)).join('') + '</div>'
+    + '<div class="fp-metas">'
+    +   fpMetasRegua(janela)
+    +   aps.map(x => fpMetaLinhaHtml(x, janela)).join('')
+    + '</div>'
     + (sobra.length ? '<div class="fp-meta-sobra"><b>' + sobra.length + (sobra.length === 1 ? ' peça publicada fora das metas' : ' peças publicadas fora das metas') + '</b>'
         + '<div>' + sobra.slice(0, 12).map(p => '<span class="fp-meta-chip" data-tip="' + escHtml((p.titulo || '') + ' · ' + (p.duracao_seg ? Math.round(p.duracao_seg / 60) + ' min' : p.plataforma)) + '">'
-        + escHtml(p.tipo) + '</span>').join('') + '</div></div>' : '');
+        + escHtml(FP_TIPO_ROTULO[p.tipo] || p.tipo) + '</span>').join('') + '</div></div>' : '');
 }
 
 /* A lista do mês, do mais novo para o mais velho, com o interruptor de repost.

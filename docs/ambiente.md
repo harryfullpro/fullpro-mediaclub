@@ -99,6 +99,26 @@ ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 - **Servidor local:** `python3 -m http.server` falha no sandbox (`os.getcwd` sem
   permissão). Use um servidor em node.
 - **Fonte de verdade:** print do iPhone do dono. Vários problemas só apareceram assim.
+- **O service worker atrapalha o teste local — armadilha real.** O `sw.js` fica
+  registrado no escopo de `localhost:<porta>` depois da primeira visita, e o `fetch`
+  dele responde navegação com `caches.match('/admin')` quando a rede falha. Resultado:
+  você abre uma página de teste sua, o servidor devolve **200**, e o que aparece na tela
+  é a **tela de login do painel** — inclusive dentro de `<iframe>`, e sem nenhum erro no
+  console. Custou tempo em 31/08. Antes de desconfiar do seu HTML, limpe:
+
+  ```js
+  (await navigator.serviceWorker.getRegistrations()).forEach(r => r.unregister());
+  (await caches.keys()).forEach(k => caches.delete(k));
+  ```
+
+- **Laboratório de medição:** para conferir contraste, alinhamento e altura de linha sem
+  login, monte uma página que **extrai** os `<style>` do `<head>` do `admin.html` e o
+  trecho de JS da tela, e injeta dados reais lidos do Supabase. Assim o que você mede é o
+  CSS de produção, com a mesma cascata. Dois cuidados: pegue só os `<style>` que estão
+  **antes** de `<div id="app"`, senão o regex também captura o `<style>` da etiqueta de
+  envio (que vive dentro de uma template string de JS, no fim do arquivo) e o
+  `body { font-family: Arial }` dele apaga a fonte do painel; e os arquivos `_lab-*.html`
+  estão no `.gitignore` porque a Vercel serve a raiz inteira.
 
 ---
 
