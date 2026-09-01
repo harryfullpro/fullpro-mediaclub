@@ -8384,6 +8384,7 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
               </div>
             </div>
             <button id="tkConnectBtn" class="action-btn approve" onclick="connectTikTok()">Conectar</button>
+            <button id="tkPubBtn" class="action-btn" onclick="fpTkPublicar()" style="display:none">Autorizar publicação</button>
           </div>
           <div class="fp-integr-lin">
             <div class="fp-integr-id">
@@ -9222,6 +9223,44 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
 <!-- Autorizacao de upload do YouTube. Modal proprio porque o #integrModal
      generico so sabe mandar UM campo, e aqui sao dois. O secret nao fica no
      navegador: vai direto para a edge function, que grava no banco. -->
+<!-- Autorizacao de PUBLICACAO no TikTok. Modal proprio: sao dois campos, e o
+     #integrModal generico so manda um. O app do Sandbox tem chave e secret
+     diferentes dos de producao — e e o Sandbox que publica enquanto a producao
+     esta em analise. -->
+<div class="modal" id="tkAppModal">
+  <div class="modal-content" style="max-width:560px">
+    <div class="modal-head">
+      <h3>Autorizar publica&ccedil;&atilde;o no TikTok</h3>
+      <button class="modal-close" onclick="fpTkFechar()" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="fp-user-form">
+      <div class="fp-prod-faixa">
+        <b>App Sandbox</b>
+        <span class="fp-aviso-sub">A conex&atilde;o atual s&oacute; l&ecirc; m&eacute;tricas</span>
+      </div>
+      <p class="fp-user-nota" style="margin-top:0">
+        Em <b>developers.tiktok.com</b> &rarr; FullPro Media Club HUB &rarr; aba <b>Sandbox</b> &rarr;
+        Credentials. O olhinho revela cada valor.
+      </p>
+      <div class="block-field">
+        <label for="tkAppKey">Client key</label>
+        <input type="text" class="login-input" id="tkAppKey" style="margin:0"
+               autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="cole aqui"/>
+      </div>
+      <div class="block-field">
+        <label for="tkAppSecret">Client secret</label>
+        <input type="password" class="login-input" id="tkAppSecret" style="margin:0"
+               autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="cole aqui"/>
+      </div>
+      <p class="fp-user-nota" id="tkAppErro" style="display:none;color:var(--danger)"></p>
+      <div class="fp-user-pe">
+        <button class="action-btn" type="button" onclick="fpTkFechar()">Cancelar</button>
+        <button class="action-btn approve" type="button" id="tkAppSalvar" onclick="fpTkAppSalvar()">Salvar e autorizar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="ytOauthModal">
   <div class="modal-content" style="max-width:560px">
     <div class="modal-head">
@@ -19192,6 +19231,120 @@ async function fpIntegrDesconectar() {
   fpIntegrFechar();
 }
 
+/* ── TikTok: autorizacao de PUBLICACAO [FP-TK-PUB 01/09/2026] ─────────────
+   Vive em provider 'tiktok_sandbox', separado do 'tiktok' que o coletor usa
+   para ler metricas. Reconectar um nao pode apagar o outro — foi o erro que
+   quase cometemos no YouTube. */
+
+let FP_TK_PUB = null;
+
+async function fpTkStatus() {
+  try {
+    const h = await tkCabecalhos();
+    const r = await fetch(TK_PROXY_URL + '?action=status&provider=tiktok_sandbox', { headers: h });
+    FP_TK_PUB = await r.json();
+  } catch (e) { FP_TK_PUB = null; }
+  const b = document.getElementById('tkPubBtn');
+  if (!b) return FP_TK_PUB;
+  if (typeof isUserAdmin === 'function' && !isUserAdmin()) { b.style.display = 'none'; return FP_TK_PUB; }
+  b.style.display = '';
+  const e = FP_TK_PUB;
+  b.textContent = (e && e.connected) ? 'Reautorizar publicação' : 'Autorizar publicação';
+  b.title = (e && e.connected)
+    ? 'Autorizado' + (e.escopos ? ' com ' + e.escopos.join(', ') : '') + '. Clique para refazer.'
+    : 'A conexão atual só lê métricas. Autorize para poder publicar.';
+  return FP_TK_PUB;
+}
+
+async function fpTkPublicar() {
+  const e = await fpTkStatus();
+  if (!e || !e.app_configurado) { fpTkAbrir(); return; }
+  fpTkIr();
+}
+
+function fpTkAbrir() {
+  document.getElementById('tkAppErro').style.display = 'none';
+  document.getElementById('tkAppKey').value = '';
+  document.getElementById('tkAppSecret').value = '';
+  document.getElementById('tkAppModal').classList.add('show');
+}
+function fpTkFechar() {
+  document.getElementById('tkAppModal').classList.remove('show');
+  document.getElementById('tkAppSecret').value = '';
+}
+
+async function fpTkAppSalvar() {
+  const key = document.getElementById('tkAppKey').value.trim();
+  const secret = document.getElementById('tkAppSecret').value.trim();
+  const erro = document.getElementById('tkAppErro');
+  const botao = document.getElementById('tkAppSalvar');
+  erro.style.display = 'none';
+  if (!key || !secret) { erro.textContent = 'Preencha os dois campos.'; erro.style.display = 'block'; return; }
+
+  botao.disabled = true; botao.textContent = 'Salvando...';
+  let j = null;
+  try {
+    const h = await tkCabecalhos();
+    const r = await fetch(TK_PROXY_URL + '?action=app_salvar&provider=tiktok_sandbox',
+      { method: 'POST', headers: h, body: JSON.stringify({ client_key: key, client_secret: secret }) });
+    j = await r.json();
+  } catch (e) { j = { ok: false, erro: (e && e.message) || 'falha de rede' }; }
+  botao.disabled = false; botao.textContent = 'Salvar e autorizar';
+  if (!j || !j.ok) { erro.textContent = (j && j.erro) || 'não deu para salvar.'; erro.style.display = 'block'; return; }
+
+  fpTkFechar();
+  fpTkIr();
+}
+
+async function fpTkIr() {
+  const redirect = window.location.origin + '/admin';
+  if (!/^https:/.test(redirect)) {
+    fpToast('O TikTok só aceita retorno em https. Autorize pelo endereço de produção.', 'info');
+    return;
+  }
+  let j = null;
+  try {
+    const h = await tkCabecalhos();
+    const r = await fetch(TK_PROXY_URL + '?action=oauth_url&provider=tiktok_sandbox',
+      { method: 'POST', headers: h, body: JSON.stringify({ redirect_uri: redirect }) });
+    j = await r.json();
+  } catch (e) { j = null; }
+  if (!j || !j.ok) { fpToast((j && j.erro) || 'não deu para montar o endereço de autorização', 'error'); return; }
+  try { sessionStorage.setItem('fp_tk_pub_state', j.state); } catch (e) { /* sessão anônima */ }
+  window.location.href = j.url;
+}
+
+/* Volta do TikTok. Roda antes do handleTKCallback (o da conexao de leitura)
+   porque os dois leem ?code= e aquele limpa a URL. O state separa os dois. */
+async function handleTkPubCallback() {
+  const q = new URLSearchParams(window.location.search);
+  const code = q.get('code');
+  const estado = q.get('state');
+  if (!code || !estado) return;
+  let guardado = null;
+  try { guardado = sessionStorage.getItem('fp_tk_pub_state'); } catch (e) { /* ignora */ }
+  if (!guardado || guardado !== estado) return;
+  try { sessionStorage.removeItem('fp_tk_pub_state'); } catch (e) { /* ignora */ }
+
+  ['code','state','scopes','error','error_description'].forEach(function (k) { q.delete(k); });
+  const resto = q.toString();
+  window.history.replaceState({}, '', window.location.pathname + (resto ? '?' + resto : '') + window.location.hash);
+
+  let j = null;
+  try {
+    const h = await tkCabecalhos();
+    const r = await fetch(TK_PROXY_URL + '?action=oauth_code&provider=tiktok_sandbox',
+      { method: 'POST', headers: h, body: JSON.stringify({ code: code, redirect_uri: window.location.origin + '/admin' }) });
+    j = await r.json();
+  } catch (e) { j = null; }
+  if (j && j.ok) {
+    await fpTkStatus();
+    fpToast('TikTok autorizado para publicar' + (j.escopos ? ' (' + j.escopos.join(', ') + ')' : '') + '.', 'success');
+  } else {
+    fpToast((j && j.erro) || 'não deu para concluir a autorização do TikTok', 'error');
+  }
+}
+
 /* ── YouTube: autorizacao de upload (OAuth) [FP-YT-OAUTH 01/09/2026] ──────
    Segue o padrao novo (Instagram/YouTube), nao o do TikTok e do Bling: a
    credencial NUNCA fica no localStorage do navegador. O code volta para ca e e
@@ -19311,6 +19464,7 @@ function renderIntegracoes() {
   fpIntegrStatus('instagram');
   fpIntegrStatus('youtube');
   fpYtOauthStatus();
+  fpTkStatus();
   updateTKStatus();
   updateBlingStatus();
   fpDriveVerificar(false);
@@ -30648,6 +30802,9 @@ window.fpPubAbrir = fpPubAbrir;
 window.fpPubFechar = fpPubFechar;
 window.fpPubArquivo = fpPubArquivo;
 window.fpPubCapa = fpPubCapa;
+window.fpTkPublicar = fpTkPublicar;
+window.fpTkFechar = fpTkFechar;
+window.fpTkAppSalvar = fpTkAppSalvar;
 window.fpPubYtContar = fpPubYtContar;
 window.fpPubSalvar = fpPubSalvar;
 window.fpPubPublicarAgora = fpPubPublicarAgora;
@@ -33074,6 +33231,7 @@ if (window.initMotoSelects) {
 async function initApp() {
   // Handle TikTok OAuth callback if present
   loadTKTokens();
+  await handleTkPubCallback();
   await handleYtCallback();
   await handleTKCallback();
 

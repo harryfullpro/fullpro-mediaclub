@@ -179,7 +179,7 @@
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-const VERSAO = 'pub6';
+const VERSAO = 'pub7';
 const GRAPH = 'https://graph.facebook.com/v21.0';
 const BUCKET = 'publicacoes';
 
@@ -988,27 +988,255 @@ async function redeFacebook(ctx: Contexto): Promise<Resultado> {
   };
 }
 
-/* ── TIKTOK — travado na auditoria, não na nossa mão ── */
+/* ── TIKTOK — Content Posting API, empurrando os bytes ── */
 
-async function redeTiktok(_ctx: Contexto): Promise<Resultado> {
-  const cred = await credencial('tiktok');
-  const vencido = cred.expira ? new Date(cred.expira).getTime() < Date.now() : false;
+const TK_API = 'https://open.tiktokapis.com/v2';
+const TK_TOKEN_URL_P = 'https://open.tiktokapis.com/v2/oauth/token/';
 
-  const partes = [
-    'O TikTok ainda não publica por API: falta a auditoria do Content Posting API.',
-    'Sem ela, o Direct Post em conta pública volta 403 (unaudited_client_can_only_post_to_private_accounts).',
-  ];
-  if (!cred.token) partes.push('Além disso, o TikTok não está conectado em Integrações.');
-  else if (vencido) partes.push('E o token guardado venceu (o do TikTok dura 24h e precisa de refresh diário).');
+/* Pedaço do upload. O TikTok exige entre 5 MB e 64 MB por pedaço, e o último
+   pode passar de 64 MB desde que não chegue a 128. Fico em 32 MB: cabe na
+   memória da função com folga e dá pedaço grande o bastante para vídeo de
+   minutos não virar dezenas de requisições. */
+const TK_PEDACO = 32 * 1024 * 1024;
 
+type CredTk = { token: string; provider: string; escopos: string[] };
+
+/* Sandbox primeiro, produção depois. Enquanto a produção está em análise, é o
+   Sandbox que publica — ele tem chave própria e conta alvo fullprobr. */
+async function credTiktok(): Promise<CredTk | null> {
+  for (const provider of ['tiktok_sandbox', 'tiktok']) {
+    const { data } = await servico()
+      .from('mc_integrations')
+      .select('access_token, refresh_token, expires_at, meta')
+      .eq('provider', provider)
+      .maybeSingle();
+    if (!data?.access_token) continue;
+    const meta = (data.meta ?? {}) as Record<string, any>;
+    const escopos: string[] = Array.isArray(meta.escopos) ? meta.escopos : [];
+    /* Só serve se souber publicar. Uma linha com escopo só de leitura é a
+       conexão do coletor, não a de publicação. */
+    if (escopos.indexOf('video.publish') < 0 && escopos.indexOf('video.upload') < 0) continue;
+
+    /* O token dura 24h. Renova aqui se estiver perto de vencer — não dá para
+       contar com o cron ter passado nos últimos minutos. */
+    let token = String(data.access_token);
+    const venc = data.expires_at ? Date.parse(data.expires_at) : 0;
+    if (venc && Date.now() > venc - 120_000 && data.refresh_token && meta.client_key && meta.client_secret) {
+      try {
+        const r = await fetch(TK_TOKEN_URL_P, {
+          method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_key: String(meta.client_key), client_secret: String(meta.client_secret),
+            grant_type: 'refresh_token', refresh_token: String(data.refresh_token),
+          }).toString(),
+        });
+        const j = await r.json();
+        if (j?.access_token) {
+          token = j.access_token;
+          await servico().from('mc_integrations').update({
+            access_token: j.access_token,
+            refresh_token: j.refresh_token || data.refresh_token,
+            expires_at: new Date(Date.now() + (Number(j.expires_in) || 86400) * 1000).toISOString(),
+            updated_at: agoraISO(),
+          }).eq('provider', provider);
+        }
+      } catch { /* segue com o token velho; a chamada dirá se ainda vale */ }
+    }
+    return { token, provider, escopos };
+  }
+  return null;
+}
+
+async function tkPost(caminho: string, corpo: unknown, token: string) {
+  let r: Response;
+  try {
+    r = await fetch(`${TK_API}${caminho}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json; charset=UTF-8' },
+      body: JSON.stringify(corpo ?? {}),
+    });
+  } catch { throw erroDeRede('TikTok'); }
+  const j = await r.json().catch(() => ({}));
+  /* O TikTok responde 200 com error.code = 'ok' quando deu certo. Quem manda é
+     o código dentro do corpo, não o status HTTP. */
+  const cod = j?.error?.code;
+  if (cod && cod !== 'ok') {
+    throw new Error(j.error.message || cod, { cause: { code: cod, log_id: j.error.log_id ?? null } });
+  }
+  return j;
+}
+
+/* Frases para os erros que o dono vai ver de verdade. O resto sai cru. */
+function tkFrase(cod: string, msg: string): string {
+  if (cod === 'unaudited_client_can_only_post_to_private_accounts') {
+    return 'O TikTok recusou: cliente sem auditoria só publica em conta privada. '
+      + 'É a trava do Direct Post — o caminho do rascunho (video.upload) não passa por ela.';
+  }
+  if (cod === 'privacy_level_option_mismatch') {
+    return 'A privacidade escolhida não está entre as que a conta permite agora. O robô usa o que o creator_info devolve.';
+  }
+  if (cod === 'spam_risk_too_many_posts') return 'O TikTok bloqueou por excesso de publicações nas últimas 24h. Reagende.';
+  if (cod === 'spam_risk_user_banned_from_posting') return 'A conta está impedida de publicar pelo TikTok.';
+  if (cod === 'reached_active_user_cap') return 'Limite de usuários publicando por este app em 24h. É teto de cliente não auditado.';
+  if (cod === 'url_ownership_unverified') return 'O domínio do arquivo não está verificado no portal do TikTok.';
+  if (cod === 'access_token_invalid' || cod === 'scope_not_authorized') {
+    return 'A autorização do TikTok não vale mais ou não tem o escopo de publicação. Um administrador reconecta em Integrações.';
+  }
+  return 'O TikTok recusou: ' + (msg || cod);
+}
+
+async function redeTiktok(ctx: Contexto): Promise<Resultado> {
+  const cred = await credTiktok();
+  if (!cred) {
+    return {
+      estado: 'erro',
+      erro: 'O TikTok não está autorizado para publicar. Um administrador conecta em Integrações → TikTok, '
+        + 'com os escopos video.upload e video.publish.',
+      meta: { falta: ['autorizar o TikTok com escopo de publicação'] },
+    };
+  }
+  if (!ctx.midias.length) return { estado: 'erro', erro: 'A publicação está sem arquivo.' };
+  const midia = ctx.midias[0];
+  if (!midia.ehVideo) return { estado: 'erro', erro: 'O TikTok só recebe vídeo por aqui, e o arquivo desta publicação é imagem.' };
+
+  const jaTinha = (ctx.dest?.meta ?? {}) as Record<string, any>;
+  let publishId: string | null = jaTinha.publish_id ?? null;
+  const podeDireto = cred.escopos.indexOf('video.publish') >= 0;
+
+  /* ── 1. abre a publicação (ou retoma a que ficou em voo) ── */
+  if (!publishId) {
+    const tamanho = midia.caminho ? await tamanhoNoBucket(midia.caminho) : null;
+    if (!tamanho) {
+      return { estado: 'erro', erro: 'Não deu para saber o tamanho do arquivo, e o TikTok exige o tamanho antes do envio.' };
+    }
+
+    const pedaco = Math.min(TK_PEDACO, tamanho);
+    const pedacos = Math.max(1, Math.floor(tamanho / pedaco));
+    const legenda = String(ctx.pub.legenda ?? ctx.pub.titulo ?? '').slice(0, 2200);
+
+    let corpo: Record<string, unknown>;
+    let caminho: string;
+
+    if (podeDireto) {
+      /* creator_info É OBRIGATÓRIO antes do Direct Post — o TikTok recusa sem
+         ele. E serve para outra coisa: as opções de privacidade que ele devolve
+         são as ÚNICAS aceitas. Mandar um valor fora dessa lista dá
+         privacy_level_option_mismatch, e é onde a maioria das integrações
+         quebra. Por isso o nível sai daqui, não de constante. */
+      const info = await tkPost('/post/publish/creator_info/query/', {}, cred.token);
+      const opcoes: string[] = info?.data?.privacy_level_options ?? [];
+      const nivel = opcoes.indexOf('PUBLIC_TO_EVERYONE') >= 0 ? 'PUBLIC_TO_EVERYONE'
+                  : (opcoes[0] ?? 'SELF_ONLY');
+
+      corpo = {
+        post_info: {
+          title: legenda,
+          privacy_level: nivel,
+          disable_comment: false, disable_duet: false, disable_stitch: false,
+        },
+        source_info: { source: 'FILE_UPLOAD', video_size: tamanho, chunk_size: pedaco, total_chunk_count: pedacos },
+      };
+      caminho = '/post/publish/video/init/';
+      await gravarDestino(ctx.dest.id, { status: 'enviando', erro: 'Abrindo envio no TikTok.' },
+        { modo: 'direct_post', privacidade_pedida: nivel, opcoes_da_conta: opcoes, bytes: tamanho });
+    } else {
+      /* Rascunho: cai na caixa de entrada do app e o operador finaliza no
+         celular. NÃO passa pela auditoria — é o caminho que funciona antes
+         dela. Aqui não vai post_info: o título é escolhido lá. */
+      corpo = { source_info: { source: 'FILE_UPLOAD', video_size: tamanho, chunk_size: pedaco, total_chunk_count: pedacos } };
+      caminho = '/post/publish/inbox/video/init/';
+      await gravarDestino(ctx.dest.id, { status: 'enviando', erro: 'Abrindo envio no TikTok (rascunho).' },
+        { modo: 'rascunho', bytes: tamanho });
+    }
+
+    let init: Record<string, any>;
+    try {
+      init = await tkPost(caminho, corpo, cred.token);
+    } catch (e) {
+      const cru = (e as any)?.cause ?? {};
+      return { estado: 'erro', erro: tkFrase(String(cru.code ?? ''), e instanceof Error ? e.message : ''), meta: cru };
+    }
+
+    publishId = String(init?.data?.publish_id ?? '');
+    const uploadUrl = String(init?.data?.upload_url ?? '');
+    if (!publishId || !uploadUrl) throw new Error('o TikTok não devolveu o endereço de envio');
+
+    /* ── 2. os bytes, em pedaços ── */
+    for (let i = 0; i < pedacos; i++) {
+      const ini = i * pedaco;
+      const fim = (i === pedacos - 1) ? tamanho - 1 : ini + pedaco - 1;
+
+      const parte = await fetch(midia.url, { headers: { Range: `bytes=${ini}-${fim}` } });
+      if (!parte.ok) return { estado: 'erro', erro: `Não deu para ler o arquivo (HTTP ${parte.status}).` };
+      const bytes = new Uint8Array(await parte.arrayBuffer());
+
+      const env = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': midia.mime || 'video/mp4',
+          'Content-Length': String(bytes.byteLength),
+          'Content-Range': `bytes ${ini}-${fim}/${tamanho}`,
+        },
+        body: bytes,
+      });
+      if (env.status !== 201 && env.status !== 200 && env.status !== 206 && env.status !== 308) {
+        const t = await env.text().catch(() => '');
+        return { estado: 'erro', erro: `O TikTok recusou o pedaço ${i + 1}/${pedacos} (HTTP ${env.status}). ${t.slice(0, 200)}` };
+      }
+
+      /* Vídeo grande não cabe numa invocação. O publish_id já está gravado, e a
+         próxima rodada retoma pela consulta de status — o TikTok mantém o
+         envio aberto. */
+      if (Date.now() > ctx.prazo - 20_000 && i < pedacos - 1) {
+        await gravarDestino(ctx.dest.id, { status: 'enviando', erro: 'Enviando ao TikTok, continua na próxima rodada.' },
+          { ...jaTinha, publish_id: publishId, bytes: tamanho, pedacos_enviados: i + 1 });
+        return { estado: 'enviando', erro: 'O envio ao TikTok continua na próxima rodada.', meta: { publish_id: publishId } };
+      }
+    }
+
+    await gravarDestino(ctx.dest.id, { status: 'enviando', erro: 'Enviado ao TikTok, processando.' },
+      { ...jaTinha, publish_id: publishId, modo: podeDireto ? 'direct_post' : 'rascunho' });
+  }
+
+  /* ── 3. o que o TikTok fez com o vídeo ── */
+  let situacao = '';
+  let idPublico: string | null = null;
+  let motivo = '';
+  while (Date.now() < ctx.prazo) {
+    const st = await tkPost('/post/publish/status/fetch/', { publish_id: publishId }, cred.token);
+    situacao = String(st?.data?.status ?? '');
+    const ids: string[] = st?.data?.publicaly_available_post_id ?? st?.data?.publicly_available_post_id ?? [];
+    if (ids.length) idPublico = String(ids[0]);
+    if (situacao === 'PUBLISH_COMPLETE' || situacao === 'SEND_TO_USER_INBOX') break;
+    if (situacao === 'FAILED') { motivo = String(st?.data?.fail_reason ?? ''); break; }
+    await dormir(INTERVALO_POLL_MS);
+  }
+
+  if (situacao === 'FAILED') {
+    return { estado: 'erro', erro: tkFrase(motivo, ''), meta: { publish_id: publishId, fail_reason: motivo } };
+  }
+  if (!situacao || (situacao !== 'PUBLISH_COMPLETE' && situacao !== 'SEND_TO_USER_INBOX')) {
+    return {
+      estado: 'enviando',
+      erro: 'O TikTok ainda está processando o vídeo. O robô confere na próxima rodada.',
+      meta: { publish_id: publishId, situacao },
+    };
+  }
+
+  const rascunho = situacao === 'SEND_TO_USER_INBOX';
+  console.log('[publicar] tiktok', rabo(publishId), situacao, cred.provider);
   return {
-    estado: 'erro',
-    erro: partes.join(' '),
+    estado: 'publicado',
+    id_externo: idPublico ?? publishId,
+    link: idPublico ? `https://www.tiktok.com/@fullprobr/video/${idPublico}` : null,
     meta: {
-      conectado: Boolean(cred.token),
-      token_vencido: vencido,
-      falta: ['auditoria do Content Posting API', 'escopos video.publish e video.upload', 'verificação do domínio para PULL_FROM_URL'],
-      doc: 'https://developers.tiktok.com/doc/content-posting-api-reference-direct-post/',
+      situacao, modo: rascunho ? 'rascunho' : 'direct_post', ambiente: cred.provider,
+      /* Rascunho NÃO é publicação: está na caixa de entrada esperando alguém
+         finalizar no celular. O painel precisa dizer isso, senão o operador
+         acha que saiu e o vídeo nunca vai ao ar. */
+      aviso: rascunho
+        ? 'O vídeo foi para a CAIXA DE ENTRADA do app do TikTok. Alguém precisa abrir o app e finalizar a publicação.'
+        : null,
     },
   };
 }
@@ -1615,6 +1843,7 @@ async function panorama() {
   const ig = await credencial('instagram', IG_TOKEN_ENV);
   const fb = await credencial('facebook');
   const tt = await credencial('tiktok');
+  const ttSandbox = await credencial('tiktok_sandbox');
   const yt = await credencial('youtube');
   const ytOauth = await credencial('youtube_oauth');
   const escoposIg: string[] = Array.isArray((ig.meta as any)?.escopos) ? (ig.meta as any).escopos : [];
@@ -1635,12 +1864,27 @@ async function panorama() {
       pode_publicar: Boolean(fb.token || ig.token) && !faltaFb.length,
       falta: faltaFb,
     },
-    tiktok: {
-      conectado: Boolean(tt.token),
-      token_vencido: tt.expira ? new Date(tt.expira).getTime() < Date.now() : null,
-      pode_publicar: false,
-      falta: ['auditoria do Content Posting API', 'escopos video.publish e video.upload'],
-    },
+    tiktok: (function () {
+      /* Duas linhas: 'tiktok' e a producao (o token que o coletor le) e
+         'tiktok_sandbox' e o app Sandbox, por onde publicamos enquanto a
+         producao esta em analise. */
+      const esc = (p: Cred) => (Array.isArray((p.meta as any)?.escopos) ? (p.meta as any).escopos as string[] : []);
+      const daProd = esc(tt), daSand = esc(ttSandbox);
+      const publica = (l: string[]) => l.indexOf('video.publish') >= 0 || l.indexOf('video.upload') >= 0;
+      const usando = publica(daSand) ? 'sandbox' : (publica(daProd) ? 'producao' : null);
+      const escopos = usando === 'sandbox' ? daSand : daProd;
+      return {
+        conectado: Boolean(tt.token || ttSandbox.token),
+        token_vencido: tt.expira ? new Date(tt.expira).getTime() < Date.now() : null,
+        pode_publicar: Boolean(usando),
+        ambiente: usando,
+        /* Direct Post exige video.publish E auditoria; o rascunho so exige o
+           escopo. O painel precisa distinguir: rascunho nao e publicacao, e
+           sim video esperando alguem finalizar no celular. */
+        modo: escopos.indexOf('video.publish') >= 0 ? 'direct_post' : (escopos.indexOf('video.upload') >= 0 ? 'rascunho' : null),
+        falta: usando ? [] : ['autorizar o TikTok com escopo video.upload/video.publish'],
+      };
+    })(),
     youtube: (function () {
       /* Duas linhas diferentes: 'youtube' guarda a CHAVE (só lê) e
          'youtube_oauth' guarda a autorização de upload. Misturar as duas foi o
