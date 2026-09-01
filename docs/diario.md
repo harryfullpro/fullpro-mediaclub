@@ -4325,3 +4325,38 @@ diferentes (fonte primária e o que envelheceu). A maioria das refutações foi 
 ATRIBUIÇÃO, não de fato — frase certa, página errada. Uma pegou coisa que não
 existe em fonte nenhuma e foi descartada. Vale o padrão: quem levanta cita, quem
 refuta abre a URL.
+
+### 01/09 (continuação) — a passada de interação
+
+Revisão nova em Meus Posts, olhando o que não tinha sido medido: teclado, estados e
+falsa promessa de clique.
+
+| Achado | Antes | Depois |
+|---|---|---|
+| Cards alcançáveis por teclado | **0 de 7** | 7 de 7 |
+| Elementos focáveis na tela | 8 (só cabeçalho) | 15 |
+| Link com aspa dupla | trunca o `onclick`, cria atributo solto | inerte, só `class/href/target/rel` |
+| Estrelas | `cursor:pointer` + hover dourado, sem handler | leitura, `role="img"`, "Nota N de 5" |
+
+**O card era `<div onclick>`.** A ação principal da tela — abrir o post — não existia
+para quem não usa mouse. Virou `<a href>`, e com isso vieram de graça tabulação, Enter,
+botão do meio e "abrir em nova aba" do menu de contexto.
+
+**Duas camadas de escape, uma só aplicada.** O `onclick` interpolava a URL crua num
+atributo delimitado por aspa dupla, escapando apenas a aspa **simples** (para a string
+JS). O link é digitado pelo operador. Com `href` no `escHtml` sobra uma camada só.
+
+**A nota fingia ser controle.** `cursor:pointer` e hover dourado, sem handler nenhum —
+quem edita nota é a tela do projeto. Pior: o clique subia para o card, então quem tentasse
+dar nota era mandado para o YouTube.
+
+**Ressalvas viraram linha própria.** Encadeadas davam 98 caracteres numa frase só, com o
+mês e a contagem perdidos no meio do rodapé.
+
+**Um erro meu que vale mais que os outros:** escrevi uma regra `.post-card:focus-visible`
+que nunca pegou — o bloco global usa `!important` de propósito, porque há 28
+`outline: none` no arquivo que não podem apagar o foco de quem usa teclado. Era CSS morto
+com cara de intenção, que é pior que CSS nenhum: o próximo a ler acredita. Removida, com o
+motivo no lugar. O anel do sistema mede 5,34:1.
+
+Contraste rechecado depois de tudo: 97 nós, 0 reprovados nos dois temas.
