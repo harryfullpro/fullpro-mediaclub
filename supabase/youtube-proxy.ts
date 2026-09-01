@@ -25,6 +25,11 @@
  *   salvar    { chave }    -> { ok, ... }                              [admin]
  *   desconectar            -> { ok, ... }                              [admin]
  *   stats     { ids: [] }  -> { ok, stats: { id: {views,likes,comments} } }
+ *   oauth_status           -> { ok, app_configurado, autorizado, canal }
+ *   oauth_app   { client_id, client_secret }        -> { ok, ... }     [admin]
+ *   oauth_url   { redirect_uri }                    -> { ok, url }     [admin]
+ *   oauth_code  { code, redirect_uri }              -> { ok, ... }     [admin]
+ *   oauth_desconectar                               -> { ok, ... }     [admin]
  *
  * TODA resposta traz `ok`. Em falha vem { ok:false, erro } com a frase já em
  * português. A chave NUNCA sai daqui — nem em resposta, nem em log, nem em
@@ -170,6 +175,107 @@ async function operadorOuNulo(req: Request): Promise<{ id: string; role: string 
   }
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   OAUTH DE UPLOAD  [01/09/2026]
+
+   A chave de API acima SÓ LÊ. Subir vídeo exige OAuth com escopo
+   youtube.upload — são credenciais diferentes, não uma versão melhor da outra.
+
+   POR QUE UMA LINHA SEPARADA ('youtube_oauth') E NÃO A MESMA DO 'youtube':
+   a ação 'salvar' faz upsert com `refresh_token: null` fixo. Se o OAuth
+   morasse na mesma linha, a primeira vez que alguém reconectasse a CHAVE pelo
+   modal apagaria o refresh token do upload — em silêncio, com a tela ainda
+   dizendo "conectado". E 'desconectar' apaga a linha inteira: desligar as
+   métricas derrubaria a publicação junto. Duas credenciais, dois ciclos de
+   vida, duas linhas.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const OAUTH_AUTH  = 'https://accounts.google.com/o/oauth2/v2/auth';
+const OAUTH_TOKEN = 'https://oauth2.googleapis.com/token';
+const ESCOPO_UPLOAD = 'https://www.googleapis.com/auth/youtube.upload';
+
+type CredOauth = {
+  client_id: string;
+  client_secret: string;
+  refresh: string | null;
+  access: string | null;
+  expira: string | null;
+  meta: Record<string, any>;
+};
+
+async function credOauth(): Promise<CredOauth | null> {
+  const { data } = await servico()
+    .from('mc_integrations')
+    .select('access_token, refresh_token, expires_at, meta')
+    .eq('provider', 'youtube_oauth')
+    .maybeSingle();
+  if (!data) return null;
+  const m = (data.meta ?? {}) as Record<string, any>;
+  if (!m.client_id || !m.client_secret) return null;
+  return {
+    client_id: String(m.client_id),
+    client_secret: String(m.client_secret),
+    refresh: data.refresh_token ?? null,
+    access: data.access_token ?? null,
+    expira: data.expires_at ?? null,
+    meta: m,
+  };
+}
+
+/* O que a tela pode ver do OAuth. Nunca client_secret, nunca token. */
+async function estadoOauth() {
+  const c = await credOauth();
+  return {
+    app_configurado: Boolean(c),
+    autorizado: Boolean(c?.refresh),
+    canal: c?.meta?.canal_titulo ?? null,
+    canal_id: c?.meta?.canal_id ?? null,
+    autorizado_em: c?.meta?.autorizado_em ?? null,
+    escopos: c?.meta?.escopos ?? null,
+  };
+}
+
+/* Troca do refresh token por um access token novo. O access do Google dura
+   1 hora; o refresh não expira sozinho fora do modo de teste — e este app
+   está "Em produção", conferido no console em 01/09/2026. */
+async function acessoDoRefresh(c: CredOauth): Promise<string> {
+  if (c.access && c.expira && new Date(c.expira).getTime() > Date.now() + 120_000) return c.access;
+  if (!c.refresh) throw new Error('o YouTube ainda não foi autorizado para upload.');
+
+  let r: Response;
+  try {
+    r = await fetch(OAUTH_TOKEN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: c.client_id, client_secret: c.client_secret,
+        refresh_token: c.refresh, grant_type: 'refresh_token',
+      }).toString(),
+    });
+  } catch (e) {
+    throw new Error('não deu para falar com o Google (' + (e instanceof Error ? e.name : 'rede') + ')');
+  }
+  const j = await r.json().catch(() => ({}));
+  if (j?.error) {
+    /* invalid_grant é o erro que o dono precisa entender: o consentimento caiu
+       (revogado, senha trocada, app voltou para teste) e só refazer resolve. */
+    if (j.error === 'invalid_grant') {
+      throw new Error('a autorização do YouTube caiu e precisa ser refeita em Integrações → Autorizar upload.');
+    }
+    throw new Error('o Google recusou a renovação: ' + (j.error_description ?? j.error));
+  }
+  const acesso = String(j.access_token ?? '');
+  if (!acesso) throw new Error('o Google não devolveu o token de acesso.');
+
+  await servico().from('mc_integrations').update({
+    access_token: acesso,
+    expires_at: new Date(Date.now() + (Number(j.expires_in) || 3600) * 1000).toISOString(),
+    updated_at: new Date().toISOString(),
+  }).eq('provider', 'youtube_oauth');
+
+  return acesso;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
 
@@ -182,7 +288,7 @@ Deno.serve(async (req) => {
   if (action === 'health') {
     /* `versao` é o que deixa conferir, de fora e sem sessão, QUAL código está
        no ar. Sem isso, depois de um deploy só dá para acreditar. */
-    return resposta({ ok: true, versao: 'yt2', configurado: (await credencial()).chave.length > 0 });
+    return resposta({ ok: true, versao: 'yt3', configurado: (await credencial()).chave.length > 0 });
   }
 
   const operador = await operadorOuNulo(req);
@@ -207,10 +313,140 @@ Deno.serve(async (req) => {
     }
   }
 
-  if (action === 'salvar' || action === 'desconectar') {
+  const ACOES_ADMIN = ['salvar', 'desconectar', 'oauth_app', 'oauth_url', 'oauth_code', 'oauth_desconectar'];
+  if (ACOES_ADMIN.indexOf(action) >= 0) {
     if (!ehAdmin(operador)) {
       return falha('só administrador pode trocar a conexão do YouTube.', null, 403);
     }
+  }
+
+  /* ── OAuth de upload ─────────────────────────────────────────────────── */
+
+  if (action === 'oauth_status') {
+    return resposta({ ok: true, ...(await estadoOauth()) });
+  }
+
+  /* Guarda o app do Google. O client_id é público por natureza (aparece na
+     barra de endereços na hora do consentimento); o secret não, e por isso
+     mora aqui e não no navegador. */
+  if (action === 'oauth_app') {
+    const id = String(corpo.client_id ?? '').trim();
+    const segredo = String(corpo.client_secret ?? '').trim();
+    if (!id || !segredo) return falha('cole o Client ID e o Client Secret.');
+    if (!/\.apps\.googleusercontent\.com$/.test(id)) {
+      return falha('esse Client ID não parece do Google — o certo termina em .apps.googleusercontent.com.');
+    }
+
+    const atual = await credOauth();
+    const { error } = await servico().from('mc_integrations').upsert({
+      provider: 'youtube_oauth',
+      access_token: null,
+      refresh_token: atual?.refresh ?? null,   /* trocar o app não derruba autorização existente */
+      expires_at: null,
+      meta: { ...(atual?.meta ?? {}), client_id: id, client_secret: segredo,
+              salvo_por: operador.id, salvo_em: new Date().toISOString() },
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'provider' });
+    if (error) return falha('não deu para gravar: ' + error.message);
+    return resposta({ ok: true, ...(await estadoOauth()) });
+  }
+
+  /* A URL do consentimento é montada AQUI e não no navegador, porque quem
+     conhece o client_id é o servidor. access_type=offline + prompt=consent
+     são obrigatórios: sem os dois o Google devolve access token e NENHUM
+     refresh token, e a autorização morre em uma hora. */
+  if (action === 'oauth_url') {
+    const c = await credOauth();
+    if (!c) return falha('configure primeiro o Client ID e o Client Secret.');
+    const redirect = String(corpo.redirect_uri ?? '').trim();
+    if (!/^https:\/\//.test(redirect)) return falha('redirect_uri inválido.');
+
+    const estadoCsrf = crypto.randomUUID();
+    const u = new URL(OAUTH_AUTH);
+    u.searchParams.set('client_id', c.client_id);
+    u.searchParams.set('redirect_uri', redirect);
+    u.searchParams.set('response_type', 'code');
+    u.searchParams.set('scope', ESCOPO_UPLOAD);
+    u.searchParams.set('access_type', 'offline');
+    u.searchParams.set('prompt', 'consent');
+    u.searchParams.set('include_granted_scopes', 'true');
+    u.searchParams.set('state', estadoCsrf);
+    return resposta({ ok: true, url: u.toString(), state: estado });
+  }
+
+  if (action === 'oauth_code') {
+    const c = await credOauth();
+    if (!c) return falha('configure primeiro o Client ID e o Client Secret.');
+    const code = String(corpo.code ?? '').trim();
+    const redirect = String(corpo.redirect_uri ?? '').trim();
+    if (!code) return falha('o Google não devolveu o código de autorização.');
+
+    let r: Response;
+    try {
+      r = await fetch(OAUTH_TOKEN, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: c.client_id, client_secret: c.client_secret,
+          code, grant_type: 'authorization_code', redirect_uri: redirect,
+        }).toString(),
+      });
+    } catch (e) {
+      return falha('não deu para falar com o Google (' + (e instanceof Error ? e.name : 'rede') + ').');
+    }
+    const j = await r.json().catch(() => ({}));
+    if (j?.error) {
+      if (j.error === 'redirect_uri_mismatch') {
+        return falha('o endereço de retorno não bate com o cadastrado no Google. '
+          + 'Em Credenciais → o cliente OAuth, o URI autorizado precisa ser exatamente ' + redirect);
+      }
+      return falha('o Google recusou o código: ' + (j.error_description ?? j.error));
+    }
+    const refresh = String(j.refresh_token ?? '');
+    if (!refresh) {
+      return falha('o Google autorizou mas não devolveu refresh token. Isso acontece quando a conta já tinha '
+        + 'autorizado antes: revogue o acesso em myaccount.google.com/permissions e autorize de novo.');
+    }
+
+    /* Descobre o canal com o token novo, para a tela mostrar em qual conta a
+       autorização caiu — errar de canal é o tipo de erro que só aparece depois
+       do primeiro vídeo publicado no lugar errado. */
+    let canalId: string | null = null;
+    let canalTitulo: string | null = null;
+    try {
+      const rc = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true',
+        { headers: { Authorization: 'Bearer ' + j.access_token } });
+      const jc = await rc.json().catch(() => ({}));
+      const item = (jc?.items ?? [])[0];
+      if (item) { canalId = item.id ?? null; canalTitulo = item.snippet?.title ?? null; }
+    } catch { /* o escopo upload pode não ler canal; não é motivo para falhar */ }
+
+    const { error } = await servico().from('mc_integrations').update({
+      access_token: j.access_token ?? null,
+      refresh_token: refresh,
+      expires_at: new Date(Date.now() + (Number(j.expires_in) || 3600) * 1000).toISOString(),
+      meta: { ...c.meta, canal_id: canalId, canal_titulo: canalTitulo,
+              escopos: String(j.scope ?? '').split(' ').filter(Boolean),
+              autorizado_por: operador.id, autorizado_em: new Date().toISOString() },
+      updated_at: new Date().toISOString(),
+    }).eq('provider', 'youtube_oauth');
+    if (error) return falha('autorizou, mas não deu para gravar: ' + error.message);
+
+    return resposta({ ok: true, ...(await estadoOauth()) });
+  }
+
+  /* Só a autorização cai; o app (client id/secret) fica, para reautorizar sem
+     ter de colar tudo de novo. */
+  if (action === 'oauth_desconectar') {
+    const c = await credOauth();
+    if (!c) return resposta({ ok: true, ...(await estadoOauth()) });
+    const { error } = await servico().from('mc_integrations').update({
+      access_token: null, refresh_token: null, expires_at: null,
+      meta: { client_id: c.meta.client_id, client_secret: c.meta.client_secret },
+      updated_at: new Date().toISOString(),
+    }).eq('provider', 'youtube_oauth');
+    if (error) return falha('não deu para desconectar: ' + error.message);
+    return resposta({ ok: true, ...(await estadoOauth()) });
   }
 
   if (action === 'salvar') {

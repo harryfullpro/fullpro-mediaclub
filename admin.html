@@ -8385,6 +8385,7 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
             <div class="fp-integr-acoes">
               <button class="action-btn" type="button" id="ytVerifyBtn" onclick="fpIntegrVerificar('youtube')">Verificar</button>
               <button class="action-btn approve" type="button" id="ytConnectBtn" onclick="fpIntegrAbrir('youtube')">Conectar</button>
+              <button class="action-btn" type="button" id="ytOauthBtn" onclick="fpYtOauth()" style="display:none">Autorizar upload</button>
             </div>
           </div>
         </div>
@@ -9171,6 +9172,48 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
      fica no config.js e não volta em resposta nenhuma. O campo é `password`
      com autocomplete desligado de propósito: senão o navegador guarda o token
      no gerenciador de senhas dele e reoferece em outro formulário. -->
+<!-- Autorizacao de upload do YouTube. Modal proprio porque o #integrModal
+     generico so sabe mandar UM campo, e aqui sao dois. O secret nao fica no
+     navegador: vai direto para a edge function, que grava no banco. -->
+<div class="modal" id="ytOauthModal">
+  <div class="modal-content" style="max-width:560px">
+    <div class="modal-head">
+      <h3>Autorizar upload no YouTube</h3>
+      <button class="modal-close" onclick="fpYtOauthFechar()" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="fp-user-form">
+      <div class="fp-prod-faixa">
+        <b>Credencial de upload</b>
+        <span class="fp-aviso-sub">A chave conectada hoje s&oacute; l&ecirc;</span>
+      </div>
+      <p class="fp-user-nota" style="margin-top:0">
+        Pegue os dois em <b>console.cloud.google.com &rarr; Credenciais &rarr; MEDIA CLUB HUB</b>.
+      </p>
+      <div class="block-field">
+        <label for="ytOauthId">Client ID</label>
+        <input type="text" class="login-input" id="ytOauthId" style="margin:0"
+               autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+               placeholder="....apps.googleusercontent.com"/>
+      </div>
+      <div class="block-field">
+        <label for="ytOauthSecret">Client Secret</label>
+        <input type="password" class="login-input" id="ytOauthSecret" style="margin:0"
+               autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+               placeholder="cole aqui"/>
+      </div>
+      <p class="fp-user-nota">
+        O Google n&atilde;o deixa mais ver um secret j&aacute; criado. Se n&atilde;o tiver guardado,
+        crie um novo em <i>Add secret</i> e copie na hora.
+      </p>
+      <p class="fp-user-nota" id="ytOauthErro" style="display:none;color:var(--danger)"></p>
+      <div class="fp-user-pe">
+        <button class="action-btn" type="button" onclick="fpYtOauthFechar()">Cancelar</button>
+        <button class="action-btn approve" type="button" id="ytOauthSalvar" onclick="fpYtOauthSalvar()">Salvar e autorizar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="integrModal">
   <div class="modal-content" style="max-width:560px">
     <div class="modal-head">
@@ -19024,9 +19067,125 @@ async function fpIntegrDesconectar() {
   fpIntegrFechar();
 }
 
+/* ── YouTube: autorizacao de upload (OAuth) [FP-YT-OAUTH 01/09/2026] ──────
+   Segue o padrao novo (Instagram/YouTube), nao o do TikTok e do Bling: a
+   credencial NUNCA fica no localStorage do navegador. O code volta para ca e e
+   trocado por refresh token DENTRO da edge function, que grava em
+   mc_integrations. O navegador so ve "autorizado: sim/nao".
+
+   Mora em provider 'youtube_oauth', separado da chave de API em 'youtube' —
+   senao reconectar a chave apagaria a autorizacao de upload em silencio. */
+
+let FP_YT_OAUTH = null;
+
+async function fpYtOauthStatus() {
+  const r = await fpIntegrChamar('youtube', 'oauth_status');
+  FP_YT_OAUTH = (r && r.ok) ? r : null;
+  fpYtOauthPintar();
+  return FP_YT_OAUTH;
+}
+
+function fpYtOauthPintar() {
+  const b = document.getElementById('ytOauthBtn');
+  if (!b) return;
+  if (typeof isUserAdmin === 'function' && !isUserAdmin()) { b.style.display = 'none'; return; }
+  b.style.display = '';
+  const e = FP_YT_OAUTH;
+  if (e && e.autorizado) {
+    b.textContent = 'Reautorizar upload';
+    b.title = 'Autorizado' + (e.canal ? ' no canal ' + e.canal : '') + '. Clique para refazer.';
+  } else {
+    b.textContent = 'Autorizar upload';
+    b.title = 'A chave de API so le. Autorize para poder subir video.';
+  }
+}
+
+async function fpYtOauth() {
+  const e = await fpYtOauthStatus();
+  /* Sem app configurado nao ha o que autorizar: pede os dois campos primeiro. */
+  if (!e || !e.app_configurado) { fpYtOauthAbrir(); return; }
+  fpYtOauthIr();
+}
+
+function fpYtOauthAbrir() {
+  const erro = document.getElementById('ytOauthErro');
+  if (erro) erro.style.display = 'none';
+  document.getElementById('ytOauthId').value = '';
+  document.getElementById('ytOauthSecret').value = '';
+  document.getElementById('ytOauthModal').classList.add('show');
+}
+
+function fpYtOauthFechar() {
+  document.getElementById('ytOauthModal').classList.remove('show');
+  document.getElementById('ytOauthSecret').value = '';
+}
+
+async function fpYtOauthSalvar() {
+  const id = document.getElementById('ytOauthId').value.trim();
+  const segredo = document.getElementById('ytOauthSecret').value.trim();
+  const erro = document.getElementById('ytOauthErro');
+  const botao = document.getElementById('ytOauthSalvar');
+  erro.style.display = 'none';
+  if (!id || !segredo) { erro.textContent = 'Preencha os dois campos.'; erro.style.display = 'block'; return; }
+
+  botao.disabled = true; botao.textContent = 'Salvando...';
+  const r = await fpIntegrChamar('youtube', 'oauth_app', { client_id: id, client_secret: segredo });
+  botao.disabled = false; botao.textContent = 'Salvar e autorizar';
+  if (!r || !r.ok) { erro.textContent = (r && r.erro) || 'nao deu para salvar.'; erro.style.display = 'block'; return; }
+
+  fpYtOauthFechar();
+  fpYtOauthIr();
+}
+
+/* Manda para a tela de consentimento do Google. Sai da pagina, como o TikTok e
+   o Bling fazem — pop-up e bloqueada por padrao em muito navegador. */
+async function fpYtOauthIr() {
+  const redirect = window.location.origin + '/admin';
+  if (!/^https:/.test(redirect)) {
+    fpToast('O Google so aceita retorno em https. Autorize pelo endereco de producao, nao pelo localhost.', 'info');
+    return;
+  }
+  const r = await fpIntegrChamar('youtube', 'oauth_url', { redirect_uri: redirect });
+  if (!r || !r.ok) { fpToast((r && r.erro) || 'nao deu para montar o endereco de autorizacao', 'error'); return; }
+  try { sessionStorage.setItem('fp_yt_state', r.state); } catch (e) { /* sessao anonima */ }
+  window.location.href = r.url;
+}
+
+/* Volta do Google com ?code=&state=. Roda ANTES do handleTKCallback de
+   proposito: os dois leem ?code= e o do TikTok limpa a URL — se ele rodasse
+   primeiro, o codigo do Google sumiria antes de ser trocado. O state separa
+   um do outro. */
+async function handleYtCallback() {
+  const q = new URLSearchParams(window.location.search);
+  const code = q.get('code');
+  const estado = q.get('state');
+  if (!code || !estado) return;
+
+  let guardado = null;
+  try { guardado = sessionStorage.getItem('fp_yt_state'); } catch (e) { /* ignora */ }
+  if (!guardado || guardado !== estado) return;   /* nao e nosso: deixa para o TikTok/Bling */
+  try { sessionStorage.removeItem('fp_yt_state'); } catch (e) { /* ignora */ }
+
+  /* Limpa a URL antes de trocar: se a troca demorar e a pessoa recarregar, o
+     code ja foi usado e o Google recusa o segundo uso. */
+  ['code','state','scope','authuser','prompt'].forEach(function (k) { q.delete(k); });
+  const resto = q.toString();
+  window.history.replaceState({}, '', window.location.pathname + (resto ? '?' + resto : '') + window.location.hash);
+
+  const r = await fpIntegrChamar('youtube', 'oauth_code', { code: code, redirect_uri: window.location.origin + '/admin' });
+  if (r && r.ok) {
+    FP_YT_OAUTH = r;
+    fpYtOauthPintar();
+    fpToast('YouTube autorizado para upload' + (r.canal ? ' no canal ' + r.canal : '') + '.', 'success');
+  } else {
+    fpToast((r && r.erro) || 'nao deu para concluir a autorizacao do YouTube', 'error');
+  }
+}
+
 function renderIntegracoes() {
   fpIntegrStatus('instagram');
   fpIntegrStatus('youtube');
+  fpYtOauthStatus();
   updateTKStatus();
   updateBlingStatus();
   fpDriveVerificar(false);
@@ -32498,6 +32657,7 @@ if (window.initMotoSelects) {
 async function initApp() {
   // Handle TikTok OAuth callback if present
   loadTKTokens();
+  await handleYtCallback();
   await handleTKCallback();
 
   // Handle Bling OAuth callback if present
