@@ -3027,6 +3027,12 @@
   }
   .inf-tab:hover { color:var(--text); }
   .inf-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+  /* Estado de carga do planner: mesma caixa do vazio, sem icone de alerta —
+     nao e problema, e espera. */
+  .fp-planner-carregando {
+    padding: 28px 16px; text-align: center;
+    font-size: 13px; color: var(--text-muted);
+  }
   .inf-tab-content { display:none; }
   .inf-tab-content.active { display:block; }
   .kpi-card { background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;transition:transform .15s,box-shadow .15s }
@@ -8121,11 +8127,11 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
         <div>
           <h1>Meus Posts</h1>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" id="ppAcoesPlanner">
+        <div style="display:none;gap:8px;align-items:center;flex-wrap:wrap" id="ppAcoesPlanner">
           <button class="action-btn" type="button" onclick="fpPlannerGradeAbrir()">Cronograma</button>
           <button class="fp-new-btn" data-tip="Agendar publicação" aria-label="Agendar publicação" onclick="fpPubAbrir()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
         </div>
-        <div style="display:none;gap:8px;align-items:center;flex-wrap:wrap" id="ppAcoesPublicados">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" id="ppAcoesPublicados">
           <select id="perfPostPeriod" class="proj-sort-select" style="margin:0" onchange="setPerfPostPeriod(this.value)">
             <option value="mes" selected>Este mês</option>
             <option value="all">Todo o período</option>
@@ -8138,21 +8144,22 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
         </div>
       </div>
 
-      <!-- Duas abas porque são dois tempos verbais: o Planner é o que VAI sair,
-           Publicados é o que JÁ saiu com métrica. Misturar os dois numa lista só
+      <!-- Duas abas porque são dois tempos verbais: Publicados é o que JÁ saiu
+           com métrica, o Planner é o que VAI sair. Misturar os dois numa lista só
            foi o que fez o operador registrar post à mão — ele não tinha onde
-           planejar, então registrava depois. -->
+           planejar, então registrava depois.
+           Publicados vem primeiro e é o padrão, a pedido do dono. -->
       <div class="inf-tabs">
-        <button class="inf-tab active" data-pptab="planner" onclick="fpPostsAba('planner')">Planner</button>
-        <button class="inf-tab" data-pptab="publicados" onclick="fpPostsAba('publicados')">Publicados</button>
+        <button class="inf-tab active" data-pptab="publicados" onclick="fpPostsAba('publicados')">Publicados</button>
+        <button class="inf-tab" data-pptab="planner" onclick="fpPostsAba('planner')">Planner</button>
       </div>
 
-      <div class="inf-tab-content active" id="ppTabPlanner">
+      <div class="inf-tab-content" id="ppTabPlanner">
         <div id="ppPlannerGrade"></div>
         <div id="ppPlannerFila"></div>
       </div>
 
-      <div class="inf-tab-content" id="ppTabPublicados">
+      <div class="inf-tab-content active" id="ppTabPublicados">
       <div class="fp-pgrade" id="perfPostsDash"></div>
       <div class="proj-filters" style="margin-bottom:16px">
         <button class="proj-filter-chip active" data-post-filter="todos" onclick="setPerfPostFilter('todos')" style="text-transform:uppercase">Todos</button>
@@ -29897,7 +29904,12 @@ let PLANNER_GRADE = [];
 let PLANNER_FILA = [];
 let _plannerCarregado = 0;
 
+/* Aba corrente de Meus Posts. Guardada porque `refreshViewData` roda toda vez
+   que se entra na tela, e reativar 'publicados' na marra jogaria fora a aba que
+   a pessoa tinha escolhido ao voltar de outro modulo. */
+let PP_ABA = 'publicados';
 function fpPostsAba(qual) {
+  PP_ABA = (qual === 'planner') ? 'planner' : 'publicados';
   document.querySelectorAll('#view-perf-posts .inf-tab').forEach(function (b) {
     b.classList.toggle('active', b.dataset.pptab === qual);
   });
@@ -29912,6 +29924,13 @@ function fpPostsAba(qual) {
 async function fpPlannerCarregar(forcar) {
   if (!forcar && Date.now() - _plannerCarregado < 30000 && PLANNER_GRADE.length) {
     fpPlannerPintar(); return;
+  }
+  /* So na PRIMEIRA carga: numa reconsulta o painel ja tem conteudo, e trocar
+     por "carregando" seria piscar para tras. Sem isto o painel fica branco
+     entre o clique e a resposta do banco, que foi como o vazio apareceu. */
+  const _grade0 = document.getElementById('ppPlannerGrade');
+  if (_grade0 && !_grade0.innerHTML.trim()) {
+    _grade0.innerHTML = '<div class="fp-planner-carregando">Carregando o planner…</div>';
   }
   try {
     /* A fila traz os destinos junto (relacionamento), senão seriam N+1
@@ -32990,12 +33009,22 @@ async function initApp() {
         case 'perf-posts':
         case 'perf-influencers':
         case 'perf-bonificacao':
+          /* A aba e ativada ANTES dos carregamentos, e nao depois.
+             Duas correcoes numa linha so:
+             1. `view` NAO EXISTE neste escopo — a funcao recebe `viewName`.
+                A linha lancava ReferenceError, que subia ate o
+                `.catch(e => console.warn('refreshViewData', e))` do
+                switchToView e sumia. Resultado: a aba nunca inicializava
+                sozinha, ficava visivel e VAZIA, e so enchia no clique.
+             2. Mesmo sem o erro de nome, ela vinha depois de um
+                `await Promise.all` e de `renderPerformance()`, no mesmo try.
+                Qualquer tropeco em qualquer um dos cinco carregamentos
+                levaria a aba junto. Ativar a aba nao depende de dado. */
+          if (viewName === 'perf-posts' && typeof fpPostsAba === 'function') {
+            try { fpPostsAba(PP_ABA); } catch (e) { console.warn('fpPostsAba', e); }
+          }
           await Promise.all([loadPerfPosts(), loadPerfDatas(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses()]);
           if (typeof renderPerformance === 'function') renderPerformance();
-          /* O Planner abre junto com Meus Posts, e não só quando alguém clica na
-             aba: a tela existe para responder "o que sai hoje", e responder isso
-             depois de um clique é não responder. */
-          if (view === 'perf-posts' && typeof fpPostsAba === 'function') fpPostsAba('planner');
           break;
         case 'templates':
           if (typeof renderTemplates === 'function') renderTemplates();
