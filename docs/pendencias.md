@@ -453,6 +453,30 @@ Falta também `mc_pecas.project_id`, que existe na tabela e está **100% vazio**
 passasse a ser preenchido na coleta, o casamento por link viraria desnecessário.
 
 
+### Erro ao entrar numa tela vira tela vazia silenciosa
+
+`switchToView` chama o carregamento assim:
+
+```js
+Promise.resolve(refreshViewData(viewName))
+  .catch(e => console.warn('refreshViewData', e))
+```
+
+Qualquer erro dentro de `refreshViewData` — de qualquer tela — some num `console.warn`.
+A tela abre, fica vazia, e nada indica que houve falha. Foi exatamente o que escondeu o
+`ReferenceError` do Planner em 01/09: um `view` em vez de `viewName` deixou a aba visível
+e vazia por dias, e ela só enchia no clique.
+
+O `.catch` existe por um motivo bom (um erro numa tela não pode derrubar a navegação), mas
+hoje ele é indistinguível de sucesso.
+
+Caminho: manter o `.catch` e acrescentar sinal — um estado de erro na área de conteúdo da
+tela que falhou, com a mensagem. Enquanto isso vale a regra de diagnóstico: **se algo não
+aparece ao entrar na tela mas aparece ao clicar, olhe esse `.catch` primeiro.**
+
+Vale para todos os `case` do switch, não só para Meus Posts.
+
+
 ---
 
 ## Ideias levantadas e não pedidas

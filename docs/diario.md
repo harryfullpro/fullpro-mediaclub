@@ -4360,3 +4360,36 @@ com cara de intenção, que é pior que CSS nenhum: o próximo a ler acredita. R
 motivo no lugar. O anel do sistema mede 5,34:1.
 
 Contraste rechecado depois de tudo: 97 nós, 0 reprovados nos dois temas.
+
+### 01/09 (continuação) — o Planner que não abria
+
+Dois pedidos do dono: o Planner não mostrava nada ao carregar a tela (só depois de clicar
+na aba), e Publicados deveria vir antes.
+
+**A causa, e ela não era de UI.** A linha que ativava a aba na entrada era
+
+```js
+if (view === 'perf-posts' && ...) fpPostsAba('planner');
+```
+
+e `view` **não existe nesse escopo** — `refreshViewData` recebe `viewName`. Isso lançava
+`ReferenceError`, que subia até o `.catch(e => console.warn(...))` do `switchToView` e
+sumia. A aba ficava visível e vazia; o clique funcionava porque chama `fpPostsAba` direto.
+Reproduzido em isolado antes de mexer: o escopo antigo devolve
+`ReferenceError: view is not defined`, o novo chama.
+
+Aproveitei para tirar a ativação da aba do caminho de erro dos dados — ela vinha depois de
+um `await Promise.all` de cinco carregamentos e de `renderPerformance()`, no mesmo `try`.
+Tropeço em qualquer um levava a aba junto. Ativar aba não depende de dado.
+
+**Publicados virou a primeira aba e o padrão**, na marcação e nas ações do cabeçalho. A aba
+corrente virou estado (`PP_ABA`): sem isso, reentrar na tela jogaria fora a aba que a
+pessoa escolheu ao voltar de outro módulo. Testado com DOM mínimo — padrão, troca nos dois
+sentidos, reentrada preservando a escolha, valor inválido caindo em publicados.
+
+O painel ganhou estado de carga, só na primeira: numa reconsulta o conteúdo já está lá e
+trocar por "carregando" piscaria para trás.
+
+**O que vale além deste bug** está em `pendencias.md`: aquele `.catch` com `console.warn`
+transforma erro de carga de **qualquer** tela em tela vazia silenciosa. O bug só sobreviveu
+porque o erro não tinha para onde aparecer.
