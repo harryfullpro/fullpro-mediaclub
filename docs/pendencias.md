@@ -412,6 +412,29 @@ HTTP 200 com um cinza 120×90 quando não há capa, então continua precisando d
 por `naturalWidth`).
 
 
+### Meus Posts mostra 24 de 81 publicações — três fontes para a mesma coisa
+
+Medido em 01/09/2026:
+
+| Fonte | O que é | Publicações |
+|---|---|---|
+| `mc_pecas` | registro real de publicação, com `publicado_em` | 81 (fora story) |
+| `mc_projects.posts` | lista mantida à mão dentro do projeto | 23 |
+| `mc_performance_posts` | post avulso digitado no painel | 1 |
+
+Meus Posts é alimentado pelas **duas últimas** e usa `mc_pecas` só para descobrir a data.
+Ou seja: a tela de performance mostra menos de um terço do que foi publicado, e o que ela
+mostra depende de alguém ter registrado à mão.
+
+O dono já disse que **nem toda publicação vai ter projeto para vincular**, o que confirma
+que a unidade certa é a publicação, não o projeto — projeto vira atributo opcional dela.
+Consolidar em `mc_pecas` como fonte única resolveria de uma vez o alcance, a data e o
+vínculo. É decisão dele, não conserto de tela: muda o que a tela mostra (24 → 81).
+
+Falta também `mc_pecas.project_id`, que existe na tabela e está **100% vazio** — se
+passasse a ser preenchido na coleta, o casamento por link viraria desnecessário.
+
+
 ---
 
 ## Ideias levantadas e não pedidas

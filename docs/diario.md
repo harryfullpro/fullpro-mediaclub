@@ -4145,3 +4145,40 @@ Ganhou tokens próprios (`--nota-cheia`, `--nota-vazia`), por tema.
 
 **Duas armadilhas de medição** (valem para qualquer tela daqui em diante) — ver
 `ambiente.md`.
+
+### 01/09 (continuação) — a data errada
+
+Depois de publicar, o dono apontou o que derrubava a premissa: **gravar e publicar são
+eventos separados por dias ou semanas.** O vídeo que saiu hoje veio de um projeto de
+gravação do mês passado, e isso é a rotina, não a exceção. Também: nem toda publicação
+tem projeto para vincular.
+
+O filtro usava `proj.created_at` — a data da **gravação**. Respondia a pergunta errada, e
+por isso a tela abriu vazia em 01/09 com 24 posts no banco.
+
+A data real mora em `mc_pecas.publicado_em`. Não há chave estrangeira — `mc_pecas.project_id`
+está **100% vazio** —, então o casamento é pelo **link normalizado por plataforma**: o
+mesmo vídeo aparece como `youtu.be/X`, `watch?v=X&t=30` e `/shorts/X`, e o mesmo post do
+Instagram como `/reel/X` e `/p/X`.
+
+| Medição | Resultado |
+|---|---|
+| Links de projeto que casam com `mc_pecas` | 20 de 22 (91%) |
+| Post avulso que casa | 1 de 1 |
+| Regex do JS conferido contra o do SQL | 12 de 12 formatos reais |
+
+Com data real as datas se redistribuem: **setembro sai de 0 para 2 posts** e agosto de 13
+para 16 — a prova de que o corte antigo alocava no mês errado.
+
+Quem não casa cai na data do projeto e a tela **diz** (`· 2 sem data de publicação`). Se a
+leitura de `mc_pecas` falhar por RLS, tudo cai nesse caminho e o aviso aparece: degrada
+visível, não calado.
+
+Ficou também um recuo de mês: se o mês corrente não tem post nenhum, mostra o mês mais
+recente que tem e avisa. Com data real ele quase não dispara, mas cobre o dia 1º.
+
+**Fora do escopo, medido e não resolvido:** `mc_pecas` tem 81 publicações fora story,
+contra as 24 que Meus Posts mostra. A tela é alimentada por `mc_projects.posts` +
+`mc_performance_posts`, que são listas mantidas à mão — o registro real de publicação é
+outro. Consolidar as três fontes é decisão do dono, não conserto de tela. Ver
+`pendencias.md`.

@@ -307,3 +307,8 @@ empilhamento invertia a ordem e devolvia 3,00 onde o valor real era 5,25.
 
 Se um seletor de raiz não existe no laboratório (`#ppTabPublicados` é do app), a varredura
 cai calada no `body` e mede a página inteira. Confirme quantos nós entraram.
+
+**Duas notas de outra sessão sobre a mesma armadilha de tema** (b3, medindo em 28/08 leu
+1,14:1 num elemento que era 13,73:1): `void offsetHeight` **não** termina transição — ele
+força layout, não animação; e o caminho mais barato é medir **um tema por avaliação**, em
+vez de trocar e esperar dentro da mesma chamada.
