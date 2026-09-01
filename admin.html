@@ -28449,19 +28449,33 @@ function fpChaveLink(u) {
 }
 
 let PERF_DATAS = new Map();
+/* Fontes em que `publicado_em` veio da PROPRIA plataforma, via coletor. Sao as
+   autoritativas: e o carimbo do YouTube/Instagram/TikTok, nao o nosso. */
+const PERF_FONTE_PLATAFORMA = new Set(['youtube', 'instagram', 'tiktok']);
 async function loadPerfDatas() {
   const { data, error } = await sb.from('mc_pecas')
-    .select('link,publicado_em').not('publicado_em', 'is', null).not('link', 'is', null);
+    .select('link,publicado_em,fonte').not('publicado_em', 'is', null).not('link', 'is', null);
   if (error) { console.warn('loadPerfDatas:', error.message); return; }
+  /* O MESMO post vai passar a ter DUAS origens: o coletor e o planner, que
+     publica pelo painel. Escolher pela data mais antiga seria escolher pelo
+     relogio — e a nossa hora de envio e sempre anterior ao carimbo da
+     plataforma, entao a regra antiga passaria a preferir sistematicamente a
+     data errada, e calada. Aqui a plataforma manda; entre iguais, a mais
+     antiga (coleta repetida da mesma origem).
+     Medido em 01/09: hoje nenhuma chave tem duas fontes, entao isto e
+     blindagem para quando a fila do planner comecar a publicar. */
   const m = new Map();
   (data || []).forEach(r => {
     const k = fpChaveLink(r.link); if (!k) return;
     const t = new Date(r.publicado_em).getTime(); if (!t) return;
-    /* Mesmo link pode ter mais de uma peca (coleta repetida). Vale a MAIS
-       ANTIGA: e a hora em que aquilo foi ao ar. */
-    if (!m.has(k) || t < m.get(k)) m.set(k, t);
+    const daPlataforma = PERF_FONTE_PLATAFORMA.has(r.fonte);
+    const antes = m.get(k);
+    if (!antes) { m.set(k, { t: t, daPlataforma: daPlataforma }); return; }
+    if (daPlataforma && !antes.daPlataforma) m.set(k, { t: t, daPlataforma: daPlataforma });
+    else if (daPlataforma === antes.daPlataforma && t < antes.t) m.set(k, { t: t, daPlataforma: daPlataforma });
   });
-  PERF_DATAS = m;
+  // Quem consome quer so o instante; a origem ja cumpriu o papel na escolha.
+  PERF_DATAS = new Map(Array.from(m, function (e) { return [e[0], e[1].t]; }));
 }
 
 async function loadPerfPosts() {
