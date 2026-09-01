@@ -6080,6 +6080,35 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-pl-slot { padding: 6px 0; border-top: 1px solid var(--border); }
 .fp-pl-slot:first-of-type { border-top: 0; }
 .fp-pl-slot b { display: block; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+/* A caixa fica na linha da hora, dentro de um <label>: assim a hora tambem e
+   alvo de clique, em vez de um quadradinho de 14px sozinho numa coluna
+   estreita. O <label> tambem da nome acessivel e foco de teclado de graca. */
+/* padding aumenta o ALVO, a margem negativa devolve o espaco: a caixa nativa
+   tem 14px e o toque minimo e 24. Num celular, errar o toque aqui marca o
+   horario errado como feito — erro de dado, nao incomodo. A folga cabe dentro
+   do proprio padding do slot, entao nenhum alvo invade o do vizinho e a grade
+   nao cresce um pixel. */
+.fp-pl-slot-h { display: flex; align-items: center; gap: 6px; cursor: pointer;
+  padding: 5px 0; margin: -5px 0; }
+.fp-pl-slot-h input { width: 14px; height: 14px; margin: 0; flex: 0 0 auto;
+  accent-color: var(--success); cursor: pointer; }
+.fp-pl-slot-h b { flex: 1 1 auto; }
+/* Feito: recua o TEXTO. Os logotipos ficam como estao — plataforma e
+   identidade, nao status, e apaga-los tiraria a informacao de qual rede era. */
+.fp-pl-slot.feito .fp-pl-slot-h b, .fp-pl-slot.feito > span { color: var(--text-muted); }
+.fp-pl-dia-d { margin-left: 5px; font-weight: 600; letter-spacing: 0; }
+/* A coluna de hoje tem fundo tingido de azul, e o tingimento custa contraste ao
+   texto secundario. Medido no tema claro: --text-muted cai de 5,25 para 4,41,
+   abaixo dos 4,5 que 10-12px exigem. Dentro desta coluna o secundario escurece
+   um grau — --text-dim da 6,89 e continua claramente subordinado ao principal,
+   que ali mede 14,58. Vale para o rotulo do slot (que ja falhava antes) e para
+   o texto do slot concluido. */
+[data-theme="light"] .fp-pl-dia.hoje .fp-pl-slot > span,
+[data-theme="light"] .fp-pl-dia.hoje .fp-pl-slot.feito .fp-pl-slot-h b { color: var(--text-dim); }
+/* Mesmo motivo: --azul sobre o proprio fundo tingido da 3,38 num rotulo de
+   10px. Azul mais fundo SO aqui — o token e compartilhado com o resto do
+   painel, onde ele mede bem. */
+[data-theme="light"] .fp-pl-dia.hoje .fp-pl-dia-n { color: #0a5fd0; }
 .fp-pl-slot span { display: block; font-size: 10.5px; color: var(--text-muted); line-height: 1.3;
   overflow: hidden; text-overflow: ellipsis; }
 .fp-pl-slot-r { display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap; }
@@ -29898,6 +29927,31 @@ const FP_REDES = {
   youtube:   { nome: 'YouTube',   logo: 'shorts' },
 };
 const FP_DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
+/* CONCLUSAO DE HORARIO · mc_planner_grade e molde SEMANAL — tem dia_semana e
+   hora, nao tem data. Marcar "feito" no horario deixaria a terca marcada para
+   sempre, em toda semana seguinte. Por isso a chave e (grade_id, DATA), e a
+   grade passou a mostrar o dia do mes em cada coluna: se a caixa vale "esta
+   terca", a coluna precisa dizer que terca e essa. */
+let PLANNER_FEITO = new Map();          /* 'gradeId|AAAA-MM-DD' -> true */
+let _plannerSemanaCarregada = '';       /* domingo da semana que esta em PLANNER_FEITO */
+
+/* Data local, nunca toISOString: o fuso de Brasilia joga tudo para o dia
+   seguinte a partir das 21h, e a semana inteira sairia deslocada. */
+function fpDataLocal(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
+       + '-' + String(d.getDate()).padStart(2, '0');
+}
+/* Os sete dias da semana corrente, comecando no domingo — a mesma ordem em que
+   a grade e desenhada. */
+function fpPlannerSemana() {
+  const base = new Date(); base.setHours(0, 0, 0, 0);
+  const dom = new Date(base); dom.setDate(base.getDate() - base.getDay());
+  const dias = [];
+  for (let i = 0; i < 7; i++) { const d = new Date(dom); d.setDate(dom.getDate() + i); dias.push(d); }
+  return dias;
+}
+function fpPlannerFeitoChave(gradeId, data) { return gradeId + '|' + data; }
 const FP_DIAS_CURTO = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
 
 let PLANNER_GRADE = [];
@@ -29922,7 +29976,14 @@ function fpPostsAba(qual) {
 }
 
 async function fpPlannerCarregar(forcar) {
-  if (!forcar && Date.now() - _plannerCarregado < 30000 && PLANNER_GRADE.length) {
+  const _sem = fpPlannerSemana();
+  const _dom = fpDataLocal(_sem[0]);
+  /* `_dom` entra na condicao do cache porque a aba pode ficar aberta virando o
+     sabado para o domingo: a grade seria redesenhada para a semana NOVA usando
+     a conclusao carregada da semana VELHA, e as caixas apareceriam marcadas
+     sem motivo. */
+  if (!forcar && Date.now() - _plannerCarregado < 30000 && PLANNER_GRADE.length
+      && _plannerSemanaCarregada === _dom) {
     fpPlannerPintar(); return;
   }
   /* So na PRIMEIRA carga: numa reconsulta o painel ja tem conteudo, e trocar
@@ -29935,17 +29996,31 @@ async function fpPlannerCarregar(forcar) {
   try {
     /* A fila traz os destinos junto (relacionamento), senão seriam N+1
        consultas para desenhar N linhas. */
-    const [g, f] = await Promise.all([
+    const [g, f, c] = await Promise.all([
       sb.from('mc_planner_grade').select('*').order('dia_semana').order('hora'),
       sb.from('mc_publicacoes')
         .select('*, destinos:mc_publicacoes_destino(*)')
         .order('agendado_para', { ascending: true })
         .limit(80),
+      sb.from('mc_planner_feito').select('grade_id,data,feito')
+        .gte('data', _dom).lte('data', fpDataLocal(_sem[6])),
     ]);
     if (g.error) throw g.error;
     if (f.error) throw f.error;
     PLANNER_GRADE = g.data || [];
     PLANNER_FILA = f.data || [];
+    /* A conclusao NAO derruba o planner se falhar: e um enfeite util, e a
+       grade e a fila valem sozinhas. Sem isto, um problema de permissao na
+       tabela nova apagaria a tela inteira. */
+    if (c.error) { console.warn('mc_planner_feito:', c.error.message); PLANNER_FEITO = new Map(); }
+    else {
+      const m = new Map();
+      (c.data || []).forEach(function (r) {
+        if (r.feito) m.set(fpPlannerFeitoChave(r.grade_id, r.data), true);
+      });
+      PLANNER_FEITO = m;
+    }
+    _plannerSemanaCarregada = _dom;
     _plannerCarregado = Date.now();
   } catch (e) {
     document.getElementById('ppPlannerGrade').innerHTML =
@@ -29969,6 +30044,7 @@ function fpPlannerRedesHtml(redes, tam) {
    ganha a marca — é a coluna que responde "o que sai agora". */
 function fpPlannerGradeHtml() {
   const hoje = new Date().getDay();
+  const semana = fpPlannerSemana();
   const porDia = FP_DIAS.map(function (_, i) {
     return PLANNER_GRADE.filter(function (g) { return g.dia_semana === i && g.ativo !== false; });
   });
@@ -29982,13 +30058,27 @@ function fpPlannerGradeHtml() {
     + '</div>'
     + '<div class="fp-pl-semana">'
     + porDia.map(function (slots, i) {
+        const data = fpDataLocal(semana[i]);
         return '<div class="fp-pl-dia' + (i === hoje ? ' hoje' : '') + '">'
-          + '<div class="fp-pl-dia-n">' + FP_DIAS_CURTO[i] + '</div>'
+          /* O dia do mes ao lado do nome: a caixa de concluido vale para ESTA
+             data, e sem o numero a coluna nao diz qual terca esta sendo
+             marcada. */
+          + '<div class="fp-pl-dia-n">' + FP_DIAS_CURTO[i]
+          +   '<span class="fp-pl-dia-d">' + semana[i].getDate() + '</span></div>'
           + (slots.length
               ? slots.map(function (g) {
-                  return '<div class="fp-pl-slot">'
-                    + '<b>' + escHtml(String(g.hora || '').slice(0, 5)) + '</b>'
-                    + '<span>' + escHtml(g.rotulo || g.tipo || '') + '</span>'
+                  const hora = String(g.hora || '').slice(0, 5);
+                  const rot = g.rotulo || g.tipo || '';
+                  const feito = PLANNER_FEITO.get(fpPlannerFeitoChave(g.id, data)) === true;
+                  return '<div class="fp-pl-slot' + (feito ? ' feito' : '') + '">'
+                    + '<label class="fp-pl-slot-h">'
+                    +   '<input type="checkbox"' + (feito ? ' checked' : '')
+                    +     ' aria-label="' + escHtml('Concluído — ' + (rot || 'horário') + ', '
+                          + FP_DIAS[i] + ' ' + semana[i].getDate() + ' às ' + hora) + '"'
+                    +     ' onchange="fpPlannerMarcar(this, \'' + fpJs(g.id) + '\', \'' + data + '\')">'
+                    +   '<b>' + escHtml(hora) + '</b>'
+                    + '</label>'
+                    + '<span>' + escHtml(rot) + '</span>'
                     + '<div class="fp-pl-slot-r">' + fpPlannerRedesHtml(g.plataformas, 13) + '</div>'
                     + '</div>';
                 }).join('')
@@ -30048,6 +30138,33 @@ function fpPlannerFilaHtml() {
           + '</span></div>';
       }).join('');
 }
+
+/* Marca otimista: a caixa responde na hora e o banco confirma depois. Se
+   falhar, VOLTA — caixa que fica marcada sem ter gravado e pior que caixa que
+   nao marca, porque o operador confia nela e o combinado se perde calado. */
+async function fpPlannerMarcar(el, gradeId, data) {
+  const marcado = !!el.checked;
+  const slot = el.closest('.fp-pl-slot');
+  const chave = fpPlannerFeitoChave(gradeId, data);
+  const aplicar = function (v) {
+    el.checked = v;
+    if (slot) slot.classList.toggle('feito', v);
+    if (v) PLANNER_FEITO.set(chave, true); else PLANNER_FEITO.delete(chave);
+  };
+  aplicar(marcado);
+  el.disabled = true;
+  const { error } = await sb.from('mc_planner_feito').upsert({
+    grade_id: gradeId, data: data, feito: marcado,
+    feito_em: new Date().toISOString(),
+    feito_por: CURRENT_USER ? CURRENT_USER.id : null,
+  }, { onConflict: 'grade_id,data' });
+  el.disabled = false;
+  if (error) {
+    aplicar(!marcado);
+    fpToast('Não deu para salvar: ' + (error.message || 'erro'), 'erro');
+  }
+}
+window.fpPlannerMarcar = fpPlannerMarcar;
 
 function fpPlannerPintar() {
   const g = document.getElementById('ppPlannerGrade');
