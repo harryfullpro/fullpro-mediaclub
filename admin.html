@@ -28613,7 +28613,7 @@ async function fpMetasCarregar(mes, forcar) {
     try {
       const [ra, rp, rm] = await Promise.all([
         sb.from('mc_metas_alvo').select('*').eq('mes', alvo).order('ordem'),
-        sb.from('mc_pecas').select('id,tipo,titulo,link,plataforma,publicado_em,duracao_seg,metricas,eh_repost,sku,atualizado_em,bruto,classificado_em,auto_repost,auto_motivo')
+        sb.from('mc_pecas').select('id,tipo,titulo,link,plataforma,publicado_em,duracao_seg,metricas,eh_repost,sku,atualizado_em,bruto,classificado_em,auto_repost,auto_motivo,classe,auto_classe')
           .gte('publicado_em', de).lt('publicado_em', ate).order('publicado_em', { ascending: true }),
         sb.from('mc_metas_alvo').select('mes'),
       ]);
@@ -28659,12 +28659,30 @@ function fpMetasJanela(mes) {
    ponta a ponta não é post recompartilhado. Então ela DESCARTA sozinha (esses
    saem da fila) e nunca AFIRMA. O trabalho humano some para a maioria e sobra
    só no caso ambíguo. */
-function fpEhRepost(p) {
-  return p.classificado_em ? !!p.eh_repost : false;
+/* TRÊS classes, porque o dono definiu três: story próprio é "só uma foto mesmo
+   ou um vídeo novo postado nos stories" — e explicitamente NÃO entra repost de
+   outro perfil NEM republicação de conteúdo nosso.
+     proprio       foto/vídeo novo
+     republicacao  recompartilhamento de post NOSSO
+     repost        recompartilhamento de outro perfil
+   Vale o que a pessoa disse; se ninguém disse, vale o palpite da máquina — que
+   hoje só sabe afirmar 'proprio' (quadro cheio de ponta a ponta). Fundo liso é
+   recompartilhamento de ALGUMA coisa, e separar a nossa da de terceiro pela
+   imagem ainda não é confiável: fica null, e null NÃO CONTA EM META NENHUMA.
+   Não contar é melhor que contar errado — contar errado tira peça de uma meta
+   e põe em outra, erra duas vezes de uma vez. */
+function fpStoryClasse(p) {
+  return p.classe || p.auto_classe || null;
 }
-/* Resolvido = alguém olhou, OU a máquina descartou pelo lado seguro. */
+function fpEhRepost(p) {
+  return fpStoryClasse(p) === 'repost';
+}
+function fpEhProprio(p) {
+  return fpStoryClasse(p) === 'proprio';
+}
+/* Resolvido = tem classe, de gente ou da máquina. */
 function fpStoryResolvido(p) {
-  return !!p.classificado_em || p.auto_repost === false;
+  return !!fpStoryClasse(p);
 }
 function fpStoriesSemOlhar() {
   return METAS_PECAS.filter(function (p) {
@@ -28680,9 +28698,13 @@ function fpMetaApurar(alvo, janela) {
      e marcar um reel tirava ele de "vídeos curtos" sem pôr em lugar nenhum
      visível. O dono definiu a meta olhando os stories do Instagram; é ali que
      ela vive. */
+  /* Story só conta na meta de stories se for PRÓPRIO. Antes bastava não ser
+     repost, e com isso republicação de post nosso — e story ainda não
+     classificado — entravam como próprios, inflando a meta com o que o dono
+     acabou de excluir da definição. */
   const daMeta = p => alvo.chave === 'repost'
     ? (p.tipo === 'story' && fpEhRepost(p))
-    : (tipos.indexOf(p.tipo) >= 0 && !(p.tipo === 'story' && fpEhRepost(p)));
+    : (tipos.indexOf(p.tipo) >= 0 && (p.tipo !== 'story' || fpEhProprio(p)));
 
   const pecas = METAS_PECAS.filter(daMeta);
   const dia = p => new Date(p.publicado_em).getDate();

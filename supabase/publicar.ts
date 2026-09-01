@@ -1,0 +1,1199 @@
+/**
+ * publicar — o braço que efetivamente POSTA nas redes, para o planner.
+ *
+ * Ele é o par do `coletor-pecas`: o coletor lê o que já foi publicado, este
+ * escreve. Fica separado de propósito — o coletor roda de hora em hora e pode
+ * falhar sem consequência (tenta de novo na próxima); aqui uma falha mal
+ * tratada publica DUAS VEZES no perfil da FullPro, na frente do público, e o
+ * operador leva a culpa. Por isso quase todo o código abaixo é sobre não
+ * repetir, não sobre postar.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * O QUE PUBLICA DE VERDADE HOJE
+ *
+ *   instagram  → SIM, implementado (container → polling → media_publish).
+ *   facebook   → não. Conector honesto: mede quais permissões faltam e diz.
+ *   tiktok     → não. Falta a auditoria do Content Posting API.
+ *   youtube    → não. A credencial guardada é CHAVE DE API, que não sobe vídeo.
+ *
+ * As três que não publicam NÃO fingem sucesso: marcam o destino como `erro`
+ * com a frase do que falta. Isso é decisão de projeto — destino "pendente para
+ * sempre" some da tela e vira surpresa; destino em erro com motivo aparece.
+ *
+ * ⚠ MEDIDO EM 01/09/2026, ANTES DE ESCREVER UMA LINHA: o token do Instagram
+ * guardado em mc_integrations tem os escopos
+ *   pages_show_list, business_management, instagram_basic,
+ *   instagram_manage_insights, pages_read_engagement, public_profile
+ * — ou seja, NÃO tem `instagram_content_publish`. Enquanto o dono não refizer
+ * o OAuth acrescentando essa permissão, o Instagram também não publica, e esta
+ * função diz isso na cara (checagem de escopo ANTES de tentar), em vez de
+ * devolver o erro 200 opaco da Meta. Ver `escoposDoToken()`.
+ * O caminho está pronto: no minuto em que o escopo aparecer, funciona.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * AÇÕES  (em ?action= ou no corpo {action}, porque o painel chama por
+ *         sb.functions.invoke(), que sempre manda POST com JSON)
+ *
+ *   health                        -> { ok, versao, redes: {...} }        [aberta]
+ *   publicar  { publicacao_id }   -> processa TODOS os destinos da linha
+ *   agora     { publicacao_id }   -> idem, ignorando `agendado_para`
+ *   agora     { redes, tipo, ... }-> cria a linha e publica na hora (avulso)
+ *   status    { publicacao_id }   -> estado de cada destino, em português
+ *   fila                          -> processa o que venceu   [chamada do cron]
+ *
+ * Toda resposta traz `ok`. Em falha vem { ok:false, erro } com a frase já em
+ * português e, quando o "não" veio da plataforma, `meta` com o erro cru
+ * (código, subcódigo, fbtrace_id) — que é o que o suporte da Meta pede e o que
+ * permite reconstituir a falha sem repetir a publicação.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * QUEM PODE CHAMAR — mesma trinca do coletor-pecas, pelo mesmo motivo
+ *
+ *   1. service role  — máquina, para quem tem a chave do projeto.
+ *   2. token do cron — linha `cron_publicador` em mc_integrations. É bem menos
+ *      poder que a service role key, que é o que estaria no comando do pg_cron
+ *      se eu tivesse ido pelo caminho fácil. Trocar é um UPDATE de uma linha.
+ *   3. JWT de operador — o botão "Publicar agora" do painel. Estar logado não
+ *      basta: tem que estar em mc_admin_users.
+ *
+ * `verify_jwt` fica DESLIGADO no gateway de propósito: (a) o token do cron não
+ * é JWT e seria recusado antes de chegar aqui, e (b) a chave publicável do
+ * config.js é aceita como JWT válido pelo gateway — verify_jwt sozinho deixaria
+ * qualquer pessoa da internet postar no perfil da FullPro. Quem separa é o
+ * bloco `quemChamou()`.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * AS QUATRO REGRAS QUE SUSTENTAM O RESTO
+ *
+ * 1. O CONTAINER SÓ NASCE NA HORA DE PUBLICAR. O container do Instagram expira
+ *    em 24h ("The container was not published within 24 hours and has expired."
+ *    https://developers.facebook.com/docs/instagram-platform/content-publishing/).
+ *    Criar no agendamento e publicar depois é a receita para o post de segunda
+ *    morrer calado. Agendar aqui grava LINHA NO BANCO, nada mais.
+ *
+ * 2. CADA DESTINO É INDEPENDENTE. Uma linha por rede em mc_publicacoes_destino,
+ *    com status, tentativas e erro próprios. TikTok travado não pode impedir o
+ *    Instagram. "Publicar simultaneamente" é da interface e do nosso relógio —
+ *    nenhuma API faz cross-network; por baixo é um upload por rede.
+ *
+ * 3. IDEMPOTÊNCIA. Destino com `id_externo` preenchido NUNCA é republicado, em
+ *    nenhum caminho, nem com o operador clicando de novo. E a tomada do destino
+ *    é um compare-and-set no Postgres (UPDATE ... WHERE status = <o que eu li>),
+ *    então duas rodadas do cron sobrepostas não postam duas vezes.
+ *
+ * 4. NADA DE RETENTATIVA CEGA. Falha DEPOIS do upload pode ter publicado. Um
+ *    destino preso em `enviando` sem container para retomar vira `erro` pedindo
+ *    conferência humana — não sai postando de novo para "resolver".
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * CONTRATO DO INSTAGRAM (doc oficial, conferida em 01/09/2026)
+ *
+ *   POST /{ig-id}/media           cria o container
+ *   GET  /{container-id}?fields=status_code   → EXPIRED | ERROR | FINISHED |
+ *                                                IN_PROGRESS | PUBLISHED
+ *   POST /{ig-id}/media_publish   com creation_id — "The ID of the IG Container
+ *                                 to be published."
+ *   https://developers.facebook.com/docs/instagram-platform/content-publishing/
+ *   https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media/
+ *   https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media_publish/
+ *
+ *   media_type, verbatim: "Indicates container is for a carousel, story or
+ *   reel. Value can be: CAROUSEL, REELS, STORIES". Foto simples de feed vai SEM
+ *   media_type (é o default IMAGE).
+ *
+ *   image_url, verbatim: "Path to the image. We cURL the image using the URL
+ *   that you specify so the image must be on a public server." — daí a URL
+ *   assinada do Storage: a Meta busca o arquivo do servidor dela, então não
+ *   adianta mandar bytes nem caminho interno.
+ *
+ *   "JPEG is the only image format supported" — PNG/WebP são recusados. Esta
+ *   função barra antes de gastar a chamada.
+ *
+ *   "Carousels are limited to 10 images, videos, or a mix of the two."
+ *
+ *   COTA — a doc se contradiz e as duas páginas são oficiais: o guia diz
+ *   "Instagram accounts are limited to 100 API-published posts within a 24-hour
+ *   moving period" e a referência de media_publish diz "An Instagram
+ *   professional account can only publish 50 posts within a 24 hour moving
+ *   period". Não cravo nenhum dos dois: leio
+ *   GET /{ig-id}/content_publishing_limit?fields=config,quota_usage
+ *   e uso o número que a própria conta devolve. Se essa leitura falhar, sigo
+ *   em frente — cota desconhecida não é motivo para não publicar.
+ *
+ *   O Instagram NÃO agenda nativamente (só Página do Facebook tem
+ *   scheduled_publish_time). Quem segura o horário é o pg_cron + a ação `fila`.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * O QUE FALTA NAS OUTRAS TRÊS (levantado na fase anterior, com a doc)
+ *
+ *   FACEBOOK — falta só permissão. Adicionar `pages_show_list`,
+ *   `pages_read_engagement` e `pages_manage_posts` ao app e refazer o OAuth
+ *   JUNTO com o `instagram_content_publish` (é o mesmo diálogo, o mesmo User
+ *   Token; pedir em duas rodadas custa duas rederivações de Page token).
+ *   Sem App Review, porque Standard Access basta para quem tem papel no app
+ *   (https://developers.facebook.com/docs/graph-api/overview/access-levels/).
+ *   Quando entrar, o caminho é POST /{page-id}/videos com `file_url` (feed) ou
+ *   /{page-id}/video_reels em 3 fases (Reels), sempre em graph.facebook.com —
+ *   `graph-video.facebook.com` foi descontinuado
+ *   (https://developers.facebook.com/docs/video-api/overview/).
+ *   É a primeira que fica de pé; o conector abaixo já mede o que falta.
+ *
+ *   TIKTOK — auditoria. Direct Post em conta pública volta HTTP 403
+ *   `unaudited_client_can_only_post_to_private_accounts`: "Unaudited clients can
+ *   only post to a private account. The publish attempt will be blocked when
+ *   calling /publish/video/init/."
+ *   (https://developers.tiktok.com/doc/content-posting-api-reference-direct-post/)
+ *   Some o access_token em 24h e o refresh_token PODE ROTACIONAR a cada refresh
+ *   (https://developers.tiktok.com/doc/oauth-user-access-token-management).
+ *   Não agenda nativamente: não há campo de horário futuro em post_info.
+ *
+ *   YOUTUBE — a linha `youtube` de mc_integrations guarda uma CHAVE DE API
+ *   (39 caracteres), que serve para LER. Subir vídeo exige OAuth com escopo
+ *   youtube.upload (https://developers.google.com/youtube/v3/docs/videos/insert)
+ *   e, sem a auditoria do projeto, todo upload fica travado em privado sem
+ *   recurso (https://support.google.com/youtube/answer/7300965).
+ *   Agenda nativamente com privacyStatus=private + publishAt, mas só depois da
+ *   auditoria (https://developers.google.com/youtube/v3/docs/videos).
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * DUAS FALTAS DE ESQUEMA QUE EU CONTORNEI (e que valem uma migração)
+ *
+ *   a) mc_publicacoes_destino não tem coluna `meta jsonb`. O erro cru da
+ *      plataforma e o id do container em processamento não têm onde morar. O
+ *      código já ESCREVE em `meta` e cai para o modo sem-coluna sozinho quando
+ *      o Postgres reclama (42703 / PGRST204) — no dia em que a coluna existir,
+ *      passa a gravar sem trocar uma linha aqui. Enquanto não existe, o
+ *      container em voo fica marcado em `erro` como `[container:123…]`, que é
+ *      feio e é de propósito: assim dá para retomar depois de um timeout.
+ *      Sugestão: ALTER TABLE mc_publicacoes_destino ADD COLUMN meta jsonb NOT NULL DEFAULT '{}'::jsonb;
+ *
+ *   b) mc_publicacoes guarda UMA mídia (midia_caminho/midia_url). Carrossel
+ *      precisa de até 10. Aqui aceito lista por JSON, vírgula ou quebra de
+ *      linha no mesmo campo, e `midias[]` no corpo do `agora`. Funciona, mas o
+ *      certo é uma tabela mc_publicacoes_midia (ordem, caminho, mime).
+ *
+ * Secrets usados: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (já existem) e
+ * IG_ACCESS_TOKEN (reserva, opcional). Nenhuma credencial sai daqui: nem em
+ * resposta, nem em log, nem em mensagem de erro de rede.
+ */
+
+import { createClient } from 'jsr:@supabase/supabase-js@2';
+
+const VERSAO = 'pub1';
+const GRAPH = 'https://graph.facebook.com/v21.0';
+const BUCKET = 'publicacoes';
+
+/* Quanto tempo a invocação se dá para esperar o Instagram processar o vídeo.
+   O teto do Deno é 150s (free) / 400s (pago); fico bem abaixo para sobrar
+   margem de escrita no banco. Estourou o prazo? O container fica anotado e a
+   próxima rodada do cron retoma — não vira erro. */
+const TETO_MS = Number(Deno.env.get('PUBLICAR_TETO_MS') ?? 100_000);
+const INTERVALO_POLL_MS = 3_000;
+const VALIDADE_URL_S = 2 * 60 * 60;   /* a Meta baixa na hora; 2h é folga pura */
+const MAX_CARROSSEL = 10;             /* limite documentado */
+const MAX_TENTATIVAS_FILA = 3;        /* automático desiste; humano ainda pode */
+const RETOMAR_APOS_MS = 90_000;       /* 'enviando' parado além disso = retomar */
+const DESISTIR_APOS_MS = 30 * 60_000; /* 'enviando' sem container = conferir */
+
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
+const SB_URL = Deno.env.get('SUPABASE_URL') ?? '';
+const SRK = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const IG_TOKEN_ENV = Deno.env.get('IG_ACCESS_TOKEN') ?? '';
+
+let servicoCache: ReturnType<typeof createClient> | null = null;
+function servico() {
+  if (!servicoCache) servicoCache = createClient(SB_URL, SRK, { auth: { persistSession: false } });
+  return servicoCache;
+}
+
+/* ────────────────────────────── utilidades ────────────────────────────── */
+
+function resposta(corpo: unknown, status = 200): Response {
+  return new Response(JSON.stringify(corpo), {
+    status,
+    headers: { ...CORS, 'Content-Type': 'application/json' },
+  });
+}
+
+function falha(erro: string, meta?: unknown, status = 200): Response {
+  return resposta({ ok: false, erro, ...(meta ? { meta } : {}) }, status);
+}
+
+const dormir = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const agoraISO = () => new Date().toISOString();
+
+/* Erro que carrega o cru da plataforma em `cause`, para virar `meta` na
+   resposta. Nunca coloque token, URL assinada ou header aqui dentro. */
+function erroDeRede(nome: string): Error {
+  return new Error(`não deu para falar com a rede (${nome})`);
+}
+
+function semAcento(s: string): string {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+/* Últimos 6 caracteres, para log. Serve para casar duas linhas de log sem
+   escrever id inteiro de container em lugar nenhum. */
+const rabo = (s: string | null | undefined) => (s ? '…' + String(s).slice(-6) : '—');
+
+/* ─────────────────────────── credencial por rede ──────────────────────── */
+
+type Cred = {
+  token: string;
+  refresh: string | null;
+  origem: 'painel' | 'secret' | 'nenhuma';
+  meta: Record<string, unknown>;
+  expira: string | null;
+  em: number;
+};
+
+const credCache = new Map<string, Cred>();
+
+/* Banco primeiro, secret depois — a ordem do integr-cred.md. Cache de 60s
+   porque uma publicação com 4 destinos bate aqui 4 vezes. */
+async function credencial(provider: string, reserva = ''): Promise<Cred> {
+  const guardado = credCache.get(provider);
+  if (guardado && Date.now() - guardado.em < 60_000) return guardado;
+
+  let linha: Record<string, any> | null = null;
+  try {
+    const { data } = await servico()
+      .from('mc_integrations')
+      .select('access_token, refresh_token, expires_at, meta')
+      .eq('provider', provider)
+      .maybeSingle();
+    linha = data ?? null;
+  } catch (e) {
+    console.error('[publicar] leitura de mc_integrations falhou', provider, e instanceof Error ? e.message : e);
+  }
+
+  const c: Cred = linha?.access_token
+    ? {
+        token: linha.access_token, refresh: linha.refresh_token ?? null, origem: 'painel',
+        meta: linha.meta ?? {}, expira: linha.expires_at ?? null, em: Date.now(),
+      }
+    : {
+        token: reserva, refresh: null, origem: reserva ? 'secret' : 'nenhuma',
+        meta: {}, expira: null, em: Date.now(),
+      };
+  credCache.set(provider, c);
+  return c;
+}
+
+/* ────────────────────────────── Graph API ─────────────────────────────── */
+
+/* A Graph responde 200 com {error:{...}} em muitos casos. Nada aqui decide
+   sucesso pelo status HTTP: quem manda é a ausência de `error` no corpo. */
+async function graph(caminho: string, params: Record<string, string>, token: string) {
+  const url = new URL(`${GRAPH}/${caminho}`);
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  url.searchParams.set('access_token', token);
+
+  let r: Response;
+  try {
+    r = await fetch(url.toString());
+  } catch (e) {
+    /* O TypeError do Deno traz a URL INTEIRA na mensagem — com access_token
+       dentro — e isso acabaria no log da função. Por isso é reescrito. */
+    throw erroDeRede(e instanceof Error ? e.name : 'falha de rede');
+  }
+  const j = await r.json().catch(() => ({}));
+  if (j?.error) throw new Error(j.error.message ?? 'erro da Meta', { cause: j.error });
+  return j;
+}
+
+/* POST manda o token no CORPO, não na query: além de ser o que a Meta pede
+   para publicação, mantém a credencial fora de qualquer URL que possa vazar
+   em mensagem de erro ou em log de proxy. */
+async function graphPost(caminho: string, params: Record<string, string>, token: string) {
+  const corpo = new URLSearchParams(params);
+  corpo.set('access_token', token);
+
+  let r: Response;
+  try {
+    r = await fetch(`${GRAPH}/${caminho}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: corpo.toString(),
+    });
+  } catch (e) {
+    throw erroDeRede(e instanceof Error ? e.name : 'falha de rede');
+  }
+  const j = await r.json().catch(() => ({}));
+  if (j?.error) throw new Error(j.error.message ?? 'erro da Meta', { cause: j.error });
+  return j;
+}
+
+/* Escopos que o token realmente tem. É o que transforma o erro 200 opaco da
+   Meta ("(#200) Permissions error") numa frase que diz o que fazer. Prefere o
+   que ficou gravado ao conectar; `vivo` força debug_token. */
+let escoposCache: { lista: string[]; em: number } | null = null;
+async function escoposDoToken(cred: Cred, vivo = false): Promise<string[]> {
+  const gravados = Array.isArray((cred.meta as any)?.escopos) ? (cred.meta as any).escopos as string[] : [];
+  if (!vivo && gravados.length) return gravados;
+  if (escoposCache && !vivo && Date.now() - escoposCache.em < 300_000) return escoposCache.lista;
+  try {
+    const d = await graph('debug_token', { input_token: cred.token }, cred.token);
+    const lista: string[] = Array.isArray(d?.data?.scopes) ? d.data.scopes : gravados;
+    escoposCache = { lista, em: Date.now() };
+    return lista;
+  } catch {
+    return gravados;
+  }
+}
+
+/* Token DE PÁGINA. Resolvido no servidor e guardado só na memória da
+   instância — nunca entra em resposta, é o vazamento que a instagram-proxy
+   fechou e que não pode voltar por aqui. */
+let pageTokenCache: { ig_id: string; token: string; em: number } | null = null;
+async function tokenDaPagina(igId: string, usuario: string): Promise<string> {
+  if (pageTokenCache?.ig_id === igId && Date.now() - pageTokenCache.em < 600_000) return pageTokenCache.token;
+
+  const j = await graph('me/accounts', { fields: 'id,name,access_token,instagram_business_account' }, usuario);
+  for (const pagina of j?.data ?? []) {
+    if (pagina?.instagram_business_account?.id === igId && pagina?.access_token) {
+      pageTokenCache = { ig_id: igId, token: pagina.access_token, em: Date.now() };
+      return pagina.access_token;
+    }
+  }
+  throw new Error(`nenhuma página vinculada à conta ${igId} — reconecte o Instagram em Integrações`);
+}
+
+/* ─────────────────────────────── a mídia ──────────────────────────────── */
+
+/* Uma mídia pronta para ser entregue à rede: URL que a plataforma consegue
+   baixar sozinha, mais o que dá para saber do arquivo. */
+type Midia = { url: string; ehVideo: boolean; mime: string | null; caminho: string | null };
+
+function ehVideoPor(mime: string | null, ref: string): boolean {
+  if (mime) return mime.startsWith('video/');
+  return /\.(mp4|mov|m4v|webm|avi|mkv)(\?|$)/i.test(ref);
+}
+
+function ehJpegPor(mime: string | null, ref: string): boolean {
+  if (mime) return mime === 'image/jpeg' || mime === 'image/jpg';
+  return /\.(jpe?g)(\?|$)/i.test(ref);
+}
+
+/* Um campo, várias formas de listar: JSON, vírgula ou quebra de linha. É a
+   ginástica que a falta da tabela mc_publicacoes_midia custa (ver cabeçalho). */
+function listar(valor: unknown): string[] {
+  if (Array.isArray(valor)) return valor.map((v) => String(v).trim()).filter(Boolean);
+  const s = String(valor ?? '').trim();
+  if (!s) return [];
+  if (s.startsWith('[')) {
+    try {
+      const j = JSON.parse(s);
+      if (Array.isArray(j)) return j.map((v) => String(v).trim()).filter(Boolean);
+    } catch { /* não era JSON, segue para a separação simples */ }
+  }
+  return s.split(/[\n,]+/).map((v) => v.trim()).filter(Boolean);
+}
+
+/* URL assinada do Storage. Vale para bucket público e privado, expira em 2h e
+   NÃO é persistida em lugar nenhum — a Meta baixa o arquivo em segundos.
+   Se o bucket virar privado amanhã, isto continua funcionando. */
+async function urlDoCaminho(caminho: string): Promise<string> {
+  const { data, error } = await servico().storage.from(BUCKET).createSignedUrl(caminho, VALIDADE_URL_S);
+  if (data?.signedUrl) return data.signedUrl;
+  const pub = servico().storage.from(BUCKET).getPublicUrl(caminho);
+  if (pub?.data?.publicUrl) return pub.data.publicUrl;
+  throw new Error(`não deu para gerar o link do arquivo "${caminho}" no bucket ${BUCKET}`
+    + (error?.message ? ' — ' + error.message : ''));
+}
+
+async function midiasDaPublicacao(p: Record<string, any>, extra?: unknown): Promise<Midia[]> {
+  const mime = p.midia_mime ?? null;
+  /* CUIDADO: midia_url e midia_caminho costumam apontar para o MESMO arquivo
+     (o painel grava os dois). Somar as duas listas transformaria foto simples
+     em carrossel de dois itens iguais. Então não se soma: vence a lista mais
+     longa, e em empate vence a mais explícita (extra > url > caminho). */
+  const brutas = [listar(extra), listar(p.midia_url), listar(p.midia_caminho)]
+    .reduce((a, b) => (b.length > a.length ? b : a), [] as string[]);
+  const vistas = new Set<string>();
+  const saida: Midia[] = [];
+  for (const item of brutas) {
+    if (vistas.has(item)) continue;
+    vistas.add(item);
+    const ehUrl = /^https:\/\//i.test(item);
+    if (!ehUrl && /^http:\/\//i.test(item)) {
+      throw new Error('o link da mídia precisa ser https — as redes recusam http.');
+    }
+    const url = ehUrl ? item : await urlDoCaminho(item);
+    saida.push({
+      url,
+      ehVideo: ehVideoPor(mime, item),
+      mime,
+      caminho: ehUrl ? null : item,
+    });
+    if (saida.length >= MAX_CARROSSEL) break;
+  }
+  return saida;
+}
+
+/* Confere se o arquivo está mesmo de pé antes de mandar a rede buscá-lo. Falha
+   aqui é AVISO, não veto: há CDN que recusa HEAD e mesmo assim serve GET.
+   Redirecionamento é anotado porque o TikTok proíbe explicitamente
+   ("should not redirect to another URL") e a Meta engasga em alguns casos. */
+async function conferirMidia(url: string): Promise<string | null> {
+  try {
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), 8_000);
+    const r = await fetch(url, { method: 'HEAD', redirect: 'manual', signal: ctl.signal });
+    clearTimeout(t);
+    if (r.status >= 300 && r.status < 400) return 'o link da mídia redireciona; algumas redes recusam link com redirecionamento';
+    if (r.status === 404 || r.status === 403) return `o arquivo não está acessível (HTTP ${r.status})`;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/* ─────────────────── gravação do destino (com meta opcional) ──────────── */
+
+/* mc_publicacoes_destino ainda não tem `meta jsonb`. Em vez de escolher entre
+   perder o erro cru e quebrar, tento COM meta e caio para SEM na primeira
+   reclamação do Postgres — e lembro. No dia em que a coluna existir, começa a
+   gravar sozinho. */
+let temColunaMeta: boolean | null = null;
+
+function reclamouDeColuna(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  return error.code === '42703' || error.code === 'PGRST204'
+    || /column .*meta.* does not exist|could not find the 'meta' column/i.test(error.message ?? '');
+}
+
+async function gravarDestino(id: string, campos: Record<string, unknown>, meta?: Record<string, unknown>) {
+  const base = { ...campos, atualizado_em: agoraISO() };
+
+  if (meta && temColunaMeta !== false) {
+    const { error } = await servico().from('mc_publicacoes_destino').update({ ...base, meta }).eq('id', id);
+    if (!error) { temColunaMeta = true; return; }
+    /* Falhou por outro motivo? Ainda assim tenta o UPDATE sem `meta` logo
+       abaixo: perder o erro cru é ruim, perder a mudança de STATUS é pior —
+       destino que fica preso em `enviando` some da tela do operador. */
+    if (!reclamouDeColuna(error)) console.error('[publicar] gravar destino (com meta)', rabo(id), error.message);
+    else temColunaMeta = false;
+  }
+
+  const { error } = await servico().from('mc_publicacoes_destino').update(base).eq('id', id);
+  if (error) console.error('[publicar] gravar destino', rabo(id), error.message);
+}
+
+/* O container em voo precisa sobreviver ao fim da invocação para a rodada
+   seguinte retomar. Sem coluna `meta`, mora marcado dentro de `erro`. */
+const MARCA = /\[container:(\d+)\]/;
+const marcarContainer = (id: string) => `[container:${id}]`;
+function containerAnotado(d: Record<string, any>): string | null {
+  const emMeta = d?.meta?.container_id;
+  if (emMeta) return String(emMeta);
+  const m = MARCA.exec(String(d?.erro ?? ''));
+  return m ? m[1] : null;
+}
+
+/* ──────────────────────── tradução de erro da Meta ────────────────────── */
+
+/* O operador não lê código de erro do Meta. Cada frase abaixo diz o que ele (ou
+   o Harry) tem de FAZER — e nenhuma pede que o operador faça login, porque quem
+   refaz o OAuth é o dono. */
+function traduzirMeta(e: unknown): { frase: string; cru: Record<string, unknown> | null } {
+  const err = e instanceof Error ? e : new Error('falha inesperada');
+  const cru = (err.cause && typeof err.cause === 'object') ? err.cause as Record<string, unknown> : null;
+  const codigo = Number(cru?.code ?? 0);
+  const sub = Number(cru?.error_subcode ?? 0);
+  const msg = String(cru?.message ?? err.message ?? '');
+
+  if (codigo === 190) {
+    return { frase: 'A conexão com a Meta expirou. Avise o Harry — precisa reconectar o Instagram em Integrações.', cru };
+  }
+  if (codigo === 200 || codigo === 10 || codigo === 3) {
+    return {
+      frase: 'Sem permissão para publicar nesta conta. Pode ser a permissão instagram_content_publish faltando no app '
+        + 'ou o cargo do Harry na Página da FullPro (é preciso CREATE_CONTENT).', cru,
+    };
+  }
+  if (codigo === 4 || codigo === 17 || codigo === 32 || codigo === 613 || sub === 2207051) {
+    return { frase: 'Limite de publicações do Instagram atingido nas últimas 24 horas. Reagende para mais tarde.', cru };
+  }
+  if (codigo === 9007 || sub === 2207042) {
+    return { frase: 'O Instagram recusou: a conta atingiu o limite de posts por API nas últimas 24 horas.', cru };
+  }
+  if (sub === 2207032 || sub === 2207020) {
+    return { frase: 'O Instagram não conseguiu baixar o arquivo. Confira se o link da mídia está acessível e sem redirecionamento.', cru };
+  }
+  if (sub === 2207026 || sub === 2207023 || sub === 2207003) {
+    return { frase: 'O Instagram recusou o formato do arquivo (proporção, duração ou codec fora do aceito).', cru };
+  }
+  if (/permission/i.test(msg)) {
+    return { frase: 'A Meta recusou por permissão: ' + msg, cru };
+  }
+  return { frase: msg || 'a Meta recusou a publicação', cru };
+}
+
+/* ───────────────────────────── conectores ─────────────────────────────── */
+
+type Resultado = {
+  estado: 'publicado' | 'erro' | 'enviando';
+  id_externo?: string | null;
+  link?: string | null;
+  erro?: string | null;
+  meta?: Record<string, unknown> | null;
+};
+
+type Contexto = {
+  pub: Record<string, any>;
+  dest: Record<string, any>;
+  midias: Midia[];
+  prazo: number;          /* timestamp em ms para desistir de esperar */
+  container?: string | null;
+};
+
+/* ── INSTAGRAM — a única que publica de verdade hoje ── */
+
+function formatoInstagram(pub: Record<string, any>, m: Midia[]): 'STORIES' | 'REELS' | 'CAROUSEL' | 'IMAGE' {
+  const t = semAcento(String(pub.tipo ?? ''));
+  /* Story vem antes da contagem: não existe carrossel de story. Se vierem
+     vários arquivos marcados como story, vale o primeiro. */
+  if (/stor/.test(t)) return 'STORIES';
+  /* Carrossel de um item só não existe: com um arquivo, quem manda é o
+     arquivo, mesmo que o tipo diga carrossel. */
+  if (m.length > 1) return 'CAROUSEL';
+  if (/reel|short|video/.test(t) && m[0]?.ehVideo) return 'REELS';
+  /* Sem tipo confiável, o ARQUIVO decide — é o dado que não mente. */
+  return m[0]?.ehVideo ? 'REELS' : 'IMAGE';
+}
+
+async function esperarContainer(id: string, token: string, prazo: number): Promise<'pronto' | 'processando'> {
+  while (Date.now() < prazo) {
+    const j = await graph(id, { fields: 'status_code,status' }, token);
+    const sc = String(j?.status_code ?? '');
+    if (sc === 'FINISHED' || sc === 'PUBLISHED') return 'pronto';
+    if (sc === 'ERROR') {
+      throw new Error(String(j?.status ?? 'o Instagram recusou o arquivo no processamento'),
+        { cause: { code: 'CONTAINER_ERROR', status: j?.status ?? null } });
+    }
+    if (sc === 'EXPIRED') {
+      throw new Error('o container passou de 24h sem ser publicado e expirou',
+        { cause: { code: 'CONTAINER_EXPIRED' } });
+    }
+    await dormir(INTERVALO_POLL_MS);
+  }
+  return 'processando';
+}
+
+async function redeInstagram(ctx: Contexto): Promise<Resultado> {
+  const cred = await credencial('instagram', IG_TOKEN_ENV);
+  if (!cred.token) {
+    return { estado: 'erro', erro: 'O Instagram não está conectado. Um administrador conecta em Integrações.' };
+  }
+
+  /* Escopo ANTES de qualquer chamada cara. Sem isto, o operador receberia
+     "(#200) Permissions error" e ninguém saberia o que fazer. */
+  const escopos = await escoposDoToken(cred);
+  if (escopos.length && !escopos.includes('instagram_content_publish')) {
+    return {
+      estado: 'erro',
+      erro: 'Falta a permissão instagram_content_publish no token da Meta. O Harry precisa refazer a conexão '
+        + 'do Instagram marcando essa permissão (aproveite e marque também pages_manage_posts, para liberar o Facebook).',
+      meta: { escopos_atuais: escopos, falta: ['instagram_content_publish'] },
+    };
+  }
+
+  const igId = String((cred.meta as any)?.ig_id ?? '');
+  if (!igId) {
+    return { estado: 'erro', erro: 'Sem o id da conta do Instagram — reconecte em Integrações para gravá-lo.' };
+  }
+  const token = await tokenDaPagina(igId, cred.token);
+
+  /* Cota pela própria conta, não por constante: a doc oficial diz 100 num
+     lugar e 50 no outro. Se não der para ler, sigo. */
+  try {
+    const q = await graph(`${igId}/content_publishing_limit`, { fields: 'config,quota_usage' }, token);
+    const linha = q?.data?.[0];
+    const usado = Number(linha?.quota_usage ?? NaN);
+    const total = Number(linha?.config?.quota_total ?? NaN);
+    if (Number.isFinite(usado) && Number.isFinite(total) && total > 0 && usado >= total) {
+      return {
+        estado: 'erro',
+        erro: `Limite do Instagram atingido: ${usado} de ${total} publicações por API nas últimas 24 horas. Reagende.`,
+        meta: { quota_usage: usado, quota_total: total },
+      };
+    }
+  } catch { /* cota desconhecida não impede de publicar */ }
+
+  const legenda = String(ctx.pub.legenda ?? ctx.pub.titulo ?? '').slice(0, 2200);
+  const formato = formatoInstagram(ctx.pub, ctx.midias);
+
+  /* Validações locais: transformam recusa remota opaca em aviso claro, e
+     economizam a cota da conta. */
+  if (!ctx.midias.length) return { estado: 'erro', erro: 'A publicação está sem arquivo de mídia.' };
+  if (formato === 'CAROUSEL' && ctx.midias.length > MAX_CARROSSEL) {
+    return { estado: 'erro', erro: `Carrossel aceita no máximo ${MAX_CARROSSEL} itens; esta publicação tem ${ctx.midias.length}.` };
+  }
+  if (formato === 'REELS' && !ctx.midias[0].ehVideo) {
+    return { estado: 'erro', erro: 'Reel precisa de vídeo, e o arquivo desta publicação é imagem.' };
+  }
+  for (const m of ctx.midias) {
+    if (!m.ehVideo && !ehJpegPor(m.mime, m.caminho ?? m.url)) {
+      return {
+        estado: 'erro',
+        erro: 'O Instagram só aceita imagem em JPEG por API. Converta o arquivo (PNG e WebP são recusados).',
+        meta: { mime: m.mime, arquivo: m.caminho },
+      };
+    }
+  }
+
+  let container = ctx.container ?? null;
+
+  /* Só cria container se ainda não houver um em voo. É isto que permite
+     retomar depois de um timeout sem publicar duas vezes. */
+  if (!container) {
+    const aviso = await conferirMidia(ctx.midias[0].url);
+    if (aviso) console.warn('[publicar] instagram', rabo(ctx.dest.id), aviso);
+
+    if (formato === 'CAROUSEL') {
+      /* Filhos primeiro, cada um com is_carousel_item=true; depois o pai. */
+      const filhos: string[] = [];
+      for (const m of ctx.midias) {
+        const p: Record<string, string> = { is_carousel_item: 'true' };
+        if (m.ehVideo) { p.media_type = 'VIDEO'; p.video_url = m.url; }
+        else { p.image_url = m.url; }
+        const c = await graphPost(`${igId}/media`, p, token);
+        if (!c?.id) throw new Error('o Instagram não devolveu o container do item do carrossel');
+        filhos.push(String(c.id));
+      }
+      for (const f of filhos) {
+        const e = await esperarContainer(f, token, ctx.prazo);
+        if (e === 'processando') {
+          return {
+            estado: 'enviando',
+            erro: 'O Instagram ainda está processando os itens do carrossel. O robô retoma na próxima rodada.',
+            meta: { filhos },
+          };
+        }
+      }
+      const pai = await graphPost(`${igId}/media`, {
+        media_type: 'CAROUSEL', children: filhos.join(','), caption: legenda,
+      }, token);
+      container = String(pai?.id ?? '');
+    } else {
+      const p: Record<string, string> = {};
+      if (formato === 'STORIES') {
+        p.media_type = 'STORIES';
+        if (ctx.midias[0].ehVideo) p.video_url = ctx.midias[0].url; else p.image_url = ctx.midias[0].url;
+        /* Story não leva legenda: o campo é ignorado pela borda. */
+      } else if (formato === 'REELS') {
+        p.media_type = 'REELS';
+        p.video_url = ctx.midias[0].url;
+        p.caption = legenda;
+        p.share_to_feed = 'true';
+      } else {
+        p.image_url = ctx.midias[0].url;
+        p.caption = legenda;
+      }
+      const c = await graphPost(`${igId}/media`, p, token);
+      container = String(c?.id ?? '');
+    }
+
+    if (!container) throw new Error('o Instagram não devolveu o id do container');
+    /* Anota ANTES de esperar: se a invocação morrer no polling, a próxima
+       rodada retoma este container em vez de criar outro. */
+    await gravarDestino(ctx.dest.id, { status: 'enviando', erro: 'Enviado ao Instagram, processando. ' + marcarContainer(container) },
+      { container_id: container, formato });
+  }
+
+  const estado = await esperarContainer(container, token, ctx.prazo);
+  if (estado === 'processando') {
+    return {
+      estado: 'enviando',
+      erro: 'O Instagram ainda está processando o vídeo. O robô retoma na próxima rodada. ' + marcarContainer(container),
+      meta: { container_id: container, formato },
+    };
+  }
+
+  const pub = await graphPost(`${igId}/media_publish`, { creation_id: container }, token);
+  const idMedia = String(pub?.id ?? '');
+  if (!idMedia) throw new Error('o Instagram aceitou a publicação mas não devolveu o id da mídia');
+
+  /* Permalink é conveniência: se falhar, o post já está no ar e não se
+     desfaz nada por causa de um link. */
+  let link: string | null = null;
+  try {
+    const j = await graph(idMedia, { fields: 'permalink' }, token);
+    link = j?.permalink ?? null;
+  } catch { /* segue sem link */ }
+
+  console.log('[publicar] instagram publicado', rabo(idMedia), formato);
+  return { estado: 'publicado', id_externo: idMedia, link, meta: { formato, container_id: container } };
+}
+
+/* ── FACEBOOK — não publica ainda; mede e diz exatamente o que falta ── */
+
+const PERM_FACEBOOK = ['pages_show_list', 'pages_read_engagement', 'pages_manage_posts'];
+
+async function redeFacebook(_ctx: Contexto): Promise<Resultado> {
+  const cred = await credencial('facebook');
+  const base = cred.token ? cred : await credencial('instagram', IG_TOKEN_ENV);
+  if (!base.token) {
+    return { estado: 'erro', erro: 'O Facebook não está conectado. Um administrador conecta em Integrações.' };
+  }
+  const escopos = await escoposDoToken(base);
+  const faltando = PERM_FACEBOOK.filter((p) => !escopos.includes(p));
+
+  return {
+    estado: 'erro',
+    erro: faltando.length
+      ? `O Facebook ainda não publica por aqui: faltam as permissões ${faltando.join(', ')} no token da Meta. `
+        + 'O Harry precisa adicioná-las ao app e refazer o OAuth — no mesmo consentimento do instagram_content_publish.'
+      : 'As permissões do Facebook já estão no token, mas o envio de vídeo para a Página ainda não foi ligado nesta função. '
+        + 'Avise o Harry: é o próximo passo, e não depende de aprovação da Meta.',
+    meta: {
+      escopos_atuais: escopos,
+      falta: faltando,
+      doc: 'https://developers.facebook.com/docs/video-api/guides/reels-publishing/',
+      observacao: 'Sem App Review neste caso: Standard Access basta para quem tem papel no app '
+        + '(https://developers.facebook.com/docs/graph-api/overview/access-levels/).',
+    },
+  };
+}
+
+/* ── TIKTOK — travado na auditoria, não na nossa mão ── */
+
+async function redeTiktok(_ctx: Contexto): Promise<Resultado> {
+  const cred = await credencial('tiktok');
+  const vencido = cred.expira ? new Date(cred.expira).getTime() < Date.now() : false;
+
+  const partes = [
+    'O TikTok ainda não publica por API: falta a auditoria do Content Posting API.',
+    'Sem ela, o Direct Post em conta pública volta 403 (unaudited_client_can_only_post_to_private_accounts).',
+  ];
+  if (!cred.token) partes.push('Além disso, o TikTok não está conectado em Integrações.');
+  else if (vencido) partes.push('E o token guardado venceu (o do TikTok dura 24h e precisa de refresh diário).');
+
+  return {
+    estado: 'erro',
+    erro: partes.join(' '),
+    meta: {
+      conectado: Boolean(cred.token),
+      token_vencido: vencido,
+      falta: ['auditoria do Content Posting API', 'escopos video.publish e video.upload', 'verificação do domínio para PULL_FROM_URL'],
+      doc: 'https://developers.tiktok.com/doc/content-posting-api-reference-direct-post/',
+    },
+  };
+}
+
+/* ── YOUTUBE — a credencial guardada é chave de API, que não sobe vídeo ── */
+
+async function redeYoutube(_ctx: Contexto): Promise<Resultado> {
+  const cred = await credencial('youtube');
+  const temOAuth = Boolean(cred.refresh);
+
+  return {
+    estado: 'erro',
+    erro: temOAuth
+      ? 'O YouTube tem OAuth guardado, mas o envio de vídeo ainda não foi ligado nesta função — e, sem a auditoria do '
+        + 'projeto, todo upload por API fica travado em privado.'
+      : 'O YouTube não publica por aqui: a credencial guardada é uma CHAVE DE API, que só lê. Subir vídeo exige OAuth '
+        + 'com o escopo youtube.upload, autorizado pela conta dona do canal, e a auditoria do projeto no Google.',
+    meta: {
+      tem_oauth: temOAuth,
+      canal: (cred.meta as any)?.canal_titulo ?? null,
+      falta: temOAuth ? ['auditoria do projeto no YouTube'] : ['OAuth com escopo youtube.upload', 'auditoria do projeto no YouTube'],
+      doc: 'https://developers.google.com/youtube/v3/docs/videos/insert',
+      observacao: 'Vídeo enviado por projeto não auditado fica privado sem recurso '
+        + '(https://support.google.com/youtube/answer/7300965).',
+    },
+  };
+}
+
+const CONECTORES: Record<string, (c: Contexto) => Promise<Resultado>> = {
+  instagram: redeInstagram,
+  facebook: redeFacebook,
+  tiktok: redeTiktok,
+  youtube: redeYoutube,
+};
+
+/* ─────────────────────── processamento de um destino ──────────────────── */
+
+/* Toma o destino com compare-and-set: o UPDATE só pega a linha se o status
+   ainda for o que eu li. Duas rodadas do cron sobrepostas — ou o operador
+   clicando enquanto o cron roda — não postam duas vezes. */
+async function tomarDestino(dest: Record<string, any>, retomando: boolean): Promise<boolean> {
+  let q = servico().from('mc_publicacoes_destino')
+    .update({ status: 'enviando', tentativas: (dest.tentativas ?? 0) + 1, atualizado_em: agoraISO() })
+    .eq('id', dest.id)
+    .eq('status', dest.status);
+
+  /* Retomar um 'enviando' não pode usar o status como trava (ele já é
+     'enviando'); a trava vira o carimbo de tempo, que este UPDATE renova. */
+  if (retomando) q = q.lt('atualizado_em', new Date(Date.now() - RETOMAR_APOS_MS).toISOString());
+
+  const { data, error } = await q.select('id');
+  if (error) { console.error('[publicar] tomar destino', rabo(dest.id), error.message); return false; }
+  return Array.isArray(data) && data.length > 0;
+}
+
+async function processarDestino(pub: Record<string, any>, dest: Record<string, any>, prazo: number) {
+  const rede = String(dest.rede);
+  const nome = `${rede}/${rabo(dest.id)}`;
+
+  /* REGRA 3 — id_externo preenchido é publicação que já saiu. Não republica em
+     hipótese nenhuma; só conserta o status se estiver torto. */
+  if (dest.id_externo) {
+    if (dest.status !== 'publicado') {
+      await gravarDestino(dest.id, { status: 'publicado', erro: null, publicado_em: dest.publicado_em ?? agoraISO() });
+    }
+    return { rede, estado: 'publicado', pulado: 'já tinha id externo' };
+  }
+  if (dest.status === 'cancelado') return { rede, estado: 'cancelado' };
+
+  const conector = CONECTORES[rede];
+  if (!conector) {
+    await gravarDestino(dest.id, { status: 'erro', erro: `Rede desconhecida: ${rede}.` });
+    return { rede, estado: 'erro', erro: `Rede desconhecida: ${rede}.` };
+  }
+
+  const container = containerAnotado(dest);
+  const retomando = dest.status === 'enviando';
+
+  /* Preso em 'enviando' há muito tempo e sem container para retomar: pode ter
+     publicado. Não retenta — pede olho humano. REGRA 4. */
+  if (retomando && !container) {
+    const parado = Date.now() - new Date(dest.atualizado_em ?? 0).getTime();
+    if (parado > DESISTIR_APOS_MS) {
+      await gravarDestino(dest.id, {
+        status: 'erro',
+        erro: 'O envio ficou preso e não dá para saber se o post saiu. Confira o perfil antes de publicar de novo — '
+          + 'o robô não repete sozinho para não postar em dobro.',
+      });
+      return { rede, estado: 'erro', erro: 'envio preso; conferir manualmente' };
+    }
+    return { rede, estado: 'enviando', pulado: 'em andamento em outra rodada' };
+  }
+
+  if (!(await tomarDestino(dest, retomando))) {
+    return { rede, estado: dest.status, pulado: 'outra rodada já pegou este destino' };
+  }
+
+  try {
+    const midias = await midiasDaPublicacao(pub);
+    const r = await conector({ pub, dest, midias, prazo, container });
+
+    if (r.estado === 'publicado') {
+      await gravarDestino(dest.id, {
+        status: 'publicado', erro: null, id_externo: r.id_externo ?? null,
+        link: r.link ?? null, publicado_em: agoraISO(),
+      }, r.meta ?? undefined);
+      return { rede, estado: 'publicado', id_externo: r.id_externo ?? null, link: r.link ?? null };
+    }
+
+    if (r.estado === 'enviando') {
+      await gravarDestino(dest.id, { status: 'enviando', erro: r.erro ?? null }, r.meta ?? undefined);
+      return { rede, estado: 'enviando', erro: r.erro ?? null };
+    }
+
+    await gravarDestino(dest.id, { status: 'erro', erro: r.erro ?? 'falha sem descrição' }, r.meta ?? undefined);
+    return { rede, estado: 'erro', erro: r.erro ?? 'falha sem descrição', meta: r.meta ?? null };
+  } catch (e) {
+    const { frase, cru } = traduzirMeta(e);
+    console.error('[publicar]', nome, frase, cru ? JSON.stringify(cru).slice(0, 400) : '');
+    /* Se havia container em voo, a marca continua no texto: a próxima rodada
+       retoma dali em vez de criar outro. */
+    const sufixo = container ? ' ' + marcarContainer(container) : '';
+    await gravarDestino(dest.id, { status: 'erro', erro: frase + sufixo }, cru ? { erro_cru: cru } : undefined);
+    return { rede, estado: 'erro', erro: frase, meta: cru };
+  }
+}
+
+/* ───────────────────── processamento de uma publicação ────────────────── */
+
+function statusDaPublicacao(destinos: Record<string, any>[]): string {
+  if (!destinos.length) return 'rascunho';
+  const est = destinos.map((d) => d.status);
+  if (est.every((s) => s === 'cancelado')) return 'cancelada';
+  if (est.some((s) => s === 'fila' || s === 'enviando')) return 'enviando';
+  if (est.some((s) => s === 'publicado')) return est.some((s) => s === 'erro') ? 'erro' : 'publicada';
+  return 'erro';
+}
+
+async function processarPublicacao(id: string, prazo: number, opcoes: { automatico: boolean }) {
+  const sb = servico();
+  const { data: pub, error } = await sb.from('mc_publicacoes').select('*').eq('id', id).maybeSingle();
+  if (error) throw new Error('não deu para ler a publicação: ' + error.message);
+  if (!pub) throw new Error('publicação não encontrada.');
+  if (pub.status === 'cancelada') throw new Error('esta publicação está cancelada.');
+
+  const { data: destinos, error: e2 } = await sb.from('mc_publicacoes_destino')
+    .select('*').eq('publicacao_id', id).order('rede');
+  if (e2) throw new Error('não deu para ler os destinos: ' + e2.message);
+  if (!destinos?.length) throw new Error('esta publicação não tem nenhuma rede marcada.');
+
+  await sb.from('mc_publicacoes').update({ status: 'enviando', atualizado_em: agoraISO() }).eq('id', id);
+
+  const feitos: Record<string, unknown>[] = [];
+  for (const d of destinos) {
+    /* REGRA 2 — um destino por vez, e a falha de um não interrompe o laço.
+       O `catch` aqui é a última rede: processarDestino já trata o que sabe. */
+    if (opcoes.automatico && (d.tentativas ?? 0) >= MAX_TENTATIVAS_FILA && d.status !== 'enviando') {
+      feitos.push({ rede: d.rede, estado: d.status, pulado: `parou após ${MAX_TENTATIVAS_FILA} tentativas; retomar pelo painel` });
+      continue;
+    }
+    if (opcoes.automatico && d.status === 'erro') {
+      /* Erro não volta sozinho para a fila: quem decide retentar é gente. */
+      feitos.push({ rede: d.rede, estado: 'erro', pulado: 'em erro; retentar pelo painel' });
+      continue;
+    }
+    if (Date.now() > prazo) {
+      feitos.push({ rede: d.rede, estado: d.status, pulado: 'sem tempo nesta rodada; segue na próxima' });
+      continue;
+    }
+    try {
+      feitos.push(await processarDestino(pub, d, prazo));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'falha inesperada';
+      console.error('[publicar] destino', rabo(d.id), msg);
+      await gravarDestino(d.id, { status: 'erro', erro: msg });
+      feitos.push({ rede: d.rede, estado: 'erro', erro: msg });
+    }
+  }
+
+  const { data: finais } = await sb.from('mc_publicacoes_destino')
+    .select('status').eq('publicacao_id', id);
+  const novo = statusDaPublicacao(finais ?? []);
+  await sb.from('mc_publicacoes').update({ status: novo, atualizado_em: agoraISO() }).eq('id', id);
+
+  return { publicacao_id: id, status: novo, destinos: feitos };
+}
+
+/* ──────────────────────────── quem chamou ─────────────────────────────── */
+
+async function quemChamou(req: Request): Promise<{ tipo: 'service_role' | 'cron' | 'operador'; id?: string; role?: string } | null> {
+  const auth = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '').trim();
+  if (!auth) return null;
+  if (!SB_URL || !SRK) return null;
+
+  if (auth === SRK) return { tipo: 'service_role' };
+
+  const sb = servico();
+  try {
+    const { data: tk } = await sb.from('mc_integrations')
+      .select('access_token').eq('provider', 'cron_publicador').maybeSingle();
+    if (tk?.access_token && auth === tk.access_token) return { tipo: 'cron' };
+
+    const { data: u } = await sb.auth.getUser(auth);
+    if (!u?.user) return null;
+    const { data: op } = await sb.from('mc_admin_users')
+      .select('id, role').eq('auth_uid', u.user.id).maybeSingle();
+    if (!op) return null;
+    return { tipo: 'operador', id: op.id, role: op.role };
+  } catch {
+    return null;
+  }
+}
+
+/* ──────────────────────────── estado das redes ────────────────────────── */
+
+/* Barato de propósito: `health` é aberta, então NÃO bate na Meta — lê só o que
+   já está gravado. Health que faz chamada externa vira alavanca de ataque e
+   gasta cota da empresa de graça. */
+async function panorama() {
+  const ig = await credencial('instagram', IG_TOKEN_ENV);
+  const fb = await credencial('facebook');
+  const tt = await credencial('tiktok');
+  const yt = await credencial('youtube');
+  const escoposIg: string[] = Array.isArray((ig.meta as any)?.escopos) ? (ig.meta as any).escopos : [];
+
+  const podeIg = Boolean(ig.token) && (!escoposIg.length || escoposIg.includes('instagram_content_publish'));
+  const faltaFb = PERM_FACEBOOK.filter((p) => !escoposIg.includes(p) && !((fb.meta as any)?.escopos ?? []).includes(p));
+
+  return {
+    instagram: {
+      conectado: Boolean(ig.token),
+      conta: (ig.meta as any)?.ig_username ?? null,
+      pode_publicar: podeIg,
+      falta: podeIg ? [] : (ig.token ? ['instagram_content_publish'] : ['conectar o Instagram em Integrações']),
+    },
+    facebook: {
+      conectado: Boolean(fb.token || ig.token),
+      pagina: (ig.meta as any)?.pagina_nome ?? null,
+      pode_publicar: false,
+      falta: faltaFb.length ? faltaFb : ['ligar o envio de vídeo nesta função'],
+    },
+    tiktok: {
+      conectado: Boolean(tt.token),
+      token_vencido: tt.expira ? new Date(tt.expira).getTime() < Date.now() : null,
+      pode_publicar: false,
+      falta: ['auditoria do Content Posting API', 'escopos video.publish e video.upload'],
+    },
+    youtube: {
+      conectado: Boolean(yt.token),
+      canal: (yt.meta as any)?.canal_titulo ?? null,
+      pode_publicar: false,
+      falta: yt.refresh ? ['auditoria do projeto'] : ['OAuth com escopo youtube.upload', 'auditoria do projeto'],
+    },
+  };
+}
+
+/* ──────────────────────────────── porta ───────────────────────────────── */
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+
+  const inicio = Date.now();
+  const prazo = inicio + TETO_MS;
+
+  let corpo: Record<string, unknown> = {};
+  try { corpo = await req.json(); } catch { /* GET ou corpo vazio */ }
+
+  const url = new URL(req.url);
+  const action = String(corpo.action ?? url.searchParams.get('action') ?? 'health');
+
+  /* `versao` é o que deixa conferir, de fora e sem sessão, QUAL código está no
+     ar. Sem isso, depois de um deploy só dá para acreditar. */
+  if (action === 'health') {
+    return resposta({ ok: true, versao: VERSAO, redes: await panorama() });
+  }
+
+  const quem = await quemChamou(req);
+  if (!quem) {
+    return falha('sessão de operador ausente ou inválida — entre de novo no painel', null, 401);
+  }
+
+  try {
+    switch (action) {
+      /* ── processa todos os destinos de uma linha ── */
+      case 'publicar':
+      case 'agora': {
+        const id = String(corpo.publicacao_id ?? '').trim();
+
+        if (id) {
+          if (action === 'publicar') {
+            /* `publicar` respeita o relógio: adiantar é o que o `agora` faz. */
+            const { data: p } = await servico().from('mc_publicacoes')
+              .select('agendado_para, status').eq('id', id).maybeSingle();
+            if (!p) return falha('publicação não encontrada.');
+            const quando = p.agendado_para ? new Date(p.agendado_para).getTime() : 0;
+            if (quando > Date.now() + 60_000) {
+              return falha(`esta publicação está agendada para ${new Date(quando).toLocaleString('pt-BR')}. `
+                + 'Use "publicar agora" se quiser adiantar.');
+            }
+          }
+          const r = await processarPublicacao(id, prazo, { automatico: false });
+          return resposta({ ok: true, chamado_por: quem.tipo, ...r });
+        }
+
+        if (action !== 'agora') return falha('publicacao_id é obrigatório.');
+
+        /* `agora` avulso: cria a linha e publica na hora. Continua passando
+           pelo banco de propósito — publicação sem registro é publicação que
+           ninguém consegue auditar depois. */
+        const redes = listar(corpo.redes ?? corpo.plataformas);
+        if (!redes.length) return falha('escolha ao menos uma rede.');
+        const invalidas = redes.filter((r) => !CONECTORES[r]);
+        if (invalidas.length) return falha(`rede desconhecida: ${invalidas.join(', ')}.`);
+
+        const midiaCaminho = String(corpo.midia_caminho ?? '').trim() || null;
+        const midiaUrl = String(corpo.midia_url ?? '').trim() || null;
+        const listaMidias = listar(corpo.midias);
+        if (!midiaCaminho && !midiaUrl && !listaMidias.length) {
+          return falha('informe a mídia (midia_caminho, midia_url ou midias[]).');
+        }
+
+        const { data: nova, error: e1 } = await servico().from('mc_publicacoes').insert({
+          titulo: String(corpo.titulo ?? '').trim() || null,
+          legenda: String(corpo.legenda ?? '').trim() || null,
+          tipo: String(corpo.tipo ?? '').trim() || null,
+          midia_caminho: midiaCaminho ?? (listaMidias.length ? JSON.stringify(listaMidias) : null),
+          midia_url: midiaUrl,
+          midia_mime: String(corpo.midia_mime ?? '').trim() || null,
+          agendado_para: agoraISO(),
+          status: 'enviando',
+          project_id: corpo.project_id ? String(corpo.project_id) : null,
+          criado_por: quem.id ?? null,
+        }).select('id').single();
+        if (e1) return falha('não deu para criar a publicação: ' + e1.message);
+
+        const { error: e2 } = await servico().from('mc_publicacoes_destino')
+          .insert(redes.map((r) => ({ publicacao_id: nova.id, rede: r, status: 'fila' })));
+        if (e2) return falha('não deu para criar os destinos: ' + e2.message);
+
+        const r = await processarPublicacao(String(nova.id), prazo, { automatico: false });
+        return resposta({ ok: true, chamado_por: quem.tipo, criada: true, ...r });
+      }
+
+      /* ── estado de cada destino, em português ── */
+      case 'status': {
+        const id = String(corpo.publicacao_id ?? '').trim();
+        if (!id) return falha('publicacao_id é obrigatório.');
+
+        const { data: pub } = await servico().from('mc_publicacoes').select('*').eq('id', id).maybeSingle();
+        if (!pub) return falha('publicação não encontrada.');
+        const { data: destinos } = await servico().from('mc_publicacoes_destino')
+          .select('rede, status, tentativas, erro, id_externo, link, publicado_em, atualizado_em')
+          .eq('publicacao_id', id).order('rede');
+
+        const legivel: Record<string, string> = {
+          fila: 'na fila', enviando: 'enviando', publicado: 'no ar', erro: 'com erro', cancelado: 'cancelado',
+        };
+        return resposta({
+          ok: true,
+          publicacao: {
+            id: pub.id, titulo: pub.titulo, tipo: pub.tipo,
+            status: pub.status, agendado_para: pub.agendado_para,
+          },
+          destinos: (destinos ?? []).map((d) => ({
+            ...d,
+            /* A marca de container é ferramenta interna; some da tela. */
+            erro: d.erro ? String(d.erro).replace(MARCA, '').trim() || null : null,
+            resumo: legivel[d.status] ?? d.status,
+          })),
+        });
+      }
+
+      /* ── a chamada do pg_cron: pega o que venceu ── */
+      case 'fila': {
+        const limite = Math.min(Number(corpo.limite ?? 5), 20);
+        const { data: vencidas, error } = await servico().from('mc_publicacoes')
+          .select('id, agendado_para, status')
+          .in('status', ['agendada', 'enviando'])
+          .not('agendado_para', 'is', null)
+          .lte('agendado_para', agoraISO())
+          .order('agendado_para', { ascending: true })
+          .limit(limite);
+        if (error) return falha('não deu para ler a fila: ' + error.message);
+
+        const feitas: unknown[] = [];
+        for (const p of vencidas ?? []) {
+          /* Para antes de estourar o tempo da invocação: o que sobrar continua
+             vencido e sai na próxima rodada. Melhor sobrar que ser morto no
+             meio de um media_publish. */
+          if (Date.now() > prazo - 15_000) break;
+          try {
+            feitas.push(await processarPublicacao(String(p.id), prazo, { automatico: true }));
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : 'falha inesperada';
+            console.error('[publicar] fila', rabo(String(p.id)), msg);
+            feitas.push({ publicacao_id: p.id, status: 'erro', erro: msg });
+          }
+        }
+        return resposta({
+          ok: true, chamado_por: quem.tipo,
+          vencidas: (vencidas ?? []).length, processadas: feitas.length,
+          segundos: Math.round((Date.now() - inicio) / 1000), resultados: feitas,
+        });
+      }
+
+      default:
+        return falha(`ação desconhecida: ${action}`);
+    }
+  } catch (e) {
+    const { frase, cru } = traduzirMeta(e);
+    console.error('[publicar]', action, frase, cru ? JSON.stringify(cru).slice(0, 400) : '');
+    return falha(frase, cru);
+  }
+});
