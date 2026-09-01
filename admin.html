@@ -28408,6 +28408,53 @@ let PERF_POST_PERIOD = 'mes';
 /* Mes para o qual a tela recuou por falta de post no mes corrente (Date), ou
    null. Quem escreve e o filtro em renderPerfPosts; quem le e renderPerfDash. */
 let PERF_POST_RECUO = null;
+/* Quantos posts do recorte na tela entraram pela data da GRAVACAO por nao terem
+   publicacao casada. Se for >0, o periodo mostrado e aproximado e a tela diz. */
+let PERF_POST_ESTIMADOS = 0;
+
+/* DATA DE PUBLICACAO · gravar e publicar sao eventos separados por dias ou
+   semanas: o video que saiu hoje veio de projeto do mes passado. Filtrar por
+   `proj.created_at` (data da GRAVACAO) portanto responde a pergunta errada, e
+   em 01/09/2026 deixou a tela vazia com 24 posts no banco.
+   A data real mora em `mc_pecas.publicado_em`. Nao ha chave estrangeira —
+   `mc_pecas.project_id` esta 100% vazio — entao o casamento e pelo LINK,
+   normalizado por plataforma (o mesmo video aparece como youtu.be/X,
+   watch?v=X&t=30 e /shorts/X). Medido em 01/09: casa 20 de 22 links de projeto
+   e o avulso. Quem nao casa cai na data do projeto, marcado como estimada. */
+function fpChaveLink(u) {
+  if (!u) return '';
+  const url = (String(u).match(/https?:\/\/\S+/) || [String(u)])[0];
+  let m;
+  if (/youtu/.test(url)) {
+    m = url.match(/(?:v=|youtu\.be\/|\/shorts\/|\/embed\/)([A-Za-z0-9_-]{11})/);
+    return 'yt:' + (m ? m[1] : url);
+  }
+  if (/instagram/.test(url)) {
+    m = url.match(/\/(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/);
+    return 'ig:' + (m ? m[1] : url);
+  }
+  if (/tiktok/.test(url)) {
+    m = url.match(/\/video\/([0-9]+)/);
+    return 'tt:' + (m ? m[1] : url);
+  }
+  return url.trim().toLowerCase();
+}
+
+let PERF_DATAS = new Map();
+async function loadPerfDatas() {
+  const { data, error } = await sb.from('mc_pecas')
+    .select('link,publicado_em').not('publicado_em', 'is', null).not('link', 'is', null);
+  if (error) { console.warn('loadPerfDatas:', error.message); return; }
+  const m = new Map();
+  (data || []).forEach(r => {
+    const k = fpChaveLink(r.link); if (!k) return;
+    const t = new Date(r.publicado_em).getTime(); if (!t) return;
+    /* Mesmo link pode ter mais de uma peca (coleta repetida). Vale a MAIS
+       ANTIGA: e a hora em que aquilo foi ao ar. */
+    if (!m.has(k) || t < m.get(k)) m.set(k, t);
+  });
+  PERF_DATAS = m;
+}
 
 async function loadPerfPosts() {
   const { data, error } = await sb.from('mc_performance_posts').select('*').order('created_at', { ascending: false });
@@ -28480,13 +28527,19 @@ function getAllProjectPosts() {
         comments: post.comments || 0,
         rating: proj.rating || 0,
         status: post.status || proj.status || '',
-        created_at: proj.created_at
+        created_at: proj.created_at,
+        /* null quando o link nao casou com nenhuma peca: quem le decide o
+           fallback, em vez de receber a data da gravacao disfarcada de
+           publicacao. */
+        published_at: PERF_DATAS.get(fpChaveLink(_url)) || null
       });
     });
   });
 
-  // Sort: most views first, then by creation date
-  posts.sort((a, b) => (b.views - a.views) || (new Date(b.created_at) - new Date(a.created_at)));
+  // Empate de views desempata pela publicacao, nao pela gravacao.
+  posts.sort((a, b) => (b.views - a.views)
+    || ((b.published_at || new Date(b.created_at).getTime() || 0)
+      - (a.published_at || new Date(a.created_at).getTime() || 0)));
   return posts;
 }
 
@@ -30060,9 +30113,16 @@ function renderPerfDash(posts) {
                  ? fpMesNome(fpMesChave(PERF_POST_RECUO || new Date()))
                  : per === 'all'  ? 'todo o período'
                  : 'últimos ' + per + ' dias';
-  const nota = (per === 'mes' && PERF_POST_RECUO)
-             ? ' · ' + fpMesNome(fpMesChave(new Date())).split(' ')[0].toLowerCase() + ' ainda sem posts'
-             : '';
+  let nota = (per === 'mes' && PERF_POST_RECUO)
+           ? ' · ' + fpMesNome(fpMesChave(new Date())).split(' ')[0].toLowerCase() + ' ainda sem posts'
+           : '';
+  /* Dizer quantos entraram por data de gravacao: sem isso o recorte parece
+     exato quando nao e, e e justamente onde ele erra — gravar num mes e
+     publicar no outro e a rotina, nao a excecao. */
+  if (PERF_POST_ESTIMADOS > 0) {
+    nota += ' · ' + PERF_POST_ESTIMADOS
+          + (PERF_POST_ESTIMADOS === 1 ? ' sem data de publicação' : ' sem data de publicação');
+  }
   el.innerHTML = '<div class="fp-mh">'
     + '<div class="fp-mh-cab">'
     +   '<div class="fp-mh-mes"><b>Publicados</b>'
@@ -30117,6 +30177,9 @@ async function refreshAllPerfMetrics() {
     }
   } catch (e) { console.warn('refreshAllPerfMetrics', e); }
   if (btn) { btn.dataset.busy = '0'; btn.classList.remove('spinning'); btn.setAttribute('data-tip', 'Atualizar métricas'); }
+  /* Recarrega tambem as datas: o post coletado agora ja cai no mes certo sem
+     precisar recarregar a pagina inteira. */
+  await loadPerfDatas();
   renderPerfPosts();
   /* Atualizou 22 de 24 e pintava de vermelho: sucesso parcial lido como falha.
      So e erro quando NADA entrou. */
@@ -30153,24 +30216,31 @@ function renderPerfPosts() {
       comments: p.comments || 0,
       rating: p.rating || 0,
       status: '',
-      created_at: p.created_at
+      created_at: p.created_at,
+      published_at: PERF_DATAS.get(fpChaveLink(p.link)) || null
     };
   });
   // Deduplicate: remove standalone posts whose link already exists in project posts
   const projLinks = new Set(projectPosts.map(p => p.link).filter(Boolean));
   const uniqueStandalone = standalonePosts.filter(p => !p.link || !projLinks.has(p.link));
   let allPosts = [...projectPosts, ...uniqueStandalone];
-  allPosts.sort((a, b) => (b.views - a.views) || (new Date(b.created_at) - new Date(a.created_at)));
+  allPosts.sort((a, b) => (b.views - a.views)
+    || ((b.published_at || new Date(b.created_at).getTime() || 0)
+      - (a.published_at || new Date(a.created_at).getTime() || 0)));
 
-  // Filtro por período (created_at)
+  // Filtro por período (data de publicação, com a gravação como último recurso)
   PERF_POST_RECUO = null;
+  PERF_POST_ESTIMADOS = 0;
   let scoped = allPosts;
   const _period = PERF_POST_PERIOD || 'mes';
   if (_period !== 'all') {
     /* 'mes' e o primeiro dia do mes corrente no fuso de quem esta olhando; o
        resto continua sendo "ultimos N dias". Dois modos no mesmo seletor porque
        "este mes" e a pergunta de rotina e "ultimos 90" e a de comparacao. */
-    const _quando = p => p.created_at ? new Date(p.created_at).getTime() : 0;
+    /* Publicacao quando existe; gravacao so como ultimo recurso, e nesse caso
+       o post entra na conta de `_estimados` para a tela poder dizer que aquele
+       recorte nao e 100% data real. */
+    const _quando = p => p.published_at || (p.created_at ? new Date(p.created_at).getTime() : 0);
     let _cut, _ate = Infinity;
     if (_period === 'mes') { const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); _cut = d.getTime(); }
     else { _cut = Date.now() - parseInt(_period, 10) * 86400000; }
@@ -30195,6 +30265,7 @@ function renderPerfPosts() {
       }
     }
   }
+  PERF_POST_ESTIMADOS = scoped.filter(p => !p.published_at).length;
   renderPerfDash(scoped);
   let posts = [...scoped];
 
@@ -32318,7 +32389,7 @@ async function initApp() {
   // Integrações: carrega status compartilhado do servidor (vale p/ toda a equipe)
   await refreshIntegrationStatus();
 
-  await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects(), loadPerfPosts(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses(), loadNotifications(), loadInfExtras(), loadBugs(), loadUpdates()]);
+  await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects(), loadPerfPosts(), loadPerfDatas(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses(), loadNotifications(), loadInfExtras(), loadBugs(), loadUpdates()]);
   renderDashboard();
   renderRequests();
   renderCalendar();
@@ -32641,7 +32712,7 @@ async function initApp() {
         case 'perf-posts':
         case 'perf-influencers':
         case 'perf-bonificacao':
-          await Promise.all([loadPerfPosts(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses()]);
+          await Promise.all([loadPerfPosts(), loadPerfDatas(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses()]);
           if (typeof renderPerformance === 'function') renderPerformance();
           /* O Planner abre junto com Meus Posts, e não só quando alguém clica na
              aba: a tela existe para responder "o que sai hoje", e responder isso
