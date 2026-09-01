@@ -179,7 +179,7 @@
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-const VERSAO = 'pub1';
+const VERSAO = 'pub3';
 const GRAPH = 'https://graph.facebook.com/v21.0';
 const BUCKET = 'publicacoes';
 
@@ -732,33 +732,259 @@ async function redeInstagram(ctx: Contexto): Promise<Resultado> {
   return { estado: 'publicado', id_externo: idMedia, link, meta: { formato, container_id: container } };
 }
 
-/* ── FACEBOOK — não publica ainda; mede e diz exatamente o que falta ── */
+/* ── FACEBOOK — publica na Página: Reel, vídeo de feed, foto e carrossel ── */
 
 const PERM_FACEBOOK = ['pages_show_list', 'pages_read_engagement', 'pages_manage_posts'];
 
-async function redeFacebook(_ctx: Contexto): Promise<Resultado> {
-  const cred = await credencial('facebook');
-  const base = cred.token ? cred : await credencial('instagram', IG_TOKEN_ENV);
+/* A Página e o token DELA. Mesma regra do Instagram: token de página é
+   resolvido no servidor, vive só na memória da instância e nunca entra em
+   resposta nem em log. */
+let paginaCache: { id: string; nome: string; token: string; em: number } | null = null;
+
+async function paginaFacebook(usuario: string, preferida: string) {
+  if (paginaCache && Date.now() - paginaCache.em < 600_000
+      && (!preferida || paginaCache.id === preferida)) return paginaCache;
+
+  const j = await graph('me/accounts',
+    { fields: 'id,name,access_token,instagram_business_account', limit: '100' }, usuario);
+  const paginas: Record<string, any>[] = Array.isArray(j?.data) ? j.data : [];
+  if (!paginas.length) {
+    throw new Error('o token da Meta não enxerga nenhuma Página do Facebook — confira se a conta é '
+      + 'administradora da Página e se pages_show_list está no token', { cause: { code: 'SEM_PAGINA' } });
+  }
+
+  const igCred = await credencial('instagram', IG_TOKEN_ENV);
+  const igId = String((igCred.meta as any)?.ig_id ?? '');
+
+  /* Ordem de escolha: a que o admin fixou > a Página do nosso Instagram > a
+     única que existe. Nunca "a primeira da lista": com duas Páginas no token,
+     isso publicaria na errada sem avisar ninguém. */
+  const escolhida =
+    (preferida && paginas.find((p) => String(p.id) === preferida))
+    || (igId && paginas.find((p) => String(p?.instagram_business_account?.id ?? '') === igId))
+    || (paginas.length === 1 ? paginas[0] : null);
+
+  if (!escolhida) {
+    throw new Error('há mais de uma Página neste token e nenhuma está marcada como a da FullPro. '
+      + 'Grave o id em mc_integrations (provider "facebook", meta.page_id). Páginas vistas: '
+      + paginas.map((p) => `${p.name} (${p.id})`).join(', '), { cause: { code: 'PAGINA_AMBIGUA' } });
+  }
+  if (!escolhida.access_token) {
+    throw new Error(`a Página "${escolhida.name}" veio sem token — o dono do token precisa ter papel nela`,
+      { cause: { code: 'SEM_TOKEN_PAGINA' } });
+  }
+
+  paginaCache = {
+    id: String(escolhida.id), nome: String(escolhida.name ?? ''),
+    token: String(escolhida.access_token), em: Date.now(),
+  };
+  return paginaCache;
+}
+
+/* O vídeo continua sendo processado depois que a Graph responde. Publicar sem
+   esperar devolve link que dá 404 por alguns minutos. */
+async function esperarVideoFacebook(id: string, token: string, prazo: number): Promise<'pronto' | 'processando'> {
+  while (Date.now() < prazo) {
+    let s: Record<string, any> = {};
+    try {
+      const j = await graph(id, { fields: 'status' }, token);
+      s = j?.status ?? {};
+    } catch (e) {
+      /* Vídeo recém-criado às vezes ainda não responde a leitura. Só insiste
+         se der tempo; erro de permissão cai fora no throw abaixo. */
+      const c = (e as any)?.cause?.code;
+      if (c !== 100 && c !== 803) throw e;
+    }
+    const fase = String(s.video_status ?? '');
+    if (fase === 'ready' || fase === 'published') return 'pronto';
+    if (fase === 'error') {
+      throw new Error(String(s?.processing_phase?.error?.message ?? 'o Facebook recusou o vídeo no processamento'),
+        { cause: { code: 'VIDEO_ERROR', status: s } });
+    }
+    /* Fase de upload travada é o caso da retomada: o container existe mas os
+       bytes nunca chegaram. Esperar não resolve, e o operador precisa saber. */
+    if (String(s?.uploading_phase?.status ?? '') === 'error') {
+      throw new Error('o Facebook não conseguiu baixar o arquivo do Reel. Confira se o link da mídia está de pé.',
+        { cause: { code: 'UPLOAD_ERROR', status: s } });
+    }
+    await dormir(INTERVALO_POLL_MS);
+  }
+  return 'processando';
+}
+
+/* Reel é upload em TRÊS fases, e a do meio não é a Graph: é o rupload, que
+   aceita o arquivo por URL no cabeçalho `file_url` — assim os bytes não passam
+   por esta função. graph-video.facebook.com está descontinuado; não voltar a ele.
+   https://developers.facebook.com/docs/video-api/guides/reels-publishing/ */
+async function reelFacebook(pagina: { id: string; token: string }, url: string, descricao: string): Promise<string> {
+  const inicio = await graphPost(`${pagina.id}/video_reels`, { upload_phase: 'start' }, pagina.token);
+  const videoId = String(inicio?.video_id ?? '');
+  const uploadUrl = String(inicio?.upload_url ?? '');
+  if (!videoId || !uploadUrl) throw new Error('o Facebook não devolveu o endereço de upload do Reel');
+
+  let r: Response;
+  try {
+    r = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: { Authorization: `OAuth ${pagina.token}`, file_url: url },
+    });
+  } catch {
+    throw erroDeRede('rupload do Facebook');
+  }
+  const bruto = await r.text();
+  let corpo: Record<string, any> = {};
+  try { corpo = JSON.parse(bruto); } catch { /* o rupload nem sempre devolve JSON */ }
+  if (corpo?.error) throw new Error(corpo.error.message ?? 'o rupload recusou o arquivo', { cause: corpo.error });
+  if (!r.ok && corpo?.success !== true) {
+    throw new Error(`o rupload do Facebook respondeu ${r.status} ao buscar o arquivo do Reel`,
+      { cause: { code: 'RUPLOAD', status: r.status } });
+  }
+
+  /* PUBLISHED aqui, e não agendamento nativo: quem decide a hora é o nosso
+     cron, para as quatro redes seguirem a mesma fila. O Facebook aceitaria
+     scheduled_publish_time (10 min a 29 dias no Reel), mas aí metade das
+     publicações teria horário no Facebook e metade no painel. */
+  await graphPost(`${pagina.id}/video_reels`, {
+    upload_phase: 'finish', video_id: videoId, video_state: 'PUBLISHED',
+    description: descricao,
+  }, pagina.token);
+
+  return videoId;
+}
+
+function formatoFacebook(pub: Record<string, any>, m: Midia[]): 'REEL' | 'VIDEO' | 'FOTO' | 'ALBUM' | 'TEXTO' {
+  const t = semAcento(String(pub.tipo ?? ''));
+  if (!m.length) return 'TEXTO';
+  if (m.length > 1) return m.some((x) => x.ehVideo) ? 'VIDEO' : 'ALBUM';
+  if (!m[0].ehVideo) return 'FOTO';
+  /* Story e clipe curto viram Reel; vídeo longo vai para o feed, que é onde
+     ele cabe (o Reel do Facebook tem teto de 90s). */
+  return /reel|short|stor|clip|curto/.test(t) ? 'REEL' : 'VIDEO';
+}
+
+async function redeFacebook(ctx: Contexto): Promise<Resultado> {
+  /* Credencial própria se houver; senão a mesma da Meta, que é um User Token e
+     serve para as duas — foi assim que o Harry conectou. */
+  const fbCred = await credencial('facebook');
+  const base = fbCred.token ? fbCred : await credencial('instagram', IG_TOKEN_ENV);
   if (!base.token) {
     return { estado: 'erro', erro: 'O Facebook não está conectado. Um administrador conecta em Integrações.' };
   }
+
+  /* Escopo antes de qualquer chamada cara — sem isto a Meta devolve
+     "(#200) Permissions error" e ninguém sabe o que fazer com isso. */
   const escopos = await escoposDoToken(base);
   const faltando = PERM_FACEBOOK.filter((p) => !escopos.includes(p));
+  if (escopos.length && faltando.length) {
+    return {
+      estado: 'erro',
+      erro: `Faltam as permissões ${faltando.join(', ')} no token da Meta. O Harry precisa marcá-las e gerar um `
+        + 'token novo — permissão marcada no app não muda token já emitido.',
+      meta: { escopos_atuais: escopos, falta: faltando },
+    };
+  }
 
+  const pagina = await paginaFacebook(base.token, String((fbCred.meta as any)?.page_id ?? ''));
+  const legenda = String(ctx.pub.legenda ?? ctx.pub.titulo ?? '').slice(0, 5000);
+  const formato = formatoFacebook(ctx.pub, ctx.midias);
+
+  if (formato === 'TEXTO' && !legenda) {
+    return { estado: 'erro', erro: 'A publicação está sem arquivo e sem texto — não há o que postar.' };
+  }
+
+  /* ── vídeo: tem container, então retoma em vez de mandar de novo ── */
+  if (formato === 'REEL' || formato === 'VIDEO') {
+    let videoId = ctx.container ?? null;
+
+    if (!videoId) {
+      const aviso = await conferirMidia(ctx.midias[0].url);
+      if (aviso) console.warn('[publicar] facebook', rabo(ctx.dest.id), aviso);
+
+      if (formato === 'REEL') {
+        videoId = await reelFacebook(pagina, ctx.midias[0].url, legenda);
+      } else {
+        const v = await graphPost(`${pagina.id}/videos`, {
+          file_url: ctx.midias[0].url,
+          description: legenda,
+          ...(ctx.pub.titulo ? { title: String(ctx.pub.titulo).slice(0, 255) } : {}),
+        }, pagina.token);
+        videoId = String(v?.id ?? '');
+      }
+      if (!videoId) throw new Error('o Facebook não devolveu o id do vídeo');
+
+      /* Anota ANTES de esperar: se a invocação morrer no polling, a rodada
+         seguinte retoma este vídeo em vez de subir o arquivo outra vez. */
+      await gravarDestino(ctx.dest.id,
+        { status: 'enviando', erro: 'Enviado ao Facebook, processando. ' + marcarContainer(videoId) },
+        { container_id: videoId, formato });
+    }
+
+    const estado = await esperarVideoFacebook(videoId, pagina.token, ctx.prazo);
+    if (estado === 'processando') {
+      return {
+        estado: 'enviando',
+        erro: 'O Facebook ainda está processando o vídeo. O robô retoma na próxima rodada. ' + marcarContainer(videoId),
+        meta: { container_id: videoId, formato, pagina: pagina.nome },
+      };
+    }
+
+    let link: string | null = null;
+    try {
+      const j = await graph(videoId, { fields: 'permalink_url' }, pagina.token);
+      const p = String(j?.permalink_url ?? '');
+      link = p ? (p.startsWith('http') ? p : `https://www.facebook.com${p}`) : null;
+    } catch { /* o vídeo já está no ar; link é conveniência */ }
+
+    console.log('[publicar] facebook publicado', rabo(videoId), formato);
+    return { estado: 'publicado', id_externo: videoId, link, meta: { formato, pagina: pagina.nome } };
+  }
+
+  /* ── foto única ── */
+  if (formato === 'FOTO') {
+    const f = await graphPost(`${pagina.id}/photos`, {
+      url: ctx.midias[0].url, caption: legenda, published: 'true',
+    }, pagina.token);
+    /* post_id é o post no feed; id é só a foto. O operador quer o post. */
+    const idPost = String(f?.post_id ?? f?.id ?? '');
+    if (!idPost) throw new Error('o Facebook aceitou a foto mas não devolveu o id do post');
+    console.log('[publicar] facebook publicado', rabo(idPost), 'FOTO');
+    return {
+      estado: 'publicado', id_externo: idPost,
+      link: `https://www.facebook.com/${idPost.replace('_', '/posts/')}`,
+      meta: { formato, pagina: pagina.nome },
+    };
+  }
+
+  /* ── álbum: cada foto sobe despublicada e o post do feed as junta ── */
+  if (formato === 'ALBUM') {
+    const ids: string[] = [];
+    for (const m of ctx.midias) {
+      const f = await graphPost(`${pagina.id}/photos`, { url: m.url, published: 'false' }, pagina.token);
+      if (f?.id) ids.push(String(f.id));
+    }
+    if (!ids.length) throw new Error('nenhuma das fotos foi aceita pelo Facebook');
+    const params: Record<string, string> = { message: legenda };
+    ids.forEach((id, i) => { params[`attached_media[${i}]`] = JSON.stringify({ media_fbid: id }); });
+    const post = await graphPost(`${pagina.id}/feed`, params, pagina.token);
+    const idPost = String(post?.id ?? '');
+    if (!idPost) throw new Error('o Facebook não devolveu o id do post do álbum');
+    console.log('[publicar] facebook publicado', rabo(idPost), 'ALBUM', ids.length);
+    return {
+      estado: 'publicado', id_externo: idPost,
+      link: `https://www.facebook.com/${idPost.replace('_', '/posts/')}`,
+      meta: { formato, fotos: ids.length, pagina: pagina.nome },
+    };
+  }
+
+  /* ── só texto ── */
+  const post = await graphPost(`${pagina.id}/feed`, { message: legenda }, pagina.token);
+  const idPost = String(post?.id ?? '');
+  if (!idPost) throw new Error('o Facebook não devolveu o id do post');
+  console.log('[publicar] facebook publicado', rabo(idPost), 'TEXTO');
   return {
-    estado: 'erro',
-    erro: faltando.length
-      ? `O Facebook ainda não publica por aqui: faltam as permissões ${faltando.join(', ')} no token da Meta. `
-        + 'O Harry precisa adicioná-las ao app e refazer o OAuth — no mesmo consentimento do instagram_content_publish.'
-      : 'As permissões do Facebook já estão no token, mas o envio de vídeo para a Página ainda não foi ligado nesta função. '
-        + 'Avise o Harry: é o próximo passo, e não depende de aprovação da Meta.',
-    meta: {
-      escopos_atuais: escopos,
-      falta: faltando,
-      doc: 'https://developers.facebook.com/docs/video-api/guides/reels-publishing/',
-      observacao: 'Sem App Review neste caso: Standard Access basta para quem tem papel no app '
-        + '(https://developers.facebook.com/docs/graph-api/overview/access-levels/).',
-    },
+    estado: 'publicado', id_externo: idPost,
+    link: `https://www.facebook.com/${idPost.replace('_', '/posts/')}`,
+    meta: { formato, pagina: pagina.nome },
   };
 }
 
@@ -903,8 +1129,20 @@ async function processarDestino(pub: Record<string, any>, dest: Record<string, a
     const { frase, cru } = traduzirMeta(e);
     console.error('[publicar]', nome, frase, cru ? JSON.stringify(cru).slice(0, 400) : '');
     /* Se havia container em voo, a marca continua no texto: a próxima rodada
-       retoma dali em vez de criar outro. */
-    const sufixo = container ? ' ' + marcarContainer(container) : '';
+       retoma dali em vez de criar outro.
+
+       CUIDADO com o container que nasceu DENTRO desta tentativa. `container` foi
+       lido antes de chamar o conector e continua nulo — mas o conector gravou a
+       marca na linha antes de começar a esperar. Sem reler, a marca se perde
+       exatamente aqui, e o "publicar agora" seguinte sobe o arquivo OUTRA VEZ.
+       Post em dobro é o que o resto deste arquivo inteiro existe para evitar. */
+    let marca = container;
+    if (!marca) {
+      const { data } = await servico().from('mc_publicacoes_destino')
+        .select('erro, meta').eq('id', dest.id).maybeSingle();
+      if (data) marca = containerAnotado(data);
+    }
+    const sufixo = marca ? ' ' + marcarContainer(marca) : '';
     await gravarDestino(dest.id, { status: 'erro', erro: frase + sufixo }, cru ? { erro_cru: cru } : undefined);
     return { rede, estado: 'erro', erro: frase, meta: cru };
   }
@@ -1020,9 +1258,9 @@ async function panorama() {
     },
     facebook: {
       conectado: Boolean(fb.token || ig.token),
-      pagina: (ig.meta as any)?.pagina_nome ?? null,
-      pode_publicar: false,
-      falta: faltaFb.length ? faltaFb : ['ligar o envio de vídeo nesta função'],
+      pagina: (fb.meta as any)?.pagina_nome ?? (ig.meta as any)?.pagina_nome ?? null,
+      pode_publicar: Boolean(fb.token || ig.token) && !faltaFb.length,
+      falta: faltaFb,
     },
     tiktok: {
       conectado: Boolean(tt.token),
