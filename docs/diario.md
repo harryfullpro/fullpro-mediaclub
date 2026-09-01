@@ -4210,3 +4210,41 @@ inteiro. Ainda seria preciso o link para escolher a peça certa dentro do projet
 Suspeita minha que **não** se confirmou, registrada para ninguém repetir: `mc_chave_link`
 devolve NULL em 14 linhas e isso parecia defeito. São 8 stories do Instagram e 6 links de
 produto do Mercado Livre — nenhum é post de projeto, então o NULL está correto.
+
+### 01/09 (continuação) — o Facebook publica, e a fila ganhou relógio
+
+Duas peças que faltavam para o planner deixar de ser tela e virar publicação.
+
+**O relógio.** Sem cron, "agendado para as 19h" era uma linha no banco e mais nada:
+alguém teria que apertar um botão às 19h. Agora `publicar-fila` roda **de 5 em 5
+minutos** e chama a ação `fila`, que pega o que já venceu e processa. Cinco minutos
+porque é o que o operador percebe como "na hora" — e porque o piso de agendamento do
+próprio Facebook é 10 minutos, então precisão maior não teria para onde ir.
+
+Token próprio (`cron_publicador`, 64 hex gerados pelo banco), não a service role key,
+pelo mesmo motivo do coletor: a chave que ignora RLS não entra no comando de um cron,
+que aparece inteiro em qualquer dump. Trocar este é um UPDATE de uma linha.
+
+**O Facebook.** `redeFacebook` deixou de ser um aviso educado e virou envio:
+
+| O que entra | Onde cai | Como |
+|---|---|---|
+| vídeo tipo reel/short/story/clip | Reel | 3 fases; a do meio é o `rupload` com `file_url` no cabeçalho |
+| vídeo de outro tipo | feed | `/videos` com `file_url` |
+| 1 foto | feed | `/photos`, e o id que vale é o `post_id` |
+| 2+ fotos | álbum | sobem com `published=false`, o `/feed` junta em `attached_media` |
+
+Três decisões que valem registrar:
+
+- **Qual Página.** A vinculada ao nosso Instagram. Com duas Páginas no token e
+  nenhuma casando, a função **para e lista as opções** em vez de pegar a primeira:
+  publicar na Página errada não se desfaz. Fixar é gravar `meta.page_id`.
+- **Não uso o agendamento nativo**, mesmo sendo o melhor das quatro redes (10 min a
+  75 dias no feed, 29 dias no Reel). Metade das publicações com horário no Facebook e
+  metade no painel seria o jeito mais fácil de perder post de vista.
+- **O container é anotado antes da espera**, igual ao Instagram. Se a invocação morrer
+  no polling, a rodada seguinte retoma aquele vídeo em vez de subir o arquivo de novo.
+
+O `health` agora diz `facebook.pode_publicar: true` — mas isso mede **permissão, não
+resultado**. Nenhum post real saiu ainda, no Facebook nem no Instagram. Está em
+`pendencias.md` como o que é: previsão, até o primeiro post cair.

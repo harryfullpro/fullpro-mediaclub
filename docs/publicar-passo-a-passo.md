@@ -9,7 +9,7 @@ Estado de hoje, medido pelo `health` da function `publicar`:
 | Rede | Publica? | Quem resolve |
 |---|---|---|
 | Instagram | **sim** — cota 100/24h | pronto |
-| Facebook | falta ligar o envio de vídeo | código, em andamento |
+| Facebook | **sim** — Reel, vídeo de feed, foto e álbum | pronto (falta o 1º post de verdade) |
 | YouTube | não | **Harry** — OAuth de upload |
 | TikTok | não | **Harry** — auditoria + escopos |
 
@@ -97,18 +97,41 @@ Hoje o app tem só os escopos de leitura (`user.info.basic`, `user.info.stats`,
 
 ---
 
-## Facebook — não precisa de nada seu
+## Facebook — ligado em 01/09; falta você olhar o primeiro post
 
-Seu token novo já veio com `pages_show_list`, `pages_read_engagement` e
-`pages_manage_posts`. Falta só ligar o envio de vídeo na função, que é código.
+Seu token já veio com `pages_show_list`, `pages_read_engagement` e
+`pages_manage_posts`, e o envio está escrito e no ar. A função escolhe sozinha
+o formato:
 
-Duas coisas boas dessa rede, para saber ao planejar:
+| O que você manda | Onde cai no Facebook |
+|---|---|
+| 1 vídeo com tipo reel/short/story/clip | **Reel** (upload em 3 fases pelo rupload) |
+| 1 vídeo de outro tipo | **vídeo do feed** (`/videos` com `file_url`) |
+| 1 foto | **foto no feed** |
+| 2+ fotos | **álbum** (sobem despublicadas, o post do feed junta) |
+| só texto | post de texto |
 
-- **Agenda nativamente**, e é a que agenda melhor: vídeo de feed aceita
-  `scheduled_publish_time` entre 10 minutos e 75 dias; Reels, entre 10 minutos e
-  29 dias.
-- **Aceita rascunho** (`video_state=DRAFT`): dá para o operador revisar no Meta
-  Business Suite antes de subir. O Instagram não tem isso.
+**Qual Página?** A que estiver vinculada ao nosso Instagram. Se um dia o token
+enxergar duas Páginas e nenhuma casar com o Instagram, a função **para e
+reclama** em vez de chutar — publicar na Página errada é o tipo de erro que
+ninguém desfaz. Para fixar, grave o id em `mc_integrations` (provider
+`facebook`, `meta.page_id`).
+
+**O que ainda não dá para eu afirmar:** que o primeiro post sai bonito. Testar
+de verdade é postar de verdade na Página pública da FullPro, e isso é sua
+decisão, não minha. Sugestão: agende um vídeo qualquer para daqui a 10 minutos
+só no Facebook, veja cair, apague. Aí a rede está provada.
+
+Duas coisas dessa rede que valem no planejamento:
+
+- **Agenda nativamente** — vídeo de feed aceita `scheduled_publish_time` entre
+  10 minutos e 75 dias; Reels, entre 10 minutos e 29 dias. **Não estou usando**:
+  quem marca a hora é o nosso cron, para as quatro redes seguirem uma fila só.
+  Metade das publicações com horário no Facebook e metade no painel seria um
+  jeito garantido de perder post de vista.
+- **Aceita rascunho** (`video_state=DRAFT`): dá para revisar no Meta Business
+  Suite antes de subir. O Instagram não tem isso — se você quiser esse fluxo
+  para o Facebook, é uma linha, me peça.
 
 ---
 

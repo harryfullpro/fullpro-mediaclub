@@ -6,22 +6,29 @@ Ordenado por impacto. Atualizar sempre que algo for concluído ou aparecer.
 
 ## Em andamento
 
-### O botão "Configurar metas" não configura as metas da tela
-`openPerfGoalsModal()` / `savePerfGoals()` escrevem em **`mc_performance_goals`** —
-`volume_long_target`, `volume_short_target`, `views_target`, `clicks_target`,
-`pool_per_goal`, `dist_*`. A tela de Metas **não lê nada disso** desde que passou a
-apurar por `mc_metas_alvo` (os alvos) + `mc_pecas` (o realizado). O admin abre a
-engrenagem, salva, vê "Metas salvas!" e a tela não muda.
+### Publicação: o Facebook nunca postou de verdade
+O código está no ar (`publicar` v5, 01/09) e o `health` diz `pode_publicar: true`,
+mas **isso mede permissão, não resultado**. Testar de verdade é postar na Página
+pública da FullPro, e essa é decisão do dono. O teste honesto é um só: agendar um
+vídeo qualquer para daqui a 10 minutos marcando **só o Facebook**, ver cair,
+apagar. Enquanto isso não acontecer, "Facebook pronto" é uma previsão minha.
 
-Hoje quem grava `mc_metas_alvo` é SQL na mão — foi assim que os sete `grafico`
-entraram em 31/08. Falta um CRUD de verdade no modal: uma linha por meta com
-rótulo, detalhe, alvo, modo (contagem/cadência), tipos de peça, ordem e o
-**gráfico** (linha / semanas / calendario / sequencia / semanal / slots / rosca,
-ou vazio para o painel decidir). É o que destrava o dono mudar as metas de
-setembro sem pedir SQL.
+Vale para o Instagram também, com uma diferença: lá o contrato foi provado
+(`content_publishing_limit` respondeu 200, cota 100/24h, 0 usadas), mas nenhum
+post real saiu por aqui ainda.
 
-O que está em `mc_performance_goals` e ainda é usado de verdade: `pool_per_goal` e
-o rateio `dist_*`, na tela de Bonificação. Esses ficam.
+### YouTube e TikTok: parado na mão do dono, não no código
+Os dois passo a passo estão em [`publicar-passo-a-passo.md`](publicar-passo-a-passo.md).
+
+- **YouTube** — a chave de API conectada **só lê**; upload exige OAuth com escopo
+  `youtube.upload`. Preciso do Client ID e do Client Secret (redirect
+  `https://mediaclub.fullpro.com.br/admin`). Armadilha: app em "modo de teste" tem
+  refresh token que **expira em 7 dias**. E cada upload custa 1.600 das 10.000
+  unidades diárias — teto real de **6 vídeos/dia** para o projeto inteiro.
+- **TikTok** — falta o produto Content Posting API, os escopos `video.publish` e
+  `video.upload`, o domínio verificado (TXT na GoDaddy) e a **auditoria**. Antes da
+  auditoria passar, todo post por API sai `SELF_ONLY`: publicar e esperar virar
+  público não funciona.
 
 ### Régua de front-end/design: Metas e Dashboard feitos, faltam as outras
 Em 31/08/2026 passaram **Metas** e o **Dashboard** (as duas frentes). As duas
@@ -84,30 +91,6 @@ neles — o painel é estático e público de qualquer forma — mas é código 
 servido, e o `.bak` de uma edge function pode mostrar lógica que a versão atual
 já não usa. `git rm --cached` nos quatro resolve; o `.gitignore` já barra novos
 (`*.bak-*` entrou em 31/08).
-
-### O coletor de metas está no ar mas não roda sozinho — falta secret e cron
-`coletor-pecas` (edge function) traz as peças publicadas de Instagram, YouTube e
-TikTok para `mc_pecas`, e é ele que alimenta o painel de Metas. Testado contra as
-contas reais em 27/08/2026 — `/stories` devolveu 4 stories, `/media` separou 21
-REELS de 4 carrosséis, o YouTube devolveu a duração de cada vídeo. **Mas ele
-ainda não roda sozinho.** Faltam duas coisas, as duas do dono:
-
-1. ~~Criar os secrets `IG_ACCESS_TOKEN` e `YOUTUBE_API_KEY`~~ — **resolvido de
-   outro jeito em 28/08/2026**: as duas credenciais agora são conectadas pelo
-   próprio painel (Integrações), gravadas em `mc_integrations` e lidas dali pelo
-   `coletor-pecas`. Não precisa mais mexer em secret. **Falta o dono conectar as
-   duas uma vez** — hoje as duas linhas dizem "não conectado, ainda usando a
-   chave pública do config.js".
-2. ~~Agendar de hora em hora~~ — **FEITO em 31/08/2026**: `pg_cron` e `pg_net`
-   instalados, job `coletor-pecas-hora` no minuto 7 de cada hora. Testado
-   disparando pelo mesmo caminho do cron: `chamado_por: cron`, 121 peças
-   encontradas e 121 gravadas, zero erros.
-
-**O agendamento não é opcional:** story do Instagram vive 24 horas e `/stories`
-só devolve o que está no ar AGORA. Sem cron, story publicado numa sexta à noite
-simplesmente não existe na segunda — e não há como buscar depois. O botão
-"Atualizar" da tela de Metas cobre o dia a dia de quem está com a aba aberta,
-nada mais.
 
 ### `mc_clips` está vazio e a meta de 40 clips não tem fonte
 `select count(*) from mc_clips where recorded_at is not null` = **0**. Os 6 clips
