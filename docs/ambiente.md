@@ -312,3 +312,31 @@ cai calada no `body` e mede a página inteira. Confirme quantos nós entraram.
 1,14:1 num elemento que era 13,73:1): `void offsetHeight` **não** termina transição — ele
 força layout, não animação; e o caminho mais barato é medir **um tema por avaliação**, em
 vez de trocar e esperar dentro da mesma chamada.
+
+## Os jobs do pg_cron são um encadeamento, não quatro coisas soltas
+
+Mudar o horário de um quebra o outro **em silêncio**. Descoberto em 01/09 quando movi o
+coletor para 30 em 30 minutos e deixei metade das rodadas sem token de TikTok.
+
+| Minuto | Job | Por que nessa ordem |
+|---|---|---|
+| `:06,:36` | `tiktok-renovar` | o token do TikTok dura 24h e **só é renovado quando a `tiktok-proxy` é chamada**; o coletor lê `mc_integrations` direto e não passa por ela |
+| `:07,:37` | `coletor-pecas-30min` | precisa achar o token já fresco |
+| `:12,:42` | `vincular-pecas-projeto` | roda depois do coletor, sobre as peças que ele acabou de gravar |
+| `*/5` | `publicar-fila` | independente dos outros |
+
+**Regra: ao mexer no horário do coletor, mexa no `tiktok-renovar` junto**, mantendo-o um
+minuto antes. Sem isso o coletor grava "tiktok: token vencido" e o TikTok some do painel
+sem ninguém perceber — que é exatamente o que aquele job existe para evitar.
+
+### Cota, com os números conferidos (01/09/2026)
+
+- **YouTube** — o coletor gasta ~4 unidades por rodada (~2 páginas de `playlistItems` +
+  ~2 lotes de `videos`) contra teto de 10.000/dia. A 30 min são ~192/dia, ~2%.
+  *Armadilha:* o "Page Summary" no topo da página de cota do Google ainda diz que
+  `videos.insert` custa 1600 unidades, contradizendo a tabela normativa da mesma página —
+  é o resumo que está velho. Desde 01/06/2026 `videos.insert` e `search.list` têm baldes
+  próprios de 100/dia, fora do balde comum.
+- **TikTok** — `user/info`, `video/query` e `video/list` a 600/minuto. 48 rodadas/dia não
+  chegam perto.
+- **Meta** — poucas chamadas por rodada, sem limite que morda nessa ordem.
