@@ -5974,6 +5974,56 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   letter-spacing: .02em; color: var(--text-muted); overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; cursor: help; }
 
+/* ── planner de publicações ───────────────────────────────────────────────
+   Sem caixa: faixa de título com fio, e a semana em sete colunas. O dia de
+   hoje é o único com marca — é a coluna que responde "o que sai agora". */
+.fp-pl-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
+  flex-wrap: wrap; padding: 16px 0 10px; border-bottom: 1px solid var(--border); }
+.fp-pl-cab b { font-family: 'FullPro Sans', sans-serif; font-weight: 800; text-transform: uppercase;
+  font-size: 13px; letter-spacing: .09em; color: var(--text); }
+.fp-pl-cab span { display: block; margin-top: 3px; font-size: 11.5px; color: var(--text-muted); }
+
+.fp-pl-semana { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px;
+  background: var(--border); border-bottom: 1px solid var(--border); margin-bottom: 6px; }
+.fp-pl-dia { background: var(--bg); padding: 10px 8px 12px; min-width: 0; }
+.fp-pl-dia.hoje { background: color-mix(in srgb, var(--azul) 7%, var(--bg)); }
+.fp-pl-dia-n { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 8px; }
+.fp-pl-dia.hoje .fp-pl-dia-n { color: var(--azul); }
+.fp-pl-slot { padding: 6px 0; border-top: 1px solid var(--border); }
+.fp-pl-slot:first-of-type { border-top: 0; }
+.fp-pl-slot b { display: block; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.fp-pl-slot span { display: block; font-size: 10.5px; color: var(--text-muted); line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; }
+.fp-pl-slot-r { display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap; }
+.fp-pl-vazio { font-size: 12px; color: var(--border); }
+
+.fp-pl-lin { display: flex; align-items: center; gap: 14px; padding: 11px 0;
+  border-bottom: 1px solid var(--border); font-size: 12.5px; }
+.fp-pl-lin.atrasada .fp-pl-quando b { color: var(--danger); }
+.fp-pl-quando { flex: 0 0 62px; }
+.fp-pl-quando b { display: block; font-size: 12.5px; font-weight: 800; }
+.fp-pl-quando small { font-size: 10.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.fp-pl-tit { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fp-pl-tit small { display: block; font-size: 10.5px; color: var(--text-muted); text-transform: uppercase;
+  letter-spacing: .05em; }
+.fp-pl-dest { flex: 0 0 auto; display: flex; gap: 6px; align-items: center; }
+/* O estado da rede vira um anel em volta do logotipo: a marca fica NO logo, e
+   não numa bolinha ao lado, senão a linha vira uma sopa de pontinhos. */
+.fp-pl-rede { display: inline-flex; padding: 2px; border-radius: 50%;
+  box-shadow: 0 0 0 1.5px var(--st); }
+.fp-pl-acao { flex: 0 0 auto; font-size: 11px; }
+.fp-pl-acao i { color: var(--text-muted); font-style: normal; }
+.fp-pl-acao button { border: 0; background: none; padding: 0; cursor: pointer; font: inherit;
+  font-size: 11px; font-weight: 700; color: var(--azul); }
+.fp-pl-acao button:hover { opacity: .7; }
+
+@media (max-width: 900px) {
+  /* Sete colunas em 375px dão 45px cada: ilegível. Vira rolagem lateral, com
+     a coluna larga o suficiente para o horário e as redes caberem. */
+  .fp-pl-semana { grid-template-columns: repeat(7, minmax(104px, 1fr)); overflow-x: auto; }
+}
+
 /* ── triagem: próprio ou repost ───────────────────────────────────────────
    Story quase nunca tem legenda: decidir "próprio ou repost" por texto é
    impossível, e é por isso que aqui o que manda é a IMAGEM. Cards no formato do
@@ -7980,7 +8030,11 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
         <div>
           <h1>Meus Posts</h1>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" id="ppAcoesPlanner">
+          <button class="action-btn" type="button" onclick="fpPlannerGradeAbrir()">Cronograma</button>
+          <button class="fp-new-btn" data-tip="Agendar publicação" aria-label="Agendar publicação" onclick="fpPubAbrir()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        </div>
+        <div style="display:none;gap:8px;align-items:center;flex-wrap:wrap" id="ppAcoesPublicados">
           <select id="perfPostPeriod" class="proj-sort-select" style="margin:0" onchange="setPerfPostPeriod(this.value)">
             <option value="all">Todo o período</option>
             <option value="7">Últimos 7 dias</option>
@@ -7991,6 +8045,22 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
           <button class="fp-new-btn" data-tip="Novo post" aria-label="Novo post" onclick="openAddPostModal()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
         </div>
       </div>
+
+      <!-- Duas abas porque são dois tempos verbais: o Planner é o que VAI sair,
+           Publicados é o que JÁ saiu com métrica. Misturar os dois numa lista só
+           foi o que fez o operador registrar post à mão — ele não tinha onde
+           planejar, então registrava depois. -->
+      <div class="inf-tabs">
+        <button class="inf-tab active" data-pptab="planner" onclick="fpPostsAba('planner')">Planner</button>
+        <button class="inf-tab" data-pptab="publicados" onclick="fpPostsAba('publicados')">Publicados</button>
+      </div>
+
+      <div class="inf-tab-content active" id="ppTabPlanner">
+        <div id="ppPlannerGrade"></div>
+        <div id="ppPlannerFila"></div>
+      </div>
+
+      <div class="inf-tab-content" id="ppTabPublicados">
       <div class="perf-dash" id="perfPostsDash"></div>
       <div class="proj-filters" style="margin-bottom:16px">
         <button class="proj-filter-chip active" data-post-filter="todos" onclick="setPerfPostFilter('todos')" style="text-transform:uppercase">Todos</button>
@@ -8005,6 +8075,7 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
         <button class="proj-filter-chip" data-post-filter="tt" onclick="setPerfPostFilter('tt')"><span class="fp-dest-lg" data-fp-logo="tiktok" style="width:14px;height:14px;vertical-align:-2px"></span> TT</button>
       </div>
       <div id="perfPostsList"></div>
+      </div>
     </div>
 
     <!-- INFLUENCIADORES HUB VIEW -->
@@ -12701,7 +12772,8 @@ function fpProjTh(rotulo, campo, dica) {
 /* Destinos deitados: no maximo dois na linha e o resto em "+N". Empilhados,
    tres tags levavam a linha de 63px para 109px (medido) e a tabela perdia o
    ritmo — o detalhe mostra todos. */
-const FP_DEST_NOMES = { youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads' };
+const FP_DEST_NOMES = {
+  facebook: 'Facebook', youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', reels: 'Reels', clips: 'Clips', site: 'Site', ads: 'Ads' };
 
 /* ── Logotipos dos destinos ──────────────────────────────────────────────
    A coluna Destinos era texto em caixa colorida ("SHORTS  TIKTOK  +1"). Virou
@@ -12732,6 +12804,10 @@ const FP_DEST_NOMES = { youtube: 'YouTube', shorts: 'Shorts', tiktok: 'TikTok', 
    claro e vira um bloco branco no tema escuro.
    ───────────────────────────────────────────────────────────────────────── */
 const FP_DEST_ARTE = {
+  /* Facebook entrou com o planner: publicar simultaneamente inclui a Página,
+     e o mapa de logotipos é UM só — logo que nasce fora dele é logo que
+     alguém desenha diferente na segunda tela. */
+  facebook: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#1877F2"/><path d="M16.7 15.5l.53-3.46h-3.32V9.79c0-.95.46-1.87 1.95-1.87h1.51V4.98s-1.37-.23-2.68-.23c-2.73 0-4.52 1.66-4.52 4.66v2.63H7.13v3.46h3.04v8.36a12.1 12.1 0 003.74 0V15.5h2.79z" fill="#fff"/></svg>',
   youtube: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z" fill="#ff0000"/><path d="M9.545 15.568V8.432L15.818 12l-6.273 3.568z" fill="#fff"/></svg>',
   shorts:  '<img src="data:image/png;base64,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" alt="" loading="lazy">',
   tiktok:  '<svg viewBox="-2 -2 28 28" aria-hidden="true"><path d="M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" fill="#25f4ee" transform="translate(-1.4,0.7)"/><path d="M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" fill="#fe2c55" transform="translate(1.4,-0.7)"/><path d="M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" fill="var(--dest-nota)"/></svg>',
@@ -29297,6 +29373,174 @@ async function fpRepostMarcar(id, valor) {
 window.fpRepostAbrir = fpRepostAbrir;
 window.fpRepostFechar = fpRepostFechar;
 window.fpRepostMarcar = fpRepostMarcar;
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PLANNER DE PUBLICAÇÕES  [FP-PLANNER 01/09/2026]
+
+   Duas coisas diferentes moram aqui, e é por isso que são duas tabelas:
+
+   1. O CRONOGRAMA (mc_planner_grade) — o combinado com o analista de social
+      media: "terça 18h sai short no Instagram e no TikTok". É uma REGRA, não
+      um post. Não tem mídia, não tem data, se repete toda semana.
+   2. As PUBLICAÇÕES (mc_publicacoes + mc_publicacoes_destino) — o post de
+      verdade, com arquivo, legenda, hora marcada e uma linha por REDE.
+
+   Por que destino é tabela separada: cada rede falha sozinha. O Instagram
+   publica, o TikTok recusa por falta de auditoria, o YouTube fica sem cota —
+   e isso tem que aparecer rede a rede, com o erro de cada uma. Um status só
+   na publicação obrigaria a escolher entre "publicado" e "erro" quando a
+   verdade é "publicado em duas de quatro".
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const FP_REDES = {
+  instagram: { nome: 'Instagram', logo: 'reels' },
+  facebook:  { nome: 'Facebook',  logo: 'facebook' },
+  tiktok:    { nome: 'TikTok',    logo: 'tiktok' },
+  youtube:   { nome: 'YouTube',   logo: 'shorts' },
+};
+const FP_DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+const FP_DIAS_CURTO = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+
+let PLANNER_GRADE = [];
+let PLANNER_FILA = [];
+let _plannerCarregado = 0;
+
+function fpPostsAba(qual) {
+  document.querySelectorAll('#view-perf-posts .inf-tab').forEach(function (b) {
+    b.classList.toggle('active', b.dataset.pptab === qual);
+  });
+  const planner = qual === 'planner';
+  document.getElementById('ppTabPlanner').classList.toggle('active', planner);
+  document.getElementById('ppTabPublicados').classList.toggle('active', !planner);
+  document.getElementById('ppAcoesPlanner').style.display = planner ? 'flex' : 'none';
+  document.getElementById('ppAcoesPublicados').style.display = planner ? 'none' : 'flex';
+  if (planner) fpPlannerCarregar();
+}
+
+async function fpPlannerCarregar(forcar) {
+  if (!forcar && Date.now() - _plannerCarregado < 30000 && PLANNER_GRADE.length) {
+    fpPlannerPintar(); return;
+  }
+  try {
+    /* A fila traz os destinos junto (relacionamento), senão seriam N+1
+       consultas para desenhar N linhas. */
+    const [g, f] = await Promise.all([
+      sb.from('mc_planner_grade').select('*').order('dia_semana').order('hora'),
+      sb.from('mc_publicacoes')
+        .select('*, destinos:mc_publicacoes_destino(*)')
+        .order('agendado_para', { ascending: true })
+        .limit(80),
+    ]);
+    if (g.error) throw g.error;
+    if (f.error) throw f.error;
+    PLANNER_GRADE = g.data || [];
+    PLANNER_FILA = f.data || [];
+    _plannerCarregado = Date.now();
+  } catch (e) {
+    document.getElementById('ppPlannerGrade').innerHTML =
+      '<div class="fp-vazio fp-moldura">' + FP_ICO_ATENCAO
+      + '<h3>Não deu para ler o planner</h3><p>' + escHtml(e.message || String(e)) + '</p></div>';
+    return;
+  }
+  fpPlannerPintar();
+}
+
+function fpPlannerRedesHtml(redes, tam) {
+  return (redes || []).map(function (r) {
+    const d = FP_REDES[r];
+    return d ? fpDestLogoHtml(d.logo, tam || 14) : '';
+  }).join('');
+}
+
+/* ── o cronograma da semana ──────────────────────────────────────────────
+   Sete colunas, uma por dia, na ordem da semana. Sem caixa: cada dia é uma
+   coluna com fio embaixo do nome, igual ao resto do painel. O dia de HOJE
+   ganha a marca — é a coluna que responde "o que sai agora". */
+function fpPlannerGradeHtml() {
+  const hoje = new Date().getDay();
+  const porDia = FP_DIAS.map(function (_, i) {
+    return PLANNER_GRADE.filter(function (g) { return g.dia_semana === i && g.ativo !== false; });
+  });
+  const vazio = !PLANNER_GRADE.length;
+
+  return '<div class="fp-pl-cab">'
+    + '<div><b>Cronograma da semana</b><span>' + (vazio
+        ? 'ainda não cadastrado — é o combinado que se repete toda semana'
+        : PLANNER_GRADE.length + (PLANNER_GRADE.length === 1 ? ' horário fixo' : ' horários fixos')) + '</span></div>'
+    + (isUserAdmin() ? '<button class="action-btn" type="button" onclick="fpPlannerGradeAbrir()">Editar</button>' : '')
+    + '</div>'
+    + '<div class="fp-pl-semana">'
+    + porDia.map(function (slots, i) {
+        return '<div class="fp-pl-dia' + (i === hoje ? ' hoje' : '') + '">'
+          + '<div class="fp-pl-dia-n">' + FP_DIAS_CURTO[i] + '</div>'
+          + (slots.length
+              ? slots.map(function (g) {
+                  return '<div class="fp-pl-slot">'
+                    + '<b>' + escHtml(String(g.hora || '').slice(0, 5)) + '</b>'
+                    + '<span>' + escHtml(g.rotulo || g.tipo || '') + '</span>'
+                    + '<div class="fp-pl-slot-r">' + fpPlannerRedesHtml(g.plataformas, 13) + '</div>'
+                    + '</div>';
+                }).join('')
+              : '<div class="fp-pl-vazio">—</div>')
+          + '</div>';
+      }).join('')
+    + '</div>';
+}
+
+/* ── a fila ──────────────────────────────────────────────────────────────
+   O que está marcado para sair, e o que já saiu, com uma marca por rede. */
+function fpPlannerStatusRede(d) {
+  const cor = d.status === 'publicado' ? 'var(--success)'
+            : d.status === 'erro' ? 'var(--danger)'
+            : d.status === 'enviando' ? 'var(--warning)' : 'var(--text-muted)';
+  const dica = d.status === 'erro' ? (d.erro || 'falhou')
+             : d.status === 'publicado' ? 'publicado' + (d.link ? ' — abrir' : '')
+             : d.status;
+  const logo = '<span class="fp-pl-rede" style="--st:' + cor + '" data-tip="'
+    + escHtml((FP_REDES[d.rede] ? FP_REDES[d.rede].nome : d.rede) + ': ' + dica) + '">'
+    + fpPlannerRedesHtml([d.rede], 16) + '</span>';
+  return d.link
+    ? '<a href="' + escHtml(d.link) + '" target="_blank" rel="noopener noreferrer">' + logo + '</a>'
+    : logo;
+}
+
+function fpPlannerFilaHtml() {
+  if (!PLANNER_FILA.length) {
+    return '<div class="fp-pl-cab"><div><b>Agendadas</b><span>nada na fila</span></div></div>'
+      + '<p class="fp-aviso-sub" style="padding:14px 0">'
+      + 'Nenhuma publicação agendada. O <b>+</b> aí em cima marca a primeira.</p>';
+  }
+  const agora = Date.now();
+  return '<div class="fp-pl-cab"><div><b>Agendadas</b><span>'
+    + PLANNER_FILA.length + (PLANNER_FILA.length === 1 ? ' publicação' : ' publicações') + '</span></div></div>'
+    + PLANNER_FILA.map(function (p) {
+        const dest = p.destinos || [];
+        const quando = p.agendado_para ? new Date(p.agendado_para) : null;
+        const atrasada = quando && quando.getTime() < agora && p.status !== 'publicado' && p.status !== 'erro';
+        return '<div class="fp-pl-lin' + (atrasada ? ' atrasada' : '') + '">'
+          + '<span class="fp-pl-quando">' + (quando
+              ? '<b>' + quando.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) + '</b>'
+                + '<small>' + quando.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + '</small>'
+              : '<b>—</b>') + '</span>'
+          + '<span class="fp-pl-tit">' + escHtml(p.titulo || '(sem título)')
+          + (p.tipo ? '<small>' + escHtml(p.tipo) + '</small>' : '') + '</span>'
+          + '<span class="fp-pl-dest">' + dest.map(fpPlannerStatusRede).join('') + '</span>'
+          + '<span class="fp-pl-acao">'
+          + (p.status === 'publicado' ? '<i>publicado</i>'
+             : '<button type="button" onclick="fpPubPublicarAgora(\'' + fpJs(p.id) + '\')">publicar agora</button>')
+          + '</span></div>';
+      }).join('');
+}
+
+function fpPlannerPintar() {
+  const g = document.getElementById('ppPlannerGrade');
+  const f = document.getElementById('ppPlannerFila');
+  if (g) { g.innerHTML = fpPlannerGradeHtml(); fpDestPintarEstaticos(g); }
+  if (f) { f.innerHTML = fpPlannerFilaHtml(); fpDestPintarEstaticos(f); }
+}
+
+window.fpPostsAba = fpPostsAba;
+window.fpPlannerCarregar = fpPlannerCarregar;
 
 function fpMetasTrocarMes(mes) {
   fpMetasCarregar(mes, true).then(renderPerfMetas);
