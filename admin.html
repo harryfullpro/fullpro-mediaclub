@@ -28411,6 +28411,9 @@ let PERF_POST_RECUO = null;
 /* Quantos posts do recorte na tela entraram pela data da GRAVACAO por nao terem
    publicacao casada. Se for >0, o periodo mostrado e aproximado e a tela diz. */
 let PERF_POST_ESTIMADOS = 0;
+/* Quantas publicacoes vieram registradas mais de uma vez (mesmo video em dois
+   projetos, ou avulso repetindo um post de projeto). */
+let PERF_POST_REPETIDOS = 0;
 
 /* DATA DE PUBLICACAO · gravar e publicar sao eventos separados por dias ou
    semanas: o video que saiu hoje veio de projeto do mes passado. Filtrar por
@@ -30119,9 +30122,10 @@ function renderPerfDash(posts) {
   /* Dizer quantos entraram por data de gravacao: sem isso o recorte parece
      exato quando nao e, e e justamente onde ele erra — gravar num mes e
      publicar no outro e a rotina, nao a excecao. */
-  if (PERF_POST_ESTIMADOS > 0) {
-    nota += ' · ' + PERF_POST_ESTIMADOS
-          + (PERF_POST_ESTIMADOS === 1 ? ' sem data de publicação' : ' sem data de publicação');
+  if (PERF_POST_ESTIMADOS > 0) nota += ' · ' + PERF_POST_ESTIMADOS + ' sem data de publicação';
+  if (PERF_POST_REPETIDOS > 0) {
+    nota += ' · ' + PERF_POST_REPETIDOS
+          + (PERF_POST_REPETIDOS === 1 ? ' registro repetido' : ' registros repetidos');
   }
   el.innerHTML = '<div class="fp-mh">'
     + '<div class="fp-mh-cab">'
@@ -30220,10 +30224,29 @@ function renderPerfPosts() {
       published_at: PERF_DATAS.get(fpChaveLink(p.link)) || null
     };
   });
-  // Deduplicate: remove standalone posts whose link already exists in project posts
-  const projLinks = new Set(projectPosts.map(p => p.link).filter(Boolean));
-  const uniqueStandalone = standalonePosts.filter(p => !p.link || !projLinks.has(p.link));
-  let allPosts = [...projectPosts, ...uniqueStandalone];
+  /* DEDUP POR PUBLICACAO, nao por string de link. O dedup antigo comparava
+     `p.link` exato e so olhava avulso-contra-projeto — deixava passar os dois
+     casos que existem de verdade no banco:
+       1. o mesmo Reel gravado em DOIS projetos ("TAKES ESCAPE F850" e "Video
+          com F850"), um como /p/X/ e outro como /reel/X/?utm_source=...;
+       2. qualquer avulso digitado com a URL em formato diferente do projeto.
+     O resultado era o post aparecendo duas vezes e as views contando EM DOBRO
+     no placar. Aqui a chave e a mesma normalizacao da data (`fpChaveLink`).
+     Fica quem tem mais metrica — empate, fica quem tem projeto —, e o total de
+     repetidos vai para a tela: registro duplicado e coisa para o dono arrumar
+     na origem, nao para o painel esconder. */
+  const _porPub = new Map();
+  PERF_POST_REPETIDOS = 0;
+  [...projectPosts, ...standalonePosts].forEach(p => {
+    const k = fpChaveLink(p.link) || ('id:' + p.id);
+    const antes = _porPub.get(k);
+    if (!antes) { _porPub.set(k, p); return; }
+    PERF_POST_REPETIDOS++;
+    const fica = (p.views > antes.views)
+      || (p.views === antes.views && !antes.projectId && p.projectId) ? p : antes;
+    _porPub.set(k, fica);
+  });
+  let allPosts = [..._porPub.values()];
   allPosts.sort((a, b) => (b.views - a.views)
     || ((b.published_at || new Date(b.created_at).getTime() || 0)
       - (a.published_at || new Date(a.created_at).getTime() || 0)));
