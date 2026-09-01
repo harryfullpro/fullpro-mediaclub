@@ -6092,6 +6092,18 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   padding: 5px 0; margin: -5px 0; }
 .fp-pl-slot-h input { width: 14px; height: 14px; margin: 0; flex: 0 0 auto;
   accent-color: var(--success); cursor: pointer; }
+/* Azul quando quem marcou foi o SISTEMA, verde quando foi gente. Sem isso o
+   operador nao distingue "eu conferi" de "deduziram por mim", e a diferenca
+   importa: a deducao pode estar errada e ele e quem sabe.
+   A cor nao carrega sozinha nada essencial: marcado x nao marcado ja esta na
+   propria caixa, que independe de cor. A origem tambem vai no `data-tip` e no
+   aria-label, para quem nao distingue os dois tons. */
+.fp-pl-slot.auto .fp-pl-slot-h input { accent-color: var(--azul); }
+/* No tema claro o --success mede 2,83:1 sobre o fundo da coluna — abaixo dos
+   3:1 de objeto grafico. Verde mais fundo SO na caixa (3,17): o token e
+   compartilhado e mede bem no resto. */
+[data-theme="light"] .fp-pl-slot-h input { accent-color: #1a9e5c; }
+[data-theme="light"] .fp-pl-slot.auto .fp-pl-slot-h input { accent-color: var(--azul); }
 .fp-pl-slot-h b { flex: 1 1 auto; }
 /* Feito: recua o TEXTO. Os logotipos ficam como estao — plataforma e
    identidade, nao status, e apaga-los tiraria a informacao de qual rede era. */
@@ -29933,7 +29945,8 @@ const FP_DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'S
    sempre, em toda semana seguinte. Por isso a chave e (grade_id, DATA), e a
    grade passou a mostrar o dia do mes em cada coluna: se a caixa vale "esta
    terca", a coluna precisa dizer que terca e essa. */
-let PLANNER_FEITO = new Map();          /* 'gradeId|AAAA-MM-DD' -> true */
+let PLANNER_FEITO = new Map();          /* 'gradeId|AAAA-MM-DD' -> true|false, so o que foi na MAO */
+let PLANNER_AUTO  = new Map();          /* idem, deduzido do que realmente saiu */
 let _plannerSemanaCarregada = '';       /* domingo da semana que esta em PLANNER_FEITO */
 
 /* Data local, nunca toISOString: o fuso de Brasilia joga tudo para o dia
@@ -29952,6 +29965,58 @@ function fpPlannerSemana() {
   return dias;
 }
 function fpPlannerFeitoChave(gradeId, data) { return gradeId + '|' + data; }
+
+/* MARCACAO AUTOMATICA · o horario se marca sozinho quando existe publicacao que
+   corresponde a ele. Medido em 01/09 antes de escolher a chave: `(dia_semana,
+   tipo, plataforma)` e UNICO em toda a grade — os dois `short` do mesmo dia tem
+   plataformas disjuntas ("Reel do dia" e IG/FB, "O mesmo video" e TikTok/YT).
+   Por isso o casamento e exato e NAO precisa de janela de tempo nem de
+   desempate por proximidade, que seria chute.
+   Na duvida NAO marca: horario marcado sem ter saido e pior que horario por
+   marcar — o primeiro faz o combinado parecer cumprido. */
+function fpPlannerTipoCasa(slotTipo, p) {
+  const t = p.tipo || '';
+  /* story proprio x repost e distincao de CLASSE, nao de tipo: os dois sao
+     `story` em mc_pecas. Sem isto, o repost das 19h marcaria o story das 13h.
+     Exige a classe DITA, nunca "diferente de repost": story sem classificar
+     pode ser qualquer uma das tres, e marcar por eliminacao e adivinhar. Mesma
+     regra que ja vale na meta de stories, onde so `proprio` conta —
+     republicacao de post nosso nao e story do dia. Medido em 01/09: 5 dos 9
+     stories ja tem classe automatica, entao exigir nao mata o recurso. */
+  const classe = p.classe || p.auto_classe || '';
+  if (slotTipo === 'story')  return t === 'story' && classe === 'proprio';
+  if (slotTipo === 'repost') return t === 'story' && classe === 'repost';
+  if (slotTipo === 'longo')  return t.indexOf('longo') === 0;
+  return t === slotTipo;
+}
+function fpPlannerAutoCalcular(pecas) {
+  const semana = fpPlannerSemana();
+  const m = new Map();
+  (PLANNER_GRADE || []).forEach(function (g) {
+    /* Sem `tipo` no horario nao ha como casar sem adivinhar pelo rotulo, entao
+       esse fica so no manual. */
+    if (g.ativo === false || !g.tipo) return;
+    const dia = semana[g.dia_semana]; if (!dia) return;
+    const data = fpDataLocal(dia);
+    const plats = g.plataformas || [];
+    const achou = (pecas || []).some(function (p) {
+      if (!p.publicado_em) return false;
+      if (fpDataLocal(new Date(p.publicado_em)) !== data) return false;
+      if (plats.indexOf(p.plataforma) < 0) return false;
+      return fpPlannerTipoCasa(g.tipo, p);
+    });
+    if (achou) m.set(fpPlannerFeitoChave(g.id, data), true);
+  });
+  return m;
+}
+/* A mao MANDA sobre o automatico, inclusive para desmarcar: se o operador diz
+   que nao saiu, nao saiu — ele viu, o casamento so deduziu. */
+function fpPlannerConcluido(gradeId, data) {
+  const k = fpPlannerFeitoChave(gradeId, data);
+  if (PLANNER_FEITO.has(k)) return { feito: PLANNER_FEITO.get(k) === true, auto: false };
+  const a = PLANNER_AUTO.get(k) === true;
+  return { feito: a, auto: a };
+}
 const FP_DIAS_CURTO = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
 
 let PLANNER_GRADE = [];
@@ -29996,7 +30061,7 @@ async function fpPlannerCarregar(forcar) {
   try {
     /* A fila traz os destinos junto (relacionamento), senão seriam N+1
        consultas para desenhar N linhas. */
-    const [g, f, c] = await Promise.all([
+    const [g, f, c, pc] = await Promise.all([
       sb.from('mc_planner_grade').select('*').order('dia_semana').order('hora'),
       sb.from('mc_publicacoes')
         .select('*, destinos:mc_publicacoes_destino(*)')
@@ -30004,6 +30069,12 @@ async function fpPlannerCarregar(forcar) {
         .limit(80),
       sb.from('mc_planner_feito').select('grade_id,data,feito')
         .gte('data', _dom).lte('data', fpDataLocal(_sem[6])),
+      /* O que REALMENTE saiu na semana, para o horario se marcar sozinho.
+         Intervalo em instante local: o dia 0 comeca a meia-noite daqui, nao a
+         de Greenwich. */
+      sb.from('mc_pecas').select('publicado_em,plataforma,tipo,classe,auto_classe')
+        .gte('publicado_em', new Date(_sem[0].getFullYear(), _sem[0].getMonth(), _sem[0].getDate()).toISOString())
+        .lt('publicado_em', new Date(_sem[6].getFullYear(), _sem[6].getMonth(), _sem[6].getDate() + 1).toISOString()),
     ]);
     if (g.error) throw g.error;
     if (f.error) throw f.error;
@@ -30015,11 +30086,16 @@ async function fpPlannerCarregar(forcar) {
     if (c.error) { console.warn('mc_planner_feito:', c.error.message); PLANNER_FEITO = new Map(); }
     else {
       const m = new Map();
+      /* Guarda `false` TAMBEM: linha com feito=false e o operador dizendo "nao
+         saiu", e e isso que derruba a marcacao automatica. Filtrar aqui faria a
+         correcao dele sumir no recarregamento. */
       (c.data || []).forEach(function (r) {
-        if (r.feito) m.set(fpPlannerFeitoChave(r.grade_id, r.data), true);
+        m.set(fpPlannerFeitoChave(r.grade_id, r.data), r.feito === true);
       });
       PLANNER_FEITO = m;
     }
+    if (pc.error) { console.warn('mc_pecas (planner):', pc.error.message); PLANNER_AUTO = new Map(); }
+    else PLANNER_AUTO = fpPlannerAutoCalcular(pc.data || []);
     _plannerSemanaCarregada = _dom;
     _plannerCarregado = Date.now();
   } catch (e) {
@@ -30069,11 +30145,14 @@ function fpPlannerGradeHtml() {
               ? slots.map(function (g) {
                   const hora = String(g.hora || '').slice(0, 5);
                   const rot = g.rotulo || g.tipo || '';
-                  const feito = PLANNER_FEITO.get(fpPlannerFeitoChave(g.id, data)) === true;
-                  return '<div class="fp-pl-slot' + (feito ? ' feito' : '') + '">'
-                    + '<label class="fp-pl-slot-h">'
+                  const est = fpPlannerConcluido(g.id, data);
+                  const feito = est.feito;
+                  return '<div class="fp-pl-slot' + (feito ? ' feito' : '') + (est.auto ? ' auto' : '') + '">'
+                    + '<label class="fp-pl-slot-h"'
+                    +   (est.auto ? ' data-tip="Marcado pelo sistema: houve publicação que corresponde a este horário. Desmarque se não foi."' : '')
+                    +   '>'
                     +   '<input type="checkbox"' + (feito ? ' checked' : '')
-                    +     ' aria-label="' + escHtml('Concluído — ' + (rot || 'horário') + ', '
+                    +     ' aria-label="' + escHtml('Concluído' + (est.auto ? ' (marcado pelo sistema)' : '') + ' — ' + (rot || 'horário') + ', '
                           + FP_DIAS[i] + ' ' + semana[i].getDate() + ' às ' + hora) + '"'
                     +     ' onchange="fpPlannerMarcar(this, \'' + fpJs(g.id) + '\', \'' + data + '\')">'
                     +   '<b>' + escHtml(hora) + '</b>'
@@ -30148,10 +30227,15 @@ async function fpPlannerMarcar(el, gradeId, data) {
   const chave = fpPlannerFeitoChave(gradeId, data);
   const aplicar = function (v) {
     el.checked = v;
-    if (slot) slot.classList.toggle('feito', v);
-    if (v) PLANNER_FEITO.set(chave, true); else PLANNER_FEITO.delete(chave);
+    if (slot) { slot.classList.toggle('feito', v); slot.classList.remove('auto'); }
+    /* Grava o booleano em vez de apagar a linha: apagar devolveria o horario
+       para o automatico, e um desmarque logo depois de o sistema marcar seria
+       desfeito sozinho no proximo carregamento. Mao registrada manda. */
+    PLANNER_FEITO.set(chave, v);
   };
   aplicar(marcado);
+  const lb = el.closest('.fp-pl-slot-h');
+  if (lb) lb.removeAttribute('data-tip');
   el.disabled = true;
   const { error } = await sb.from('mc_planner_feito').upsert({
     grade_id: gradeId, data: data, feito: marcado,
@@ -30534,7 +30618,42 @@ async function fetchStatsForLink(link) {
   } catch (e) { console.warn('fetchStatsForLink', e); }
   return null;
 }
-async function refreshAllPerfMetrics() {
+/* ── metricas sozinhas, de 30 em 30 minutos ───────────────────────────────
+   Regra: enquanto Meus Posts estiver aberto, os numeros nao passam de 30 min.
+   Nao e um `setInterval` de 30 min e sim um tique de 1 min que confere quanto
+   tempo passou — assim a aba que ficou duas horas escondida atualiza UMA vez
+   ao voltar, em vez de quatro rodadas enfileiradas.
+   Tres guardas, e cada uma evita um desperdicio real:
+     - so com a aba visivel: aba de fundo gastaria cota sem ninguem olhando;
+     - so com a tela aberta: uma rodada e UMA CHAMADA DE API POR POST, e o
+       painel tem outras 30 telas;
+     - carimbo no localStorage: sem ele, todo F5 dispararia a varredura
+       inteira, e recarregar pagina e o gesto mais comum que existe. */
+const FP_MET_JANELA = 30 * 60 * 1000;
+function fpMetUltima() {
+  try { return parseInt(localStorage.getItem('fp_met_ultima') || '0', 10) || 0; } catch (e) { return 0; }
+}
+function fpMetCarimbar() {
+  try { localStorage.setItem('fp_met_ultima', String(Date.now())); } catch (e) {}
+}
+function fpMetPodeRodar() {
+  if (document.visibilityState !== 'visible') return false;
+  const v = document.getElementById('view-perf-posts');
+  if (!v || v.style.display === 'none' || !v.offsetParent) return false;
+  return Date.now() - fpMetUltima() >= FP_MET_JANELA;
+}
+async function fpMetTique() {
+  if (!fpMetPodeRodar()) return;
+  /* Carimba ANTES de rodar: a varredura leva dezenas de segundos e o tique
+     seguinte chegaria no meio dela. */
+  fpMetCarimbar();
+  await refreshAllPerfMetrics(true);
+}
+setInterval(fpMetTique, 60000);
+document.addEventListener('visibilitychange', function () { fpMetTique(); });
+window.fpMetTique = fpMetTique;
+
+async function refreshAllPerfMetrics(automatico) {
   const btn = document.getElementById('perfRefreshBtn');
   if (btn && btn.dataset.busy === '1') return;
   if (btn) { btn.dataset.busy = '1'; btn.classList.add('spinning'); btn.setAttribute('data-tip', 'Atualizando…'); }
@@ -30563,11 +30682,24 @@ async function refreshAllPerfMetrics() {
   /* Recarrega tambem as datas: o post coletado agora ja cai no mes certo sem
      precisar recarregar a pagina inteira. */
   await loadPerfDatas();
+  /* A conclusao do cronograma sai do que ja foi publicado: se a rodada trouxe
+     peca nova, o horario correspondente se marca sozinho sem precisar de outro
+     clique. `true` porque o cache de 30s barraria a releitura. */
+  if (typeof fpPlannerCarregar === 'function') { try { await fpPlannerCarregar(true); } catch (e) { console.warn('planner', e); } }
   renderPerfPosts();
+  fpMetCarimbar();
   /* Atualizou 22 de 24 e pintava de vermelho: sucesso parcial lido como falha.
-     So e erro quando NADA entrou. */
-  fpToast('Métricas atualizadas: ' + updated + (failed ? ' · ' + failed + ' sem dados (API não conectada ou link não suportado)' : ''),
-    updated > 0 ? 'ok' : 'erro');
+     So e erro quando NADA entrou.
+     Na rodada AUTOMATICA nao ha aviso de sucesso — recado de 30 em 30 minutos
+     que ninguem pediu vira ruido, e aviso que vira ruido para de ser lido. So
+     fala quando NADA entrou, que e o caso em que o silencio esconderia numero
+     velho passando por atual. */
+  if (!automatico) {
+    fpToast('Métricas atualizadas: ' + updated + (failed ? ' · ' + failed + ' sem dados (API não conectada ou link não suportado)' : ''),
+      updated > 0 ? 'ok' : 'erro');
+  } else if (updated === 0 && failed > 0) {
+    fpToast('Métricas não atualizaram: ' + failed + ' sem dados (API não conectada)', 'erro');
+  }
 }
 
 function renderPerfPosts() {
@@ -33139,6 +33271,9 @@ async function initApp() {
                 levaria a aba junto. Ativar a aba nao depende de dado. */
           if (viewName === 'perf-posts' && typeof fpPostsAba === 'function') {
             try { fpPostsAba(PP_ABA); } catch (e) { console.warn('fpPostsAba', e); }
+            /* Sem await: a varredura de metricas nao pode segurar a abertura
+               da tela. Ela repinta sozinha quando termina. */
+            if (typeof fpMetTique === 'function') fpMetTique();
           }
           await Promise.all([loadPerfPosts(), loadPerfDatas(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses()]);
           if (typeof renderPerformance === 'function') renderPerformance();
