@@ -3042,6 +3042,7 @@
     gap: 16px;
   }
   .post-card {
+    display: block; text-decoration: none; color: inherit;
     border-radius: 14px;
     overflow: hidden;
     background: var(--bg-card);
@@ -3049,6 +3050,12 @@
     cursor: pointer;
     transition: transform .18s ease, box-shadow .18s ease;
   }
+  /* Sem regra de foco aqui de proposito. O anel vem do bloco global
+     `a:focus-visible`, que usa !important porque existem 28 `outline: none`
+     espalhados no arquivo e nenhum pode apagar o foco de quem usa teclado.
+     Cheguei a escrever uma regra propria (2px, offset 3px) e ela nunca pegou:
+     era CSS morto com cara de intencao. Medido: o anel do sistema da 5,34:1
+     sobre o fundo, acima dos 3:1 de objeto grafico. */
   .post-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 30px rgba(0,0,0,.25);
@@ -3157,12 +3164,15 @@
     display: flex; align-items: center; justify-content: space-between;
   }
   .post-card-stars { display: flex; gap: 1px; }
+  /* AQUI a nota e LEITURA, nao controle: nao existe handler nenhum nestas
+     estrelas — quem edita e a tela do projeto (`setPostRating`). Elas tinham
+     `cursor: pointer` e ficavam douradas no hover, prometendo um clique que
+     nao existe; e como o clique subia para o card, quem tentasse dar nota era
+     mandado para o YouTube. Sem cursor e sem hover, viram o que sao. */
   .post-card-star {
-    font-size: 14px; color: var(--nota-vazia); cursor: pointer;
-    transition: color .1s;
+    font-size: 14px; color: var(--nota-vazia);
   }
   .post-card-star.active { color: var(--nota-cheia); }
-  .post-card-star:hover { color: var(--nota-cheia); }
   .post-card-delete {
     background: none; border: none; cursor: pointer;
     font-size: 18px; color: var(--text-muted); line-height: 1;
@@ -6229,6 +6239,11 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-mh-mes b { display: block; font-size: 20px; font-weight: 850; line-height: 1.05;
   letter-spacing: -.02em; }
 .fp-mh-mes span { display: block; margin-top: 3px; font-size: 12px; color: var(--text-muted); }
+/* Ressalvas do recorte (dado estimado, registro repetido). Linha propria e
+   menor: encadeadas na linha do mes viravam uma frase corrida de 98 caracteres
+   com quatro cláusulas, que ninguém lê até o fim. Some quando não há nenhuma —
+   nota de rodapé só existe quando há rodapé. */
+.fp-mh-mes span.fp-mh-obs { margin-top: 5px; font-size: 11px; line-height: 1.45; }
 .fp-mh-placar { flex: 0 0 auto; text-align: right; }
 .fp-mh-placar b { display: block; font-variant-numeric: tabular-nums;
   font-size: 27px; font-weight: 850; line-height: 1; letter-spacing: -.03em; }
@@ -30179,22 +30194,28 @@ function renderPerfDash(posts) {
                  ? fpMesNome(fpMesChave(PERF_POST_RECUO || new Date()))
                  : per === 'all'  ? 'todo o período'
                  : 'últimos ' + per + ' dias';
-  let nota = (per === 'mes' && PERF_POST_RECUO)
-           ? ' · ' + fpMesNome(fpMesChave(new Date())).split(' ')[0].toLowerCase() + ' ainda sem posts'
-           : '';
-  /* Dizer quantos entraram por data de gravacao: sem isso o recorte parece
-     exato quando nao e, e e justamente onde ele erra — gravar num mes e
-     publicar no outro e a rotina, nao a excecao. */
-  if (PERF_POST_ESTIMADOS > 0) nota += ' · ' + PERF_POST_ESTIMADOS + ' sem data de publicação';
+  /* As ressalvas ficam FORA da linha do mes. Encadeadas nela davam
+     "Julho 2026 · 7 posts · setembro ainda sem posts · 4 sem data de
+     publicação · 2 registros repetidos" — 98 caracteres numa frase so, onde o
+     que importa (o mes e a contagem) some no meio do que e rodape.
+     Dizer quantos entraram por data de gravacao importa: sem isso o recorte
+     parece exato justamente onde ele erra — gravar num mes e publicar no outro
+     e a rotina, nao a excecao. */
+  const obs = [];
+  if (per === 'mes' && PERF_POST_RECUO) {
+    obs.push(fpMesNome(fpMesChave(new Date())).split(' ')[0].toLowerCase() + ' ainda sem posts');
+  }
+  if (PERF_POST_ESTIMADOS > 0) obs.push(PERF_POST_ESTIMADOS + ' sem data de publicação');
   if (PERF_POST_REPETIDOS > 0) {
-    nota += ' · ' + PERF_POST_REPETIDOS
-          + (PERF_POST_REPETIDOS === 1 ? ' registro repetido' : ' registros repetidos');
+    obs.push(PERF_POST_REPETIDOS + (PERF_POST_REPETIDOS === 1 ? ' registro repetido' : ' registros repetidos'));
   }
   el.innerHTML = '<div class="fp-mh">'
     + '<div class="fp-mh-cab">'
     +   '<div class="fp-mh-mes"><b>Publicados</b>'
     +     '<span>' + escHtml(contexto) + ' · ' + num(posts.length)
-    +       (posts.length === 1 ? ' post' : ' posts') + escHtml(nota) + '</span></div>'
+    +       (posts.length === 1 ? ' post' : ' posts') + '</span>'
+    +     (obs.length ? '<span class="fp-mh-obs">' + escHtml(obs.join(' · ')) + '</span>' : '')
+    +   '</div>'
     +   '<div class="fp-mh-placar"><b>' + fmtKPosts(v) + '</b><span>views</span></div>'
     + '</div>'
     + '<div class="fp-fatos">'
@@ -30421,14 +30442,25 @@ function renderPerfPosts() {
 
     // Stars
     const stars = Array.from({ length: 5 }, (_, i) =>
-      `<span class="post-card-star${(i + 1) <= (p.rating || 0) ? ' active' : ''}">\u2605</span>`
+      `<span class="post-card-star${(i + 1) <= (p.rating || 0) ? ' active' : ''}" aria-hidden="true">\u2605</span>`
     ).join('');
 
-    return `<div class="post-card${isShort ? ' post-card-short' : ''}" onclick="${p.link ? `window.open('${p.link.replace(/'/g, "\\'")}','_blank')` : ''}">
+    /* <a> de verdade, nao div com onclick. Dois motivos medidos em 01/09:
+       1. TECLADO — a tela tinha 8 elementos focaveis (o seletor de periodo e
+          os 6 chips) e NENHUM dos cards. Quem nao usa mouse nao conseguia
+          abrir post nenhum, que e a acao principal da tela. Com <a href> vem
+          de graca: ordem de tabulacao, Enter, botao do meio, "abrir em nova
+          aba" do menu de contexto.
+       2. ESCAPE — o onclick interpolava a URL crua dentro de um atributo
+          delimitado por aspa dupla, escapando so a aspa SIMPLES (para a string
+          JS). Testado: link com aspa dupla trunca o onclick e cria atributo
+          solto no elemento. O link e digitado pelo operador. Agora vai por
+          href passado no escHtml, uma camada so. */
+    return `<a class="post-card${isShort ? ' post-card-short' : ''}"${p.link ? ` href="${escHtml(p.link)}" target="_blank" rel="noopener noreferrer"` : ''}>
       <div class="post-card-thumb" style="background:${gradient}">
         <div class="post-card-no-thumb">${platIcons[plat] || ''}<span class="post-card-no-thumb-lbl">sem capa</span></div>
         ${hasThumb ? `<img src="${escHtml(thumb)}" alt="" loading="lazy" onerror="this.remove()" onload="if(this.naturalWidth<=120)this.remove()">` : ''}
-        <div class="post-card-type" title="${isShort ? 'Vertical 9:16' : 'Horizontal 16:9'}">${isShort ? '9:16' : '16:9'}</div>
+        <div class="post-card-type" role="img" data-tip="${isShort ? 'Vertical 9:16' : 'Horizontal 16:9'}" aria-label="${isShort ? 'Vertical 9:16' : 'Horizontal 16:9'}">${isShort ? '9:16' : '16:9'}</div>
         <div class="post-card-plats"><span class="post-card-plat">${platIcons[plat] || ''}</span></div>
         <div class="post-card-overlay">
           <div class="post-card-stat"><svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg> ${fmtKPosts(p.views || 0)}</div>
@@ -30441,10 +30473,10 @@ function renderPerfPosts() {
         <div class="post-card-title">${escHtml(p.title)}</div>
         <div style="font-size: 11px;color:var(--text-muted);margin-bottom:4px">${p.label}</div>
         <div class="post-card-meta">
-          <div class="post-card-stars">${stars}</div>
+          <div class="post-card-stars" role="img" aria-label="Nota ${p.rating || 0} de 5">${stars}</div>
         </div>
       </div>
-    </div>`;
+    </a>`;
   }).join('')}</div>
     </div>
   </div></div>`;
