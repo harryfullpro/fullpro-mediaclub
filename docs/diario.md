@@ -4182,3 +4182,31 @@ contra as 24 que Meus Posts mostra. A tela é alimentada por `mc_projects.posts`
 `mc_performance_posts`, que são listas mantidas à mão — o registro real de publicação é
 outro. Consolidar as três fontes é decisão do dono, não conserto de tela. Ver
 `pendencias.md`.
+
+### 01/09 (continuação) — views em dobro
+
+A outra sessão preencheu `mc_pecas.project_id` e avisou que **uma chave apontava para dois
+projetos**, sugerindo conferir se meu casamento em memória atribuía errado em silêncio.
+Conferi e o achado foi outro, pior e meu.
+
+| Verificação | Resultado |
+|---|---|
+| Chaves com `publicado_em` conflitante (minha normalização) | **0** — o casamento por link não erra a data |
+| Chaves em mais de um projeto | 1 — `ig:Dav5nAoRB5j` |
+| Efeito na tela | o Reel aparecia **2×** e as views contavam **em dobro** no placar |
+
+O dedup comparava `p.link` como **string exata** e só olhava avulso-contra-projeto. O mesmo
+Reel estava gravado como `/p/X/` num projeto e `/reel/X/?utm_source=` no outro — formas
+diferentes do mesmo post, então passava batido, e projeto-contra-projeto nunca era testado.
+
+Agora a chave do dedup é a mesma da data (`fpChaveLink`). Fica quem tem mais métrica;
+empate, fica quem tem projeto. O total vai para a tela (`· 1 registro repetido`): registro
+duplicado se arruma na origem, não se esconde no painel.
+
+**Por que o `project_id` não aposenta o casamento por link:** a unidade em Meus Posts é
+*projeto + canal* — um projeto tem até três posts (yt/ig/tt) — e `project_id` é do projeto
+inteiro. Ainda seria preciso o link para escolher a peça certa dentro do projeto.
+
+Suspeita minha que **não** se confirmou, registrada para ninguém repetir: `mc_chave_link`
+devolve NULL em 14 linhas e isso parecia defeito. São 8 stories do Instagram e 6 links de
+produto do Mercado Livre — nenhum é post de projeto, então o NULL está correto.
