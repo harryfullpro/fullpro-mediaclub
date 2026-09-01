@@ -4442,3 +4442,60 @@ pediu vira ruído, e aviso que vira ruído para de ser lido. Só fala quando nad
 No banco, o coletor passou de 1×/hora para `:07` e `:37`, e o vínculo para `:12` e `:42`.
 A conta de cota veio do comentário do próprio coletor: ~4 unidades do YouTube por rodada
 contra teto de 10.000/dia — de ~96 para ~192, menos de 2%.
+
+### 01/09 (fim do dia) — o YouTube publica, e a auditoria não era necessária
+
+O dia terminou com as três redes da Meta e o YouTube publicando de verdade. Mas o
+que vale registrar não é o código: é ter previsto errado com confiança.
+
+**A previsão errada.** Levantei na doc oficial do Google, verbatim e numa página
+atualizada em 27/08/2026, que vídeo subido por API de projeto não auditado fica
+travado em privado sem recurso. Passei a afirmação por duas refutações
+adversariais; as duas confirmaram a citação. Escrevi para o dono que ele
+precisaria encarar um formulário de auditoria de sete seções com razão social,
+empresa controladora e endereço legal.
+
+O Harry perguntou: *"a gente chegou a testar pra ver?"* Não tínhamos. Ele insistiu
+— *"às vezes testando dá certo, não se sabe"* — subimos um vídeo de 4 segundos, e
+**saiu público**. A trava não se aplicou.
+
+A lição não é "a doc estava errada". A doc dizia o que diz. A lição é que **duas
+checagens adversariais confirmaram a CITAÇÃO e nenhuma podia confirmar o
+COMPORTAMENTO** — e eu tratei uma como se fosse a outra. Refutar fonte é barato;
+testar custava um vídeo de 4 segundos e teria vindo antes.
+
+Ainda houve um susto no meio: o vídeo não aparecia na listagem do Studio e eu
+levantei uma teoria (era Short, fica em outra aba). Medi e a teoria caiu — não é
+Short: `/shorts/` redireciona com 303, o vídeo é 522×360 deitado e
+`isShortsEligible` é false. Era página velha do Studio. Um Cmd+Shift+R resolveu.
+
+**O que ficou pronto**
+
+| | |
+|---|---|
+| OAuth de upload | linha própria `youtube_oauth`, separada da chave de API |
+| Upload | resumable, retomando de onde parou pela URI de sessão gravada |
+| Agendamento | nativo do YouTube (`publishAt`), ao contrário do Facebook |
+| Capa | `thumbnails.set`, campo no modal, teto de 2 MB |
+| Título, tags, categoria | campos próprios; ids de categoria vindos de `videoCategories.list` |
+
+**Três achados que mudaram decisão:**
+
+1. **A cota mudou e quase toda informação de terceiro está velha.** Desde
+   01/06/2026 o `videos.insert` tem balde próprio de 100/dia a 1 unidade. O número
+   1600 que eu tinha escrito aqui ontem sobrevive até hoje no "Page Summary"
+   gerado no topo da página do Google, **contradizendo a tabela normativa da mesma
+   página**. Foi a lente de "o que envelheceu" que pegou.
+2. **`notifySubscribers` é true por padrão.** O vídeo de teste de 3 segundos
+   notificou todos os inscritos, sem ninguém pedir. Invertemos o padrão no painel.
+3. **Com `youtube.upload` só existem 4 métodos chamáveis**, e `videos.update` não
+   é um deles: não há segunda chance de corrigir título depois do upload. Subir o
+   escopo para `youtube` resolve isso e libera playlist.
+
+**Cards e tela final: não existem em API nenhuma.** A prova é de ausência de
+verdade: o Discovery Document oficial (519 KB, revisão 20260831) tem zero
+ocorrências de `card` e `endScreen`, e o mesmo vale para Content ID, Analytics e
+Reporting. Mas a refutação corrigiu meu absoluto: **LER desempenho de card e de
+tela final existe** — a Analytics API tem `cardImpressions`/`cardClicks` e a
+Reporting API tem os report types `channel_cards_a1` e `channel_end_screens_a2`.
+Criar não dá; medir dá.

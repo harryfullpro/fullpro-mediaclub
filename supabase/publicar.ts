@@ -1654,11 +1654,13 @@ async function panorama() {
         falta: autorizado ? [] : (oauth.client_id
           ? ['autorizar em Integrações → Autorizar upload']
           : ['configurar o app do Google e autorizar em Integrações']),
-        /* O primeiro upload é que responde: projeto não auditado faz o vídeo
-           nascer travado como privado, e isso só se vê depois de subir um. */
-        observacao: autorizado
-          ? 'auditoria do projeto ainda não confirmada — o primeiro vídeo dirá se sai público'
-          : null,
+        /* MEDIDO EM 01/09/2026, e derruba a previsão que estava escrita aqui: o
+           primeiro vídeo subiu às 15:30 e saiu PÚBLICO. A trava de "projeto de
+           API não auditado nasce travado em privado" está documentada pelo
+           Google (developers.google.com/youtube/v3/docs/videos, atualizada em
+           27/08/2026) e NÃO se aplicou a este projeto. Ou seja: não é preciso
+           passar pela auditoria de conformidade para publicar. */
+        observacao: null,
       };
     })(),
   };
