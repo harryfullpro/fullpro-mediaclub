@@ -28405,6 +28405,9 @@ let PERF_POST_FILTER = 'todos';
    inteiro por cima do que ele publicou hoje — a pergunta diaria e "como foi
    este mes", nao "como foi desde sempre". O historico continua a um clique. */
 let PERF_POST_PERIOD = 'mes';
+/* Mes para o qual a tela recuou por falta de post no mes corrente (Date), ou
+   null. Quem escreve e o filtro em renderPerfPosts; quem le e renderPerfDash. */
+let PERF_POST_RECUO = null;
 
 async function loadPerfPosts() {
   const { data, error } = await sb.from('mc_performance_posts').select('*').order('created_at', { ascending: false });
@@ -30027,14 +30030,22 @@ function renderPerfDash(posts) {
      não precisam de cor nenhuma para se distinguir: precisam de ordem e de
      `tabular-nums`. */
   const per = PERF_POST_PERIOD || 'mes';
-  const contexto = per === 'mes'  ? fpMesNome(fpMesChave(new Date()))
+  /* Quando houve recuo, o rotulo e o mes que esta NA TELA — dizer
+     "Setembro 2026" com 22 posts de agosto listados embaixo seria pior que a
+     tela vazia. O motivo vai no fim, como clausula propria, para nao espremer
+     "sem posts em setembro" entre o mes e a contagem. */
+  const contexto = per === 'mes'
+                 ? fpMesNome(fpMesChave(PERF_POST_RECUO || new Date()))
                  : per === 'all'  ? 'todo o período'
                  : 'últimos ' + per + ' dias';
+  const nota = (per === 'mes' && PERF_POST_RECUO)
+             ? ' · ' + fpMesNome(fpMesChave(new Date())).split(' ')[0].toLowerCase() + ' ainda sem posts'
+             : '';
   el.innerHTML = '<div class="fp-mh">'
     + '<div class="fp-mh-cab">'
     +   '<div class="fp-mh-mes"><b>Publicados</b>'
     +     '<span>' + escHtml(contexto) + ' · ' + num(posts.length)
-    +       (posts.length === 1 ? ' post' : ' posts') + '</span></div>'
+    +       (posts.length === 1 ? ' post' : ' posts') + escHtml(nota) + '</span></div>'
     +   '<div class="fp-mh-placar"><b>' + fmtKPosts(v) + '</b><span>views</span></div>'
     + '</div>'
     + '<div class="fp-fatos">'
@@ -30085,7 +30096,10 @@ async function refreshAllPerfMetrics() {
   } catch (e) { console.warn('refreshAllPerfMetrics', e); }
   if (btn) { btn.dataset.busy = '0'; btn.classList.remove('spinning'); btn.setAttribute('data-tip', 'Atualizar métricas'); }
   renderPerfPosts();
-  fpToast('Métricas atualizadas: ' + updated + (failed ? ' · ' + failed + ' sem dados (API não conectada ou link não suportado)' : ''), 'erro');
+  /* Atualizou 22 de 24 e pintava de vermelho: sucesso parcial lido como falha.
+     So e erro quando NADA entrou. */
+  fpToast('Métricas atualizadas: ' + updated + (failed ? ' · ' + failed + ' sem dados (API não conectada ou link não suportado)' : ''),
+    updated > 0 ? 'ok' : 'erro');
 }
 
 function renderPerfPosts() {
@@ -30127,16 +30141,37 @@ function renderPerfPosts() {
   allPosts.sort((a, b) => (b.views - a.views) || (new Date(b.created_at) - new Date(a.created_at)));
 
   // Filtro por período (created_at)
+  PERF_POST_RECUO = null;
   let scoped = allPosts;
   const _period = PERF_POST_PERIOD || 'mes';
   if (_period !== 'all') {
     /* 'mes' e o primeiro dia do mes corrente no fuso de quem esta olhando; o
        resto continua sendo "ultimos N dias". Dois modos no mesmo seletor porque
        "este mes" e a pergunta de rotina e "ultimos 90" e a de comparacao. */
-    let _cut;
+    const _quando = p => p.created_at ? new Date(p.created_at).getTime() : 0;
+    let _cut, _ate = Infinity;
     if (_period === 'mes') { const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); _cut = d.getTime(); }
     else { _cut = Date.now() - parseInt(_period, 10) * 86400000; }
-    scoped = allPosts.filter(p => { const t = p.created_at ? new Date(p.created_at).getTime() : 0; return t >= _cut; });
+    scoped = allPosts.filter(p => { const t = _quando(p); return t >= _cut && t < _ate; });
+
+    /* RECUO DE MES · o post gravado no projeto tem link, views, likes e
+       comments — e mais nada. NAO EXISTE data de publicacao, entao o unico
+       corte possivel e a data de criacao do PROJETO. Nos primeiros dias do mes,
+       ou em mes onde ninguem abriu projeto novo, "este mes" e legitimamente
+       zero: em 01/09/2026 a tela abriu totalmente em branco, parecendo
+       quebrada, com 24 posts no banco.
+       Em vez de mostrar nada, cai para o mes mais recente que TEM post — e
+       avisa que caiu, senao o numero mente sobre de quando ele e. */
+    if (_period === 'mes' && !scoped.length && allPosts.length) {
+      const _ult = allPosts.map(_quando).filter(Boolean).sort((a, b) => b - a)[0];
+      if (_ult) {
+        const _ini = new Date(_ult); _ini.setDate(1); _ini.setHours(0, 0, 0, 0);
+        const _fim = new Date(_ini); _fim.setMonth(_fim.getMonth() + 1);
+        _cut = _ini.getTime(); _ate = _fim.getTime();
+        scoped = allPosts.filter(p => { const t = _quando(p); return t >= _cut && t < _ate; });
+        PERF_POST_RECUO = _ini;
+      }
+    }
   }
   renderPerfDash(scoped);
   let posts = [...scoped];
