@@ -6080,43 +6080,38 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-pl-slot { padding: 6px 0; border-top: 1px solid var(--border); }
 .fp-pl-slot:first-of-type { border-top: 0; }
 .fp-pl-slot b { display: block; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
-/* A caixa fica na linha da hora, dentro de um <label>: assim a hora tambem e
-   alvo de clique, em vez de um quadradinho de 14px sozinho numa coluna
-   estreita. O <label> tambem da nome acessivel e foco de teclado de graca. */
-/* padding aumenta o ALVO, a margem negativa devolve o espaco: a caixa nativa
-   tem 14px e o toque minimo e 24. Num celular, errar o toque aqui marca o
-   horario errado como feito — erro de dado, nao incomodo. A folga cabe dentro
-   do proprio padding do slot, entao nenhum alvo invade o do vizinho e a grade
-   nao cresce um pixel. */
-.fp-pl-slot-h { display: flex; align-items: center; gap: 6px; cursor: pointer;
-  padding: 5px 0; margin: -5px 0; }
-.fp-pl-slot-h input { width: 14px; height: 14px; margin: 0; flex: 0 0 auto;
-  accent-color: var(--success); cursor: pointer; }
-/* Azul quando quem marcou foi o SISTEMA, verde quando foi gente. Sem isso o
-   operador nao distingue "eu conferi" de "deduziram por mim", e a diferenca
-   importa: a deducao pode estar errada e ele e quem sabe.
-   A cor nao carrega sozinha nada essencial: marcado x nao marcado ja esta na
-   propria caixa, que independe de cor. A origem tambem vai no `data-tip` e no
-   aria-label, para quem nao distingue os dois tons. */
-.fp-pl-slot.auto .fp-pl-slot-h input { accent-color: var(--azul); }
-/* No tema claro o --success mede 2,83:1 sobre o fundo da coluna — abaixo dos
-   3:1 de objeto grafico. Verde mais fundo SO na caixa (3,17): o token e
-   compartilhado e mede bem no resto. */
-[data-theme="light"] .fp-pl-slot-h input { accent-color: #1a9e5c; }
-[data-theme="light"] .fp-pl-slot.auto .fp-pl-slot-h input { accent-color: var(--azul); }
+.fp-pl-slot-h { display: flex; align-items: center; gap: 6px; }
 .fp-pl-slot-h b { flex: 1 1 auto; }
-/* Feito: recua o TEXTO. Os logotipos ficam como estao — plataforma e
-   identidade, nao status, e apaga-los tiraria a informacao de qual rede era. */
-.fp-pl-slot.feito .fp-pl-slot-h b, .fp-pl-slot.feito > span { color: var(--text-muted); }
+/* A marca ocupa lugar fixo, e o lugar existe mesmo sem marca: sem isso os
+   horarios de um dia perdiam o alinhamento entre si conforme uns saissem e
+   outros nao, e a coluna de marcas deixaria de ser varrivel de relance — que e
+   o unico motivo de ela existir.
+   `.fp-pl-slot .fp-pl-ok` e nao `.fp-pl-ok` sozinho: a regra do rotulo,
+   `.fp-pl-slot span` (0,1,1), pega QUALQUER span dentro do slot e vencia
+   (0,1,0), pintando a marca de --text-muted. Media CINZA no tema escuro; no
+   claro o override de tema tinha 2 classes e ganhava por acidente. */
+.fp-pl-slot .fp-pl-ok { flex: 0 0 12px; width: 12px; height: 12px; display: block;
+  font-size: 0; color: var(--success); }
+.fp-pl-slot .fp-pl-ok svg { display: block; }
+/* No tema claro o --success mede 2,83:1 sobre o fundo da coluna, abaixo dos
+   3:1 de objeto grafico. Verde mais fundo so aqui; o token e compartilhado e
+   mede bem no resto do painel.
+   O tom foi escolhido pela coluna PIOR, nao pela comum: a coluna de hoje tem
+   fundo tingido e mais ESCURO, e verde escuro sobre fundo mais escuro perde
+   contraste — um primeiro tom passava em 3,17 na coluna comum e reprovava em
+   2,90 na de hoje. Este da 3,51 e 3,40. */
+[data-theme="light"] .fp-pl-slot .fp-pl-ok { color: #1a955a; }
+/* Sem recuo no texto do horario cumprido. A marca ja diz que saiu, e apagar o
+   texto por cima disso faz a linha parecer DESLIGADA — o oposto do que o dono
+   quer ver, que e o que foi feito. Quem nao saiu se distingue pela AUSENCIA da
+   marca, que fica sempre na mesma coluna e por isso e varrivel de relance. */
 .fp-pl-dia-d { margin-left: 5px; font-weight: 600; letter-spacing: 0; }
 /* A coluna de hoje tem fundo tingido de azul, e o tingimento custa contraste ao
    texto secundario. Medido no tema claro: --text-muted cai de 5,25 para 4,41,
    abaixo dos 4,5 que 10-12px exigem. Dentro desta coluna o secundario escurece
    um grau — --text-dim da 6,89 e continua claramente subordinado ao principal,
-   que ali mede 14,58. Vale para o rotulo do slot (que ja falhava antes) e para
-   o texto do slot concluido. */
-[data-theme="light"] .fp-pl-dia.hoje .fp-pl-slot > span,
-[data-theme="light"] .fp-pl-dia.hoje .fp-pl-slot.feito .fp-pl-slot-h b { color: var(--text-dim); }
+   que ali mede 14,58. Isso ja falhava antes desta tela ganhar indicador. */
+[data-theme="light"] .fp-pl-dia.hoje .fp-pl-slot > span { color: var(--text-dim); }
 /* Mesmo motivo: --azul sobre o proprio fundo tingido da 3,38 num rotulo de
    10px. Azul mais fundo SO aqui — o token e compartilhado com o resto do
    painel, onde ele mede bem. */
@@ -29945,9 +29940,8 @@ const FP_DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'S
    sempre, em toda semana seguinte. Por isso a chave e (grade_id, DATA), e a
    grade passou a mostrar o dia do mes em cada coluna: se a caixa vale "esta
    terca", a coluna precisa dizer que terca e essa. */
-let PLANNER_FEITO = new Map();          /* 'gradeId|AAAA-MM-DD' -> true|false, so o que foi na MAO */
-let PLANNER_AUTO  = new Map();          /* idem, deduzido do que realmente saiu */
-let _plannerSemanaCarregada = '';       /* domingo da semana que esta em PLANNER_FEITO */
+let PLANNER_AUTO  = new Map();          /* 'gradeId|AAAA-MM-DD' -> true, deduzido do que saiu */
+let _plannerSemanaCarregada = '';       /* domingo da semana que esta em PLANNER_AUTO */
 
 /* Data local, nunca toISOString: o fuso de Brasilia joga tudo para o dia
    seguinte a partir das 21h, e a semana inteira sairia deslocada. */
@@ -30009,13 +30003,12 @@ function fpPlannerAutoCalcular(pecas) {
   });
   return m;
 }
-/* A mao MANDA sobre o automatico, inclusive para desmarcar: se o operador diz
-   que nao saiu, nao saiu — ele viu, o casamento so deduziu. */
-function fpPlannerConcluido(gradeId, data) {
-  const k = fpPlannerFeitoChave(gradeId, data);
-  if (PLANNER_FEITO.has(k)) return { feito: PLANNER_FEITO.get(k) === true, auto: false };
-  const a = PLANNER_AUTO.get(k) === true;
-  return { feito: a, auto: a };
+/* Nao ha marcacao a mao: a grade e um PAINEL, nao uma lista de tarefas. O
+   horario e cumprido publicando, e o indicador so reflete isso. O preco esta
+   dito: quando a deteccao nao acha (story sem classe, por exemplo), o horario
+   fica sem marca mesmo tendo saido — e nao ha como corrigir na tela. */
+function fpPlannerSaiu(gradeId, data) {
+  return PLANNER_AUTO.get(fpPlannerFeitoChave(gradeId, data)) === true;
 }
 const FP_DIAS_CURTO = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
 
@@ -30061,14 +30054,12 @@ async function fpPlannerCarregar(forcar) {
   try {
     /* A fila traz os destinos junto (relacionamento), senão seriam N+1
        consultas para desenhar N linhas. */
-    const [g, f, c, pc] = await Promise.all([
+    const [g, f, pc] = await Promise.all([
       sb.from('mc_planner_grade').select('*').order('dia_semana').order('hora'),
       sb.from('mc_publicacoes')
         .select('*, destinos:mc_publicacoes_destino(*)')
         .order('agendado_para', { ascending: true })
         .limit(80),
-      sb.from('mc_planner_feito').select('grade_id,data,feito')
-        .gte('data', _dom).lte('data', fpDataLocal(_sem[6])),
       /* O que REALMENTE saiu na semana, para o horario se marcar sozinho.
          Intervalo em instante local: o dia 0 comeca a meia-noite daqui, nao a
          de Greenwich. */
@@ -30083,17 +30074,8 @@ async function fpPlannerCarregar(forcar) {
     /* A conclusao NAO derruba o planner se falhar: e um enfeite util, e a
        grade e a fila valem sozinhas. Sem isto, um problema de permissao na
        tabela nova apagaria a tela inteira. */
-    if (c.error) { console.warn('mc_planner_feito:', c.error.message); PLANNER_FEITO = new Map(); }
-    else {
-      const m = new Map();
-      /* Guarda `false` TAMBEM: linha com feito=false e o operador dizendo "nao
-         saiu", e e isso que derruba a marcacao automatica. Filtrar aqui faria a
-         correcao dele sumir no recarregamento. */
-      (c.data || []).forEach(function (r) {
-        m.set(fpPlannerFeitoChave(r.grade_id, r.data), r.feito === true);
-      });
-      PLANNER_FEITO = m;
-    }
+    /* O indicador NAO derruba o planner se falhar: grade e fila valem sozinhas,
+       e sem isto um problema de permissao apagaria a tela inteira. */
     if (pc.error) { console.warn('mc_pecas (planner):', pc.error.message); PLANNER_AUTO = new Map(); }
     else PLANNER_AUTO = fpPlannerAutoCalcular(pc.data || []);
     _plannerSemanaCarregada = _dom;
@@ -30145,18 +30127,24 @@ function fpPlannerGradeHtml() {
               ? slots.map(function (g) {
                   const hora = String(g.hora || '').slice(0, 5);
                   const rot = g.rotulo || g.tipo || '';
-                  const est = fpPlannerConcluido(g.id, data);
-                  const feito = est.feito;
-                  return '<div class="fp-pl-slot' + (feito ? ' feito' : '') + (est.auto ? ' auto' : '') + '">'
-                    + '<label class="fp-pl-slot-h"'
-                    +   (est.auto ? ' data-tip="Marcado pelo sistema: houve publicação que corresponde a este horário. Desmarque se não foi."' : '')
-                    +   '>'
-                    +   '<input type="checkbox"' + (feito ? ' checked' : '')
-                    +     ' aria-label="' + escHtml('Concluído' + (est.auto ? ' (marcado pelo sistema)' : '') + ' — ' + (rot || 'horário') + ', '
-                          + FP_DIAS[i] + ' ' + semana[i].getDate() + ' às ' + hora) + '"'
-                    +     ' onchange="fpPlannerMarcar(this, \'' + fpJs(g.id) + '\', \'' + data + '\')">'
+                  const feito = fpPlannerSaiu(g.id, data);
+                  return '<div class="fp-pl-slot' + (feito ? ' feito' : '') + '">'
+                    /* Indicador, nao controle: o horario e cumprido publicando,
+                       nao clicando. A marca so DIZ que saiu. O espaco dela fica
+                       reservado mesmo quando nao saiu, senao os horarios
+                       perdiam o alinhamento entre si e a coluna de marcas
+                       deixaria de ser varrivel de relance — que e o unico
+                       motivo de a marca existir. */
+                    + '<div class="fp-pl-slot-h">'
+                    +   (feito
+                        ? '<span class="fp-pl-ok" role="img" data-tip="'
+                          + escHtml('Publicado — houve publicação que corresponde a este horário') + '" aria-label="'
+                          + escHtml('Publicado — ' + (rot || 'horário') + ', ' + FP_DIAS[i] + ' ' + semana[i].getDate() + ' às ' + hora) + '">'
+                          + '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3.5"'
+                          + ' stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>'
+                        : '<span class="fp-pl-ok vazio" aria-hidden="true"></span>')
                     +   '<b>' + escHtml(hora) + '</b>'
-                    + '</label>'
+                    + '</div>'
                     + '<span>' + escHtml(rot) + '</span>'
                     + '<div class="fp-pl-slot-r">' + fpPlannerRedesHtml(g.plataformas, 13) + '</div>'
                     + '</div>';
@@ -30218,37 +30206,6 @@ function fpPlannerFilaHtml() {
       }).join('');
 }
 
-/* Marca otimista: a caixa responde na hora e o banco confirma depois. Se
-   falhar, VOLTA — caixa que fica marcada sem ter gravado e pior que caixa que
-   nao marca, porque o operador confia nela e o combinado se perde calado. */
-async function fpPlannerMarcar(el, gradeId, data) {
-  const marcado = !!el.checked;
-  const slot = el.closest('.fp-pl-slot');
-  const chave = fpPlannerFeitoChave(gradeId, data);
-  const aplicar = function (v) {
-    el.checked = v;
-    if (slot) { slot.classList.toggle('feito', v); slot.classList.remove('auto'); }
-    /* Grava o booleano em vez de apagar a linha: apagar devolveria o horario
-       para o automatico, e um desmarque logo depois de o sistema marcar seria
-       desfeito sozinho no proximo carregamento. Mao registrada manda. */
-    PLANNER_FEITO.set(chave, v);
-  };
-  aplicar(marcado);
-  const lb = el.closest('.fp-pl-slot-h');
-  if (lb) lb.removeAttribute('data-tip');
-  el.disabled = true;
-  const { error } = await sb.from('mc_planner_feito').upsert({
-    grade_id: gradeId, data: data, feito: marcado,
-    feito_em: new Date().toISOString(),
-    feito_por: CURRENT_USER ? CURRENT_USER.id : null,
-  }, { onConflict: 'grade_id,data' });
-  el.disabled = false;
-  if (error) {
-    aplicar(!marcado);
-    fpToast('Não deu para salvar: ' + (error.message || 'erro'), 'erro');
-  }
-}
-window.fpPlannerMarcar = fpPlannerMarcar;
 
 function fpPlannerPintar() {
   const g = document.getElementById('ppPlannerGrade');
