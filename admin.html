@@ -28456,14 +28456,19 @@ async function loadPerfDatas() {
   const { data, error } = await sb.from('mc_pecas')
     .select('link,publicado_em,fonte').not('publicado_em', 'is', null).not('link', 'is', null);
   if (error) { console.warn('loadPerfDatas:', error.message); return; }
-  /* O MESMO post vai passar a ter DUAS origens: o coletor e o planner, que
-     publica pelo painel. Escolher pela data mais antiga seria escolher pelo
-     relogio — e a nossa hora de envio e sempre anterior ao carimbo da
-     plataforma, entao a regra antiga passaria a preferir sistematicamente a
-     data errada, e calada. Aqui a plataforma manda; entre iguais, a mais
-     antiga (coleta repetida da mesma origem).
-     Medido em 01/09: hoje nenhuma chave tem duas fontes, entao isto e
-     blindagem para quando a fila do planner comecar a publicar. */
+  /* Hoje `mc_pecas` tem UM escritor so: o coletor. Conferido em 01/09 —
+     `supabase/publicar.ts`, a fila do planner, grava em mc_publicacoes e
+     mc_publicacoes_destino e NAO encosta em mc_pecas, de proposito: gravar la
+     reusaria o mesmo externo_id do coletor, e o `publicado_em` seria a NOSSA
+     hora de envio ate a coleta seguinte corrigir, ate 60 min depois. Ou seja,
+     publicado_em e sempre o carimbo da plataforma, e nenhuma chave tem duas
+     fontes.
+     A escolha por origem fica como defesa para QUALQUER escritor futuro que
+     nao seja a plataforma — nao ha nenhum hoje. O motivo vale para todos:
+     "vale a mais antiga" escolhe pelo RELOGIO, e relogio nosso e sempre
+     anterior ao carimbo da plataforma, entao preferiria a data errada e sem
+     avisar. Entre iguais continua valendo a mais antiga, que cobre coleta
+     repetida da mesma origem. */
   const m = new Map();
   (data || []).forEach(r => {
     const k = fpChaveLink(r.link); if (!k) return;
