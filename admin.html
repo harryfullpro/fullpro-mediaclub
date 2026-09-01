@@ -3059,6 +3059,23 @@
     aspect-ratio: 9/16;
     max-height: 340px;
   }
+  /* FP-POSTS-THUMB · A imagem passa a ser <img>, nao background-image.
+     Medido em 01/09/2026 nos 22 posts reais: 9 do YouTube carregam, mas as 7
+     thumbnails do Instagram gravadas em `_igThumb` respondem **HTTP 403** (sao
+     URLs assinadas de scontent.cdninstagram.com, com `oe=`/`_nc_ohc`, que
+     EXPIRAM), e as 4 do TikTok nunca existiram. Treze dos 22 posts (59%) ficam
+     sem imagem.
+     Com background-image e `hasThumb = !!thumb`, uma URL morta contava como
+     "tem thumb": o card virava uma CAIXA VAZIA, sem icone, sem titulo, sem
+     nada. Agora o placeholder fica SEMPRE embaixo e a <img> por cima; se ela
+     falhar, `onerror` remove a imagem e o placeholder aparece sozinho — sem
+     classe para alternar, sem estado para sincronizar. */
+  .post-card-thumb img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    background: inherit;
+  }
   .post-card-no-thumb {
     position: absolute; inset: 0;
     display: flex; flex-direction: column;
@@ -5974,6 +5991,34 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   letter-spacing: .02em; color: var(--text-muted); overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; cursor: help; }
 
+/* Escolher rede é escolher LOGOTIPO, não ler texto: o operador reconhece o
+   ícone antes de ler a palavra. A caixa fica, mas some visualmente — quem diz
+   "marcado" é o anel em volta do cartão. */
+.fp-pub-redes { display: flex; gap: 8px; flex-wrap: wrap; }
+.fp-pub-rede { display: flex; align-items: center; gap: 7px; padding: 8px 12px 8px 10px;
+  border: 1px solid var(--border); border-radius: 9px; cursor: pointer; font-size: 12px;
+  font-weight: 650; color: var(--text-dim); transition: all .12s ease; }
+.fp-pub-rede:hover { border-color: var(--text-muted); color: var(--text); }
+.fp-pub-rede.on { border-color: var(--azul); color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--azul); }
+.fp-pub-rede input { position: absolute; opacity: 0; width: 0; height: 0; }
+.fp-pub-rede .fp-dest-lg { flex: 0 0 auto; opacity: .45; transition: opacity .12s ease; }
+.fp-pub-rede.on .fp-dest-lg { opacity: 1; }
+
+/* Uma linha por horário do cronograma. Dia e hora com largura fixa: com
+   largura automática cada linha punha o campo num lugar diferente. */
+.fp-gr-lin { display: flex; gap: 7px; align-items: center; flex-wrap: wrap;
+  padding: 10px 0; border-top: 1px solid var(--border); }
+.fp-gr-lin:first-child { border-top: 0; }
+.fp-gr-dia { flex: 0 0 116px; margin: 0 !important; }
+.fp-gr-hora { flex: 0 0 96px; margin: 0 !important; font-variant-numeric: tabular-nums; }
+.fp-gr-rotulo { flex: 1 1 140px; min-width: 0; margin: 0 !important; }
+.fp-gr-redes { flex: 1 1 100%; display: flex; gap: 5px; flex-wrap: wrap; }
+.fp-gr-redes .fp-pub-rede { padding: 4px 9px 4px 7px; font-size: 11px; gap: 5px; }
+.fp-gr-x { flex: 0 0 auto; border: 0; background: none; color: var(--text-muted);
+  font-size: 18px; line-height: 1; cursor: pointer; padding: 2px 6px; }
+.fp-gr-x:hover { color: var(--danger); }
+
 /* ── planner de publicações ───────────────────────────────────────────────
    Sem caixa: faixa de título com fio, e a semana em sete colunas. O dia de
    hoje é o único com marca — é a coluna que responde "o que sai agora". */
@@ -8036,6 +8081,7 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
         </div>
         <div style="display:none;gap:8px;align-items:center;flex-wrap:wrap" id="ppAcoesPublicados">
           <select id="perfPostPeriod" class="proj-sort-select" style="margin:0" onchange="setPerfPostPeriod(this.value)">
+            <option value="mes" selected>Este mês</option>
             <option value="all">Todo o período</option>
             <option value="7">Últimos 7 dias</option>
             <option value="30">Últimos 30 dias</option>
@@ -8061,11 +8107,19 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
       </div>
 
       <div class="inf-tab-content" id="ppTabPublicados">
-      <div class="perf-dash" id="perfPostsDash"></div>
+      <div class="fp-pgrade" id="perfPostsDash"></div>
       <div class="proj-filters" style="margin-bottom:16px">
         <button class="proj-filter-chip active" data-post-filter="todos" onclick="setPerfPostFilter('todos')" style="text-transform:uppercase">Todos</button>
-        <button class="proj-filter-chip" data-post-filter="longo" onclick="setPerfPostFilter('longo')" style="text-transform:uppercase">Longos</button>
-        <button class="proj-filter-chip" data-post-filter="short" onclick="setPerfPostFilter('short')" style="text-transform:uppercase">Shorts</button>
+        <!-- "Longos" e "Shorts" saiu a pedido do dono: "Shorts" colidia com o
+             YouTube Shorts, que aqui e uma PLATAFORMA (o chip YTS logo ao lado).
+             O que estes dois chips separam nao e plataforma, e FORMATO — o
+             enquadramento em que a peca foi gravada. Vertical/Horizontal e o
+             termo do estudio e nao colide com nada.
+             Os values 'longo'/'short' ficam INTOCADOS: sao o `tipo` em mc_pecas
+             e alimentam mc_metas_alvo.tipos; trocar aqui quebraria a apuracao
+             das metas. Muda so o rotulo. -->
+        <button class="proj-filter-chip" data-post-filter="longo" onclick="setPerfPostFilter('longo')" style="text-transform:uppercase" data-tip="Gravado em 16:9">Horizontal</button>
+        <button class="proj-filter-chip" data-post-filter="short" onclick="setPerfPostFilter('short')" style="text-transform:uppercase" data-tip="Gravado em 9:16">Vertical</button>
         <div class="proj-filter-separator"></div>
         <!-- YT levava o logotipo do SHORTS: os dois botões apontavam para
              `yt_shorts.png`. Agora YT é o play do YouTube e YTS é o Shorts. -->
@@ -9106,6 +9160,86 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
      bônus. Nada disso é o que o dash mostra: o dash lê mc_metas_alvo. Ou seja,
      mudar um número aqui não mudava nada na tela, e não havia erro para ver.
      Agora os campos SÃO as metas do dash, na mesma ordem. -->
+<!-- Agendar publicação.
+     O container do Instagram expira em 24h, então ele NÃO é criado aqui: aqui
+     só se guarda a intenção (arquivo, legenda, hora, redes). Quem cria o
+     container é a função de publicar, na hora. Criar no agendamento seria
+     agendar um container morto. -->
+<div class="modal" id="pubModal">
+  <div class="modal-content" style="max-width:620px">
+    <div class="modal-head">
+      <h3 id="pubTitulo">Agendar publicação</h3>
+      <button class="modal-close" onclick="fpPubFechar()" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="fp-user-form">
+      <div class="fp-prod-faixa">
+        <b>O que vai sair</b>
+        <span class="fp-aviso-sub">O mesmo arquivo vai para todas as redes marcadas</span>
+      </div>
+      <div class="block-field">
+        <label for="pubArquivo">Vídeo ou foto</label>
+        <input type="file" class="login-input" id="pubArquivo" style="margin:0"
+               accept="video/mp4,video/quicktime,image/jpeg"
+               onchange="fpPubArquivo(this)"/>
+        <p class="fp-aviso-sub" id="pubArquivoInfo" style="margin-top:6px">
+          MP4 ou MOV para vídeo, JPEG para foto. O Instagram só aceita JPEG em imagem.
+        </p>
+      </div>
+      <div class="block-field">
+        <label for="pubLegenda">Legenda</label>
+        <textarea class="login-input" id="pubLegenda" rows="3" style="margin:0;resize:vertical"
+                  placeholder="a legenda que vai em todas as redes"></textarea>
+      </div>
+      <div class="fp-user-grade">
+        <div class="block-field">
+          <label for="pubTipo">Tipo</label>
+          <select class="login-input" id="pubTipo" style="margin:0">
+            <option value="short">Vídeo curto (reels / shorts)</option>
+            <option value="story">Story</option>
+            <option value="carrossel">Carrossel</option>
+            <option value="longo">Vídeo longo</option>
+          </select>
+        </div>
+        <div class="block-field">
+          <label for="pubQuando">Quando</label>
+          <input type="datetime-local" class="login-input" id="pubQuando" style="margin:0"/>
+        </div>
+      </div>
+
+      <div class="fp-prod-faixa">
+        <b>Onde publicar</b>
+        <span class="fp-aviso-sub">Cada rede é enviada e cobrada separadamente</span>
+      </div>
+      <div class="fp-pub-redes" id="pubRedes"></div>
+
+      <p class="fp-user-nota" id="pubNota"></p>
+      <div class="fp-user-pe">
+        <button class="action-btn" type="button" onclick="fpPubFechar()">Cancelar</button>
+        <button class="action-btn approve" type="button" id="pubSalvar" onclick="fpPubSalvar()">Agendar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- O cronograma da semana. É REGRA, não post: sem arquivo, sem data. -->
+<div class="modal" id="gradeModal">
+  <div class="modal-content" style="max-width:660px">
+    <div class="modal-head">
+      <h3>Cronograma da semana</h3>
+      <button class="modal-close" onclick="fpPlannerGradeFechar()" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="fp-user-form">
+      <div id="gradeLista"></div>
+      <button class="action-btn" type="button" onclick="fpPlannerGradeNova()" style="margin-top:10px">+ horário</button>
+      <p class="fp-user-nota">Isto é o combinado que se repete toda semana — o que o analista definiu. Ele não publica nada sozinho: serve de régua para o operador agendar, e para a tela mostrar o que era para ter saído.</p>
+      <div class="fp-user-pe">
+        <button class="action-btn" type="button" onclick="fpPlannerGradeFechar()">Cancelar</button>
+        <button class="action-btn approve" type="button" id="gradeSalvar" onclick="fpPlannerGradeSalvar()">Salvar cronograma</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="perfGoalsModal">
   <div class="modal-content" style="max-width:620px">
     <div class="modal-head">
@@ -28241,7 +28375,10 @@ let PERF_INFLUENCERS = [];
 let PERF_BONUSES = [];
 let PERF_CURRENT_TAB = 'metas';
 let PERF_POST_FILTER = 'todos';
-let PERF_POST_PERIOD = 'all';
+/* Padrao = MES CORRENTE. Era 'all', e o operador abria a tela com o historico
+   inteiro por cima do que ele publicou hoje — a pergunta diaria e "como foi
+   este mes", nao "como foi desde sempre". O historico continua a um clique. */
+let PERF_POST_PERIOD = 'mes';
 
 async function loadPerfPosts() {
   const { data, error } = await sb.from('mc_performance_posts').select('*').order('created_at', { ascending: false });
@@ -29516,7 +29653,12 @@ function fpPlannerFilaHtml() {
     + PLANNER_FILA.map(function (p) {
         const dest = p.destinos || [];
         const quando = p.agendado_para ? new Date(p.agendado_para) : null;
-        const atrasada = quando && quando.getTime() < agora && p.status !== 'publicado' && p.status !== 'erro';
+        /* O status da PUBLICAÇÃO é 'publicada' (feminino, concorda com
+           publicação); o do DESTINO é 'publicado' (concorda com destino). São
+           duas tabelas e dois enums, e comparar um com o outro fazia a linha já
+           publicada oferecer "publicar agora" e sair marcada como atrasada. */
+        const pronta = p.status === 'publicada' || p.status === 'erro' || p.status === 'cancelada';
+        const atrasada = quando && quando.getTime() < agora && !pronta;
         return '<div class="fp-pl-lin' + (atrasada ? ' atrasada' : '') + '">'
           + '<span class="fp-pl-quando">' + (quando
               ? '<b>' + quando.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) + '</b>'
@@ -29526,7 +29668,8 @@ function fpPlannerFilaHtml() {
           + (p.tipo ? '<small>' + escHtml(p.tipo) + '</small>' : '') + '</span>'
           + '<span class="fp-pl-dest">' + dest.map(fpPlannerStatusRede).join('') + '</span>'
           + '<span class="fp-pl-acao">'
-          + (p.status === 'publicado' ? '<i>publicado</i>'
+          + (p.status === 'publicada' ? '<i>publicada</i>'
+             : p.status === 'cancelada' ? '<i>cancelada</i>'
              : '<button type="button" onclick="fpPubPublicarAgora(\'' + fpJs(p.id) + '\')">publicar agora</button>')
           + '</span></div>';
       }).join('');
@@ -29541,6 +29684,254 @@ function fpPlannerPintar() {
 
 window.fpPostsAba = fpPostsAba;
 window.fpPlannerCarregar = fpPlannerCarregar;
+
+/* ── agendar publicação ──────────────────────────────────────────────────
+   O arquivo sobe para o bucket ANTES de a linha existir, porque é o passo que
+   pode demorar e falhar (vídeo de 300 MB). Sem isso, o operador preencheria
+   tudo, clicaria em Agendar e só então descobriria que o upload não foi. */
+let _pubArquivo = null;      /* { caminho, url, tamanho, mime } */
+let _pubSubindo = false;
+
+function fpPubRedesHtml(marcadas) {
+  return Object.keys(FP_REDES).map(function (r) {
+    const d = FP_REDES[r];
+    const on = (marcadas || []).indexOf(r) >= 0;
+    return '<label class="fp-pub-rede' + (on ? ' on' : '') + '">'
+      + '<input type="checkbox" value="' + r + '"' + (on ? ' checked' : '')
+      + ' onchange="this.closest(\'label\').classList.toggle(\'on\', this.checked)">'
+      + fpDestLogoHtml(d.logo, 20) + '<span>' + escHtml(d.nome) + '</span></label>';
+  }).join('');
+}
+
+function fpPubAbrir(marcadas) {
+  const cx = document.getElementById('pubRedes');
+  cx.innerHTML = fpPubRedesHtml(marcadas || ['instagram']);
+  fpDestPintarEstaticos(cx);
+
+  document.getElementById('pubLegenda').value = '';
+  document.getElementById('pubArquivo').value = '';
+  document.getElementById('pubArquivoInfo').textContent =
+    'MP4 ou MOV para vídeo, JPEG para foto. O Instagram só aceita JPEG em imagem.';
+  _pubArquivo = null;
+
+  /* Padrão: daqui a uma hora, arredondado. Agendar para "agora" é o erro mais
+     comum e o container do Instagram leva minutos para processar. */
+  const d = new Date(Date.now() + 3600000);
+  d.setMinutes(0, 0, 0);
+  const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  document.getElementById('pubQuando').value = iso;
+
+  fpPubNota();
+  document.getElementById('pubModal').classList.add('show');
+}
+function fpPubFechar() {
+  document.getElementById('pubModal').classList.remove('show');
+  _pubArquivo = null;
+}
+
+/* A nota diz, ANTES de agendar, o que cada rede marcada vai realmente fazer.
+   Sem isso o operador marca as quatro, espera quatro publicações e recebe uma
+   — e descobre pela fila, depois. */
+function fpPubNota() {
+  const marcadas = [...document.querySelectorAll('#pubRedes input:checked')].map(function (i) { return i.value; });
+  const avisos = [];
+  if (marcadas.indexOf('instagram') >= 0 && !(FP_INTEGR.instagram && FP_INTEGR.instagram.conectado)) {
+    avisos.push('<b>Instagram</b> não está conectado em Integrações.');
+  }
+  if (marcadas.indexOf('facebook') >= 0) avisos.push('<b>Facebook</b> precisa da permissão <code>pages_manage_posts</code> no token.');
+  if (marcadas.indexOf('tiktok') >= 0) avisos.push('<b>TikTok</b> precisa da auditoria do Direct Post; sem ela o vídeo sai restrito.');
+  if (marcadas.indexOf('youtube') >= 0) avisos.push('<b>YouTube</b> precisa de OAuth de upload — a chave de API que temos só lê.');
+  const el = document.getElementById('pubNota');
+  el.innerHTML = avisos.length
+    ? 'Fica agendado, mas hoje: ' + avisos.join(' ')
+    : 'Cada rede é enviada separadamente e o estado aparece na fila, rede a rede.';
+}
+
+async function fpPubArquivo(input) {
+  const f = input.files && input.files[0];
+  const info = document.getElementById('pubArquivoInfo');
+  if (!f) { _pubArquivo = null; return; }
+
+  const mb = (f.size / 1048576).toFixed(1);
+  info.textContent = 'Enviando ' + f.name + ' (' + mb + ' MB)…';
+  _pubSubindo = true;
+  document.getElementById('pubSalvar').disabled = true;
+  try {
+    /* Nome com carimbo de tempo: dois arquivos com o mesmo nome no mesmo dia é
+       o caso normal ("reels.mp4"), e sobrescrever o de outra publicação
+       trocaria o vídeo dela sem ninguém perceber. */
+    const ext = (f.name.split('.').pop() || 'bin').toLowerCase();
+    const caminho = new Date().toISOString().slice(0, 10) + '/'
+      + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+    const { error } = await sb.storage.from('publicacoes').upload(caminho, f, {
+      contentType: f.type || 'application/octet-stream', upsert: false,
+    });
+    if (error) throw error;
+    const { data } = sb.storage.from('publicacoes').getPublicUrl(caminho);
+    _pubArquivo = { caminho: caminho, url: data.publicUrl, tamanho: f.size, mime: f.type };
+    info.textContent = f.name + ' — ' + mb + ' MB, no servidor.';
+  } catch (e) {
+    _pubArquivo = null;
+    info.textContent = 'Não deu para enviar: ' + ((e && e.message) || e);
+  } finally {
+    _pubSubindo = false;
+    document.getElementById('pubSalvar').disabled = false;
+  }
+}
+
+async function fpPubSalvar() {
+  if (_pubSubindo) { fpToast('Espere o arquivo terminar de subir.', 'info'); return; }
+  const redes = [...document.querySelectorAll('#pubRedes input:checked')].map(function (i) { return i.value; });
+  const quando = document.getElementById('pubQuando').value;
+  const legenda = document.getElementById('pubLegenda').value.trim();
+
+  if (!redes.length) { fpToast('Marque pelo menos uma rede.', 'info'); return; }
+  if (!quando) { fpToast('Escolha a data e a hora.', 'info'); return; }
+  if (!_pubArquivo) { fpToast('Escolha o arquivo — sem ele não há o que publicar.', 'info'); return; }
+
+  const btn = document.getElementById('pubSalvar');
+  btn.disabled = true; btn.textContent = 'Agendando...';
+  try {
+    const { data: pub, error } = await sb.from('mc_publicacoes').insert({
+      titulo: legenda.slice(0, 120) || 'Publicação',
+      legenda: legenda,
+      tipo: document.getElementById('pubTipo').value,
+      midia_caminho: _pubArquivo.caminho,
+      midia_url: _pubArquivo.url,
+      midia_mime: _pubArquivo.mime,
+      agendado_para: new Date(quando).toISOString(),
+      status: 'agendada',
+      criado_por: CURRENT_USER ? CURRENT_USER.id : null,
+    }).select().single();
+    if (error) throw error;
+
+    const { error: e2 } = await sb.from('mc_publicacoes_destino').insert(
+      redes.map(function (r) { return { publicacao_id: pub.id, rede: r, status: 'fila' }; })
+    );
+    if (e2) throw e2;
+
+    fpPubFechar();
+    await fpPlannerCarregar(true);
+    fpToast('Agendada para ' + new Date(quando).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) + '.', 'ok');
+  } catch (e) {
+    fpToast('Não deu para agendar: ' + ((e && e.message) || e), 'erro');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Agendar';
+  }
+}
+
+async function fpPubPublicarAgora(id) {
+  if (!await fpConfirm({
+    titulo: 'Publicar agora',
+    mensagem: 'Vai sair em todas as redes marcadas desta publicação, imediatamente.',
+    detalhe: 'Publicação não se desfaz por API: depois só apagando na mão em cada rede.',
+    confirmar: 'Publicar', perigo: false,
+  })) return;
+  fpToast('Enviando…', 'info', { duracao: 2500 });
+  try {
+    const r = await sb.functions.invoke('publicar', { body: { action: 'publicar', publicacao_id: id } });
+    if (r.error) throw r.error;
+    await fpPlannerCarregar(true);
+    const d = r.data || {};
+    fpToast(d.ok ? 'Publicado.' : ('Parcial: ' + (d.erros || []).join(' · ')), d.ok ? 'ok' : 'warn', { duracao: 9000 });
+  } catch (e) {
+    fpToast('Não deu para publicar: ' + ((e && e.message) || e), 'erro');
+  }
+}
+
+/* ── editor do cronograma ────────────────────────────────────────────────── */
+let _gradeRascunho = [];
+
+function fpPlannerGradeLinhaHtml(g, i) {
+  return '<div class="fp-gr-lin" data-i="' + i + '">'
+    + '<select class="login-input fp-gr-dia" aria-label="Dia">'
+    +   FP_DIAS.map(function (d, k) {
+          return '<option value="' + k + '"' + (Number(g.dia_semana) === k ? ' selected' : '') + '>' + d + '</option>';
+        }).join('')
+    + '</select>'
+    + '<input type="time" class="login-input fp-gr-hora" value="' + escHtml(String(g.hora || '09:00').slice(0, 5)) + '" aria-label="Hora"/>'
+    + '<input type="text" class="login-input fp-gr-rotulo" value="' + escHtml(g.rotulo || '') + '" placeholder="o que sai" aria-label="Rótulo"/>'
+    + '<div class="fp-gr-redes">' + fpPubRedesHtml(g.plataformas || []) + '</div>'
+    + '<button type="button" class="fp-gr-x" onclick="fpPlannerGradeTirar(' + i + ')" aria-label="Tirar">&times;</button>'
+    + '</div>';
+}
+
+function fpPlannerGradePintar() {
+  const cx = document.getElementById('gradeLista');
+  cx.innerHTML = _gradeRascunho.length
+    ? _gradeRascunho.map(fpPlannerGradeLinhaHtml).join('')
+    : '<p class="fp-aviso-sub" style="padding:12px 0">Nenhum horário ainda. O botão abaixo põe o primeiro.</p>';
+  fpDestPintarEstaticos(cx);
+}
+function fpPlannerGradeAbrir() {
+  if (!isUserAdmin()) { fpToast('Só administrador edita o cronograma.', 'info'); return; }
+  _gradeRascunho = PLANNER_GRADE.map(function (g) { return Object.assign({}, g); });
+  fpPlannerGradePintar();
+  document.getElementById('gradeModal').classList.add('show');
+}
+function fpPlannerGradeFechar() { document.getElementById('gradeModal').classList.remove('show'); }
+function fpPlannerGradeNova() {
+  fpPlannerGradeColher();
+  _gradeRascunho.push({ dia_semana: 1, hora: '18:00', rotulo: '', plataformas: ['instagram'] });
+  fpPlannerGradePintar();
+}
+function fpPlannerGradeTirar(i) {
+  fpPlannerGradeColher();
+  _gradeRascunho.splice(i, 1);
+  fpPlannerGradePintar();
+}
+/* Colher antes de redesenhar: sem isto, acrescentar um horário apagaria o que
+   estava digitado nos outros. */
+function fpPlannerGradeColher() {
+  [...document.querySelectorAll('#gradeLista .fp-gr-lin')].forEach(function (el) {
+    const g = _gradeRascunho[Number(el.dataset.i)];
+    if (!g) return;
+    g.dia_semana = Number(el.querySelector('.fp-gr-dia').value);
+    g.hora = el.querySelector('.fp-gr-hora').value || '09:00';
+    g.rotulo = el.querySelector('.fp-gr-rotulo').value.trim();
+    g.plataformas = [...el.querySelectorAll('.fp-gr-redes input:checked')].map(function (i) { return i.value; });
+  });
+}
+
+async function fpPlannerGradeSalvar() {
+  fpPlannerGradeColher();
+  const btn = document.getElementById('gradeSalvar');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    /* Apaga e regrava: a grade é pequena (uma dúzia de linhas) e o operador
+       tira e põe horário o tempo todo. Um diff aqui seria mais código para o
+       mesmo resultado, com mais chance de deixar linha órfã. */
+    const { error: eDel } = await sb.from('mc_planner_grade').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if (eDel) throw eDel;
+    if (_gradeRascunho.length) {
+      const { error } = await sb.from('mc_planner_grade').insert(_gradeRascunho.map(function (g) {
+        return {
+          dia_semana: g.dia_semana, hora: g.hora, rotulo: g.rotulo || null,
+          tipo: g.tipo || null, plataformas: g.plataformas || [], ativo: true,
+        };
+      }));
+      if (error) throw error;
+    }
+    fpPlannerGradeFechar();
+    await fpPlannerCarregar(true);
+    fpToast('Cronograma salvo.', 'ok');
+  } catch (e) {
+    fpToast('Não deu para salvar: ' + ((e && e.message) || e), 'erro');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Salvar cronograma';
+  }
+}
+
+window.fpPubAbrir = fpPubAbrir;
+window.fpPubFechar = fpPubFechar;
+window.fpPubArquivo = fpPubArquivo;
+window.fpPubSalvar = fpPubSalvar;
+window.fpPubPublicarAgora = fpPubPublicarAgora;
+window.fpPlannerGradeAbrir = fpPlannerGradeAbrir;
+window.fpPlannerGradeFechar = fpPlannerGradeFechar;
+window.fpPlannerGradeNova = fpPlannerGradeNova;
+window.fpPlannerGradeTirar = fpPlannerGradeTirar;
+window.fpPlannerGradeSalvar = fpPlannerGradeSalvar;
 
 function fpMetasTrocarMes(mes) {
   fpMetasCarregar(mes, true).then(renderPerfMetas);
@@ -29587,17 +29978,36 @@ function renderPerfDash(posts) {
   const l = posts.reduce((s,p)=>s+(p.likes||0),0);
   const c = posts.reduce((s,p)=>s+(p.comments||0),0);
   const eng = v > 0 ? (((l + c) / v) * 100) : 0;
-  const eye = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
-  const heart = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
-  const chat = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>';
-  const grid = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>';
-  const spark = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>';
-  const card = (label, val, icon, color) => '<div class="perf-dash-card"><div class="pd-label"><span style="color:'+color+'">'+icon+'</span>'+label+'</div><div class="pd-value">'+val+'</div></div>';
-  el.innerHTML = card('Posts', posts.length, grid, 'var(--text-muted)')
-    + card('Views', fmtKPosts(v), eye, '#3b82f6')
-    + card('Likes', fmtKPosts(l), heart, '#ec4899')
-    + card('Comentários', fmtKPosts(c), chat, '#a855f7')
-    + card('Engajamento', eng.toFixed(1) + '%', spark, '#1fd27a');
+  const num = x => Number(x||0).toLocaleString('pt-BR');
+
+  /* FP-POSTS-PADRAO · o topo de Publicados passa a falar a mesma lingua de
+     Metas e do Dashboard: herói `.fp-mh` com contexto e placar, e os números
+     em `.fp-fatos`.
+     Eram cinco cartões com ícone colorido e quatro hexes chumbados (#3b82f6,
+     #ec4899, #a855f7, #1fd27a) — a mesma paleta sem sistema que já saiu do
+     Dashboard: L de 0,55 a 0,77 e três matizes colidindo. Aqui os números não
+     são categorias, são a mesma grandeza vista de ângulos diferentes, então
+     não precisam de cor nenhuma para se distinguir: precisam de ordem e de
+     `tabular-nums`. */
+  const per = PERF_POST_PERIOD || 'mes';
+  const contexto = per === 'mes'  ? fpMesNome(fpMesChave(new Date()))
+                 : per === 'all'  ? 'todo o período'
+                 : 'últimos ' + per + ' dias';
+  el.innerHTML = '<div class="fp-mh">'
+    + '<div class="fp-mh-cab">'
+    +   '<div class="fp-mh-mes"><b>Publicados</b>'
+    +     '<span>' + escHtml(contexto) + ' · ' + num(posts.length)
+    +       (posts.length === 1 ? ' post' : ' posts') + '</span></div>'
+    +   '<div class="fp-mh-placar"><b>' + fmtKPosts(v) + '</b><span>views</span></div>'
+    + '</div>'
+    + '<div class="fp-fatos">'
+    +   '<div class="fp-fato"><span>Likes</span><b>' + num(l) + '</b></div>'
+    +   '<div class="fp-fato"><span>Comentários</span><b>' + num(c) + '</b></div>'
+    +   '<div class="fp-fato"><span>Engajamento</span><b>'
+    +     eng.toFixed(1).replace('.', ',') + '%</b>'
+    +     '<small>(likes + comentários) ÷ views</small></div>'
+    + '</div>'
+    + '</div>';
 }
 
 // Re-busca métricas de cada post (YT/IG/TikTok) e salva no banco
@@ -29681,9 +30091,14 @@ function renderPerfPosts() {
 
   // Filtro por período (created_at)
   let scoped = allPosts;
-  const _period = PERF_POST_PERIOD || 'all';
+  const _period = PERF_POST_PERIOD || 'mes';
   if (_period !== 'all') {
-    const _cut = Date.now() - parseInt(_period, 10) * 86400000;
+    /* 'mes' e o primeiro dia do mes corrente no fuso de quem esta olhando; o
+       resto continua sendo "ultimos N dias". Dois modos no mesmo seletor porque
+       "este mes" e a pergunta de rotina e "ultimos 90" e a de comparacao. */
+    let _cut;
+    if (_period === 'mes') { const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); _cut = d.getTime(); }
+    else { _cut = Date.now() - parseInt(_period, 10) * 86400000; }
     scoped = allPosts.filter(p => { const t = p.created_at ? new Date(p.created_at).getTime() : 0; return t >= _cut; });
   }
   renderPerfDash(scoped);
@@ -29695,6 +30110,14 @@ function renderPerfPosts() {
     else if (PERF_POST_FILTER === 'short') posts = posts.filter(p => p.type === 'short');
     else posts = posts.filter(p => p.platform === PERF_POST_FILTER);
   }
+
+  /* O painel diz em palavras o recorte que esta na tela. Sem isso, "12 posts"
+     nao distingue "12 no mes" de "12 verticais no mes". */
+  const _rotFmt = { longo: 'horizontal 16:9', short: 'vertical 9:16' };
+  const _rotPlat = { yt: 'YouTube', yts: 'YouTube Shorts', ig: 'Instagram', tt: 'TikTok' };
+  const _rotuloFiltro = PERF_POST_FILTER === 'todos'
+    ? 'todos os formatos e plataformas'
+    : (_rotFmt[PERF_POST_FILTER] || _rotPlat[PERF_POST_FILTER] || PERF_POST_FILTER);
 
   // Update subtitle with totals
   const subEl = document.getElementById('perfPostsSubtitle');
@@ -29722,11 +30145,23 @@ function renderPerfPosts() {
   };
 
   if (posts.length === 0) {
-    el.innerHTML = '<div class="cal-card"><p style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0">Nenhum post encontrado.</p></div>';
+    /* Estado vazio no idioma do painel, e dizendo POR QUE esta vazio: com o
+       filtro padrao no mes corrente, "nenhum post" quase sempre quer dizer
+       "nada publicado ainda este mes", nao "a tela quebrou". */
+    const _porMes = (PERF_POST_PERIOD || 'mes') === 'mes';
+    el.innerHTML = '<div class="fp-mp-pe" style="justify-content:center;padding:36px 0">'
+      + '<span>' + (_porMes ? 'nenhum post publicado neste mes'
+                            : 'nenhum post no periodo e filtro escolhidos') + '</span></div>';
     return;
   }
 
-  el.innerHTML = `<div class="posts-grid">${posts.map(p => {
+  el.innerHTML = `<div class="fp-pgrade"><div class="fp-mp" data-col="12">
+    <div class="fp-mp-cab">
+      <span class="fp-mp-tit"><b>Posts publicados</b><span>${escHtml(_rotuloFiltro)}</span></span>
+      <span class="fp-mp-val"><b>${posts.length}</b><span class="fp-mp-vd" style="color:var(--text-muted)">${posts.length === 1 ? 'post' : 'posts'}</span></span>
+    </div>
+    <div class="fp-mp-viz" style="justify-content:flex-start">
+  <div class="posts-grid">${posts.map(p => {
     const plat = p.platform;
     const thumb = p.thumbnail || '';
     const hasThumb = !!thumb;
@@ -29739,9 +30174,10 @@ function renderPerfPosts() {
     ).join('');
 
     return `<div class="post-card${isShort ? ' post-card-short' : ''}" onclick="${p.link ? `window.open('${p.link.replace(/'/g, "\\'")}','_blank')` : ''}">
-      <div class="post-card-thumb" style="${hasThumb ? `background-image:url('${thumb}')` : `background:${gradient}`}">
-        ${!hasThumb ? `<div class="post-card-no-thumb">${platIcons[plat] || ''}<span>${escHtml(p.title.substring(0, 30))}</span></div>` : ''}
-        <div class="post-card-type">${isShort ? 'SHORT' : 'LONGO'}</div>
+      <div class="post-card-thumb" style="background:${gradient}">
+        <div class="post-card-no-thumb">${platIcons[plat] || ''}<span>${escHtml(p.title.substring(0, 30))}</span></div>
+        ${hasThumb ? `<img src="${escHtml(thumb)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+        <div class="post-card-type" title="${isShort ? 'Vertical 9:16' : 'Horizontal 16:9'}">${isShort ? '9:16' : '16:9'}</div>
         <div class="post-card-plats"><span class="post-card-plat">${platIcons[plat] || ''}</span></div>
         <div class="post-card-overlay">
           <div class="post-card-stat"><svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg> ${fmtKPosts(p.views || 0)}</div>
@@ -29758,7 +30194,9 @@ function renderPerfPosts() {
         </div>
       </div>
     </div>`;
-  }).join('')}</div>`;
+  }).join('')}</div>
+    </div>
+  </div></div>`;
 }
 
 /* ═══════════════════════════════════════════
@@ -32111,6 +32549,10 @@ async function initApp() {
         case 'perf-bonificacao':
           await Promise.all([loadPerfPosts(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses()]);
           if (typeof renderPerformance === 'function') renderPerformance();
+          /* O Planner abre junto com Meus Posts, e não só quando alguém clica na
+             aba: a tela existe para responder "o que sai hoje", e responder isso
+             depois de um clique é não responder. */
+          if (view === 'perf-posts' && typeof fpPostsAba === 'function') fpPostsAba('planner');
           break;
         case 'templates':
           if (typeof renderTemplates === 'function') renderTemplates();
