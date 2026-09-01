@@ -4393,3 +4393,52 @@ trocar por "carregando" piscaria para trás.
 **O que vale além deste bug** está em `pendencias.md`: aquele `.catch` com `console.warn`
 transforma erro de carga de **qualquer** tela em tela vazia silenciosa. O bug só sobreviveu
 porque o erro não tinha para onde aparecer.
+
+### 01/09 (continuação) — o cronograma se marcando sozinho
+
+Pedido: a caixa de concluído deve marcar sozinha quando o sistema identificar a
+publicação; e as métricas devem atualizar de 30 em 30 minutos.
+
+**A medição que dispensou a heurística.** Antes de escolher como casar publicação com
+horário, medi a grade: **`(dia_semana, tipo, plataforma)` é único nos 31 horários**. Os
+dois `short` do mesmo dia têm plataformas disjuntas — "Reel do dia" é IG/FB e "O mesmo
+vídeo" é TikTok/YouTube. Por isso o casamento é exato e **não precisa de janela de tempo
+nem de desempate por proximidade**, que seriam chute disfarçado de regra.
+
+Fica um risco conhecido: se alguém editar a grade e criar dois horários com mesmo tipo e
+plataforma no mesmo dia, o casamento fica ambíguo. Está em `pendencias.md`.
+
+**Story exige a classe dita, nunca "diferente de repost".** Os dois são `story` em
+`mc_pecas`; o que separa é `classe`. Marcar por eliminação faria story não classificado
+contar como próprio — o mesmo erro que a meta de stories já tinha cometido. Medido: 5 dos
+9 stories já têm classe automática, então exigir não mata o recurso.
+
+**A mão manda sobre o automático, inclusive para desmarcar.** Por isso desmarcar grava
+`feito = false` em vez de apagar a linha: apagar devolveria o horário ao automático e o
+desmarque seria desfeito sozinho no carregamento seguinte.
+
+Azul quando quem marcou foi o sistema, verde quando foi gente. A cor não carrega nada
+essencial sozinha — marcado × não marcado está na própria caixa, e a origem vai também no
+`data-tip` e no `aria-label`.
+
+11 casos testados com as funções extraídas do próprio arquivo, incluindo os dois de
+sobreposição manual.
+
+**Métricas de 30 em 30 minutos.** A regra é: *enquanto Meus Posts estiver aberto, os
+números não passam de 30 minutos*. É um tique de 1 minuto que confere quanto tempo passou,
+não um `setInterval` de 30 — assim a aba escondida por duas horas atualiza **uma** vez ao
+voltar, em vez de quatro rodadas enfileiradas. Três guardas, cada uma evitando desperdício
+real:
+
+| Guarda | O que evita |
+|---|---|
+| aba visível | gastar cota com ninguém olhando |
+| tela aberta | uma rodada é **uma chamada de API por post**, e o painel tem outras 30 telas |
+| carimbo no `localStorage` | todo F5 dispararia a varredura inteira |
+
+A rodada automática **não avisa quando dá certo**: recado de 30 em 30 minutos que ninguém
+pediu vira ruído, e aviso que vira ruído para de ser lido. Só fala quando nada entrou.
+
+No banco, o coletor passou de 1×/hora para `:07` e `:37`, e o vínculo para `:12` e `:42`.
+A conta de cota veio do comentário do próprio coletor: ~4 unidades do YouTube por rodada
+contra teto de 10.000/dia — de ~96 para ~192, menos de 2%.

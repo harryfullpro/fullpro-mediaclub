@@ -477,6 +477,21 @@ aparece ao entrar na tela mas aparece ao clicar, olhe esse `.catch` primeiro.**
 Vale para todos os `case` do switch, não só para Meus Posts.
 
 
+### O editor do cronograma pode criar horários ambíguos
+
+A marcação automática casa publicação com horário por `(dia_semana, tipo, plataforma)`.
+Medido em 01/09: essa chave é **única** nos 31 horários atuais — os dois `short` do mesmo
+dia têm plataformas disjuntas.
+
+Nada garante que continue assim. Se alguém cadastrar dois horários no mesmo dia com o
+mesmo tipo e plataforma sobreposta, uma única publicação marcaria os dois, ou marcaria o
+errado.
+
+Caminho: o editor da grade avisar ao salvar quando a combinação já existir naquele dia.
+Não é bloqueio — pode haver motivo para dois —, é o editor dizendo que a marcação
+automática não vai saber distinguir.
+
+
 ---
 
 ## Ideias levantadas e não pedidas
