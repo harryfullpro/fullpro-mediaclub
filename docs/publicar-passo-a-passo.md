@@ -11,7 +11,7 @@ Estado de hoje, medido pelo `health` da function `publicar`:
 | Instagram | **sim** — cota 100/24h | pronto |
 | Facebook | **sim** — Reel, vídeo de feed, foto e álbum | pronto (falta o 1º post de verdade) |
 | YouTube | não | **Harry** — OAuth de upload |
-| TikTok | não | **Harry** — auditoria + escopos |
+| TikTok | rascunho: **sim, sem auditoria** · direto: não | **Harry** — escopo `video.upload` já destrava |
 
 ---
 
@@ -63,37 +63,118 @@ aumento de cota tem que ser pedido antes, e a Google leva semanas.
 
 ---
 
-## TikTok — o gargalo é auditoria, e ela demora
+## TikTok — existe um caminho que NÃO passa pela auditoria
+
+Levantado na doc oficial em 01/09/2026 e passado por dupla refutação, com as
+páginas abertas uma a uma. O que estava escrito aqui antes dizia que publicar no
+TikTok dependia da auditoria. **Está errado** — depende para um dos dois modos.
 
 Hoje o app tem só os escopos de leitura (`user.info.basic`, `user.info.stats`,
-`video.list`). Publicar exige mais três coisas, e **uma delas leva dias**.
+`video.list`).
+
+### Os dois modos, e por que isso muda o plano
+
+| | `video.upload` — rascunho | `video.publish` — Direct Post |
+|---|---|---|
+| O que faz | manda o vídeo para a **caixa de entrada** do app do TikTok | publica direto, sem tocar no celular |
+| Quem finaliza | o operador, no celular, com dois toques | ninguém |
+| Passa por auditoria? | **não** | **sim** |
+| Dá para usar quando? | assim que o escopo for aprovado | depois da auditoria, sem prazo |
+
+O caminho do rascunho é legítimo e documentado, não é gambiarra: a restrição de
+visibilidade está sob o título *Direct Post API* nas guidelines, e a tabela de
+erros do endpoint de rascunho não tem o erro de cliente não auditado.
+
+**Recomendação:** pedir os dois escopos, ligar o rascunho agora e deixar a
+auditoria correndo em paralelo. O operador ganha o TikTok esta semana em vez de
+esperar sem prazo.
+
+### O que a auditoria trava de verdade
+
+Enquanto o cliente não é auditado, o Direct Post:
+
+- só publica em **`SELF_ONLY`** (só você vê);
+- exige que a **conta esteja privada no momento do post**;
+- aceita no máximo **5 usuários publicando por 24h**;
+- devolve 403 `unaudited_client_can_only_post_to_private_accounts` se a conta
+  estiver pública.
+
+**E o mais importante, que quase ninguém sabe:** os vídeos publicados antes da
+auditoria **não viram públicos sozinhos** quando ela passa. A doc manda o dono
+tornar a conta pública e depois mudar a privacidade **de cada post, na mão**. Ou
+seja: nada de "publica agora e conserta depois".
+
+Prazo? A TikTok é explícita em não dar nenhum: *"We do not provide an official
+review timeline or any guarantees for approval."*
 
 ### Passo a passo
 
-1. **developers.tiktok.com** → seu app → **Add products** → adicionar
-   **Content Posting API**.
-2. Em **Scopes**, pedir `video.upload` e `video.publish`.
-   - `video.upload` = manda o vídeo para os **rascunhos** do app do TikTok, e
-     alguém finaliza no celular.
-   - `video.publish` = **Direct Post**, publica direto. É o que a gente quer, e
-     é o que exige auditoria.
-3. **Verificar o domínio** (necessário para mandar o arquivo por URL em vez de
-   subir em pedaços): no portal, *URL properties* → adicionar
-   `mediaclub.fullpro.com.br` → o TikTok dá um registro **TXT** → publicar esse
-   TXT no DNS (**GoDaddy**, que é onde o domínio mora) → voltar e verificar.
-4. **Submeter a auditoria**. É aqui que trava: verbatim na doc, *"to lift the
-   restrictions on content visibility, your API client must undergo an audit"*.
-   **Antes da auditoria passar, todo vídeo publicado pela API sai como
-   `SELF_ONLY`** — só você vê. Não adianta publicar e esperar virar público.
-5. Refazer o OAuth do TikTok em Integrações, para o token novo carregar os
-   escopos novos.
+1. **developers.tiktok.com** → seu app → **Add products** → **Content Posting API**.
+2. Em **Scopes**, pedir `video.upload` **e** `video.publish`.
+3. **Verificar o domínio** — só é necessário para mandar o arquivo por URL
+   (`PULL_FROM_URL`), que é como a gente faz. No portal: *URL properties* →
+   adicionar `mediaclub.fullpro.com.br` → o TikTok dá um **TXT** → publicar no
+   DNS (**GoDaddy**) → voltar e verificar.
+4. **Submeter a auditoria** — para o Direct Post. O formulário fica atrás de
+   login, então não dá para eu listar os campos daqui.
+5. **Refazer o OAuth em Integrações**, para o token novo carregar os escopos
+   novos. Escopo marcado no app não muda token já emitido.
 
-### O que já sabemos que vai aparecer
+### Detalhe de implementação que economiza um bug
 
-- O `access_token` do TikTok vale **24 horas** e é renovado pelo `refresh_token`
-  — o painel já guarda os dois e renova sozinho.
-- Antes de cada Direct Post é **obrigatório** chamar `creator_info/query` — o
-  TikTok recusa a publicação sem isso. Já está previsto no código.
+Antes de cada Direct Post é obrigatório chamar `creator_info/query`, e a tela
+tem que oferecer **só as opções de privacidade que essa chamada devolver** — não
+o enum completo da doc. Oferecer a mais dá `privacy_level_option_mismatch`.
+
+---
+
+## TikTok: não existe token que dure mais. E não precisa.
+
+Você perguntou como fazer um token que dure mais tempo. A resposta honesta é que
+**não dá** — e o motivo é de projeto, não limitação sua:
+
+| | Validade | Dá para alongar? |
+|---|---|---|
+| `access_token` | **24 horas** (`expires_in: 86400`) | não, não há parâmetro |
+| `refresh_token` | **365 dias** (`refresh_expires_in: 31536000`) | — |
+| `client_credentials` | 2 horas | não serve: é para dado do app, não da conta |
+
+Não existe equivalente ao *long-lived token* da Meta. O desenho oficial é o
+contrário: token curto + renovação automática em segundo plano — verbatim,
+*"can be refreshed without user consent... schedule background jobs"*.
+
+**É exatamente o que está ligado desde 01/09**: o job `tiktok-renovar` roda no
+minuto 6 de cada hora, um minuto antes do coletor. Você não precisa mais olhar
+para esse token no dia a dia.
+
+### O que sobra para vigiar: os 365 dias
+
+Uma coisa a doc **não** responde, e eu não vou fingir que responde: quando o
+refresh devolve um `refresh_token` novo, **os 365 dias reiniciam ou o relógio
+original continua correndo?** A própria página do TikTok dá os dois sinais:
+
+- a descrição do campo diz *"valid for 365 days after the **initial**
+  issuance"* → relógio fixo;
+- o exemplo de resposta do endpoint de refresh mostra `refresh_expires_in:
+  31536000` de novo → relógio renovado.
+
+Sem fonte primária para decidir. Mas **é medível**: basta gravar a data de cada
+refresh junto com o `refresh_expires_in` devolvido e ver se a data absoluta de
+vencimento anda para frente ou fica parada. Duas ou três medições respondem.
+Hoje o painel não guarda esse número — vale guardar quando eu mexer na
+`tiktok-proxy`.
+
+### O que derruba a autorização antes da hora
+
+Documentado no webhook `authorization.removed`, com código de motivo: usuário
+desconecta pelo app (1), conta apagada (2), **idade da conta mudou** (3), conta
+banida (4), nós revogarmos (5). O TikTok **avisa** quando isso acontece — existe
+callback. Hoje a gente não escuta esse webhook; se o TikTok cair do nada um dia,
+é o primeiro lugar a olhar.
+
+Não há na doc nada sobre troca de senha invalidar token, nem sobre expirar por
+inatividade, nem limite de refreshes por dia. Ausência de limite documentado não
+é o mesmo que ausência de limite.
 
 ---
 

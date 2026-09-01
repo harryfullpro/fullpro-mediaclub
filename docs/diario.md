@@ -4277,3 +4277,51 @@ comentário: daqui a seis meses alguém lê e acredita.
 no mecanismo, e eu o transformei em código sem conferir. O conserto veio de correr um
 `grep` de dez segundos. Aviso de outra sessão é dado, não medição — vale o mesmo que
 qualquer outra afirmação: confere antes de escrever no arquivo.
+
+### 01/09 (continuação) — cronograma gravado, e o TikTok tinha uma porta aberta
+
+**A grade virou padrão.** 31 horários fixos em `mc_planner_grade`, do cronograma
+que o Harry fechou com o analista. Detalhe que quase custou uma semana inteira de
+desalinhamento: `dia_semana` é **0 = domingo**, convenção do `getDay()` do
+JavaScript, e o painel indexa `FP_DIAS` direto por esse número. Conferi no código
+antes de gravar (sete pontos, de `FP_DIAS` ao `<option value>` do editor) porque
+errar isso não dá erro — só joga a semana um dia fora, calada.
+
+Conferido na tela, não no banco: injetei as 31 linhas no `fpPlannerGradeHtml` real
+e medi. 31 slots, 46 logotipos, zero dia vazio, zero rótulo cortado, sem estouro
+horizontal; no celular a grade rola dentro dela mesma sem empurrar a página. Terça
+marcada como "hoje", que bate com `getDay()` — a prova viva da convenção.
+
+Ficaram de fora de propósito: a coluna PRODUÇÃO (o cronograma não diz a hora, e
+`hora` é `not null` — inventar seria virar palpite em dado) e a certeza de qual
+story é próprio e qual é repost (o mês fecha em 30+30, mas o cronograma não diz
+qual horário é qual; ficou 13h próprio / 19h repost, e está marcado como chute).
+
+Os oito totais do mês batem com o calendário real — inclusive o "10 diárias", que
+parecia errado: ter+qua em 4 semanas dá 8, e só fecha em 10 porque setembro/2026
+começa numa terça. Ou seja, aquela coluna é deste mês, não uma regra de semana.
+
+**O TikTok.** Duas correções ao que eu mesmo tinha escrito ontem:
+
+1. `video.upload` (rascunho na caixa de entrada do app) **não passa pela
+   auditoria** — só o Direct Post passa. Estava escrito aqui que publicar no
+   TikTok dependia da auditoria, e isso trava o operador sem necessidade. Dá para
+   ligar o rascunho assim que o escopo sair e deixar a auditoria correndo.
+2. Não existe token longo no TikTok, e a doc oficial não deixa dúvida: o desenho é
+   token de 24h + renovação em segundo plano. O que fazia falta era o job, não um
+   token melhor.
+
+Fato que muda operação e quase ninguém sabe: vídeo publicado antes da auditoria
+**não vira público sozinho** quando ela passa — o dono tem que tornar a conta
+pública e mudar a privacidade de cada post na mão.
+
+Uma pergunta ficou sem resposta oficial e está marcada como tal: o refresh
+rotacionado reinicia os 365 dias ou o relógio original continua? A doc dá os dois
+sinais em páginas diferentes. É medível guardando `refresh_expires_in` a cada
+renovação — hoje não guardamos.
+
+Método: sete agentes, três levantando e quatro tentando refutar com duas lentes
+diferentes (fonte primária e o que envelheceu). A maioria das refutações foi de
+ATRIBUIÇÃO, não de fato — frase certa, página errada. Uma pegou coisa que não
+existe em fonte nenhuma e foi descartada. Vale o padrão: quem levanta cita, quem
+refuta abre a URL.
