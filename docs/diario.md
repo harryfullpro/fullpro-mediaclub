@@ -4499,3 +4499,46 @@ Reporting. Mas a refutação corrigiu meu absoluto: **LER desempenho de card e d
 tela final existe** — a Analytics API tem `cardImpressions`/`cardClicks` e a
 Reporting API tem os report types `channel_cards_a1` e `channel_end_screens_a2`.
 Criar não dá; medir dá.
+
+### 01/09 (fim mesmo) — TikTok: o buraco fechado e o caminho que não precisa de auditoria
+
+Fechado o dia com as quatro redes escritas e três publicando.
+
+**A `tiktok-proxy` atendia a internet inteira.** Medido, sem nenhum cabeçalho:
+`curl ".../tiktok-proxy?action=user-info"` devolvia 200 com as nossas métricas, e
+`?action=disconnect` apagava a integração — destrutivo e anônimo. Agora tudo além
+de `health` exige JWT de operador. O `client_secret`, que morava em texto dentro
+da função, foi para `mc_integrations.meta`; é o que finalmente permitiu commitar
+essa fonte, que nunca esteve no repositório justamente por causa dele.
+
+De quebra caiu um bug antigo: `resolveToken` preferia o token do banco ao
+cabeçalho `x-tk-token`, então a "métrica do influenciador" em Influenciadores era
+**a nossa**.
+
+**O portal já estava quase todo configurado** — o Harry tinha submetido em 31/08 e
+o app está *In review*. O que faltava era outra coisa: o Redirect URI de produção
+tem erro de digitação (`mediaclub.com.br`, sem o `fullpro.`) e o campo está
+travado durante a análise. Em vez de recolher a submissão e perder a fila,
+achamos o **Sandbox** — editável, com conta alvo `fullprobr`, e é onde a própria
+TikTok manda testar antes da aprovação.
+
+**Três coisas que eu afirmei e que a medição derrubou no mesmo dia:**
+
+1. Disse que o DNS estava na GoDaddy. Está no **Cloudflare** — o Harry desconfiou
+   e o `dig` deu razão a ele.
+2. Disse que não dava para pôr TXT junto de CNAME (regra clássica do DNS). O
+   Cloudflare **permite**, e o registro subiu.
+3. Disse que `video.publish` não apareceria no Sandbox. Apareceu assim que o
+   Direct Post foi ligado.
+
+**O envio é `FILE_UPLOAD`, e a razão é chata:** verificamos o domínio, mas nossos
+arquivos moram no `supabase.co`. O `pull_by_url` só aceita URL de domínio
+verificado, e `supabase.co` não é nosso para verificar. Empurrar os bytes não
+depende de domínio nenhum. A verificação não foi perdida — a produção vai
+precisar dela.
+
+**O que o primeiro envio vai responder:** antes de cada Direct Post o TikTok
+obriga a chamar `creator_info`, e as opções de privacidade que ele devolve são as
+únicas aceitas. Em vez de mandar "público" e torcer, o código lê a lista. Se
+`PUBLIC_TO_EVERYONE` estiver lá, o Direct Post funciona sem auditoria — que é
+exatamente a pergunta que o YouTube respondeu de graça hoje de manhã.
