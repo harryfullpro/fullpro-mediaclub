@@ -6037,6 +6037,10 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    ícone antes de ler a palavra. A caixa fica, mas some visualmente — quem diz
    "marcado" é o anel em volta do cartão. */
 .fp-pub-redes { display: flex; gap: 8px; flex-wrap: wrap; }
+.fp-pub-opcao { display: flex; gap: 9px; align-items: flex-start; margin-top: 10px;
+                cursor: pointer; font-size: 12.5px; line-height: 1.5; }
+.fp-pub-opcao input { margin: 2px 0 0; flex: none; }
+.fp-pub-opcao i { font-style: normal; color: var(--text-dim); }
 .fp-pub-rede { display: flex; align-items: center; gap: 7px; padding: 8px 12px 8px 10px;
   border: 1px solid var(--border); border-radius: 9px; cursor: pointer; font-size: 12px;
   font-weight: 650; color: var(--text-dim); transition: all .12s ease; }
@@ -9343,6 +9347,71 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
         <span class="fp-aviso-sub">Cada rede é enviada e cobrada separadamente</span>
       </div>
       <div class="fp-pub-redes" id="pubRedes"></div>
+
+      <!-- So aparece com o YouTube marcado. Nasce oculto por style inline, que e o
+           padrao da casa (nao existe classe .hidden neste arquivo). Quem liga e
+           desliga e fpPubYtVisivel(). -->
+      <div id="pubYt" style="display:none">
+        <div class="fp-prod-faixa">
+          <b>S&oacute; no YouTube</b>
+          <span class="fp-aviso-sub">O YouTube pede t&iacute;tulo pr&oacute;prio; as outras usam a legenda</span>
+        </div>
+
+        <div class="block-field">
+          <label for="pubYtTitulo">T&iacute;tulo <span class="fp-aviso-sub" id="pubYtTituloConta">0/100</span></label>
+          <input type="text" class="login-input" id="pubYtTitulo" style="margin:0" maxlength="100"
+                 placeholder="se deixar vazio, usa a primeira linha da legenda" oninput="fpPubYtContar()"/>
+        </div>
+
+        <div class="block-field">
+          <label for="pubYtCapa">Capa (miniatura)</label>
+          <input type="file" class="login-input" id="pubYtCapa" style="margin:0"
+                 accept="image/jpeg,image/png" onchange="fpPubCapa(this)"/>
+          <p class="fp-aviso-sub" id="pubYtCapaInfo" style="margin-top:6px">
+            JPEG ou PNG, at&eacute; 2 MB &mdash; o limite &eacute; da API, n&atilde;o do site. Exige conta verificada por telefone.
+          </p>
+        </div>
+
+        <div class="fp-user-grade">
+          <div class="block-field">
+            <label for="pubYtCategoria">Categoria</label>
+            <select class="login-input" id="pubYtCategoria" style="margin:0">
+              <option value="2" selected>Autom&oacute;veis e ve&iacute;culos</option>
+              <option value="26">Instru&ccedil;&otilde;es e estilo</option>
+              <option value="28">Ci&ecirc;ncia e tecnologia</option>
+              <option value="24">Entretenimento</option>
+              <option value="22">Pessoas e blogs</option>
+              <option value="17">Esportes</option>
+              <option value="19">Viagens e eventos</option>
+              <option value="20">Jogos</option>
+              <option value="10">M&uacute;sica</option>
+              <option value="1">Filmes e anima&ccedil;&atilde;o</option>
+              <option value="23">Com&eacute;dia</option>
+              <option value="25">Not&iacute;cias e pol&iacute;tica</option>
+              <option value="27">Educa&ccedil;&atilde;o</option>
+              <option value="15">Animais de estima&ccedil;&atilde;o</option>
+            </select>
+          </div>
+          <div class="block-field">
+            <label for="pubYtTags">Tags <span class="fp-aviso-sub" id="pubYtTagsConta">0/500</span></label>
+            <input type="text" class="login-input" id="pubYtTags" style="margin:0"
+                   placeholder="separadas por v&iacute;rgula" oninput="fpPubYtContar()"/>
+          </div>
+        </div>
+
+        <label class="fp-pub-opcao" for="pubYtAvisar">
+          <input type="checkbox" id="pubYtAvisar"/>
+          <span>Avisar os inscritos <i>&mdash; o padr&atilde;o do YouTube &eacute; avisar; aqui o padr&atilde;o &eacute; n&atilde;o avisar</i></span>
+        </label>
+        <label class="fp-pub-opcao" for="pubYtCriancas">
+          <input type="checkbox" id="pubYtCriancas"/>
+          <span>&Eacute; conte&uacute;do feito para crian&ccedil;as <i>&mdash; obrigat&oacute;rio declarar</i></span>
+        </label>
+        <label class="fp-pub-opcao" for="pubYtIa">
+          <input type="checkbox" id="pubYtIa"/>
+          <span>Tem cena realista gerada por IA <i>&mdash; declara&ccedil;&atilde;o exigida por pol&iacute;tica</i></span>
+        </label>
+      </div>
 
       <p class="fp-user-nota" id="pubNota"></p>
       <div class="fp-user-pe">
@@ -30223,6 +30292,7 @@ window.fpPlannerCarregar = fpPlannerCarregar;
    tudo, clicaria em Agendar e só então descobriria que o upload não foi. */
 let _pubArquivo = null;      /* { caminho, url, tamanho, mime } */
 let _pubSubindo = false;
+let _pubCapa = null;         /* { caminho, url, mime } — só o YouTube usa */
 
 function fpPubRedesHtml(marcadas) {
   return Object.keys(FP_REDES).map(function (r) {
@@ -30246,6 +30316,26 @@ function fpPubAbrir(marcadas) {
     'MP4 ou MOV para vídeo, JPEG para foto. O Instagram só aceita JPEG em imagem.';
   _pubArquivo = null;
 
+  /* O modal nunca é destruído, só perde a classe .show — o que ficou digitado na
+     vez anterior continua lá. Zerar é obrigatório, não zelo. */
+  _pubCapa = null;
+  ['pubYtTitulo', 'pubYtTags', 'pubYtCapa'].forEach(function (id) { document.getElementById(id).value = ''; });
+  ['pubYtAvisar', 'pubYtCriancas', 'pubYtIa'].forEach(function (id) { document.getElementById(id).checked = false; });
+  document.getElementById('pubYtCategoria').value = '2';
+  document.getElementById('pubYtCapaInfo').textContent =
+    'JPEG ou PNG, até 2 MB — o limite é da API, não do site. Exige conta verificada por telefone.';
+  fpPubYtContar();
+
+  /* O onchange gerado em fpPubRedesHtml só troca a classe do cartão, e é
+     compartilhado com o modal do cronograma — mexer nele afetaria os dois. Aqui o
+     listener fica no container, que é exclusivo deste modal. Guarda no dataset
+     porque fpPubAbrir roda a cada abertura e empilharia um listener por vez. */
+  if (!cx.dataset.fpLigado) {
+    cx.dataset.fpLigado = '1';
+    cx.addEventListener('change', function () { fpPubNota(); fpPubYtVisivel(); });
+  }
+  fpPubYtVisivel();
+
   /* Padrão: daqui a uma hora, arredondado. Agendar para "agora" é o erro mais
      comum e o container do Instagram leva minutos para processar. */
   const d = new Date(Date.now() + 3600000);
@@ -30264,15 +30354,79 @@ function fpPubFechar() {
 /* A nota diz, ANTES de agendar, o que cada rede marcada vai realmente fazer.
    Sem isso o operador marca as quatro, espera quatro publicações e recebe uma
    — e descobre pela fila, depois. */
+/* O bloco do YouTube aparece e some conforme a rede é marcada. Sem isto, o
+   operador marcaria YouTube e não teria onde pôr capa nem título. */
+function fpPubYtVisivel() {
+  const marcado = !!document.querySelector('#pubRedes input[value="youtube"]:checked');
+  document.getElementById('pubYt').style.display = marcado ? 'block' : 'none';
+}
+
+/* Os dois limites do YouTube que derrubam o envio calados: título tem teto de 100
+   caracteres e as tags somam 500 no total, com as vírgulas contando. Mostrar o
+   número em tempo real é mais barato que traduzir um 400 depois. */
+function fpPubYtContar() {
+  const t = document.getElementById('pubYtTitulo').value;
+  const g = document.getElementById('pubYtTags').value;
+  const et = document.getElementById('pubYtTituloConta');
+  const eg = document.getElementById('pubYtTagsConta');
+  et.textContent = t.length + '/100';
+  eg.textContent = g.length + '/500';
+  et.style.color = t.length > 100 ? 'var(--danger)' : '';
+  eg.style.color = g.length > 500 ? 'var(--danger)' : '';
+}
+
+/* A capa vai para o MESMO bucket do vídeo, com prefixo próprio. Sobe agora e não
+   na hora de agendar, pelo mesmo motivo do arquivo principal: assim o operador
+   descobre que o arquivo é grande demais enquanto ainda está olhando a tela. */
+async function fpPubCapa(input) {
+  const f = input.files && input.files[0];
+  const info = document.getElementById('pubYtCapaInfo');
+  if (!f) { _pubCapa = null; return; }
+
+  /* 2 MB é o limite da API do YouTube. A interface do Studio aceita 50 MB, que é
+     outra coisa — e é a confusão que faria o envio falhar só lá na frente. */
+  if (f.size > 2 * 1024 * 1024) {
+    input.value = '';
+    _pubCapa = null;
+    info.textContent = 'Essa imagem tem ' + (f.size / 1048576).toFixed(1) + ' MB. O YouTube aceita no máximo 2 MB por API.';
+    return;
+  }
+
+  const botao = document.getElementById('pubSalvar');
+  botao.disabled = true;
+  info.textContent = 'Enviando a capa...';
+  try {
+    const ext = (f.name.split('.').pop() || 'jpg').toLowerCase();
+    const dia = new Date().toISOString().slice(0, 10);
+    const caminho = 'thumbs/' + dia + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+    const { error } = await sb.storage.from('publicacoes').upload(caminho, f, {
+      contentType: f.type || 'image/jpeg', upsert: false,
+    });
+    if (error) throw error;
+    const { data } = sb.storage.from('publicacoes').getPublicUrl(caminho);
+    _pubCapa = { caminho: caminho, url: data.publicUrl, mime: f.type || 'image/jpeg' };
+    info.textContent = f.name + ' — ' + (f.size / 1024).toFixed(0) + ' KB, no servidor.';
+  } catch (e) {
+    _pubCapa = null;
+    info.textContent = 'Não deu para enviar a capa: ' + ((e && e.message) || e);
+  } finally {
+    botao.disabled = false;
+  }
+}
+
 function fpPubNota() {
   const marcadas = [...document.querySelectorAll('#pubRedes input:checked')].map(function (i) { return i.value; });
   const avisos = [];
   if (marcadas.indexOf('instagram') >= 0 && !(FP_INTEGR.instagram && FP_INTEGR.instagram.conectado)) {
     avisos.push('<b>Instagram</b> não está conectado em Integrações.');
   }
-  if (marcadas.indexOf('facebook') >= 0) avisos.push('<b>Facebook</b> precisa da permissão <code>pages_manage_posts</code> no token.');
+  /* Facebook e YouTube saíram desta lista em 01/09: os dois publicam de verdade
+     agora (Facebook no pub2, YouTube no pub4 — o primeiro vídeo subiu às 15:30 e
+     saiu público). Aviso que envelhece é pior que aviso nenhum. */
   if (marcadas.indexOf('tiktok') >= 0) avisos.push('<b>TikTok</b> precisa da auditoria do Direct Post; sem ela o vídeo sai restrito.');
-  if (marcadas.indexOf('youtube') >= 0) avisos.push('<b>YouTube</b> precisa de OAuth de upload — a chave de API que temos só lê.');
+  if (marcadas.indexOf('youtube') >= 0 && !(FP_YT_OAUTH && FP_YT_OAUTH.autorizado)) {
+    avisos.push('<b>YouTube</b> não foi autorizado para upload — um administrador autoriza em Integrações.');
+  }
   const el = document.getElementById('pubNota');
   el.innerHTML = avisos.length
     ? 'Fica agendado, mas hoje: ' + avisos.join(' ')
@@ -30311,6 +30465,25 @@ async function fpPubArquivo(input) {
   }
 }
 
+/* As opções específicas de rede. Só monta a chave da rede que está marcada —
+   gravar opções de YouTube numa publicação sem YouTube seria dado órfão que
+   ninguém apaga depois. */
+function fpPubOpcoes(redes) {
+  if (redes.indexOf('youtube') < 0) return null;
+  const tags = document.getElementById('pubYtTags').value
+    .split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+  return {
+    youtube: {
+      titulo: document.getElementById('pubYtTitulo').value.trim() || null,
+      tags: tags.length ? tags : null,
+      categoria: document.getElementById('pubYtCategoria').value,
+      avisar_inscritos: document.getElementById('pubYtAvisar').checked,
+      para_criancas: document.getElementById('pubYtCriancas').checked,
+      tem_ia: document.getElementById('pubYtIa').checked,
+    },
+  };
+}
+
 async function fpPubSalvar() {
   if (_pubSubindo) { fpToast('Espere o arquivo terminar de subir.', 'info'); return; }
   const redes = [...document.querySelectorAll('#pubRedes input:checked')].map(function (i) { return i.value; });
@@ -30331,6 +30504,10 @@ async function fpPubSalvar() {
       midia_caminho: _pubArquivo.caminho,
       midia_url: _pubArquivo.url,
       midia_mime: _pubArquivo.mime,
+      thumb_caminho: _pubCapa ? _pubCapa.caminho : null,
+      thumb_url: _pubCapa ? _pubCapa.url : null,
+      thumb_mime: _pubCapa ? _pubCapa.mime : null,
+      opcoes: fpPubOpcoes(redes),
       agendado_para: new Date(quando).toISOString(),
       status: 'agendada',
       criado_por: CURRENT_USER ? CURRENT_USER.id : null,
@@ -30457,6 +30634,8 @@ async function fpPlannerGradeSalvar() {
 window.fpPubAbrir = fpPubAbrir;
 window.fpPubFechar = fpPubFechar;
 window.fpPubArquivo = fpPubArquivo;
+window.fpPubCapa = fpPubCapa;
+window.fpPubYtContar = fpPubYtContar;
 window.fpPubSalvar = fpPubSalvar;
 window.fpPubPublicarAgora = fpPubPublicarAgora;
 window.fpPlannerGradeAbrir = fpPlannerGradeAbrir;

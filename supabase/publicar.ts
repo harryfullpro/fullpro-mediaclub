@@ -179,7 +179,7 @@
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-const VERSAO = 'pub3';
+const VERSAO = 'pub6';
 const GRAPH = 'https://graph.facebook.com/v21.0';
 const BUCKET = 'publicacoes';
 
@@ -1013,28 +1013,400 @@ async function redeTiktok(_ctx: Contexto): Promise<Resultado> {
   };
 }
 
-/* ── YOUTUBE — a credencial guardada é chave de API, que não sobe vídeo ── */
+/* ── YOUTUBE — sobe o arquivo, agenda no nativo e põe capa ── */
 
-async function redeYoutube(_ctx: Contexto): Promise<Resultado> {
-  const cred = await credencial('youtube');
-  const temOAuth = Boolean(cred.refresh);
+const YT_API = 'https://www.googleapis.com/youtube/v3';
+const YT_UPLOAD = 'https://www.googleapis.com/upload/youtube/v3';
+const OAUTH_TOKEN_G = 'https://oauth2.googleapis.com/token';
+
+type CredYt = { client_id: string; client_secret: string; refresh: string; access: string | null; expira: string | null; meta: Record<string, any> };
+
+/* O OAuth mora em 'youtube_oauth', não em 'youtube'. A linha 'youtube' guarda a
+   CHAVE DE API, que só lê — e cujo upsert zera refresh_token. Ver youtube-proxy. */
+async function credYoutube(): Promise<CredYt | null> {
+  const { data } = await servico()
+    .from('mc_integrations')
+    .select('access_token, refresh_token, expires_at, meta')
+    .eq('provider', 'youtube_oauth')
+    .maybeSingle();
+  const m = (data?.meta ?? {}) as Record<string, any>;
+  if (!data?.refresh_token || !m.client_id || !m.client_secret) return null;
+  return {
+    client_id: String(m.client_id), client_secret: String(m.client_secret),
+    refresh: String(data.refresh_token), access: data.access_token ?? null,
+    expira: data.expires_at ?? null, meta: m,
+  };
+}
+
+/* Access token do Google dura 1h. Renova só quando falta menos de 2 min, para
+   não gastar chamada à toa numa fila com vários destinos. */
+async function acessoYoutube(c: CredYt): Promise<string> {
+  if (c.access && c.expira && new Date(c.expira).getTime() > Date.now() + 120_000) return c.access;
+
+  let r: Response;
+  try {
+    r = await fetch(OAUTH_TOKEN_G, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: c.client_id, client_secret: c.client_secret,
+        refresh_token: c.refresh, grant_type: 'refresh_token',
+      }).toString(),
+    });
+  } catch { throw erroDeRede('Google (renovação de token)'); }
+
+  const j = await r.json().catch(() => ({}));
+  if (j?.error) {
+    if (j.error === 'invalid_grant') {
+      throw new Error('A autorização do YouTube caiu. Um administrador precisa refazer em Integrações → Autorizar upload.',
+        { cause: { code: 'YT_INVALID_GRANT' } });
+    }
+    throw new Error('o Google recusou a renovação: ' + (j.error_description ?? j.error), { cause: j });
+  }
+  const acesso = String(j.access_token ?? '');
+  if (!acesso) throw new Error('o Google não devolveu token de acesso');
+
+  await servico().from('mc_integrations').update({
+    access_token: acesso,
+    expires_at: new Date(Date.now() + (Number(j.expires_in) || 3600) * 1000).toISOString(),
+    updated_at: agoraISO(),
+  }).eq('provider', 'youtube_oauth');
+  return acesso;
+}
+
+/* Tamanho exato em bytes, que o protocolo resumable exige ANTES de mandar os
+   bytes (X-Upload-Content-Length). O Storage guarda isso em metadata.size. */
+async function tamanhoNoBucket(caminho: string): Promise<number | null> {
+  const barra = caminho.lastIndexOf('/');
+  const pasta = barra > 0 ? caminho.slice(0, barra) : '';
+  const nome = barra > 0 ? caminho.slice(barra + 1) : caminho;
+  const { data } = await servico().storage.from(BUCKET).list(pasta, { limit: 100, search: nome });
+  const achado = (data ?? []).find((o: any) => o.name === nome);
+  const n = Number(achado?.metadata?.size ?? NaN);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/* Quantos bytes o Google já recebeu nesta sessão. Resposta 308 traz Range;
+   sem Range, nada chegou ainda. 200/201 = o vídeo já subiu inteiro. */
+async function jaRecebido(uri: string, total: number, token: string): Promise<number | 'pronto'> {
+  const r = await fetch(uri, {
+    method: 'PUT',
+    headers: { Authorization: 'Bearer ' + token, 'Content-Length': '0', 'Content-Range': `bytes */${total}` },
+  });
+  if (r.status === 200 || r.status === 201) return 'pronto';
+  if (r.status === 404) throw new Error('a sessão de upload expirou', { cause: { code: 'YT_SESSAO_EXPIRADA' } });
+  const range = r.headers.get('Range');
+  if (!range) return 0;
+  const m = /bytes=0-(\d+)/.exec(range);
+  return m ? Number(m[1]) + 1 : 0;
+}
+
+/* A descrição do YouTube tem teto de 5000 BYTES, não caracteres — acento vale 2
+   e emoji vale 4. Cortar por .slice() deixa passar texto que a API recusa, e
+   pior: pode partir um caractere no meio. */
+function cortarBytes(texto: string, teto: number): string {
+  const bytes = new TextEncoder().encode(texto);
+  if (bytes.length <= teto) return texto;
+  return new TextDecoder('utf-8', { fatal: false }).decode(bytes.slice(0, teto)).replace(/\uFFFD$/, '');
+}
+
+/* As tags somam 500 caracteres NO TOTAL, e as vírgulas entre elas contam. Corto
+   tag inteira, nunca pela metade: meia tag é pior que uma tag a menos. */
+function tagsQueCabem(tags: string[], teto = 500): string[] {
+  const saida: string[] = [];
+  let usado = 0;
+  for (const bruta of tags) {
+    const t = String(bruta ?? '').replace(/[<>,]/g, '').trim();
+    if (!t) continue;
+    /* Tag com espaço é tratada como se estivesse entre aspas, e as aspas contam. */
+    const custo = t.length + (t.includes(' ') ? 2 : 0) + (saida.length ? 1 : 0);
+    if (usado + custo > teto) break;
+    saida.push(t);
+    usado += custo;
+  }
+  return saida;
+}
+
+type OpcoesYt = {
+  titulo: string; descricao: string; categoria: string; tags: string[];
+  avisar: boolean; paraCriancas: boolean; temIa: boolean;
+};
+
+function formatoYoutube(pub: Record<string, any>): OpcoesYt {
+  const o = (pub.opcoes?.youtube ?? {}) as Record<string, any>;
+  const legenda = String(pub.legenda ?? '');
+
+  /* Título: o que o operador escreveu no campo do YouTube manda; sem ele, a
+     primeira linha da legenda. Teto de 100 caracteres e proibido < e >. */
+  let titulo = String(o.titulo ?? pub.titulo ?? '').replace(/[<>]/g, '').trim();
+  if (!titulo) titulo = legenda.split('\n')[0].trim();
+  if (!titulo) titulo = 'Vídeo FullPro';
 
   return {
-    estado: 'erro',
-    erro: temOAuth
-      ? 'O YouTube tem OAuth guardado, mas o envio de vídeo ainda não foi ligado nesta função — e, sem a auditoria do '
-        + 'projeto, todo upload por API fica travado em privado.'
-      : 'O YouTube não publica por aqui: a credencial guardada é uma CHAVE DE API, que só lê. Subir vídeo exige OAuth '
-        + 'com o escopo youtube.upload, autorizado pela conta dona do canal, e a auditoria do projeto no Google.',
-    meta: {
-      tem_oauth: temOAuth,
-      canal: (cred.meta as any)?.canal_titulo ?? null,
-      falta: temOAuth ? ['auditoria do projeto no YouTube'] : ['OAuth com escopo youtube.upload', 'auditoria do projeto no YouTube'],
-      doc: 'https://developers.google.com/youtube/v3/docs/videos/insert',
-      observacao: 'Vídeo enviado por projeto não auditado fica privado sem recurso '
-        + '(https://support.google.com/youtube/answer/7300965).',
-    },
+    titulo: titulo.slice(0, 100),
+    descricao: cortarBytes(legenda.replace(/[<>]/g, ''), 5000),
+    /* 2 = Autos & Vehicles. Os ids foram conferidos contra videoCategories.list
+       com regionCode=BR em 01/09/2026, não chutados. */
+    categoria: String(o.categoria ?? '2'),
+    tags: tagsQueCabem(Array.isArray(o.tags) ? o.tags : []),
+    /* AVISAR INSCRITOS: o default do YouTube é TRUE. Aqui o default é FALSE, de
+       propósito — quem publica pelo painel publica em volume, e notificar todo
+       mundo a cada vídeo é o tipo de estrago que não se desfaz. Quem quiser
+       avisar marca a caixinha. */
+    avisar: o.avisar_inscritos === true,
+    paraCriancas: o.para_criancas === true,
+    temIa: o.tem_ia === true,
   };
+}
+
+async function redeYoutube(ctx: Contexto): Promise<Resultado> {
+  const cred = await credYoutube();
+  if (!cred) {
+    return {
+      estado: 'erro',
+      erro: 'O YouTube ainda não foi autorizado para upload. Um administrador autoriza em Integrações → Autorizar upload. '
+        + 'A chave de API que está conectada só lê métricas; ela não sobe vídeo.',
+      meta: { falta: ['OAuth com escopo youtube.upload'] },
+    };
+  }
+  if (!ctx.midias.length) return { estado: 'erro', erro: 'A publicação está sem arquivo de vídeo.' };
+  const midia = ctx.midias[0];
+  if (!midia.ehVideo) return { estado: 'erro', erro: 'O YouTube só recebe vídeo por aqui, e o arquivo desta publicação é imagem.' };
+
+  const token = await acessoYoutube(cred);
+  const jaTinha = (ctx.dest?.meta ?? {}) as Record<string, any>;
+  let videoId: string | null = jaTinha.video_id ?? null;
+  let uri: string | null = jaTinha.upload_uri ?? null;
+  let total: number | null = Number(jaTinha.bytes) || null;
+
+  /* ── 1. abre a sessão (ou retoma a que ficou em voo) ── */
+  if (!videoId) {
+    if (!total) {
+      total = midia.caminho ? await tamanhoNoBucket(midia.caminho) : null;
+      if (!total) {
+        /* Sem caminho no bucket (mídia por URL externa), o tamanho vem do HEAD. */
+        try {
+          const h = await fetch(midia.url, { method: 'HEAD' });
+          total = Number(h.headers.get('content-length')) || null;
+        } catch { /* segue */ }
+      }
+    }
+    if (!total) {
+      return { estado: 'erro', erro: 'Não deu para saber o tamanho do arquivo, e o YouTube exige o tamanho antes do envio.' };
+    }
+
+    if (!uri) {
+      /* AGENDAMENTO NATIVO. Ao contrário do Facebook, aqui eu uso o do YouTube:
+         subir um vídeo grande leva minutos, e "publicar às 18h" não pode virar
+         "começar a subir às 18h". publishAt SÓ vale com privacyStatus private —
+         é regra do Google, não escolha nossa. Data no passado publica na hora. */
+      const quando = ctx.pub.agendado_para ? new Date(ctx.pub.agendado_para).getTime() : 0;
+      const agenda = quando > Date.now() + 60_000 ? new Date(quando).toISOString() : null;
+      const f = formatoYoutube(ctx.pub);
+
+      const corpo = {
+        snippet: {
+          title: f.titulo,
+          description: f.descricao,
+          categoryId: f.categoria,
+          /* Lista vazia é 400 Bad Request; ou manda com conteúdo, ou não manda. */
+          ...(f.tags.length ? { tags: f.tags } : {}),
+        },
+        status: {
+          privacyStatus: agenda ? 'private' : 'public',
+          ...(agenda ? { publishAt: agenda } : {}),
+          selfDeclaredMadeForKids: f.paraCriancas,
+          ...(f.temIa ? { containsSyntheticMedia: true } : {}),
+        },
+      };
+
+      let r: Response;
+      try {
+        r = await fetch(`${YT_UPLOAD}/videos?uploadType=resumable&part=snippet,status&notifySubscribers=${f.avisar}`, {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + token,
+            'Content-Type': 'application/json; charset=UTF-8',
+            'X-Upload-Content-Length': String(total),
+            'X-Upload-Content-Type': midia.mime || 'video/mp4',
+          },
+          body: JSON.stringify(corpo),
+        });
+      } catch { throw erroDeRede('YouTube (abertura do envio)'); }
+
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        const motivo = j?.error?.errors?.[0]?.reason ?? '';
+        if (motivo === 'quotaExceeded' || motivo === 'uploadLimitExceeded') {
+          return { estado: 'erro', erro: 'O limite diário de envios do YouTube foi atingido (100 por dia). Reagende.', meta: { motivo } };
+        }
+        if (motivo === 'youtubeSignupRequired') {
+          return { estado: 'erro', erro: 'A conta autorizada não tem canal do YouTube. Autorize com a conta que administra o canal FullPro.', meta: { motivo } };
+        }
+        return { estado: 'erro', erro: 'O YouTube recusou a abertura do envio: ' + (j?.error?.message ?? r.status), meta: j?.error ?? null };
+      }
+
+      uri = r.headers.get('Location');
+      if (!uri) throw new Error('o YouTube não devolveu o endereço da sessão de envio');
+      /* Grava ANTES de mandar os bytes: sem isto, um timeout no meio do envio
+         faria a rodada seguinte subir o arquivo INTEIRO outra vez. */
+      await gravarDestino(ctx.dest.id, { status: 'enviando', erro: 'Enviando ao YouTube.' },
+        { upload_uri: uri, bytes: total, formato: 'video' });
+    }
+
+    /* ── 2. manda os bytes, retomando de onde parou ── */
+    const feito = await jaRecebido(uri, total, token);
+    if (feito !== 'pronto') {
+      const inicio = feito as number;
+      let origem: Response;
+      try {
+        origem = await fetch(midia.url, inicio > 0 ? { headers: { Range: `bytes=${inicio}-` } } : undefined);
+      } catch { throw erroDeRede('leitura do arquivo'); }
+      if (!origem.ok || !origem.body) {
+        return { estado: 'erro', erro: `Não deu para ler o arquivo do vídeo (HTTP ${origem.status}).` };
+      }
+
+      let env: Response;
+      try {
+        env = await fetch(uri, {
+          method: 'PUT',
+          headers: {
+            Authorization: 'Bearer ' + token,
+            'Content-Length': String(total - inicio),
+            ...(inicio > 0 ? { 'Content-Range': `bytes ${inicio}-${total - 1}/${total}` } : {}),
+          },
+          body: origem.body,
+        });
+      } catch {
+        /* Rede caiu no meio: a sessão continua válida e a marca está gravada.
+           A próxima rodada pergunta ao Google quanto chegou e continua dali. */
+        return {
+          estado: 'enviando',
+          erro: 'O envio ao YouTube foi interrompido. O robô retoma de onde parou na próxima rodada.',
+          meta: { upload_uri: uri, bytes: total },
+        };
+      }
+
+      if (env.status === 308) {
+        return {
+          estado: 'enviando',
+          erro: 'O YouTube ainda está recebendo o vídeo. O robô retoma na próxima rodada.',
+          meta: { upload_uri: uri, bytes: total },
+        };
+      }
+      if (!env.ok) {
+        const j = await env.json().catch(() => ({}));
+        return { estado: 'erro', erro: 'O YouTube recusou o arquivo: ' + (j?.error?.message ?? env.status), meta: j?.error ?? null };
+      }
+      const j = await env.json().catch(() => ({}));
+      videoId = String(j?.id ?? '');
+    }
+
+    if (!videoId) {
+      /* Chegou 'pronto' na consulta mas sem corpo com id: pergunta ao Google. */
+      return {
+        estado: 'enviando',
+        erro: 'O YouTube recebeu o vídeo e ainda está fechando o envio. O robô confere na próxima rodada.',
+        meta: { upload_uri: uri, bytes: total },
+      };
+    }
+    await gravarDestino(ctx.dest.id, { status: 'enviando', erro: 'Enviado ao YouTube, processando.' },
+      { upload_uri: uri, bytes: total, video_id: videoId });
+  }
+
+  /* ── 3. capa (thumbnails.set é SEMPRE uma segunda chamada) ── */
+  let capa: string | null = null;
+  const thumbRef = ctx.pub.thumb_caminho || ctx.pub.thumb_url || null;
+  if (thumbRef && !jaTinha.capa_ok) {
+    try {
+      const urlThumb = /^https:\/\//i.test(String(thumbRef)) ? String(thumbRef) : await urlDoCaminho(String(thumbRef));
+      const img = await fetch(urlThumb);
+      if (img.ok) {
+        const bytes = new Uint8Array(await img.arrayBuffer());
+        const rt = await fetch(`${YT_UPLOAD}/thumbnails/set?videoId=${videoId}`, {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + token,
+            'Content-Type': ctx.pub.thumb_mime || 'image/jpeg',
+            'Content-Length': String(bytes.byteLength),
+          },
+          body: bytes,
+        });
+        if (rt.ok) capa = 'posta';
+        else {
+          const jt = await rt.json().catch(() => ({}));
+          const motivo = jt?.error?.errors?.[0]?.reason ?? '';
+          /* Capa personalizada exige canal VERIFICADO por telefone. Não é
+             motivo para dar o vídeo como falho: ele já está no ar. */
+          capa = motivo === 'forbidden'
+            ? 'recusada: o canal precisa estar verificado por telefone em youtube.com/verify'
+            : 'recusada: ' + (jt?.error?.message ?? rt.status);
+          console.warn('[publicar] youtube capa', rabo(videoId), capa);
+        }
+      }
+    } catch (e) {
+      capa = 'não enviada (' + (e instanceof Error ? e.message : 'falha') + ')';
+    }
+  }
+
+  /* ── 4. o que o Google realmente fez com o vídeo ──
+     É AQUI que se descobre a trava de projeto não auditado: pedimos 'public' e
+     ele volta 'private'.
+
+     NÃO dá para perguntar com o token do upload: `youtube.upload` autoriza
+     ESCREVER e não LER. A tentativa devolve 403 e a resposta vinha `null`,
+     que foi o que me obrigou a conferir no navegador em 01/09 — e o dono
+     ficou sem saber se o vídeo saiu público pela API ou porque alguém clicou.
+     Nunca mais: duas leituras independentes, nenhuma delas com o token do
+     upload.
+
+       a) oEmbed — não precisa de credencial nenhuma e não gasta cota.
+          Responde 401 para vídeo privado e 200 para vídeo visível. É o teste
+          de "o público consegue ver?", que é a pergunta que importa.
+       b) chave de API (linha 'youtube', que LÊ) — devolve o privacyStatus
+          exato: public, unlisted ou private. Custa 1 unidade. */
+  let privacidade: string | null = null;
+  let visivelPublicamente: boolean | null = null;
+  let travado = false;
+
+  try {
+    const oe = await fetch('https://www.youtube.com/oembed?format=json&url='
+      + encodeURIComponent(`https://youtu.be/${videoId}`));
+    visivelPublicamente = oe.status === 200;
+  } catch { /* sem rede para o oEmbed: fica null, e null é honesto */ }
+
+  try {
+    const chave = (await credencial('youtube')).token;
+    if (chave) {
+      const rv = await fetch(`${YT_API}/videos?part=status&id=${videoId}&key=${chave}`);
+      const jv = await rv.json().catch(() => ({}));
+      const itens = jv?.items ?? [];
+      /* Chave de API não enxerga vídeo privado: lista vazia É a resposta, mas
+         só quando o oEmbed concorda. Discordância vira null em vez de chute. */
+      if (itens.length) privacidade = itens[0]?.status?.privacyStatus ?? null;
+      else if (visivelPublicamente === false) privacidade = 'private';
+    }
+  } catch { /* leitura é conveniência; o vídeo já está no ar */ }
+
+  const queriaPublico = !(ctx.pub.agendado_para && new Date(ctx.pub.agendado_para).getTime() > Date.now() + 60_000);
+  travado = queriaPublico && (privacidade === 'private' || visivelPublicamente === false);
+
+  const link = `https://youtu.be/${videoId}`;
+  console.log('[publicar] youtube publicado', rabo(videoId), privacidade ?? '?', capa ?? 'sem capa');
+
+  if (travado) {
+    return {
+      estado: 'publicado', id_externo: videoId, link,
+      meta: {
+        privacidade, visivel_publicamente: visivelPublicamente, capa, travado_como_privado: true,
+        aviso: 'O vídeo subiu mas o YouTube o deixou PRIVADO. É a trava de projeto de API não auditado: '
+          + 'não há recurso, e o vídeo precisa ser reenviado por cliente auditado ou pelo próprio YouTube. '
+          + 'Para liberar, o projeto precisa passar na auditoria de conformidade (yt_api_form).',
+      },
+    };
+  }
+
+  return { estado: 'publicado', id_externo: videoId, link, meta: { privacidade, visivel_publicamente: visivelPublicamente, capa } };
 }
 
 const CONECTORES: Record<string, (c: Contexto) => Promise<Resultado>> = {
@@ -1244,6 +1616,7 @@ async function panorama() {
   const fb = await credencial('facebook');
   const tt = await credencial('tiktok');
   const yt = await credencial('youtube');
+  const ytOauth = await credencial('youtube_oauth');
   const escoposIg: string[] = Array.isArray((ig.meta as any)?.escopos) ? (ig.meta as any).escopos : [];
 
   const podeIg = Boolean(ig.token) && (!escoposIg.length || escoposIg.includes('instagram_content_publish'));
@@ -1268,12 +1641,26 @@ async function panorama() {
       pode_publicar: false,
       falta: ['auditoria do Content Posting API', 'escopos video.publish e video.upload'],
     },
-    youtube: {
-      conectado: Boolean(yt.token),
-      canal: (yt.meta as any)?.canal_titulo ?? null,
-      pode_publicar: false,
-      falta: yt.refresh ? ['auditoria do projeto'] : ['OAuth com escopo youtube.upload', 'auditoria do projeto'],
-    },
+    youtube: (function () {
+      /* Duas linhas diferentes: 'youtube' guarda a CHAVE (só lê) e
+         'youtube_oauth' guarda a autorização de upload. Misturar as duas foi o
+         que quase apagou o refresh token — ver o comentário na youtube-proxy. */
+      const oauth = (ytOauth?.meta as any) ?? {};
+      const autorizado = Boolean(ytOauth?.refresh);
+      return {
+        conectado: Boolean(yt.token),
+        canal: oauth.canal_titulo ?? (yt.meta as any)?.canal_titulo ?? null,
+        pode_publicar: autorizado,
+        falta: autorizado ? [] : (oauth.client_id
+          ? ['autorizar em Integrações → Autorizar upload']
+          : ['configurar o app do Google e autorizar em Integrações']),
+        /* O primeiro upload é que responde: projeto não auditado faz o vídeo
+           nascer travado como privado, e isso só se vê depois de subir um. */
+        observacao: autorizado
+          ? 'auditoria do projeto ainda não confirmada — o primeiro vídeo dirá se sai público'
+          : null,
+      };
+    })(),
   };
 }
 
