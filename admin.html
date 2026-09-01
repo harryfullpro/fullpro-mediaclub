@@ -18012,7 +18012,7 @@ async function resolveTKVideoFromShortUrl(shortUrl) {
       if (!tkVideoCache || now - tkVideoCacheTime > 300000) {
         const res = await fetch(TK_PROXY_URL + '?action=videos', {
           method: 'POST',
-          headers: { 'x-tk-token': tkAccessToken, 'Content-Type': 'application/json' },
+          headers: await tkCabecalhos({ 'x-tk-token': tkAccessToken }),
           body: JSON.stringify({ max_count: 20 })
         });
         const json = await res.json();
@@ -18052,6 +18052,22 @@ async function resolveTKVideoFromShortUrl(shortUrl) {
 
 // TikTok proxy URL (Supabase Edge Function)
 const TK_PROXY_URL = 'https://xgaaocnuqgcwttrljqep.supabase.co/functions/v1/tiktok-proxy';
+
+/* [FP-TK-AUTH 01/09/2026] A tiktok-proxy passou a exigir JWT de operador.
+   Antes ela atendia qualquer pessoa da internet — inclusive ?action=disconnect,
+   que apagava a integração sem pedir nada. Estas sete chamadas eram as que
+   funcionavam SEM credencial; agora todas mandam o token da sessão.
+   `extra` é para o x-tk-token do módulo de influenciadores, que lê a conta de
+   outra pessoa e por isso manda um token próprio. */
+async function tkCabecalhos(extra) {
+  const base = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
+  try {
+    const { data } = await sb.auth.getSession();
+    const jwt = data && data.session && data.session.access_token;
+    if (jwt) base.Authorization = 'Bearer ' + jwt;
+  } catch (e) { /* sem sessão: a proxy responde 401 e a tela mostra desconectado */ }
+  return base;
+}
 
 // TikTok OAuth token management
 let tkAccessToken = null;
@@ -18130,7 +18146,7 @@ async function handleTKCallback() {
   try {
     const res = await fetch(TK_PROXY_URL + '?action=token', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await tkCabecalhos(),
       body: JSON.stringify({
         code: code,
         redirect_uri: window.location.origin + '/admin'
@@ -18162,7 +18178,7 @@ async function refreshTKAccessToken() {
   try {
     const res = await fetch(TK_PROXY_URL + '?action=refresh', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await tkCabecalhos(),
       body: JSON.stringify({ refresh_token: tkRefreshToken })
     });
     const json = await res.json();
@@ -18200,10 +18216,7 @@ async function fetchTKStats(videoId) {
     if (!tkVideoCache || now - tkVideoCacheTime > 300000) {
       const res = await fetch(TK_PROXY_URL + '?action=videos', {
         method: 'POST',
-        headers: {
-          'x-tk-token': tkAccessToken,
-          'Content-Type': 'application/json'
-        },
+        headers: await tkCabecalhos({ 'x-tk-token': tkAccessToken }),
         body: JSON.stringify({ max_count: 20 })
       });
       const json = await res.json();
@@ -18897,7 +18910,7 @@ async function refreshIntegrationStatus() {
   try {
     const results = await Promise.all([
       fetch(BLING_PROXY_URL + '?action=status', { headers: blingHeaders() }).then(function(r){ return r.json(); }).catch(function(){ return { connected: false }; }),
-      fetch(TK_PROXY_URL + '?action=status').then(function(r){ return r.json(); }).catch(function(){ return { connected: false }; })
+      tkCabecalhos().then(function (h) { return fetch(TK_PROXY_URL + '?action=status', { headers: h }); }).then(function(r){ return r.json(); }).catch(function(){ return { connected: false }; })
     ]);
     blingConnected = !!(results[0] && results[0].connected);
     tkConnected = !!(results[1] && results[1].connected);
@@ -18936,7 +18949,7 @@ function updateTKStatus() {
 
 async function disconnectTikTok() {
   if (!await fpConfirm({titulo:'Desconectar o TikTok', mensagem:'As métricas de posts do TikTok param de atualizar para toda a equipe.', detalhe:'Para religar, um administrador precisa autorizar de novo no TikTok.', confirmar:'Desconectar', perigo:true})) return;
-  fetch(TK_PROXY_URL + '?action=disconnect', { method: 'POST' }).catch(function(){});
+  tkCabecalhos().then(function (h) { return fetch(TK_PROXY_URL + '?action=disconnect', { method: 'POST', headers: h }); }).catch(function(){});
   clearTKTokens();
   tkConnected = false;
   updateTKStatus();
@@ -31171,7 +31184,7 @@ async function autoRefreshInfFollowers() {
         try {
           const res = await fetch(
             TK_PROXY_URL + '?action=user-info',
-            { headers: { 'x-tk-token': inf.tk_access_token } }
+            { headers: await tkCabecalhos({ 'x-tk-token': inf.tk_access_token }) }
           );
           if (res.ok) {
             const data = await res.json();
