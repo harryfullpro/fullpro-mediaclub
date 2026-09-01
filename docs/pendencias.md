@@ -305,6 +305,41 @@ acrescentar a entrada em `FP_AJUDA` com `titulo`, `intro`, `itens` e `passos`.
 
 ## Segurança
 
+### `tiktok-proxy` atende qualquer pessoa da internet, sem autenticação nenhuma
+Medido em 01/09/2026, do meu terminal, **sem um único cabeçalho**:
+
+```
+curl "https://xgaaocnuqgcwttrljqep.supabase.co/functions/v1/tiktok-proxy?action=user-info"
+→ HTTP 200 {"data":{"user":{"follower_count":560,...}}}
+```
+
+`verify_jwt` está desligado e a função **não confere nada no corpo** — ao
+contrário da `instagram-proxy`, que exige JWT de operador. Três consequências,
+em ordem de gravidade:
+
+1. **`?action=disconnect` apaga a integração e não pede nada.** Um POST de
+   qualquer lugar do mundo derruba o TikTok do painel. É destrutivo e anônimo.
+2. **As leituras (`videos`, `user-info`, `video-query`) usam o NOSSO token** e
+   servem nossa métrica para quem pedir, gastando nossa cota da API.
+3. O `client_secret` do app está **escrito em texto dentro da função**. Não
+   vazou (não está no repositório nem no histórico — conferido com `git log -S`),
+   mas devia ser secret do Supabase, não literal no código.
+
+**Por que ainda não consertei:** fechar isso exige mudar os ~7 `fetch` do
+`admin.html` que hoje chamam sem `Authorization` (o Instagram usa
+`sb.functions.invoke()`, que já manda o JWT sozinho) — e o `admin.html` estava
+em edição na outra sessão. Precisa de combinação, não de pressa.
+
+**Bônus achado no caminho:** em `atualizarMetricasInfluenciadores` o painel manda
+`x-tk-token` com o token *do influenciador*, mas `resolveToken()` prefere o do
+banco e **ignora o cabeçalho**. Ou seja, a métrica "do influenciador" é a nossa.
+
+### `tiktok-proxy` não tem código-fonte no repositório
+Está no ar na versão 6 e não existe em `supabase/`. Não dá para revisar, nem
+para saber o que mudou entre as versões. Só descobri o conteúdo pedindo o fonte
+ao Supabase.
+
+
 ### A sessão é o UUID do usuário, sem assinatura
 `fp_session` no localStorage é apenas o `id` do operador. Quem tiver o UUID de um
 administrador **entra como ele**. Não há assinatura nem validade.
