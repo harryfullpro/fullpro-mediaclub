@@ -57,6 +57,9 @@
     --bg-card: #16161a;
     --bg-elev: #1c1c22;
     --border: #26262e;
+    /* nota: trilha >=3:1 e estrela cheia bem acima, sobre --bg-card #16161a */
+    --nota-vazia: #6d6d76;  /* 3.52:1 */
+    --nota-cheia: #e6a800;  /* 8.55:1 */
     --border-hi: #34343e;
     /* Distancia entre colunas das grades de metrica e da dupla fila+animacao.
        Token porque as duas TEM que andar juntas, senao a tela desalinha. */
@@ -93,6 +96,9 @@
     --bg-card: #ffffff;
     --bg-elev: #f0f0f2;
     --border: #e0e0e4;
+    /* no claro o ouro #e6a800 dava so 2.11:1 sobre branco; escurecido p/ 3.08 */
+    --nota-vazia: #94949e;  /* 3.00:1 */
+    --nota-cheia: #c28800;  /* 3.08:1 */
     --border-hi: #c8c8ce;
     --text: #1a1a1e;
     --text-dim: #4e4e5a;
@@ -3070,21 +3076,41 @@
      nada. Agora o placeholder fica SEMPRE embaixo e a <img> por cima; se ela
      falhar, `onerror` remove a imagem e o placeholder aparece sozinho — sem
      classe para alternar, sem estado para sincronizar. */
-  .post-card-thumb img {
+  /* Filho DIRETO, nao qualquer img descendente: o placeholder tem o logotipo da
+     plataforma dentro dele (`.post-card-no-thumb img`, 32px), e o seletor largo
+     inflava esse logotipo para o card inteiro. */
+  /* onload checa naturalWidth<=120: o img.youtube.com devolve HTTP 200 com um
+     cinza 120x90 quando o video nao tem thumb, entao onerror sozinho nao pega. */
+  .post-card-thumb > img {
     position: absolute; inset: 0;
     width: 100%; height: 100%;
     object-fit: cover; display: block;
-    background: inherit;
+    /* sem background proprio: enquanto a imagem nao pinta (carregando, ou
+       quebrada antes do onerror disparar), a img fica transparente e o
+       placeholder embaixo aparece na hora, em vez de um retangulo vazio. */
   }
   .post-card-no-thumb {
     position: absolute; inset: 0;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     gap: 10px; padding: 20px;
+    /* Veu escuro: com o CDN do Instagram/TikTok expirando, o placeholder e o
+       estado da MAIORIA dos cards, nao a excecao. Entao o texto precisa de um
+       fundo previsivel, e nao da luminancia do gradiente da plataforma, que
+       varia. Sem o veu, o titulo media 4.18-4.38:1 (abaixo de 4.5). */
+    background: rgba(0,0,0,.42);
   }
-  .post-card-no-thumb img { width: 32px; height: 32px; opacity: .5; }
-  .post-card-no-thumb span {
-    font-size: 12px; font-weight: 600; color: rgba(255,255,255,.45);
+  /* O icone da plataforma vem como .fp-dest-lg com width/height INLINE de 14px
+     (tamanho de badge de canto). Aqui ele e o elemento principal do estado, e
+     inline style so cede a !important. */
+  .post-card-no-thumb > .fp-dest-lg { width: 34px !important; height: 34px !important; }
+  .post-card-no-thumb img { width: 100%; height: 100%; opacity: .78; }
+  /* Estado, nao titulo: o titulo ja aparece em .post-card-info logo abaixo, e
+     repeti-lo aqui lia como falha de render. Dizer "sem capa" ainda deixa
+     visivel de relance quantos posts estao sem imagem. */
+  .post-card-no-thumb-lbl {
+    font-size: 10px; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; color: rgba(255,255,255,.72);
     text-align: center; line-height: 1.4;
   }
   .post-card-type {
@@ -3132,11 +3158,11 @@
   }
   .post-card-stars { display: flex; gap: 1px; }
   .post-card-star {
-    font-size: 14px; color: var(--border); cursor: pointer;
+    font-size: 14px; color: var(--nota-vazia); cursor: pointer;
     transition: color .1s;
   }
-  .post-card-star.active { color: #e6a800; }
-  .post-card-star:hover { color: #e6a800; }
+  .post-card-star.active { color: var(--nota-cheia); }
+  .post-card-star:hover { color: var(--nota-cheia); }
   .post-card-delete {
     background: none; border: none; cursor: pointer;
     font-size: 18px; color: var(--text-muted); line-height: 1;
@@ -28420,10 +28446,21 @@ function getAllProjectPosts() {
     if (!proj.posts) return;
     Object.entries(proj.posts).forEach(([key, post]) => {
       if (!post || !post.link) return;
-      // Auto-detect thumbnail
-      let thumb = post._igThumb || '';
+      /* FP-POSTS-THUMB · o link vem do copiar-e-colar do operador e nem sempre e
+         so o link: ha registro com "Link do video https://youtu.be/..." gravado
+         inteiro. `extractYouTubeId` acha o id assim mesmo (o regex nao tem
+         ancora), entao a thumbnail aparecia — mas o clique fazia
+         window.open("Link do video https://...") e abria a BUSCA do navegador
+         em vez do video. Aqui a URL e extraida do texto. */
+      const _url = (String(post.link).match(/https?:\/\/\S+/) || [String(post.link)])[0];
+      /* Le tambem `_tkThumb`: a thumbnail do TikTok esta gravada no banco desde
+         sempre e o codigo so lia `_igThumb` — as 4 pecas de TikTok nunca
+         mostraram imagem, mesmo tendo uma. (As duas fontes sao URLs assinadas
+         que EXPIRAM: as do TikTok venceram em 09 e 18/ago, as do Instagram
+         respondem 403. Por isso o cartao tem fallback: ver .post-card-thumb img.) */
+      let thumb = post._igThumb || post._tkThumb || '';
       if (!thumb) {
-        const ytId = extractYouTubeId(post.link);
+        const ytId = extractYouTubeId(_url);
         if (ytId) thumb = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
       }
       posts.push({
@@ -28433,7 +28470,7 @@ function getAllProjectPosts() {
         label: keyToLabel[key] || key,
         platform: keyToPlatform[key] || 'yt',
         type: keyToType[key] || 'longo',
-        link: post.link,
+        link: _url,
         thumbnail: thumb,
         views: post.views || 0,
         likes: post.likes || 0,
@@ -30175,8 +30212,8 @@ function renderPerfPosts() {
 
     return `<div class="post-card${isShort ? ' post-card-short' : ''}" onclick="${p.link ? `window.open('${p.link.replace(/'/g, "\\'")}','_blank')` : ''}">
       <div class="post-card-thumb" style="background:${gradient}">
-        <div class="post-card-no-thumb">${platIcons[plat] || ''}<span>${escHtml(p.title.substring(0, 30))}</span></div>
-        ${hasThumb ? `<img src="${escHtml(thumb)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+        <div class="post-card-no-thumb">${platIcons[plat] || ''}<span class="post-card-no-thumb-lbl">sem capa</span></div>
+        ${hasThumb ? `<img src="${escHtml(thumb)}" alt="" loading="lazy" onerror="this.remove()" onload="if(this.naturalWidth<=120)this.remove()">` : ''}
         <div class="post-card-type" title="${isShort ? 'Vertical 9:16' : 'Horizontal 16:9'}">${isShort ? '9:16' : '16:9'}</div>
         <div class="post-card-plats"><span class="post-card-plat">${platIcons[plat] || ''}</span></div>
         <div class="post-card-overlay">

@@ -397,6 +397,21 @@ Caminho: extrair um módulo por tela, começando pelas que mais mudam (Projetos,
 ~6 mil nós, 1,4 MB de HTML serializado, 18 `<h1>` simultâneos. Trocar de tela só alterna
 `display`.
 
+### Capa de post depende de URL que expira (13 de 22 posts sem imagem)
+
+O painel guarda o **link** da thumbnail no CDN da plataforma, não a imagem. São URLs
+assinadas: as do Instagram (`oe=`/`_nc_ohc`) já respondem 403 e as do TikTok venceram em
+09 e 18/ago. O card hoje cai num placeholder honesto ("sem capa"), que resolve a
+aparência mas não traz a imagem de volta — e a proporção só piora com o tempo, porque
+toda capa nova também vence.
+
+Correção durável: copiar a imagem para bucket nosso **no momento da coleta**, e guardar a
+referência local. É o padrão que já roda para story (`bruto.thumb` + `fpTriAssinar`) —
+falta aplicar a posts. Só o YouTube não precisa: `img.youtube.com` é estável (mas devolve
+HTTP 200 com um cinza 120×90 quando não há capa, então continua precisando da checagem
+por `naturalWidth`).
+
+
 ---
 
 ## Ideias levantadas e não pedidas

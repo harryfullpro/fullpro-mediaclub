@@ -4088,3 +4088,60 @@ handler `onclick`; e o `vercel.json` bloqueava a câmera por header, o que teria
 melhoria do check-in.
 
 Backup em três camadas antes de começar — ver `ambiente.md`.
+
+---
+
+## 01/09/2026 — Meus Posts
+
+Quatro pedidos: pôr a tela no padrão dos painéis, corrigir thumbnail de vídeo que não
+carregava, abrir filtrando o mês corrente, e trocar "vídeos longos / vídeos shorts" por
+termos que não colidissem com Shorts do YouTube.
+
+**Por que as thumbnails falhavam.** Medido nos 22 posts reais: 13 (59%) não tinham
+imagem, por três causas somadas.
+
+| Causa | Alcance |
+|---|---|
+| URL assinada do Instagram (`oe=`/`_nc_ohc`) responde **403** — expira | 7 posts |
+| Thumbnail do TikTok existia no banco em `_tkThumb`, e o código só lia `_igThumb` | 4 posts |
+| `img.youtube.com` devolve **HTTP 200 com um cinza 120×90** quando o vídeo não tem capa | 1 post |
+
+Com `background-image` e `hasThumb = !!thumb`, URL morta contava como "tem thumb": o
+card virava caixa vazia, sem ícone, sem título, sem nada. Virou `<img>` por cima de um
+placeholder que fica sempre embaixo — se falhar, `onerror` remove a imagem e o
+placeholder aparece, sem classe para alternar nem estado para sincronizar. O cinza do
+YouTube não dispara `onerror`, então é pego por `onload` com `naturalWidth <= 120`.
+
+Achado no caminho: o link vem de copiar-e-colar e às vezes traz texto junto
+("Link do video https://youtu.be/..."). A thumbnail aparecia — `extractYouTubeId` acha o
+id mesmo assim — mas o clique abria a **busca do navegador** em vez do vídeo. A URL passou
+a ser extraída do texto.
+
+**Nomenclatura.** "longos/shorts" viraram **Horizontal** e **Vertical**, com selo `16:9`
+e `9:16` no card. Descreve o formato sem pegar carona em marca de plataforma. Os valores
+internos (`longo`/`short`) não mudaram — troca de rótulo, não de dado.
+
+**Contraste, medido nos dois temas** (96 nós de texto, 0 reprovados nos dois):
+
+| Item | Antes | Depois |
+|---|---|---|
+| Título sobre o placeholder | 4,18–4,38 | 9,7–10,0 |
+| Estrela cheia (tema claro) | 2,11 | 3,08 |
+| Trilha da nota (estrela vazia) | **1,20** | 3,52 escuro / 3,00 claro |
+
+A trilha da nota usava `var(--border)` — cor de filete aplicada a um gráfico com
+significado. A 1,2:1 não dava para ver que a nota era 3 de 5, porque a trilha sumia.
+Ganhou tokens próprios (`--nota-cheia`, `--nota-vazia`), por tema.
+
+**Três erros meus, pegos medindo e não olhando:**
+
+1. `.post-card-thumb img` (descendente) inflou para o card inteiro o logotipo de 32px que
+   vive *dentro* do placeholder. Corrigido para filho direto.
+2. `background: inherit` na `<img>` fazia a imagem quebrada pintar o gradiente por cima
+   do placeholder — o card ficava vazio pelos ~10s até o 403 chegar.
+3. O placeholder repetia o título que já aparece logo abaixo, no `.post-card-info`. Lia
+   como falha de render. Virou logotipo da plataforma + "sem capa", que ainda deixa
+   visível de relance quantos posts estão sem imagem.
+
+**Duas armadilhas de medição** (valem para qualquer tela daqui em diante) — ver
+`ambiente.md`.

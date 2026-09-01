@@ -270,3 +270,40 @@ Reverter tudo:
 git revert --no-commit ca11e22..HEAD && git commit -m "Reverte auditoria de UX"
 git push origin main
 ```
+
+## Medir contraste no laboratório — duas armadilhas
+
+Custaram uma rodada inteira de conclusões erradas em 01/09. As duas produzem números
+plausíveis, não erro visível, e é por isso que enganam.
+
+### 1. Trocar de tema e medir antes de a transição acabar
+
+O CSS anima `color` e `background-color`. Trocar `data-theme` e medir 2,5 s depois pegou
+os **tokens do tema antigo sobre o fundo do tema novo** — texto claro sobre fundo já
+claro. Deu 1,04:1 num chip que na verdade tem 16,57:1, e a lista de "reprovados" ficou
+inteira de fantasma. Antes de medir:
+
+```js
+const s = document.createElement('style');
+s.textContent = '*,*::before,*::after{transition:none!important;animation:none!important}';
+document.head.appendChild(s);
+```
+
+Não use `requestAnimationFrame` para esperar: **com o painel do navegador oculto o rAF não
+dispara** e a chamada trava até o timeout. Só `setTimeout`.
+
+### 2. Resolver o fundo com `backgroundColor` quando há gradiente
+
+`.post-card-thumb` pinta a plataforma com `background: linear-gradient(...)`. Nesse
+elemento `backgroundColor` é `rgba(0,0,0,0)`, então quem sobe a árvore procurando cor
+sólida **passa direto pelo gradiente** e mede contra o fundo errado.
+
+Empilhe as camadas de baixo para cima e teste cada parada do gradiente, ficando com a
+pior. A ordem importa: a cor de fundo pinta **embaixo** da imagem de fundo. E confira o
+medidor contra um caso calculado à mão antes de confiar nele — a primeira versão do meu
+empilhamento invertia a ordem e devolvia 3,00 onde o valor real era 5,25.
+
+### Sanidade que sempre vale
+
+Se um seletor de raiz não existe no laboratório (`#ppTabPublicados` é do app), a varredura
+cai calada no `body` e mede a página inteira. Confirme quantos nós entraram.
