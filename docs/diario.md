@@ -4248,3 +4248,32 @@ Três decisões que valem registrar:
 O `health` agora diz `facebook.pode_publicar: true` — mas isso mede **permissão, não
 resultado**. Nenhum post real saiu ainda, no Facebook nem no Instagram. Está em
 `pendencias.md` como o que é: previsão, até o primeiro post cair.
+
+### 01/09 (continuação) — a data escolhida pela origem, e um comentário falso
+
+Blindagem no `loadPerfDatas` de Meus Posts. Quando um mesmo link tem mais de uma peça, a
+regra era "vale a mais antiga" — o que escolhe **pelo relógio**. Qualquer escritor de
+`mc_pecas` que não seja a plataforma carimba com a *nossa* hora, sempre anterior ao
+carimbo real, então a regra passaria a preferir a data errada sem avisar: post no mês
+errado, achado meses depois. Agora `fonte` decide — `youtube`/`instagram`/`tiktok` vêm do
+coletor e mandam; entre iguais continua valendo a mais antiga, que cobre coleta repetida.
+
+Os 5 casos foram testados com o trecho **extraído do próprio `admin.html`**, não
+reescrito, inclusive "nossa hora antes + carimbo da plataforma depois" → escolhe a
+plataforma.
+
+**O erro que veio junto, e que vale mais que a correção.** Escrevi no comentário que a
+fila do planner *viraria* a segunda origem em `mc_pecas`. Não vira. Conferido:
+`supabase/publicar.ts` grava em `mc_publicacoes` e `mc_publicacoes_destino` e tem **zero**
+menção a `mc_pecas` — o único escritor continua sendo `coletor-pecas.ts`. E é decisão, não
+esquecimento: gravar ali reusaria o `externo_id` do coletor e deixaria a nossa hora de
+envio como `publicado_em` por até 60 minutos, que é exatamente o bug acima.
+
+A regra fica (o motivo nunca dependeu do planner), mas o comentário foi corrigido. Código
+que afirma como fato uma coisa que vai deixar de ser verdade é pior que código sem
+comentário: daqui a seis meses alguém lê e acredita.
+
+**Nota de método:** esse comentário nasceu de um aviso de outra sessão que estava errado
+no mecanismo, e eu o transformei em código sem conferir. O conserto veio de correr um
+`grep` de dez segundos. Aviso de outra sessão é dado, não medição — vale o mesmo que
+qualquer outra afirmação: confere antes de escrever no arquivo.
