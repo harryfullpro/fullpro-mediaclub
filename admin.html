@@ -6443,7 +6443,7 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 .fp-sem-n { font-size: 12px; font-weight: 800; line-height: 1; color: var(--text-dim);
   font-variant-numeric: tabular-nums; }
 .fp-sem-r { font-size: 9.5px; font-weight: 600; letter-spacing: .05em; color: var(--text-muted); line-height: 1.2; }
-.fp-sem-d { font-size: 9px; font-weight: 500; color: var(--text-muted); opacity: .8; line-height: 1;
+.fp-sem-d { font-size: 9px; font-weight: 500; color: var(--text-muted); opacity: .8; line-height: 1; white-space: nowrap;
   font-variant-numeric: tabular-nums; }
 /* Mistura com o TRILHO (cor opaca), não com `transparent`: sobre card escuro a
    mistura com transparente desidrata a croma e o verde virava cinza-esverdeado.
@@ -29452,6 +29452,43 @@ function fpMetaSemanas(janela) {
   return out;
 }
 
+const FP_DIA_CURTO = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+
+/* IRMÃ de fpMetaSemanas, não substituta: um bloco por OCORRÊNCIA de um dia da
+   semana no mês. Serve à meta que sai em dia fixo — o carrossel é sábado às
+   10h, e "1–7 / 8–14" esconde justamente o que interessa: com "05, 12, 19, 26"
+   dá para ver de relance QUAL sábado ficou em branco.
+
+   Não editei fpMetaSemanas porque ela alimenta também o cartão de PRODUTOS COM
+   CLIP e a grade de calor do celular — mudar a âncora ali mexeria em três telas
+   por causa de um pedido.
+
+   `ini` e `fim` iguais de propósito: o laço de fpVizSemanal soma de ini a fim,
+   e com os dois no mesmo dia ele funciona sem uma linha de mudança.
+
+   As datas são CALCULADAS de METAS_MES, nunca fixas. O dono pediu "06, 13, 20,
+   27" e os sábados de setembro/2026 são 05, 12, 19 e 26 — o dia 1 é terça. Uma
+   lista fixa mentiria em todo mês que não começa no domingo. */
+function fpMetaDiasSem(janela, dow) {
+  const partes = String(METAS_MES || '').split('-');
+  const aa = Number(partes[0]), mm = Number(partes[1]);
+  const out = [];
+  if (!aa || !mm) return out;
+  for (let d = 1; d <= janela.dias; d++) {
+    if (new Date(aa, mm - 1, d).getDay() !== dow) continue;
+    out.push({ ini: d, fim: d, dia: d, dias: 1, corridos: d <= janela.corridos ? 1 : 0 });
+  }
+  return out;
+}
+
+/* O dia da semana fixo da meta, se ela tiver um. 0 é domingo e é valor válido,
+   então a checagem é por tipo, não por verdade — `opcoes.dia_semana || null`
+   transformaria domingo em "não tem". */
+function fpMetaDiaFixo(alvo) {
+  const d = alvo && alvo.opcoes ? alvo.opcoes.dia_semana : null;
+  return (typeof d === 'number' && d >= 0 && d <= 6) ? d : null;
+}
+
 /* Qual gráfico a meta usa. A escolha é do dono, na coluna `grafico` — a divisão
    não sai do alvo: `clips` tem alvo 40 (mais que `story`, 30) e ainda assim é
    meta de lote, seis clips saem no mesmo dia. A regra de bolso abaixo só vale
@@ -29722,9 +29759,12 @@ function fpVizSequencia(ap, janela) {
    altura dupla diria justamente que substituem. O que a meta pede é presença
    semanal, então o gráfico só pode dizer sim ou não. */
 function fpVizSemanal(ap, janela) {
-  const semanas = fpMetaSemanas(janela);
-  /* Quantas peças a semana pede: o alvo dividido pelas semanas que o mês tem,
-     arredondado para cima e no mínimo 1. Alvo 4 em 5 blocos pede 1 por semana. */
+  const dow = fpMetaDiaFixo(ap.alvo);
+  const semanas = dow === null ? fpMetaSemanas(janela) : fpMetaDiasSem(janela, dow);
+  if (!semanas.length) return '';
+  const unidade = dow === null ? 'semana' : FP_DIA_CURTO[dow] === 'sáb' ? 'sábado' : FP_DIA_CURTO[dow];
+  /* Quantas peças o bloco pede: o alvo dividido pelos blocos do mês, no mínimo
+     1. Alvo 4 em 5 blocos pede 1 por bloco. */
   const pede = Math.max(1, Math.round((ap.meta || 1) / semanas.length));
   return '<div class="fp-mp-sem">'
     + semanas.map((s, i) => {
@@ -29736,20 +29776,35 @@ function fpVizSemanal(ap, janela) {
         const est = futura ? 'fp-fut' : ok ? 'fp-ok' : curso ? 'fp-curso' : 'fp-nao';
         return '<div class="fp-sem-cel ' + est + '"'
           + (ok ? ' style="--c:' + fpMetaCor(1) + '"' : (est === 'fp-nao' ? ' style="--c:' + fpMetaCor(0) + '"' : ''))
-          + ' title="' + escHtml('semana ' + (i + 1) + ' · dia ' + s.ini + '-' + s.fim + ': ' + feito
-              + ' de ' + pede + (futura ? ' (não começou)' : curso ? ' (em curso)' : '')) + '">'
+          + ' title="' + escHtml((dow === null ? 'semana ' + (i + 1) + ' · dia ' + s.ini + '-' + s.fim
+                                              : unidade + ' dia ' + s.dia)
+              + ': ' + feito + ' de ' + pede
+              + (futura ? ' (não chegou)' : curso ? ' (em curso)' : '')) + '">'
           + '<span class="fp-sem-ico">' + (futura ? '·' : ok ? '✓' : curso ? '◦' : '✕') + '</span>'
           + '<span class="fp-sem-n">' + (futura ? '–' : feito + (pede > 1 ? '/' + pede : '')) + '</span>'
-          + '<span class="fp-sem-r">sem ' + (i + 1) + '</span>'
-          + '<span class="fp-sem-d">' + s.ini + '–' + s.fim + '</span>'
+          + '<span class="fp-sem-r">' + (dow === null ? 'sem ' + (i + 1) : FP_DIA_CURTO[dow]) + '</span>'
+          + '<span class="fp-sem-d">'
+          +   (dow === null ? s.ini + '–' + s.fim : String(s.dia).padStart(2, '0'))
+          + '</span>'
           + '</div>';
       }).join('')
     + '</div>'
-    + '<div class="fp-mp-pe"><span>' + pede + (pede === 1 ? ' por semana' : ' por semana') + '</span>'
-    + '<b>' + semanas.filter((s, i) => {
-        let f = 0; for (let d = s.ini; d <= s.fim; d++) f += (ap.porDia[d] || 0);
-        return s.corridos > 0 && f >= pede;
-      }).length + ' de ' + semanas.filter(s => s.corridos > 0).length + ' semanas</b></div>';
+    + (function () {
+        const cumpridos = semanas.filter(s => {
+          let f = 0; for (let d = s.ini; d <= s.fim; d++) f += (ap.porDia[d] || 0);
+          return s.corridos > 0 && f >= pede;
+        }).length;
+        /* O DENOMINADOR É LIMITADO PELA META, e isto conserta um erro que já
+           existia: outubro/2026 tem CINCO sábados e a meta é 4. Com 5 no
+           denominador, um sábado sempre marcaria ✕ e o rodapé diria "4 de 5"
+           mesmo com a meta batida — o cabeçalho dizendo BATEU e o pé dizendo
+           que falta. O mês pede 4; o quinto sábado é folga legítima. */
+        const cobrados = semanas.filter(s => s.corridos > 0).length;
+        const teto = ap.meta ? Math.min(cobrados, ap.meta) : cobrados;
+        const plural = teto === 1 ? unidade : (unidade === 'sábado' ? 'sábados' : unidade + 's');
+        return '<div class="fp-mp-pe"><span>' + pede + ' por ' + unidade + '</span>'
+          + '<b>' + cumpridos + ' de ' + teto + ' ' + plural + '</b></div>';
+      })();
 }
 /* ── slots · alvo baixo, sem cadência ─────────────────────────────────────
    Um bloco por peça que a meta pede, preenchido da esquerda para a direita, com
