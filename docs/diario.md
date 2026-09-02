@@ -4542,3 +4542,54 @@ obriga a chamar `creator_info`, e as opções de privacidade que ele devolve sã
 únicas aceitas. Em vez de mandar "público" e torcer, o código lê a lista. Se
 `PUBLIC_TO_EVERYONE` estiver lá, o Direct Post funciona sem auditoria — que é
 exatamente a pergunta que o YouTube respondeu de graça hoje de manhã.
+
+---
+
+## 02/09/2026 — METAS: uma produção não são três vídeos, e o botão que eu escondi
+
+**Três ajustes pedidos no METAS, todos entregues.**
+
+**1. Produção ≠ publicação.** O painel dizia "3 vídeos curtos postados" onde havia
+**um** vídeo em três redes. Minha primeira regra foi "o máximo por plataforma" e a
+medição a matou no mesmo dia: erra o 07/08 (diz 2, foram 3) e, num dia de fila com
+20 shorts, reportaria 20 produções. A chave certa já estava no banco —
+`project_id`. Uma produção = N publicações. O card mostra a produção; a
+publicação aparece como `· N publicações` embaixo, só quando os números divergem.
+
+**2. Stories com palpite automático.** O reconhecimento de repost ficou ligado. A
+`/stories` da Meta diz, com estas palavras, que **não retorna** o story criado ao
+recompartilhar — não há campo, webhook nem métrica de reshare. Então não é
+detecção, é **palpite**, e a tela precisa dizer isso: o palpite entra tracejado
+com `?`, e um clique do dono o vira decisão. Classe única (`story` ou `repost`) —
+a categoria "nosso" saiu.
+
+**3. Sábado tem data, não faixa.** O carrossel sai sábado 10h; o gráfico listava
+`1-7`, `8-14`. Agora é uma coluna por sábado real. De brinde, o bug de outubro:
+mês com 5 sábados perdia o quinto.
+
+**A regressão que eu mesmo criei, e a lição.** O botão que abre a triagem de
+stories era condicional a "existe pendente". Ao ligar o palpite, todo story
+passou a ter classe, o contador foi a zero e **o botão sumiu** — junto com o
+crachá no ícone do cabeçalho. Ou seja: a melhoria apagou o caminho para corrigir
+a própria melhoria. O dono viu na hora ("cade????"). *Ação permanente não se
+esconde atrás de contador.* Reclassificar não é função de fila cheia.
+
+**Recarga de 30 em 30 min, com duas escolhas que não são o óbvio.** Ancorada nos
+minutos **9 e 39**, não num timer solto: quem traz dado novo é o cron dos minutos
+7 e 37, e um timer arbitrário recarrega metade das vezes logo *antes* da coleta,
+exibindo dado de 29 minutos com cara de fresco. E ela **relê o banco**, não chama
+o coletor — três abas abertas seriam três coletas por rodada, queimando cota de
+YouTube e TikTok. O servidor coleta; a tela lê.
+
+**Contraste: três reprovações no mesmo dia, nenhuma vista a olho.** Meu botão de
+palpite saiu branco no branco (**1,00:1**). Os botões `story` (**3,08**) e
+`repost` (**2,48**) já estavam reprovados antes de eu chegar. E o estado de
+alerta ficou azul porque pus `.fp-mm-alerta` *antes* da regra base — mesma
+especificidade, ganha quem vem depois. Fim: 5,63 / 17,35 / 7,0 / 7,0, e o aviso
+em `--meta-aviso` (6,33 claro, 9,49 escuro) porque `--warning` é cor de
+preenchimento, não de texto.
+
+**Coletor apagando dado a cada 30 min.** O `guardar()` mandava `{}` quando o story
+já tinha thumb, e o upsert do PostgREST **substitui o jsonb inteiro** — coluna
+omitida sobrevive, jsonb parcial não. Um `Map` carregando o valor anterior
+resolveu.
