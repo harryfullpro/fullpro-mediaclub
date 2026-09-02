@@ -5933,8 +5933,8 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    Este par ficou igual nos dois temas: 1,85 e 1,97.
    O azul é o do `.fp-link`, que já é o par acessível do painel — o #007AFF
    dava 3,69:1 num texto de 11px no claro, que reprova. */
-:root { --meta-grade: #3d3d48; --meta-link: #5b9dd9; }
-[data-theme="light"] { --meta-grade: #b0b0bb; --meta-link: #1558b0; }
+:root { --meta-grade: #3d3d48; --meta-link: #5b9dd9; --meta-aviso: #ffaa33; }
+[data-theme="light"] { --meta-grade: #b0b0bb; --meta-link: #1558b0; --meta-aviso: #8a5300; }
 
 /* ATIVIDADE não é VEREDITO, e por isso tem hue própria.
    O mapa de calor do herói responde "quando o trabalho aconteceu", que não é
@@ -6492,7 +6492,15 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
   border: 0; background: none; padding: 0; cursor: pointer; font: inherit;
   font-size: 10px; font-weight: 700; letter-spacing: .03em;
   text-transform: none; color: var(--meta-link);
+  /* SUBLINHADO porque este rodapé é feito de legenda: sem ele o único botão da
+     área parece texto, e o dono não achou o caminho de reclassificar. */
+  text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px;
 }
+.fp-meta-marcar:hover { text-decoration-thickness: 2px; }
+/* DEPOIS da regra base, não antes: as duas têm uma classe de especificidade, e
+   nesse empate quem vence é quem vem por último no arquivo. Colocada acima, a
+   cor de alerta era simplesmente ignorada — medido, dava o azul do link. */
+.fp-meta-marcar.fp-mm-alerta { color: var(--meta-aviso); }
 .fp-meta-marcar:hover { text-decoration: underline; text-underline-offset: 2px; }
 
 /* ── peças fora das metas ────────────────────────────────────────────── */
@@ -29251,6 +29259,27 @@ function fpEhProprio(p) {
 function fpStoryResolvido(p) {
   return !!fpStoryClasse(p);
 }
+/* O BOTÃO DE CLASSIFICAR EXISTE SEMPRE, e isto é conserto de regressão minha.
+
+   Ele aparecia só quando havia story pendente. Ao ligar o palpite automático
+   (02/09), todo story virou "resolvido", o contador foi a zero — e o botão
+   sumiu junto com o crachá do ícone do cabeçalho. Resultado: o dono ficou sem
+   nenhum caminho visível para RETAGUEAR o que a máquina chutou, que é
+   justamente o que ele mais precisa fazer agora.
+
+   Reclassificar é necessidade permanente, não função de fila vazia. */
+function fpBotaoTriagem() {
+  const n = fpStoriesSemOlhar();
+  const chutes = METAS_PECAS.filter(function (p) {
+    return p.tipo === 'story' && fpStoryDaMaquina(p);
+  }).length;
+  const frase = n ? n + (n === 1 ? ' story por conferir' : ' stories por conferir')
+              : chutes ? 'conferir ' + chutes + (chutes === 1 ? ' palpite' : ' palpites')
+              : 'classificar stories';
+  return '<button type="button" class="fp-meta-marcar' + (n || chutes ? ' fp-mm-alerta' : '') + '"'
+    + ' onclick="fpRepostAbrir()">' + frase + '</button>';
+}
+
 function fpStoriesSemOlhar() {
   return METAS_PECAS.filter(function (p) {
     return p.tipo === 'story' && !fpStoryResolvido(p);
@@ -29736,7 +29765,7 @@ function fpVizCalendario(ap, janela) {
   return '<div class="fp-mp-cal">'
     + FP_DIA_SEM.map((s, i) => '<span class="fp-cal-cab' + (i === forte && ap.feito ? ' fp-cal-forte' : '') + '">' + s + '</span>').join('')
     + cels + '</div>'
-    + '<div class="fp-mp-pe"><span>calendário do mês</span>'
+    + '<div class="fp-mp-pe"><span>' + fpBotaoTriagem() + '</span>'
     + (ap.feito ? '<span>mais forte: <b>' + NOME_SEM[forte] + ' (' + porSem[forte] + ')</b></span>' : '')
     + '</div>';
 }
@@ -29771,12 +29800,8 @@ function fpVizSequencia(ap, janela) {
      apresentaria palpite de imagem com a mesma cara de dado conferido — e o
      palpite não vê o caso principal (story que recompartilha OUTRO story nem
      chega na coleta: limitação escrita da borda /stories da Meta). */
-  const porConferir = fpStoriesSemOlhar();
   return '<div class="fp-mp-seq">' + cels + '</div>'
-    + '<div class="fp-mp-pe"><span>' + (porConferir
-        ? '<button type="button" class="fp-meta-marcar" onclick="fpRepostAbrir()">'
-          + porConferir + (porConferir === 1 ? ' story por conferir' : ' stories por conferir') + '</button>'
-        : 'dias cumpridos · 1 quadrado = 1 dia') + '</span>'
+    + '<div class="fp-mp-pe"><span>' + fpBotaoTriagem() + '</span>'
     + '<span>sequência atual <b>' + atual + '</b> · melhor <b>' + melhor + '</b></span></div>';
 }
 
@@ -33770,6 +33795,60 @@ async function initApp() {
       console.warn('refreshViewData error for', viewName, err);
     }
   }
+
+  /* ── Recarga automática de Metas e Meus Posts ──────────────────────────
+     Pedido do dono: as duas telas atualizadas de 30 em 30 minutos.
+
+     NÃO é um relógio de 30 minutos, e a diferença importa. Quem traz dado novo
+     das redes é o cron `coletor-pecas-30min`, nos minutos 7 e 37. Um timer solto
+     de 30 min cairia em qualquer minuto — metade das vezes logo ANTES da coleta,
+     mostrando dado de 29 minutos como se fosse fresco. Então a recarga é
+     ancorada: minutos 9 e 39, dois minutos depois da coleta.
+
+     E NÃO chama fpMetasAtualizar: aquela invoca o coletor. Com três abas
+     abertas seriam três coletas por rodada, gastando cota da API do YouTube e
+     do TikTok à toa. O servidor já coleta; a tela só relê o banco.
+
+     Três guardas, cada uma por um motivo concreto:
+       · aba escondida não recarrega — e recarrega ao voltar, se estiver velha;
+       · modal aberto não recarrega, senão o dado muda embaixo de quem está
+         classificando story ou preenchendo publicação;
+       · trava de 5 minutos, para o relógio bater duas vezes no mesmo minuto
+         (ou o visibilitychange somar com o tique) e não virar recarga dupla. */
+  const RECARGA_VIEWS = ['perf-metas', 'perf-posts'];
+  const RECARGA_MINUTOS = [9, 39];
+  const RECARGA_TRAVA_MS = 5 * 60 * 1000;
+  const RECARGA_VELHO_MS = 30 * 60 * 1000;
+  let _recargaEm = Date.now();
+
+  function fpViewCorrente() {
+    const h = (location.hash || '').slice(1);
+    return h === 'requests' ? 'calendar' : (h || 'dashboard');
+  }
+
+  async function fpRecarregar(motivo) {
+    const v = fpViewCorrente();
+    if (RECARGA_VIEWS.indexOf(v) < 0) return;
+    if (document.hidden) return;
+    if (document.querySelector('.modal.show')) return;
+    if (Date.now() - _recargaEm < RECARGA_TRAVA_MS) return;
+    _recargaEm = Date.now();
+    try { await refreshViewData(v); } catch (e) { console.warn('recarga', motivo, e); }
+  }
+
+  setInterval(function () {
+    if (RECARGA_MINUTOS.indexOf(new Date().getMinutes()) < 0) return;
+    fpRecarregar('relogio');
+  }, 30 * 1000);
+
+  /* Voltar para a aba depois de meia hora fora tem de mostrar dado de agora, e
+     não o retrato de quando ela foi deixada. */
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) return;
+    if (Date.now() - _recargaEm < RECARGA_VELHO_MS) return;
+    _recargaEm = 0;
+    fpRecarregar('voltou para a aba');
+  });
 
   /* ------------------------------------------------------------------
      4. OVERRIDE existing nav-item click handlers
