@@ -6192,7 +6192,6 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
    repost de terceiro). É o meio-termo, e o azul do painel já é a cor de
    "informação, não veredito". */
 .fp-tri-b.on.nossa { background: var(--azul); border-color: var(--azul); }
-.fp-tri-card.nossa .fp-tri-img { box-shadow: 0 0 0 2px var(--azul); }
 
 /* As outras peças: linha compacta, porque aí a legenda resolve. */
 .fp-tri-lista { max-height: 34vh; overflow-y: auto; }
@@ -8150,7 +8149,7 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
             <button class="modal-close" onclick="fpRepostFechar()" aria-label="Fechar">&times;</button>
           </div>
           <div class="fp-user-form">
-            <p class="fp-user-nota"><b>novo</b> = foto ou vídeo feito para o story, e é o único que conta em <b>Stories próprios</b>. <b>nosso</b> = recompartilhamento de um post nosso do feed. <b>outro</b> = recompartilhamento de outro perfil, e é o que conta em <b>Reposts diários</b>. O painel já marca sozinho os que preenchem o quadro de ponta a ponta; o que sobra é o que ele não consegue distinguir — o desenho de "nosso" e o de "outro" é o mesmo. Story sem miniatura saiu do ar antes da primeira coleta.</p>
+            <p class="fp-user-nota"><b>story</b> = foto ou vídeo do dia, feito por nós — conta em <b>Stories próprios</b>. <b>repost</b> = recompartilhamento de outro perfil — conta em <b>Reposts diários</b>. Cada um sai da lista do outro assim que você decide; clicar no botão aceso desmarca. O painel <b>não</b> palpita mais: a análise da imagem errou os dois casos conhecidos, e palpite errado esconderia justamente o que precisa de olho. Story sem miniatura saiu do ar antes da primeira coleta.</p>
             <div id="repostStories" class="fp-tri-grade"></div>
             <div id="repostLista" class="fp-tri-lista"></div>
             <div class="fp-user-pe">
@@ -29192,20 +29191,28 @@ function fpMetasJanela(mes) {
    ponta a ponta não é post recompartilhado. Então ela DESCARTA sozinha (esses
    saem da fila) e nunca AFIRMA. O trabalho humano some para a maioria e sobra
    só no caso ambíguo. */
-/* TRÊS classes, porque o dono definiu três: story próprio é "só uma foto mesmo
-   ou um vídeo novo postado nos stories" — e explicitamente NÃO entra repost de
-   outro perfil NEM republicação de conteúdo nosso.
-     proprio       foto/vídeo novo
-     republicacao  recompartilhamento de post NOSSO
-     repost        recompartilhamento de outro perfil
-   Vale o que a pessoa disse; se ninguém disse, vale o palpite da máquina — que
-   hoje só sabe afirmar 'proprio' (quadro cheio de ponta a ponta). Fundo liso é
-   recompartilhamento de ALGUMA coisa, e separar a nossa da de terceiro pela
-   imagem ainda não é confiável: fica null, e null NÃO CONTA EM META NENHUMA.
-   Não contar é melhor que contar errado — contar errado tira peça de uma meta
-   e põe em outra, erra duas vezes de uma vez. */
+/* DUAS classes:
+     proprio  foto ou vídeo do dia, feito por nós  -> conta em Stories próprios
+     repost   recompartilhamento de outro perfil   -> conta em Reposts diários
+
+   DUAS CLASSES desde 02/09, por decisão do dono. A terceira ('republicacao',
+   que a tela chamava de "nosso") saiu: ela separava republicação de post nosso
+   de story novo, distinção que a máquina nunca conseguiu enxergar — o desenho
+   de uma republicação e o de um repost de terceiro são idênticos.
+
+   E SÓ VALE O QUE A PESSOA DISSE. O palpite da máquina (auto_classe) saiu
+   daqui, e o motivo é medido, não estético: em 02/09, contra os dois únicos
+   stories com verdade humana conhecida, a análise geométrica acertou ZERO —
+   marcou os dois reposts como "quadro cheio, não é recompartilhado". Em 8
+   análises o ramo positivo do limiar nunca disparou.
+
+   Palpite errado aqui é pior que palpite nenhum: ele contaria o story na meta
+   sem ninguém decidir, E o tiraria da fila de conferência — escondendo
+   justamente o que precisa de olho. null NÃO CONTA EM META NENHUMA, e não
+   contar é melhor que contar errado, porque contar errado tira peça de uma
+   meta e põe em outra: erra duas vezes de uma vez. */
 function fpStoryClasse(p) {
-  return p.classe || p.auto_classe || null;
+  return p.classe || null;
 }
 function fpEhRepost(p) {
   return fpStoryClasse(p) === 'repost';
@@ -29213,7 +29220,7 @@ function fpEhRepost(p) {
 function fpEhProprio(p) {
   return fpStoryClasse(p) === 'proprio';
 }
-/* Resolvido = tem classe, de gente ou da máquina. */
+/* Resolvido = alguém decidiu. Máquina não resolve mais nada aqui. */
 function fpStoryResolvido(p) {
   return !!fpStoryClasse(p);
 }
@@ -30080,7 +30087,7 @@ function fpTriCardHtml(p) {
       + (p.auto_repost === false ? 'descartado: quadro cheio'
          : p.auto_repost === true ? 'suspeita: imagem em fundo liso' : 'sem análise') + '</span>'
     : '';
-  return '<div class="fp-tri-card' + (rep ? ' repost' : cls === 'republicacao' ? ' nossa' : '')
+  return '<div class="fp-tri-card' + (rep ? ' repost' : '')
     + (naoOlhado ? ' novo' : '') + (url ? '' : ' sem-img') + '">'
     + palpite
     + '<div class="fp-tri-img">'
@@ -30088,19 +30095,16 @@ function fpTriCardHtml(p) {
            : '<span class="fp-tri-semimg">' + (cam ? 'carregando' : 'sem imagem') + '</span>')
     +   '<span class="fp-tri-dia">' + escHtml(fpTriDia(p)) + '</span>'
     + '</div>'
-    /* TRÊS botões porque são três classes. "Republicação" é a que o dono
-       separou e que a máquina não consegue enxergar: o desenho dela é idêntico
-       ao do repost de terceiro. */
+    /* DOIS botões, porque são duas classes. Clicar no que já está aceso
+       DESMARCA: sem isso, marcar errado não tinha volta pela tela — e a coluna
+       aceita null, que é o estado "ainda não decidi". */
     + '<div class="fp-tri-acoes">'
     +   '<button type="button" class="fp-tri-b' + (cls === 'proprio' ? ' on' : '') + '"'
-    +     ' data-tip="NOVO: foto ou vídeo feito para o story"'
-    +     ' onclick="fpStoryClassificar(\'' + fpJs(p.id) + '\', \'proprio\')">novo</button>'
-    +   '<button type="button" class="fp-tri-b' + (cls === 'republicacao' ? ' on nossa' : '') + '"'
-    +     ' data-tip="NOSSO: recompartilhamento de um post nosso do feed"'
-    +     ' onclick="fpStoryClassificar(\'' + fpJs(p.id) + '\', \'republicacao\')">nosso</button>'
+    +     ' data-tip="STORY: foto ou vídeo do dia, feito por nós"'
+    +     ' onclick="fpStoryClassificar(\'' + fpJs(p.id) + '\', \'proprio\')">story</button>'
     +   '<button type="button" class="fp-tri-b' + (cls === 'repost' ? ' on rep' : '') + '"'
-    +     ' data-tip="OUTRO: recompartilhamento de outro perfil"'
-    +     ' onclick="fpStoryClassificar(\'' + fpJs(p.id) + '\', \'repost\')">outro</button>'
+    +     ' data-tip="REPOST: recompartilhamento de outro perfil"'
+    +     ' onclick="fpStoryClassificar(\'' + fpJs(p.id) + '\', \'repost\')">repost</button>'
     + '</div>'
     + '</div>';
 }
@@ -30111,44 +30115,39 @@ function fpRepostPintar() {
   if (!cx || !grade) return;
 
   const recente = function (a, b) { return String(b.publicado_em).localeCompare(String(a.publicado_em)); };
-  const stories = METAS_PECAS.filter(function (p) { return p.tipo === 'story'; }).sort(recente);
-  /* Só story. Repost é coisa de story, e era a lista das outras peças que fazia
-     o operador marcar reel e clip como repost sem querer — 25 de uma vez, na
-     primeira vez que ele abriu isto. */
-  const resto = [];
+  const stories = METAS_PECAS.filter(function (p) { return p.tipo === 'story'; });
 
-  /* Stories primeiro e em imagem: é o caso que o dono descreveu, e é o único
-     em que a legenda não ajuda a decidir (story quase nunca tem texto). */
-  /* Ambíguo primeiro: é o único que precisa de olho. O que a máquina descartou
-     e o que já foi decidido ficam depois, para conferência eventual. */
-  stories.sort(function (a, b) {
-    const ra = fpStoryResolvido(a) ? 1 : 0, rb = fpStoryResolvido(b) ? 1 : 0;
-    return ra - rb || recente(a, b);
-  });
-  const semOlhar = stories.filter(function (p) { return !fpStoryResolvido(p); }).length;
-  const descartados = stories.filter(function (p) { return !p.classificado_em && p.auto_repost === false; }).length;
+  /* DUAS LISTAS, MUTUAMENTE EXCLUSIVAS. O que está marcado repost sai da lista
+     de story e vice-versa — foi o pedido, e é o que faz a tela responder "o que
+     saiu de story hoje?" sem o operador ter de filtrar com o olho.
+
+     O que ninguém decidiu aparece nas DUAS, com o seletor: é de lá que se
+     decide, e obrigar a pessoa a adivinhar em qual lista procurar o pendente
+     seria trocar um trabalho por outro. */
+  const pendentes = stories.filter(function (p) { return !fpStoryResolvido(p); }).sort(recente);
+  const proprios  = stories.filter(fpEhProprio).sort(recente);
+  const reposts   = stories.filter(fpEhRepost).sort(recente);
+
+  /* Pendente primeiro em cada lista: é o único que precisa de olho. */
+  const secao = function (rotulo, detalhe, decididos, vazio) {
+    const lista = pendentes.concat(decididos);
+    if (!lista.length) return '<div class="fp-tri-faixa"><b>' + rotulo + '</b><span>' + escHtml(vazio) + '</span></div>';
+    return '<div class="fp-tri-faixa"><b>' + rotulo + '</b><span>'
+      + decididos.length + ' ' + escHtml(detalhe)
+      + (pendentes.length ? ' · ' + pendentes.length + ' por decidir' : ' · nada pendente')
+      + '</span></div>'
+      + '<div class="fp-tri-cards">' + lista.map(fpTriCardHtml).join('') + '</div>';
+  };
+
   grade.innerHTML = stories.length
-    ? '<div class="fp-tri-faixa"><b>Stories</b><span>' + stories.length
-      + (stories.length === 1 ? ' story' : ' stories')
-      + (semOlhar ? ' · ' + semOlhar + ' por conferir' : ' · nada pendente')
-      + (descartados ? ' · ' + descartados + ' o painel descartou (quadro cheio)' : '') + '</span></div>'
-      + '<div class="fp-tri-cards">' + stories.map(fpTriCardHtml).join('') + '</div>'
+    ? secao('Stories do dia', proprios.length === 1 ? 'marcado como story' : 'marcados como story',
+            proprios, 'nenhum ainda')
     : '<p class="fp-aviso-sub" style="padding:14px 0">Nenhum story neste mês ainda.</p>';
 
-  cx.innerHTML = resto.length
-    ? '<div class="fp-tri-faixa"><b>Outras peças</b><span>vídeos, carrosséis e clips</span></div>'
-      + resto.map(function (p) {
-          return '<label class="fp-tri-lin' + (p.eh_repost ? ' on' : '') + '">'
-            + '<input type="checkbox"' + (p.eh_repost ? ' checked' : '')
-            + ' onchange="fpRepostMarcar(\'' + fpJs(p.id) + '\', this.checked)">'
-            + '<span class="fp-tri-l-dia">' + escHtml(fpTriDia(p)) + '</span>'
-            + '<span class="fp-tri-l-tipo">' + escHtml(p.tipo) + '</span>'
-            + '<span class="fp-tri-l-tit">' + escHtml(p.titulo || '(sem legenda)') + '</span>'
-            + (p.link ? '<a href="' + escHtml(p.link) + '" target="_blank" rel="noopener noreferrer"'
-                + ' onclick="event.stopPropagation()">ver</a>' : '')
-            + '</label>';
-        }).join('')
-    : (stories.length ? '' : '<p class="fp-aviso-sub" style="padding:14px 0">Nenhuma peça neste mês ainda.</p>');
+  cx.innerHTML = stories.length
+    ? secao('Reposts', reposts.length === 1 ? 'marcado como repost' : 'marcados como repost',
+            reposts, 'nenhum ainda')
+    : '';
 }
 
 /* Grava a CLASSE. `eh_repost` continua sendo escrito, derivado, porque outras
@@ -30158,18 +30157,28 @@ async function fpStoryClassificar(id, classe) {
   const p = METAS_PECAS.find(function (x) { return x.id === id; });
   if (!p) return;
   const antes = { classe: p.classe, eh_repost: p.eh_repost, classificado_em: p.classificado_em };
-  const valor = classe === 'repost';
-  p.classe = classe;
+
+  /* CLICAR NO QUE JÁ ESTÁ ACESO DESMARCA. Sem isto, marcar errado não tem volta
+     pela tela: com dois botões e nenhum "limpar", o operador ficaria preso na
+     primeira escolha. A coluna aceita null, e null é o estado honesto de "ainda
+     não decidi" — o mesmo que faz o story voltar para as duas listas. */
+  const desmarcar = p.classe === classe;
+  const nova = desmarcar ? null : classe;
+  const valor = nova === 'repost';
+
+  p.classe = nova;
   p.eh_repost = valor;
-  p.classificado_em = new Date().toISOString();
+  /* Desmarcar limpa também QUEM olhou: senão o story sai da fila de pendentes
+     sem ter classe nenhuma, e some das contas sem ninguém ver. */
+  p.classificado_em = desmarcar ? null : new Date().toISOString();
   fpRepostPintar();
   const { error } = await sb.from('mc_pecas').update({
-    classe: classe,
+    classe: nova,
     eh_repost: valor,
     repost_por: valor && CURRENT_USER ? CURRENT_USER.id : null,
     repost_em: valor ? new Date().toISOString() : null,
     classificado_em: p.classificado_em,
-    classificado_por: CURRENT_USER ? CURRENT_USER.id : null,
+    classificado_por: desmarcar ? null : (CURRENT_USER ? CURRENT_USER.id : null),
   }).eq('id', id);
   if (error) {
     p.classe = antes.classe; p.eh_repost = antes.eh_repost; p.classificado_em = antes.classificado_em;
@@ -30272,12 +30281,18 @@ function fpPlannerTipoCasa(slotTipo, p) {
   const t = p.tipo || '';
   /* story proprio x repost e distincao de CLASSE, nao de tipo: os dois sao
      `story` em mc_pecas. Sem isto, o repost das 19h marcaria o story das 13h.
-     Exige a classe DITA, nunca "diferente de repost": story sem classificar
-     pode ser qualquer uma das tres, e marcar por eliminacao e adivinhar. Mesma
-     regra que ja vale na meta de stories, onde so `proprio` conta —
-     republicacao de post nosso nao e story do dia. Medido em 01/09: 5 dos 9
-     stories ja tem classe automatica, entao exigir nao mata o recurso. */
-  const classe = p.classe || p.auto_classe || '';
+     Exige a classe DITA, nunca "diferente de repost": marcar por eliminacao e
+     adivinhar. Mesma regra que vale na meta.
+
+     LE SO `classe`, nao mais `classe || auto_classe`. O comentario antigo dizia
+     "5 dos 9 stories ja tem classe automatica, entao exigir nao mata o
+     recurso" — e isso era falso de duas formas, medido em 02/09/2026: aqueles
+     5 valores vieram de uma migracao UNICA (o coletor nunca escreve
+     auto_classe), e o classificador que os gerou acertou ZERO dos dois casos
+     com verdade humana conhecida. A coluna foi esvaziada; ler dela agora seria
+     ler nada, e ler dela no futuro seria marcar horario do cronograma com
+     palpite errado. */
+  const classe = p.classe || '';
   if (slotTipo === 'story')  return t === 'story' && classe === 'proprio';
   if (slotTipo === 'repost') return t === 'story' && classe === 'repost';
   if (slotTipo === 'longo')  return t.indexOf('longo') === 0;

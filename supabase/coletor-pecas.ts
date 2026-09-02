@@ -213,7 +213,7 @@ async function analisarStory(bin: Uint8Array) {
    Guardar a URL da Meta seria guardar um link quebrado.
    `jaTem` evita rebaixar a mesma imagem de hora em hora: story vive 24h, então
    sem isso seriam ~24 downloads do mesmo arquivo. */
-async function thumbDoStory(sb: any, m: any, jaTem: Set<string>, erros: string[]) {
+async function thumbDoStory(sb: any, m: any, jaTem: Map<string, Record<string, unknown>>, erros: string[]) {
   if (jaTem.has(m.id)) return null;
   const url = m.thumbnail_url || m.media_url;
   if (!url) return null;
@@ -286,11 +286,22 @@ async function instagram(sb: any, IG_TOKEN: string, erros: string[], analisados:
   /* Stories: só as últimas 24h existem aqui, e é por isso que esta função é
      agendada de hora em hora. Repost ou próprio, TODOS entram — a classificação
      é visual e vem depois, no painel. */
-  const jaTem = new Set<string>();
+  /* MAPA, não conjunto, e a diferença é um bug que apagava dado.
+
+     Quando o story já tem miniatura, thumbDoStory devolve null para não baixar
+     de novo — e o `guardar` abaixo montava `bruto` com `{}`. Como o upsert
+     SUBSTITUI o jsonb inteiro, isso APAGAVA thumb e medidas a cada rodada. Foi
+     por isso que 3 stories de 31/08 e 01/09 ficaram com o arquivo no bucket e
+     bruto.thumb nulo: a imagem existia, a evidência da análise não.
+
+     Guardando o valor anterior, a rodada seguinte o repassa em vez de zerar. */
+  const jaTem = new Map<string, Record<string, unknown>>();
   try {
     const { data: comThumb } = await sb.from('mc_pecas')
       .select('externo_id, bruto').eq('fonte', 'instagram').eq('tipo', 'story');
-    for (const r of (comThumb || [])) if (r?.bruto?.thumb) jaTem.add(r.externo_id);
+    for (const r of (comThumb || [])) {
+      if (r?.bruto?.thumb) jaTem.set(r.externo_id, { thumb: r.bruto.thumb, medidas: r.bruto.medidas });
+    }
   } catch (e) {
     /* Não saber quais já têm miniatura só custa download repetido — não pode
        derrubar a coleta dos stories, que é a parte que não dá para refazer. */
@@ -322,7 +333,18 @@ async function instagram(sb: any, IG_TOKEN: string, erros: string[], analisados:
      hora — PostgREST preenche com NULL a coluna que não vem no lote. */
   for (const m of stories) {
     const res = await thumbDoStory(sb, m, jaTem, erros);
-    guardar(m, 'story', res && res.caminho ? { thumb: res.caminho, medidas: res.analise?.medidas } : {});
+    const antes = jaTem.get(m.id);
+    /* Novo: grava o que acabou de medir. Já tinha: REPASSA o que já estava, em
+       vez de mandar {} e deixar o upsert apagar. Sem miniatura nenhuma: {}
+       mesmo, que é o estado verdadeiro. */
+    const extra = res && res.caminho
+      ? { thumb: res.caminho, medidas: res.analise?.medidas }
+      : (antes
+          ? (antes.medidas === undefined || antes.medidas === null
+              ? { thumb: antes.thumb }
+              : { thumb: antes.thumb, medidas: antes.medidas })
+          : {});
+    guardar(m, 'story', extra);
     if (res && res.analise) {
       analisados.push({ externo_id: m.id, parece: res.analise.parece, motivo: res.analise.motivo });
     }
