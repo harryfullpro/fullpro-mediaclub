@@ -6180,18 +6180,33 @@ body.fp-sem-sessao .fp-bug-btn { display: none; }
 /* Ainda não olhado: contorno, não cor de alarme. É trabalho pendente, não erro. */
 .fp-tri-card.novo .fp-tri-img { box-shadow: 0 0 0 2px var(--azul); }
 .fp-tri-card.repost .fp-tri-img { box-shadow: 0 0 0 2px var(--warning); }
+/* Palpite do painel: aceso, mas tracejado e sem preenchimento cheio — para
+   "eu marquei" e "o painel chutou" não parecerem a mesma coisa na conferência.
+   A COR DO TEXTO É OBRIGATÓRIA AQUI: `.fp-tri-b.on` pinta o texto de branco
+   porque conta com o fundo cheio. Tirar o fundo sem trocar a cor dá branco no
+   branco — medido em 02/09, contraste 1,00, botão invisível. */
+.fp-tri-b.on.palpite { background: none; border-style: dashed; color: var(--text); }
+.fp-tri-b.on.palpite::after { content: '?'; margin-left: 3px; opacity: .7; font-weight: 700; }
 
 .fp-tri-acoes { display: flex; gap: 4px; margin-top: 5px; }
 .fp-tri-b { flex: 1 1 0; min-width: 0; border: 1px solid var(--border); background: transparent;
   color: var(--text-dim); border-radius: 7px; padding: 5px 1px; font: inherit; font-size: 10px;
   font-weight: 700; cursor: pointer; transition: all .12s ease; }
 .fp-tri-b:hover { color: var(--text); border-color: var(--text-muted); }
-.fp-tri-b.on { background: var(--success); border-color: var(--success); color: #fff; }
-.fp-tri-b.on.rep { background: var(--warning); border-color: var(--warning); }
+/* TEXTO ESCURO nos dois estados cheios, e o motivo é medido. Estes botões são
+   o rótulo do estado — quem lê "story" ou "repost" está conferindo, não
+   decorando. Branco sobre --success dava 3,08:1 e sobre --warning 2,48:1, os
+   dois abaixo do mínimo de 4,5. Escuro dá 6,3:1 e 7,0:1. Eram bugs que já
+   existiam; apareceram porque fui medir o botão de palpite ao lado. */
+.fp-tri-b.on { background: var(--success); border-color: var(--success); color: #1a1a1e; }
+/* Texto ESCURO no âmbar, não branco. Medido em 02/09: branco sobre
+   rgb(224,149,0) dá 2,48:1, abaixo do mínimo de 4,5 — e este botão é o rótulo
+   do estado, não enfeite. Escuro no mesmo âmbar dá 7,0:1. Bug que já existia;
+   apareceu porque eu fui medir o botão vizinho. */
+.fp-tri-b.on.rep { background: var(--warning); border-color: var(--warning); color: #1a1a1e; }
 /* Republicação de conteúdo nosso: nem verde (não é próprio) nem âmbar (não é
    repost de terceiro). É o meio-termo, e o azul do painel já é a cor de
    "informação, não veredito". */
-.fp-tri-b.on.nossa { background: var(--azul); border-color: var(--azul); }
 
 /* As outras peças: linha compacta, porque aí a legenda resolve. */
 .fp-tri-lista { max-height: 34vh; overflow-y: auto; }
@@ -8149,7 +8164,7 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
             <button class="modal-close" onclick="fpRepostFechar()" aria-label="Fechar">&times;</button>
           </div>
           <div class="fp-user-form">
-            <p class="fp-user-nota"><b>story</b> = foto ou vídeo do dia, feito por nós — conta em <b>Stories próprios</b>. <b>repost</b> = recompartilhamento de outro perfil — conta em <b>Reposts diários</b>. Cada um sai da lista do outro assim que você decide; clicar no botão aceso desmarca. O painel <b>não</b> palpita mais: a análise da imagem errou os dois casos conhecidos, e palpite errado esconderia justamente o que precisa de olho. Story sem miniatura saiu do ar antes da primeira coleta.</p>
+            <p class="fp-user-nota"><b>story</b> = foto ou vídeo do dia, feito por nós — conta em <b>Stories próprios</b>. <b>repost</b> = recompartilhamento de outro perfil — conta em <b>Reposts diários</b>. Cada um sai da lista do outro assim que você decide; clicar no botão aceso desmarca. O painel <b>palpita</b>: botão <b>tracejado com "?"</b> é chute dele, não decisão sua — clique para confirmar ou trocar. Aviso honesto: a análise da imagem errou os 3 casos que você já classificou, então confira antes de confiar. Story sem miniatura saiu do ar antes da primeira coleta.</p>
             <div id="repostStories" class="fp-tri-grade"></div>
             <div id="repostLista" class="fp-tri-lista"></div>
             <div class="fp-user-pe">
@@ -29200,19 +29215,29 @@ function fpMetasJanela(mes) {
    de story novo, distinção que a máquina nunca conseguiu enxergar — o desenho
    de uma republicação e o de um repost de terceiro são idênticos.
 
-   E SÓ VALE O QUE A PESSOA DISSE. O palpite da máquina (auto_classe) saiu
-   daqui, e o motivo é medido, não estético: em 02/09, contra os dois únicos
-   stories com verdade humana conhecida, a análise geométrica acertou ZERO —
-   marcou os dois reposts como "quadro cheio, não é recompartilhado". Em 8
-   análises o ramo positivo do limiar nunca disparou.
+   QUEM CLICOU MANDA; SE NINGUÉM CLICOU, VALE O PALPITE DA MÁQUINA.
 
-   Palpite errado aqui é pior que palpite nenhum: ele contaria o story na meta
-   sem ninguém decidir, E o tiraria da fila de conferência — escondendo
-   justamente o que precisa de olho. null NÃO CONTA EM META NENHUMA, e não
-   contar é melhor que contar errado, porque contar errado tira peça de uma
-   meta e põe em outra: erra duas vezes de uma vez. */
+   O palpite foi LIGADO em 02/09 por decisão do dono, e o histórico dele está
+   registrado aqui de propósito: contra os 3 stories com verdade humana
+   conhecida, a geometria acertou ZERO — disse "quadro cheio, não é
+   recompartilhado" nos três que ele marcou como repost. Em 8 análises o ramo
+   positivo do limiar nunca disparou; os dois que chegaram perto tinham UMA
+   ponta lisa (16%/2% e 2%/17%) e a condição exigia as duas.
+
+   Ele conhece o conteúdo melhor que a minha régua e preferiu o story
+   pré-marcado ao story em branco. Duas coisas seguram o estrago:
+     · o coletor só escreve auto_classe onde classificado_em é null, então
+       palpite nunca passa por cima de clique;
+     · a tela mostra palpite com desenho DIFERENTE de decisão (botão tracejado
+       e a frase do que a máquina mediu ao lado), para "story marcado" e "story
+       chutado" não virarem a mesma coisa na hora de conferir. */
 function fpStoryClasse(p) {
-  return p.classe || null;
+  return p.classe || p.auto_classe || null;
+}
+/* Foi a máquina que decidiu isto? É o que a tela precisa saber para não
+   desenhar palpite igual a clique. */
+function fpStoryDaMaquina(p) {
+  return !p.classe && !!p.auto_classe;
 }
 function fpEhRepost(p) {
   return fpStoryClasse(p) === 'repost';
@@ -29220,7 +29245,9 @@ function fpEhRepost(p) {
 function fpEhProprio(p) {
   return fpStoryClasse(p) === 'proprio';
 }
-/* Resolvido = alguém decidiu. Máquina não resolve mais nada aqui. */
+/* Resolvido = tem classe, de gente ou de máquina. Com o palpite ligado, story
+   chutado sai da fila de pendentes — é o que "ligar" significa. O quanto disso
+   é chute aparece no cabeçalho de cada lista, para não sumir da vista. */
 function fpStoryResolvido(p) {
   return !!fpStoryClasse(p);
 }
@@ -30133,6 +30160,7 @@ function fpTriCardHtml(p) {
   const naoOlhado = !p.classificado_em;
   const cls = fpStoryClasse(p);
   const rep = cls === 'repost';
+  const chute = fpStoryDaMaquina(p);
   /* Palpite só aparece enquanto ninguém decidiu: depois de decidido, mostrar o
      que a máquina achava só semeia dúvida sobre o que já foi resolvido. */
   /* A frase do palpite diz o que a máquina PODE dizer, e nada além: ela
@@ -30154,11 +30182,11 @@ function fpTriCardHtml(p) {
        DESMARCA: sem isso, marcar errado não tinha volta pela tela — e a coluna
        aceita null, que é o estado "ainda não decidi". */
     + '<div class="fp-tri-acoes">'
-    +   '<button type="button" class="fp-tri-b' + (cls === 'proprio' ? ' on' : '') + '"'
-    +     ' data-tip="STORY: foto ou vídeo do dia, feito por nós"'
+    +   '<button type="button" class="fp-tri-b' + (cls === 'proprio' ? ' on' + (chute ? ' palpite' : '') : '') + '"'
+    +     ' data-tip="' + (cls === 'proprio' && chute ? 'PALPITE do painel — clique para confirmar' : 'STORY: foto ou vídeo do dia, feito por nós') + '"'
     +     ' onclick="fpStoryClassificar(\'' + fpJs(p.id) + '\', \'proprio\')">story</button>'
-    +   '<button type="button" class="fp-tri-b' + (cls === 'repost' ? ' on rep' : '') + '"'
-    +     ' data-tip="REPOST: recompartilhamento de outro perfil"'
+    +   '<button type="button" class="fp-tri-b' + (cls === 'repost' ? ' on rep' + (chute ? ' palpite' : '') : '') + '"'
+    +     ' data-tip="' + (cls === 'repost' && chute ? 'PALPITE do painel — clique para confirmar' : 'REPOST: recompartilhamento de outro perfil') + '"'
     +     ' onclick="fpStoryClassificar(\'' + fpJs(p.id) + '\', \'repost\')">repost</button>'
     + '</div>'
     + '</div>';
@@ -30187,8 +30215,13 @@ function fpRepostPintar() {
   const secao = function (rotulo, detalhe, decididos, vazio) {
     const lista = pendentes.concat(decididos);
     if (!lista.length) return '<div class="fp-tri-faixa"><b>' + rotulo + '</b><span>' + escHtml(vazio) + '</span></div>';
+    /* Quanto da lista é palpite e não decisão. Com o automático ligado, chute
+       sai da fila de pendentes — então este número é o único lugar onde dá para
+       ver que ninguém conferiu aquilo ainda. */
+    const chutes = decididos.filter(fpStoryDaMaquina).length;
     return '<div class="fp-tri-faixa"><b>' + rotulo + '</b><span>'
       + decididos.length + ' ' + escHtml(detalhe)
+      + (chutes ? ' (' + chutes + ' por palpite do painel)' : '')
       + (pendentes.length ? ' · ' + pendentes.length + ' por decidir' : ' · nada pendente')
       + '</span></div>'
       + '<div class="fp-tri-cards">' + lista.map(fpTriCardHtml).join('') + '</div>';

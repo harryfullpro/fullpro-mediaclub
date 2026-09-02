@@ -546,8 +546,24 @@ Deno.serve(async (req: Request) => {
      em hora sem desfazer a correção de quem olhou a imagem. */
   let palpites = 0;
   for (const a of analisados) {
+    /* auto_classe LIGADA em 02/09/2026, por decisão do dono depois de eu
+       apresentar o histórico: a geometria errou os 3 casos com verdade humana
+       conhecida (disse "quadro cheio, não é recompartilhado" nos três que ele
+       marcou como repost). Ele conhece o conteúdo melhor que a minha régua e
+       preferiu o palpite pré-marcado ao story em branco. Registrado aqui para
+       quem ler depois não achar que foi descuido.
+
+       DUAS GARANTIAS que não enfraquecem isso e evitam o estrago silencioso:
+
+       1. `.is('classificado_em', null)` — já existia e é o que impede o palpite
+          de passar por cima de decisão humana. Quem clicou manda, sempre.
+       2. Palpite só quando HÁ análise: a.parece null (sem miniatura, sem
+          jpeg-js) deixa auto_classe null, e null não conta em meta nenhuma.
+          Chutar sem ter medido seria pior que não chutar. */
+    const classe = a.parece === true ? 'repost' : a.parece === false ? 'proprio' : null;
     const { error } = await sb.from('mc_pecas')
-      .update({ auto_repost: a.parece, auto_motivo: a.motivo, auto_em: new Date().toISOString() })
+      .update({ auto_repost: a.parece, auto_motivo: a.motivo, auto_classe: classe,
+                auto_em: new Date().toISOString() })
       .eq('fonte', 'instagram').eq('externo_id', a.externo_id)
       .is('classificado_em', null);
     if (error) erros.push('palpite ' + a.externo_id + ': ' + error.message);
