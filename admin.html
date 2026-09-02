@@ -29146,7 +29146,7 @@ async function fpMetasCarregar(mes, forcar) {
     try {
       const [ra, rp, rm] = await Promise.all([
         sb.from('mc_metas_alvo').select('*').eq('mes', alvo).order('ordem'),
-        sb.from('mc_pecas').select('id,tipo,titulo,link,plataforma,publicado_em,duracao_seg,metricas,eh_repost,sku,atualizado_em,bruto,classificado_em,auto_repost,auto_motivo,classe,auto_classe')
+        sb.from('mc_pecas').select('id,tipo,titulo,link,plataforma,publicado_em,duracao_seg,metricas,eh_repost,sku,atualizado_em,bruto,classificado_em,auto_repost,auto_motivo,classe,auto_classe,project_id')
           .gte('publicado_em', de).lt('publicado_em', ate).order('publicado_em', { ascending: true }),
         sb.from('mc_metas_alvo').select('mes'),
       ]);
@@ -29242,9 +29242,65 @@ function fpMetaApurar(alvo, janela) {
   const pecas = METAS_PECAS.filter(daMeta);
   const dia = p => new Date(p.publicado_em).getDate();
 
-  /* Acumulado por dia do mês, para a linha do gráfico. */
+  /* ─────────────────────────────────────────────────────────────────────────
+     PRODUÇÃO NÃO É PUBLICAÇÃO, e era isso que a tela estava contando errado.
+
+     O coletor grava UMA LINHA POR REDE: o mesmo vídeo no Instagram, no TikTok e
+     no Shorts são três linhas de mc_pecas. Contar linhas dizia "3 vídeos
+     curtos" para um vídeo só — a primeira regra do cronograma é justamente
+     "uma produção, três publicações".
+
+     Quem agrupa é o `project_id`, e não é palpite: medido em 173 linhas de
+     mc_pecas em 02/09/2026, NUNCA existe projeto com duas peças na mesma
+     plataforma. A chave é limpa de uma-por-rede.
+
+     Três alternativas foram testadas contra agosto (9 produções, 16
+     publicações) e descartadas com número:
+       · contar dias distintos    -> 8, erra 07/08, que teve 3 produções no dia
+       · maior nº por plataforma  -> fecha o mês por compensação e erra o dia;
+                                     num dia de backlog com 20 shorts no YouTube
+                                     diria 20 produções
+       · agrupar por título       -> 15; o YouTube trunca diferente, há typo
+                                     entre redes ("ritimo") e story não tem título
+
+     PEÇA SEM PROJETO vira produção própria — não se adivinha por título:
+     agrupar por prefixo junta "Versys 650 com escape GP Burn" com "Versys 650
+     com escape Trioval Force", que são produtos diferentes. Órfão entra na
+     conta como o que é, e o conserto é vincular na origem.
+
+     A DATA da produção é a PRIMEIRA publicação do grupo, nunca
+     mc_projects.production_date: o projeto de setembro foi gravado em 05/06 e
+     publicado em 01/09 — ancorar na produção mostraria zero no mês.
+     ───────────────────────────────────────────────────────────────────────── */
+  const grupos = new Map();
+  pecas.forEach(p => {
+    const chave = p.project_id || ('peca:' + p.id);
+    const quando = new Date(p.publicado_em).getTime();
+    const g = grupos.get(chave);
+    if (!g) {
+      grupos.set(chave, { primeiro: quando, dia: dia(p), redes: new Set([p.plataforma]), n: 1, orfa: !p.project_id });
+    } else {
+      g.n++;
+      g.redes.add(p.plataforma);
+      /* Produção que atravessa a meia-noite existe: o projeto a41da784 saiu no
+         Instagram e no TikTok dia 06/08 e no YouTube só dia 07/08. Sem fixar no
+         primeiro, ela contaria dois dias. */
+      if (quando < g.primeiro) { g.primeiro = quando; g.dia = dia(p); }
+    }
+  });
+  const publicacoes = pecas.length;
+  const producoes = grupos.size;
+  const semProjeto = Array.from(grupos.values()).filter(g => g.orfa).length;
+  /* Quantas produções bateram as três redes. A régua do cronograma é "o mesmo
+     vídeo nas três redes", e a média real de agosto foi 1,78 — este número é o
+     que mostra a régua sendo furada, em vez de esconder na média. */
+  const tresRedes = Array.from(grupos.values()).filter(g => g.redes.size >= 3).length;
+
+  /* Acumulado por dia do mês. Uma PRODUÇÃO soma 1 no dia da primeira
+     publicação dela — e é isto que conserta de uma vez o calendário do topo, o
+     gráfico semanal e o de dia da semana, porque todos leem porDia. */
   const porDia = new Array(janela.dias + 1).fill(0);
-  pecas.forEach(p => { const d = dia(p); if (d >= 1 && d <= janela.dias) porDia[d]++; });
+  grupos.forEach(g => { if (g.dia >= 1 && g.dia <= janela.dias) porDia[g.dia]++; });
   const acum = []; let s = 0;
   for (let d = 1; d <= janela.dias; d++) { s += porDia[d]; acum.push(s); }
 
@@ -29267,10 +29323,11 @@ function fpMetaApurar(alvo, janela) {
              /* Cadência também tem ritmo. Sem isto, "0 de 28 dias" saía na cor
                 de quem está indo bem — a cor dizia o contrário do número. */
              noRitmo: pct >= 80,
-             porDia, acum: acumDias, pecas };
+             porDia, acum: acumDias, pecas,
+             publicacoes, producoes, semProjeto, tresRedes };
   }
 
-  const feito = pecas.length;
+  const feito = producoes;
   const pct = alvo.alvo ? Math.min(999, Math.round(100 * feito / alvo.alvo)) : 0;
   /* Projeção linear: onde o mês termina se o ritmo de hoje continuar. Só faz
      sentido com o mês em curso — em mês fechado a projeção É o realizado. */
@@ -29278,7 +29335,8 @@ function fpMetaApurar(alvo, janela) {
     : janela.passado ? feito
     : (janela.corridos ? Math.round(feito / (janela.corridos / janela.dias)) : 0);
   return { alvo, modo: 'contagem', feito, meta: alvo.alvo, pct, projecao,
-           bateu: feito >= alvo.alvo, noRitmo: projecao >= alvo.alvo, porDia, acum, pecas };
+           bateu: feito >= alvo.alvo, noRitmo: projecao >= alvo.alvo, porDia, acum, pecas,
+           publicacoes, producoes, semProjeto, tresRedes };
 }
 
 /* Quanto do que o mês JÁ COBRAVA está feito. 1 é estar em cima da reta ideal;
@@ -29768,8 +29826,14 @@ function fpMetaPainelHtml(ap, janela) {
   /* Em cadência o denominador são os dias que o mês JÁ cobrou. Num mês futuro
      isso é zero, e sairia "0/0 dias" — fração sem sentido. */
   const den = cad ? (janela.futuro ? janela.dias : janela.corridos) + ' dias' : String(ap.meta);
+  /* A segunda conta só aparece quando difere da primeira. Em story produção e
+     publicação são sempre iguais (cada story é único), e repetir o número ali
+     seria ruído. */
+  const maisPub = !cad && ap.publicacoes > ap.feito
+    ? ' <small>· ' + ap.publicacoes + ' publicações</small>' : '';
   const apoio = cad && ap.sequencia
-    ? ' <small>· ' + ap.sequencia + (ap.sequencia === 1 ? ' dia seguido' : ' dias seguidos') + '</small>' : '';
+    ? ' <small>· ' + ap.sequencia + (ap.sequencia === 1 ? ' dia seguido' : ' dias seguidos') + '</small>'
+    : maisPub;
   return '<div class="fp-mp" data-col="' + (FP_VIZ_COL[tipo] || 6) + '" data-viz="' + tipo + '">'
     + '<div class="fp-mp-cab">'
     +   '<span class="fp-mp-tit"><b>' + escHtml(a.rotulo) + '</b><span>' + escHtml(a.detalhe || '') + '</span></span>'
