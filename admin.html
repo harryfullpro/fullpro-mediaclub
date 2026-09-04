@@ -10811,7 +10811,14 @@ function prettyDT(iso) {
   window.addEventListener('online', marcaConexao);
   window.addEventListener('offline', marcaConexao);
   document.addEventListener('DOMContentLoaded', function(){
-    if (!navigator.onLine) document.body.classList.add('fp-esta-offline');
+    if (!navigator.onLine) {
+      document.body.classList.add('fp-esta-offline');
+      /* MARCAR AQUI TAMBÉM. Só o evento 'offline' marcava, então quem ABRIA o
+         painel sem sinal nunca ficava com a marca — e quando a conexão voltava,
+         marcaConexao caía no `else if` e não limpava o cache de rede. Resultado:
+         a tela seguia servindo as respostas vazias de quando não havia sinal. */
+      document.body.dataset.fpJaEsteveOffline = '1';
+    }
   });
 
   /* A FAIXA NAO TINHA CAMINHO DE VOLTA, e em 04/09 o dono viu isso: faixa de
@@ -10825,7 +10832,15 @@ function prettyDT(iso) {
      Reconferir ao voltar para a aba e ao focar a janela conserta sem inventar
      heartbeat nem bater no servidor de proposito. */
   function reconferirConexao(){
-    document.body.classList.toggle('fp-esta-offline', !navigator.onLine);
+    const off = !navigator.onLine;
+    const estava = document.body.classList.contains('fp-esta-offline');
+    document.body.classList.toggle('fp-esta-offline', off);
+    if (off) { document.body.dataset.fpJaEsteveOffline = '1'; return; }
+    /* Saiu do offline agora: o cache de rede pode guardar resposta vazia de
+       quando não havia sinal, e é ele que faz a tela mentir depois. Sem toast
+       aqui de propósito — quem avisa é marcaConexao, no evento do navegador. */
+    if (estava && document.body.dataset.fpJaEsteveOffline === '1'
+        && typeof fpLimparCacheRede === 'function') fpLimparCacheRede();
   }
   document.addEventListener('visibilitychange', function(){
     if (!document.hidden) reconferirConexao();
@@ -18266,7 +18281,10 @@ async function handleTKCallback() {
       tkConnected = true;
       saveTKTokens();
       // Clean URL params
-      window.history.replaceState({}, '', window.location.pathname);
+      /* Preserva params alheios e o HASH — o hash é a view aberta, e limpar
+         com pathname pelado jogava o dono de volta para o dashboard. Os
+         handlers novos (linhas ~19437 e ~19449) já faziam assim. */
+      fpLimparUrlOauth();
       console.log('TikTok connected successfully');
       return true;
     } else {
@@ -18657,7 +18675,10 @@ async function handleBlingCallback() {
       blingTokenExpiry = Date.now() + ((json.expires_in || 3600) * 1000);
       blingConnected = true;
       saveBlingTokens();
-      window.history.replaceState({}, '', window.location.pathname);
+      /* Preserva params alheios e o HASH — o hash é a view aberta, e limpar
+         com pathname pelado jogava o dono de volta para o dashboard. Os
+         handlers novos (linhas ~19437 e ~19449) já faziam assim. */
+      fpLimparUrlOauth();
       console.log('Bling connected successfully');
       return true;
     } else {
@@ -19404,6 +19425,18 @@ async function fpCallbackSeguro(nome, fn) {
    Agora fala e limpa a URL. Codigo de OAuth e de uso unico e vive poucos
    minutos, entao a unica saida real e refazer a autorizacao por Integracoes;
    a mensagem diz isso em vez de mandar "tentar de novo" o que nao funciona. */
+/* Tira só os params de OAuth da URL, mantendo o resto e o hash. */
+function fpLimparUrlOauth() {
+  const q = new URLSearchParams(window.location.search);
+  ['code','state','scope','scopes','authuser','prompt','error','error_description']
+    .forEach(function (k) { q.delete(k); });
+  const resto = q.toString();
+  try {
+    window.history.replaceState({}, '', window.location.pathname
+      + (resto ? '?' + resto : '') + window.location.hash);
+  } catch (e) { /* ignora */ }
+}
+
 function fpCodeOrfao() {
   const q = new URLSearchParams(window.location.search);
   const erro = q.get('error');
@@ -19412,13 +19445,7 @@ function fpCodeOrfao() {
      aconteceu. O provedor manda ?error=access_denied — dá para dizer. */
   if (!q.get('code') && !erro) return;
   const semState = !q.get('state');
-  ['code','state','scope','scopes','authuser','prompt','error','error_description']
-    .forEach(function (k) { q.delete(k); });
-  const resto = q.toString();
-  try {
-    window.history.replaceState({}, '', window.location.pathname
-      + (resto ? '?' + resto : '') + window.location.hash);
-  } catch (e) { /* ignora */ }
+  fpLimparUrlOauth();
   if (erro) {
     console.warn('OAuth: autorização recusada pelo provedor —', erro);
     fpToast(erro === 'access_denied'

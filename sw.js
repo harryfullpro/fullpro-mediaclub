@@ -18,7 +18,9 @@ const CACHE_MIDIA = VERSAO + '-midia';
 
 const SHELL = [
   '/admin',
-  '/admin.html',
+  /* '/admin.html' saiu: responde 308 para /admin (cleanUrls da Vercel) e o
+     cache.put RECUSA resposta redirecionada. O allSettled abaixo engolia a
+     recusa, entao essa entrada nunca existiu de verdade — so parecia. */
   '/config.js',
   '/moto-catalog.js',
   '/manifest.webmanifest',
@@ -31,8 +33,13 @@ self.addEventListener('install', (evento) => {
   evento.waitUntil(
     caches.open(CACHE_SHELL)
       .then((c) => Promise.allSettled(SHELL.map((u) => c.add(u))))
-      .then(() => self.skipWaiting())
   );
+  /* SEM skipWaiting AQUI, de proposito. O admin.html mostra "Nova versao do
+     painel disponivel" com um botao, e o comentario de la diz "avisa em vez de
+     trocar por baixo" — mas o skipWaiting no install trocava por baixo mesmo
+     assim, e o botao Atualizar nao fazia diferenca nenhuma.
+     Agora o SW novo espera de verdade e quem libera e o clique: ele manda
+     'atualizar-agora', que chama skipWaiting no listener de message. */
 });
 
 self.addEventListener('activate', (evento) => {
