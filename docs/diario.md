@@ -4593,3 +4593,83 @@ preenchimento, não de texto.
 já tinha thumb, e o upsert do PostgREST **substitui o jsonb inteiro** — coluna
 omitida sobrevive, jsonb parcial não. Um `Map` carregando o valor anterior
 resolveu.
+
+---
+
+## 04/09/2026 — "Sem conexão": o aviso era falso e o defeito era outro
+
+O dono mandou print de `/admin?code=…` com a faixa **"Sem conexão"** acesa e a
+pergunta certa: *"será que é algum problema com o supabase?"*
+
+**Não era.** Projeto `ACTIVE_HEALTHY` e, na janela 14:43:30–14:46:30, **todas** as
+chamadas responderam **200** — `mc-login`, `bling-proxy`, `drive-proxy`,
+`instagram-proxy`, `youtube-proxy`, `tiktok-proxy`. Nenhuma exceção. A faixa não é
+acionada por falha de requisição em lugar nenhum: sai **só** de `navigator.onLine`.
+Daí a cena esquisita do print — barra lateral com dado e faixa dizendo o contrário.
+
+### A cadeia de três defeitos, e nenhum deles era o Supabase
+
+**1. `state: estado` — um nome de variável.** No `youtube-proxy`, ação `oauth_url`:
+o Google recebia `state=<uuid>` correto, mas a resposta devolvia `estado`, que é a
+**função** da linha 113. `JSON.stringify` de função **apaga a chave** — medido:
+`{ok:true, state: estado}` sai como `{"ok":true}`. O painel gravava a string
+`"undefined"`, o Google voltava com o UUID real, nunca casava.
+
+**2. O handler guloso.** `handleTKCallback` conferia CSRF assim:
+
+```js
+if (state && savedState && state !== savedState) return false;
+```
+
+Só recusa quando os **dois** existem. Com `sessionStorage` vazio a condição dá
+`false` e ele seguia — engolia **qualquer** `?code=`, de qualquer provedor.
+Era buraco de CSRF antes de ser bug: um link com `?code=` plantado seria trocado
+sem perguntar. O log mostra a mordida: a primeiríssima chamada do app após o boot
+foi `tiktok-proxy?action=token` (14:44:07), e o handler certo roda **antes** dele.
+
+**3. O silêncio.** O `replaceState` só roda no ramo de sucesso, então o código
+ficou preso na barra de endereço — e no histórico do navegador. Nenhuma mensagem.
+E as cinco mensagens que existiam usavam `fpToast(..., 'error')`, tipo que **não
+existe** (`ok|erro|warn|info`): caíam no ícone de info e saíam azuis, cara de
+recado. As mensagens de falha do OAuth eram as mais afetadas.
+
+Somados: o dono autorizava o **YouTube**, nada acontecia, nada era dito.
+
+### O que virou regra
+
+- **Verificação de segurança não pode ser condicional à presença do dado.**
+  `if (a && b && a !== b)` não é comparação, é convite. O certo é
+  `if (!a || !b || a !== b)`.
+- **Aviso de estado tem de ter caminho de volta.** A faixa era acesa no
+  `DOMContentLoaded` e só saía no evento `online`, que é uma **transição** do
+  Chrome. Se `navigator.onLine` lê `false` no instante da carga — acontece em
+  volta de redirect — e nenhuma transição vem depois, ela mente até a página ser
+  recarregada. Trava de um lado só. Agora reconfere em `visibilitychange` e
+  `focus`, e a recarga automática a desmente quando a leitura volta: requisição
+  que respondeu é prova melhor de rede que o palpite do navegador.
+- **`?code=` órfão e consentimento negado agora falam.** Um `code` que sobra
+  depois dos quatro handlers vira mensagem e a URL é limpa. `?error=access_denied`
+  também — antes era silêncio total, porque sem `code` os quatro saem na
+  primeira linha.
+- **URL com query não entra no cache do SW.** Ele gravava
+  `/admin?code=<código>` no `CACHE_SHELL`: credencial em disco, e chave que
+  `caches.match` nunca bateria de novo (casa por URL inteira). `VERSAO` foi para
+  `v2` porque é o `activate` que expurga o cache velho.
+- **O SW agora confere se há versão nova ao voltar para a aba** (trava de 1h). O
+  aviso de "nova versão" já existia, mas `updatefound` só dispara se o navegador
+  conferir — e ele confere na navegação e a cada ~24h. Aba aberta o dia todo
+  nunca conferia: código velho com dado novo.
+
+### Duas confissões do dia
+
+O `curl` que eu usei para dizer "o deploy não subiu" batia em `/admin.html`, que
+responde **308**; eu estava grepando a página de redirecionamento. O caminho é
+`/admin`. E depois, ao testar local, **o próprio service worker me serviu a cópia
+em cache** com o servidor morto — medi a versão errada por duas rodadas. Os dois
+enganos são o mesmo defeito que o dono relatou, vindo me morder.
+
+**Como provar o que aconteceu no painel, da próxima vez:** os logs de
+`function_edge_logs` no Supabase dizem qual ação foi chamada e com que status
+(o `action` vem na query string); `mc_integrations.updated_at` diz se algo foi
+realmente gravado; e a ação `health` de cada proxy devolve `versao`, que diz qual
+código está no ar sem depender de fé.
