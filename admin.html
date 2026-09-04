@@ -34018,7 +34018,28 @@ async function initApp() {
   console.log('[NAV PATCH] Hash-based routing + data refresh active');
 })();
 
-checkAuth();
+/* O BOOT NÃO TINHA PARA QUEM RECLAMAR. checkAuth é async e era chamada pelada:
+   fpRevelarPainel() já põe o painel na tela ANTES do `await initApp()`, então
+   uma rejeição aqui deixa a moldura montada, o menu filtrado e o dado pela
+   metade — sem uma palavra na tela, só no console. Era essa a cara do print de
+   04/09: painel inteiro, contador preenchido, nenhum erro.
+   Não existe window.onunhandledrejection neste arquivo, então ninguém escutava. */
+checkAuth().catch(function (e) {
+  console.error('boot', e);
+  try {
+    fpToast('O painel abriu mas não terminou de carregar. Recarregue a página.', 'erro', {
+      duracao: 0,
+      acao: { texto: 'Recarregar', onClick: function () { location.reload(); } }
+    });
+  } catch (_) { /* se nem o toast sobe, o console já tem o motivo */ }
+});
+
+/* Rede de segurança para o que escapar de qualquer catch — inclusive um catch
+   que quebre por dentro. Só registra: virar toast aqui encheria a tela de aviso
+   para rejeição que já foi tratada em outro lugar. */
+window.addEventListener('unhandledrejection', function (ev) {
+  console.error('promise sem catch:', ev.reason);
+});
 </script>
     <!-- AI Chat Overlay -->
     <div id="aiChatOverlay" onclick="toggleAiChat()"></div>
