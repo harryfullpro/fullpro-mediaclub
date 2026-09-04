@@ -10779,6 +10779,20 @@ function prettyDT(iso) {
             }
           });
         });
+        /* O AVISO ACIMA SÓ APARECE SE ALGUÉM CONFERIR, e o navegador confere na
+           navegação e mais ou menos a cada 24h. Aba aberta o dia todo — que é o
+           uso normal aqui — nunca confere: o dono fica com código velho e dado
+           novo, sem sinal nenhum. Em 04/09 isso enganou até a investigação, com
+           o SW servindo /admin do cache enquanto eu media a versão errada.
+           Conferir ao voltar para a aba, no máximo de hora em hora, custa uma
+           requisição condicional ao /sw.js — 304 quando nada mudou. */
+        let confEm = 0;
+        document.addEventListener('visibilitychange', function(){
+          if (document.hidden) return;
+          if (Date.now() - confEm < 60 * 60 * 1000) return;
+          confEm = Date.now();
+          reg.update().catch(function(){ /* sem rede: confere na próxima volta */ });
+        });
       }).catch(function(e){ console.warn('[SW] não registrado:', e && e.message); });
     });
   }
