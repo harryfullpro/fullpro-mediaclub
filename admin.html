@@ -10799,6 +10799,27 @@ function prettyDT(iso) {
   document.addEventListener('DOMContentLoaded', function(){
     if (!navigator.onLine) document.body.classList.add('fp-esta-offline');
   });
+
+  /* A FAIXA NAO TINHA CAMINHO DE VOLTA, e em 04/09 o dono viu isso: faixa de
+     "sem conexao" acesa com TODAS as requisicoes respondendo 200 (conferido no
+     log do Supabase, janela 14:43-14:46: nenhum status diferente de 200).
+     O motivo: ela era acesa no DOMContentLoaded e so apagava no evento
+     'online', que e uma TRANSICAO do proprio Chrome. Se navigator.onLine le
+     false no instante da carga — acontece em volta de redirect e em troca de
+     rede — e nenhuma transicao vem depois, a faixa mente ate a pagina ser
+     recarregada. Uma trava de um lado so.
+     Reconferir ao voltar para a aba e ao focar a janela conserta sem inventar
+     heartbeat nem bater no servidor de proposito. */
+  function reconferirConexao(){
+    document.body.classList.toggle('fp-esta-offline', !navigator.onLine);
+  }
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden) reconferirConexao();
+  });
+  window.addEventListener('focus', reconferirConexao);
+  /* Requisicao que VOLTOU e a prova mais honesta de que ha rede — mais que o
+     palpite do navigator.onLine. A recarga automatica chama isto no sucesso. */
+  window.fpReconferirConexao = reconferirConexao;
 })();
 
 /* "ha 1685h" nao diz nada para quem le. Converte para a maior unidade util. */
@@ -18195,10 +18216,19 @@ async function handleTKCallback() {
 
   if (!code || error) return false;
 
-  // Verify CSRF state
+  /* GULOSO ATE 04/09/2026, e era buraco de CSRF antes de ser bug.
+     A condicao antiga so recusava quando os DOIS existiam. Com o sessionStorage
+     vazio, savedState era null, a condicao dava false e este handler engolia
+     QUALQUER ?code= — de qualquer provedor, ou plantado por terceiro num link
+     enviado ao dono. Foi exatamente o que aconteceu em 04/09 as 14:44: um code
+     de outro provedor veio parar no token do TikTok, a troca falhou, o
+     replaceState (que so roda no ramo de sucesso) nao limpou a URL e ninguem
+     foi avisado de nada.
+     connectTikTok() (linha ~18184) SEMPRE grava tk_csrf, entao exigir os dois
+     nao fecha nenhuma porta do fluxo legitimo. */
   const savedState = sessionStorage.getItem('tk_csrf');
-  if (state && savedState && state !== savedState) {
-    console.warn('TikTok CSRF mismatch');
+  if (!state || !savedState || state !== savedState) {
+    console.warn('TikTok: state nao confere — este code nao e desta autorizacao');
     return false;
   }
   sessionStorage.removeItem('tk_csrf');
@@ -18590,9 +18620,12 @@ async function handleBlingCallback() {
   const state = params.get('state');
   if (!code || !state || !state.startsWith('bling_')) return false;
 
+  /* Mesmo padrao permissivo do TikTok: sem savedState a verificacao passava.
+     Aqui o prefixo "bling_" no state ja limitava o estrago, mas exigir os dois
+     custa nada. fpBlingIr grava bling_csrf sempre. */
   const savedState = sessionStorage.getItem('bling_csrf');
-  if (savedState && state !== savedState) {
-    console.warn('Bling CSRF mismatch');
+  if (!savedState || state !== savedState) {
+    console.warn('Bling: state nao confere — este code nao e desta autorizacao');
     return false;
   }
   sessionStorage.removeItem('bling_csrf');
@@ -19334,6 +19367,45 @@ async function fpTkIr() {
   if (!j || !j.ok) { fpToast((j && j.erro) || 'não deu para montar o endereço de autorização', 'error'); return; }
   try { sessionStorage.setItem('fp_tk_pub_state', j.state); } catch (e) { /* sessão anônima */ }
   window.location.href = j.url;
+}
+
+/* Cada callback no seu proprio try/catch. Antes eram quatro await NUS no topo
+   do initApp: um fetch rejeitado ali derrubava o boot inteiro — e como o login
+   envolve initApp num try/catch (linha ~10247), o dono via "Nao foi possivel
+   entrar agora", mensagem errada que joga a culpa no login. */
+async function fpCallbackSeguro(nome, fn) {
+  try { return await fn(); }
+  catch (e) {
+    console.warn('callback OAuth ' + nome + ':', e);
+    fpToast('A volta da autorização do ' + nome + ' falhou. Tente autorizar de novo.',
+            'error', { duracao: 10000 });
+    return false;
+  }
+}
+
+/* UM ?code= QUE SOBRA depois dos quatro handlers e codigo de OAuth que NINGUEM
+   reclamou. Ate 04/09/2026 isso era silencio absoluto: o dono autorizava,
+   voltava para o painel, nada acontecia, nada era dito — e o codigo continuava
+   exposto na barra de endereco, indo para o historico do navegador.
+   Agora fala e limpa a URL. Codigo de OAuth e de uso unico e vive poucos
+   minutos, entao a unica saida real e refazer a autorizacao por Integracoes;
+   a mensagem diz isso em vez de mandar "tentar de novo" o que nao funciona. */
+function fpCodeOrfao() {
+  const q = new URLSearchParams(window.location.search);
+  if (!q.get('code')) return;
+  const semState = !q.get('state');
+  ['code','state','scope','scopes','authuser','prompt','error','error_description']
+    .forEach(function (k) { q.delete(k); });
+  const resto = q.toString();
+  try {
+    window.history.replaceState({}, '', window.location.pathname
+      + (resto ? '?' + resto : '') + window.location.hash);
+  } catch (e) { /* ignora */ }
+  console.warn('OAuth: code orfao descartado — nenhum handler reconheceu o state');
+  fpToast(semState
+    ? 'Voltou uma autorização sem identificação — o provedor não devolveu o state. Nada foi conectado: refaça a autorização a partir de Integrações.'
+    : 'Voltou uma autorização que este painel não reconheceu. Nada foi conectado: refaça a autorização a partir de Integrações.',
+    'warn', { duracao: 14000 });
 }
 
 /* Volta do TikTok. Roda antes do handleTKCallback (o da conexao de leitura)
@@ -33423,13 +33495,14 @@ if (window.initMotoSelects) {
 async function initApp() {
   // Handle TikTok OAuth callback if present
   loadTKTokens();
-  await handleTkPubCallback();
-  await handleYtCallback();
-  await handleTKCallback();
+  await fpCallbackSeguro('TikTok (publicação)', handleTkPubCallback);
+  await fpCallbackSeguro('YouTube', handleYtCallback);
+  await fpCallbackSeguro('TikTok', handleTKCallback);
 
   // Handle Bling OAuth callback if present
   loadBlingTokens();
-  await handleBlingCallback();
+  await fpCallbackSeguro('Bling', handleBlingCallback);
+  fpCodeOrfao();
 
   // Integrações: carrega status compartilhado do servidor (vale p/ toda a equipe)
   await refreshIntegrationStatus();
@@ -33833,7 +33906,11 @@ async function initApp() {
     if (document.querySelector('.modal.show')) return;
     if (Date.now() - _recargaEm < RECARGA_TRAVA_MS) return;
     _recargaEm = Date.now();
-    try { await refreshViewData(v); } catch (e) { console.warn('recarga', motivo, e); }
+    try {
+      await refreshViewData(v);
+      /* Leitura voltou: ha rede, qualquer que seja o palpite do navigator. */
+      if (typeof window.fpReconferirConexao === 'function') window.fpReconferirConexao();
+    } catch (e) { console.warn('recarga', motivo, e); }
   }
 
   setInterval(function () {
