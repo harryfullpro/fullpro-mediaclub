@@ -9,7 +9,10 @@
      operacao nao pode vir velho.
 */
 
-const VERSAO = 'mediaclub-v1';
+/* v2 em 04/09/2026: o cache do v1 pode conter uma entrada /admin?code=<codigo>
+   com codigo de autorizacao real dentro (ver abaixo). O activate apaga tudo que
+   nao comeca com VERSAO, entao subir a versao e o que expurga aquilo. */
+const VERSAO = 'mediaclub-v2';
 const CACHE_SHELL = VERSAO + '-shell';
 const CACHE_MIDIA = VERSAO + '-midia';
 
@@ -73,11 +76,20 @@ self.addEventListener('fetch', (evento) => {
     return;
   }
 
+  /* URL COM QUERY NAO ENTRA NO CACHE. Duas razoes, as duas medidas em 04/09:
+     1. A volta do OAuth e uma navegacao para /admin?code=<codigo>&state=… e o
+        caches.put guardava isso — codigo de autorizacao gravado em disco, no
+        cache do navegador, sem prazo. Nao e lugar de credencial.
+     2. caches.match casa por URL INTEIRA, entao /admin?code=abc jamais seria
+        batida de novo: era entrada morta, ocupando espaco para sempre.
+     Quem tem query aqui e ou callback ou cache-buster; nenhum dos dois e shell. */
+  const temQuery = url.search !== '';
+
   // Shell: rede primeiro, cache como rede de seguranca.
   evento.respondWith(
     fetch(req)
       .then((resp) => {
-        if (resp.ok) {
+        if (resp.ok && !temQuery) {
           const copia = resp.clone();
           caches.open(CACHE_SHELL).then((c) => c.put(req, copia));
         }

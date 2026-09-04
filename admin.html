@@ -19378,7 +19378,7 @@ async function fpTkIr() {
       { method: 'POST', headers: h, body: JSON.stringify({ redirect_uri: redirect }) });
     j = await r.json();
   } catch (e) { j = null; }
-  if (!j || !j.ok) { fpToast((j && j.erro) || 'não deu para montar o endereço de autorização', 'error'); return; }
+  if (!j || !j.ok) { fpToast((j && j.erro) || 'não deu para montar o endereço de autorização', 'erro'); return; }
   try { sessionStorage.setItem('fp_tk_pub_state', j.state); } catch (e) { /* sessão anônima */ }
   window.location.href = j.url;
 }
@@ -19392,7 +19392,7 @@ async function fpCallbackSeguro(nome, fn) {
   catch (e) {
     console.warn('callback OAuth ' + nome + ':', e);
     fpToast('A volta da autorização do ' + nome + ' falhou. Tente autorizar de novo.',
-            'error', { duracao: 10000 });
+            'erro', { duracao: 10000 });
     return false;
   }
 }
@@ -19406,7 +19406,11 @@ async function fpCallbackSeguro(nome, fn) {
    a mensagem diz isso em vez de mandar "tentar de novo" o que nao funciona. */
 function fpCodeOrfao() {
   const q = new URLSearchParams(window.location.search);
-  if (!q.get('code')) return;
+  const erro = q.get('error');
+  /* NEGAR o consentimento era silêncio total: sem `code`, os quatro handlers
+     saem na primeira linha e o dono volta para um painel que finge que nada
+     aconteceu. O provedor manda ?error=access_denied — dá para dizer. */
+  if (!q.get('code') && !erro) return;
   const semState = !q.get('state');
   ['code','state','scope','scopes','authuser','prompt','error','error_description']
     .forEach(function (k) { q.delete(k); });
@@ -19415,6 +19419,14 @@ function fpCodeOrfao() {
     window.history.replaceState({}, '', window.location.pathname
       + (resto ? '?' + resto : '') + window.location.hash);
   } catch (e) { /* ignora */ }
+  if (erro) {
+    console.warn('OAuth: autorização recusada pelo provedor —', erro);
+    fpToast(erro === 'access_denied'
+      ? 'A autorização foi recusada na tela do provedor. Nada foi conectado.'
+      : 'O provedor recusou a autorização (' + erro + '). Nada foi conectado.',
+      'erro', { duracao: 12000 });
+    return;
+  }
   console.warn('OAuth: code orfao descartado — nenhum handler reconheceu o state');
   fpToast(semState
     ? 'Voltou uma autorização sem identificação — o provedor não devolveu o state. Nada foi conectado: refaça a autorização a partir de Integrações.'
@@ -19447,9 +19459,9 @@ async function handleTkPubCallback() {
   } catch (e) { j = null; }
   if (j && j.ok) {
     await fpTkStatus();
-    fpToast('TikTok autorizado para publicar' + (j.escopos ? ' (' + j.escopos.join(', ') + ')' : '') + '.', 'success');
+    fpToast('TikTok autorizado para publicar' + (j.escopos ? ' (' + j.escopos.join(', ') + ')' : '') + '.', 'ok');
   } else {
-    fpToast((j && j.erro) || 'não deu para concluir a autorização do TikTok', 'error');
+    fpToast((j && j.erro) || 'não deu para concluir a autorização do TikTok', 'erro');
   }
 }
 
@@ -19532,7 +19544,7 @@ async function fpYtOauthIr() {
     return;
   }
   const r = await fpIntegrChamar('youtube', 'oauth_url', { redirect_uri: redirect });
-  if (!r || !r.ok) { fpToast((r && r.erro) || 'nao deu para montar o endereco de autorizacao', 'error'); return; }
+  if (!r || !r.ok) { fpToast((r && r.erro) || 'não deu para montar o endereço de autorização', 'erro'); return; }
   try { sessionStorage.setItem('fp_yt_state', r.state); } catch (e) { /* sessao anonima */ }
   window.location.href = r.url;
 }
@@ -19562,9 +19574,9 @@ async function handleYtCallback() {
   if (r && r.ok) {
     FP_YT_OAUTH = r;
     fpYtOauthPintar();
-    fpToast('YouTube autorizado para upload' + (r.canal ? ' no canal ' + r.canal : '') + '.', 'success');
+    fpToast('YouTube autorizado para upload' + (r.canal ? ' no canal ' + r.canal : '') + '.', 'ok');
   } else {
-    fpToast((r && r.erro) || 'nao deu para concluir a autorizacao do YouTube', 'error');
+    fpToast((r && r.erro) || 'não deu para concluir a autorização do YouTube', 'erro');
   }
 }
 

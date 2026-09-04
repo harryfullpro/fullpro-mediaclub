@@ -288,7 +288,7 @@ Deno.serve(async (req) => {
   if (action === 'health') {
     /* `versao` é o que deixa conferir, de fora e sem sessão, QUAL código está
        no ar. Sem isso, depois de um deploy só dá para acreditar. */
-    return resposta({ ok: true, versao: 'yt3', configurado: (await credencial()).chave.length > 0 });
+    return resposta({ ok: true, versao: 'yt4', configurado: (await credencial()).chave.length > 0 });
   }
 
   const operador = await operadorOuNulo(req);
@@ -371,7 +371,12 @@ Deno.serve(async (req) => {
     u.searchParams.set('prompt', 'consent');
     u.searchParams.set('include_granted_scopes', 'true');
     u.searchParams.set('state', estadoCsrf);
-    return resposta({ ok: true, url: u.toString(), state: estado });
+    /* `estado` (sem sufixo) e a FUNCAO da linha 113. JSON.stringify de funcao
+       APAGA a chave: o painel recebia o objeto sem `state`, gravava a string
+       "undefined" no sessionStorage e, na volta, a comparacao com o state real
+       do Google nunca casava. handleYtCallback desistia calado e o ?code= caia
+       no handler seguinte. Foi o que aconteceu em 04/09 as 14:44. */
+    return resposta({ ok: true, url: u.toString(), state: estadoCsrf });
   }
 
   if (action === 'oauth_code') {
