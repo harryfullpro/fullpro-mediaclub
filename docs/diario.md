@@ -1,5 +1,63 @@
 # Diário
 
+## 09/09/2026 · O texto do formulário estava ilegível, e a minha medição disse que estava tudo bem
+
+> *"agora preciso que você garanta que vai ficar bom de ler os elementos do
+> form né cara. Como tu deixou isso passar assim?"*
+
+Ele estava certo, e a resposta ao "como passou" é específica: **a varredura de
+contraste tem um ponto cego.**
+
+Ela sobe pela cadeia de `background-color` do DOM compondo alfa. A prancheta é
+uma camada `fixed` **irmã**, em `z-index:0`, atrás de tudo — não está nessa
+cadeia. Então quando as duas decisões anteriores se encontraram — "sem
+contêiner" (que deixou `.block`, `.ficha`, `.f` e `main` transparentes) e
+"prancheta no fundo" — o texto do formulário passou a se apoiar direto na grade
+e nos brilhos em movimento, e a medição continuou dizendo 29 estilos, zero
+reprovação.
+
+Medido no pior fundo que a prancheta produz, `rgb(172,155,182)`:
+
+| Texto | Contraste | Mínimo |
+|---|---|---|
+| rótulo do campo (`--ink`) | 6,73 | 4,5 |
+| linha da ficha (`--ink-dim`) | 3,18 | 4,5 |
+| texto de ajuda (`--ink-quiet`) | **2,04** | 4,5 |
+| rótulo da ficha (`--ink-quiet`) | **2,04** | 4,5 |
+
+### O conserto
+
+**Folha de papel** sobre a prancheta e sob o conteúdo: `main::before`,
+`.fim::before` e `.pe::before`, sem borda, sem raio, de ponta a ponta, com
+máscara desvanecendo 120px em cima e embaixo — não vira caixa, que é
+justamente o que a preferência dele proíbe, e devolve superfície de leitura.
+
+A opacidade é **calculada**: com os brilhos já reduzidos, 0,88 parava em 4,45 e
+0,90 dava 4,51. Ficou 0,92, por margem.
+
+Os brilhos desceram de `.16/.14/.10` para `.10/.09/.07`, como ele sugeriu — mas
+sozinho isso não resolvia: mesmo reduzido, o pior fundo deixava o texto fraco
+em 2,25:1. O problema era a superfície, não a intensidade.
+
+E `--red-txt` foi de `#db2121` para `#d52020`: sobre o fundo liso o primeiro
+dava 4,54, mas sobre a prancheta **com** a folha cai para 4,30.
+
+### O método, corrigido
+
+Duas armadilhas dentro da própria correção:
+
+**Parar no primeiro opaco não basta.** O `body` tem fundo opaco e fica ABAIXO
+da camada decorativa; parar nele dá a resposta errada de novo. O critério é
+parar no primeiro opaco **que não seja o body**.
+
+**Gradiente engana.** Elemento com `linear-gradient` tem `backgroundColor`
+transparente, então a cadeia sobe direto até a página: o botão branco sobre
+vermelho mediu 1,09:1 quando o real é 4,85 a 6,54.
+
+Com o método corrigido: 29 estilos, **24 apoiados na prancheta, 23 protegidos
+pela folha, zero reprovação**, o mais fraco em 4,51.
+
+
 ## 09/09/2026 · Influencer sai do escuro: a prancheta do admin vira o fundo
 
 > *"vamos tirar esse site do tema escuro e aplicar o mesmo layout do light

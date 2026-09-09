@@ -73,7 +73,11 @@
        e reprova em 12px, e ate o `--red` fica em 4,46 — a um fio de passar.
        Este da 4,54. Mesma licao do vermelho de botao: sobre fundo claro,
        LETRA vermelha precisa ser mais fechada do que AREA vermelha. */
-    --red-txt:#db2121;
+    /* #d52020 e nao #db2121: sobre o fundo LISO o #db2121 dava 4,54, mas
+       sobre a prancheta com a folha de papel cai para 4,30 e reprova. Medir
+       so contra a cor de fundo declarada nao basta quando existe camada
+       decoratriva atras — foi assim que isto passou na primeira vez. */
+    --red-txt:#d52020;
     --green:#18a863;       /* admin: --success */
 
     /* ritmo de 8: 8 16 24 32 48 64 96 — o mesmo da landing */
@@ -649,17 +653,17 @@
   .bp-b{position:absolute; border-radius:50%; filter:blur(72px); will-change:transform}
   .bp-b1{
     width:46vw; height:46vw; min-width:380px; min-height:380px;
-    background:rgba(255,45,45,.16); top:-16%; left:-12%;
+    background:rgba(255,45,45,.10); top:-16%; left:-12%;
     animation:bpDeriva1 22s ease-in-out infinite;
   }
   .bp-b2{
     width:40vw; height:40vw; min-width:320px; min-height:320px;
-    background:rgba(52,104,220,.14); bottom:-18%; right:-10%;
+    background:rgba(52,104,220,.09); bottom:-18%; right:-10%;
     animation:bpDeriva2 30s ease-in-out infinite;
   }
   .bp-b3{
     width:26vw; height:26vw; min-width:220px; min-height:220px;
-    background:rgba(255,45,45,.10); top:42%; left:38%;
+    background:rgba(255,45,45,.07); top:42%; left:38%;
     animation:bpDeriva3 17s ease-in-out infinite;
   }
   @keyframes bpDeriva1{
@@ -682,6 +686,40 @@
      posicionado passa por cima dos filhos estaticos — a mesma armadilha que o
      comentario do `.fp-bp` no admin avisa. */
   .top, main, .padrao, .fim, .pe{position:relative; z-index:1}
+
+  /* ── FOLHA DE PAPEL sobre a prancheta ──────────────────────────────
+     MEDIDO, e foi um defeito real que eu deixei passar: ao dissolver os
+     conteineres, `.block`, `.ficha`, `.f` e `main` ficaram TRANSPARENTES, e
+     o texto do formulario passou a se apoiar direto na grade e no brilho em
+     movimento. No pior fundo que a prancheta produz — rgb(172,155,182), com
+     linha grossa, traco tecnico e os dois brilhos somados — o texto de ajuda
+     e os rotulos da ficha caiam para **2,04:1**, contra os 4,5 exigidos.
+
+     Por que a minha varredura nao pegou: ela compoe alfa subindo pela cadeia
+     de `background-color` do DOM, e a prancheta nao esta nessa cadeia — e uma
+     camada `fixed` irma, atras de tudo. Cadeia transparente + camada
+     decorativa por tras e um ponto cego do metodo, nao descuido de olhar.
+
+     A correcao NAO e caixa: e uma folha sem borda, sem raio e sem sombra, de
+     ponta a ponta, que apenas troca a superficie da pagina onde se le. A
+     prancheta continua inteira no heroi e no slider, que e onde ela e
+     decoracao sobre foto e tipo grande.
+
+     0,92 e calculado, nao gosto: com o brilho ja reduzido, 0,90 devolve o
+     texto mais fraco a 4,51 e 0,88 para em 4,45. 0,92 da margem.
+
+     A borda desaparece nos 120px de cima e de baixo — folha que corta reto
+     vira caixa, e caixa e justamente o que o dono nao quer. */
+  /* O rodape entrou na lista depois de medido: fora da folha, o texto dele
+     ficava em 2,25:1 e o link em 3,52:1. Com folha, 4,57 e 7,14. */
+  main::before, .fim::before, .pe::before{
+    content:''; position:absolute; inset:0; z-index:-1;
+    background:var(--void);
+    opacity:.92;
+    -webkit-mask-image:linear-gradient(180deg, transparent 0, #000 120px, #000 calc(100% - 120px), transparent 100%);
+    mask-image:linear-gradient(180deg, transparent 0, #000 120px, #000 calc(100% - 120px), transparent 100%);
+    pointer-events:none;
+  }
 
   /* O logo veio para fundo claro: mesmo tratamento do admin, que aplica
      `brightness(0.2)` no tema claro em vez de trocar o arquivo. */
