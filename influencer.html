@@ -448,7 +448,9 @@
   }
   .ok + .ok{margin-top:10px}
   .ok:hover{border-color:var(--line-hi)}
-  .ok.on{border-color:rgba(31,210,122,.5)}
+  /* Era `rgba(31,210,122,.5)` — o verde do tema ESCURO (#1fd27a) cravado.
+     Agora sai do token, que no claro e #18a863. */
+  .ok.on{border-color:color-mix(in srgb, var(--green) 50%, transparent)}
   .ok input{
     appearance:none; flex:0 0 auto; width:19px; height:19px; margin:1px 0 0;
     border:1.5px solid var(--line-hi); border-radius:6px; cursor:pointer; position:relative;
@@ -457,7 +459,10 @@
   .ok input:checked{background:var(--green); border-color:var(--green)}
   .ok input:checked::after{
     content:''; position:absolute; left:5px; top:1px; width:5px; height:10px;
-    border:2px solid #0a0a0b; border-top:0; border-left:0; transform:rotate(42deg);
+    /* Era `#0a0a0b`, o fundo do tema escuro cravado como "a cor que contrasta
+       com o verde". Vira token: mesma leitura, e nao apodrece na proxima
+       virada de tema. */
+    border:2px solid var(--ink); border-top:0; border-left:0; transform:rotate(42deg);
   }
   .ok input:focus-visible{outline:2px solid var(--green); outline-offset:2px}
   .ok-t{font-size:13.5px; line-height:1.55; color:var(--ink-dim)}
@@ -495,7 +500,8 @@
   .ficha-rows{padding:6px var(--s3) var(--s3)}
   .row{
     display:flex; align-items:baseline; gap:10px; padding:9px 0;
-    border-bottom:1px solid rgba(38,38,46,.6);
+    /* Era `rgba(38,38,46,.6)` — o --line do tema escuro cravado. */
+    border-bottom:1px solid var(--line);
   }
   .row:last-child{border-bottom:0}
   .row-k{
