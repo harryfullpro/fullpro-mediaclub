@@ -11,7 +11,7 @@
 <meta name="robots" content="noindex, nofollow" />
 <meta name="referrer" content="strict-origin-when-cross-origin" />
 <meta name="description" content="Candidatura a patrocínio FullPro para criadores de conteúdo de moto no Instagram." />
-<meta name="theme-color" content="#0a0a0b" />
+<meta name="theme-color" content="#f5f5f7" />
 <link rel="icon" href="/assets/logo-short.png" />
 
 <style>
@@ -33,65 +33,67 @@
      a decisão do dono em docs/contexto.md é "nenhuma outra família, muda peso
      e tamanho, nunca a fonte". O papel de dado agora se distingue por peso,
      corpo e entreletra, que é o que aquela decisão manda usar. */
+  /* ===================== TOKENS =====================
+     TEMA CLARO, herdado do admin do MediaClub (`[data-theme="light"]`).
+     Decisao do dono em 09/09: "tirar esse site do tema escuro e aplicar o
+     mesmo layout do light theme no media club admin".
+
+     Os valores sao os de la, COPIADOS e nao reinterpretados — inclusive as
+     razoes de contraste que quem montou o admin ja tinha medido e anotado:
+     `--text-muted: #6b6b78` da 5,1:1 sobre card branco, e foi escolhido
+     depois de `#8a8a96` reprovar com 3,4:1.
+
+     Os nomes locais (--void, --panel, --ink...) ficam: eles estao em ~900
+     linhas de regra desta pagina, e renomear tudo seria risco sem ganho.
+     O que muda e o VALOR de cada um. */
   :root{
-    --void:#0a0a0b;
-    --panel:#16161a;
-    --panel-hi:#1c1c22;
-    --line:#26262e;
-    --line-hi:#34343e;
-    /* Borda de CAMPO, separada da hairline estrutural. Medido em 09/09: o
-       --line no campo dava 1,13:1 contra o preenchimento e 1,20:1 contra o
-       entorno — a caixa era invisivel, e no print de celular nao dava para
-       ver onde tocar. O minimo da WCAG 1.4.11 para contorno de componente e
-       3:1, e este e o cinza mais BAIXO que passa nos dois fundos mantendo o
-       matiz frio do --line: 3,03 contra o campo, 3,22 contra o entorno.
-       Clarear o PREENCHIMENTO ate passar exigiria #626277 — caixa cinza
-       clara, que arruinaria o tema escuro. A borda e a alavanca certa. */
-    --line-campo:#66667b;
-    --ink:#f5f5f7;
-    --ink-dim:#a1a1aa;
-    --ink-mute:#6b6b76;   /* SO decoracao: 3,2:1 no fundo dos campos, reprova em texto */
-    --ink-quiet:#8b8b96;  /* texto que informa e precisa ser lido: 5,03:1 no pior fundo */
-    --red:#ff2d2d;
-    --red-hi:#ff5252;
-    --red-dark:#cc1d1d;
-    --green:#1fd27a;
+    --void:#f5f5f7;        /* era #0a0a0b — fundo da pagina (admin: --bg) */
+    --panel:#ffffff;       /* admin: --bg-card */
+    --panel-hi:#f0f0f2;    /* admin: --bg-elev */
+    --line:#e0e0e4;        /* admin: --border */
+    --line-hi:#c8c8ce;     /* admin: --border-hi */
+    /* Recalculado para o claro: o #66667b de antes era 3:1 contra painel
+       ESCURO e sobre branco daria contraste demais, virando caixa pesada.
+       Medido abaixo depois de aplicar. */
+    --line-campo:#8a8a8c;  /* 3,03:1 no campo (#f0f0f2) e 3,16:1 no fundo */
+
+    --ink:#1a1a1e;         /* admin: --text */
+    --ink-dim:#4e4e5a;     /* admin: --text-dim */
+    --ink-quiet:#6b6b78;   /* admin: --text-muted, 5,1:1 sobre branco */
+    --ink-mute:#94949e;    /* SO decoracao (admin: --nota-vazia, 3,00:1) */
+
+    /* O vermelho da marca muda de tom entre os temas, e isso e do admin, nao
+       invencao: no escuro e #ff2d2d, no claro #dd2222 — o claro precisa de
+       vermelho mais fechado para nao lavar sobre branco. */
+    --red:#dd2222;
+    --red-hi:#ee3333;
+    --red-dark:#b81b1b;
+    /* Vermelho de TEXTO, separado do de preenchimento. No claro os dois nao
+       podem ser o mesmo: medido, `--red-hi` sobre o fundo da pagina da 3,74:1
+       e reprova em 12px, e ate o `--red` fica em 4,46 — a um fio de passar.
+       Este da 4,54. Mesma licao do vermelho de botao: sobre fundo claro,
+       LETRA vermelha precisa ser mais fechada do que AREA vermelha. */
+    --red-txt:#db2121;
+    --green:#18a863;       /* admin: --success */
 
     /* ritmo de 8: 8 16 24 32 48 64 96 — o mesmo da landing */
     --s1:8px; --s2:16px; --s3:24px; --s4:32px; --s6:48px; --s8:64px; --s12:96px;
     --r:12px; --r-lg:18px;
+
+    /* Tons da prancheta, iguais aos do login do admin no tema claro. */
+    --bp-fina:rgba(28,52,96,.075);
+    --bp-grossa:rgba(28,52,96,.14);
+    --bp-tec:rgba(28,52,96,.19);
   }
 
   *{box-sizing:border-box}
   input,select,textarea,button{font-family:inherit}
   html{-webkit-text-size-adjust:100%}
-  /* ===================== TEXTURA DE FUNDO =====================
-     Grao de filme, gerado por `feTurbulence` num data-URI — sem arquivo,
-     sem requisicao, menos de 1 KB.
-
-     Por que grao e nao grade ou hachura: este e o braco de REDES da FullPro,
-     e o que o criador produz e foto e video. Grao e a textura nativa desse
-     material; grade seria linguagem de painel e hachura seria de impresso.
-
-     Mora na COR, nao por cima do conteudo: e `background-image` do proprio
-     body, entao nao existe camada interceptando clique nem disputando
-     empilhamento com o cabecalho grudado.
-
-     `fixed` de proposito: com o grao preso a viewport a pagina rola POR CIMA
-     de uma textura parada, como filme sob a imagem. Rolando junto, o olho le
-     como papel de parede e a pagina parece barata.
-
-     Alfa de 5,5 por cento: conferido depois de aplicar, os 30 estilos de
-     texto continuam sem reprovacao de contraste. */
+  /* O grao de filme saiu: foi substituido pela PRANCHETA (blueprint), que e
+     o fundo do admin — papel milimetrado, tracado tecnico e os brilhos
+     vermelho e azul em movimento. Ver o bloco `.bp` mais abaixo. */
   body{
-    background-color:var(--void);
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='.055'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)'/%3E%3C/svg%3E");
-    background-attachment:fixed;
-    /* Sem o atalho `background:` aqui embaixo, e isso e armadilha de verdade:
-       atalho ZERA todas as sub-propriedades, entao o `background-image` de
-       cima era apagado por ele e a textura simplesmente nao existia. A cor
-       agora vem do `background-color` declarado acima. */
-    margin:0; color:var(--ink);
+    margin:0; background:var(--void); color:var(--ink);
     font-family:'FullPro Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     font-size:16px; line-height:1.6;
     -webkit-font-smoothing:antialiased;
@@ -104,7 +106,11 @@
 
   /* ===================== CABEÇALHO ===================== */
   .top{
-    border-bottom:1px solid var(--line); background:rgba(10,10,11,.92);
+    /* Era `rgba(10,10,11,.92)`, cravado do tema escuro — remapear token nao
+        alcanca literal, e a barra continuou preta depois da virada, derrubando
+        o contraste do rotulo ao lado do logo para 3,19:1. Branco translucido
+        mantem o efeito de vidro e deixa a prancheta aparecer por tras. */
+    border-bottom:1px solid var(--line); background:rgba(255,255,255,.82);
     backdrop-filter:blur(10px); position:sticky; top:0; z-index:40;
   }
   .top-in{display:flex; align-items:center; justify-content:space-between; gap:var(--s2); height:62px}
@@ -124,12 +130,17 @@
   /* ===================== HERO =====================
      A tese primeiro. Quem abre esta página recebeu o link de alguém: não
      precisa de seis seções vendendo, precisa saber o critério em 5 segundos. */
-  .hero{padding:var(--s8) 0 var(--s6)}
+  /* Centralizado a pedido do dono (09/09), para casar com o cabecalho do
+     slider. Com o titulo no meio, a faixa de numeros logo abaixo tem de vir
+     junto — numero alinhado a esquerda sob um titulo centrado deixa a coluna
+     torta, e essa faixa e a primeira coisa que o criador le depois do H1. */
+  .hero{padding:var(--s8) 0 var(--s6); text-align:center}
+  .hero .hero-lead{margin-left:auto; margin-right:auto}
   @media (max-width:640px){ .hero{padding:var(--s6) 0 var(--s4)} }
 
   .eyebrow{
     font-size:12px; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
-    color:var(--red-hi); margin:0 0 var(--s3);
+    color:var(--red-txt); margin:0 0 var(--s3);
   }
   .hero h1{
     margin:0 0 var(--s3);
@@ -171,8 +182,8 @@
        que o numero pede. */
   .nums{
     margin:var(--s6) 0 0; display:grid;
-    grid-template-columns:repeat(4,auto); justify-content:start;
-    gap:0;
+    grid-template-columns:repeat(4,auto); justify-content:center;
+    gap:0; text-align:left;
   }
   .num{padding:var(--s2) var(--s3) var(--s2) 0}
   .num + .num{border-left:1px solid var(--line); padding-left:var(--s3)}
@@ -267,7 +278,12 @@
   .seta:disabled{opacity:0; pointer-events:none}
 
   .post{
-    position:relative; display:block; scroll-snap-align:start; text-decoration:none;
+    /* `center` e nao `start`, e isso e o que torna possivel o pedido "em foco
+       100% so o central". Com `start` o trilho para com um cartao encostado a
+       ESQUERDA, entao nenhum fica no meio da tela: o mais nitido parava em
+       0,26px de desfoque e mudava a cada rolagem. Com `center` sempre existe
+       um cartao no eixo, e a curva de foco o entrega com desfoque zero. */
+    position:relative; display:block; scroll-snap-align:center; text-decoration:none;
     aspect-ratio:9/16; border-radius:6px; overflow:hidden;
     background:var(--panel);
     /* filtro e opacidade são pintados pelo JS conforme a distância do centro:
@@ -585,6 +601,86 @@
     letter-spacing:.06em; font-variant-numeric:tabular-nums;
   }
 
+
+  /* ===================== PRANCHETA (blueprint) =====================
+     O fundo do login e da barra lateral do admin, trazido para ca: papel
+     milimetrado, tracado tecnico e brilhos vermelho e azul que passeiam.
+
+     `fixed` e nao `absolute`, e essa e a unica diferenca real em relacao ao
+     admin: la o login tem UMA tela de altura, aqui a pagina tem quase 5.000px.
+     Com `absolute` a prancheta esticaria por tudo e a malha de 24px viraria
+     papel de parede; presa a viewport, o conteudo rola por cima de uma folha
+     parada, que e o comportamento do original.
+
+     A mascara apaga as bordas — grade que morre no corte da tela parece papel
+     de parede; morrendo por dentro, parece folha. (comentario do admin)
+
+     Os tres brilhos correm em 22s, 30s e 17s: periodos sem divisor comum, para
+     o quadro nunca se repetir. Tambem do admin, junto com a nota de que 40s e
+     52s eram lentos demais e o dono perguntou se a animacao tinha ficado
+     pronta. */
+  .bp{
+    position:fixed; inset:0; overflow:hidden;
+    pointer-events:none; z-index:0;
+  }
+  .bp-grade{
+    position:absolute; inset:-2px;
+    background-image:
+      linear-gradient(var(--bp-fina) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bp-fina) 1px, transparent 1px),
+      linear-gradient(var(--bp-grossa) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bp-grossa) 1px, transparent 1px);
+    background-size:24px 24px, 24px 24px, 120px 120px, 120px 120px;
+    -webkit-mask-image:radial-gradient(ellipse 92% 84% at 50% 46%, #000 30%, transparent 80%);
+    mask-image:radial-gradient(ellipse 92% 84% at 50% 46%, #000 30%, transparent 80%);
+  }
+  .bp-tec{
+    position:absolute; inset:0; width:100%; height:100%;
+    fill:none; stroke:var(--bp-tec); stroke-width:1.2; color:var(--bp-tec);
+    -webkit-mask-image:radial-gradient(ellipse 88% 80% at 50% 46%, #000 25%, transparent 76%);
+    mask-image:radial-gradient(ellipse 88% 80% at 50% 46%, #000 25%, transparent 76%);
+  }
+  .bp-b{position:absolute; border-radius:50%; filter:blur(72px); will-change:transform}
+  .bp-b1{
+    width:46vw; height:46vw; min-width:380px; min-height:380px;
+    background:rgba(255,45,45,.16); top:-16%; left:-12%;
+    animation:bpDeriva1 22s ease-in-out infinite;
+  }
+  .bp-b2{
+    width:40vw; height:40vw; min-width:320px; min-height:320px;
+    background:rgba(52,104,220,.14); bottom:-18%; right:-10%;
+    animation:bpDeriva2 30s ease-in-out infinite;
+  }
+  .bp-b3{
+    width:26vw; height:26vw; min-width:220px; min-height:220px;
+    background:rgba(255,45,45,.10); top:42%; left:38%;
+    animation:bpDeriva3 17s ease-in-out infinite;
+  }
+  @keyframes bpDeriva1{
+    0%,100%{transform:translate3d(0,0,0) scale(1)}
+    33%{transform:translate3d(28vw,8vh,0) scale(1.22)}
+    66%{transform:translate3d(12vw,26vh,0) scale(.92)}
+  }
+  @keyframes bpDeriva2{
+    0%,100%{transform:translate3d(0,0,0) scale(1.08)}
+    40%{transform:translate3d(-26vw,-10vh,0) scale(.86)}
+    75%{transform:translate3d(-8vw,-24vh,0) scale(1.15)}
+  }
+  @keyframes bpDeriva3{
+    0%,100%{transform:translate3d(0,0,0) scale(.9)}
+    50%{transform:translate3d(-22vw,-16vh,0) scale(1.3)}
+  }
+  @media (prefers-reduced-motion:reduce){ .bp-b{animation:none} }
+
+  /* O conteudo sobe acima da camada decorativa. Sem isto o pseudo-fundo
+     posicionado passa por cima dos filhos estaticos — a mesma armadilha que o
+     comentario do `.fp-bp` no admin avisa. */
+  .top, main, .padrao, .fim, .pe{position:relative; z-index:1}
+
+  /* O logo veio para fundo claro: mesmo tratamento do admin, que aplica
+     `brightness(0.2)` no tema claro em vez de trocar o arquivo. */
+  .brand img{filter:brightness(.2)}
+
   /* ===================== PÉ ===================== */
   .pe{border-top:1px solid var(--line); padding:var(--s4) 0}
   .pe-in{
@@ -619,6 +715,28 @@
 </style>
 </head>
 <body>
+
+<!-- Prancheta: o mesmo fundo do login do admin. `aria-hidden` porque e
+     decoracao pura — leitor de tela nao tem o que fazer com ela. -->
+<div class="bp" aria-hidden="true">
+  <div class="bp-grade"></div>
+  <svg class="bp-tec" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <circle cx="238" cy="286" r="168"/>
+    <circle cx="238" cy="286" r="96" stroke-dasharray="5 7"/>
+    <path d="M238 96v380M48 286h380" stroke-dasharray="5 7"/>
+    <circle cx="238" cy="286" r="5"/>
+    <path d="M132 742h368M132 730v24M500 730v24"/>
+    <path d="m146 742-14-6v12zM486 742l14-6v12" fill="currentColor" stroke="none"/>
+    <rect x="1006" y="176" width="318" height="228" rx="4"/>
+    <path d="m1006 176 318 228M1324 176l-318 228" stroke-dasharray="4 8"/>
+    <path d="M1128 640a112 112 0 0 1 112-112"/>
+    <path d="M1240 528v-46M1240 640h-112" stroke-dasharray="5 7"/>
+    <path d="M640 40v14M700 40v22M760 40v14M820 40v22M880 40v14"/>
+  </svg>
+  <span class="bp-b bp-b1"></span>
+  <span class="bp-b bp-b2"></span>
+  <span class="bp-b bp-b3"></span>
+</div>
 
 <header class="top">
   <div class="wrap top-in">
@@ -1625,22 +1743,37 @@
     var cartoes = t.querySelectorAll('.post');
     if (!cartoes.length) return;
     var meio = t.scrollLeft + t.clientWidth / 2;
-    var largura = cartoes[0].offsetWidth + 14;
+    var borda = t.clientWidth / 2;
+    /* 9px e nao 5: com a rampa terminando na borda da tela, o teto so e
+       alcancado pelo cartao que ja esta metade fora do quadro — ali o
+       desfoque precisa ser forte o bastante para a peca virar atmosfera e
+       nao concorrer com a do meio. */
+    var TETO_DESFOQUE = 9;
 
     for (var i = 0; i < cartoes.length; i++) {
       var c = cartoes[i];
       var centro = c.offsetLeft + c.offsetWidth / 2;
-      var d = Math.abs(centro - meio) / largura;   // distância em cartões
+      /* `u` = distância do centro da tela, normalizada: 0 no meio, 1 na borda.
+         Ancorar na BORDA e não em "cartões de distância" é o que faz a rampa
+         terminar exatamente onde a tela termina, em qualquer largura — em
+         1280 a borda fica a ~2,1 cartões e em 1920 a ~3,1, e uma constante em
+         cartões daria rampas diferentes nas duas. */
+      var u = Math.min(1, Math.abs(centro - meio) / borda);
 
-      /* Até 1,4 cartão do centro = nítido. O 1,4 não é gosto: com o trilho no
-         repouso o primeiro cartão fica a 1,25 do centro, e um teto de 1,2
-         deixava ele nascer com 0,17px de desfoque — sujeira visível logo na
-         peça que o olho encontra primeiro. Depois cresce até o teto de 5px,
-         que é onde a imagem ainda se lê como imagem em vez de virar mancha. */
-      var LIMPO = 1.4;
-      var desfoque = d <= LIMPO ? 0 : Math.min(5, (d - LIMPO) * 3.2);
-      var opacidade = d <= LIMPO ? 1 : Math.max(0.42, 1 - (d - LIMPO) * 0.34);
-      var escala = d <= LIMPO ? 1 : Math.max(0.94, 1 - (d - LIMPO) * 0.04);
+      /* SEM PATAMAR. Antes havia `LIMPO = 1.4`: tudo dentro de 1,4 cartão
+         ficava 100% nítido e o desfoque só começava depois — três peças
+         igualmente limpas e então um salto, que é a sensação de degrau que o
+         dono apontou. Agora a nitidez cai desde o primeiro pixel fora do
+         centro, então **só o cartão do meio fica em foco pleno**.
+
+         Expoente 2,2 é o que dá o "gradual" pedido: perto do centro a curva
+         é quase plana (em u=0,3 o desfoque é 6% do teto), e ela só ganha
+         corpo na metade de fora — que cai por volta do terceiro cartão — e
+         acelera até a borda. Uma rampa linear borraria o vizinho imediato
+         cedo demais e achataria a diferença entre o terceiro e a borda. */
+      var desfoque = TETO_DESFOQUE * Math.pow(u, 2.2);
+      var opacidade = 1 - 0.52 * Math.pow(u, 1.7);
+      var escala = 1 - 0.05 * Math.pow(u, 1.5);
 
       c.style.filter = desfoque ? 'blur(' + desfoque.toFixed(2) + 'px)' : '';
       c.style.opacity = opacidade.toFixed(3);

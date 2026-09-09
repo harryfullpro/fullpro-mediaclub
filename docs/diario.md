@@ -1,5 +1,86 @@
 # Diário
 
+## 09/09/2026 · Influencer sai do escuro: a prancheta do admin vira o fundo
+
+> *"vamos tirar esse site do tema escuro e aplicar o mesmo layout do light
+> theme no media club admin, com aquele padrão de blueprint no fundo, degradê
+> vermelho e azul em movimento"* — e antes, no mesmo fôlego: slider mais
+> gradual com só o central em foco, e o header da página centralizado.
+
+### O tema
+
+Os valores vieram **copiados** do `[data-theme="light"]` do admin, não
+reinterpretados — inclusive as razões de contraste que quem montou o admin já
+tinha medido e anotado no próprio arquivo (`--text-muted: #6b6b78` dá 5,1:1
+sobre card branco, escolhido depois de `#8a8a96` reprovar com 3,4:1).
+
+Os nomes locais (`--void`, `--panel`, `--ink`…) ficaram: estão em ~900 linhas
+de regra desta página e renomear seria risco sem ganho. O que mudou foi o
+**valor** de cada um.
+
+**Remapear token não alcança literal**, e foi assim que a barra do topo
+continuou preta depois da virada: `.top` tinha `background:rgba(10,10,11,.92)`
+cravado, e o rótulo ao lado do logo caiu para 3,19:1. Virou branco translúcido,
+que mantém o vidro e deixa a prancheta aparecer por trás.
+
+**No claro, letra vermelha e área vermelha não podem ser o mesmo vermelho.**
+Medido: `--red-hi` na sobrancelha dá 3,74:1 e reprova em 12px; até o `--red`
+fica em 4,46, a um fio. Entrou `--red-txt:#db2121`, com 4,54. É a mesma lição
+do vermelho de botão que já tinha aparecido no FutCore.
+
+### A prancheta
+
+`.bp` é o fundo do login do admin trazido inteiro — malha de 24px com a grossa
+de 120px, traçado técnico em SVG e três brilhos (dois vermelhos, um azul) em
+22s, 30s e 17s: períodos sem divisor comum, para o quadro nunca repetir.
+
+A única diferença real: **`fixed` e não `absolute`**. Lá o login tem uma tela
+de altura; aqui a página tem quase 5.000px, e com `absolute` a malha de 24px
+esticaria por tudo e viraria papel de parede. Presa à viewport, o conteúdo rola
+por cima de uma folha parada.
+
+O grão de filme que eu tinha posto de manhã **saiu**. Vale registrar por quê:
+saiu com 5,5% de alfa, o dono não viu nada, e textura que ninguém vê não
+existe. Eu tinha acabado de subir para 17% quando ele pediu a prancheta — que
+resolve o mesmo problema muito melhor, porque não é textura genérica, é a
+identidade do produto.
+
+### O foco do slider
+
+O pedido: *"mais gradual, partindo da metade do 3 card para a borda da tela...
+em foco 100% vai ficar só o central"*.
+
+Havia um **patamar**: `LIMPO = 1.4` deixava tudo dentro de 1,4 cartão
+igualmente nítido e só então o desfoque começava — três peças limpas e um
+salto, que é a sensação de degrau. Agora a curva é contínua e ancorada na
+BORDA da tela, não em "cartões de distância": `u = |centro − meio| / meia
+largura`, e `desfoque = 9 · u^2,2`. Ancorar na borda é o que faz a rampa
+terminar onde a tela termina em qualquer largura — em 1280 a borda fica a ~2,1
+cartões e em 1920 a ~3,1.
+
+Expoente 2,2 é o que dá o "gradual": perto do centro quase não cresce, ganha
+corpo na metade de fora (por volta do terceiro cartão) e acelera até a borda.
+Medido: `0 → 0px`, `0,48 → 1,83px`, `0,97 → 8,39px`.
+
+**E `scroll-snap-align` foi de `start` para `center`.** Sem isso o pedido é
+impossível: com `start` o trilho para com um cartão encostado à esquerda e
+nenhum fica no eixo da tela — o mais nítido parava em 0,26px de desfoque e
+mudava a cada rolagem. Com `center` sempre existe um no meio, e a curva o
+entrega com desfoque zero. Conferido: exatamente **um** cartão em u=0 com
+desfoque 0 e opacidade 1, e todos os outros acima de zero.
+
+### Conferido
+
+29 estilos de texto, **zero reprovação de contraste** no tema claro; borda de
+campo em 3,03:1 contra o campo e 3,16:1 contra o fundo; zero transbordo no
+desktop e no celular; campo em 16px.
+
+**Um falso positivo que quase virou conserto:** o `.btn` mediu 1,09:1. A função
+de fundo que eu uso não enxerga `linear-gradient` — o `backgroundColor` é
+transparente, então ela subiu até a página e comparou branco com quase-branco.
+Branco sobre o gradiente vermelho real dá de 4,85 a 6,54.
+
+
 ## 09/09/2026 · Influencer: sem caixa, slider infinito e grão de filme
 
 > *"aplique um slider infinito, centralize o header do slider, melhore a
