@@ -410,6 +410,57 @@ celular real e manda print.
 
 ---
 
+### Patrocínio de influenciador: página só por link (09/09/2026)
+> *"eu quero uma landing page separada em um link separado para enviar aos
+> influenciadores"* · *"nada a ver com a landing page do media club para
+> gravações"* · *"não quero botão na landing page original nem nada"*
+
+A candidatura mora em **`/influencer`** (arquivo `influencer.html` na raiz; o
+`cleanUrls` da Vercel serve `.html` sem extensão, igual acontece com `/admin`).
+**Não precisou de subdomínio** — o isolamento que ele pediu vem de nada apontar
+para a página, não do domínio. Subdomínio custaria apontamento na Cloudflare e
+domínio novo na Vercel para o mesmo resultado.
+
+Três consequências que a página tem que respeitar:
+- **Zero link entre as duas landings**, nos dois sentidos.
+- **`noindex, nofollow`** e fora de qualquer sitemap — é isso, e não o caminho,
+  que impede de aparecer em busca.
+- Perguntado se queria exigir código na URL, ele escolheu **não**: link basta.
+  Então caminho não é sigilo, e quem receber o link repassa se quiser. Para
+  formulário de candidatura isso é aceitável e foi decisão consciente.
+
+**A análise é do departamento de Marketing e a resposta vai pelo e-mail do
+cadastro**, dito por ele e escrito na página em dois lugares (rodapé do envio e
+tela de sucesso). Ele olha as candidaturas **a cada 15 dias** — daí o contador de
+pendentes no painel: sem ele, ciclo de 15 dias vira ciclo de nunca.
+
+WhatsApp é **obrigatório**, para contato direto, e é o canal da conversa depois
+do sim.
+
+### Resposta por e-mail: automática, e reusando o Google do site (09/09/2026)
+Duas decisões no mesmo dia, na ordem em que aconteceram.
+
+**Primeiro** ele escolheu envio automático com Resend + DNS, em vez de resposta
+manual ou por WhatsApp. **Depois** perguntou: *"será que é possível usar alguma
+ferramenta que já tenho configurada no site woocommerce de email?"* — e a medição
+mostrou que sim: o site manda por `smtp.gmail.com:465` com `contato@fullpro.parts`,
+227 e-mails entregues, e o SPF do domínio já autoriza o Google. Ele então trocou
+o Resend por **reusar o Google Workspace**, o que dispensa conta nova e qualquer
+registro de DNS. Detalhes medidos em `ambiente.md`.
+
+Perguntado se queria enviar como `@fullpro.com.br` (custaria uma edição de SPF na
+Cloudflare), preferiu começar pelo caminho sem DNS.
+
+### O que a pergunta dele desfez (09/09/2026)
+Perguntado como a resposta sairia de fato — porque **o MediaClub não enviava
+e-mail nenhum até aqui** — ele escolheu **envio automático com Resend + DNS**, em
+vez de resposta manual ou por WhatsApp.
+
+Isso é infraestrutura nova, não conserto: não havia provedor no repo, nenhuma das
+18 edge functions mandava e-mail, nenhuma chave de e-mail no `.env`, e o login do
+painel foi desenhado **sem caixa postal** de propósito (`mc-login.ts`: conta nasce
+com `email_confirm: true` "porque nao ha caixa postal para confirmar").
+
 ## Como o dono valida
 
 Manda **print do iPhone**. É a fonte de verdade mais confiável do projeto — vários

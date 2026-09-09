@@ -1127,3 +1127,88 @@ Mensagem em português, explicando **o porquê** e não só o quê. Terminar com
 ```
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 ```
+
+
+---
+
+## Formulário público novo: as quatro travas (09/09/2026)
+
+Vindas da landing `/influencer`, e todas **medidas** contra a produção antes de
+virar código. Valem para qualquer formulário público que a gente acrescentar.
+
+### 1. Nunca criar view pública sobre tabela com dado pessoal
+Uma view "simples" (`select ... where`) sobre a tabela é **auto-atualizável**, e
+roda com privilégio do dono. O dono é `postgres`, que tem `rolbypassrls = true`,
+e o default ACL do schema `public` dá `arwdDxtm` a `anon` — inclusive na view.
+Resultado reproduzido em sandbox: **`anon` rodou `DELETE FROM a_view` e as linhas
+da tabela base sumiram.**
+
+As duas `mc_public_*` que existem hoje escapam disso **por acidente**: uma tem
+`UNION` e a outra `CROSS JOIN LATERAL`, construções que desqualificam
+auto-update. Copiar "o padrão das mc_public_*" sem copiar essa parte é copiar a
+casca e jogar fora a trava. Então: **tabela de candidato/lead não tem view.**
+
+### 2. `REVOKE` em `anon`, não só RLS
+Toda tabela nova em `public` **nasce** com SELECT/INSERT/UPDATE/DELETE para
+`anon` (default ACL). A RLS segura, mas uma política de SELECT acrescentada por
+engano amanhã vazaria sozinha. Reduzir a INSERT é cinto além da RLS:
+
+```sql
+revoke select, update, delete, truncate, references, trigger on table X from anon;
+grant  insert on table X to anon;
+```
+
+**Consequência na landing:** sem SELECT para `anon`, o insert tem que ser
+`return=minimal`. No supabase-js, `.insert(payload)` funciona e
+`.insert(payload).select()` volta 401 — pedir a linha de volta transformaria
+sucesso em erro na tela.
+
+### 3. `created_at` é forjável pelo cliente
+O `DEFAULT now()` **não impede** o cliente de mandar a coluna. Medido: `anon`
+inseriu com `created_at = now() + 10 anos` e passou. A política precisa da janela:
+
+```sql
+and created_at >= (now() - interval '5 minutes')
+and created_at <= (now() + interval '5 minutes')
+```
+
+O mesmo vale para as colunas de trilha interna (`analisado_em`, `nota_interna`,
+`email_enviado_em`): a política do público exige que venham nulas.
+
+### 4. Isca e tempo mínimo, porque não existe captcha aqui
+O formulário público que já estava no ar **não tem proteção nenhuma** — conferido:
+zero honeypot, zero captcha, zero rate limit no banco (os 6 triggers de
+`mc_requests` são `RI_ConstraintTrigger` de chave estrangeira), e nenhum índice
+único útil. A única barreira é o `with_check` da RLS, que limita **formato, não
+volume**. A outra loja do grupo levou 23 mil cadastros de robô por porta assim.
+
+Na landing nova: campo-isca dentro de `.sr` com `tabindex="-1"`, mais tempo
+mínimo de 8s entre abrir e enviar. Os dois falham com a **mesma** mensagem
+genérica de "tente de novo" — mensagem específica ensina o robô a passar na
+próxima.
+
+## Edge function que envia e-mail: falhar fechado
+De `supabase/functions/candidatura-email/index.ts`. A checagem de operador usa o **token de quem chamou**
+(`getUser(jwt)` + `rpc('mc_eh_operador')` com aquele JWT), nunca a service role —
+perguntar "é operador?" com a service role responde sobre o servidor, ou seja
+responde sempre sim. E erro na função do banco vira **403, não liberação**.
+
+Sem `GMAIL_APP_PASSWORD` a função responde **503 dizendo isso**, e nunca sucesso:
+o painel pinta "respondido" a partir de `email_enviado_em`, então sucesso
+mentiroso viraria candidato marcado como avisado sem nunca ter sido avisado.
+
+### O anel é `mc_eh_admin()`, não `mc_eh_operador()`
+Vale para qualquer function nova que toque PII ou fale em nome da empresa.
+Medido: `mc_eh_operador()` é só
+`exists (select 1 from mc_admin_users where auth_uid = auth.uid())` e responde
+**true para as 7 contas do painel**, em 6 papéis. `mc_eh_admin()` é
+`lower(role) like 'admin%'` e dá os **2** Administradores. Esconder o módulo do
+menu não substitui a política: qualquer um dos 7 consulta a tabela com o próprio
+token.
+
+### Falha de negócio volta 200, com o motivo no corpo
+O `sb.functions.invoke` do supabase-js v2 colapsa qualquer resposta não-2xx num
+`FunctionsHttpError` genérico e **descarta o corpo**. Se o motivo real voltasse
+como 502, ele nunca chegaria à tela e o operador veria "erro" sem saber qual.
+Então: problema de **envio** volta 200 com `{ ok:false, erro, codigo }`; só o que
+é de **permissão** volta 401/403, onde a única informação útil é "você não pode".

@@ -6,6 +6,52 @@ Ordenado por impacto. Atualizar sempre que algo for concluído ou aparecer.
 
 ## Em andamento
 
+### Uma senha de app do Google — é o único passo que falta para a resposta sair
+A função `candidatura-email` está escrita e **não publicada**. Sem ela, a landing
+`/influencer` promete resposta por e-mail e ninguém envia.
+
+Depois da pergunta do dono, o caminho ficou curto: o site já manda por
+`smtp.gmail.com:465` com `contato@fullpro.parts` (227 entregues, medido), e o SPF
+do domínio já autoriza o Google. **Não há DNS a mexer.**
+
+1. Na conta do Google de `contato@fullpro.parts`, gerar uma **senha de app**
+   dedicada ao MediaClub (não reusar a do site — revogar uma não pode derrubar a
+   outra).
+2. `supabase secrets set GMAIL_USER=... GMAIL_APP_PASSWORD=...`
+3. `supabase functions deploy candidatura-email`
+4. **Testar conferindo a CAIXA**, não o log: log registra tentativa, não entrega.
+
+Enquanto não subir, a função responde 503 dizendo que falta credencial — de
+propósito, para não marcar candidato como avisado sem aviso.
+
+Depois, se quiser: enviar como `@fullpro.com.br` custa uma edição de SPF na
+Cloudflare; e o `fullpro.parts` **não tem DMARC**, que é o próximo passo se
+resposta começar a cair em spam.
+
+### Não existe Marketing no sistema, e a página promete Marketing
+A landing diz, em dois lugares, que a análise é do **departamento de Marketing da
+FullPro**. No banco não existe papel nem usuário de Marketing: são 7 usuários em
+6 papéis (2 Administradores, Filmmaker, Mecânico/Apresentador, Fotógrafo,
+Assistente Admin., Auxiliar Admin), e **nenhum papel não-administrador tem
+`perf-influencers` na lista de módulos**. Hoje quem vê o hub de influenciadores
+são os 2 Administradores.
+
+Não é defeito enquanto o dono for quem analisa — é ele mesmo. Vira decisão no dia
+em que outra pessoa for operar: conceder o módulo cai na regra "permissão nunca
+aparece e depois desaparece" (contexto.md).
+
+### O financeiro do hub de influenciadores mostra número que ninguém escreve
+Achado ao medir o módulo existente, não é do trabalho de patrocínio.
+`coupon_sales`, `coupon_clicks` e `coupon_revenue` são **só lidos** (admin.html
+31755, 31939, 31979, 32103, 32138) e o `payload` de `saveInfluencer` (32765-32787)
+não inclui nenhum dos três. Não existe integração com o WooCommerce atribuindo
+venda por cupom. Confere com o banco: 0 influenciadores com faturamento.
+
+O verbete de ajuda promete *"Cupons liga o código ao influenciador — é como a
+venda é atribuída"*, e a atribuição não existe. Hoje é preenchimento manual no
+Supabase, ou nada. Decidir: integrar de verdade, ou tirar a promessa da ajuda e
+rotular a coluna como manual.
+
 ### Publicação: o Facebook nunca postou de verdade
 O código está no ar (`publicar` v5, 01/09) e o `health` diz `pode_publicar: true`,
 mas **isso mede permissão, não resultado**. Testar de verdade é postar na Página

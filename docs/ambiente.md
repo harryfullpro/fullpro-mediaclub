@@ -340,3 +340,96 @@ sem ninguém perceber — que é exatamente o que aquele job existe para evitar.
 - **TikTok** — `user/info`, `video/query` e `video/list` a 600/minuto. 48 rodadas/dia não
   chegam perto.
 - **Meta** — poucas chamadas por rodada, sem limite que morda nessa ordem.
+
+
+---
+
+## Candidatura a patrocínio (09/09/2026)
+
+### Rota
+`influencer.html` na raiz → **`https://mediaclub.fullpro.com.br/influencer`**.
+Sem configuração na Vercel: o `cleanUrls: true` do `vercel.json` já serve
+`.html` sem extensão (provado: `/admin` responde 200 e é o `admin.html`).
+Antes de subir, `/influencer` respondia 404 — o caminho estava livre.
+
+### Tabela
+`public.mc_influencer_candidaturas` — 35 colunas. RLS conferida pela API REST com
+a chave publicável, os seis comportamentos, não por leitura de política:
+
+| tentativa como `anon` | resultado medido |
+|---|---|
+| INSERT válido | **201** |
+| SELECT | 401 `permission denied` |
+| DELETE | 401 `permission denied` |
+| UPDATE de `status` | 401 `permission denied` |
+| INSERT com `created_at` = +10 anos | recusado pela RLS |
+| INSERT com aceite `false` | recusado pela RLS |
+
+Índices: `(status, created_at desc)` para a consulta do painel,
+`(created_at desc)`, e `lower(btrim(instagram))` para achar reenvio do mesmo @.
+O `@` **não** é único de propósito — a pessoa pode se recandidatar depois de
+melhorar os números.
+
+### E-mail: Google Workspace, reusando o que o site já usa
+`supabase/functions/candidatura-email/index.ts`, **não publicada ainda**.
+
+O dono perguntou se dava para reusar alguma ferramenta de e-mail que o site já
+tem. Dava, e foi medido em 09/09 por SSH no fullpro.com.br:
+
+- plugin **`fluent-smtp` 2.3.1** ativo, provedor `smtp` genérico
+- **`smtp.gmail.com:465`**, remetente `contato@fullpro.parts`
+- log `wp_fsmpt_email_logs`: **227 enviados**, o último no mesmo dia às 09:25
+- 8 falhas, todas em 27/08, com *"Erro SMTP: Não foi possível autenticar"*
+
+Aquelas 8 falhas são o bloqueio do sendmail que estava registrado como "nenhum
+e-mail sai" — **isso ficou velho**: o FluentSMTP contorna o sendmail falando SMTP
+direto com o Google, e entrega desde então.
+
+**Por que isso dispensa DNS:** o `fullpro.parts` está no Google Workspace (MX
+`aspmx.l.google.com`, DNS na GoDaddy) e o SPF dele já é
+`v=spf1 include:_spf.google.com include:_spf.tray.com.br ~all`. O Google **já**
+está autorizado a enviar por esse domínio. Zero registro novo, zero conta nova,
+zero verificação de domínio — só uma senha de app.
+
+**Autenticar e aparecer são endereços DIFERENTES** — confundir os dois é o erro
+clássico, e a memória de 27/08 já registra por quê: só a conta `yonan@fullpro.parts`
+consegue gerar senha de app na organização (o Google devolvia `535-5.7.8` para
+gabriel@, harry@ e contato@), e `contato@fullpro.parts` é um endereço cadastrado
+em "Enviar e-mail como" DENTRO da conta do yonan. Se o From não estiver lá, o
+Gmail **reescreve o remetente calado** para a conta autenticada.
+
+```
+supabase secrets set GMAIL_USER=yonan@fullpro.parts    --project-ref xgaaocnuqgcwttrljqep
+supabase secrets set GMAIL_FROM=contato@fullpro.parts  --project-ref xgaaocnuqgcwttrljqep
+supabase secrets set GMAIL_APP_PASSWORD=<16 minúsculas, SEM espaço> --project-ref xgaaocnuqgcwttrljqep
+supabase functions deploy candidatura-email --project-ref xgaaocnuqgcwttrljqep
+```
+
+A senha do Google é mostrada em blocos de 4 e **os campos aceitam os espaços sem
+reclamar** — no site isso já custou duas rodadas de depuração. São 16 minúsculas
+coladas.
+
+Senha de app **dedicada a esta função** dá para revogar sem derrubar o site —
+mas **não** protege do caso pior: trocar a senha da CONTA do Google revoga
+**todas** as senhas de app dela, e nesse dia esta função para junto com o e-mail
+da loja. O caminho durável é o **SMTP relay do Workspace**
+(`smtp-relay.gmail.com:587`, *Allowed senders = only addresses in my domains*),
+que não depende de senha de app de pessoa física.
+
+**O caminho do arquivo importa.** O CLI procura `supabase/functions/<nome>/index.ts`;
+a primeira versão morava em `supabase/candidatura-email.ts` e o deploy
+documentado não teria funcionado.
+
+Duas ressalvas honestas: a função fala **SMTP por TCP** (denomailer), que é mais
+frágil que uma API HTTP; e o remetente é `@fullpro.parts` enquanto o candidato se
+inscreveu num endereço `@fullpro.com.br`. Enviar como `@fullpro.com.br` custaria
+UMA edição de SPF na Cloudflare e o domínio no Workspace — foi oferecido e o dono
+escolheu começar pelo que não pede DNS.
+
+**Nota de entrega:** o `fullpro.parts` **não tem DMARC**. Não é bloqueio, mas é o
+próximo passo natural se resposta de candidatura começar a cair em spam.
+
+### Onde o Resend ficou
+Descartado em 09/09, depois de medir que o Google já resolvia. A decisão anterior
+(Resend + subdomínio `envio.fullpro.com.br`) está registrada em `contexto.md`
+como escolha revista, não como plano ativo.

@@ -1,5 +1,82 @@
 # Diário
 
+## 09/09/2026 · Influencer: três defeitos reais, e quatro que eu quase inventei
+
+> *"da teu show aí nesse projeto antes de eu mandar publicar"*
+
+Auditei a página inteira medindo. O primeiro resultado foi que **ela já estava
+bem feita**, e isso importa dizer antes de listar conserto: 30 estilos de texto
+distintos, **zero reprovação de contraste**; os 33 campos **todos com rótulo**;
+foco vermelho a **4,57:1** contra o campo, bem acima do mínimo de 3;
+`prefers-reduced-motion` respeitado no CSS e no JS; zero transbordo horizontal
+no desktop e no celular. Não havia o que "dar uma geral".
+
+### Os três que eram de verdade
+
+**1. O campo não tinha caixa.** Medido: borda **1,13:1** contra o
+preenchimento e **1,20:1** contra o entorno. O mínimo da WCAG 1.4.11 para
+contorno de componente é 3:1, e aqui não era só norma — no print de 375px eu
+literalmente não achava onde digitar. Entrou o token `--line-campo:#66667b`,
+que é o cinza **mais baixo** que passa nos dois fundos mantendo o matiz frio do
+`--line`: 3,03 e 3,22. Fica só nos controles; a hairline estrutural dos cards
+continua em `--line`, porque ali ela separa, não delimita campo.
+
+Clarear o **preenchimento** até passar exigiria `#626277` — caixa cinza clara,
+que arruinaria o tema escuro. A borda é a alavanca certa.
+
+**2. Os 21 campos estavam em 15px, e o iOS dá zoom abaixo de 16.** Toda vez que
+o dedo toca um campo com fonte menor que 16px, o Safari amplia a página e a
+pessoa tem que pinçar de volta. Esta página chega por **link no Instagram**, ou
+seja iPhone: eram 21 campos, 21 zooms. Agora 16px, campo de 48px.
+
+Detalhe do próprio conserto: eu acrescentei `font-size:16px` e não pegou —
+havia um `font-size:15px` **na mesma regra**, três palavras adiante, e a última
+declaração vence. Corrigido na declaração que existe, não empilhando outra.
+
+**3. A revelação não tinha rede.** Tudo que é `.rev` nasce em `opacity:0` e só
+o `IntersectionObserver` devolve. Se ele não entregar callback, o formulário
+inteiro e a ficha ficam invisíveis — sem erro no console, sem nada parecendo
+quebrado. E não é hipótese: **existe ambiente onde o IO existe, aceita
+`observe()` e nunca chama de volta** — foi o que medi aqui. Como a página abre
+pelo navegador embutido do Instagram, que é justamente essa classe de ambiente,
+entrou uma rede com detector exato: um observer vivo entrega a **primeira**
+chamada logo ao observar, com `isIntersecting:false` para quem está fora da
+tela. Então "nenhuma chamada em 1,2s" separa observer morto de observer vivo
+esperando rolagem, e nunca dispara à toa. Mesmo espírito do contador de números
+logo acima, que já publica o valor final no HTML pelo mesmo motivo.
+
+### Os quatro que eu quase reportei, e não eram
+
+Vale registrar porque cada um teria virado um "conserto" em código que estava
+certo.
+
+**O `<em>` do h1 media contraste 1,00.** É `background-clip:text` com gradiente
+vermelho: a cor computada é `transparent`. O que se vê são os stops, que dão
+**5,34 e 6,20**. Medir `color` em texto com gradiente sempre mente.
+
+**O placeholder saiu branco no `getComputedStyle`.** O Chrome não expõe
+`::placeholder` de forma confiável por essa via. No fonte é `--ink-quiet`, que é
+o certo.
+
+**As marcas de rádio têm 17×17.** Mas cada uma vive dentro de um `<label>` de
+**199×64** com `cursor:pointer` — o alvo real é a caixa inteira. Medir o input
+em vez do rótulo teria produzido um conserto inútil.
+
+**13 campos "sem `autocomplete`".** São `moto`, `pecas`, `reel_1`,
+`alcance_30d`. Não coletam dado pessoal, então não existe token e a regra não
+se aplica.
+
+### A lição que fica para a próxima medição
+
+O painel de navegador desta sessão **não entrega callback de
+`IntersectionObserver`, não casa `:focus` mesmo com `activeElement` correto, não
+avança transição de CSS (a opacidade fica travada no valor inicial) e reporta
+`innerWidth: 0` quando está oculto**. Quatro artefatos, todos com cara de
+defeito do site. O jeito de separar é sempre o mesmo: reproduzir o mecanismo do
+zero (montei um observer meu sobre um elemento visível — também não disparou) ou
+neutralizar a variável (desliguei a transição e a opacidade virou 1 na hora).
+
+
 ## 31/08/2026 · Repost de story: a API não diz, e esconde o caso principal
 
 > *"esse reposts diarios quero que seja reconhecido automaticamente pela nossa
@@ -4673,3 +4750,101 @@ enganos são o mesmo defeito que o dono relatou, vindo me morder.
 (o `action` vem na query string); `mc_integrations.updated_at` diz se algo foi
 realmente gravado; e a ação `health` de cada proxy devolve `versao`, que diz qual
 código está no ar sem depender de fé.
+
+
+## 09/09/2026 — candidatura a patrocínio de influenciador
+
+Pedido: uma landing só por link para influenciadores do Instagram se candidatarem
+a patrocínio, e uma área no painel para o dono revisar a cada 15 dias.
+
+### O que mudou o desenho, e veio de medir antes de codar
+
+- **O painel já tinha um hub de influenciadores completo.** `perf-influencers`,
+  seis abas, cadastro com CPF/endereço/redes/cupom, e envio de produto que **dá
+  baixa real de estoque no Bling**. O que faltava não era gerenciar patrocinado:
+  era a etapa ANTERIOR. Então a área nova é a **sétima aba, Candidaturas**, e
+  Aprovar promove para o cadastro que já existia. Nada de módulo paralelo.
+- **`/influencer` não precisou de subdomínio.** O `cleanUrls` da Vercel já serve
+  `.html` sem extensão (provado em `/admin`, que responde 200). O isolamento vem
+  de nada apontar para a página, mais `noindex`.
+- **O MediaClub não enviava e-mail nenhum** — ausência de canal, não canal
+  quebrado: nenhum provedor no repo, nenhuma das 18 functions mandando e-mail, e
+  o login desenhado **sem caixa postal** de propósito. Isso importava porque a
+  página promete resposta por e-mail.
+
+### A pergunta do dono que encurtou o caminho
+
+Ele perguntou se dava para reusar alguma ferramenta de e-mail do site. Dava — e
+eu não tinha olhado. Por SSH: `fluent-smtp` ativo, `smtp.gmail.com:465`,
+`contato@fullpro.parts`, **227 entregues, o último no mesmo dia às 09:25**. E o
+SPF do `fullpro.parts` já inclui `_spf.google.com`.
+
+Resultado: caiu a conta no Resend, caíram os três registros de DNS, caiu a
+verificação de domínio. Sobrou **uma senha de app**. A pergunta dele valeu mais
+que a minha arquitetura.
+
+Isso também **desmentiu uma informação que eu vinha repetindo**: que nenhum
+e-mail sai do site. As 8 falhas de autenticação param em 27/08; desde então
+entrega. Memória corrigida.
+
+### O que a rodada adversarial impediu
+
+Onze achados na aba, dez na function. O crítico apareceu nas duas:
+
+- **A política de RLS estava larga demais.** Eu usei `mc_eh_operador()`, que é só
+  `exists (select 1 from mc_admin_users where auth_uid = auth.uid())` e responde
+  **true para as 7 contas do painel**. PII de candidato — nome, WhatsApp,
+  e-mail, cidade — ficava legível, editável e **apagável** por Filmmaker,
+  Fotógrafo, Mecânico, Assistente e Auxiliar. O módulo estar escondido do menu
+  deles não protege nada: a política é do banco. Trocado por `mc_eh_admin()`, que
+  já existia na casa e dá os 2 Administradores.
+- **View pública sobre a tabela apagaria tudo.** View simples ali é
+  auto-atualizável, roda com privilégio do dono (`postgres`, `rolbypassrls`), e o
+  default ACL dá DELETE a `anon` também na view. Reproduzido em sandbox: `anon`
+  rodou DELETE e as linhas da tabela base sumiram. As duas `mc_public_*` que
+  existem escapam disso **por acidente** (UNION e CROSS JOIN LATERAL). Não há
+  view.
+- **`created_at` é forjável.** O DEFAULT não impede o cliente de mandar a coluna:
+  passou com data de 2036. Virou janela de 5 minutos na política.
+- **Toda tabela nova nasce com SELECT/UPDATE/DELETE para `anon`** (default ACL do
+  schema). Reduzido a INSERT por REVOKE.
+- **O selo da aba nunca escondia** — `display:inline-flex` da classe vence o
+  `[hidden]` do navegador, a mesma armadilha que este arquivo já documenta na
+  linha 7320. Ficava "0" permanente, e selo que sempre mostra zero para de ser
+  lido.
+- **Chips de status ilegíveis no tema claro**: nasceram com paleta escura cravada,
+  2,48 e 3,08 sobre card branco. E usar os tokens da casa não resolvia — no claro
+  eles dão os mesmos 2,48/3,08, porque foram escolhidos para chapa, não para
+  texto de 11px. Par de blocos por tema, medido: escuro 9,49/9,07/5,52/6,02,
+  claro 5,93/6,15/5,54/5,25.
+- **Falha de carga aparecia como "ninguém se candidatou"** — afirmação sobre o
+  mundo que a tela não tinha como fazer.
+- **O motivo da falha de e-mail não chegava à tela**: o `invoke` do supabase-js v2
+  colapsa não-2xx num erro genérico e descarta o corpo. A function passou a
+  devolver 200 com `{ok:false, erro}` para falha de ENVIO, reservando 401/403
+  para permissão.
+- **Reenvio sem teto.** Agora o teto mora no banco (`check email_reenvios <= 2`),
+  porque o cliente pode ser reescrito e a constraint não.
+- **Aprovar gravava `approved` antes de o cadastro existir** e nada reconciliava.
+  Em vez de reestruturar o fluxo, a tela passou a dizer a verdade: aprovada sem
+  influenciador correspondente aparece como "cadastro pendente".
+
+### Três confissões
+
+1. **Eu violei uma decisão registrada do dono.** Pus monoespaçada de sistema nos
+   dados da ficha; `contexto.md` diz *"FullPro Sans em 100% do site, nenhuma
+   outra família"*. Tirei e refiz a diferenciação em peso e corpo, que é o que
+   aquela decisão manda usar. A regra estava escrita e eu não conferi antes.
+2. **Apresentei o `config.js` público como achado meu.** Já era pendência escrita
+   em `pendencias.md`, com ordem de rotação melhor que a do meu plano.
+3. **Três colisões de especificidade na landing**, uma visível: `.f label`
+   (0,0,1,1) vencia `.opt` (0,0,1,0) e os 8 cartões de rádio renderizavam
+   `display:block` — o círculo empilhado em cima do texto, 89px em vez de 64px.
+   Estilizar por seletor de elemento dentro de escopo de classe foi a causa das
+   três; saiu do arquivo.
+
+### O que NÃO consegui verificar
+
+O anel de foco por teclado da landing. As regras existem e casam com cada
+controle (conferido pelo CSSOM), mas o painel do navegador não toma foco do
+sistema aqui, então `:focus` nunca ativa. Fica para o navegador real.

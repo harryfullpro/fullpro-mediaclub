@@ -3306,6 +3306,194 @@
   .inf-rank-bar { height:6px; border-radius:3px; background:var(--border); overflow:hidden; margin-top:6px; }
   .inf-rank-fill { height:100%; border-radius:3px; transition:width .4s ease; }
 
+  /* ── Candidaturas (aba 7 do hub) ──────────────────────────────────────────
+     Ficha em CARTAO e nao em linha de tabela: a decisao depende de 15 campos
+     (alcance, retencao, moto propria, o que espera, via publica, exclusividade)
+     e nenhuma linha de `.inf-list-table` cabe isso sem virar scroll horizontal.
+     O objetivo declarado e decidir SEM abrir nada. */
+  /* Contorno, não chapa cheia: chapa `--danger` com texto branco dava 3,27:1 no
+     tema escuro (medido), e 10,5px em peso 800 é exatamente o tamanho que exige
+     4,5:1. Com contorno, o contraste passa a ser texto-sobre-card e passa nos
+     dois temas — e o padrão já existe na casa, em `.action-btn.reject`. */
+  .inf-cand-badge {
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:18px; height:18px; margin-left:7px; padding:0 5px;
+    border-radius:9px; background:transparent; color:var(--danger);
+    border:1px solid var(--danger);
+    font-size:10.5px; font-weight:800; letter-spacing:0; line-height:1;
+    vertical-align:1px;
+  }
+  /* `display:inline-flex` da classe vence o `[hidden]{display:none}` do
+     navegador — a mesma armadilha que este arquivo já documenta na linha 7320 e
+     conserta em `.fp-filter-clear` e `.fp-novo-aviso`. Sem esta linha o selo
+     fica "0" para sempre ao lado de CANDIDATURAS, e selo que sempre mostra zero
+     para de ser lido, que é justamente o contrário do que ele existe para fazer. */
+  .inf-cand-badge[hidden] { display:none; }
+  .inf-cand-topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; flex-wrap:wrap; margin-bottom:16px;
+  }
+  .inf-cand-filtros { display:flex; gap:6px; flex-wrap:wrap; }
+  .inf-cand-filtro {
+    padding:6px 13px; border:1px solid var(--border); border-radius:999px;
+    background:var(--bg-card); color:var(--text-muted);
+    font-family:inherit; font-size:11.5px; font-weight:650; cursor:pointer;
+    transition:border-color .15s, color .15s, background .15s;
+  }
+  .inf-cand-filtro:hover { border-color:var(--border-hi); color:var(--text); }
+  .inf-cand-filtro.active { background:var(--primary); border-color:var(--primary); color:#fff; }
+  .inf-cand-recarregar { padding:7px 14px; font-size:12px; }
+
+  .inf-cand-card {
+    background:var(--bg-card); border:1px solid var(--border); border-radius:14px;
+    padding:18px 20px; margin-bottom:12px;
+  }
+  .inf-cand-card:hover { border-color:var(--border-hi); }
+  .inf-cand-head {
+    display:flex; align-items:flex-start; justify-content:space-between;
+    gap:14px; flex-wrap:wrap; margin-bottom:14px;
+  }
+  .inf-cand-ident { display:flex; align-items:center; gap:11px; min-width:0; }
+  .inf-cand-nome { font-size:15px; font-weight:650; color:var(--text); line-height:1.25; }
+  .inf-cand-sub { font-size:11.5px; color:var(--text-muted); margin-top:3px; }
+  .inf-cand-sub a { color:var(--primary); text-decoration:none; font-weight:650; }
+  .inf-cand-sub a:hover { text-decoration:underline; }
+  .inf-cand-head-dir { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  /* Selo de status: preenchimento inteiro, sem barra na lateral. */
+  .inf-cand-status {
+    display:inline-block; padding:4px 10px; border-radius:6px;
+    font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
+  }
+  /* O bloco nasceu com paleta de tema escuro cravada (#eab308, #22c55e, #ef4444,
+     #94a3b8), e no tema CLARO isso punha texto claro sobre card branco.
+     Aqui ficam os valores do tema ESCURO — medidos sobre --bg-card #16161a:
+     pending 9,49 · approved 9,07 · rejected 5,52 · standby 6,02.
+
+     Não usei os tokens --warning/--success direto porque, no tema claro, os
+     valores da casa (#e09500 e #18a863) dão 2,48 e 3,08 sobre card branco e
+     reprovam: eles foram escolhidos para chapa e borda, não para texto de 11px.
+     Daí o par de blocos, com o claro escurecido logo abaixo. */
+  .inf-cand-status.pending  { background:rgba(255,170,51,.14); color:#ffaa33; }
+  .inf-cand-status.approved { background:rgba(31,210,122,.14); color:#1fd27a; }
+  .inf-cand-status.rejected { background:rgba(255,77,77,.14);  color:#ff4d4d; }
+  .inf-cand-status.standby  { background:rgba(148,148,160,.16); color:#9494a0; }
+
+  /* Tema claro: mesmos matizes, escurecidos até passarem 4,5:1 sobre #ffffff.
+     Medido: 5,93 · 6,15 · 5,54 · 5,25. */
+  [data-theme="light"] .inf-cand-status.pending  { background:rgba(138,90,0,.10);  color:#8a5a00; }
+  [data-theme="light"] .inf-cand-status.approved { background:rgba(15,112,66,.10);  color:#0f7042; }
+  [data-theme="light"] .inf-cand-status.rejected { background:rgba(199,42,42,.10);  color:#c72a2a; }
+  [data-theme="light"] .inf-cand-status.standby  { background:rgba(107,107,120,.12); color:#6b6b78; }
+  .inf-cand-data { font-size:11px; color:var(--text-muted); white-space:nowrap; }
+
+  /* Numeros do Reel primeiro, em fileira propria: salvamento, compartilhamento
+     e retencao sao os tres que separam alcance comprado de alcance real. */
+  .inf-cand-nums {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr));
+    gap:8px; margin-bottom:14px;
+  }
+  .inf-cand-num {
+    background:var(--bg-elev); border:1px solid var(--border);
+    border-radius:10px; padding:10px 12px;
+  }
+  .inf-cand-num-lbl {
+    font-size:9.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+    color:var(--text-muted); line-height:1.3;
+  }
+  .inf-cand-num-val {
+    font-family:'FullPro Sans', sans-serif; font-weight:800;
+    font-size:19px; line-height:1.15; color:var(--text); margin-top:4px;
+  }
+  .inf-cand-num-val.vazio { color:var(--text-muted); font-size:14px; font-weight:650; }
+
+  .inf-cand-grid {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:10px 22px; margin-bottom:14px;
+  }
+  .inf-cand-campo-lbl {
+    font-size:9.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+    color:var(--text-muted);
+  }
+  .inf-cand-campo-val { font-size:12.5px; color:var(--text-dim); line-height:1.5; margin-top:2px; }
+  .inf-cand-campo-val strong { color:var(--text); font-weight:650; }
+
+  /* EXCLUSIVIDADE em destaque porque e o campo que decide a analise: e nele que
+     aparece "ja tenho contrato com X" ou "fecho so com voces". Destaque por
+     fundo e contorno inteiros — SEM barra colorida na lateral esquerda. */
+  .inf-cand-excl {
+    background:var(--bg-elev); border:1px solid var(--border-hi);
+    border-radius:12px; padding:13px 15px; margin-bottom:14px;
+  }
+  .inf-cand-excl .inf-cand-campo-lbl { color:var(--text-dim); }
+  .inf-cand-excl-txt {
+    font-size:13.5px; color:var(--text); line-height:1.55; margin-top:5px;
+    white-space:pre-wrap; overflow-wrap:anywhere;
+  }
+  .inf-cand-texto {
+    font-size:12.5px; color:var(--text-dim); line-height:1.55; margin-top:3px;
+    white-space:pre-wrap; overflow-wrap:anywhere;
+  }
+  .inf-cand-links { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:14px; }
+  .inf-cand-link {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:5px 11px; border:1px solid var(--border); border-radius:999px;
+    background:var(--bg-elev); color:var(--text-dim);
+    font-size:11.5px; font-weight:650; text-decoration:none;
+    transition:border-color .15s, color .15s;
+  }
+  .inf-cand-link:hover { border-color:var(--primary); color:var(--primary); }
+
+  .inf-cand-rodape {
+    display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap;
+    padding-top:14px; border-top:1px solid var(--border);
+  }
+  .inf-cand-nota-box { flex:1 1 260px; min-width:0; }
+  .inf-cand-nota-input {
+    width:100%; margin-top:4px; padding:8px 11px;
+    background:var(--bg-elev); border:1px solid var(--border); border-radius:8px;
+    color:var(--text); font-family:inherit; font-size:12.5px; line-height:1.45;
+    resize:vertical; min-height:38px;
+  }
+  .inf-cand-nota-input:focus { outline:none; border-color:var(--primary); }
+  .inf-cand-acoes { display:flex; gap:7px; flex-wrap:wrap; }
+  .inf-cand-btn {
+    min-height:32px; padding:0 13px; border-radius:8px;
+    border:1px solid var(--border-hi); background:var(--bg-elev); color:var(--text);
+    font-family:inherit; font-size:12px; font-weight:650; cursor:pointer;
+    transition:border-color .15s, color .15s, opacity .15s;
+  }
+  .inf-cand-btn:hover { border-color:var(--text-muted); }
+  .inf-cand-btn:disabled { opacity:.55; cursor:default; }
+  .inf-cand-btn.aprovar:hover { border-color:#22c55e; color:#22c55e; }
+  .inf-cand-btn.recusar:hover { border-color:var(--danger); color:var(--danger); }
+  .inf-cand-btn.email { border-color:var(--primary); color:var(--primary); }
+
+  /* Estado do e-mail: obrigatoriamente lido do banco depois de invocar a
+     function. Falha silenciosa aqui faz a candidatura desaparecer sem ninguem
+     saber, entao o erro fica escrito por extenso e em vermelho. */
+  .inf-cand-email-estado { flex:1 1 100%; font-size:12px; line-height:1.5; margin-top:2px; }
+  .inf-cand-email-ok { color:var(--success); }
+  .inf-cand-email-erro { color:var(--danger); overflow-wrap:anywhere; }
+
+  @media (max-width: 900px) {
+    /* Ficha no celular: uma coluna e alvo de toque de 40px. Mesma tipografia,
+       paleta e ritmo do desktop — adaptacao de largura, nao outro desenho. */
+    /* `flex-wrap: wrap` no eixo coluna deixa o filho dimensionar pelo CONTEUDO:
+       medido a 375px, a fileira de filtros ficava com 431px de largura e
+       empurrava a pagina, em vez de rolar dentro de si. Com nowrap e largura
+       travada em 100%, o overflow-x volta a ser do proprio scroller. */
+    .inf-cand-topbar { align-items:stretch; flex-direction:column; flex-wrap:nowrap; }
+    .inf-cand-filtros { width:100%; max-width:100%; min-width:0; overflow-x:auto; flex-wrap:nowrap; padding-bottom:2px; }
+    .inf-cand-filtro { white-space:nowrap; min-height:34px; }
+    .inf-cand-recarregar { width:100%; min-height:40px; }
+    .inf-cand-card { padding:15px 15px; border-radius:12px; }
+    .inf-cand-head { flex-direction:column; gap:9px; }
+    .inf-cand-nums { grid-template-columns:1fr 1fr; }
+    .inf-cand-grid { grid-template-columns:1fr; gap:9px; }
+    .inf-cand-acoes { width:100%; }
+    .inf-cand-acoes .inf-cand-btn { flex:1 1 44%; min-height:40px; }
+  }
+
   /* ============================================
      RESPONSIVE: Ultrawide (>1600px)
      ============================================ */
@@ -8265,6 +8453,11 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
         <button class="inf-tab" data-inftab="envios" onclick="switchInfTab('envios')">Envios & Produtos</button>
         <button class="inf-tab" data-inftab="conteudo" onclick="switchInfTab('conteudo')">Conteúdo</button>
         <button class="inf-tab" data-inftab="financeiro" onclick="switchInfTab('financeiro')">Financeiro</button>
+        <!-- O contador de pendentes fica NO ROTULO da aba de proposito: candidatura
+             e olhada a cada ~15 dias, e ninguem clica numa aba para descobrir se ha
+             algo nela. O numero na aba e o que faz lembrar. Fica oculto em zero —
+             selo vazio permanente para de ser lido. -->
+        <button class="inf-tab" data-inftab="candidaturas" onclick="switchInfTab('candidaturas')">Candidaturas<span class="inf-cand-badge" id="infCandBadge" hidden>0</span></button>
       </div>
 
       <!-- TAB: Visão Geral -->
@@ -8344,6 +8537,23 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
           <h3 style="font-size:14px;font-weight:700;margin-bottom:14px">Extrato por Influenciador</h3>
           <div id="infFinanceiroList"></div>
         </div>
+      </div>
+
+      <!-- TAB: Candidaturas -->
+      <div class="inf-tab-content" id="infTabCandidaturas">
+        <div class="inf-cand-topbar">
+          <div class="inf-cand-filtros" id="infCandFiltros">
+            <!-- Abre em "pendentes" porque quem entra aqui vem decidir, nao navegar
+                 arquivo. As demais fatias continuam a um clique. -->
+            <button class="inf-cand-filtro active" data-candfiltro="pending" onclick="setInfCandFiltro('pending')">Pendentes</button>
+            <button class="inf-cand-filtro" data-candfiltro="approved" onclick="setInfCandFiltro('approved')">Aprovadas</button>
+            <button class="inf-cand-filtro" data-candfiltro="rejected" onclick="setInfCandFiltro('rejected')">Recusadas</button>
+            <button class="inf-cand-filtro" data-candfiltro="standby" onclick="setInfCandFiltro('standby')">Standby</button>
+            <button class="inf-cand-filtro" data-candfiltro="todas" onclick="setInfCandFiltro('todas')">Todas</button>
+          </div>
+          <button class="action-btn view inf-cand-recarregar" onclick="recarregarInfCandidaturas()">Recarregar</button>
+        </div>
+        <div id="infCandList"></div>
       </div>
     </div>
 
@@ -26424,7 +26634,8 @@ const FP_AJUDA = {
     titulo: 'Influenciadores',
     intro: 'As parcerias: cadastro, cupons, envios, conteúdo entregue e o financeiro de cada um.',
     itens: [
-      'As <b>abas</b> do topo dividem a tela: visão geral, cadastro, cupons, envios, conteúdo e financeiro.',
+      'As <b>abas</b> do topo dividem a tela: visão geral, cadastro, cupons, envios, conteúdo, financeiro e candidaturas.',
+      '<b>Candidaturas</b> traz quem se inscreveu pela página /influencer. O número na aba é quantas estão pendentes; aprovar já abre o cadastro preenchido.',
       'A <b>visão geral</b> traz o ranking e o resumo das parcerias.',
       '<b>Cupons</b> liga o código ao influenciador — é como a venda é atribuída.',
       '<b>Envios</b> acompanha o produto que foi mandado, com status.',
@@ -31544,10 +31755,16 @@ function switchInfTab(tab) {
   INF_CURRENT_TAB = tab;
   document.querySelectorAll('.inf-tab').forEach(t => t.classList.toggle('active', t.dataset.inftab === tab));
   document.querySelectorAll('.inf-tab-content').forEach(c => c.classList.remove('active'));
-  const map = { visao:'infTabVisao', config:'infTabConfig', cupons:'infTabCupons', envios:'infTabEnvios', conteudo:'infTabConteudo', financeiro:'infTabFinanceiro' };
+  const map = { visao:'infTabVisao', config:'infTabConfig', cupons:'infTabCupons', envios:'infTabEnvios', conteudo:'infTabConteudo', financeiro:'infTabFinanceiro', candidaturas:'infTabCandidaturas' };
   const el = document.getElementById(map[tab]);
   if (el) el.classList.add('active');
   renderInfHub();
+  /* Candidatura chega de fora do painel, a qualquer hora, e a aba e olhada de
+     quinze em quinze dias — o retrato carregado no boot ja estaria velho.
+     Recarrega em segundo plano, sem travar a troca de aba. */
+  if (tab === 'candidaturas') {
+    loadInfCandidaturas().then(renderInfCandidaturas).catch(e => console.warn('candidaturas:', e));
+  }
 }
 
 async function loadInfExtras() {
@@ -31555,6 +31772,123 @@ async function loadInfExtras() {
   INF_ENVIOS = envios || [];
   const { data: conteudos } = await sb.from('mc_influencer_conteudos').select('*').order('created_at',{ascending:false});
   INF_CONTEUDOS = conteudos || [];
+  await loadInfCandidaturas();
+}
+
+/* ═══════════════════════════════════════════════
+   CANDIDATURAS DE INFLUENCIADOR
+   Chegam pelo formulario publico /influencer (anon tem so INSERT).
+   Tudo aqui e texto de estranho na internet: NAO existe campo confiavel,
+   por isso todo valor passa por escHtml() antes de virar innerHTML.
+   ═══════════════════════════════════════════════ */
+let INF_CANDIDATURAS = [];
+let INF_CAND_FILTRO = 'pending';
+
+/* Guarda a falha de CARGA separada da lista. Sem isso, erro de rede ou de
+   permissão caía no mesmo `return` silencioso e a tela escrevia "Nenhuma
+   candidatura ainda" — uma afirmação sobre o mundo que a gente não tinha como
+   fazer. Candidatura invisível por engano é candidato perdido. */
+let INF_CAND_ERRO = null;
+
+async function loadInfCandidaturas() {
+  const { data, error } = await sb.from('mc_influencer_candidaturas')
+    .select('*').order('created_at', { ascending: false });
+  if (error) {
+    console.warn('loadInfCandidaturas:', error.message);
+    INF_CAND_ERRO = error.message || 'falha ao carregar';
+    INF_CANDIDATURAS = [];
+    return false;
+  }
+  INF_CAND_ERRO = null;
+  INF_CANDIDATURAS = data || [];
+  return true;
+}
+
+async function recarregarInfCandidaturas() {
+  const deu = await loadInfCandidaturas();
+  renderInfCandidaturas();
+  if (deu) fpToast('Candidaturas recarregadas.', 'ok');
+  else fpToast('Não foi possível carregar as candidaturas: ' + INF_CAND_ERRO, 'erro');
+}
+
+function setInfCandFiltro(v) {
+  INF_CAND_FILTRO = v;
+  document.querySelectorAll('.inf-cand-filtro')
+    .forEach(b => b.classList.toggle('active', b.dataset.candfiltro === v));
+  renderInfCandidaturas();
+}
+
+/* Consulta que NAO alcanca Object.prototype. Sem isto, um valor de banco fora
+   do dominio vira lixo na tela em vez de aparecer cru: status 'constructor'
+   renderizava "function Object() { [native code] }" e espera '__proto__' saia
+   como "[object Object]". Valor inesperado tem que APARECER, para alguem
+   consertar o dado — nao virar texto de sistema. */
+const infRotulo = (mapa, chave) =>
+  (chave != null && Object.prototype.hasOwnProperty.call(mapa, chave)) ? mapa[chave] : chave;
+
+/* APROVAR grava `approved` na hora e SÓ ABRE o cadastro pré-preenchido. Se o
+   operador fechar o modal, apertar Esc, ou o salvar falhar, a candidatura fica
+   aprovada e o influenciador nunca existe — e nada reconciliava os dois. Em vez
+   de reestruturar o fluxo (que exigiria transação entre duas telas), a tela
+   passa a DIZER a verdade: aprovada sem cadastro correspondente aparece como
+   pendência, com o botão para retomar de onde parou.
+   O casamento é por e-mail ou @, que são os dois campos que a promoção copia. */
+function infCandCadastroPendente(c) {
+  if ((c.status || '') !== 'approved') return '';
+  if (!Array.isArray(PERF_INFLUENCERS)) return '';
+  const email = String(c.email || '').trim().toLowerCase();
+  const arroba = String(infCandIgHandle(c.instagram) || '').replace(/^@/, '').toLowerCase();
+  const existe = PERF_INFLUENCERS.some(i => {
+    const ie = String(i.email || '').trim().toLowerCase();
+    const ii = String(i.instagram || '').replace(/^@/, '').trim().toLowerCase();
+    return (email && ie === email) || (arroba && ii === arroba);
+  });
+  if (existe) return '';
+  return '<span class="inf-cand-status standby" title="Aprovada, mas não existe influenciador cadastrado com este e-mail ou @.">'
+    + 'cadastro pendente</span>';
+}
+
+const INF_CAND_STATUS_ROTULO = { pending:'Pendente', approved:'Aprovada', rejected:'Recusada', standby:'Standby' };
+const INF_CAND_ESPERA_ROTULO = {
+  peca:'Peça', cache:'Cachê', comissao:'Comissão', desconto:'Desconto', combinar:'A combinar'
+};
+const INF_CAND_VIA_ROTULO = {
+  nao_apareco:'Não aparece em via pública',
+  sim_documentos_ok:'Pilota em via pública — documentação em ordem',
+  sim_sem_documentos:'Pilota em via pública — SEM documentação'
+};
+const INF_CAND_ESTUDIO_ROTULO = { sim:'Sim', nao:'Não', talvez:'Talvez' };
+
+/* Numero pode ser 0 legitimamente (zero salvamento é informação, não ausência),
+   entao a checagem e por null/undefined e nao por falsy. */
+function infCandNum(v) {
+  if (v === null || v === undefined || v === '') return null;
+  const n = Number(v);
+  /* NaN cai em "não informou" e nao vira a palavra "NaN" na ficha: numero
+     ilegivel na tela e pior que campo declarado vazio. */
+  return Number.isFinite(n) ? n : null;
+}
+function infCandData(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return isNaN(d) ? '—' : d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+/* Aceita "@perfil", "perfil" e a URL inteira colada: o formulario e publico e
+   as tres formas chegam. So o handle vai para o link. */
+function infCandIgHandle(raw) {
+  let h = String(raw == null ? '' : raw).trim();
+  if (!h) return '';
+  h = h.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/[?#].*$/, '');
+  h = h.replace(/^\/+/, '').replace(/\/+$/, '').replace(/^@+/, '');
+  return /^[A-Za-z0-9._]{1,60}$/.test(h) ? h : '';
+}
+/* Só http/https viram <a>. O campo e texto livre de estranho: sem esta trava,
+   um "javascript:" colado ali seria XSS por href, que o escHtml nao pega. */
+function infCandLinkSeguro(raw) {
+  const s = String(raw == null ? '' : raw).trim();
+  if (!s) return '';
+  const m = s.match(/https?:\/\/\S+/);
+  return m ? m[0] : '';
 }
 
 /* ═══════════════════════════════════════════════
@@ -31734,6 +32068,7 @@ function renderInfHub() {
   renderInfEnvios(active);
   renderInfConteudo(active);
   renderInfFinanceiro(active);
+  renderInfCandidaturas();
 }
 
 function infInitials(name) {
@@ -32149,6 +32484,354 @@ function renderInfFinanceiro(active) {
       </tr>`;
     }).join('')}</tbody>
   </table>`;
+}
+
+/* ── TAB: Candidaturas ──────────────────────────────────────────────────────
+   Cada cartao e a FICHA COMPLETA. A intencao e decidir sem abrir nada: se for
+   preciso clicar para ver retencao ou exclusividade, a analise vira quatro
+   cliques por pessoa e para de acontecer. */
+function renderInfCandidaturas() {
+  const badge = document.getElementById('infCandBadge');
+  const pendentes = INF_CANDIDATURAS.filter(c => (c.status || 'pending') === 'pending').length;
+  if (badge) {
+    badge.textContent = pendentes;
+    badge.hidden = pendentes === 0;
+  }
+
+  const el = document.getElementById('infCandList');
+  if (!el) return;
+
+  const lista = INF_CAND_FILTRO === 'todas'
+    ? INF_CANDIDATURAS
+    : INF_CANDIDATURAS.filter(c => (c.status || 'pending') === INF_CAND_FILTRO);
+
+  /* Falha de carga NÃO é lista vazia. Este ramo vem antes de tudo justamente
+     para a tela nunca dizer "ninguém se candidatou" quando a verdade é
+     "não consegui perguntar". */
+  if (INF_CAND_ERRO) {
+    el.innerHTML = '<div class="fp-vazio">'
+      + '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'
+      + '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>'
+      + '<h3>Não foi possível carregar as candidaturas</h3>'
+      + '<p>Isto <b>não</b> significa que ninguém se candidatou — significa que a consulta falhou. '
+      + 'Motivo: ' + escHtml(INF_CAND_ERRO) + '.</p>'
+      + '<button class="action-btn view" onclick="recarregarInfCandidaturas()">Tentar de novo</button>'
+      + '</div>';
+    return;
+  }
+
+  if (lista.length === 0) {
+    /* Estado vazio que ENSINA de onde vem o dado: "nenhum registro" nao diz se
+       o formulario esta no ar, se ninguem se candidatou ou se o filtro esconde. */
+    const semNenhuma = INF_CANDIDATURAS.length === 0;
+    el.innerHTML = '<div class="fp-vazio">'
+      + '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'
+      + '<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>'
+      + '<h3>' + (semNenhuma ? 'Nenhuma candidatura ainda' : 'Nada neste filtro') + '</h3>'
+      + '<p>' + (semNenhuma
+          ? 'As candidaturas chegam sozinhas pela página <b>/influencer</b> do site — quem se inscreve por lá aparece aqui, com a ficha completa, para você aprovar ou recusar.'
+          : 'Nenhuma candidatura com este status. As inscrições novas entram como <b>pendentes</b> pela página <b>/influencer</b>.')
+      + '</p></div>';
+    return;
+  }
+
+  el.innerHTML = lista.map(c => infCandCard(c)).join('');
+}
+
+function infCandCard(c) {
+  const st = c.status || 'pending';
+  /* O id entra em atributo onclick. UUID nao tem aspas, mas o cartao inteiro e
+     construido a partir de linha de banco alimentada por formulario publico:
+     conferir a forma e mais barato do que confiar. Fora do formato, o cartao
+     sai sem acao em vez de sair com HTML quebrado. */
+  const idOk = /^[0-9a-fA-F-]{36}$/.test(String(c.id || ''));
+  const id = idOk ? c.id : '';
+
+  const ig = infCandIgHandle(c.instagram);
+  const igHtml = ig
+    ? `<a href="https://instagram.com/${encodeURIComponent(ig)}" target="_blank" rel="noopener">@${escHtml(ig)}</a>`
+    : (c.instagram ? escHtml(fpArroba(c.instagram)) : '<span style="color:var(--text-muted)">sem Instagram</span>');
+
+  const num = (rotulo, valor, sufixo) => {
+    const v = infCandNum(valor);
+    return `<div class="inf-cand-num">
+      <div class="inf-cand-num-lbl">${rotulo}</div>
+      <div class="inf-cand-num-val${v === null ? ' vazio' : ''}">${v === null ? 'não informou' : escHtml(formatNum(v)) + (sufixo || '')}</div>
+    </div>`;
+  };
+
+  const campo = (rotulo, valorHtml) => valorHtml
+    ? `<div><div class="inf-cand-campo-lbl">${rotulo}</div><div class="inf-cand-campo-val">${valorHtml}</div></div>`
+    : '';
+
+  const motoPropria = c.moto_propria === 'sim' ? '<strong>própria</strong>'
+    : c.moto_propria === 'nao' ? 'não é dele' : '';
+  const motoHtml = c.moto
+    ? escHtml(c.moto) + (motoPropria ? ' · ' + motoPropria : '')
+    : '';
+
+  const esperaHtml = c.espera
+    ? '<strong>' + escHtml(infRotulo(INF_CAND_ESPERA_ROTULO, c.espera)) + '</strong>'
+      + (c.cache_faixa ? ' · faixa: ' + escHtml(c.cache_faixa) : '')
+    : '';
+
+  const postsMes = infCandNum(c.posts_por_mes);
+
+  /* Link de Reel/publi so sai como <a> se for http(s) — ver infCandLinkSeguro. */
+  const links = [
+    ['Reel 1', c.reel_1], ['Reel 2', c.reel_2], ['Reel 3', c.reel_3],
+    ['Publi anterior', c.publi_link]
+  ].map(([rot, raw]) => {
+    const u = infCandLinkSeguro(raw);
+    return u ? `<a class="inf-cand-link" href="${escHtml(u)}" target="_blank" rel="noopener">${rot} ↗</a>` : '';
+  }).filter(Boolean).join('');
+
+  const outrasUrl = infCandLinkSeguro(c.outras_redes);
+  const outrasHtml = c.outras_redes
+    ? (outrasUrl
+        ? `<a class="inf-cand-link" href="${escHtml(outrasUrl)}" target="_blank" rel="noopener">Outras redes ↗</a>`
+        : '')
+    : '';
+  /* Quando "outras redes" nao e URL (vem "tiktok @fulano, kwai @fulano"), vai
+     como TEXTO no corpo da ficha, nao como link morto. */
+  const outrasTexto = (c.outras_redes && !outrasUrl) ? escHtml(c.outras_redes) : '';
+
+  /* Estado do e-mail lido do banco: `email_erro` vence `email_enviado_em`,
+     porque uma tentativa que falhou depois de uma que passou e o que importa. */
+  let emailEstado = '';
+  if (c.email_erro) {
+    emailEstado = `<div class="inf-cand-email-estado inf-cand-email-erro">Falha ao enviar o e-mail: ${escHtml(c.email_erro)}</div>`;
+  } else if (c.email_enviado_em) {
+    emailEstado = `<div class="inf-cand-email-estado inf-cand-email-ok">Resposta enviada por e-mail em ${escHtml(infCandData(c.email_enviado_em))}.</div>`;
+  }
+
+  const decisao = st === 'approved' ? 'aprovada' : st === 'rejected' ? 'recusada' : '';
+  const emailBtn = !id ? ''
+    : decisao
+      ? `<button class="inf-cand-btn email" onclick="enviarInfCandEmail('${id}','${decisao}')">Enviar resposta por e-mail</button>`
+      : `<button class="inf-cand-btn email" disabled title="Aprove ou recuse antes: o e-mail é a resposta da decisão.">Enviar resposta por e-mail</button>`;
+
+  const analisado = c.analisado_em
+    ? `<span class="inf-cand-data">analisada em ${escHtml(infCandData(c.analisado_em))}</span>` : '';
+
+  const aceites = [
+    c.maior_18 === false ? 'declarou MENOR de 18' : '',
+    c.aceite_dados === false ? 'não aceitou o uso de dados' : '',
+    c.aceite_repost === false ? 'não autorizou repostagem' : ''
+  ].filter(Boolean).join(' · ');
+
+  return `<div class="inf-cand-card">
+    <div class="inf-cand-head">
+      <div class="inf-cand-ident">
+        <div class="inf-row-avatar" style="background:var(--primary)">${escHtml(infInitials(c.nome))}</div>
+        <div style="min-width:0">
+          <div class="inf-cand-nome">${escHtml(c.nome || 'sem nome')}</div>
+          <div class="inf-cand-sub">${igHtml}${c.cidade_uf ? ' · ' + escHtml(c.cidade_uf) : ''}</div>
+          <div class="inf-cand-sub">${escHtml(c.whatsapp || '—')}${c.email ? ' · ' + escHtml(c.email) : ''}</div>
+        </div>
+      </div>
+      <div class="inf-cand-head-dir">
+        ${analisado}
+        <span class="inf-cand-data">recebida ${escHtml(infCandData(c.created_at))}</span>
+        <span class="inf-cand-status ${escHtml(st)}">${escHtml(infRotulo(INF_CAND_STATUS_ROTULO, st))}</span>
+        ${infCandCadastroPendente(c)}
+      </div>
+    </div>
+
+    <div class="inf-cand-nums">
+      ${num('Alcance 30d', c.alcance_30d)}
+      ${num('Salvamentos', c.reel_salvamentos)}
+      ${num('Compartilh.', c.reel_compartilhamentos)}
+      ${num('Retenção', c.reel_retencao_pct, '%')}
+    </div>
+
+    <div class="inf-cand-excl">
+      <div class="inf-cand-campo-lbl">Exclusividade</div>
+      <div class="inf-cand-excl-txt">${c.exclusividade ? escHtml(c.exclusividade) : 'Não respondeu sobre exclusividade — perguntar antes de fechar.'}</div>
+    </div>
+
+    <div class="inf-cand-grid">
+      ${campo('Moto', motoHtml)}
+      ${campo('Peças que mostra', c.pecas ? escHtml(c.pecas) : '')}
+      ${campo('Posts por mês', postsMes === null ? '' : '<strong>' + postsMes + '</strong>')}
+      ${campo('O que espera', esperaHtml)}
+      ${campo('Via pública', c.via_publica ? escHtml(infRotulo(INF_CAND_VIA_ROTULO, c.via_publica)) : '')}
+      ${campo('Pode ir ao estúdio', c.pode_estudio ? escHtml(infRotulo(INF_CAND_ESTUDIO_ROTULO, c.pode_estudio)) : '')}
+      ${campo('Outras redes', outrasTexto)}
+      ${campo('Pendências de aceite', aceites ? escHtml(aceites) : '')}
+    </div>
+
+    ${c.motivo ? `<div style="margin-bottom:14px"><div class="inf-cand-campo-lbl">Por que quer trabalhar com a FullPro</div><div class="inf-cand-texto">${escHtml(c.motivo)}</div></div>` : ''}
+
+    ${(links || outrasHtml) ? `<div class="inf-cand-links">${links}${outrasHtml}</div>` : ''}
+
+    <div class="inf-cand-rodape">
+      <div class="inf-cand-nota-box">
+        <div class="inf-cand-campo-lbl">Nota interna</div>
+        <textarea class="inf-cand-nota-input" id="infCandNota_${id}" rows="2"
+          placeholder="Por que aprovou, recusou ou deixou em standby.">${escHtml(c.nota_interna || '')}</textarea>
+      </div>
+      <div class="inf-cand-acoes">
+        ${id ? `<button class="inf-cand-btn" onclick="salvarInfCandNota('${id}')">Salvar nota</button>
+        <button class="inf-cand-btn aprovar" onclick="infCandDecidir('${id}','approved')">Aprovar</button>
+        <button class="inf-cand-btn recusar" onclick="infCandDecidir('${id}','rejected')">Recusar</button>
+        <button class="inf-cand-btn" onclick="infCandDecidir('${id}','standby')">Standby</button>`
+        : '<span class="inf-cand-email-erro">Registro com id inválido — abrir no Supabase.</span>'}
+        ${emailBtn}
+      </div>
+      ${emailEstado}
+    </div>
+  </div>`;
+}
+
+/* uid de AUTENTICACAO, nao o id do perfil em mc_admin_users: `analisado_por`
+   e uuid e a politica `mcic_operador` raciocina sobre auth.uid(). */
+async function infCandAuthUid() {
+  try {
+    const { data } = await sb.auth.getSession();
+    return data?.session?.user?.id || null;
+  } catch (e) { return null; }
+}
+
+function infCandLerNota(id) {
+  const el = document.getElementById('infCandNota_' + id);
+  return el ? el.value.trim() : null;
+}
+
+async function salvarInfCandNota(id) {
+  const nota = infCandLerNota(id);
+  const { error } = await sb.from('mc_influencer_candidaturas')
+    .update({ nota_interna: nota }).eq('id', id);
+  if (error) { fpToast('Não salvou a nota: ' + error.message, 'erro'); return; }
+  const c = INF_CANDIDATURAS.find(x => x.id === id);
+  if (c) c.nota_interna = nota;
+  fpToast('Nota interna salva.', 'ok');
+}
+
+async function infCandDecidir(id, status) {
+  const c = INF_CANDIDATURAS.find(x => x.id === id);
+  if (!c) { fpToast('Candidatura não encontrada — recarregue.', 'erro'); return; }
+
+  const rotulo = INF_CAND_STATUS_ROTULO[status] || status;
+  /* Recusar tem confirmacao porque e a unica decisao que a pessoa do outro lado
+     recebe como "nao" por e-mail. Aprovar e standby sao reversiveis a um clique. */
+  if (status === 'rejected') {
+    const ok = await fpConfirm({
+      titulo: 'Recusar candidatura',
+      mensagem: `Marcar a candidatura de ${c.nome || 'sem nome'} como recusada?`,
+      detalhe: 'O e-mail de resposta só sai depois, quando você clicar em "Enviar resposta por e-mail".',
+      confirmar: 'Recusar', cancelar: 'Cancelar', perigo: true
+    });
+    if (!ok) return;
+  }
+
+  const uid = await infCandAuthUid();
+  const patch = { status, analisado_em: new Date().toISOString(), analisado_por: uid };
+  /* A nota digitada e gravada junto com a decisao: separar em dois cliques faz
+     o motivo da recusa ficar no campo e nunca no banco. */
+  const nota = infCandLerNota(id);
+  if (nota !== null) patch.nota_interna = nota;
+
+  const { error } = await sb.from('mc_influencer_candidaturas').update(patch).eq('id', id);
+  if (error) { fpToast('Não gravou a decisão: ' + error.message, 'erro'); return; }
+
+  Object.assign(c, patch);
+  renderInfCandidaturas();
+  fpToast(`Candidatura marcada como ${rotulo.toLowerCase()}.`, 'ok');
+
+  /* Aprovar PROMOVE para o cadastro que ja existe: o modal abre pre-preenchido
+     e quem salva e o saveInfluencer de sempre, em mc_performance_influencers.
+     Sem cadastro paralelo — a candidatura e a porta, nao o registro. */
+  if (status === 'approved') promoverInfCandidatura(id);
+}
+
+function promoverInfCandidatura(id) {
+  const c = INF_CANDIDATURAS.find(x => x.id === id);
+  if (!c) return;
+  if (typeof openInfModal !== 'function') return;
+
+  openInfModal();   // sem id: modo "Novo Influenciador", campos limpos
+  const set = (campo, valor) => {
+    const el = document.getElementById(campo);
+    if (el) el.value = valor == null ? '' : String(valor);
+  };
+  set('infName', c.nome);
+  set('infEmail', c.email);
+  set('infWhatsapp', c.whatsapp);
+  set('infInstagram', infCandIgHandle(c.instagram) || c.instagram);
+  /* Cidade e UF a candidatura JA coletou (campo obrigatorio). Deixar o operador
+     redigitar o que esta na ficha do lado e desperdicio — e fonte de divergencia
+     entre a candidatura e o cadastro. O `cidade_uf` vem como texto livre
+     ("Curitiba / PR"), entao parte a UF do fim quando ela existe. */
+  if (c.cidade_uf) {
+    const m = String(c.cidade_uf).match(/^(.*?)[\s/,-]+([A-Za-z]{2})\s*$/);
+    if (m) { set('infCidade', m[1].trim()); set('infUf', m[2].toUpperCase()); }
+    else   { set('infCidade', String(c.cidade_uf).trim()); }
+  }
+  /* A moto vem como texto livre ("CB 500 2019"), enquanto o cadastro monta a
+     moto por selects de marca/modelo/ano. Entao ela entra direto na lista de
+     motos do modal, sem tentar casar com o catalogo — o dono confere na hora. */
+  if (c.moto && String(c.moto).trim()) {
+    INF_MOTOS_TEMP = [String(c.moto).trim()];
+    if (typeof renderInfMotos === 'function') renderInfMotos();
+  }
+  fpToast('Cadastro aberto com os dados da candidatura. Complete e salve.', 'info');
+}
+
+/* O e-mail e enviado pela edge function `candidatura-email`. Depois de invocar,
+   a linha e RELIDA do banco: o estado mostrado e o que ficou gravado, nunca o
+   que o clique prometeu. E-mail que falha calado faz a candidatura desaparecer
+   sem ninguem saber — e o pior desfecho possivel aqui. */
+async function enviarInfCandEmail(id, decisao) {
+  const c = INF_CANDIDATURAS.find(x => x.id === id);
+  if (!c) { fpToast('Candidatura não encontrada — recarregue.', 'erro'); return; }
+  if (!c.email) { fpToast('Essa candidatura não tem e-mail preenchido.', 'warn'); return; }
+
+  const ok = await fpConfirm({
+    titulo: 'Enviar resposta por e-mail',
+    mensagem: `Enviar o e-mail de candidatura ${decisao} para ${c.email}?`,
+    detalhe: 'A mensagem sai agora, pela função candidatura-email.',
+    confirmar: 'Enviar', cancelar: 'Cancelar'
+  });
+  if (!ok) return;
+
+  let erroInvoke = null;
+  try {
+    const { data, error } = await sb.functions.invoke('candidatura-email', { body: { id, decisao } });
+    /* O supabase-js v2 colapsa QUALQUER resposta não-2xx num FunctionsHttpError
+       genérico e joga o corpo fora — o motivo real nunca chegaria à tela. Por
+       isso a function devolve 200 com { ok:false, erro } quando o problema é de
+       ENVIO, e reserva 401/403 para permissão. Aqui os dois casos são lidos:
+       o corpo quando ele vem, o erro de transporte quando não vem. */
+    if (error) erroInvoke = error.message || String(error);
+    else if (data && data.ok === false) erroInvoke = data.erro || 'a função recusou o envio.';
+  } catch (e) {
+    erroInvoke = e.message || String(e);
+  }
+
+  /* Releitura obrigatoria, e vale mesmo quando o invoke deu erro: a function
+     pode ter gravado `email_erro` antes de estourar, e esse texto e mais util
+     que o erro de transporte. */
+  const { data: linha, error: erroLeitura } = await sb.from('mc_influencer_candidaturas')
+    .select('*').eq('id', id).maybeSingle();
+
+  if (linha) {
+    Object.assign(c, linha);
+  } else if (erroInvoke || erroLeitura) {
+    /* Nao deu para confirmar nada: registra a incerteza na propria ficha em vez
+       de deixar a tela dizendo "enviado". */
+    c.email_erro = 'Não foi possível confirmar o envio: ' + (erroInvoke || erroLeitura.message);
+  }
+
+  renderInfCandidaturas();
+
+  if (c.email_erro) {
+    fpToast('O e-mail NÃO foi enviado. Veja o erro na ficha.', 'erro');
+  } else if (c.email_enviado_em) {
+    fpToast('E-mail enviado e confirmado no banco.', 'ok');
+  } else {
+    fpToast('Sem confirmação de envio no banco. Trate como não enviado.', 'warn');
+  }
 }
 
 function renderPerfBonuses() {
