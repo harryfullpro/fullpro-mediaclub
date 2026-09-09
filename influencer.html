@@ -65,8 +65,33 @@
   *{box-sizing:border-box}
   input,select,textarea,button{font-family:inherit}
   html{-webkit-text-size-adjust:100%}
+  /* ===================== TEXTURA DE FUNDO =====================
+     Grao de filme, gerado por `feTurbulence` num data-URI — sem arquivo,
+     sem requisicao, menos de 1 KB.
+
+     Por que grao e nao grade ou hachura: este e o braco de REDES da FullPro,
+     e o que o criador produz e foto e video. Grao e a textura nativa desse
+     material; grade seria linguagem de painel e hachura seria de impresso.
+
+     Mora na COR, nao por cima do conteudo: e `background-image` do proprio
+     body, entao nao existe camada interceptando clique nem disputando
+     empilhamento com o cabecalho grudado.
+
+     `fixed` de proposito: com o grao preso a viewport a pagina rola POR CIMA
+     de uma textura parada, como filme sob a imagem. Rolando junto, o olho le
+     como papel de parede e a pagina parece barata.
+
+     Alfa de 5,5 por cento: conferido depois de aplicar, os 30 estilos de
+     texto continuam sem reprovacao de contraste. */
   body{
-    margin:0; background:var(--void); color:var(--ink);
+    background-color:var(--void);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='.055'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)'/%3E%3C/svg%3E");
+    background-attachment:fixed;
+    /* Sem o atalho `background:` aqui embaixo, e isso e armadilha de verdade:
+       atalho ZERA todas as sub-propriedades, entao o `background-image` de
+       cima era apagado por ele e a textura simplesmente nao existia. A cor
+       agora vem do `background-color` declarado acima. */
+    margin:0; color:var(--ink);
     font-family:'FullPro Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     font-size:16px; line-height:1.6;
     -webkit-font-smoothing:antialiased;
@@ -131,22 +156,48 @@
      Substitui o bloco de texto que explicava o critério. O argumento de peso
      da marca é numérico, então quem fala é o número — grande, na fonte da
      casa, com o rótulo pequeno embaixo. Fio de 1px separando, sem caixa. */
+  /* A faixa e o argumento de credibilidade da pagina: e o que responde
+     "por que eu falaria com essa marca". Refeita em 09/09.
+
+     - Saiu o `border-block`, que fechava a faixa numa caixa. Sobraram so os
+       filetes VERTICAIS entre os numeros — divisor, nao moldura.
+     - O numero cresceu (46 para 60 no teto) e ganhou entreletra negativa: em
+       corpo grande, o espacamento normal abre buraco entre os algarismos.
+     - O rotulo virou a micro-legenda da pagina — caixa alta, entreletra
+       larga — a mesma lingua da sobrancelha e do `.block-head span`. Antes
+       era frase solta de 12px, que competia com o numero em vez de servi-lo.
+     - `1fr` virou `auto`: com quatro colunas iguais, "+10" ocupava a mesma
+       largura de "+34.705" e a fila ficava frouxa. Agora cada coluna vale o
+       que o numero pede. */
   .nums{
-    margin:var(--s6) 0 0; display:grid; grid-template-columns:repeat(4,1fr);
-    gap:1px; background:var(--line); border-block:1px solid var(--line);
+    margin:var(--s6) 0 0; display:grid;
+    grid-template-columns:repeat(4,auto); justify-content:start;
+    gap:0;
   }
-  .num{background:var(--void); padding:var(--s3) var(--s2)}
+  .num{padding:var(--s2) var(--s3) var(--s2) 0}
+  .num + .num{border-left:1px solid var(--line); padding-left:var(--s3)}
   .num-v{
-    display:block; font-size:clamp(30px,3.6vw,46px); font-weight:800;
-    line-height:1; letter-spacing:.5px; color:var(--ink);
+    display:block; font-size:clamp(32px,4.4vw,60px); font-weight:800;
+    line-height:.95; letter-spacing:-.02em; color:var(--ink);
     font-variant-numeric:tabular-nums;
   }
   .num-l{
-    display:block; margin-top:10px; font-size:12px; font-weight:500;
-    line-height:1.35; color:var(--ink-quiet);
+    display:block; margin-top:12px; font-size:11px; font-weight:600;
+    line-height:1.5; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink-quiet);
   }
+  /* Em duas colunas o divisor tem que virar de eixo, e isso e defeito medido,
+     nao teoria: `.num + .num` pega os itens 2, 3 e 4, e numa grade de duas
+     colunas o item 3 ABRE LINHA — desenhava um filete solto a esquerda do
+     terceiro numero, no comeco da fileira.
+     Aqui a regra passa a ser posicional: filete a esquerda so em quem esta na
+     coluna da direita, e filete em cima em quem esta na segunda fileira. */
   @media (max-width:820px){
-    .nums{grid-template-columns:repeat(2,1fr)}
+    .nums{grid-template-columns:repeat(2,1fr); justify-content:stretch}
+    .num{padding:var(--s2) var(--s2) var(--s2) 0}
+    .num + .num{border-left:0; padding-left:0}
+    .num:nth-child(2n){border-left:1px solid var(--line); padding-left:var(--s2)}
+    .num:nth-child(n+3){border-top:1px solid var(--line); margin-top:var(--s1); padding-top:var(--s2)}
   }
   @media (max-width:640px){
     .num{padding:var(--s2) 14px}
@@ -168,7 +219,9 @@
   /* margin-BOTTOM, nao o atalho: `.padrao-head` e `.wrap` dividem o mesmo
      elemento, e `margin:0 0 X` zerava o `margin:0 auto` do .wrap — o título
      ia para a borda da tela enquanto os cartões ficavam centrados. */
-  .padrao-head{margin-bottom:var(--s3)}
+  /* Centralizado a pedido do dono (09/09). A nota do rodapé do slider
+     acompanha: título centrado com legenda à esquerda ficaria torto. */
+  .padrao-head{margin-bottom:var(--s3); text-align:center}
   .padrao-head h2{
     margin:0; font-size:clamp(24px,3.2vw,36px); font-weight:800;
     text-transform:uppercase; letter-spacing:1px; line-height:1.05;
@@ -257,11 +310,23 @@
   }
 
   /* ===================== BLOCOS DO FORMULÁRIO ===================== */
+  /* SEM CAIXA. Preferência do dono (09/09): nada de contêiner em volta de
+     formulário e elemento — o conteúdo mora direto no fundo da página e a
+     separação é feita por DIVISOR.
+
+     O que sai: `background:var(--panel)`, `border` e `border-radius`.
+     O que entra no lugar: uma linha no topo e ar generoso. A hierarquia
+     passa a ser dada por espaço e pela régua do `.block-head`, não por
+     moldura — que é justamente o que a preferência pede.
+
+     O primeiro bloco não leva linha: divisor existe para separar dois, e
+     no primeiro ele viraria moldura pela metade. */
   .block{
-    background:var(--panel); border:1px solid var(--line); border-radius:var(--r-lg);
-    padding:var(--s4); margin:0 0 var(--s3);
+    padding:var(--s6) 0 0; margin:0;
+    border-top:1px solid var(--line);
   }
-  @media (max-width:640px){ .block{padding:var(--s3)} }
+  .block:first-of-type{border-top:0; padding-top:0}
+  @media (max-width:640px){ .block{padding-top:var(--s4)} }
 
   .block-head{
     display:flex; align-items:baseline; gap:var(--s2);
@@ -391,11 +456,21 @@
   .ficha-col{position:sticky; top:86px}
   @media (max-width:1000px){ .ficha-col{position:static} }
 
+  /* Sem caixa, igual aos blocos. Aqui o divisor é VERTICAL: a ficha vive na
+     coluna da direita, então uma linha à esquerda separa da coluna do
+     formulário melhor que uma linha em cima. No celular ela empilha, e aí a
+     linha vira horizontal — senão sobraria um traço solto na lateral. */
   .ficha{
-    background:var(--panel); border:1px solid var(--line); border-radius:var(--r-lg);
-    overflow:hidden;
+    border-left:1px solid var(--line);
+    padding-left:var(--s3);
   }
-  .ficha-h{padding:var(--s3); border-bottom:1px solid var(--line)}
+  @media (max-width:1000px){
+    .ficha{
+      border-left:0; border-top:1px solid var(--line);
+      padding-left:0; padding-top:var(--s4); margin-top:var(--s4);
+    }
+  }
+  .ficha-h{padding:0 0 var(--s3); border-bottom:1px solid var(--line)}
   .ficha-h h2{
     margin:0 0 4px; font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:1.2px;
   }
@@ -429,8 +504,11 @@
     .row-k{flex-basis:112px}
   }
 
+  /* Sem fundo: era a ultima caixa sobrando depois de a ficha perder a
+     moldura, e uma caixa solitaria numa pagina sem caixa nenhuma chama mais
+     atencao do que chamava quando todas tinham. A linha de cima ja separa. */
   .ficha-f{
-    padding:var(--s3); border-top:1px solid var(--line); background:var(--panel-hi);
+    padding:var(--s3) 0 0; border-top:1px solid var(--line);
   }
   .conta{
     font-size:11px; font-weight:600; letter-spacing:.1em; color:var(--ink-quiet);
@@ -478,8 +556,7 @@
   .fim.on{display:block}
   .fim-card{
     max-width:660px; margin:0 auto; text-align:center;
-    background:var(--panel); border:1px solid var(--line); border-radius:var(--r-lg);
-    padding:var(--s6) var(--s4);
+    padding:var(--s6) 0;
   }
   @media (max-width:640px){ .fim-card{padding:var(--s4) var(--s3)} }
   .fim-mark{
@@ -493,8 +570,8 @@
   }
   .fim-lead{margin:0 auto var(--s3); max-width:52ch; color:var(--ink-dim); font-size:15px}
   .prox{
-    text-align:left; border:1px solid var(--line); border-radius:var(--r);
-    background:var(--panel-hi); padding:var(--s3); margin-top:var(--s4);
+    text-align:left; padding:var(--s3) 0 0; margin-top:var(--s4);
+    border-top:1px solid var(--line);
   }
   .prox h3{
     margin:0 0 12px; font-size:11px; letter-spacing:.14em;
@@ -509,7 +586,7 @@
   }
 
   /* ===================== PÉ ===================== */
-  .pe{border-top:1px solid var(--line); padding:var(--s4) 0; background:var(--panel)}
+  .pe{border-top:1px solid var(--line); padding:var(--s4) 0}
   .pe-in{
     display:flex; flex-wrap:wrap; gap:var(--s2) var(--s3); align-items:center;
     justify-content:space-between;
@@ -1402,6 +1479,7 @@
     POSTS.forEach(function (post) {
       var a = document.createElement('a');
       a.className = 'post';
+      a.dataset.codigo = post.codigo;
       a.href = 'https://www.instagram.com/' + post.tipo + '/' + post.codigo + '/';
       a.target = '_blank';
       a.rel = 'noopener';
@@ -1422,7 +1500,13 @@
       img.decoding = 'async';
       /* Imagem que não carrega derruba o cartão inteiro: cartão vazio numa
          vitrine é pior que um cartão a menos. */
-      img.onerror = function () { a.remove(); atualizarSetas(); };
+      /* Tira as TRES copias (o original e os dois clones do loop), senao o
+         conjunto perde largura e a emenda do infinito passa a aparecer. */
+      img.onerror = function () {
+        var iguais = trilho.querySelectorAll('[data-codigo="' + post.codigo + '"]');
+        [].forEach.call(iguais, function (el) { el.remove(); });
+        clonarParaInfinito();
+      };
       a.appendChild(img);
 
       var veu = document.createElement('div');
@@ -1438,7 +1522,85 @@
       trilho.appendChild(a);
     });
 
+    clonarParaInfinito();
     ligarSetas();
+  }
+
+  /* ---------------- slider infinito ----------------
+     Pedido do dono (09/09): a fila gira sem fim.
+
+     Antes ela batia no fim e o autoplay dava um `scrollTo(0)` — a fila
+     voltava correndo para o começo na frente de quem estava olhando. Emenda
+     visível é pior que fila que trava.
+
+     A técnica é três conjuntos iguais — [clones][reais][clones] — começando
+     no do meio. Quando a rolagem passa de meio conjunto para qualquer lado,
+     o `scrollLeft` salta UM conjunto inteiro, de forma instantânea. Como os
+     três são idênticos, o pixel debaixo do olho não muda: o salto é
+     imperceptível por construção, não por rapidez.
+
+     O salto TEM que ser instantâneo. O trilho tem `scroll-behavior:smooth`
+     no CSS, então mexer no `scrollLeft` sem desligar isso faz o navegador
+     ANIMAR a emenda — que é exatamente o que se quer esconder.
+
+     Clone não é conteúdo: leva `aria-hidden` e `tabindex="-1"`, senão o
+     leitor de tela anuncia as nove peças três vezes e o Tab passeia por 27
+     links. */
+  var LARG_SET = 0;
+
+  function semSuave(t, fn) {
+    var antes = t.style.scrollBehavior;
+    t.style.scrollBehavior = 'auto';
+    fn();
+    /* Devolve no quadro seguinte: no mesmo quadro o navegador ainda não
+       aplicou o salto e o `smooth` voltaria a tempo de animá-lo. */
+    requestAnimationFrame(function () { t.style.scrollBehavior = antes || ''; });
+  }
+
+  /* Posição de rolagem em que um cartão encosta no início do trilho.
+     Por `getBoundingClientRect`, e não por `offsetLeft`: o pai posicionado
+     do cartão não é o trilho, então `offsetLeft` mede a partir de outra
+     caixa e erra o alvo. */
+  function posDe(t, el) {
+    return el.getBoundingClientRect().left - t.getBoundingClientRect().left + t.scrollLeft;
+  }
+
+  function clonarParaInfinito() {
+    var t = $('#trilho');
+    if (!t) return;
+    [].forEach.call(t.querySelectorAll('.post--clone'), function (c) { c.remove(); });
+
+    var reais = [].slice.call(t.querySelectorAll('.post'));
+    /* Com menos de dois cartões não existe volta a dar: clonar só encheria o
+       DOM e o loop giraria em falso. */
+    if (reais.length < 2) { LARG_SET = 0; atualizarSetas(); return; }
+
+    var frente = document.createDocumentFragment();
+    var fundo = document.createDocumentFragment();
+    reais.forEach(function (o) {
+      [frente, fundo].forEach(function (destino) {
+        var c = o.cloneNode(true);
+        c.className += ' post--clone';
+        c.setAttribute('aria-hidden', 'true');
+        c.setAttribute('tabindex', '-1');
+        destino.appendChild(c);
+      });
+    });
+    t.insertBefore(frente, reais[0]);
+    t.appendChild(fundo);
+
+    var clones = t.querySelectorAll('.post--clone');
+    LARG_SET = posDe(t, clones[reais.length]) - posDe(t, reais[0]);
+    semSuave(t, function () { t.scrollLeft = posDe(t, reais[0]); });
+    atualizarSetas();
+  }
+
+  function girarSePreciso() {
+    var t = $('#trilho');
+    if (!t || !LARG_SET) return;
+    var x = t.scrollLeft;
+    if (x < LARG_SET * 0.5) semSuave(t, function () { t.scrollLeft = x + LARG_SET; });
+    else if (x > LARG_SET * 1.5) semSuave(t, function () { t.scrollLeft = x - LARG_SET; });
   }
 
   /* As setas empurram um cartão por vez e somem nas pontas — seta que não faz
@@ -1446,6 +1608,9 @@
   function atualizarSetas() {
     var t = $('#trilho'), antes = $('#setaAntes'), depois = $('#setaDepois');
     if (!t || !antes || !depois) return;
+    /* Fila infinita nao tem ponta: seta desabilitada mentiria dizendo que
+       acabou. So desabilita quando o loop nao existe (menos de 2 cartoes). */
+    if (LARG_SET) { antes.disabled = false; depois.disabled = false; return; }
     var fim = t.scrollWidth - t.clientWidth;
     antes.disabled = t.scrollLeft <= 2;
     depois.disabled = t.scrollLeft >= fim - 2;
@@ -1493,11 +1658,13 @@
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     function passoAuto() {
-      var fim = t.scrollWidth - t.clientWidth;
       var cartao = t.querySelector('.post');
       var largura = cartao ? cartao.offsetWidth + 14 : 300;
-      /* Chegou ao fim: volta ao começo em vez de travar — a fila é circular
-         para quem está só olhando. */
+      /* Sempre para a frente. Quem devolve ao começo agora é o loop, com um
+         salto invisível de um conjunto — antes havia um `scrollTo(0)` que
+         rebobinava a fila na cara de quem estava olhando. */
+      if (LARG_SET) { t.scrollBy({ left: largura, behavior: 'smooth' }); return; }
+      var fim = t.scrollWidth - t.clientWidth;
       if (t.scrollLeft >= fim - 4) t.scrollTo({ left: 0, behavior: 'smooth' });
       else t.scrollBy({ left: largura, behavior: 'smooth' });
     }
@@ -1532,13 +1699,19 @@
        desfoque a cada evento de scroll trava a rolagem no celular. */
     var agendado = false;
     t.addEventListener('scroll', function () {
+      girarSePreciso();
       atualizarSetas();
       if (agendado) return;
       agendado = true;
       requestAnimationFrame(function () { agendado = false; pintarFoco(); });
     }, { passive: true });
 
-    window.addEventListener('resize', function () { atualizarSetas(); pintarFoco(); });
+    /* Remede o conjunto no resize: a largura do cartao muda por media query
+       (296px -> 74vw no celular) e um LARG_SET velho faria o salto cair no
+       lugar errado, que e justamente quando a emenda aparece. */
+    window.addEventListener('resize', function () {
+      clonarParaInfinito(); atualizarSetas(); pintarFoco();
+    });
     atualizarSetas();
     pintarFoco();
     ligarAutoplay();

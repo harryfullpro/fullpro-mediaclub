@@ -1,5 +1,84 @@
 # Diário
 
+## 09/09/2026 · Influencer: sem caixa, slider infinito e grão de filme
+
+> *"aplique um slider infinito, centralize o header do slider, melhore a
+> visualização dos dados de info da FullPro, e aplique a minha preferência de
+> não ter containers com os formularios e elementos etc, usando apenas
+> divisores aplicando tudo direto na tela de fundo do site. E falando na tela
+> de fundo, adicione alguma textura"*
+
+### Sem contêiner
+
+Saiu `background:var(--panel)`, `border` e `border-radius` de `.block`,
+`.ficha`, `.fim-card`, `.prox`, `.pe` e `.ficha-f`. No lugar, **divisor**: uma
+linha em cima e ar. O primeiro bloco não leva linha — divisor separa dois, e no
+primeiro viraria moldura pela metade. A ficha, que é coluna lateral, ganhou
+divisor **vertical**, que vira horizontal quando empilha no celular.
+
+**Campo continua com caixa.** Controle não é contêiner: a borda do input é a
+afordância, é o que diz onde tocar, e tirá-la desfaria o conserto de contraste
+de ontem. A regra virou memória: `fullpro-design-sem-container`.
+
+Uma coisa que só aparece depois de aplicar: **a última caixa que sobra chama
+mais atenção do que chamava quando todas existiam.** Foi o rodapé da ficha, que
+ficou como único painel numa página sem nenhum. Varrer o arquivo inteiro antes
+de dar por pronto.
+
+### Slider infinito
+
+Antes a fila batia no fim e o autoplay dava `scrollTo(0)` — rebobinava na cara
+de quem estava olhando. Agora são três conjuntos iguais, `[clones][reais]
+[clones]`, começando no do meio; passando de meio conjunto para qualquer lado,
+o `scrollLeft` salta **um conjunto inteiro**. Como os três são idênticos, o
+pixel debaixo do olho não muda: o salto é imperceptível **por construção**, não
+por rapidez.
+
+Duas coisas que o loop exige e que quebram silenciosamente sem elas: o salto
+tem que desligar o `scroll-behavior:smooth` do trilho, senão o navegador
+**anima a emenda** — exatamente o que se quer esconder; e o conjunto precisa
+ser remedido no `resize`, porque o cartão muda de 296px para 74vw por media
+query e um `LARG_SET` velho põe o salto no lugar errado.
+
+Clone leva `aria-hidden` e `tabindex="-1"`: sem isso o leitor de tela anuncia as
+nove peças três vezes e o Tab passeia por 27 links.
+
+Conferido rolando para trás 14 passos: a fila cicla os 9 códigos e
+**nunca encosta em `scrollLeft` 0** — não há ponta, que é a definição de
+infinito aqui.
+
+### A faixa de dados
+
+Saiu o `border-block`, que a fechava numa caixa; sobraram os filetes verticais.
+Número de 46 para 60px no teto com entreletra negativa — em corpo grande o
+espaçamento normal abre buraco entre algarismos. Rótulo virou a micro-legenda
+da página (caixa alta, entreletra larga), a mesma língua da sobrancelha: antes
+era frase de 12px competindo com o número em vez de servi-lo. E `1fr` virou
+`auto`, senão "+10" ocupava a mesma largura de "+34.705".
+
+**Defeito medido no celular:** em duas colunas, `.num + .num { border-left }`
+pega os itens 2, 3 e 4 — e o 3 **abre fileira**, desenhando um filete solto no
+começo da segunda linha. A regra virou posicional: `:nth-child(2n)` para a
+coluna da direita, `:nth-child(n+3)` para a segunda fileira.
+
+### A textura
+
+Grão de filme por `feTurbulence` num data-URI de 419 bytes — sem arquivo, sem
+requisição. Grão e não grade: este é o braço de **redes**, e o que o criador
+produz é foto e vídeo; grade seria linguagem de painel, hachura seria de
+impresso. Preso à viewport (`fixed`), a página rola por cima de uma textura
+parada, como filme sob a imagem — rolando junto, o olho lê papel de parede.
+
+**A armadilha, e é a segunda vez em dois dias que a mesma classe me pega:** a
+regra `body` tinha o atalho `background:var(--void)` **depois** do meu
+`background-image`, e atalho **zera todas as sub-propriedades**. A textura
+simplesmente não existia, sem erro nenhum. Antes de declarar propriedade longa,
+procurar o atalho no resto da mesma regra.
+
+Conferido depois de tudo: 30 estilos de texto, **zero reprovação de contraste**
+com o grão aplicado; zero transbordo no desktop e no celular; campo em 16px.
+
+
 ## 09/09/2026 · Influencer: três defeitos reais, e quatro que eu quase inventei
 
 > *"da teu show aí nesse projeto antes de eu mandar publicar"*
