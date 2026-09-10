@@ -1,5 +1,68 @@
 # Diário
 
+## 10/09/2026 — vidro de verdade, desfoque colado no cartão, favicon
+
+**O que fazia o header não parecer vidro era o meu próprio filtro.** Ele disse
+"não achei que ficou translúcido o suficiente" e eu baixei opacidade — errado.
+A causa estava em `brightness(1.16)` dentro do `backdrop-filter`: a faixa rosada
+do degradê que passa atrás do header é `rgb(246,225,227)`, e multiplicada por
+1,16 vira `rgb(255,255,255)`. **Estoura.** Eu apagava o fundo e depois estranhava
+que não parecesse vidro. Em 1,03 o mesmo rosa sai `rgb(253,239,241)` e a cápsula
+fica tingida pelo que está atrás — hoje a ponta esquerda puxa rosa e a direita
+fica fria. Raio de 26 para 11px pela mesma razão: em 26px a prancheta virava
+branco liso, e sem estrutura para atravessar o olho lê tinta.
+
+Lição para reaproveitar: **em `backdrop-filter`, `brightness()` > 1 sobre fundo
+claro não clareia — recorta.** E vidro se comunica por variação do que está
+atrás, não por quantidade de desfoque.
+
+Somei uma lente de borda (`::before` com desfoque extra só no anel): vidro é
+mais grosso na beirada e distorce mais ali. É o mais perto de refração que dá
+para chegar — `feDisplacementMap` via `backdrop-filter:url()` seria o certo e o
+Safari não renderiza, e esta página chega pelo navegador do Instagram.
+
+**Desfoque do slider colado no cartão central.** As máscaras eram porcentagem
+fixa do trilho (40%/60%), o que deixava um vão nítido de ~50px de cada lado do
+cartão antes de o desfoque começar. Agora a janela limpa é o próprio cartão,
+calculada por `--mp` (meia peça) e `--rN` (quanto cada nível leva para chegar à
+força total, contado da borda do cartão). O deslocamento entra na conta — sem
+isso a cópia deslocada 30px mordia o cartão que tem de ficar limpo. Perfil
+medido: 0,02 → **0,51** a 12px da borda, pico de 7,4 → **17,5**, monotônico,
+zero no central.
+
+**Dois defeitos que eu tinha deixado no ar e só apareceram agora:**
+
+- `.post-marca` estava em `var(--ink)` sobre o véu escuro do cartão — **1,4:1**,
+  o "Ver no Instagram" era invisível. Estrago da virada para o tema claro:
+  token que segue o tema não serve para texto que vive sobre foto. Branco
+  literal agora.
+- `.top` tinha `position:sticky` cancelado por um `position:relative` que veio
+  depois na folha, com a mesma especificidade. O header nunca grudou. Deixei
+  relative **de propósito** e escrevi a razão: cápsula quase transparente por
+  cima das fotos escuras do slider daria logo preto sobre preto.
+
+**Faixa de números centrada** (pedido dele, e estava certo): o número já nascia
+centrado sob um H1 centrado e o rótulo ficava à esquerda — coluna torta nas
+quatro. Padding virou simétrico junto, senão o divisor sai do meio do vão.
+
+**Hover do mouse desligado no slider.** Não é só gosto: o cartão subia 3px por
+baixo de uma pilha de `backdrop-filter` que amostra o fundo na posição final, e
+o rastro pulava junto. No celular `:hover` ainda fica grudado depois do toque.
+Os do formulário ficam — botão sem resposta ao mouse parece quebrado.
+
+**Números por publicação: a tela está pronta, o dado não existe.** Procurei nas
+quatro tabelas antes de responder. `mc_projects.posts` tem views/curtidas/
+comentários de 11 reels e 8 TikToks, mas é conteúdo da casa (@fullprobr);
+`mc_performance_posts` tem um registro com link; `mc_influencer_conteudos`, um.
+Nenhum dos nove códigos do slider. A API do Graph devolveria — com o token do
+dono de cada perfil, e são parceiros. Então é o mesmo caminho do @: preencher
+`metricas` em `POSTS` e a linha aparece, em escala curta (59 mil, 1,2 mi).
+
+**Favicon.** Estava servindo `logo-short.png`, 1774x1084 — o navegador deitava a
+marca na aba. Gerei `.ico` de verdade com 16/32/48/64/128/256, recortado e
+centrado num quadro quadrado com 8% de respiro. O `index.html` não tinha ícone
+nenhum e ganhou também.
+
 ## 09/09/2026 · O texto do formulário estava ilegível, e a minha medição disse que estava tudo bem
 
 > *"agora preciso que você garanta que vai ficar bom de ler os elementos do
