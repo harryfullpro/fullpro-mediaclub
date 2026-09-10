@@ -143,7 +143,7 @@
 
      `-webkit-` explicito pela mesma razao. */
   .top{
-    position:relative; z-index:40;
+    position:sticky; top:0; z-index:40;
     padding:12px 20px;
     background:transparent; border:0;
     pointer-events:none;          /* so a capsula recebe clique */
@@ -209,6 +209,19 @@
     pointer-events:none;
   }
   .top-in > *{position:relative; z-index:1}
+  /* GRUDADO no topo, a capsula passa por cima das fotos do slider, que sao
+     escuras. Vidro de 13% sobre foto preta deixa o logo em 1,5:1 — sumia.
+     O JS liga esta classe enquanto a capsula cruza o slider: o corpo fecha,
+     o desfoque sobe, e o logo volta para 8,6:1 (medido sobre preto puro).
+     Perde vidro nesses 500px de rolagem, e e o preco de ter header fixo
+     numa pagina cujo miolo e foto escura. Volta sozinho depois. */
+  .top-in{transition:background .25s ease, backdrop-filter .25s ease, -webkit-backdrop-filter .25s ease}
+  .top-in--escuro{
+    background:rgba(255,255,255,.8);
+    -webkit-backdrop-filter:blur(18px) saturate(150%);
+    backdrop-filter:blur(18px) saturate(150%);
+  }
+  @media (prefers-reduced-motion:reduce){ .top-in{transition:none} }
   /* Sem `backdrop-filter` a capsula viraria um oval translucido sobre a
      prancheta, com o logo ilegivel. Fundo quase opaco nesse caso. */
   @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
@@ -382,134 +395,87 @@
      do parceiro, e e o que da prova social ao quadro. */
   .post-marca--arroba{font-weight:650; letter-spacing:.01em}
 
-  /* ── RASTRO HORIZONTAL (motion blur) ──────────────────────────────
-     Pedido do dono (10/09): motion blur no lugar de gaussiano.
+  /* ── PROFUNDIDADE DE CAMPO ────────────────────────────────────────
+     Terceira tentativa, e as duas anteriores morreram por motivo medido.
 
-     A RESTRICAO, que decidiu o desenho: CSS so tem blur GAUSSIANO —
-     `blur()` aceita um raio, nao um eixo. Direcional de verdade exige filtro
-     SVG (`feGaussianBlur stdDeviation="N 0"`), e para aplicar isso no fundo
-     seria `backdrop-filter: url(#...)`, que o **Safari nao renderiza**. Como
-     esta pagina chega pelo navegador embutido do Instagram, que e WebKit,
-     usar url() daria ZERO desfoque justamente no celular de quem importa —
-     e falharia calado. `CSS.supports` nao ajuda a decidir: ele valida a
-     sintaxe, nao a renderizacao.
+     1. Gaussiano por CARTAO: o vizinho inteiro num nivel e o de fora noutro.
+        Ele reclamou, com razao: a gradacao acontecia de cartao em cartao, e
+        nao ao longo da tela.
+     2. Rastro horizontal (motion blur simulado por pares deslocados ±Npx a
+        meia opacidade). A ideia era boa e o resultado ficou FEIO: com
+        deslocamento de 30px e raio de 9px as duas copias nao se fundem —
+        viram imagem fantasma, moto dobrada. E as rampas curtas desenhavam
+        costura vertical no meio da foto. Truque descartado.
 
-     A saida e simular o rastro. `backdrop-filter` amostra o fundo na posicao
-     FINAL do elemento, entao uma camada deslocada 6px mostra o fundo de 6px
-     ao lado, desfocado. Duas camadas do mesmo nivel, uma para cada lado e
-     com meia opacidade, somam um borrao alongado no eixo X — que e o que o
-     olho le como movimento, e nao a nuvem redonda do gaussiano.
+     O que ficou: tres laminas gaussianas, SEM deslocamento, com mascaras
+     longas e sobrepostas. Cada lamina amostra o que a de baixo ja pintou,
+     entao os raios somam em quadratura (3, 6 e 11 dao ~12,9px no extremo).
+     Onde a mascara vale 0,4 o olho ve 40% de lamina sobre 60% de foto
+     nitida — e a mascara e um degrade, entao a passagem e continua de
+     verdade, sem degrau e sem fantasma.
 
-     O raio de cada nivel caiu pela metade em relacao a versao gaussiana: o
-     par ja soma, e mantendo o raio antigo o resultado virava sopa em vez de
-     rastro. O deslocamento cresce junto com o raio, senao os niveis de fora
-     borram muito e escorregam pouco, e o efeito volta a parecer radial. */
-  /* `overflow:hidden` nao e detalhe: as camadas sao deslocadas ate 22px no
-     eixo X, e sem recorte elas esticam a pagina — medido, 22px de rolagem
-     horizontal, exatamente o maior deslocamento. Recortadas, a parte que
-     sobra some e o rastro continua inteiro dentro do trilho, porque o que
-     produz o efeito e a AMOSTRAGEM deslocada do fundo, nao o pedaco que
-     ficava para fora. */
-  /* A JANELA LIMPA agora e o proprio cartao central, calculada e nao
-     chutada (pedido do dono, 10/09: "blur mais intenso ate o card do
-     centro"). Antes os pontos da mascara eram porcentagem fixa do trilho
-     (40%/60%), o que deixava um vao nitido de ~50px de cada lado do cartao:
-     o desfoque so comecava depois dele. Agora:
-
-       --mp  = meia peca (148px = metade dos 296px do cartao; 37vw no
-               celular, onde a peca e 74vw)
-       --rN  = quanto o nivel N leva para chegar a forca total, contado a
-               partir da BORDA do cartao central
-
-     O deslocamento entra na conta da mascara (`--oN`) porque `transform`
-     move a mascara junto: sem somar isso, a copia deslocada 28px morderia
-     28px do cartao central, que e justamente o que tem de ficar limpo. */
+     A janela limpa continua colada no cartao central (`--mp` = meia peca),
+     e as rampas (`--aN` inicio, `--bN` fim, contados da borda do cartao)
+     se sobrepoem de proposito: 0-300, 110-470, 260-640. Ramp curta foi o
+     que desenhou a costura da vez passada. */
   .desfoque{
     position:absolute; inset:0; z-index:2; pointer-events:none; overflow:hidden;
     --mp:148px;
-    --r1:56px; --r2:140px; --r3:250px; --r4:380px;
-    --o1:4px;  --o2:9px;   --o3:17px;  --o4:30px;
+    --a1:0px;   --b1:300px;
+    --a2:110px; --b2:470px;
+    --a3:260px; --b3:640px;
   }
-  .desfoque span{position:absolute; inset:0; display:block; opacity:.5}
-  .d-esq{--d:-1}
-  .d-dir{--d:1}
+  .desfoque span{position:absolute; inset:0; display:block}
 
   .desfoque-1{
-    -webkit-backdrop-filter:blur(1px); backdrop-filter:blur(1px);
-    transform:translateX(calc(var(--d) * var(--o1)));
-    -webkit-mask-image:linear-gradient(90deg,#000 0,
-      #000 calc(50% - var(--mp) - var(--o1) - var(--r1)),
-      transparent calc(50% - var(--mp) - var(--o1)),
-      transparent calc(50% + var(--mp) + var(--o1)),
-      #000 calc(50% + var(--mp) + var(--o1) + var(--r1)),
-      #000 100%);
-    mask-image:linear-gradient(90deg,#000 0,
-      #000 calc(50% - var(--mp) - var(--o1) - var(--r1)),
-      transparent calc(50% - var(--mp) - var(--o1)),
-      transparent calc(50% + var(--mp) + var(--o1)),
-      #000 calc(50% + var(--mp) + var(--o1) + var(--r1)),
-      #000 100%);
+    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
+    -webkit-mask-image:linear-gradient(90deg,
+      #000 calc(50% - var(--mp) - var(--b1)),
+      transparent calc(50% - var(--mp) - var(--a1)),
+      transparent calc(50% + var(--mp) + var(--a1)),
+      #000 calc(50% + var(--mp) + var(--b1)));
+    mask-image:linear-gradient(90deg,
+      #000 calc(50% - var(--mp) - var(--b1)),
+      transparent calc(50% - var(--mp) - var(--a1)),
+      transparent calc(50% + var(--mp) + var(--a1)),
+      #000 calc(50% + var(--mp) + var(--b1)));
   }
   .desfoque-2{
-    -webkit-backdrop-filter:blur(2.5px); backdrop-filter:blur(2.5px);
-    transform:translateX(calc(var(--d) * var(--o2)));
-    -webkit-mask-image:linear-gradient(90deg,#000 0,
-      #000 calc(50% - var(--mp) - var(--o2) - var(--r2)),
-      transparent calc(50% - var(--mp) - var(--o2)),
-      transparent calc(50% + var(--mp) + var(--o2)),
-      #000 calc(50% + var(--mp) + var(--o2) + var(--r2)),
-      #000 100%);
-    mask-image:linear-gradient(90deg,#000 0,
-      #000 calc(50% - var(--mp) - var(--o2) - var(--r2)),
-      transparent calc(50% - var(--mp) - var(--o2)),
-      transparent calc(50% + var(--mp) + var(--o2)),
-      #000 calc(50% + var(--mp) + var(--o2) + var(--r2)),
-      #000 100%);
+    -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+    -webkit-mask-image:linear-gradient(90deg,
+      #000 calc(50% - var(--mp) - var(--b2)),
+      transparent calc(50% - var(--mp) - var(--a2)),
+      transparent calc(50% + var(--mp) + var(--a2)),
+      #000 calc(50% + var(--mp) + var(--b2)));
+    mask-image:linear-gradient(90deg,
+      #000 calc(50% - var(--mp) - var(--b2)),
+      transparent calc(50% - var(--mp) - var(--a2)),
+      transparent calc(50% + var(--mp) + var(--a2)),
+      #000 calc(50% + var(--mp) + var(--b2)));
   }
   .desfoque-3{
-    -webkit-backdrop-filter:blur(5px); backdrop-filter:blur(5px);
-    transform:translateX(calc(var(--d) * var(--o3)));
-    -webkit-mask-image:linear-gradient(90deg,#000 0,
-      #000 calc(50% - var(--mp) - var(--o3) - var(--r3)),
-      transparent calc(50% - var(--mp) - var(--o3)),
-      transparent calc(50% + var(--mp) + var(--o3)),
-      #000 calc(50% + var(--mp) + var(--o3) + var(--r3)),
-      #000 100%);
-    mask-image:linear-gradient(90deg,#000 0,
-      #000 calc(50% - var(--mp) - var(--o3) - var(--r3)),
-      transparent calc(50% - var(--mp) - var(--o3)),
-      transparent calc(50% + var(--mp) + var(--o3)),
-      #000 calc(50% + var(--mp) + var(--o3) + var(--r3)),
-      #000 100%);
+    -webkit-backdrop-filter:blur(11px); backdrop-filter:blur(11px);
+    -webkit-mask-image:linear-gradient(90deg,
+      #000 calc(50% - var(--mp) - var(--b3)),
+      transparent calc(50% - var(--mp) - var(--a3)),
+      transparent calc(50% + var(--mp) + var(--a3)),
+      #000 calc(50% + var(--mp) + var(--b3)));
+    mask-image:linear-gradient(90deg,
+      #000 calc(50% - var(--mp) - var(--b3)),
+      transparent calc(50% - var(--mp) - var(--a3)),
+      transparent calc(50% + var(--mp) + var(--a3)),
+      #000 calc(50% + var(--mp) + var(--b3)));
   }
-  .desfoque-4{
-    -webkit-backdrop-filter:blur(9px); backdrop-filter:blur(9px);
-    transform:translateX(calc(var(--d) * var(--o4)));
-    -webkit-mask-image:linear-gradient(90deg,#000 0,
-      #000 calc(50% - var(--mp) - var(--o4) - var(--r4)),
-      transparent calc(50% - var(--mp) - var(--o4)),
-      transparent calc(50% + var(--mp) + var(--o4)),
-      #000 calc(50% + var(--mp) + var(--o4) + var(--r4)),
-      #000 100%);
-    mask-image:linear-gradient(90deg,#000 0,
-      #000 calc(50% - var(--mp) - var(--o4) - var(--r4)),
-      transparent calc(50% - var(--mp) - var(--o4)),
-      transparent calc(50% + var(--mp) + var(--o4)),
-      #000 calc(50% + var(--mp) + var(--o4) + var(--r4)),
-      #000 100%);
-  }
-  /* No celular a fila tem uma peca e meia na tela: oito camadas de
-     backdrop-filter custam GPU para borrar quase nada. Ficam quatro. */
+  /* No celular a peca e 74vw: sobram ~49px de vizinho de cada lado. Rampa de
+     300px nunca sairia do zero, e uma terceira lamina custaria GPU para
+     borrar nada. Duas, com rampa do tamanho da sobra. */
   @media (max-width:640px){
     /* `.desfoque .desfoque-3` e nao `.desfoque-3`: a regra compartilhada
-       `.desfoque span{display:block}` tem especificidade (0,1,1) e VENCE um
-       seletor de classe unica (0,1,0), entao a media query nao tinha efeito
-       — medido, as oito camadas continuavam visiveis em 375px. Com o pai
-       junto sao (0,2,0) e a contagem de classes decide. */
-    .desfoque .desfoque-3, .desfoque .desfoque-4{display:none}
-    /* 74vw de peca deixa ~13vw de sobra de cada lado: rampa de 380px nunca
-       chegaria a forca total. Os passos encolhem junto com a sobra. */
-    .desfoque{--mp:37vw; --r1:14px; --r2:38px; --o1:3px; --o2:7px}
+       `.desfoque span{position:absolute}` tem especificidade (0,1,1) e vence
+       um seletor de classe unica (0,1,0) — ja medi essa, as camadas
+       continuavam visiveis em 375px. */
+    .desfoque .desfoque-3{display:none}
+    .desfoque{--mp:37vw; --a1:0px; --b1:26px; --a2:10px; --b2:48px}
   }
   @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
     .desfoque{display:none}
@@ -960,12 +926,10 @@
   /* O conteudo sobe acima da camada decorativa. Sem isto o pseudo-fundo
      posicionado passa por cima dos filhos estaticos — a mesma armadilha que o
      comentario do `.fp-bp` no admin avisa. */
-  /* `.top` fica RELATIVE de proposito, e nao sticky: a capsula e quase
-     transparente, e grudada no topo ela passaria por cima das fotos escuras
-     do slider — logo preto sobre foto preta, medido em 1,5:1. Header que
-     acompanha a rolagem exigiria trocar o logo para branco no meio do
-     caminho. Numa landing de uma tela e meia isso nao paga. */
-  .top, main, .padrao, .fim, .pe{position:relative; z-index:1}
+  /* `.top` SAIU desta lista: ela vinha depois na folha com a mesma
+     especificidade e cancelava o `position:sticky` la de cima — o header
+     nunca grudou, e por acidente, nao por decisao. */
+  main, .padrao, .fim, .pe{position:relative; z-index:1}
 
   /* ── FOLHA DE PAPEL sobre a prancheta ──────────────────────────────
      MEDIDO, e foi um defeito real que eu deixei passar: ao dissolver os
@@ -1123,10 +1087,9 @@
            outra. `aria-hidden` e `pointer-events:none`: e vidro, nao
            conteudo, e nao pode comer o clique do cartao. -->
       <div class="desfoque" aria-hidden="true">
-        <span class="desfoque-1 d-esq"></span><span class="desfoque-1 d-dir"></span>
-        <span class="desfoque-2 d-esq"></span><span class="desfoque-2 d-dir"></span>
-        <span class="desfoque-3 d-esq"></span><span class="desfoque-3 d-dir"></span>
-        <span class="desfoque-4 d-esq"></span><span class="desfoque-4 d-dir"></span>
+        <span class="desfoque-1"></span>
+        <span class="desfoque-2"></span>
+        <span class="desfoque-3"></span>
       </div>
       <button class="seta seta--antes"  type="button" id="setaAntes"  aria-label="Ver anteriores">‹</button>
       <button class="seta seta--depois" type="button" id="setaDepois" aria-label="Ver próximos">›</button>
@@ -2044,6 +2007,41 @@
     clonarParaInfinito();
     ligarVideoDoFoco();
     ligarSetas();
+    ligarCapsulaEscura();
+  }
+
+  /* ---------------- capsula sobre fundo escuro ----------------
+     O header gruda no topo (pedido do dono, 10/09), e o miolo da pagina e
+     uma fila de fotos escuras. Vidro de 13% por cima de foto preta deixa o
+     logo em 1,5:1. Enquanto a capsula cruza o slider ela fecha o corpo.
+
+     Comparacao de dois retangulos por quadro, com `requestAnimationFrame`
+     segurando o evento — `getBoundingClientRect` em cada `scroll` trava a
+     rolagem no celular, ja paguei essa no desfoque por cartao.
+
+     Nao uso IntersectionObserver aqui de proposito: ele responde "cruzou o
+     viewport", e a pergunta e "cruzou A CAPSULA", que fica a 12px do topo e
+     tem altura propria. Daria para montar com `rootMargin` negativo, e
+     sairia mais dificil de ler do que duas subtracoes. */
+  function ligarCapsulaEscura() {
+    var capsula = $('.top-in');
+    var area = $('.trilho-area');
+    if (!capsula || !area) return;
+
+    var pedido = null;
+    function medir() {
+      pedido = null;
+      var c = capsula.getBoundingClientRect();
+      var a = area.getBoundingClientRect();
+      var cruza = a.top < c.bottom && a.bottom > c.top;
+      capsula.classList.toggle('top-in--escuro', cruza);
+    }
+    function agendar() {
+      if (pedido === null) pedido = requestAnimationFrame(medir);
+    }
+    addEventListener('scroll', agendar, { passive: true });
+    addEventListener('resize', agendar, { passive: true });
+    medir();
   }
 
   /* ---------------- video na peca em foco ----------------
