@@ -513,3 +513,43 @@ Não implementar sem o dono pedir.
   usar terminal (o cache do mapeamento dura 7 dias)
 - Filtro de destino no computador também virar caixa suspensa, para as duas telas ficarem
   iguais — hoje é um bloco recolhível separado
+
+## Landing /influencer — dois dados que faltam (10/09/2026)
+
+### 1. O @ de cada parceiro no slider
+
+O card já mostra o `@` assim que o campo existir; hoje os **nove estão
+vazios** e todos caem em "Ver no Instagram". Não dá para descobrir sozinho:
+medido em 10/09, a página pública do post devolve o shell do app do Instagram
+(duas peças diferentes voltaram com 624.351 e 624.352 bytes, sem
+`owner.username`, sem `og:title`).
+
+**Preencher `autor` no bloco `POSTS` do `influencer.html`** — sem o `@`, que o
+código põe:
+
+| código | autor |
+|---|---|
+| `DccoLupttmg` | |
+| `DPFe304DE14` | |
+| `DI4m8ptpQN0` | |
+| `DTfs43nkU0U` | |
+| `DNWZUMUyKjL` | |
+| `DOtSIe8ka7S` | |
+| `DOqtpWfDWEG` | |
+| `DXKMSmIu_9F` | |
+| `DOPRu8cDnIt` | |
+
+### 2. O vídeo da peça em foco
+
+O mecanismo está pronto: quando a rolagem para, a peça central procura
+`assets/patrocinados/posts/<codigo>.mp4`, e se não achar mantém a foto —
+silenciosamente, sem retentar o mesmo código de novo.
+
+Falta o arquivo. **Nenhum mp4/webm/gif existe no projeto** (só os 9 JPG).
+Colocar um mp4 mudo e curto com o mesmo nome do código liga o recurso sem
+tocar em código.
+
+Recomendação: 3 a 6 segundos, 720p de largura, sem áudio, `-movflags
++faststart`. Embed do Instagram foi descartado de propósito — é um iframe mais
+o script deles por peça, o autoplay não é garantido, e o peso é justamente o
+que fez a landing usar imagem local desde o início.
