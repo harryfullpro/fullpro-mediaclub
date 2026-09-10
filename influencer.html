@@ -109,43 +109,74 @@
   @media (max-width:640px){ .wrap{padding:0 var(--s2)} }
 
   /* ===================== CABEÇALHO ===================== */
+  /* ── HEADER EM LIQUID GLASS ────────────────────────────────────────
+     Segunda tentativa. A primeira era VIDRO FOSCO — blur, saturacao e um fio
+     de luz numa barra de ponta a ponta. Isso e o material antigo do iOS, e o
+     dono viu na hora.
+
+     O que separa um do outro, e nenhuma das tres e o blur:
+
+     1. FLUTUA. Liquid Glass e um OBJETO sobre o conteudo, nao uma faixa
+        colada no topo. Barra de ponta a ponta nao tem "em volta", entao nao
+        ha o que a lente distorca e o olho le como fundo pintado. Virou
+        capsula centrada, com o conteudo passando pelos lados.
+
+     2. BORDA ESPECULAR. Luz forte na quina de cima (.9), fraca embaixo
+        (.25), e um anel de 1px em volta. E isso que da ESPESSURA: sem a
+        assimetria entre cima e baixo, a peca e um retangulo translucido; com
+        ela, e uma lamina com quina pegando luz.
+
+     3. BRILHO, nao so desfoque. `brightness(1.08)` junto do blur e da
+        saturacao. Vidro real deixa passar mais luz do que a parede ao lado;
+        sem isso a capsula fica mais escura que o entorno e parece mancha.
+
+     A refracao de verdade (`feDisplacementMap` num `backdrop-filter: url()`)
+     ficou de fora de proposito: o Safari nao suporta, e este link chega pelo
+     navegador embutido do Instagram, que e WebKit. Ia funcionar no meu teste
+     e falhar calado no celular de quem importa.
+
+     `-webkit-` explicito pela mesma razao. */
   .top{
-    /* VIDRO LIQUIDO. Pedido do dono (10/09): so o logo, centralizado, e o
-       fundo em vidro no lugar do branco chapado.
-
-       O que faz o efeito nao e o blur sozinho — e a combinacao de tres coisas
-       que o material da Apple usa e que quase todo mundo esquece:
-
-       1. `saturate(180%)` junto do blur. Blur puro acinzenta o que passa por
-          tras; a saturacao devolve a cor, e e isso que faz o vidro parecer
-          vidro em vez de vidro fosco sujo. Aqui embaixo passa a prancheta,
-          com brilho vermelho e azul — sem saturar, eles viram cinza.
-       2. Fundo MUITO mais transparente (.55, nao .82). Vidro que voce nao
-          atravessa e parede pintada. O contraste do que fica em cima e
-          garantido pelo blur pesado, nao pela opacidade.
-       3. Um fio de luz na borda de cima (`inset 0 1px 0 rgba(255,255,255,.7)`).
-          E o detalhe que da espessura: sem ele a barra e um retangulo
-          translucido; com ele, tem quina.
-
-       `-webkit-` explicito porque no Safari, que e onde metade do publico
-       vai abrir, o `backdrop-filter` sem prefixo ainda falha em versoes
-       recentes — e falha SILENCIOSAMENTE, virando o fundo chapado. */
-    border-bottom:1px solid rgba(255,255,255,.55);
-    background:rgba(255,255,255,.55);
-    -webkit-backdrop-filter:blur(22px) saturate(180%);
-    backdrop-filter:blur(22px) saturate(180%);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.7), 0 1px 24px rgba(28,52,96,.06);
     position:sticky; top:0; z-index:40;
+    padding:12px 20px;
+    background:transparent; border:0;
+    pointer-events:none;          /* so a capsula recebe clique */
   }
-  /* Sem `backdrop-filter` (navegador antigo), o .55 deixaria o texto sobre a
-     prancheta. A consulta devolve o fundo quase opaco nesse caso. */
+  .top-in{
+    pointer-events:auto;
+    width:max-content; max-width:calc(100% - 8px); margin:0 auto;
+    display:flex; align-items:center; justify-content:center;
+    height:54px; padding:0 34px;
+    border-radius:999px;
+    background:rgba(255,255,255,.42);
+    -webkit-backdrop-filter:blur(26px) saturate(190%) brightness(1.08);
+    backdrop-filter:blur(26px) saturate(190%) brightness(1.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.9),      /* especular de cima */
+      inset 0 -1px 0 rgba(255,255,255,.25),    /* devolucao fraca embaixo */
+      inset 0 0 0 1px rgba(255,255,255,.35),   /* anel da lamina */
+      0 10px 34px rgba(28,52,96,.13),          /* sombra que suspende */
+      0 2px 8px rgba(28,52,96,.07);
+    position:relative; overflow:hidden;
+  }
+  /* Reflexo: uma faixa clara na metade de cima, que e como luz de ambiente
+     bate numa superficie curva. Fica em `::after` para nao competir com os
+     `inset` do anel. */
+  .top-in::after{
+    content:''; position:absolute; inset:0; border-radius:inherit;
+    background:linear-gradient(180deg, rgba(255,255,255,.5) 0, rgba(255,255,255,.06) 46%, transparent 60%);
+    pointer-events:none;
+  }
+  .top-in > *{position:relative; z-index:1}
+  /* Sem `backdrop-filter` a capsula viraria um oval translucido sobre a
+     prancheta, com o logo ilegivel. Fundo quase opaco nesse caso. */
   @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-    .top{background:rgba(255,255,255,.94)}
+    .top-in{background:rgba(255,255,255,.93)}
   }
-  /* Logo centralizado de verdade: `center` no flex, e nao `space-between` com
-     um vao fantasma do outro lado — vao fantasma desalinha assim que o texto
-     do outro elemento muda de tamanho. */
-  .top-in{display:flex; align-items:center; justify-content:center; height:62px}
+  @media (max-width:640px){
+    .top{padding:10px 14px}
+    .top-in{height:48px; padding:0 24px}
+  }
   .brand{display:flex; align-items:center; gap:10px; text-decoration:none}
   .brand img{height:20px; width:auto; display:block}
   .brand-txt{
@@ -306,62 +337,73 @@
      do parceiro, e e o que da prova social ao quadro. */
   .post-marca--arroba{font-weight:650; letter-spacing:.01em}
 
-  /* ── DESFOQUE PROGRESSIVO ──────────────────────────────────────────
-     Pedido do dono (10/09): *"queria algo na real gradativo mas linear... e
-     nao do jeito que ta com todo o card do lado em um nivel de blur e o card
-     mais na extremidade com blur mais forte"*.
+  /* ── RASTRO HORIZONTAL (motion blur) ──────────────────────────────
+     Pedido do dono (10/09): motion blur no lugar de gaussiano.
 
-     Ele descreveu o defeito com precisao, e a causa era estrutural: o
-     desfoque era `filter` aplicado NO CARTAO. Um elemento so pode ter um
-     valor de filtro, entao cada peca inteira ficava num nivel e a proxima em
-     outro — degrau por construcao. Nenhuma curva conserta isso, porque o
-     problema nao era a curva.
+     A RESTRICAO, que decidiu o desenho: CSS so tem blur GAUSSIANO —
+     `blur()` aceita um raio, nao um eixo. Direcional de verdade exige filtro
+     SVG (`feGaussianBlur stdDeviation="N 0"`), e para aplicar isso no fundo
+     seria `backdrop-filter: url(#...)`, que o **Safari nao renderiza**. Como
+     esta pagina chega pelo navegador embutido do Instagram, que e WebKit,
+     usar url() daria ZERO desfoque justamente no celular de quem importa —
+     e falharia calado. `CSS.supports` nao ajuda a decidir: ele valida a
+     sintaxe, nao a renderizacao.
 
-     Aqui o desfoque passa a ser da POSICAO NA TELA. Sao quatro camadas de
-     `backdrop-filter` empilhadas sobre o trilho, cada uma com o dobro do
-     blur da anterior e uma mascara que so a revela mais perto da borda. Onde
-     duas camadas se sobrepoem os blurs se compoem, e a soma e uma rampa
-     continua — que atravessa o meio de um cartao sem saber que ele existe.
+     A saida e simular o rastro. `backdrop-filter` amostra o fundo na posicao
+     FINAL do elemento, entao uma camada deslocada 6px mostra o fundo de 6px
+     ao lado, desfocado. Duas camadas do mesmo nivel, uma para cada lado e
+     com meia opacidade, somam um borrao alongado no eixo X — que e o que o
+     olho le como movimento, e nao a nuvem redonda do gaussiano.
 
-     Blur dobrando (1, 2, 4, 8) e nao crescendo em passos iguais: desfoque e
-     percebido em escala logaritmica, entao passo linear parece que acelera
-     no fim. Dobrando, a percepcao e que sobe parelho.
+     O raio de cada nivel caiu pela metade em relacao a versao gaussiana: o
+     par ja soma, e mantendo o raio antigo o resultado virava sopa em vez de
+     rastro. O deslocamento cresce junto com o raio, senao os niveis de fora
+     borram muito e escorregam pouco, e o efeito volta a parecer radial. */
+  /* `overflow:hidden` nao e detalhe: as camadas sao deslocadas ate 22px no
+     eixo X, e sem recorte elas esticam a pagina — medido, 22px de rolagem
+     horizontal, exatamente o maior deslocamento. Recortadas, a parte que
+     sobra some e o rastro continua inteiro dentro do trilho, porque o que
+     produz o efeito e a AMOSTRAGEM deslocada do fundo, nao o pedaco que
+     ficava para fora. */
+  .desfoque{position:absolute; inset:0; z-index:2; pointer-events:none; overflow:hidden}
+  .desfoque span{position:absolute; inset:0; display:block; opacity:.5}
+  .d-esq{--d:-1}
+  .d-dir{--d:1}
 
-     As mascaras sao simetricas e as faixas caminham para fora: a de 1px
-     comeca a agir a 40% do centro, a de 8px so nos ultimos 10%. */
-  .desfoque{position:absolute; inset:0; z-index:2; pointer-events:none}
-  .desfoque span{
-    position:absolute; inset:0; display:block;
-    /* `-webkit-` explicito: no Safari o `backdrop-filter` sem prefixo ainda
-       falha, e falha em silencio — a camada some e o degrau volta. */
-  }
   .desfoque-1{
-    -webkit-backdrop-filter:blur(1px); backdrop-filter:blur(1px);
+    -webkit-backdrop-filter:blur(.5px); backdrop-filter:blur(.5px);
+    transform:translateX(calc(var(--d) * 3px));
     -webkit-mask-image:linear-gradient(90deg,#000 0,#000 12%,transparent 40%,transparent 60%,#000 88%,#000 100%);
     mask-image:linear-gradient(90deg,#000 0,#000 12%,transparent 40%,transparent 60%,#000 88%,#000 100%);
   }
   .desfoque-2{
-    -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
+    -webkit-backdrop-filter:blur(1px); backdrop-filter:blur(1px);
+    transform:translateX(calc(var(--d) * 6px));
     -webkit-mask-image:linear-gradient(90deg,#000 0,#000 8%,transparent 30%,transparent 70%,#000 92%,#000 100%);
     mask-image:linear-gradient(90deg,#000 0,#000 8%,transparent 30%,transparent 70%,#000 92%,#000 100%);
   }
   .desfoque-3{
-    -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
+    -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
+    transform:translateX(calc(var(--d) * 12px));
     -webkit-mask-image:linear-gradient(90deg,#000 0,#000 4%,transparent 20%,transparent 80%,#000 96%,#000 100%);
     mask-image:linear-gradient(90deg,#000 0,#000 4%,transparent 20%,transparent 80%,#000 96%,#000 100%);
   }
   .desfoque-4{
-    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
+    transform:translateX(calc(var(--d) * 22px));
     -webkit-mask-image:linear-gradient(90deg,#000 0,#000 1%,transparent 12%,transparent 88%,#000 99%,#000 100%);
     mask-image:linear-gradient(90deg,#000 0,#000 1%,transparent 12%,transparent 88%,#000 99%,#000 100%);
   }
-  /* No celular o trilho tem uma peca e meia na tela: quatro camadas de
-     backdrop-filter custam GPU para desfocar quase nada. Ficam duas. */
+  /* No celular a fila tem uma peca e meia na tela: oito camadas de
+     backdrop-filter custam GPU para borrar quase nada. Ficam quatro. */
   @media (max-width:640px){
-    .desfoque-3, .desfoque-4{display:none}
+    /* `.desfoque .desfoque-3` e nao `.desfoque-3`: a regra compartilhada
+       `.desfoque span{display:block}` tem especificidade (0,1,1) e VENCE um
+       seletor de classe unica (0,1,0), entao a media query nao tinha efeito
+       — medido, as oito camadas continuavam visiveis em 375px. Com o pai
+       junto sao (0,2,0) e a contagem de classes decide. */
+    .desfoque .desfoque-3, .desfoque .desfoque-4{display:none}
   }
-  /* Sem suporte a backdrop-filter nao ha o que empilhar — e melhor a fila
-     nitida do que quatro retangulos opacos por cima dela. */
   @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
     .desfoque{display:none}
   }
@@ -946,10 +988,10 @@
            outra. `aria-hidden` e `pointer-events:none`: e vidro, nao
            conteudo, e nao pode comer o clique do cartao. -->
       <div class="desfoque" aria-hidden="true">
-        <span class="desfoque-1"></span>
-        <span class="desfoque-2"></span>
-        <span class="desfoque-3"></span>
-        <span class="desfoque-4"></span>
+        <span class="desfoque-1 d-esq"></span><span class="desfoque-1 d-dir"></span>
+        <span class="desfoque-2 d-esq"></span><span class="desfoque-2 d-dir"></span>
+        <span class="desfoque-3 d-esq"></span><span class="desfoque-3 d-dir"></span>
+        <span class="desfoque-4 d-esq"></span><span class="desfoque-4 d-dir"></span>
       </div>
       <button class="seta seta--antes"  type="button" id="setaAntes"  aria-label="Ver anteriores">‹</button>
       <button class="seta seta--depois" type="button" id="setaDepois" aria-label="Ver próximos">›</button>
