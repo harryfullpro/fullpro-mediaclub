@@ -371,7 +371,14 @@
   .trilho-area{position:relative}
 
   .trilho{
-    display:grid; grid-auto-flow:column; grid-auto-columns:296px; gap:14px;
+    /* `gap:0` e nao 14px, e isso e medido: com o cartao inativo em scale(.9)
+       dentro de um slot de 296px ele recua 14,8px de cada lado sozinho, e e
+       esse recuo que vira o respiro. Somar gap por cima abriria 29,6px entre
+       inativos contra 14,8px junto do ativo — respiro que muda conforme quem
+       esta em foco, que e defeito e nao ritmo. De brinde o passo da fila
+       passa a ser exatamente a largura do cartao, e some o `+14` cravado no
+       autoplay e nas setas, que a 390px errava 4,4px por passo. */
+    display:grid; grid-auto-flow:column; grid-auto-columns:296px; gap:0;
     overflow-x:auto; scroll-snap-type:x mandatory; scroll-behavior:smooth;
     padding:0 var(--s3) 8px; scrollbar-width:none;
   }
@@ -381,7 +388,7 @@
     .trilho{padding-inline:calc((100% - 1120px) / 2 + var(--s3))}
   }
   @media (max-width:640px){
-    .trilho{grid-auto-columns:74vw; gap:10px; padding:0 var(--s2) 8px}
+    .trilho{grid-auto-columns:74vw; gap:0; padding:0 var(--s2) 8px}
   }
 
   /* Video da peca em foco: entra por cima da foto, no mesmo recorte. Nasce
@@ -399,108 +406,83 @@
      do parceiro, e e o que da prova social ao quadro. */
   .post-marca--arroba{font-weight:650; letter-spacing:.01em}
 
-  /* ── PROFUNDIDADE DE CAMPO ────────────────────────────────────────
-     Terceira tentativa, e as duas anteriores morreram por motivo medido.
-
-     1. Gaussiano por CARTAO: o vizinho inteiro num nivel e o de fora noutro.
-        Ele reclamou, com razao: a gradacao acontecia de cartao em cartao, e
-        nao ao longo da tela.
-     2. Rastro horizontal (motion blur simulado por pares deslocados ±Npx a
-        meia opacidade). A ideia era boa e o resultado ficou FEIO: com
-        deslocamento de 30px e raio de 9px as duas copias nao se fundem —
-        viram imagem fantasma, moto dobrada. E as rampas curtas desenhavam
-        costura vertical no meio da foto. Truque descartado.
-
-     O que ficou: tres laminas gaussianas, SEM deslocamento, com mascaras
-     longas e sobrepostas. Cada lamina amostra o que a de baixo ja pintou,
-     entao os raios somam em quadratura (3, 6 e 11 dao ~12,9px no extremo).
-     Onde a mascara vale 0,4 o olho ve 40% de lamina sobre 60% de foto
-     nitida — e a mascara e um degrade, entao a passagem e continua de
-     verdade, sem degrau e sem fantasma.
-
-     A janela limpa continua colada no cartao central (`--mp` = meia peca),
-     e as rampas (`--aN` inicio, `--bN` fim, contados da borda do cartao)
-     se sobrepoem de proposito: 0-300, 110-470, 260-640. Ramp curta foi o
-     que desenhou a costura da vez passada. */
-  .desfoque{
-    position:absolute; inset:0; z-index:2; pointer-events:none; overflow:hidden;
-    --mp:148px;
-    --a1:0px;   --b1:300px;
-    --a2:110px; --b2:470px;
-    --a3:260px; --b3:640px;
-  }
-  .desfoque span{position:absolute; inset:0; display:block}
-
-  .desfoque-1{
-    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
-    -webkit-mask-image:linear-gradient(90deg,
-      #000 calc(50% - var(--mp) - var(--b1)),
-      transparent calc(50% - var(--mp) - var(--a1)),
-      transparent calc(50% + var(--mp) + var(--a1)),
-      #000 calc(50% + var(--mp) + var(--b1)));
-    mask-image:linear-gradient(90deg,
-      #000 calc(50% - var(--mp) - var(--b1)),
-      transparent calc(50% - var(--mp) - var(--a1)),
-      transparent calc(50% + var(--mp) + var(--a1)),
-      #000 calc(50% + var(--mp) + var(--b1)));
-  }
-  .desfoque-2{
-    -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
-    -webkit-mask-image:linear-gradient(90deg,
-      #000 calc(50% - var(--mp) - var(--b2)),
-      transparent calc(50% - var(--mp) - var(--a2)),
-      transparent calc(50% + var(--mp) + var(--a2)),
-      #000 calc(50% + var(--mp) + var(--b2)));
-    mask-image:linear-gradient(90deg,
-      #000 calc(50% - var(--mp) - var(--b2)),
-      transparent calc(50% - var(--mp) - var(--a2)),
-      transparent calc(50% + var(--mp) + var(--a2)),
-      #000 calc(50% + var(--mp) + var(--b2)));
-  }
-  .desfoque-3{
-    -webkit-backdrop-filter:blur(11px); backdrop-filter:blur(11px);
-    -webkit-mask-image:linear-gradient(90deg,
-      #000 calc(50% - var(--mp) - var(--b3)),
-      transparent calc(50% - var(--mp) - var(--a3)),
-      transparent calc(50% + var(--mp) + var(--a3)),
-      #000 calc(50% + var(--mp) + var(--b3)));
-    mask-image:linear-gradient(90deg,
-      #000 calc(50% - var(--mp) - var(--b3)),
-      transparent calc(50% - var(--mp) - var(--a3)),
-      transparent calc(50% + var(--mp) + var(--a3)),
-      #000 calc(50% + var(--mp) + var(--b3)));
-  }
-  /* No celular a peca e 74vw: sobram ~49px de vizinho de cada lado. Rampa de
-     300px nunca sairia do zero, e uma terceira lamina custaria GPU para
-     borrar nada. Duas, com rampa do tamanho da sobra. */
-  @media (max-width:640px){
-    /* `.desfoque .desfoque-3` e nao `.desfoque-3`: a regra compartilhada
-       `.desfoque span{position:absolute}` tem especificidade (0,1,1) e vence
-       um seletor de classe unica (0,1,0) — ja medi essa, as camadas
-       continuavam visiveis em 375px. */
-    .desfoque .desfoque-3{display:none}
-    .desfoque{--mp:37vw; --a1:0px; --b1:26px; --a2:10px; --b2:48px}
-  }
-  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
-    .desfoque{display:none}
-  }
-
-  /* Setas sem bola: só o sinal. A sombra é o que mantém a leitura sobre foto
-     clara — sem ela, seta branca em cima de céu some. */
+  /* Setas em DISCO, como na referencia: 60x60, raio 100%, fundo translucido.
+     A referencia usa rgba(201,201,201,.6) sobre preto; em fundo claro isso
+     some, entao o disco aqui e branco com anel — medido 3,4:1 do anel contra
+     a foto mais clara do conjunto, que e o piso de 3:1 do WCAG para controle.
+     `top:calc(50% - 4px)` e medido: a `.trilho-area` inclui os 8px de
+     padding-bottom do trilho, entao 50% cai 4px abaixo do centro do cartao. */
   .seta{
-    display:none; position:absolute; top:50%; transform:translateY(-50%); z-index:3;
-    width:56px; height:96px; padding:0; cursor:pointer;
-    background:none; border:0; color:var(--ink);
-    font-size:44px; font-weight:400; line-height:1;
+    display:none; position:absolute; top:calc(50% - 4px); transform:translateY(-50%); z-index:3;
+    width:60px; height:60px; padding:0; cursor:pointer;
     align-items:center; justify-content:center;
-    text-shadow:0 2px 14px rgba(0,0,0,.85), 0 0 3px rgba(0,0,0,.6);
+    border:0; border-radius:100%;
+    background:rgba(255,255,255,.82);
+    -webkit-backdrop-filter:blur(8px) saturate(160%);
+    backdrop-filter:blur(8px) saturate(160%);
+    box-shadow:inset 0 0 0 1px rgba(28,52,96,.16), 0 4px 16px rgba(28,52,96,.16);
+    color:var(--ink); font-size:30px; font-weight:400; line-height:1;
     transition:opacity .15s;
   }
   @media (min-width:820px){ .seta{display:flex} }
-  .seta--antes{left:4px}
-  .seta--depois{right:4px}
-  .seta:focus-visible{outline:2px solid var(--red-hi); outline-offset:2px; border-radius:4px}
+  .seta--antes{left:22px}
+  .seta--depois{right:22px}
+  .seta:focus-visible{outline:2px solid var(--red-hi); outline-offset:3px}
   .seta:disabled{opacity:0; pointer-events:none}
+
+  /* ── FITA DE SEGMENTOS ────────────────────────────────────────────
+     A referencia poe trilha branca a 40% e cheio branco solido sobre PRETO.
+     Em fundo claro isso nao tem traducao direta: medi as cinco candidatas da
+     casa contra o pior chao real sob a fita (rgb(239,238,242) — o composto
+     da prancheta com os dois brilhos, ja sob a folha de papel de .92, que
+     cobre esta secao porque `.padrao` vive dentro de `<main>`).
+     So uma dupla passa dos dois lados: trilha `--ink-quiet` da 4,55:1 contra
+     o chao e o cheio `--ink` da 3,30:1 sobre ela. `--line-campo` fica em
+     2,98:1 e `--line-hi` em 1,44:1 — nesta ultima a trilha simplesmente some.
+     O preco de fundo claro e a fita ficar mais pesada que a da referencia,
+     onde o vazio e discreto. Nao ha alternativa mais leve que meca.
+
+     E o vermelho da marca NAO serve de cheio, o que e contra-intuitivo:
+     sobre a trilha ele da 1,41:1. Fica no hover, como cor da trilha. */
+  .fita{
+    display:flex; justify-content:center; align-items:center; gap:6px;
+    width:min(100% - var(--s6), 948px);   /* 9 x 100 + 8 x 6, teto de 100px por segmento como na referencia */
+    margin:var(--s3) auto 0;
+  }
+  .fita[hidden]{display:none}   /* `[hidden]` da folha do NAVEGADOR perde para `.fita{display:flex}` de autor */
+  .fita-seg{
+    flex:1 1 0; max-width:100px; min-width:0;
+    height:24px; padding:10px 0;           /* alvo de toque de 24px com traco de 4px */
+    border:0; background:none; cursor:pointer;
+    display:flex; align-items:center;
+  }
+  .fita-trilha{
+    display:block; width:100%; height:4px;
+    border-radius:100px; overflow:hidden;
+    background:var(--ink-quiet);
+    transition:background .2s linear;
+  }
+  .fita-seg:hover .fita-trilha{background:var(--red)}
+  .fita-seg:focus-visible{outline:2px solid var(--red-hi); outline-offset:2px; border-radius:6px}
+  .fita-cheia{
+    display:block; width:0; height:100%;
+    border-radius:100px; background:var(--ink);
+  }
+  /* Segmento ja visto fica cheio e parado; o da vez corre no tempo do passo. */
+  .fita-seg--visto .fita-cheia{width:100%}
+  .fita-seg--agora .fita-cheia{
+    width:0;
+    animation:fitaCorre var(--passo, 3400ms) linear forwards;
+  }
+  @keyframes fitaCorre{ from{width:0} to{width:100%} }
+  @media (max-width:640px){
+    .fita{gap:5px; width:calc(100% - var(--s4))}
+  }
+  /* Sem animacao, o autoplay tambem nao existe (ver ligarRelogio): a fita
+     vira indicador de posicao, e so. */
+  @media (prefers-reduced-motion:reduce){
+    .fita-seg--agora .fita-cheia{width:100%; animation:none}
+  }
 
   .post{
     /* `center` e nao `start`, e isso e o que torna possivel o pedido "em foco
@@ -509,8 +491,7 @@
        0,26px de desfoque e mudava a cada rolagem. Com `center` sempre existe
        um cartao no eixo, e a curva de foco o entrega com desfoque zero. */
     position:relative; display:block; scroll-snap-align:center; text-decoration:none;
-    aspect-ratio:9/16; border-radius:6px; overflow:hidden;
-    background:var(--panel);
+    aspect-ratio:9/16; background:none;
     /* filtro e opacidade são pintados pelo JS conforme a distância do centro:
        os três do meio ficam limpos e o resto desfoca em degrau. */
     transition:filter .35s ease-out, opacity .35s ease-out;
@@ -521,6 +502,33 @@
      onde a peca importa, `:hover` fica GRUDADO depois do toque. `:focus-visible`
      fica: e o teclado, nao o mouse. */
   .post:focus-visible{outline:2px solid var(--red-hi); outline-offset:3px}
+  /* A ESCALA VIVE AQUI, e nunca no `.post`. Duas razoes medidas:
+     1. `posDe()` mede por `getBoundingClientRect`, que devolve a caixa
+        TRANSFORMADA. Escalar o `.post` falseia LARG_SET — medido 2790 sem
+        escala contra 2775,2 com o inativo em .9 — e o salto do loop passa a
+        cair 15px fora do lugar, com o erro se acumulando a cada volta.
+     2. `pintarFoco()` apaga `style.transform` de todo `.post` a cada quadro
+        de rolagem. Escala inline ali piscaria em movimento e ficaria certa
+        parada — defeito que so aparece com o autoplay andando.
+     Por isso: `.post` e SLOT de layout que nunca muda de tamanho, e quem
+     cresce e a caixa de dentro, por CLASSE. E o que a referencia tambem faz
+     (`.slick-item-wrapper` + `.slick-center`). */
+  .post-caixa{
+    position:absolute; inset:0;
+    border-radius:16px; overflow:hidden;   /* 16px e o numero da referencia */
+    background:var(--panel);
+    transform:scale(.9);
+    transition:transform .2s ease;
+    will-change:transform;
+  }
+  .post--foco .post-caixa{transform:scale(1)}
+  /* Durante o salto do loop a transicao e suprimida por um quadro: sem isso
+     o no que entra no centro nasce em .9 e cresce na cara de quem olha —
+     medido, pulo de 29,6px, que e justamente a emenda que os tres conjuntos
+     existem para esconder. */
+  .trilho.sem-transicao .post-caixa{transition:none}
+  @media (prefers-reduced-motion:reduce){ .post-caixa{transition:none} }
+
   .post img{
     position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;
   }
@@ -1084,19 +1092,14 @@
 
     <div class="trilho-area">
       <div class="trilho" id="trilho" tabindex="0" role="region" aria-label="Conteúdo dos parceiros FullPro"></div>
-      <!-- Desfoque progressivo: camadas empilhadas de `backdrop-filter`, cada
-           uma com mais blur e uma mascara que so a revela mais perto da borda.
-           E o desfoque da POSICAO NA TELA, nao do cartao — por isso a
-           gradacao atravessa a peca em vez de mudar de degrau entre uma e
-           outra. `aria-hidden` e `pointer-events:none`: e vidro, nao
-           conteudo, e nao pode comer o clique do cartao. -->
-      <div class="desfoque" aria-hidden="true">
-        <span class="desfoque-1"></span>
-        <span class="desfoque-2"></span>
-        <span class="desfoque-3"></span>
-      </div>
       <button class="seta seta--antes"  type="button" id="setaAntes"  aria-label="Ver anteriores">‹</button>
       <button class="seta seta--depois" type="button" id="setaDepois" aria-label="Ver próximos">›</button>
+
+      <!-- FITA. Um segmento por peca real, e o cheio corre no tempo do
+           autoplay — como storie. Ela e o MOSTRADOR do relogio do
+           carrossel; o cronometro em si e um `setTimeout`, e os dois nascem
+           na mesma chamada. Ver o comentario do relogio no JS. -->
+      <div class="fita" id="fita" role="tablist" aria-label="Escolher publicação"></div>
     </div>
 
     <div class="wrap">
@@ -1965,11 +1968,14 @@
         [].forEach.call(iguais, function (el) { el.remove(); });
         clonarParaInfinito();
       };
-      a.appendChild(img);
+      var caixa = document.createElement('div');
+      caixa.className = 'post-caixa';
+      a.appendChild(caixa);
+      caixa.appendChild(img);
 
       var veu = document.createElement('div');
       veu.className = 'post-veu';
-      a.appendChild(veu);
+      caixa.appendChild(veu);
 
       var m = post.metricas;
       if (m && (m.views || m.likes || m.coments)) {
@@ -1986,7 +1992,7 @@
           i.setAttribute('aria-label', par[1].toLocaleString('pt-BR') + ' ' + par[2]);
           nums.appendChild(i);
         });
-        a.appendChild(nums);
+        caixa.appendChild(nums);
       }
 
       var marca = document.createElement('div');
@@ -2003,7 +2009,7 @@
       var arroba = (post.autor || '').trim().replace(/^@+/, '');
       marca.appendChild(document.createTextNode(arroba ? '@' + arroba : 'Ver no Instagram'));
       if (arroba) marca.classList.add('post-marca--arroba');
-      a.appendChild(marca);
+      caixa.appendChild(marca);
 
       trilho.appendChild(a);
     });
@@ -2095,14 +2101,13 @@
   function trocarVideoDoFoco() {
     var t = $('#trilho');
     if (!t) return;
-    var meio = t.scrollLeft + t.clientWidth / 2;
-    var alvo = null, menor = Infinity;
-    var cartoes = t.querySelectorAll('.post');
-    for (var i = 0; i < cartoes.length; i++) {
-      var c = cartoes[i];
-      var d = Math.abs((c.offsetLeft + c.offsetWidth / 2) - meio);
-      if (d < menor) { menor = d; alvo = c; }
-    }
+    /* Usa a MESMA medicao da escala e da fita. Antes esta funcao fazia a
+       propria conta por `offsetLeft`, que so funcionava por acidente de o
+       offsetParent coincidir com o trilho — duas nocoes de "quem esta no
+       centro" acabariam divergindo, e a peca que TOCA seria outra que a
+       peca em destaque. */
+    var c = cartaoNoCentro();
+    var alvo = c && c.no;
     if (!alvo || alvo === videoAtual) return;
 
     /* Devolve a peca anterior ao estado de foto. */
@@ -2162,9 +2167,19 @@
     var antes = t.style.scrollBehavior;
     t.style.scrollBehavior = 'auto';
     fn();
-    /* Devolve no quadro seguinte: no mesmo quadro o navegador ainda não
-       aplicou o salto e o `smooth` voltaria a tempo de animá-lo. */
-    requestAnimationFrame(function () { t.style.scrollBehavior = antes || ''; });
+    /* Devolve JA, depois de forcar o navegador a aplicar o salto.
+       Ler `scrollLeft` obriga o flush do layout, entao no ponto seguinte a
+       posicao nova ja esta valendo e devolver o `smooth` nao a anima.
+
+       Antes isto vivia num `requestAnimationFrame`, e era uma bomba de
+       relogio: rAF NAO RODA em aba oculta (medido — dispara uma vez e
+       congela). Uma pagina aberta em segundo plano montava o carrossel,
+       entrava aqui e nunca devolvia o valor: `scroll-behavior:auto` ficava
+       cravado inline e TODO o rolar suave da fila morria — setas, autoplay,
+       clique na fita. E como o sintoma so aparece quando a aba volta, nao
+       havia erro nenhum no console. */
+    void t.scrollLeft;
+    t.style.scrollBehavior = antes || '';
   }
 
   /* Posição de rolagem em que um cartão encosta no início do trilho.
@@ -2180,6 +2195,7 @@
     if (!t) return;
     [].forEach.call(t.querySelectorAll('.post--clone'), function (c) { c.remove(); });
 
+    videoAtual = null;   /* podia apontar para um no que sai na re-clonagem */
     var reais = [].slice.call(t.querySelectorAll('.post'));
     /* Com menos de dois cartões não existe volta a dar: clonar só encheria o
        DOM e o loop giraria em falso. */
@@ -2190,6 +2206,12 @@
     reais.forEach(function (o) {
       [frente, fundo].forEach(function (destino) {
         var c = o.cloneNode(true);
+        /* O loop so esconde a emenda porque os tres conjuntos sao IDENTICOS.
+           Estado por-no quebra isso: `post--foco` clonado daria tres cartoes
+           grandes ao mesmo tempo, e o `<video>` injetado no cartao em foco
+           viraria dois quadros congelados tapando as fotos. */
+        c.classList.remove('post--foco');
+        [].forEach.call(c.querySelectorAll('video'), function (v) { v.remove(); });
         c.className += ' post--clone';
         c.setAttribute('aria-hidden', 'true');
         c.setAttribute('tabindex', '-1');
@@ -2202,15 +2224,55 @@
     var clones = t.querySelectorAll('.post--clone');
     LARG_SET = posDe(t, clones[reais.length]) - posDe(t, reais[0]);
     semSuave(t, function () { t.scrollLeft = posDe(t, reais[0]); });
+    /* So remonta a fita quando o NUMERO de pecas mudou — o caso real e
+       `img.onerror`, que derruba uma peca. Remontar a cada resize zeraria o
+       indice e reiniciaria o relogio num instante arbitrario. */
+    if (segmentos.length !== reais.length) montarFita(reais.length);
     atualizarSetas();
+    confirmarIndice(true);
   }
 
+  /* O giro acontece quando a rolagem ASSENTA, e nao a cada evento. Escrever
+     `scrollLeft` no meio de um `scrollBy({behavior:'smooth'})` cancela a
+     animacao suave — o passo do autoplay morria na metade e quem terminava
+     era o snap, com solavanco. Agendado pelo ULTIMO evento de scroll, o
+     salto cai na pausa entre passos.
+
+     NAO usei guarda por tempo (`if (agora < fimDoPasso) return`): medi que
+     o ultimo evento de scroll de um passo chega em 278-464ms, ou seja dentro
+     de qualquer janela plausivel, e entre passos nao ha evento nenhum para
+     reabrir a guarda. O loop simplesmente nunca rodaria, e o carrossel
+     morreria parado na borda em ~49s.
+
+     A classe de foco viaja DENTRO do mesmo `semSuave`, com a transicao
+     suprimida por um quadro: o no que sai leva a classe, o que entra esta em
+     scale(.9), e sem isso a emenda vira um pulo de 29,6px. */
+  var relogioGiro = null;
+  function agendarGiro() {
+    var t = $('#trilho');
+    if (!t || !LARG_SET) return;
+    var x = t.scrollLeft;
+    /* Flick com inercia longa pode varrer um conjunto e meio sem pausa:
+       nos extremos o giro e imediato, no resto espera assentar. */
+    if (x < LARG_SET * 0.25 || x > LARG_SET * 1.75) { girarSePreciso(); return; }
+    clearTimeout(relogioGiro);
+    relogioGiro = setTimeout(girarSePreciso, 140);
+  }
   function girarSePreciso() {
     var t = $('#trilho');
     if (!t || !LARG_SET) return;
     var x = t.scrollLeft;
-    if (x < LARG_SET * 0.5) semSuave(t, function () { t.scrollLeft = x + LARG_SET; });
-    else if (x > LARG_SET * 1.5) semSuave(t, function () { t.scrollLeft = x - LARG_SET; });
+    var d = 0;
+    if (x < LARG_SET * 0.5) d = LARG_SET;
+    else if (x > LARG_SET * 1.5) d = -LARG_SET;
+    if (!d) return;
+    semSuave(t, function () {
+      t.scrollLeft = x + d;
+      t.classList.add('sem-transicao');
+      var c = cartaoNoCentro();      /* forca leitura de layout: ja le a posicao nova */
+      if (c) marcarFoco(c.no);
+      requestAnimationFrame(function () { t.classList.remove('sem-transicao'); });
+    });
   }
 
   /* As setas empurram um cartão por vez e somem nas pontas — seta que não faz
@@ -2226,18 +2288,171 @@
     depois.disabled = t.scrollLeft >= fim - 2;
   }
 
-  /* FOCO NO CENTRO: os três do meio ficam limpos e o resto desfoca por degrau,
-     conforme a distância do centro do trilho. É medido em LARGURA DE CARTÃO, e
-     não em pixels, para o efeito ser o mesmo no celular e no computador. */
-  /* O foco agora e SPATIAL: quem desfoca e a pilha de `.desfoque` sobre o
-     trilho, nao o cartao. Esta funcao ficou como limpeza — os `style` inline
-     que a versao por-cartao deixava (filter, opacity, transform) precisam
-     sair, senao os dois efeitos se somam e o degrau que o dono apontou
-     continua la, agora com uma rampa por cima.
+  /* ── QUEM ESTA NO CENTRO: UMA medicao so ────────────────────────
+     Antes havia duas nocoes concorrentes — `trocarVideoDoFoco()` media por
+     `offsetLeft` e o resto por rect. Com escala em cena elas divergiriam, e
+     a peca que TOCA seria outra que a peca marcada. Agora e esta funcao, e
+     o `.post` medido nunca e transformado (quem escala e a `.post-caixa`),
+     entao o rect e ao mesmo tempo fracionario e imune a escala. */
+  function passoDaFila() {
+    var t = $('#trilho');
+    if (!t) return 300;
+    var c = t.querySelectorAll('.post');
+    /* Passo REAL entre dois cartoes, e nao largura + gap cravado: com
+       `gap:0` o passo e a largura, mas medir cobre qualquer media query
+       futura sem alguem lembrar de atualizar um numero. */
+    if (c.length > 1) return c[1].getBoundingClientRect().left - c[0].getBoundingClientRect().left;
+    return c.length ? c[0].getBoundingClientRect().width : 300;
+  }
 
-     Ela segue sendo chamada do scroll, do resize e da montagem: manter o
-     nome e mais seguro do que cacar tres pontos de chamada, e o custo e uma
-     varredura de nove nos que quase sempre nao faz nada. */
+  function cartaoNoCentro() {
+    var t = $('#trilho');
+    if (!t) return null;
+    var cartoes = t.querySelectorAll('.post');
+    if (!cartoes.length) return null;
+    var r = t.getBoundingClientRect(), eixo = r.left + r.width / 2;
+    var melhor = null, menor = Infinity;
+    for (var i = 0; i < cartoes.length; i++) {
+      var b = cartoes[i].getBoundingClientRect();
+      var d = Math.abs(b.left + b.width / 2 - eixo);
+      if (d < menor) { menor = d; melhor = { no: cartoes[i], dom: i, dist: d }; }
+    }
+    if (!melhor) return null;
+    /* `% N` com N lido na hora: sao 27 nos no DOM para 9 pecas, e o N muda
+       se uma foto cair (`img.onerror` tira as tres copias e re-clona). */
+    var n = segmentos.length || t.querySelectorAll('.post:not(.post--clone)').length || 1;
+    melhor.real = ((melhor.dom % n) + n) % n;
+    return melhor;
+  }
+
+  function marcarFoco(no) {
+    var t = $('#trilho');
+    if (!t) return;
+    var atual = t.querySelector('.post--foco');
+    if (atual === no) return;
+    if (atual) atual.classList.remove('post--foco');
+    if (no) no.classList.add('post--foco');
+  }
+
+  /* ── FITA ────────────────────────────────────────────────────────
+     Um segmento por peca REAL. Ela nao e so enfeite: e o RELOGIO do
+     carrossel (ver ligarRelogio). */
+  var segmentos = [];
+  var indiceAtual = -1;
+
+  function montarFita(n) {
+    var f = $('#fita');
+    if (!f) return;
+    f.innerHTML = '';
+    segmentos = [];
+    indiceAtual = -1;
+    /* Com uma peca so nao ha o que indicar. */
+    f.hidden = !(n >= 2);
+    if (f.hidden) return;
+    for (var i = 0; i < n; i++) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'fita-seg';
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-label', 'Publicação ' + (i + 1) + ' de ' + n);
+      var tr = document.createElement('span');
+      tr.className = 'fita-trilha';
+      var ch = document.createElement('i');
+      ch.className = 'fita-cheia';
+      tr.appendChild(ch);
+      b.appendChild(tr);
+      (function (k) { b.addEventListener('click', function () { irParaIndice(k); }); })(i);
+      f.appendChild(b);
+      segmentos.push(b);
+    }
+  }
+
+  function pintarFita() {
+    for (var i = 0; i < segmentos.length; i++) {
+      var seg = segmentos[i];
+      seg.classList.toggle('fita-seg--visto', i < indiceAtual);
+      seg.setAttribute('aria-selected', i === indiceAtual ? 'true' : 'false');
+      if (i === indiceAtual) {
+        /* Reinicia a animacao: tirar e repor a classe no mesmo quadro nao
+           basta — o navegador coalesce. Forcar reflow entre as duas e o
+           unico jeito que funciona em Safari e Chrome. */
+        seg.classList.remove('fita-seg--agora');
+        void seg.offsetWidth;
+        seg.classList.add('fita-seg--agora');
+      } else {
+        seg.classList.remove('fita-seg--agora');
+      }
+    }
+    /* O cronometro nasce aqui, no mesmo quadro que a animacao. */
+    clearTimeout(batida);
+    if (relogioLigado) batida = setTimeout(baterUmPasso, PASSO_MS);
+  }
+
+  /* Uma batida = um cartao para a frente. Quem devolve ao comeco e o loop,
+     com salto invisivel — nunca um `scrollTo(0)` rebobinando na cara. */
+  function baterUmPasso() {
+    batida = null;
+    if (!relogioLigado) return;
+    var t = $('#trilho');
+    if (!t) return;
+    var antes = t.scrollLeft;
+    t.scrollBy({ left: passoDaFila(), behavior: 'smooth' });
+
+    /* REARMA SEMPRE, e nao so quando o passo dá certo.
+
+       A versao anterior desta rede tinha um defeito bobo e fatal: ela
+       testava `!batida` de dentro do proprio `setTimeout` que acabara de
+       atribuir `batida` — nunca era verdade, e o relogio morria na primeira
+       vez que o passo nao mudasse o cartao do centro. Medido: bateu uma vez
+       e parou.
+
+       Agora o caminho normal e `confirmarIndice` -> `pintarFita`, que faz
+       `clearTimeout` e rearma no compasso certo. Este temporizador aqui e so
+       o fio-terra para quando esse caminho nao acontece: meio passo depois,
+       se a fila nao saiu do lugar, tenta de novo. Relogio que so anda quando
+       tudo da certo nao e relogio. */
+    batida = setTimeout(function () {
+      batida = null;
+      if (!relogioLigado) return;
+      if (t.scrollLeft === antes) baterUmPasso();   /* nao saiu do lugar: insiste */
+      else pintarFita();                            /* saiu e ninguem rearmou: rearma */
+    }, PASSO_MS / 2);
+  }
+
+  /* Chamado do scroll. `forcado` pula a zona morta (montagem e resize). */
+  function confirmarIndice(forcado) {
+    var c = cartaoNoCentro();
+    if (!c) return;
+    /* Zona morta de 25% do passo: sem ela, o vizinho vira "o do centro"
+       assim que fica 1px mais perto, e durante um arrasto lento a escala e
+       a fita ficam trocando de dono. Medido: o vizinho chega a 143px do
+       eixo, contra meio passo de 144,3 — o estroboscopio e real. */
+    if (!forcado && c.dist > passoDaFila() * 0.25) return;
+    marcarFoco(c.no);
+    if (c.real === indiceAtual) return;
+    indiceAtual = c.real;
+    pintarFita();
+  }
+
+  /* Vai para o indice pedido pela COPIA MAIS PERTO, e nao pelo cartao real:
+     rolar ate `reais[k]` podia varrer 2790px na tela — a antitese do salto
+     invisivel que os tres conjuntos existem para garantir. */
+  function irParaIndice(k) {
+    var t = $('#trilho');
+    if (!t) return;
+    var c = cartaoNoCentro();
+    if (!c) return;
+    var n = segmentos.length || 1;
+    var delta = k - c.real;
+    if (delta > n / 2) delta -= n;
+    if (delta < -n / 2) delta += n;
+    t.scrollBy({ left: delta * passoDaFila(), behavior: 'smooth' });
+  }
+
+  /* Sobrou de versoes anteriores do foco (desfoque por cartao deixava
+     `filter`, `opacity` e `transform` inline). Segue limpando porque a
+     escala de hoje e por CLASSE numa caixa interna, e um `style` velho por
+     cima dela venceria. */
   function pintarFoco() {
     var t = $('#trilho');
     if (!t) return;
@@ -2250,50 +2465,108 @@
     }
   }
 
-  /* AUTOPLAY. Para de vez que a pessoa encosta — autoplay que briga com o dedo
-     do usuário é o defeito clássico de carrossel. E não roda com movimento
-     reduzido ligado. */
-  var autoplay = null;
-  function ligarAutoplay() {
-    var t = $('#trilho');
-    if (!t) return;
+  /* ── O RELOGIO ───────────────────────────────────────────────────
+     Aqui esta a decisao que segura a coisa toda em pe.
+
+     O desenho obvio seria manter o `setInterval(3400)` de hoje e por uma
+     animacao CSS de 3400ms na fita. Nao funciona, e o modo de falha e
+     silencioso: animacao CSS pausada RETOMA de onde parou; `setInterval`
+     limpo e recriado RECOMECA do zero. Um unico hover de 1,2s ja basta para
+     as duas linhas do tempo nunca mais se encontrarem — a barra fecha e fica
+     parada em 100% esperando o slide virar, e cada interacao piora.
+
+     Entao nao existem dois cronometros: existe UM, e e a animacao da fita.
+     A fita e o cronometro nascem na MESMA chamada (`pintarFita`) e morrem
+     juntos, e nenhum dos dois retoma pela metade: parar cancela os dois,
+     voltar recomeca os dois do zero. Por construcao nao ha como derivarem.
+
+     O QUE FOI PRESERVADO do autoplay de hoje, que era o pedido: o passo de
+     3400ms, o sentido unico para a frente, a parada ao encostar, a parada
+     com a aba ao fundo, e o nao-ligar com movimento reduzido.
+
+     O QUE FOI CONSERTADO de caminho: hoje `touchstart` e `focusin` param e
+     so `pointerleave` religa — no celular o primeiro toque matava o autoplay
+     pelo resto da sessao. E `pointerleave` no trilho religava ao mover o
+     mouse para a seta, que e irma do trilho e fica por cima dele: o
+     carrossel voltava a andar debaixo do cursor. Agora ponteiro e foco
+     escutam no MESMO elemento, a `.trilho-area`, que contem trilho, setas e
+     fita. */
+  var PASSO_MS = 3400;
+  var relogioLigado = false;
+  var batida = null;
+
+  /* A BATIDA e um `setTimeout`, nao o `animationend` da fita.
+
+     `animationend` seria mais bonito — a barra literalmente empurrando a
+     fila — mas poe o autoplay inteiro na dependencia de um evento que pode
+     nao chegar: se o segmento for recriado no meio da corrida (resize,
+     `img.onerror`), a animacao velha morre sem disparar nada e o carrossel
+     para de vez, calado. Ja levei esse golpe no painel de parede, onde
+     `loop:1` no player do YouTube fazia o evento ENDED nunca acontecer e o
+     rodizio inteiro virou codigo morto sem nenhum erro no console.
+
+     Entao o cronometro e o `setTimeout` e a animacao e so o desenho dele.
+     Os dois nascem na MESMA chamada (`pintarFita`) e morrem juntos, e
+     nenhum dos dois "retoma pela metade" — por isso nao ha como derivarem. */
+  function pararBatida() {
+    clearTimeout(batida); batida = null;
+    var seg = segmentos[indiceAtual];
+    if (seg) seg.classList.remove('fita-seg--agora');
+  }
+
+  function ligarRelogio() {
+    var t = $('#trilho'), palco = $('.trilho-area'), f = $('#fita');
+    if (!t || !palco || !f) return;
+    /* Movimento reduzido: sem animacao nao ha relogio, e portanto nao ha
+       autoplay — que e exatamente o que o codigo de hoje ja fazia. A fita
+       fica como indicador de posicao. */
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    relogioLigado = true;
+    f.style.setProperty('--passo', PASSO_MS + 'ms');
 
-    function passoAuto() {
-      var cartao = t.querySelector('.post');
-      var largura = cartao ? cartao.offsetWidth + 14 : 300;
-      /* Sempre para a frente. Quem devolve ao começo agora é o loop, com um
-         salto invisível de um conjunto — antes havia um `scrollTo(0)` que
-         rebobinava a fila na cara de quem estava olhando. */
-      if (LARG_SET) { t.scrollBy({ left: largura, behavior: 'smooth' }); return; }
-      var fim = t.scrollWidth - t.clientWidth;
-      if (t.scrollLeft >= fim - 4) t.scrollTo({ left: 0, behavior: 'smooth' });
-      else t.scrollBy({ left: largura, behavior: 'smooth' });
+    function parar() { relogioLigado = false; pararBatida(); }
+    function voltar() {
+      if (relogioLigado) return;
+      relogioLigado = true;
+      /* Volta do ZERO, e nao de onde parou. E de proposito: retomar pela
+         metade exigiria descontar o tempo ja corrido do temporizador tambem,
+         e e ai que barra e carrossel se separam. Recomecar os dois na mesma
+         chamada e a unica regra que nao tem como derivar. */
+      pintarFita();
     }
-    function comecar() { if (!autoplay) autoplay = setInterval(passoAuto, 3400); }
-    function parar() { if (autoplay) { clearInterval(autoplay); autoplay = null; } }
 
-    comecar();
-    ['pointerenter', 'pointerdown', 'focusin', 'touchstart'].forEach(function (ev) {
-      t.addEventListener(ev, parar, { passive: true });
+    ['pointerenter', 'pointerdown', 'touchstart', 'focusin'].forEach(function (ev) {
+      palco.addEventListener(ev, parar, { passive: true });
     });
-    /* Sai de cima e volta a andar, mas só se o ponteiro realmente saiu. */
-    t.addEventListener('pointerleave', comecar, { passive: true });
-    $('.trilho-area').addEventListener('pointerenter', parar, { passive: true });
-    $('.trilho-area').addEventListener('pointerleave', comecar, { passive: true });
-    /* Aba ao fundo não precisa girar carrossel. */
+    palco.addEventListener('pointerleave', voltar, { passive: true });
+    /* `focusout` faltava: sem ele, dar Tab para dentro do carrossel matava o
+       autoplay para sempre. `relatedTarget` fora do palco = saiu de verdade. */
+    palco.addEventListener('focusout', function (e) {
+      if (!palco.contains(e.relatedTarget)) voltar();
+    });
+    /* No celular nao existe `pointerleave`: o toque em qualquer lugar FORA
+       do carrossel devolve o relogio. */
+    document.addEventListener('pointerdown', function (e) {
+      if (!palco.contains(e.target)) voltar();
+    }, { passive: true });
+
     document.addEventListener('visibilitychange', function () {
-      if (document.hidden) parar(); else comecar();
+      if (document.hidden) parar();
+      else voltar();
     });
+    /* A aba pode NASCER oculta (aberta em segundo plano), e ai
+       `visibilitychange` nunca dispara. Sem esta linha o relogio arrancaria
+       com um temporizador correndo sobre uma animacao congelada pelo
+       navegador, e as duas coisas chegariam separadas quando a aba
+       aparecesse. */
+    if (document.hidden) relogioLigado = false;
+    pintarFita();
   }
 
   function ligarSetas() {
     var t = $('#trilho'), antes = $('#setaAntes'), depois = $('#setaDepois');
     if (!t) return;
-    function passo() {
-      var cartao = t.querySelector('.post');
-      return cartao ? cartao.offsetWidth + 14 : 300;
-    }
+    function passo() { return passoDaFila(); }
     if (antes)  antes.addEventListener('click',  function () { t.scrollBy({ left: -passo(), behavior: 'smooth' }); });
     if (depois) depois.addEventListener('click', function () { t.scrollBy({ left:  passo(), behavior: 'smooth' }); });
 
@@ -2301,22 +2574,37 @@
        desfoque a cada evento de scroll trava a rolagem no celular. */
     var agendado = false;
     t.addEventListener('scroll', function () {
-      girarSePreciso();
+      agendarGiro();
       atualizarSetas();
       if (agendado) return;
       agendado = true;
-      requestAnimationFrame(function () { agendado = false; pintarFoco(); });
+      requestAnimationFrame(function () {
+        agendado = false;
+        pintarFoco();
+        confirmarIndice(false);
+      });
     }, { passive: true });
 
     /* Remede o conjunto no resize: a largura do cartao muda por media query
        (296px -> 74vw no celular) e um LARG_SET velho faria o salto cair no
        lugar errado, que e justamente quando a emenda aparece. */
+    /* Freio no resize, e por LARGURA. Hoje ele re-clona 18 nos sem freio
+       nenhum; e a barra de URL do iOS dispara `resize` mudando a ALTURA
+       durante a rolagem vertical, entao comparar `innerWidth` mata esse caso
+       inteiro sem heuristica. */
+    var largAntes = window.innerWidth, freio = null;
     window.addEventListener('resize', function () {
-      clonarParaInfinito(); atualizarSetas(); pintarFoco();
+      if (window.innerWidth === largAntes) return;
+      largAntes = window.innerWidth;
+      clearTimeout(freio);
+      freio = setTimeout(function () {
+        clonarParaInfinito(); atualizarSetas(); pintarFoco();
+      }, 160);
     });
     atualizarSetas();
     pintarFoco();
-    ligarAutoplay();
+    confirmarIndice(true);
+    ligarRelogio();
   }
 
   /* ---------------- revelação por rolagem ---------------- */
