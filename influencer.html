@@ -12,7 +12,13 @@
 <meta name="referrer" content="strict-origin-when-cross-origin" />
 <meta name="description" content="Candidatura a patrocínio FullPro para criadores de conteúdo de moto no Instagram." />
 <meta name="theme-color" content="#f5f5f7" />
-<link rel="icon" href="/assets/logo-short.png" />
+<!-- Favicon: `.ico` de verdade, com 16/32/48/64/128/256 dentro. O que estava
+     aqui era o PNG de 1774x1084 do logo — o navegador encaixava a marca deitada
+     numa aba quadrada e sobrava tarja em cima e embaixo. O .ico sai do mesmo
+     desenho, recortado e centrado num quadro quadrado com 8% de respiro. -->
+<link rel="icon" href="/assets/favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
 
 <style>
   /* ===================== FONTE DA MARCA =====================
@@ -137,7 +143,7 @@
 
      `-webkit-` explicito pela mesma razao. */
   .top{
-    position:sticky; top:0; z-index:40;
+    position:relative; z-index:40;
     padding:12px 20px;
     background:transparent; border:0;
     pointer-events:none;          /* so a capsula recebe clique */
@@ -148,23 +154,58 @@
     display:flex; align-items:center; justify-content:center;
     height:54px; padding:0 34px;
     border-radius:999px;
-    background:rgba(255,255,255,.42);
-    -webkit-backdrop-filter:blur(26px) saturate(190%) brightness(1.08);
-    backdrop-filter:blur(26px) saturate(190%) brightness(1.08);
+    /* DUAS COISAS estavam matando a transparencia, e as duas foram medidas.
+
+       1. `brightness(1.16)`. A faixa rosada do degrade que passa atras do
+          header e rgb(246,225,227). Multiplicada por 1,16 ela vira
+          rgb(255,255,255) — ESTOURA. Eu apagava o fundo com o meu proprio
+          filtro e depois estranhava que nao parecesse vidro. Em 1,03 o mesmo
+          rosa sai em rgb(253,239,241) e a capsula fica TINGIDA pelo que
+          esta atras — que e o que vidro faz. Repare que hoje a ponta
+          esquerda puxa rosa e a direita fica fria: e o degrade atravessando.
+
+       2. O raio. Em 26px a prancheta virava branco liso — sem estrutura
+          para atravessar, o olho le TINTA. Em 11px a malha sobrevive como
+          linha macia dentro da capsula.
+
+       Logo medido sobre os quatro fundos possiveis (rosa do glow, neutro,
+       linha grossa, traco tecnico): 10,0:1 no pior caso. */
+    background:rgba(255,255,255,.13);
+    -webkit-backdrop-filter:blur(11px) saturate(215%) brightness(1.03);
+    backdrop-filter:blur(11px) saturate(215%) brightness(1.03);
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.9),      /* especular de cima */
-      inset 0 -1px 0 rgba(255,255,255,.25),    /* devolucao fraca embaixo */
-      inset 0 0 0 1px rgba(255,255,255,.35),   /* anel da lamina */
-      0 10px 34px rgba(28,52,96,.13),          /* sombra que suspende */
+      inset 0 1px 0 rgba(255,255,255,.75),     /* especular de cima */
+      inset 0 -1px 0 rgba(255,255,255,.34),    /* devolucao fraca embaixo */
+      inset 0 0 0 1px rgba(255,255,255,.22),   /* anel da lamina */
+      /* Sombra INTERNA na barriga: com o corpo quase vazio, e ela que da
+         espessura ao vidro — sem isso a capsula vira um recorte chapado. */
+      inset 0 -16px 26px -18px rgba(28,52,96,.42),
+      0 12px 38px rgba(28,52,96,.15),          /* sombra que suspende */
       0 2px 8px rgba(28,52,96,.07);
     position:relative; overflow:hidden;
+  }
+  /* LENTE DE BORDA. Vidro de verdade e mais grosso na beirada, entao
+     distorce mais ali — e essa variacao, e nao o desfoque em si, que o olho
+     usa para julgar espessura. `backdrop-filter` num filho amostra tudo que
+     ja foi pintado embaixo, inclusive o desfoque do pai: os 7px daqui somam
+     aos 11px de la, so no anel externo. Custa um elemento e nenhum script.
+
+     E o mais perto de refracao que da para chegar: `feDisplacementMap` via
+     `backdrop-filter:url()` seria o certo, e o Safari nao renderiza — esta
+     pagina chega pelo navegador do Instagram, que e WebKit. */
+  .top-in::before{
+    content:''; position:absolute; inset:0; border-radius:inherit;
+    pointer-events:none;
+    -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px);
+    -webkit-mask-image:radial-gradient(120% 150% at 50% 50%, transparent 52%, #000 92%);
+    mask-image:radial-gradient(120% 150% at 50% 50%, transparent 52%, #000 92%);
   }
   /* Reflexo: uma faixa clara na metade de cima, que e como luz de ambiente
      bate numa superficie curva. Fica em `::after` para nao competir com os
      `inset` do anel. */
   .top-in::after{
     content:''; position:absolute; inset:0; border-radius:inherit;
-    background:linear-gradient(180deg, rgba(255,255,255,.5) 0, rgba(255,255,255,.06) 46%, transparent 60%);
+    background:linear-gradient(180deg, rgba(255,255,255,.20) 0, rgba(255,255,255,.04) 36%, transparent 50%);
     pointer-events:none;
   }
   .top-in > *{position:relative; z-index:1}
@@ -246,10 +287,14 @@
   .nums{
     margin:var(--s6) 0 0; display:grid;
     grid-template-columns:repeat(4,auto); justify-content:center;
-    gap:0; text-align:left;
+    gap:0; text-align:center;
   }
-  .num{padding:var(--s2) var(--s3) var(--s2) 0}
-  .num + .num{border-left:1px solid var(--line); padding-left:var(--s3)}
+  /* Centrado a pedido do dono (10/09), e ele esta certo: o numero ja nascia
+     centrado sob um H1 centrado, mas o ROTULO ficava a esquerda — a coluna
+     saia torta em todas as quatro. Com o texto centrado o padding tem de
+     virar simetrico, senao o divisor deixa de ficar no meio do vao. */
+  .num{padding:var(--s2) var(--s3)}
+  .num + .num{border-left:1px solid var(--line)}
   .num-v{
     display:block; font-size:clamp(32px,4.4vw,60px); font-weight:800;
     line-height:.95; letter-spacing:-.02em; color:var(--ink);
@@ -268,9 +313,9 @@
      coluna da direita, e filete em cima em quem esta na segunda fileira. */
   @media (max-width:820px){
     .nums{grid-template-columns:repeat(2,1fr); justify-content:stretch}
-    .num{padding:var(--s2) var(--s2) var(--s2) 0}
-    .num + .num{border-left:0; padding-left:0}
-    .num:nth-child(2n){border-left:1px solid var(--line); padding-left:var(--s2)}
+    .num{padding:var(--s2)}
+    .num + .num{border-left:0}
+    .num:nth-child(2n){border-left:1px solid var(--line)}
     .num:nth-child(n+3){border-top:1px solid var(--line); margin-top:var(--s1); padding-top:var(--s2)}
   }
   @media (max-width:640px){
@@ -365,34 +410,93 @@
      sobra some e o rastro continua inteiro dentro do trilho, porque o que
      produz o efeito e a AMOSTRAGEM deslocada do fundo, nao o pedaco que
      ficava para fora. */
-  .desfoque{position:absolute; inset:0; z-index:2; pointer-events:none; overflow:hidden}
+  /* A JANELA LIMPA agora e o proprio cartao central, calculada e nao
+     chutada (pedido do dono, 10/09: "blur mais intenso ate o card do
+     centro"). Antes os pontos da mascara eram porcentagem fixa do trilho
+     (40%/60%), o que deixava um vao nitido de ~50px de cada lado do cartao:
+     o desfoque so comecava depois dele. Agora:
+
+       --mp  = meia peca (148px = metade dos 296px do cartao; 37vw no
+               celular, onde a peca e 74vw)
+       --rN  = quanto o nivel N leva para chegar a forca total, contado a
+               partir da BORDA do cartao central
+
+     O deslocamento entra na conta da mascara (`--oN`) porque `transform`
+     move a mascara junto: sem somar isso, a copia deslocada 28px morderia
+     28px do cartao central, que e justamente o que tem de ficar limpo. */
+  .desfoque{
+    position:absolute; inset:0; z-index:2; pointer-events:none; overflow:hidden;
+    --mp:148px;
+    --r1:56px; --r2:140px; --r3:250px; --r4:380px;
+    --o1:4px;  --o2:9px;   --o3:17px;  --o4:30px;
+  }
   .desfoque span{position:absolute; inset:0; display:block; opacity:.5}
   .d-esq{--d:-1}
   .d-dir{--d:1}
 
   .desfoque-1{
-    -webkit-backdrop-filter:blur(.5px); backdrop-filter:blur(.5px);
-    transform:translateX(calc(var(--d) * 3px));
-    -webkit-mask-image:linear-gradient(90deg,#000 0,#000 12%,transparent 40%,transparent 60%,#000 88%,#000 100%);
-    mask-image:linear-gradient(90deg,#000 0,#000 12%,transparent 40%,transparent 60%,#000 88%,#000 100%);
+    -webkit-backdrop-filter:blur(1px); backdrop-filter:blur(1px);
+    transform:translateX(calc(var(--d) * var(--o1)));
+    -webkit-mask-image:linear-gradient(90deg,#000 0,
+      #000 calc(50% - var(--mp) - var(--o1) - var(--r1)),
+      transparent calc(50% - var(--mp) - var(--o1)),
+      transparent calc(50% + var(--mp) + var(--o1)),
+      #000 calc(50% + var(--mp) + var(--o1) + var(--r1)),
+      #000 100%);
+    mask-image:linear-gradient(90deg,#000 0,
+      #000 calc(50% - var(--mp) - var(--o1) - var(--r1)),
+      transparent calc(50% - var(--mp) - var(--o1)),
+      transparent calc(50% + var(--mp) + var(--o1)),
+      #000 calc(50% + var(--mp) + var(--o1) + var(--r1)),
+      #000 100%);
   }
   .desfoque-2{
-    -webkit-backdrop-filter:blur(1px); backdrop-filter:blur(1px);
-    transform:translateX(calc(var(--d) * 6px));
-    -webkit-mask-image:linear-gradient(90deg,#000 0,#000 8%,transparent 30%,transparent 70%,#000 92%,#000 100%);
-    mask-image:linear-gradient(90deg,#000 0,#000 8%,transparent 30%,transparent 70%,#000 92%,#000 100%);
+    -webkit-backdrop-filter:blur(2.5px); backdrop-filter:blur(2.5px);
+    transform:translateX(calc(var(--d) * var(--o2)));
+    -webkit-mask-image:linear-gradient(90deg,#000 0,
+      #000 calc(50% - var(--mp) - var(--o2) - var(--r2)),
+      transparent calc(50% - var(--mp) - var(--o2)),
+      transparent calc(50% + var(--mp) + var(--o2)),
+      #000 calc(50% + var(--mp) + var(--o2) + var(--r2)),
+      #000 100%);
+    mask-image:linear-gradient(90deg,#000 0,
+      #000 calc(50% - var(--mp) - var(--o2) - var(--r2)),
+      transparent calc(50% - var(--mp) - var(--o2)),
+      transparent calc(50% + var(--mp) + var(--o2)),
+      #000 calc(50% + var(--mp) + var(--o2) + var(--r2)),
+      #000 100%);
   }
   .desfoque-3{
-    -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
-    transform:translateX(calc(var(--d) * 12px));
-    -webkit-mask-image:linear-gradient(90deg,#000 0,#000 4%,transparent 20%,transparent 80%,#000 96%,#000 100%);
-    mask-image:linear-gradient(90deg,#000 0,#000 4%,transparent 20%,transparent 80%,#000 96%,#000 100%);
+    -webkit-backdrop-filter:blur(5px); backdrop-filter:blur(5px);
+    transform:translateX(calc(var(--d) * var(--o3)));
+    -webkit-mask-image:linear-gradient(90deg,#000 0,
+      #000 calc(50% - var(--mp) - var(--o3) - var(--r3)),
+      transparent calc(50% - var(--mp) - var(--o3)),
+      transparent calc(50% + var(--mp) + var(--o3)),
+      #000 calc(50% + var(--mp) + var(--o3) + var(--r3)),
+      #000 100%);
+    mask-image:linear-gradient(90deg,#000 0,
+      #000 calc(50% - var(--mp) - var(--o3) - var(--r3)),
+      transparent calc(50% - var(--mp) - var(--o3)),
+      transparent calc(50% + var(--mp) + var(--o3)),
+      #000 calc(50% + var(--mp) + var(--o3) + var(--r3)),
+      #000 100%);
   }
   .desfoque-4{
-    -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
-    transform:translateX(calc(var(--d) * 22px));
-    -webkit-mask-image:linear-gradient(90deg,#000 0,#000 1%,transparent 12%,transparent 88%,#000 99%,#000 100%);
-    mask-image:linear-gradient(90deg,#000 0,#000 1%,transparent 12%,transparent 88%,#000 99%,#000 100%);
+    -webkit-backdrop-filter:blur(9px); backdrop-filter:blur(9px);
+    transform:translateX(calc(var(--d) * var(--o4)));
+    -webkit-mask-image:linear-gradient(90deg,#000 0,
+      #000 calc(50% - var(--mp) - var(--o4) - var(--r4)),
+      transparent calc(50% - var(--mp) - var(--o4)),
+      transparent calc(50% + var(--mp) + var(--o4)),
+      #000 calc(50% + var(--mp) + var(--o4) + var(--r4)),
+      #000 100%);
+    mask-image:linear-gradient(90deg,#000 0,
+      #000 calc(50% - var(--mp) - var(--o4) - var(--r4)),
+      transparent calc(50% - var(--mp) - var(--o4)),
+      transparent calc(50% + var(--mp) + var(--o4)),
+      #000 calc(50% + var(--mp) + var(--o4) + var(--r4)),
+      #000 100%);
   }
   /* No celular a fila tem uma peca e meia na tela: oito camadas de
      backdrop-filter custam GPU para borrar quase nada. Ficam quatro. */
@@ -403,6 +507,9 @@
        — medido, as oito camadas continuavam visiveis em 375px. Com o pai
        junto sao (0,2,0) e a contagem de classes decide. */
     .desfoque .desfoque-3, .desfoque .desfoque-4{display:none}
+    /* 74vw de peca deixa ~13vw de sobra de cada lado: rampa de 380px nunca
+       chegaria a forca total. Os passos encolhem junto com a sobra. */
+    .desfoque{--mp:37vw; --r1:14px; --r2:38px; --o1:3px; --o2:7px}
   }
   @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
     .desfoque{display:none}
@@ -417,12 +524,11 @@
     font-size:44px; font-weight:400; line-height:1;
     align-items:center; justify-content:center;
     text-shadow:0 2px 14px rgba(0,0,0,.85), 0 0 3px rgba(0,0,0,.6);
-    transition:color .15s, opacity .15s, transform .15s;
+    transition:opacity .15s;
   }
   @media (min-width:820px){ .seta{display:flex} }
   .seta--antes{left:4px}
   .seta--depois{right:4px}
-  .seta:hover:not(:disabled){color:var(--red-hi); transform:translateY(-50%) scale(1.12)}
   .seta:focus-visible{outline:2px solid var(--red-hi); outline-offset:2px; border-radius:4px}
   .seta:disabled{opacity:0; pointer-events:none}
 
@@ -437,9 +543,13 @@
     background:var(--panel);
     /* filtro e opacidade são pintados pelo JS conforme a distância do centro:
        os três do meio ficam limpos e o resto desfoca em degrau. */
-    transition:filter .35s ease-out, opacity .35s ease-out, transform .2s ease-out;
+    transition:filter .35s ease-out, opacity .35s ease-out;
   }
-  .post:hover{transform:translateY(-3px)}
+  /* SEM `:hover`, por pedido do dono (10/09). Nao e so gosto: o cartao subia
+     3px por baixo de uma pilha de `backdrop-filter` que amostra o fundo na
+     posicao final — mover o cartao fazia o rastro pular junto. E no celular,
+     onde a peca importa, `:hover` fica GRUDADO depois do toque. `:focus-visible`
+     fica: e o teclado, nao o mouse. */
   .post:focus-visible{outline:2px solid var(--red-hi); outline-offset:3px}
   .post img{
     position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;
@@ -448,12 +558,32 @@
     position:absolute; left:0; right:0; bottom:0; height:42%;
     background:linear-gradient(180deg, rgba(10,10,11,0) 0%, rgba(10,10,11,.86) 72%);
   }
+  /* Branco LITERAL, nao `--ink`. O veu do cartao e escuro por desenho, e a
+     virada para o tema claro trocou o token debaixo dele: a legenda virou
+     #1a1a1e sobre preto, 1,4:1 — ilegivel, e estava assim no ar. Token que
+     depende do tema nao serve para texto que vive sobre foto. */
   .post-marca{
     position:absolute; left:14px; right:14px; bottom:12px;
-    font-size:12.5px; font-weight:600; color:var(--ink); letter-spacing:.2px;
+    font-size:12.5px; font-weight:600; color:#fff; letter-spacing:.2px;
     display:flex; align-items:center; gap:6px;
+    text-shadow:0 1px 3px rgba(0,0,0,.55);
   }
   .post-marca svg{width:13px; height:13px; flex:0 0 auto; fill:currentColor; opacity:.9}
+
+  /* ── NUMEROS DA PUBLICACAO ────────────────────────────────────────
+     Views, curtidas e comentarios da peca, sobre o veu. Aparecem SO quando
+     `metricas` esta preenchido no bloco POSTS — cartao sem numero nao ganha
+     linha vazia nem zero, que na vitrine de um parceiro pega mal. */
+  .post-num{
+    position:absolute; left:14px; right:14px; bottom:36px;
+    display:flex; align-items:center; gap:13px;
+    font-size:11.5px; font-weight:700; color:#fff;
+    font-variant-numeric:tabular-nums; letter-spacing:.01em;
+    text-shadow:0 1px 3px rgba(0,0,0,.55);
+  }
+  .post-num i{display:inline-flex; align-items:center; gap:4px; font-style:normal}
+  .post-num svg{width:12px; height:12px; flex:0 0 auto; fill:currentColor; opacity:.95}
+  @media (max-width:640px){ .post-num{font-size:11px; gap:11px} }
   .padrao-nota{
     margin:var(--s2) 0 0; font-size:12.5px; color:var(--ink-quiet); line-height:1.5;
   }
@@ -830,6 +960,11 @@
   /* O conteudo sobe acima da camada decorativa. Sem isto o pseudo-fundo
      posicionado passa por cima dos filhos estaticos — a mesma armadilha que o
      comentario do `.fp-bp` no admin avisa. */
+  /* `.top` fica RELATIVE de proposito, e nao sticky: a capsula e quase
+     transparente, e grudada no topo ela passaria por cima das fotos escuras
+     do slider — logo preto sobre foto preta, medido em 1,5:1. Header que
+     acompanha a rolagem exigiria trocar o logo para branco no meio do
+     caminho. Numa landing de uma tela e meia isso nao paga. */
   .top, main, .padrao, .fim, .pe{position:relative; z-index:1}
 
   /* ── FOLHA DE PAPEL sobre a prancheta ──────────────────────────────
@@ -1402,16 +1537,53 @@
      do link: o oEmbed da Meta exige aprovação de app, e nenhum dos nove está
      na conta da @fullprobr. Se o dono disser de quem é cada um, o cartão passa
      a mostrar o @ — o campo já está previsto aqui. */
+  /* Escala curta em pt-BR. Escrito a mao em vez de
+     `Intl.NumberFormat(..., {notation:'compact'})` porque o formato compacto
+     do pt-BR abrevia mil como "mil" e milhao como "mi", mas o suporte varia
+     por versao de WebKit — e esta pagina chega pelo navegador do Instagram.
+     Vinte linhas previsiveis valem mais que uma linha que pode sair em
+     ingles no celular de quem importa. */
+  function numeroCurto(n) {
+    n = Number(n) || 0;
+    if (n < 1000) return String(n);
+    if (n < 1000000) {
+      var mil = n / 1000;
+      return (mil < 10 ? mil.toFixed(1).replace('.', ',') : String(Math.round(mil))) + ' mil';
+    }
+    var mi = n / 1000000;
+    return (mi < 10 ? mi.toFixed(1).replace('.', ',') : String(Math.round(mi))) + ' mi';
+  }
+
+  var ICO_PLAY  = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.14v13.72c0 .8.87 1.29 1.55.87l10.8-6.86a1.03 1.03 0 000-1.74L9.55 4.27A1.03 1.03 0 008 5.14z"/></svg>';
+  var ICO_CORAC = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-8.4-5.2-10.3-10A5.6 5.6 0 0112 5.6 5.6 5.6 0 0122.3 11C20.4 15.8 12 21 12 21z"/></svg>';
+  var ICO_BALAO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6c5.4 0 9.7 3.6 9.7 8.1 0 4.4-4.3 8-9.7 8-.9 0-1.8-.1-2.6-.3l-5 2.4 1.4-4.2A7.7 7.7 0 012.3 10.7c0-4.5 4.3-8.1 9.7-8.1z"/></svg>';
+
+  /* `metricas: {views, likes, coments}` desenha a linha de numeros sobre o
+     cartao. Esta null nos nove porque O DADO NAO EXISTE em lugar nenhum que
+     eu alcance, e isso foi conferido e nao suposto (10/09):
+
+       - a pagina publica do Instagram devolve o shell do app, sem contagem;
+       - `mc_projects.posts` tem views/likes/comments, mas de CONTEUDO DA
+         CASA (@fullprobr): 11 reels e 8 TikToks, zero dos nove codigos aqui;
+       - `mc_performance_posts` tem um unico registro com link, DZsEH1wRs1K,
+         que tambem nao e nenhum destes;
+       - `mc_influencer_conteudos` tem um, DXMeutijVrr, idem.
+
+     A API do Instagram devolveria — mas com o token do DONO de cada perfil,
+     e estes sao parceiros, nao a conta da FullPro. Entao o caminho e o mesmo
+     do @: numero digitado. Preencher aqui e a linha aparece sozinha.
+     Numero de post de parceiro eu nao estimo: errar para mais e propaganda
+     enganosa, para menos e diminuir o trabalho dele. */
   var POSTS = [
-    { codigo: 'DccoLupttmg', tipo: 'p',    autor: null },
-    { codigo: 'DPFe304DE14', tipo: 'reel', autor: null },
-    { codigo: 'DI4m8ptpQN0', tipo: 'reel', autor: null },
-    { codigo: 'DTfs43nkU0U', tipo: 'reel', autor: null },
-    { codigo: 'DNWZUMUyKjL', tipo: 'reel', autor: null },
-    { codigo: 'DOtSIe8ka7S', tipo: 'reel', autor: null },
-    { codigo: 'DOqtpWfDWEG', tipo: 'reel', autor: null },
-    { codigo: 'DXKMSmIu_9F', tipo: 'reel', autor: null },
-    { codigo: 'DOPRu8cDnIt', tipo: 'reel', autor: null }
+    { codigo: 'DccoLupttmg', tipo: 'p',    autor: null, metricas: null },
+    { codigo: 'DPFe304DE14', tipo: 'reel', autor: null, metricas: null },
+    { codigo: 'DI4m8ptpQN0', tipo: 'reel', autor: null, metricas: null },
+    { codigo: 'DTfs43nkU0U', tipo: 'reel', autor: null, metricas: null },
+    { codigo: 'DNWZUMUyKjL', tipo: 'reel', autor: null, metricas: null },
+    { codigo: 'DOtSIe8ka7S', tipo: 'reel', autor: null, metricas: null },
+    { codigo: 'DOqtpWfDWEG', tipo: 'reel', autor: null, metricas: null },
+    { codigo: 'DXKMSmIu_9F', tipo: 'reel', autor: null, metricas: null },
+    { codigo: 'DOPRu8cDnIt', tipo: 'reel', autor: null, metricas: null }
   ];
 
   var sb = supabase.createClient(
@@ -1831,6 +2003,24 @@
       var veu = document.createElement('div');
       veu.className = 'post-veu';
       a.appendChild(veu);
+
+      var m = post.metricas;
+      if (m && (m.views || m.likes || m.coments)) {
+        var nums = document.createElement('div');
+        nums.className = 'post-num';
+        var partes = [];
+        if (m.views)   partes.push([ICO_PLAY,  m.views,   'visualizacoes']);
+        if (m.likes)   partes.push([ICO_CORAC, m.likes,   'curtidas']);
+        if (m.coments) partes.push([ICO_BALAO, m.coments, 'comentarios']);
+        partes.forEach(function (par) {
+          var i = document.createElement('i');
+          i.innerHTML = par[0];
+          i.appendChild(document.createTextNode(numeroCurto(par[1])));
+          i.setAttribute('aria-label', par[1].toLocaleString('pt-BR') + ' ' + par[2]);
+          nums.appendChild(i);
+        });
+        a.appendChild(nums);
+      }
 
       var marca = document.createElement('div');
       marca.className = 'post-marca';

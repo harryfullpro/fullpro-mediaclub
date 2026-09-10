@@ -553,3 +553,33 @@ Recomendação: 3 a 6 segundos, 720p de largura, sem áudio, `-movflags
 +faststart`. Embed do Instagram foi descartado de propósito — é um iframe mais
 o script deles por peça, o autoplay não é garantido, e o peso é justamente o
 que fez a landing usar imagem local desde o início.
+
+## Números de cada publicação do slider (10/09/2026)
+
+Pedido do Harry: mostrar views, curtidas e comentários em cada post do slider.
+**A tela está pronta** — preencher `metricas` no bloco `POSTS` de `influencer.html`
+faz a linha aparecer sozinha, formatada em escala curta (59 mil, 1,2 mi):
+
+```js
+{ codigo: 'DccoLupttmg', tipo: 'p', autor: null,
+  metricas: { views: 58860, likes: 3924, coments: 109 } },
+```
+
+Métrica zerada ou ausente é omitida — cartão sem dado não ganha linha vazia.
+
+**Por que não dá para buscar sozinho** (conferido em 10/09, não suposto):
+
+| Fonte | O que tem | Serve? |
+|---|---|---|
+| Página pública do Instagram | só o shell do app | não |
+| `mc_projects.posts` | 11 reels + 8 TikToks, **conteúdo da casa** (@fullprobr) | não — nenhum dos 9 códigos |
+| `mc_performance_posts` | 1 registro com link (`DZsEH1wRs1K`) | não |
+| `mc_influencer_conteudos` | 1 registro (`DXMeutijVrr`) | não |
+| API Graph do Instagram | devolveria — com o token do **dono de cada perfil** | não: são parceiros, não a conta da FullPro |
+
+Os nove códigos que faltam número **e** @:
+`DccoLupttmg` · `DPFe304DE14` · `DI4m8ptpQN0` · `DTfs43nkU0U` · `DNWZUMUyKjL` ·
+`DOtSIe8ka7S` · `DOqtpWfDWEG` · `DXKMSmIu_9F` · `DOPRu8cDnIt`
+
+Número de post de parceiro não se estima: para mais é propaganda enganosa,
+para menos diminui o trabalho dele.
