@@ -383,6 +383,10 @@
     display:grid; grid-auto-flow:column; grid-auto-columns:296px; gap:0;
     overflow-x:auto; scroll-snap-type:x mandatory; scroll-behavior:smooth;
     padding:0 var(--s3) 8px; scrollbar-width:none;
+    /* Sem isto, o swipe que chega na ponta do trilho VAZA para o navegador
+       e o iOS entende como gesto de voltar página. A pessoa desliza os
+       cartões, chega no fim, desliza mais um pouco — e sai do site. */
+    overscroll-behavior-x: contain;
   }
   .trilho::-webkit-scrollbar{display:none}
   /* Alinha o primeiro cartão com a coluna de texto e deixa o resto sangrar. */
@@ -2083,6 +2087,9 @@
     POSTS.forEach(function (post) {
       var a = document.createElement('a');
       a.className = 'post';
+      /* <a> nasce draggable: arrastar o cartão iniciava um drag de link em
+         vez de rolar a fila. Com false, arrastar rola — no dedo e no mouse. */
+      a.draggable = false;
       a.dataset.codigo = post.codigo;
       a.href = 'https://www.instagram.com/' + post.tipo + '/' + post.codigo + '/';
       a.target = '_blank';
@@ -2678,8 +2685,23 @@
       pintarFita();
     }
 
-    ['pointerenter', 'pointerdown', 'touchstart', 'focusin'].forEach(function (ev) {
-      palco.addEventListener(ev, parar, { passive: true });
+    /* PARAR NÃO PODE SER PARA SEMPRE.
+       Do jeito anterior, quem deslizava os cartões com o dedo parava o relógio
+       e só o religava tocando FORA do carrossel. Quem desliza e continua lendo
+       a página nunca toca fora — e o carrossel ficava morto pelo resto da
+       visita. Agora toda interação ADIA: para agora, volta sozinho depois de
+       RETOMA_MS parado. `touchmove` entra na lista para o adiamento durar
+       enquanto o dedo estiver arrastando. `scroll` de propósito NÃO entra: o
+       próprio autoplay dispara scroll, e ele se mataria a cada passo. */
+    var RETOMA_MS = 6000;
+    var ocioso = null;
+    function pararEAgendarVolta() {
+      parar();
+      clearTimeout(ocioso);
+      ocioso = setTimeout(function () { if (!document.hidden) voltar(); }, RETOMA_MS);
+    }
+    ['pointerenter', 'pointerdown', 'touchstart', 'touchmove', 'focusin'].forEach(function (ev) {
+      palco.addEventListener(ev, pararEAgendarVolta, { passive: true });
     });
     palco.addEventListener('pointerleave', voltar, { passive: true });
     /* `focusout` faltava: sem ele, dar Tab para dentro do carrossel matava o
