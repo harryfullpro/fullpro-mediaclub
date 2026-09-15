@@ -2,7 +2,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!-- viewport-fit=cover é o que faz env(safe-area-inset-*) devolver valor de
+     verdade no iPhone. Sem ele a conta da Dynamic Island não existe. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Patrocínio FullPro — Candidatura para criadores de moto</title>
 
 <!-- Página de acesso por LINK. Não é anunciada em lugar nenhum, não recebe link
@@ -674,6 +676,40 @@
     pointer-events:none;
   }
 
+  /* ---- anexo do print ----
+     O <input type=file> nativo é feio e, pior, não diz nada antes de clicar.
+     Ele fica escondido DENTRO do <label>, que vira a área clicável inteira —
+     assim o toque continua nativo (nada de click() sintético, que o Safari
+     bloqueia) e o rótulo pode mostrar nome do arquivo e prévia. */
+  .arq{
+    display:flex; align-items:center; gap:14px; cursor:pointer;
+    background:var(--panel-hi); border:1px dashed var(--line-hi); border-radius:var(--r);
+    padding:16px; transition:border-color .15s, background .15s;
+  }
+  .arq:hover{border-color:var(--red); background:rgba(255,45,45,.04)}
+  .arq input[type=file]{
+    position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;
+  }
+  .arq:focus-within{border-color:var(--red); box-shadow:0 0 0 3px rgba(255,45,45,.16)}
+  .arq-ico{
+    flex:0 0 auto; width:38px; height:38px; border-radius:50%;
+    background:rgba(255,45,45,.1); color:var(--red-hi);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .arq-ico svg{width:19px; height:19px}
+  .arq-txt{min-width:0}
+  .arq-txt b{display:block; font-size:14px; font-weight:600; color:var(--ink);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .arq-txt small{display:block; font-size:12px; color:var(--ink-quiet); margin-top:2px}
+  .arq.cheio{border-style:solid; border-color:var(--green)}
+  .arq.cheio .arq-ico{background:rgba(31,210,122,.12); color:var(--green)}
+  .f.erro .arq{border-color:var(--red)}
+
+  .arq-previa{
+    display:block; margin-top:10px; max-height:190px; width:auto;
+    border-radius:var(--r); border:1px solid var(--line);
+  }
+
   /* ---- escolha em cartão (rádio) ---- */
   .opts{display:grid; gap:10px}
   .opts.h{grid-template-columns:repeat(3,1fr)}
@@ -1012,6 +1048,45 @@
     position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
     clip:rect(0,0,0,0); white-space:nowrap; border:0;
   }
+
+  /* ===================== CABEÇALHO NO CELULAR =====================
+     A cápsula de vidro flutuante é desenho de computador. No iPhone com
+     Dynamic Island ela briga com a ilha: o recorte come o topo da tela, e
+     logo centralizada em cápsula estreita fica espremida embaixo dele.
+
+     No celular o header então: não flutua (estático, rola junto), ocupa a
+     largura inteira, fundo sólido, e o topo recua pela ÁREA SEGURA do
+     aparelho — `env(safe-area-inset-top)` é o número que o próprio iOS
+     informa, então vale para a ilha, para o notch e para quem não tem
+     nenhum dos dois (aí é zero e sobra só o respiro de 18px). */
+  @media (max-width:640px){
+    .top{
+      position:static; top:auto; z-index:auto;
+      padding:0; pointer-events:auto;
+      background:var(--void);
+      border-bottom:1px solid var(--line);
+      backdrop-filter:none; -webkit-backdrop-filter:none;
+    }
+    .top-in{
+      width:auto; max-width:none; margin:0;
+      height:auto; border-radius:0;
+      padding:calc(env(safe-area-inset-top, 0px) + 18px) 16px 14px;
+      background:transparent; border:0; box-shadow:none;
+      backdrop-filter:none; -webkit-backdrop-filter:none;
+      justify-content:space-between;
+    }
+    .top-in::before, .top-in::after{content:none}
+    .brand img{height:22px}
+
+    /* Com viewport-fit=cover o conteúdo encosta nas bordas físicas: em
+       paisagem, o recorte comeria o texto do lado. */
+    .wrap{
+      padding-left:max(var(--s2), env(safe-area-inset-left));
+      padding-right:max(var(--s2), env(safe-area-inset-right));
+    }
+    /* E o rodapé precisa do respiro da barra de gestos. */
+    .pe{padding-bottom:calc(var(--s4) + env(safe-area-inset-bottom, 0px))}
+  }
 </style>
 </head>
 <body>
@@ -1143,19 +1218,11 @@
               </div>
             </div>
 
-            <div class="duo">
-              <div class="f" data-f="instagram">
-                <label for="instagram">Seu @ no Instagram <span class="req">*</span></label>
-                <input class="inp" id="instagram" name="instagram" autocomplete="off"
-                       placeholder="@seuperfil" maxlength="60" />
-                <p class="f-erro">Informe o @ do perfil que você usa.</p>
-              </div>
-              <div class="f" data-f="cidade_uf">
-                <label for="cidade_uf">Cidade e estado <span class="req">*</span></label>
-                <input class="inp" id="cidade_uf" name="cidade_uf" autocomplete="address-level2"
-                       placeholder="Joinville / SC" maxlength="120" />
-                <p class="f-erro">Cidade e estado, por favor.</p>
-              </div>
+            <div class="f" data-f="cidade_uf">
+              <label for="cidade_uf">Cidade e estado <span class="req">*</span></label>
+              <input class="inp" id="cidade_uf" name="cidade_uf" autocomplete="address-level2"
+                     placeholder="Joinville / SC" maxlength="120" />
+              <p class="f-erro">Cidade e estado, por favor.</p>
             </div>
 
             <div class="f" data-f="pode_estudio">
@@ -1175,23 +1242,64 @@
           </div>
         </section>
 
-        <!-- ---------- Sua conta ---------- -->
+        <!-- ---------- Suas redes ---------- -->
         <section class="block rev">
           <div class="block-head">
-            <h2>Sua conta</h2>
-            <span>Só o que não se vê de fora</span>
+            <h2>Suas redes</h2>
+            <span>Seus @ e um print dos Insights</span>
           </div>
           <div class="fields">
-            <div class="f" data-f="alcance_30d">
-              <label for="alcance_30d">Contas alcançadas nos últimos 30 dias <span class="req">*</span>
-                <span class="hint">Perfil → Painel profissional → Contas alcançadas, em 30 dias.</span>
-              </label>
-              <div class="suf">
-                <input class="inp" id="alcance_30d" name="alcance_30d" inputmode="numeric"
-                       placeholder="15000" maxlength="9" />
-                <span class="suf-txt">contas</span>
+            <div class="duo">
+              <div class="f" data-f="instagram">
+                <label for="instagram">Instagram <span class="req">*</span></label>
+                <input class="inp" id="instagram" name="instagram" autocomplete="off"
+                       placeholder="@seuperfil" maxlength="60" />
+                <p class="f-erro">Informe o @ do seu Instagram.</p>
               </div>
-              <p class="f-erro">Informe o número, só dígitos.</p>
+              <div class="f" data-f="tiktok">
+                <label for="tiktok">TikTok <span class="hint">Opcional</span></label>
+                <input class="inp" id="tiktok" name="tiktok" autocomplete="off"
+                       placeholder="@seuperfil" maxlength="60" />
+              </div>
+            </div>
+
+            <div class="duo">
+              <div class="f" data-f="facebook">
+                <label for="facebook">Facebook <span class="hint">Opcional</span></label>
+                <input class="inp" id="facebook" name="facebook" autocomplete="off"
+                       placeholder="@suapagina ou o nome dela" maxlength="80" />
+              </div>
+              <div class="f" data-f="outras_redes">
+                <label for="outras_redes">Outras redes <span class="hint">Opcional — YouTube, Kwai…</span></label>
+                <input class="inp" id="outras_redes" name="outras_redes"
+                       placeholder="YouTube @seucanal" maxlength="300" />
+              </div>
+            </div>
+
+            <!-- O print substitui os quatro números que a versão anterior pedia
+                 um a um. Menos digitação, e a imagem carrega contexto que campo
+                 numérico não carrega. -->
+            <div class="f" data-f="insights_print">
+              <p class="lbl">Print dos Insights das suas redes <span class="req">*</span>
+                <span class="hint">No Instagram: seu perfil → Painel profissional. Vale print de qualquer rede sua — se tiver mais de um, mande o que melhor representa seu alcance.</span>
+              </p>
+              <label class="arq" id="arqCaixa" for="insights_print">
+                <input type="file" id="insights_print" name="insights_print"
+                       accept="image/png,image/jpeg,image/webp,image/heic,image/heif" />
+                <span class="arq-ico" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                       stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <path d="M17 8l-5-5-5 5"/><path d="M12 3v13"/>
+                  </svg>
+                </span>
+                <span class="arq-txt">
+                  <b id="arqNome">Escolher a imagem</b>
+                  <small id="arqDica">PNG, JPG ou WEBP, até 8 MB</small>
+                </span>
+              </label>
+              <img class="arq-previa" id="arqPrevia" alt="" hidden />
+              <p class="f-erro">Anexe o print — é por ele que a análise começa.</p>
             </div>
 
             <div class="f" data-f="reel_1">
@@ -1201,41 +1309,6 @@
               <input class="inp" id="reel_1" name="reel_1" inputmode="url"
                      placeholder="https://instagram.com/reel/…" maxlength="300" />
               <p class="f-erro">Cole o link completo do Reels.</p>
-            </div>
-
-            <div class="f">
-              <p class="lbl">Desse mesmo Reels, três números <span class="req">*</span>
-                <span class="hint">No Reels → Ver insights. São os três que mais pesam.</span>
-              </p>
-              <div class="trio">
-                <div class="f" data-f="reel_salvamentos">
-                  <label class="sr" for="reel_salvamentos">Salvamentos</label>
-                  <div class="suf">
-                    <input class="inp" id="reel_salvamentos" name="reel_salvamentos"
-                           inputmode="numeric" placeholder="324" maxlength="9" />
-                    <span class="suf-txt">salv.</span>
-                  </div>
-                  <p class="f-erro">Só dígitos.</p>
-                </div>
-                <div class="f" data-f="reel_compartilhamentos">
-                  <label class="sr" for="reel_compartilhamentos">Compartilhamentos</label>
-                  <div class="suf">
-                    <input class="inp" id="reel_compartilhamentos" name="reel_compartilhamentos"
-                           inputmode="numeric" placeholder="1372" maxlength="9" />
-                    <span class="suf-txt">comp.</span>
-                  </div>
-                  <p class="f-erro">Só dígitos.</p>
-                </div>
-                <div class="f" data-f="reel_retencao_pct">
-                  <label class="sr" for="reel_retencao_pct">Retenção média</label>
-                  <div class="suf">
-                    <input class="inp" id="reel_retencao_pct" name="reel_retencao_pct"
-                           inputmode="numeric" placeholder="50" maxlength="3" />
-                    <span class="suf-txt">%</span>
-                  </div>
-                  <p class="f-erro">De 0 a 100.</p>
-                </div>
-              </div>
             </div>
 
             <div class="duo">
@@ -1249,12 +1322,6 @@
                 <input class="inp" id="reel_3" name="reel_3" inputmode="url"
                        placeholder="https://instagram.com/reel/…" maxlength="300" />
               </div>
-            </div>
-
-            <div class="f" data-f="outras_redes">
-              <label for="outras_redes">Outras redes <span class="hint">Opcional — TikTok, YouTube</span></label>
-              <input class="inp" id="outras_redes" name="outras_redes"
-                     placeholder="TikTok @seuperfil, 40 mil · YouTube @seucanal, 8 mil" maxlength="300" />
             </div>
           </div>
         </section>
@@ -1305,8 +1372,7 @@
                   <span class="opt-b"><span class="opt-t">Sim, e estou com CNH e documento da moto em dia</span>
                   <span class="opt-s">Pilotagem normal, dentro da lei</span></span></label>
                 <label class="opt"><input type="radio" name="via_publica" value="sim_sem_documentos" />
-                  <span class="opt-b"><span class="opt-t">Sim, mas tem pendência de CNH ou documento</span>
-                  <span class="opt-s">Melhor dizer agora do que na hora do contrato</span></span></label>
+                  <span class="opt-b"><span class="opt-t">Sim, mas tem pendência de CNH ou documento</span></span></label>
               </div>
               <p class="f-erro">Escolha a opção que descreve seu caso.</p>
             </div>
@@ -1417,25 +1483,23 @@
       <aside class="ficha-col">
         <div class="ficha rev">
           <div class="ficha-h">
-            <h2>A ficha que o Marketing vai ler</h2>
-            <p>Preenche junto com você. É exatamente o que aparece no nosso painel.</p>
+            <h2>Resumo da sua candidatura</h2>
+            <p>Preenche conforme você responde. É o que o Marketing vai ler.</p>
           </div>
           <div class="ficha-rows" id="ficha">
-            <div class="row" data-r="instagram"><span class="row-k">Perfil</span><span class="row-v">—</span></div>
-            <div class="row" data-r="cidade_uf"><span class="row-k">Praça</span><span class="row-v">—</span></div>
-            <div class="row" data-r="alcance_30d"><span class="row-k">Alcance 30d</span><span class="row-v">—</span></div>
-            <div class="row" data-r="reel_salvamentos"><span class="row-k">Salvamentos</span><span class="row-v">—</span></div>
-            <div class="row" data-r="reel_compartilhamentos"><span class="row-k">Compart.</span><span class="row-v">—</span></div>
-            <div class="row" data-r="reel_retencao_pct"><span class="row-k">Retenção</span><span class="row-v">—</span></div>
+            <div class="row" data-r="instagram"><span class="row-k">Instagram</span><span class="row-v">—</span></div>
+            <div class="row" data-r="tiktok"><span class="row-k">TikTok</span><span class="row-v">—</span></div>
+            <div class="row" data-r="cidade_uf"><span class="row-k">Cidade</span><span class="row-v">—</span></div>
+            <div class="row" data-r="insights_print"><span class="row-k">Print dos Insights</span><span class="row-v">—</span></div>
             <div class="row" data-r="moto"><span class="row-k">Moto</span><span class="row-v">—</span></div>
-            <div class="row" data-r="pecas"><span class="row-k">Mostra</span><span class="row-v">—</span></div>
-            <div class="row" data-r="posts_por_mes"><span class="row-k">Entrega</span><span class="row-v">—</span></div>
-            <div class="row" data-r="espera"><span class="row-k">Espera</span><span class="row-v">—</span></div>
-            <div class="row" data-r="via_publica"><span class="row-k">Via pública</span><span class="row-v">—</span></div>
-            <div class="row" data-r="exclusividade"><span class="row-k">Exclusividade</span><span class="row-v">—</span></div>
+            <div class="row" data-r="pecas"><span class="row-k">Conteúdo que faz</span><span class="row-v">—</span></div>
+            <div class="row" data-r="posts_por_mes"><span class="row-k">Posts por mês</span><span class="row-v">—</span></div>
+            <div class="row" data-r="espera"><span class="row-k">Espera receber</span><span class="row-v">—</span></div>
+            <div class="row" data-r="via_publica"><span class="row-k">Pilotagem</span><span class="row-v">—</span></div>
+            <div class="row" data-r="exclusividade"><span class="row-k">Parcerias hoje</span><span class="row-v">—</span></div>
           </div>
           <div class="ficha-f">
-            <p class="conta">Preenchido <b><span id="conta-n">0</span> de 12</b></p>
+            <p class="conta">Preenchido <b><span id="conta-n">0</span> de 10</b></p>
             <div class="barra"><i id="barra"></i></div>
           </div>
         </div>
@@ -1448,8 +1512,8 @@
         <div class="aviso" id="aviso" role="alert" aria-live="polite"></div>
         <button class="btn" id="btn" type="submit" form="form">Enviar candidatura</button>
         <p class="sob">
-          Análise do <b>Marketing da FullPro</b>. A resposta vai para o e-mail deste
-          cadastro, e olhamos as candidaturas a cada 15 dias.
+          Análise do <b>Marketing da FullPro</b>. A resposta vai para o e-mail
+          deste cadastro.
         </p>
       </div>
 
@@ -1471,7 +1535,7 @@
       <div class="prox">
         <h3>O que acontece agora</h3>
         <ol>
-          <li>O <b>departamento de Marketing da FullPro</b> analisa as candidaturas <b>a cada 15 dias</b>.</li>
+          <li>O <b>departamento de Marketing da FullPro</b> analisa sua ficha.</li>
           <li>A resposta — aprovada ou não — vai para <b id="fim-email">o e-mail do seu cadastro</b>. Vale a pena conferir a caixa de spam.</li>
           <li>Se avançar, a conversa continua pelo <b>WhatsApp que você informou</b>, para combinar formato, entregas e contrato.</li>
         </ol>
@@ -1593,12 +1657,69 @@
   });
 
   /* Campos só-número: bloquear na digitação evita erro que só apareceria no envio. */
-  ['alcance_30d', 'reel_salvamentos', 'reel_compartilhamentos', 'reel_retencao_pct', 'posts_por_mes']
-    .forEach(function (id) {
-      $('#' + id).addEventListener('input', function (e) {
-        e.target.value = e.target.value.replace(/\D/g, '');
-      });
+  ['posts_por_mes'].forEach(function (id) {
+    $('#' + id).addEventListener('input', function (e) {
+      e.target.value = e.target.value.replace(/\D/g, '');
     });
+  });
+
+  /* O @ do TikTok chega das três formas, igual ao do Instagram. Normalizar aqui
+     evita três jeitos de procurar a mesma pessoa no painel. */
+  $('#tiktok').addEventListener('blur', function (e) {
+    var v = e.target.value.trim();
+    if (!v) return;
+    v = v.replace(/^https?:\/\/(www\.)?tiktok\.com\//i, '')
+         .replace(/[/?#].*$/, '')
+         .replace(/^@+/, '');
+    e.target.value = v ? '@' + v : '';
+  });
+
+  /* ---------------- o print dos Insights ----------------
+     Guarda o arquivo numa variável, e não só no input: o envio precisa dele
+     depois, e input de arquivo não sobrevive a nenhum reset de formulário. */
+  var ARQUIVO = null;
+  var TIPOS_OK = ['image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif'];
+  var TETO_BYTES = 8 * 1024 * 1024;
+
+  $('#insights_print').addEventListener('change', function (e) {
+    var f = e.target.files && e.target.files[0];
+    var caixa = $('#arqCaixa'), nome = $('#arqNome'), dica = $('#arqDica'), previa = $('#arqPrevia');
+    limpaErro(form.querySelector('[data-f="insights_print"]'));
+    ARQUIVO = null;
+    caixa.classList.remove('cheio');
+    previa.hidden = true;
+    if (previa.src) { URL.revokeObjectURL(previa.src); previa.removeAttribute('src'); }
+
+    if (!f) { nome.textContent = 'Escolher a imagem'; dica.textContent = 'PNG, JPG ou WEBP, até 8 MB'; return; }
+
+    /* O iPhone manda HEIC com type vazio em algumas versões — por isso o
+       segundo teste, pela extensão, em vez de recusar print de iPhone. */
+    var tipoOk = TIPOS_OK.indexOf(f.type) >= 0 || /\.(png|jpe?g|webp|heic|heif)$/i.test(f.name);
+    if (!tipoOk) {
+      nome.textContent = 'Esse arquivo não serve';
+      dica.textContent = 'Precisa ser imagem: PNG, JPG ou WEBP.';
+      e.target.value = '';
+      return;
+    }
+    if (f.size > TETO_BYTES) {
+      nome.textContent = 'Imagem grande demais';
+      dica.textContent = (f.size / 1048576).toFixed(1).replace('.', ',') + ' MB — o limite é 8 MB.';
+      e.target.value = '';
+      return;
+    }
+
+    ARQUIVO = f;
+    caixa.classList.add('cheio');
+    nome.textContent = f.name;
+    dica.textContent = (f.size / 1024).toFixed(0) + ' KB · toque para trocar';
+    /* Prévia só para o que o navegador desenha: HEIC ele não desenha, e uma
+       prévia quebrada assusta mais do que prévia nenhuma. */
+    if (/^image\/(png|jpeg|webp)$/.test(f.type)) {
+      previa.src = URL.createObjectURL(f);
+      previa.hidden = false;
+    }
+    pintarFicha();
+  });
 
   /* ---------------- estado visual das escolhas ---------------- */
   form.addEventListener('change', function (e) {
@@ -1642,6 +1763,9 @@
     return v.length > n ? v.slice(0, n - 1) + '…' : v;
   }
   function valorDe(chave) {
+    /* O print não é campo de texto: a ficha mostra que ele existe, não o
+       caminho do arquivo — caminho de bucket não diz nada a quem preenche. */
+    if (chave === 'insights_print') return ARQUIVO ? 'anexado' : '';
     var el = form.elements[chave];
     if (!el) return '';
     if (el instanceof RadioNodeList || (el.length && !el.tagName)) {
@@ -1652,8 +1776,6 @@
     }
     var raw = (el.value || '').trim();
     if (!raw) return '';
-    if (chave === 'alcance_30d' || chave === 'reel_salvamentos' || chave === 'reel_compartilhamentos') return nUm(raw);
-    if (chave === 'reel_retencao_pct') return nUm(raw) && nUm(raw) + '%';
     if (chave === 'posts_por_mes') return nUm(raw) && nUm(raw) + ' post' + (raw === '1' ? '' : 's') + '/mês';
     if (chave === 'espera') return ROTULO_ESPERA[raw] || '';
     if (chave === 'pecas' || chave === 'exclusividade') return corta(raw, 42);
@@ -1683,7 +1805,7 @@
       }
     });
     $('#conta-n').textContent = cheios;
-    $('#barra').style.width = Math.round((cheios / 12) * 100) + '%';
+    $('#barra').style.width = Math.round((cheios / 10) * 100) + '%';
   }
 
   /* ---------------- validação ----------------
@@ -1706,10 +1828,6 @@
     pecas: function (v) { return v.trim().length >= 2; },
     exclusividade: function (v) { return v.trim().length >= 2; },
     reel_1: function (v) { return v.trim().length >= 8; },
-    alcance_30d: function (v) { return /^\d+$/.test(v.trim()); },
-    reel_salvamentos: function (v) { return /^\d+$/.test(v.trim()); },
-    reel_compartilhamentos: function (v) { return /^\d+$/.test(v.trim()); },
-    reel_retencao_pct: function (v) { var n = parseInt(v, 10); return /^\d+$/.test(v.trim()) && n >= 0 && n <= 100; },
     posts_por_mes: function (v) { var n = parseInt(v, 10); return /^\d+$/.test(v.trim()) && n >= 0 && n <= 200; }
   };
   var OBRIGATORIOS_ESCOLHA = ['pode_estudio', 'moto_propria', 'via_publica'];
@@ -1728,6 +1846,7 @@
       if (!form.querySelector('input[name="' + k + '"]:checked')) falhas.push(marca(k));
     });
     if ($('#espera').value === '') falhas.push(marca('espera'));
+    if (!ARQUIVO) falhas.push(marca('insights_print'));
     if ($('#espera').value === 'cache' && $('#cache_faixa').value.trim().length < 2) falhas.push(marca('cache_faixa'));
     ACEITES.forEach(function (k) {
       if (!$('#' + k).checked) {
@@ -1790,10 +1909,8 @@
       cidade_uf: v('cidade_uf'),
       pode_estudio: esc('pode_estudio'),
 
-      alcance_30d: num('alcance_30d'),
-      reel_salvamentos: num('reel_salvamentos'),
-      reel_compartilhamentos: num('reel_compartilhamentos'),
-      reel_retencao_pct: num('reel_retencao_pct'),
+      tiktok: v('tiktok'),
+      facebook: v('facebook'),
       reel_1: v('reel_1'),
       reel_2: v('reel_2'),
       reel_3: v('reel_3'),
@@ -1815,16 +1932,42 @@
 
       aceite_dados: true,
       aceite_repost: true,
-      maior_18: true
+      maior_18: true,
+      /* preenchido logo abaixo, depois que a imagem sobe */
+      insights_print: null
       /* status e created_at ficam com o DEFAULT do banco de propósito: a
          política de insert exige status 'pending' e created_at dentro de uma
          janela de 5 minutos, então mandar do cliente só cria jeito de errar. */
     };
 
-    /* SEM .select() — de propósito. A tabela não dá SELECT para anônimo (a
-       candidatura de um não pode ser lida por outro), então pedir a linha de
-       volta transformaria um insert bem-sucedido em erro na tela. */
-    sb.from('mc_influencer_candidaturas').insert(payload).then(function (res) {
+    /* A IMAGEM SOBE PRIMEIRO, e a linha só nasce se ela subir.
+       Na outra ordem existiria candidatura gravada apontando para um print que
+       não existe — e ninguém descobriria até o Marketing abrir a ficha. */
+    var ext = (ARQUIVO.name.match(/\.(png|jpe?g|webp|heic|heif)$/i) || ['.jpg'])[0].toLowerCase();
+    /* Nome vem de crypto, não do nome do arquivo do candidato: nome de arquivo
+       de estranho é entrada de caminho, e o bucket não precisa dele. */
+    var aleatorio = (crypto && crypto.randomUUID) ? crypto.randomUUID()
+      : String(Date.now()) + Math.floor(Math.random() * 1e9);
+    var caminho = new Date().toISOString().slice(0, 7) + '/' + aleatorio + ext;
+
+    sb.storage.from('candidaturas-insights').upload(caminho, ARQUIVO, {
+      contentType: ARQUIVO.type || 'image/jpeg',
+      upsert: false
+    }).then(function (envio) {
+      if (envio.error) {
+        console.error('print:', envio.error);
+        btn.disabled = false;
+        btn.textContent = rotulo;
+        mostrarAviso(
+          'Não conseguimos enviar o print.',
+          ' Tente de novo, ou mande uma imagem menor. Nada do que você preencheu foi perdido.'
+        );
+        return null;
+      }
+      payload.insights_print = caminho;
+      return sb.from('mc_influencer_candidaturas').insert(payload);
+    }).then(function (res) {
+      if (!res) return;
       if (res.error) {
         console.error('candidatura:', res.error);
         btn.disabled = false;

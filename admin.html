@@ -3388,6 +3388,11 @@
 
   /* Numeros do Reel primeiro, em fileira propria: salvamento, compartilhamento
      e retencao sao os tres que separam alcance comprado de alcance real. */
+  .inf-cand-print { margin-bottom:14px; }
+  .inf-cand-print-img {
+    display:block; margin-top:8px; max-width:260px; max-height:340px;
+    width:auto; height:auto; border-radius:8px; border:1px solid var(--border);
+  }
   .inf-cand-nums {
     display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr));
     gap:8px; margin-bottom:14px;
@@ -31833,6 +31838,64 @@ const infRotulo = (mapa, chave) =>
    passa a DIZER a verdade: aprovada sem cadastro correspondente aparece como
    pendência, com o botão para retomar de onde parou.
    O casamento é por e-mail ou @, que são os dois campos que a promoção copia. */
+/* O print mora em bucket PRIVADO. O painel não pode montar URL na mão: só
+   existe acesso por link ASSINADO, que o Storage gera na hora e expira. Por
+   isso o cartão nasce com um botão, e a imagem só é buscada quando alguém pede
+   — assim uma tela com 30 candidaturas não dispara 30 links assinados de uma
+   vez para prints que ninguém vai abrir. */
+async function infCandVerPrint(id) {
+  const c = INF_CANDIDATURAS.find(x => x.id === id);
+  if (!c || !c.insights_print) return;
+  const alvo = document.getElementById('print-' + id);
+  if (!alvo) return;
+  alvo.innerHTML = '<span class="inf-cand-campo-val">abrindo…</span>';
+
+  const { data, error } = await sb.storage
+    .from('candidaturas-insights')
+    .createSignedUrl(c.insights_print, 300);   // 5 minutos bastam para olhar
+
+  if (error || !data || !data.signedUrl) {
+    alvo.innerHTML = '<span style="color:var(--danger);font-size:12px">'
+      + escHtml('Não foi possível abrir o print: ' + ((error && error.message) || 'sem resposta'))
+      + '</span>';
+    return;
+  }
+  const img = document.createElement('img');
+  img.className = 'inf-cand-print-img';
+  img.src = data.signedUrl;
+  img.alt = 'Print dos Insights enviado pelo candidato';
+  img.onerror = function () {
+    alvo.innerHTML = '<span style="color:var(--danger);font-size:12px">O link abriu mas a imagem não carregou.</span>';
+  };
+  const a = document.createElement('a');
+  a.href = data.signedUrl; a.target = '_blank'; a.rel = 'noopener';
+  a.title = 'Abrir em tamanho cheio (o link expira em 5 minutos)';
+  a.appendChild(img);
+  alvo.innerHTML = '';
+  alvo.appendChild(a);
+}
+
+function infCandPrintHtml(c) {
+  if (!c.insights_print) {
+    return '<div class="inf-cand-campo-lbl">Print dos Insights</div>'
+      + '<div class="inf-cand-campo-val">não enviou</div>';
+  }
+  return '<div class="inf-cand-campo-lbl">Print dos Insights</div>'
+    + '<div id="print-' + escHtml(c.id) + '">'
+    + '<button class="action-btn view" type="button" onclick="infCandVerPrint(\'' + escHtml(c.id) + '\')">Ver print</button>'
+    + '</div>';
+}
+
+/* @ de rede vira link, mas só quando é um @ de verdade. Texto livre (nome de
+   página do Facebook, por exemplo) sai como texto — link montado em cima de
+   nome com espaço leva a 404 e parece defeito nosso. */
+function infCandRedeHtml(valor, base) {
+  const limpo = String(valor || '').trim().replace(/^@/, '');
+  if (!/^[A-Za-z0-9._]{2,50}$/.test(limpo)) return escHtml(valor);
+  return '<a href="' + escHtml(base + limpo) + '" target="_blank" rel="noopener">@'
+    + escHtml(limpo) + '</a>';
+}
+
 function infCandCadastroPendente(c) {
   if ((c.status || '') !== 'approved') return '';
   if (!Array.isArray(PERF_INFLUENCERS)) return '';
@@ -32638,11 +32701,8 @@ function infCandCard(c) {
       </div>
     </div>
 
-    <div class="inf-cand-nums">
-      ${num('Alcance 30d', c.alcance_30d)}
-      ${num('Salvamentos', c.reel_salvamentos)}
-      ${num('Compartilh.', c.reel_compartilhamentos)}
-      ${num('Retenção', c.reel_retencao_pct, '%')}
+    <div class="inf-cand-print">
+      ${infCandPrintHtml(c)}
     </div>
 
     <div class="inf-cand-excl">
@@ -32657,6 +32717,8 @@ function infCandCard(c) {
       ${campo('O que espera', esperaHtml)}
       ${campo('Via pública', c.via_publica ? escHtml(infRotulo(INF_CAND_VIA_ROTULO, c.via_publica)) : '')}
       ${campo('Pode ir ao estúdio', c.pode_estudio ? escHtml(infRotulo(INF_CAND_ESTUDIO_ROTULO, c.pode_estudio)) : '')}
+      ${campo('TikTok', c.tiktok ? infCandRedeHtml(c.tiktok, 'https://tiktok.com/') : '')}
+      ${campo('Facebook', c.facebook ? escHtml(c.facebook) : '')}
       ${campo('Outras redes', outrasTexto)}
       ${campo('Pendências de aceite', aceites ? escHtml(aceites) : '')}
     </div>

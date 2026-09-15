@@ -22,14 +22,16 @@ create table if not exists public.mc_influencer_candidaturas (
   cidade_uf    text        not null,
   pode_estudio text        not null,   -- sim | nao | talvez
 
-  -- a conta: só o que NÃO se vê abrindo o perfil
-  alcance_30d            integer not null,
-  reel_salvamentos       integer not null,
-  reel_compartilhamentos integer not null,
-  reel_retencao_pct      integer not null,
-  reel_1                 text    not null,
-  reel_2                 text,
-  reel_3                 text,
+  -- as redes e a prova de alcance
+  -- Em 15/09/2026 os quatro números digitados (alcance 30d, salvamentos,
+  -- compartilhamentos, retenção) saíram e viraram UM print. Menos digitação
+  -- para o candidato, e a imagem carrega contexto que campo numérico não tem.
+  tiktok         text,
+  facebook       text,
+  insights_print text,          -- CAMINHO no bucket, nunca URL (ver constraint)
+  reel_1         text not null,
+  reel_2         text,
+  reel_3         text,
 
   -- a moto e o conteúdo (é loja de peças: a moto define se o público compra)
   moto         text not null,
@@ -90,11 +92,7 @@ create table if not exists public.mc_influencer_candidaturas (
   constraint mcic_exclusividade_check check (char_length(btrim(exclusividade)) between 2 and 500),
 
   -- número negativo ou fantasioso é lixo, não dado
-  constraint mcic_alcance_check check (alcance_30d between 0 and 100000000),
-  constraint mcic_salv_check    check (reel_salvamentos between 0 and 100000000),
-  constraint mcic_comp_check    check (reel_compartilhamentos between 0 and 100000000),
-  constraint mcic_reten_check   check (reel_retencao_pct between 0 and 100),
-  constraint mcic_posts_check   check (posts_por_mes between 0 and 200),
+  constraint mcic_posts_check check (posts_por_mes between 0 and 200),
 
   constraint mcic_reel1_check  check (char_length(reel_1) between 8 and 300),
   constraint mcic_reel2_check  check (reel_2 is null or char_length(reel_2) <= 300),
@@ -103,6 +101,11 @@ create table if not exists public.mc_influencer_candidaturas (
   constraint mcic_publi_check  check (publi_link is null or char_length(publi_link) <= 300),
   constraint mcic_redes_check  check (outras_redes is null or char_length(outras_redes) <= 300),
   constraint mcic_motivo_check check (motivo is null or char_length(motivo) <= 400),
+  constraint mcic_tiktok_check check (tiktok is null or char_length(tiktok) <= 60),
+  constraint mcic_facebook_check check (facebook is null or char_length(facebook) <= 80),
+  -- URL assinada expira; guardar link no banco é guardar lixo com cara de dado
+  constraint mcic_print_check check (insights_print is null
+    or (char_length(insights_print) <= 300 and insights_print !~* '^https?://')),
   constraint mcic_nota_check   check (nota_interna is null or char_length(nota_interna) <= 2000),
 
   -- os três aceites são condição de entrada, não preferência
@@ -200,3 +203,45 @@ grant select, insert, update, delete on table public.mc_influencer_candidaturas 
 
 comment on table public.mc_influencer_candidaturas is
   'Candidaturas a patrocínio vindas da landing /influencer. Aprovar promove para mc_performance_influencers. anon só INSERT; leitura só mc_eh_admin(). Sem view pública — ver o comentário no fim de supabase/schema-candidaturas.sql.';
+
+-- =====================================================================
+-- BUCKET DO PRINT — candidaturas-insights
+--
+-- PRIVADO. É print do painel de rede social de uma pessoa: tem nome de perfil,
+-- às vezes barra de notificação e número que ela não publica. Bucket público
+-- aqui seria pasta aberta na internet com dado de terceiro dentro.
+--
+-- Conferido pela API REST com a chave publicável, os seis comportamentos:
+--   enviar              -> 200
+--   ler o arquivo       -> 404 (a RLS esconde a existência)
+--   listar o bucket     -> [] (filtrado)
+--   apagar              -> 403 Access denied
+--   URL pública direta  -> 400 (bucket privado)
+--   sobrescrever o de outro -> 403 violates row-level security
+-- =====================================================================
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('candidaturas-insights','candidaturas-insights', false, 8388608,
+        array['image/jpeg','image/png','image/webp','image/heic','image/heif'])
+on conflict (id) do update
+  set public = false,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "mcic_print_envio_anonimo" on storage.objects;
+drop policy if exists "mcic_print_leitura_admin" on storage.objects;
+drop policy if exists "mcic_print_admin_gerencia" on storage.objects;
+
+-- o candidato ENVIA e só
+create policy "mcic_print_envio_anonimo" on storage.objects
+  for insert to anon with check (bucket_id = 'candidaturas-insights');
+
+-- administrador lê — é o que permite gerar a URL assinada de 5 minutos
+create policy "mcic_print_leitura_admin" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'candidaturas-insights' and (select mc_eh_admin()));
+
+-- e apaga, para conseguir cumprir pedido de exclusão da LGPD
+create policy "mcic_print_admin_gerencia" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'candidaturas-insights' and (select mc_eh_admin()));
