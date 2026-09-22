@@ -3388,6 +3388,27 @@
 
   /* Numeros do Reel primeiro, em fileira propria: salvamento, compartilhamento
      e retencao sao os tres que separam alcance comprado de alcance real. */
+  /* ---- botao e opcoes da IA ----
+     Discreto: e uma ajuda, nao o assunto da tela. */
+  .fp-ia-btn {
+    display:inline-flex; align-items:center; gap:5px; cursor:pointer;
+    background:transparent; border:1px solid var(--border); border-radius:999px;
+    padding:3px 10px; font-size:11px; font-weight:600; color:var(--text-dim);
+    font-family:inherit; transition:border-color .15s, color .15s;
+  }
+  .fp-ia-btn:hover:not(:disabled) { border-color:var(--primary); color:var(--primary); }
+  .fp-ia-btn:disabled { opacity:.5; cursor:default; }
+  .fp-ia-saida { margin-top:8px; display:grid; gap:6px; }
+  .fp-ia-op {
+    text-align:left; cursor:pointer; width:100%;
+    background:var(--bg-elev); border:1px solid var(--border); border-radius:8px;
+    padding:9px 11px; font-size:12.5px; line-height:1.5; color:var(--text);
+    font-family:inherit; transition:border-color .15s, background .15s;
+  }
+  .fp-ia-op:hover { border-color:var(--primary); background:rgba(255,45,45,.05); }
+  .fp-ia-nota { font-size:11px; color:var(--text-muted); line-height:1.5; }
+  .fp-ia-nota.erro { color:var(--danger); }
+
   .inf-cand-print { margin-bottom:14px; }
   .inf-cand-print-img {
     display:block; margin-top:8px; max-width:260px; max-height:340px;
@@ -9598,9 +9619,22 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
         </p>
       </div>
       <div class="block-field">
-        <label for="pubLegenda">Legenda</label>
+        <label for="pubLegenda" style="display:flex;align-items:center;gap:10px">
+          <span>Legenda</span>
+          <!-- O botao vive AQUI, onde a legenda e escrita, e nao num chat lateral.
+               Chat lateral nao sabe o que esta na tela: o operador teria que
+               redigitar arquivo, tipo e rede que ja estao do lado. -->
+          <button type="button" class="fp-ia-btn" id="pubIaBtn" onclick="fpIaLegenda()">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/>
+            </svg>
+            Gerar com IA
+          </button>
+        </label>
         <textarea class="login-input" id="pubLegenda" rows="3" style="margin:0;resize:vertical"
                   placeholder="a legenda que vai em todas as redes"></textarea>
+        <div id="pubIaSaida" class="fp-ia-saida" hidden></div>
       </div>
       <div class="fp-user-grade">
         <div class="block-field">
@@ -31005,6 +31039,107 @@ function fpPubRedesHtml(marcadas) {
   }).join('');
 }
 
+/* ══════════════ ASSISTENTE: gerar legenda ══════════════
+   Manda o CONTEXTO DA TELA junto. Sem isso o operador teria que digitar de
+   novo o que já está no modal ao lado — e é assim que assistente interno vira
+   enfeite: pede o que o usuário já deu.
+
+   A chave da Anthropic não passa por aqui. O navegador manda o JWT do
+   operador para a edge function `assistente`, e ela fala com a API. */
+async function fpIaLegenda() {
+  const btn = document.getElementById('pubIaBtn');
+  const saida = document.getElementById('pubIaSaida');
+  if (!btn || !saida) return;
+
+  const rotulo = btn.innerHTML;
+  btn.disabled = true;
+  btn.textContent = 'Gerando…';
+  saida.hidden = false;
+  saida.innerHTML = '<div class="fp-ia-nota">Escrevendo três opções…</div>';
+
+  /* Contexto: só o que está na tela, e nada de PII. */
+  const redes = [].slice.call(document.querySelectorAll('#pubRedes input:checked'))
+    .map(function (i) { return i.value || i.dataset.rede || ''; }).filter(Boolean);
+  const arquivo = (document.getElementById('pubArquivo') || {}).value || '';
+  const contexto = {
+    tipo: (document.getElementById('pubTipo') || {}).value || null,
+    redes: redes.length ? redes : null,
+    arquivo: arquivo ? arquivo.split(/[\\/]/).pop() : null,
+    titulo_youtube: (document.getElementById('pubYtTitulo') || {}).value || null,
+    legenda_atual: (document.getElementById('pubLegenda') || {}).value || null
+  };
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const token = (session && session.access_token) || '';
+    const res = await fetch(window.FULLPRO_CONFIG.SUPABASE_URL + '/functions/v1/assistente', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token,
+        'apikey': window.FULLPRO_CONFIG.SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({
+        tarefa: 'legenda',
+        contexto: contexto,
+        mensagens: [{ role: 'user', content:
+          'Escreva a legenda desta publicação. Três opções curtas e diferentes entre si, ' +
+          'numeradas de 1 a 3, sem explicação antes nem depois.' }]
+      })
+    });
+
+    let dados = null;
+    try { dados = await res.json(); } catch (e) { dados = null; }
+
+    /* A function devolve 200 com {ok:false} quando o problema é de GERAÇÃO, e
+       401/403/503 quando é de permissão ou configuração. Os dois caminhos têm
+       mensagem própria: "erro" genérico faz o operador abrir chamado à toa. */
+    if (!dados || dados.ok !== true) {
+      const motivo = (dados && dados.erro) || ('Falha ' + res.status + ' ao falar com o assistente.');
+      saida.innerHTML = '<div class="fp-ia-nota erro">' + escHtml(motivo) + '</div>';
+      return;
+    }
+
+    /* A resposta vem numerada. Quebrar em opções é o que torna o clique
+       possível — parágrafo único obriga o operador a recortar à mão. */
+    const opcoes = String(dados.texto || '')
+      .split(/\n(?=\s*\d[\).\-]\s)/)
+      .map(function (t) { return t.replace(/^\s*\d[\).\-]\s*/, '').trim(); })
+      .filter(function (t) { return t.length > 1; });
+    const lista = opcoes.length ? opcoes : [String(dados.texto || '').trim()];
+
+    saida.innerHTML = '';
+    lista.forEach(function (texto) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'fp-ia-op';
+      b.textContent = texto;
+      b.title = 'Usar esta';
+      b.onclick = function () {
+        document.getElementById('pubLegenda').value = texto;
+        saida.hidden = true;
+        showToast('Legenda preenchida — ajuste o que quiser antes de agendar.', 'success');
+      };
+      saida.appendChild(b);
+    });
+
+    const nota = document.createElement('div');
+    nota.className = 'fp-ia-nota';
+    const fer = (dados.uso && dados.uso.ferramentas || []).map(function (f) { return f.nome; });
+    nota.textContent = 'Clique em uma para usar. '
+      + (fer.length ? 'Consultou: ' + fer.join(', ') + '. ' : '')
+      + 'Gasto do mês: US$ ' + ((dados.uso && dados.uso.gasto_do_mes_usd) || '0.00');
+    saida.appendChild(nota);
+  } catch (err) {
+    console.error('[assistente] legenda:', err);
+    saida.innerHTML = '<div class="fp-ia-nota erro">Não consegui falar com o assistente: '
+      + escHtml(err.message || String(err)) + '</div>';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = rotulo;
+  }
+}
+
 function fpPubAbrir(marcadas) {
   const cx = document.getElementById('pubRedes');
   cx.innerHTML = fpPubRedesHtml(marcadas || ['instagram']);
@@ -31012,6 +31147,10 @@ function fpPubAbrir(marcadas) {
 
   document.getElementById('pubLegenda').value = '';
   document.getElementById('pubArquivo').value = '';
+  /* As opções da vez anterior continuariam na tela: o modal só perde a
+     classe .show, nunca é destruído. */
+  var _iaSaida = document.getElementById('pubIaSaida');
+  if (_iaSaida) { _iaSaida.hidden = true; _iaSaida.innerHTML = ''; }
   document.getElementById('pubArquivoInfo').textContent =
     'MP4 ou MOV para vídeo, JPEG para foto. O Instagram só aceita JPEG em imagem.';
   _pubArquivo = null;
