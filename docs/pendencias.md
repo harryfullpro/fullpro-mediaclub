@@ -6,6 +6,21 @@ Ordenado por impacto. Atualizar sempre que algo for concluído ou aparecer.
 
 ## Em andamento
 
+### A chave da Anthropic — é o único passo que falta para o assistente responder
+A caixa do assistente está no painel (botão flutuante da fagulha, acima do "?" e
+do besouro) e a edge function `assistente` está publicada. Sem o segredo, ela
+responde **503 `sem_credencial`** e a caixa mostra "o assistente ainda não está
+ligado" — estado explicado, não tela quebrada.
+
+1. O administrador da conta Anthropic cria uma **chave de conta de serviço** no
+   workspace "MediaClub — Assistente", com teto de US$ 100 e validade **Never**.
+2. `supabase secrets set ANTHROPIC_API_KEY=...`
+3. Conferir entrando no painel e pedindo uma legenda.
+
+O teto de gasto é checado **antes** da chamada, por `mc_ia_gasto_do_mes()`, e o
+custo e o texto gerado ficam em `mc_ia_uso` — é o que responde em 30 dias se o
+módulo fica ou sai.
+
 ### Uma senha de app do Google — é o único passo que falta para a resposta sair
 A função `candidatura-email` está escrita e **não publicada**. Sem ela, a landing
 `/influencer` promete resposta por e-mail e ninguém envia.
