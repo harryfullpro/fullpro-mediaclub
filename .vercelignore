@@ -1,0 +1,9 @@
+# Nada daqui vai para o deploy publico. Conferido em 22/09/2026: sem este
+# arquivo a Vercel servia supabase/*.sql em HTTP 200 para qualquer um —
+# inclusive um SQL que descrevia quais tabelas estavam abertas.
+supabase/
+docs/
+ferramentas/
+backups/
+*.sql
+*.md
