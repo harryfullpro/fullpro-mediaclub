@@ -7568,6 +7568,12 @@ body.fp-sem-sessao .fp-ia-fab { display: none; }
 .fp-ordena button.on { color: var(--text); font-weight: 700; }
 .fp-ordena button svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .fp-ordena button.sobe svg { transform: rotate(180deg); }
+/* A nota da ordenacao por Recentes ocupa a linha inteira: ela explica por que
+   a maioria dos produtos esta empilhada no fim, e some sozinha no dia em que
+   todo mundo tiver registro de entrada (o texto vem da contagem, nao e fixo). */
+.fp-ordena-nota { flex: 1 0 100%; margin-top: -4px; font-size: 11.5px; line-height: 1.45; color: var(--text-muted); }
+/* Fora da fonte monoespacada do SKU: isto e texto corrido, nao codigo. */
+.fp-prod-entrou { font-family: inherit; }
 
 /* Composição do lote por prioridade. Substitui o "· 1 emergencial" no texto:
    a proporção de cada cor diz mais, e de relance, do que a contagem de um
@@ -24167,13 +24173,87 @@ let _galOrdem = null;   // ordem congelada, mesma regra da Produção
    era o padrão antigo) continua a um clique. */
 let _galOrdenar = 'nome', _galDir = 1;
 
-const FP_GAL_ORDENS = [['nome', 'Nome'], ['estoque', 'Estoque'], ['avaliacao', 'Avaliação']];
+const FP_GAL_ORDENS = [['nome', 'Nome'], ['recente', 'Recentes'], ['estoque', 'Estoque'], ['avaliacao', 'Avaliação']];
+
+/* ─── QUANDO A FOTO ENTROU ─────────────────────────────────────────────────
+   Nenhuma coluna de mc_photo_products responde isso. Medido em 29/09/2026,
+   nas 5.365 linhas com foto: `drive_checado_em` tem UM minuto distinto e
+   `atualizado_em` tem cinco — as duas sao carimbo de varredura em massa, nao
+   de chegada, e ordenar por elas devolveria ordem arbitraria com cara de
+   verdade. `fotografado_em` esta preenchida em 41.
+
+   Quem guarda a chegada de verdade e `mc_photo_files`: uma linha por arquivo
+   que subiu pelo painel, com created_at e quem enviou. Cobre 43 SKUs — os que
+   entraram desde 01/09. Os outros 5.322 vieram antes de existir registro e
+   NAO tem data nenhuma; por isso eles afundam para o fim em vez de fingir uma
+   posicao. A cobertura cresce sozinha a cada envio novo. */
+let FOTO_RECENTE = new Map();
+let _recenteCarregadoEm = 0, _recenteCarregando = null;
+
+async function fpGalRecentesCarregar(forcar) {
+  if (!forcar && _recenteCarregadoEm && Date.now() - _recenteCarregadoEm < 120000) return FOTO_RECENTE;
+  if (_recenteCarregando) return _recenteCarregando;
+  _recenteCarregando = (async () => {
+    try {
+      const mapa = new Map();
+      for (let de = 0; de < 20000; de += 1000) {
+        const { data, error } = await sb.from('mc_photo_files')
+          .select('sku, created_at, enviado_por_nome')
+          .order('created_at', { ascending: false }).range(de, de + 999);
+        if (error) throw error;
+        (data || []).forEach(f => {
+          const t = Date.parse(f.created_at);
+          if (!f.sku || !t) return;
+          const tem = mapa.get(f.sku);
+          if (!tem || t > tem.em) mapa.set(f.sku, { em: t, por: f.enviado_por_nome || '' });
+        });
+        if (!data || data.length < 1000) break;
+      }
+      FOTO_RECENTE = mapa;
+      _recenteCarregadoEm = Date.now();
+    } catch (e) {
+      /* Sem isto a ordenacao ainda funciona pelo fotografado_em — por isso
+         falha calada em vez de torrada: nao ha nada que o operador faca. */
+      console.warn('fpGalRecentesCarregar', e);
+    }
+    return FOTO_RECENTE;
+  })();
+  try { return await _recenteCarregando; } finally { _recenteCarregando = null; }
+}
+
+/* Vale o mais recente entre o arquivo enviado e o fotografado_em: os dois
+   conjuntos quase coincidem (41 nos dois, 2 so no arquivo, 0 so na coluna). */
+function fpGalEntradaEm(p) {
+  const arq = FOTO_RECENTE.get(p.sku);
+  const t = Math.max(arq ? arq.em : 0, p.fotografado_em ? (Date.parse(p.fotografado_em) || 0) : 0);
+  return t || null;
+}
+
+function fpGalEntradaHtml(p) {
+  if (_galOrdenar !== 'recente') return '';
+  const t = fpGalEntradaEm(p);
+  if (!t) return '';
+  const d = new Date(t);
+  const arq = FOTO_RECENTE.get(p.sku);
+  return '<span class="fp-prod-entrou" data-tip="Foto registrada em '
+    + escHtml(d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))
+    + '"> · ' + escHtml(fpTempoRelativo((Date.now() - t) / 36e5) + (arq && arq.por ? ' · ' + arq.por : '')) + '</span>';
+}
 
 function fpGalComparador() {
   const dir = _galDir;
   const porNome = (a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR');
   if (_galOrdenar === 'nome') return (a, b) => dir * porNome(a, b);
   if (_galOrdenar === 'estoque') return (a, b) => dir * ((Number(b.estoque) || 0) - (Number(a.estoque) || 0)) || porNome(a, b);
+  if (_galOrdenar === 'recente') return (a, b) => {
+    const ta = fpGalEntradaEm(a), tb = fpGalEntradaEm(b);
+    /* Sem registro fica no fim NOS DOIS SENTIDOS. Inverter para achar a foto
+       mais antiga com data nao pode empurrar 5.322 sem data na frente dela. */
+    if (!ta && !tb) return porNome(a, b);
+    if (!ta) return 1;
+    if (!tb) return -1;
+    return dir * (tb - ta) || porNome(a, b);
+  };
   /* Sem nota vale -1: fica antes do 0 e é o primeiro a aparecer. */
   return (a, b) => dir * ((a.nota == null ? -1 : a.nota) - (b.nota == null ? -1 : b.nota)) || porNome(a, b);
 }
@@ -24183,13 +24263,30 @@ function fpGalOrdenar(campo) {
   if (campo === _galOrdenar) _galDir = -_galDir;
   else { _galOrdenar = campo; _galDir = 1; }
   _galMostra = FP_FOTO_PAGINA;
+  /* Primeira vez em Recentes: busca as datas ANTES de desenhar, senao a lista
+     apareceria ordenada so pelo fotografado_em e se reorganizaria sozinha um
+     segundo depois — parece defeito. */
+  if (_galOrdenar === 'recente' && !_recenteCarregadoEm) {
+    fpGalRecentesCarregar().then(() => renderFotoGaleria(true));
+    return;
+  }
   renderFotoGaleria(true);
 }
 
-function fpGalOrdenaBarra(vazia) {
+function fpGalOrdenaBarra(vazia, lista) {
   const el = document.getElementById('fotoGalOrdena');
   if (!el) return;
   if (vazia) { el.innerHTML = ''; return; }      // sem lista, ordenar o quê?
+  let nota = '';
+  if (_galOrdenar === 'recente' && lista && lista.length) {
+    const com = lista.filter(p => fpGalEntradaEm(p)).length;
+    if (com < lista.length) {
+      nota = '<span class="fp-ordena-nota">' + com.toLocaleString('pt-BR') + ' de '
+        + lista.length.toLocaleString('pt-BR') + ' têm registro de quando a foto entrou. '
+        + 'As outras chegaram antes de o painel passar a registrar isso, então ficam no fim '
+        + 'da lista em ordem alfabética — não são as mais antigas, são as sem data.</span>';
+    }
+  }
   el.innerHTML = '<span class="fp-ordena-rot">Ordenar por</span>'
     + FP_GAL_ORDENS.map(([k, rot]) => {
         const ativo = k === _galOrdenar;
@@ -24197,7 +24294,7 @@ function fpGalOrdenaBarra(vazia) {
         return '<button type="button" class="' + (ativo ? 'on' : '') + (ativo && _galDir < 0 ? ' sobe' : '')
           + '" data-tip="' + dica + '" onclick="fpGalOrdenar(\'' + k + '\')" aria-pressed="' + ativo + '">' + rot
           + (ativo ? '<svg viewBox="0 0 24 24" aria-hidden="true">' + FP_ICONES.baixo + '</svg>' : '') + '</button>';
-      }).join('');
+      }).join('') + nota;
 }
 
 const FP_ESTRELA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.4l6.5-.9z"/></svg>';
@@ -24249,7 +24346,7 @@ function renderFotoGaleria(refazerOrdem, desde) {
     lista = _galOrdem.map(sku => porSku.get(sku)).filter(Boolean);
   }
 
-  fpGalOrdenaBarra(!lista.length);
+  fpGalOrdenaBarra(!lista.length, lista);
   const conta = document.getElementById('fotoGalCount');
   if (conta) conta.textContent = lista.length ? (lista.length === 1 ? '1 produto' : lista.length.toLocaleString('pt-BR') + ' produtos') : '';
 
@@ -24283,7 +24380,7 @@ function renderFotoGaleria(refazerOrdem, desde) {
     + ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();fpGalAbrirFotos(\'' + fpJs(p.sku) + '\')}">'
     + fpFotoProdutoHtml(p.sku, p.imagem_bling, 44, 8, { semLightbox: true }) + '</span>'
     + '<span class="fp-prod-nome"><b>' + escHtml(p.nome || '(sem nome)') + '</b>'
-    + '<span class="fp-prod-sku">' + escHtml(p.sku) + (p.refazer ? ' · refazer' : '') + '</span></span>'
+    + '<span class="fp-prod-sku">' + escHtml(p.sku) + (p.refazer ? ' · refazer' : '') + fpGalEntradaHtml(p) + '</span></span>'
     + fpProdEstoqueHtml(p.estoque)
     + '<span class="fp-prod-fim">' + fpNotaHtml(p)
     + (admin ? '<button class="fp-nota-btn" type="button" data-tip="Ver a foto ampliada e dar nota de 1 a 5" onclick="fpNotaAvaliar(\'' + fpJs(p.sku) + '\')">'
@@ -26636,7 +26733,8 @@ const FP_AJUDA = {
     intro: 'As fotos que já existem e a nota que cada uma recebeu.',
     itens: [
       'As abas separam <b>com foto</b>, <b>sem avaliação</b> e as que <b>precisam refazer</b>.',
-      '<b>Ordenar por</b> nome, estoque ou avaliação. Clicar de novo no mesmo critério inverte a ordem.',
+      '<b>Ordenar por</b> nome, recentes, estoque ou avaliação. Clicar de novo no mesmo critério inverte a ordem.',
+      '<b>Recentes</b> mostra primeiro as fotos que entraram por último. Só vale para o que subiu pelo painel — o que veio antes disso não tem data de entrada e fica no fim.',
       '<b>Avaliar</b> dá nota de 1 a 5 para a foto. Nota baixa devolve o produto para a fila da Produção, marcado para refazer.',
       '"Mostrar mais" carrega o próximo bloco de produtos.'
     ],
@@ -35214,7 +35312,7 @@ async function initApp() {
       switch (viewName) {
         case 'atualizacoes': renderAtualizacoes(); break;
         case 'foto-producao':  await fpFotoCarregar(); renderFotoProducao(true); break;
-        case 'foto-galeria':   await fpFotoCarregar(); renderFotoGaleria(true); break;
+        case 'foto-galeria':   await fpFotoCarregar(); fpGalRecentesCarregar(); renderFotoGaleria(true); break;
         case 'foto-separacao': await fpFotoCarregar(); renderFotoSeparacao(); break;
         case 'foto-lote':      await fpFotoCarregar(); renderFotoLote(); break;
         case 'dashboard':
