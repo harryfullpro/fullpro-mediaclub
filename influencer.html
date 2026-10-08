@@ -599,11 +599,14 @@
 
      O primeiro bloco não leva linha: divisor existe para separar dois, e
      no primeiro ele viraria moldura pela metade. */
-  .block{
-    padding:var(--s4) 0 0; margin:0;
-    border-top:1px solid var(--line);
-  }
-  .block:first-of-type{border-top:0; padding-top:0}
+  /* O fio que fechava o bloco SAIU (pedido do dono, 08/10). Medido antes: ele
+     encostava a 0px do ultimo controle em dois dos quatro blocos, e tinha
+     sempre 33px do outro lado — lia como linha grudada nas caixas de cima, e
+     nao como separador. Separar dois blocos ja e trabalho do fio do
+     `.block-head`; dois fios por emenda era um a mais. O vao sobe um degrau
+     para o branco fazer sozinho o que a linha fazia mal. */
+  .block{padding:var(--s6) 0 0; margin:0; border-top:0}
+  .block:first-of-type{padding-top:0}
 
   .block-head{
     display:flex; align-items:baseline; gap:var(--s2);
@@ -647,32 +650,41 @@
     line-height:1.45;
   }
 
+  /* SEM CAIXA. Preferencia do dono, repetida: elemento direto no fundo,
+     separado por fio — nao retangulo arredondado com preenchimento, que ele
+     le como "cara de IA". O campo vira um sublinhado: sem fundo, sem raio, e
+     sem respiro a esquerda, para o texto digitado nascer na MESMA coluna do
+     rotulo. E o fio de baixo que diz onde se escreve. */
   .inp, .sel, .txt{
-    width:100%; background:var(--panel-hi); color:var(--ink);
-    border:1px solid var(--line-campo); border-radius:var(--r);
+    width:100%; background:transparent; color:var(--ink);
+    border:0; border-bottom:1px solid var(--line-campo); border-radius:0;
     /* 16px e nao 15: abaixo de 16 o Safari do iOS DA ZOOM na pagina a cada
        toque em campo, e a pessoa tem que pincar de volta. Esta pagina chega
        por link no Instagram, ou seja iPhone — eram 21 campos, 21 zooms. */
-    padding:12px 14px; font-family:inherit; font-size:16px; line-height:1.4;
+    /* 12px e nao 10: sem a caixa, a altura do campo caiu para 43px e o alvo
+       de toque minimo e 44. Com 12 fecha em 46. */
+    padding:12px 0; font-family:inherit; font-size:16px; line-height:1.4;
     transition:border-color .15s, box-shadow .15s;
   }
-  .txt{min-height:92px; resize:vertical}
+  .txt{min-height:92px; resize:vertical; padding-top:var(--s1)}
   .sel{
-    appearance:none; cursor:pointer; padding-right:38px;
+    appearance:none; cursor:pointer; padding-right:26px;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%236b6b76' d='M6 8 0 0h12z'/%3E%3C/svg%3E");
-    background-repeat:no-repeat; background-position:right 14px center; background-size:10px;
+    background-repeat:no-repeat; background-position:right 2px center; background-size:10px;
   }
   .sel option, .sel optgroup{background:var(--panel); color:var(--ink)}
   .inp::placeholder, .txt::placeholder{color:var(--ink-quiet)}
 
+  /* O 2o pixel do foco vem de `box-shadow` e nao de `border-width`: engrossar
+     a borda empurraria o campo 1px e a coluna inteira tremeria ao tabular. */
   .inp:focus, .sel:focus, .txt:focus{
-    outline:none; border-color:var(--red); box-shadow:0 0 0 3px rgba(255,45,45,.16);
+    outline:none; border-bottom-color:var(--red); box-shadow:0 1px 0 0 var(--red);
   }
   .inp:focus-visible, .sel:focus-visible, .txt:focus-visible{outline:none}
 
   /* Erro só depois de tentar enviar — apontar erro em campo que a pessoa ainda
      não terminou de digitar é hostil. Daí a classe no <form>, não :invalid. */
-  .f.erro .inp, .f.erro .sel, .f.erro .txt{border-color:var(--red)}
+  .f.erro .inp, .f.erro .sel, .f.erro .txt{border-bottom-color:var(--red)}
   .f-erro{
     display:none; font-size:12px; color:var(--red-hi); margin-top:6px; font-weight:500;
   }
@@ -735,16 +747,18 @@
      Ele fica escondido DENTRO do <label>, que vira a área clicável inteira —
      assim o toque continua nativo (nada de click() sintético, que o Safari
      bloqueia) e o rótulo pode mostrar nome do arquivo e prévia. */
+  /* O tracejado sobrevive porque e ELE que diz "solte um arquivo aqui" — mas
+     como fio de baixo, nao como retangulo em volta. */
   .arq{
     display:flex; align-items:center; gap:14px; cursor:pointer;
-    background:var(--panel-hi); border:1px dashed var(--line-hi); border-radius:var(--r);
-    padding:16px; transition:border-color .15s, background .15s;
+    background:none; border:0; border-bottom:1px dashed var(--line-hi); border-radius:0;
+    padding:12px 0; transition:border-color .15s;
   }
-  .arq:hover{border-color:var(--red); background:rgba(255,45,45,.04)}
+  .arq:hover{border-bottom-color:var(--red)}
   .arq input[type=file]{
     position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;
   }
-  .arq:focus-within{border-color:var(--red); box-shadow:0 0 0 3px rgba(255,45,45,.16)}
+  .arq:focus-within{border-bottom-color:var(--red); box-shadow:0 1px 0 0 var(--red)}
   .arq-ico{
     flex:0 0 auto; width:38px; height:38px; border-radius:50%;
     background:rgba(255,45,45,.1); color:var(--red-hi);
@@ -755,9 +769,9 @@
   .arq-txt b{display:block; font-size:14px; font-weight:600; color:var(--ink);
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   .arq-txt small{display:block; font-size:12px; color:var(--ink-quiet); margin-top:2px}
-  .arq.cheio{border-style:solid; border-color:var(--green)}
+  .arq.cheio{border-bottom-style:solid; border-bottom-color:var(--green)}
   .arq.cheio .arq-ico{background:rgba(31,210,122,.12); color:var(--green)}
-  .f.erro .arq{border-color:var(--red)}
+  .f.erro .arq{border-bottom-color:var(--red)}
 
   /* A previa unica virou grade: ate 10 prints. Miniatura quadrada para a
      fileira nao dancar com print de celular (9:16) ao lado de print de
@@ -789,18 +803,23 @@
   .rede-row{display:grid; grid-template-columns:1fr 1fr auto; gap:8px; margin-bottom:8px}
   @media (max-width:640px){ .rede-row{grid-template-columns:1fr 1fr auto; gap:var(--s1)} }
   .rede-x{
-    flex:0 0 auto; width:38px; border:1px solid var(--line); border-radius:var(--r);
-    background:var(--panel-hi); color:var(--ink-quiet); cursor:pointer; font-size:17px;
+    flex:0 0 auto; width:32px; border:0; border-radius:0;
+    background:none; color:var(--ink-mute); cursor:pointer; font-size:19px;
+    transition:color .15s;
   }
-  .rede-x:hover{border-color:var(--red); color:var(--red)}
+  .rede-x:hover{color:var(--red)}
+  .rede-x:focus-visible{outline:2px solid var(--red-hi); outline-offset:2px}
+  /* Acao secundaria nao precisa de caixa: texto vermelho com o sinal de mais
+     ja e botao o bastante, e some do caminho quando nao interessa. */
   .rede-add{
-    display:inline-flex; align-items:center; gap:10px;
-    padding:12px 14px; cursor:pointer;
-    background:var(--panel-hi); border:1px dashed var(--line-hi); border-radius:var(--r);
-    font-family:inherit; font-size:13px; font-weight:600; color:var(--ink);
-    transition:border-color .15s, background .15s;
+    display:inline-flex; align-items:center; gap:var(--s1);
+    padding:12px 0; cursor:pointer;
+    background:none; border:0; border-radius:0;
+    font-family:inherit; font-size:13px; font-weight:700; color:var(--red-txt);
+    transition:color .15s;
   }
-  .rede-add:hover{border-color:var(--red); background:rgba(255,45,45,.04)}
+  .rede-add:hover{color:var(--red-hi); text-decoration:underline; text-underline-offset:3px}
+  .rede-add:focus-visible{outline:2px solid var(--red-hi); outline-offset:3px; border-radius:4px}
   .rede-add[disabled]{opacity:.5; cursor:default}
   .rede-mais{
     display:inline-flex; align-items:center; justify-content:center;
@@ -809,16 +828,35 @@
   }
 
   /* ---- escolha em cartão (rádio) ---- */
-  .opts{display:grid; gap:10px}
+  .opts{display:grid; gap:0}
   .opts.h{grid-template-columns:repeat(3,1fr)}
-  @media (max-width:640px){ .opts.h{grid-template-columns:1fr} }
+  .opts.h.h2{grid-template-columns:repeat(2,1fr)}
+  /* O FIO TEM DE VIRAR DE EIXO JUNTO COM A GRADE. Empilhada, ele separa por
+     cima; lado a lado, por cima ele vira um risco solto em cima da 2a e da 3a
+     opcao — que e exatamente o defeito que o `.num + .num` ja tinha pago
+     nesta mesma folha. Aqui a regra e posicional de verdade, e o respiro fica
+     simetrico nos dois lados do fio (24px). A primeira opcao nao leva respiro
+     a esquerda, para nascer na mesma coluna do rotulo. */
+  .opts.h .opt{padding:12px var(--s3) 12px 0}
+  .opts.h .opt + .opt{
+    border-top:0; border-left:1px solid var(--line); padding-left:var(--s3);
+  }
+  @media (max-width:640px){
+    .opts.h, .opts.h.h2{grid-template-columns:1fr}
+    .opts.h .opt{padding:12px 0}
+    .opts.h .opt + .opt{border-left:0; padding-left:0; border-top:1px solid var(--line)}
+  }
 
+  /* Mesma regra do campo: sem caixa. A opcao fica direto no fundo e o que
+     separa uma da outra e um fio entre elas — nao um retangulo em volta de
+     cada. O marcador vermelho ja diz qual esta escolhida. */
   .opt{
     display:flex; align-items:flex-start; gap:12px; cursor:pointer;
-    background:var(--panel-hi); border:1px solid var(--line); border-radius:var(--r);
-    padding:12px 14px; transition:border-color .15s, background .15s;
+    background:none; border:0; border-radius:0;
+    padding:12px 0; min-height:44px; transition:color .15s;
   }
-  .opt:hover{border-color:var(--line-hi)}
+  .opt + .opt{border-top:1px solid var(--line)}
+  .opt:hover .opt-t{color:var(--red-txt)}
   .opt input{
     appearance:none; flex:0 0 auto; width:17px; height:17px; margin:2px 0 0;
     border:1.5px solid var(--line-hi); border-radius:50%; cursor:pointer;
@@ -826,24 +864,23 @@
   }
   .opt input:checked{border-color:var(--red); box-shadow:inset 0 0 0 4px var(--red)}
   .opt input:focus-visible{outline:2px solid var(--red-hi); outline-offset:2px}
-  .opt.on{border-color:var(--red); background:rgba(255,45,45,.06)}
+  .opt.on .opt-t{color:var(--ink); font-weight:700}
   .opt-b{min-width:0}
   .opt-t{display:block; font-size:14px; font-weight:600; line-height:1.35}
   .opt-s{display:block; font-size:12px; color:var(--ink-dim); margin-top:2px; line-height:1.45}
 
   /* ---- aceites ---- */
+  /* Mesma dissolucao do `.opt`. */
   .ok{
     display:flex; align-items:flex-start; gap:12px; cursor:pointer;
-    /* Mesma caixa do `.opt`: as duas são linha marcável com borda, e tinham
-       12px 14px contra 14px — diferença que não defendia nada. */
-    padding:12px 14px; border:1px solid var(--line); border-radius:var(--r);
-    background:var(--panel-hi); transition:border-color .15s;
+    padding:12px 0; min-height:44px; border:0; border-radius:0;
+    background:none; transition:color .15s;
   }
-  .ok + .ok{margin-top:10px}
-  .ok:hover{border-color:var(--line-hi)}
+  .ok + .ok{border-top:1px solid var(--line)}
+  .ok:hover .ok-t{color:var(--ink)}
   /* Era `rgba(31,210,122,.5)` — o verde do tema ESCURO (#1fd27a) cravado.
      Agora sai do token, que no claro e #18a863. */
-  .ok.on{border-color:color-mix(in srgb, var(--green) 50%, transparent)}
+  .ok.on .ok-t{color:var(--ink)}
   .ok input{
     appearance:none; flex:0 0 auto; width:19px; height:19px; margin:1px 0 0;
     border:1.5px solid var(--line-hi); border-radius:6px; cursor:pointer; position:relative;
@@ -860,7 +897,7 @@
   .ok input:focus-visible{outline:2px solid var(--green); outline-offset:2px}
   .ok-t{font-size:13.5px; line-height:1.55; color:var(--ink-dim)}
   .ok-t b{color:var(--ink); font-weight:600}
-  .ok.erro{border-color:var(--red)}
+  .ok.erro .ok-t{color:var(--red-txt)}
 
   /* ===================== A FICHA (assinatura) =====================
      O candidato vê, enquanto preenche, exatamente a ficha que o Marketing vai
@@ -959,14 +996,17 @@
   }
 
   /* Aviso de falha. Sem barra colorida na lateral — a borda é inteira. */
+  /* Sem retangulo tingido: fio em cima na cor do alerta e texto direto no
+     fundo. (Barra colorida a ESQUERDA esta proibida nos projetos da casa — por
+     isso o fio vai em cima, que e onde o olho entra no bloco.) */
   .aviso{
     display:none; margin:0 0 var(--s3);
-    background:rgba(255,45,45,.07); border:1px solid rgba(255,45,45,.4);
-    border-radius:var(--r); padding:14px 16px; font-size:13.5px; color:var(--ink);
+    background:none; border:0; border-top:2px solid var(--red);
+    border-radius:0; padding:var(--s2) 0 0; font-size:13.5px; color:var(--ink);
     line-height:1.55;
   }
   .aviso.on{display:block}
-  .aviso b{display:block; margin-bottom:3px; font-weight:700}
+  .aviso b{display:block; margin-bottom:4px; font-weight:800; color:var(--red-txt)}
 
   /* ===================== SUCESSO ===================== */
   .fim{display:none; padding:var(--s12) 0}
@@ -1453,7 +1493,7 @@
               </div>
               <div class="f" data-f="moto_propria">
                 <p class="lbl">Essa moto é sua? <span class="req">*</span></p>
-                <div class="opts h" style="grid-template-columns:1fr 1fr">
+                <div class="opts h h2">
                   <label class="opt"><input type="radio" name="moto_propria" value="sim" />
                     <span class="opt-b"><span class="opt-t">Sim</span></span></label>
                   <label class="opt"><input type="radio" name="moto_propria" value="nao" />
