@@ -571,8 +571,10 @@
   }
 
   /* ===================== LAYOUT DO CORPO ===================== */
-  .body{padding:var(--s8) 0 var(--s12)}
-  @media (max-width:640px){ .body{padding:var(--s6) 0 var(--s8)} }
+  /* Mesmo degrau do resto (s8→s6, s12→s8): deixar so o .body no ritmo antigo
+     abria um vao de 64px entre o slider e o formulario, maior que qualquer
+     outro da pagina. O override do mobile saiu porque virou o mesmo valor. */
+  .body{padding:var(--s6) 0 var(--s8)}
 
   .cols{
     display:grid; grid-template-columns:minmax(0,1fr) 340px;
