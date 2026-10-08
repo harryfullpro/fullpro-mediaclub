@@ -5,7 +5,7 @@
 <!-- viewport-fit=cover é o que faz env(safe-area-inset-*) devolver valor de
      verdade no iPhone. Sem ele a conta da Dynamic Island não existe. -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Patrocínio FullPro — Candidatura para criadores de moto</title>
+<title>Patrocínio FullPro — Candidatura para criadores de conteúdo</title>
 
 <!-- Página de acesso por LINK. Não é anunciada em lugar nenhum, não recebe link
      da landing pública e não entra em sitemap. O noindex é o que impede de ela
@@ -625,9 +625,10 @@
 
   /* ALINHAMENTO ENTRE AS COLUNAS DO PAR.
      Sem a caixa, um desalinho que a moldura escondia ficou gritante: a dica
-     ("Opcional") mora DENTRO do <label>, entao o campo do par que nao tem dica
-     subia a altura dela — medido, 20px num par e 21px no outro, e os dois
-     sublinhados paravam em alturas diferentes.
+     mora DENTRO do <label>, entao o campo do par que nao tem dica subia a
+     altura dela — medido, 20px num par e 21px no outro, e os dois sublinhados
+     paravam em alturas diferentes. (O exemplo de entao era a dica "Opcional",
+     que ja saiu da pagina; o par Facebook x Outras redes mantem o caso vivo.)
 
      `subgrid` faz rotulo, controle e erro dividirem as MESMAS faixas nas duas
      colunas, entao a faixa do rotulo passa a valer o rotulo mais alto do par.
@@ -1502,7 +1503,7 @@
                 <p class="f-erro">Informe o @ do seu Instagram.</p>
               </div>
               <div class="f" data-f="tiktok">
-                <label for="tiktok">TikTok <span class="hint">Opcional</span></label>
+                <label for="tiktok">TikTok</label>
                 <input class="inp" id="tiktok" name="tiktok" autocomplete="off"
                        placeholder="@seuperfil" maxlength="60" />
               </div>
@@ -1510,14 +1511,14 @@
 
             <div class="duo">
               <div class="f" data-f="facebook">
-                <label for="facebook">Facebook <span class="hint">Opcional</span></label>
+                <label for="facebook">Facebook</label>
                 <input class="inp" id="facebook" name="facebook" autocomplete="off"
                        placeholder="@suapagina ou o nome dela" maxlength="80" />
               </div>
               <!-- Campo livre virou par nome+usuario (08/10). Texto solto chegava
                    como "youtube e kwai tbm" e nao dava para abrir nenhum perfil. -->
               <div class="f" data-f="outras_redes">
-                <p class="lbl">Outras redes <span class="hint">Opcional — YouTube, Kwai…</span></p>
+                <p class="lbl">Outras redes <span class="hint">YouTube, Kwai…</span></p>
                 <div id="redesLista"></div>
                 <button type="button" class="rede-add" id="redesAdd">
                   Adicionar outras redes
@@ -1672,13 +1673,13 @@
             </div>
 
             <div class="f" data-f="publi_link">
-              <label for="publi_link">Link de uma publi que você já fez <span class="hint">Opcional — se já fez alguma</span></label>
+              <label for="publi_link">Link de uma publi que você já fez </label>
               <input class="inp" id="publi_link" name="publi_link" inputmode="url"
                      placeholder="https://instagram.com/p/…" maxlength="300" />
             </div>
 
             <div class="f" data-f="motivo">
-              <label for="motivo">Por que você quer ser patrocinado pela FullPro? <span class="hint">Opcional</span></label>
+              <label for="motivo">Por que você quer ser patrocinado pela FullPro?</label>
               <textarea class="txt" id="motivo" name="motivo" maxlength="400"
                         placeholder="Duas ou três linhas bastam"></textarea>
             </div>
