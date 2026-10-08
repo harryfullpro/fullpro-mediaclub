@@ -622,6 +622,31 @@
   }
 
   .fields{display:grid; gap:var(--s3)}
+
+  /* ALINHAMENTO ENTRE AS COLUNAS DO PAR.
+     Sem a caixa, um desalinho que a moldura escondia ficou gritante: a dica
+     ("Opcional") mora DENTRO do <label>, entao o campo do par que nao tem dica
+     subia a altura dela — medido, 20px num par e 21px no outro, e os dois
+     sublinhados paravam em alturas diferentes.
+
+     `subgrid` faz rotulo, controle e erro dividirem as MESMAS faixas nas duas
+     colunas, entao a faixa do rotulo passa a valer o rotulo mais alto do par.
+     Resolve tambem o caso em que a dica quebra em duas linhas, que um
+     `min-height` chutado nao resolveria. */
+  @supports (grid-template-rows:subgrid){
+    .duo, .trio{grid-template-rows:auto auto auto}
+    .duo > .f, .trio > .f{display:grid; grid-template-rows:subgrid; grid-row:span 3}
+    /* Empilhado nao ha com o que alinhar, e um `.f` de 3 faixas so atrapalha. */
+    @media (max-width:640px){
+      .duo > .f, .trio > .f{display:block}
+    }
+  }
+  /* `subgrid` alinha por POSICAO do filho, nao por papel. Um filho a mais
+     desloca o controle uma faixa inteira: a lista de redes extras, VAZIA,
+     empurrava o botao para a 3a faixa e abria 72px contra o campo ao lado
+     (medido). Vazia, ela sai do fluxo; com linha dentro, volta e empurra o
+     botao para baixo, que e o certo. */
+  #redesLista:empty{display:none}
   .duo{display:grid; grid-template-columns:1fr 1fr; gap:var(--s3)}
   .trio{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s3)}
   /* No telefone o formulario tem 21 campos empilhados: 24px entre cada vira
