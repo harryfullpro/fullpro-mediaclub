@@ -158,7 +158,7 @@
     pointer-events:auto;
     width:max-content; max-width:calc(100% - 8px); margin:0 auto;
     display:flex; align-items:center; justify-content:center;
-    height:54px; padding:0 34px;
+    height:54px; padding:0 var(--s4);
     border-radius:999px;
     /* DUAS COISAS estavam matando a transparencia, e as duas foram medidas.
 
@@ -233,10 +233,9 @@
   @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
     .top-in{background:rgba(255,255,255,.93)}
   }
-  @media (max-width:640px){
-    .top{padding:10px 14px}
-    .top-in{height:48px; padding:0 24px}
-  }
+  /* O bloco de ≤640px que existia aqui estava MORTO: o `@media` do fim da folha
+     deixa o header estático com `padding:0`, e vence por vir depois. Eram dois
+     valores fora da escala (10/14/24px) que nunca pintaram pixel. */
   .brand{display:flex; align-items:center; gap:10px; text-decoration:none}
   .brand img{height:20px; width:auto; display:block}
   .brand-txt{
@@ -456,7 +455,7 @@
   .fita[hidden]{display:none}   /* `[hidden]` da folha do NAVEGADOR perde para `.fita{display:flex}` de autor */
   .fita-seg{
     flex:1 1 0; max-width:100px; min-width:0;
-    height:24px; padding:10px 0;           /* alvo de toque de 24px com traco de 4px */
+    height:var(--s4); padding:14px 0;       /* alvo de toque de 32px com traco de 4px */
     border:0; background:none; cursor:pointer;
     display:flex; align-items:center;
   }
@@ -480,7 +479,7 @@
   }
   @keyframes fitaCorre{ from{width:0} to{width:100%} }
   @media (max-width:640px){
-    .fita{gap:5px; width:calc(100% - var(--s4))}
+    .fita{gap:6px; width:calc(100% - var(--s4))}
   }
   /* Sem animacao, o autoplay tambem nao existe (ver ligarRelogio): a fita
      vira indicador de posicao, e so. */
@@ -558,14 +557,14 @@
      linha vazia nem zero, que na vitrine de um parceiro pega mal. */
   .post-num{
     position:absolute; left:14px; right:14px; bottom:36px;
-    display:flex; align-items:center; gap:13px;
+    display:flex; align-items:center; gap:12px;
     font-size:11.5px; font-weight:700; color:#fff;
     font-variant-numeric:tabular-nums; letter-spacing:.01em;
     text-shadow:0 1px 3px rgba(0,0,0,.55);
   }
   .post-num i{display:inline-flex; align-items:center; gap:4px; font-style:normal}
   .post-num svg{width:12px; height:12px; flex:0 0 auto; fill:currentColor; opacity:.95}
-  @media (max-width:640px){ .post-num{font-size:11px; gap:11px} }
+  @media (max-width:640px){ .post-num{font-size:11px; gap:10px} }
   .padrao-nota{
     margin:var(--s2) 0 0; font-size:12.5px; color:var(--ink-quiet); line-height:1.5;
   }
@@ -788,7 +787,7 @@
 
   /* ---- outras redes: par nome + usuario ---- */
   .rede-row{display:grid; grid-template-columns:1fr 1fr auto; gap:8px; margin-bottom:8px}
-  @media (max-width:640px){ .rede-row{grid-template-columns:1fr 1fr auto; gap:6px} }
+  @media (max-width:640px){ .rede-row{grid-template-columns:1fr 1fr auto; gap:var(--s1)} }
   .rede-x{
     flex:0 0 auto; width:38px; border:1px solid var(--line); border-radius:var(--r);
     background:var(--panel-hi); color:var(--ink-quiet); cursor:pointer; font-size:17px;
@@ -796,7 +795,7 @@
   .rede-x:hover{border-color:var(--red); color:var(--red)}
   .rede-add{
     display:inline-flex; align-items:center; gap:10px;
-    padding:11px 14px; cursor:pointer;
+    padding:12px 14px; cursor:pointer;
     background:var(--panel-hi); border:1px dashed var(--line-hi); border-radius:var(--r);
     font-family:inherit; font-size:13px; font-weight:600; color:var(--ink);
     transition:border-color .15s, background .15s;
@@ -815,7 +814,7 @@
   @media (max-width:640px){ .opts.h{grid-template-columns:1fr} }
 
   .opt{
-    display:flex; align-items:flex-start; gap:10px; cursor:pointer;
+    display:flex; align-items:flex-start; gap:12px; cursor:pointer;
     background:var(--panel-hi); border:1px solid var(--line); border-radius:var(--r);
     padding:12px 14px; transition:border-color .15s, background .15s;
   }
@@ -835,7 +834,9 @@
   /* ---- aceites ---- */
   .ok{
     display:flex; align-items:flex-start; gap:12px; cursor:pointer;
-    padding:14px; border:1px solid var(--line); border-radius:var(--r);
+    /* Mesma caixa do `.opt`: as duas são linha marcável com borda, e tinham
+       12px 14px contra 14px — diferença que não defendia nada. */
+    padding:12px 14px; border:1px solid var(--line); border-radius:var(--r);
     background:var(--panel-hi); transition:border-color .15s;
   }
   .ok + .ok{margin-top:10px}
@@ -883,15 +884,17 @@
       padding-left:0; padding-top:var(--s4); margin-top:var(--s4);
     }
   }
-  .ficha-h{padding:0 0 var(--s3); border-bottom:1px solid var(--line)}
+  /* Mesmo respiro do `.block-head`: os dois são título com fio embaixo, e a
+     ficha, que é a coluna mais densa, estava com MAIS ar que o formulário. */
+  .ficha-h{padding:0 0 var(--s2); border-bottom:1px solid var(--line)}
   .ficha-h h2{
     margin:0 0 4px; font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:1.2px;
   }
   .ficha-h p{margin:0; font-size:12px; color:var(--ink-quiet); line-height:1.5}
 
-  .ficha-rows{padding:6px var(--s3) var(--s3)}
+  .ficha-rows{padding:var(--s1) var(--s3) var(--s3)}
   .row{
-    display:flex; align-items:baseline; gap:10px; padding:9px 0;
+    display:flex; align-items:baseline; gap:10px; padding:var(--s1) 0;
     /* Era `rgba(38,38,46,.6)` — o --line do tema escuro cravado. */
     border-bottom:1px solid var(--line);
   }
