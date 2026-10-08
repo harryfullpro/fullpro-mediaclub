@@ -20,7 +20,8 @@ create table if not exists public.mc_influencer_candidaturas (
   email        text        not null,
   instagram    text        not null,
   cidade_uf    text        not null,
-  pode_estudio text        not null,   -- sim | nao | talvez
+  pode_estudio text        not null,   -- sim | nao_consigo | nao_interesse
+                                      -- os dois "nao" sao distintos: logistica x interesse
 
   -- as redes e a prova de alcance
   -- Em 15/09/2026 os quatro números digitados (alcance 30d, salvamentos,
@@ -28,10 +29,8 @@ create table if not exists public.mc_influencer_candidaturas (
   -- para o candidato, e a imagem carrega contexto que campo numérico não tem.
   tiktok         text,
   facebook       text,
-  insights_print text,          -- CAMINHO no bucket, nunca URL (ver constraint)
+  insights_prints text[] not null,  -- 1 a 10 CAMINHOS no bucket, nunca URL (ver constraint)
   reel_1         text not null,
-  reel_2         text,
-  reel_3         text,
 
   -- a moto e o conteúdo (é loja de peças: a moto define se o público compra)
   moto         text not null,
@@ -71,7 +70,10 @@ create table if not exists public.mc_influencer_candidaturas (
   constraint mc_influencer_candidaturas_pkey primary key (id),
 
   constraint mcic_status_check       check (status = any (array['pending','approved','rejected','standby'])),
-  constraint mcic_pode_estudio_check check (pode_estudio = any (array['sim','nao','talvez'])),
+  -- Trocado em 08/10 com a tabela VAZIA (zero linhas, conferido antes). Os dois
+  -- "nao" sao distintos: logistica x interesse. `nao`/`talvez` sairam do conjunto
+  -- porque o formulario e o unico que escreve aqui, entao o check espelha ele.
+  constraint mcic_pode_estudio_check check (pode_estudio = any (array['sim','nao_consigo','nao_interesse'])),
   constraint mcic_moto_propria_check check (moto_propria = any (array['sim','nao'])),
   constraint mcic_espera_check       check (espera = any (array['peca','cache','comissao','desconto','combinar'])),
   constraint mcic_via_publica_check  check (via_publica = any (array['nao_apareco','sim_documentos_ok','sim_sem_documentos'])),
@@ -95,8 +97,6 @@ create table if not exists public.mc_influencer_candidaturas (
   constraint mcic_posts_check check (posts_por_mes between 0 and 200),
 
   constraint mcic_reel1_check  check (char_length(reel_1) between 8 and 300),
-  constraint mcic_reel2_check  check (reel_2 is null or char_length(reel_2) <= 300),
-  constraint mcic_reel3_check  check (reel_3 is null or char_length(reel_3) <= 300),
   constraint mcic_cache_check  check (cache_faixa is null or char_length(cache_faixa) <= 120),
   constraint mcic_publi_check  check (publi_link is null or char_length(publi_link) <= 300),
   constraint mcic_redes_check  check (outras_redes is null or char_length(outras_redes) <= 300),
@@ -104,8 +104,14 @@ create table if not exists public.mc_influencer_candidaturas (
   constraint mcic_tiktok_check check (tiktok is null or char_length(tiktok) <= 60),
   constraint mcic_facebook_check check (facebook is null or char_length(facebook) <= 80),
   -- URL assinada expira; guardar link no banco é guardar lixo com cara de dado
-  constraint mcic_print_check check (insights_print is null
-    or (char_length(insights_print) <= 300 and insights_print !~* '^https?://')),
+  -- SEM SUBCONSULTA: o Postgres recusa `select` dentro de check (erro 0A000),
+  -- entao o teste por elemento virou teste sobre os elementos juntos.
+  -- array_length devolve NULL para '{}', e NULL reprova o between — array vazio
+  -- fica barrado sem clausula propria. 3.009 = 10 caminhos de 300 + 9 separadores.
+  constraint mcic_prints_check check (
+    array_length(insights_prints, 1) between 1 and 10
+    and char_length(array_to_string(insights_prints, E'\n')) <= 3009
+    and array_to_string(insights_prints, E'\n') !~* '(^|\n)https?://'),
   constraint mcic_nota_check   check (nota_interna is null or char_length(nota_interna) <= 2000),
 
   -- os três aceites são condição de entrada, não preferência

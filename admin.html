@@ -3414,6 +3414,10 @@
     display:block; margin-top:8px; max-width:260px; max-height:340px;
     width:auto; height:auto; border-radius:8px; border:1px solid var(--border);
   }
+  /* Ate 10 prints por candidatura desde 08/10: eles viram fileira que quebra,
+     e cada um encolhe para caber mais de um na largura da ficha. */
+  .inf-cand-prints { display:flex; flex-wrap:wrap; gap:8px; align-items:flex-start; }
+  .inf-cand-prints .inf-cand-print-img { margin-top:0; max-width:150px; max-height:210px; }
   .inf-cand-nums {
     display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr));
     gap:8px; margin-bottom:14px;
@@ -32573,46 +32577,83 @@ const infRotulo = (mapa, chave) =>
    isso o cartão nasce com um botão, e a imagem só é buscada quando alguém pede
    — assim uma tela com 30 candidaturas não dispara 30 links assinados de uma
    vez para prints que ninguém vai abrir. */
+/* A coluna virou text[] (ate 10 prints) em 08/10. `infCandPrints` aceita as
+   DUAS formas de proposito: o array novo e a string antiga. Candidatura velha
+   nao existe hoje (tabela estava vazia), mas um backup restaurado existe. */
+function infCandPrints(c) {
+  if (Array.isArray(c.insights_prints)) return c.insights_prints.filter(Boolean);
+  if (c.insights_print) return [c.insights_print];
+  return [];
+}
+
 async function infCandVerPrint(id) {
   const c = INF_CANDIDATURAS.find(x => x.id === id);
-  if (!c || !c.insights_print) return;
+  if (!c) return;
+  const caminhos = infCandPrints(c);
+  if (!caminhos.length) return;
   const alvo = document.getElementById('print-' + id);
   if (!alvo) return;
   alvo.innerHTML = '<span class="inf-cand-campo-val">abrindo…</span>';
 
+  /* Uma chamada so para os N caminhos: createSignedUrls no plural evita dez
+     idas a rede para abrir uma ficha. */
   const { data, error } = await sb.storage
     .from('candidaturas-insights')
-    .createSignedUrl(c.insights_print, 300);   // 5 minutos bastam para olhar
+    .createSignedUrls(caminhos, 300);          // 5 minutos bastam para olhar
 
-  if (error || !data || !data.signedUrl) {
+  const bons = (data || []).filter(d => d && d.signedUrl);
+  if (error || !bons.length) {
     alvo.innerHTML = '<span style="color:var(--danger);font-size:12px">'
-      + escHtml('Não foi possível abrir o print: ' + ((error && error.message) || 'sem resposta'))
+      + escHtml('Não foi possível abrir os prints: ' + ((error && error.message) || 'sem resposta'))
       + '</span>';
     return;
   }
-  const img = document.createElement('img');
-  img.className = 'inf-cand-print-img';
-  img.src = data.signedUrl;
-  img.alt = 'Print dos Insights enviado pelo candidato';
-  img.onerror = function () {
-    alvo.innerHTML = '<span style="color:var(--danger);font-size:12px">O link abriu mas a imagem não carregou.</span>';
-  };
-  const a = document.createElement('a');
-  a.href = data.signedUrl; a.target = '_blank'; a.rel = 'noopener';
-  a.title = 'Abrir em tamanho cheio (o link expira em 5 minutos)';
-  a.appendChild(img);
+
   alvo.innerHTML = '';
-  alvo.appendChild(a);
+  const grade = document.createElement('div');
+  grade.className = 'inf-cand-prints';
+  bons.forEach((d, i) => {
+    const img = document.createElement('img');
+    img.className = 'inf-cand-print-img';
+    img.src = d.signedUrl;
+    img.alt = 'Print ' + (i + 1) + ' dos Insights enviado pelo candidato';
+    img.onerror = function () { a.replaceWith(avisoImg()); };
+    const a = document.createElement('a');
+    a.href = d.signedUrl; a.target = '_blank'; a.rel = 'noopener';
+    a.title = 'Abrir em tamanho cheio (o link expira em 5 minutos)';
+    a.appendChild(img);
+    grade.appendChild(a);
+  });
+  alvo.appendChild(grade);
+
+  /* Se o link assinado falhou para ALGUNS, dizer quantos — melhor que mostrar
+     cinco onde o candidato mandou sete e ninguem notar a diferenca. */
+  if (bons.length < caminhos.length) {
+    const n = document.createElement('div');
+    n.className = 'inf-cand-campo-val';
+    n.style.color = 'var(--warning)';
+    n.textContent = (caminhos.length - bons.length) + ' de ' + caminhos.length + ' não abriram.';
+    alvo.appendChild(n);
+  }
+
+  function avisoImg() {
+    const s = document.createElement('span');
+    s.style.cssText = 'color:var(--danger);font-size:12px';
+    s.textContent = 'O link abriu mas a imagem não carregou.';
+    return s;
+  }
 }
 
 function infCandPrintHtml(c) {
-  if (!c.insights_print) {
+  const n = infCandPrints(c).length;
+  if (!n) {
     return '<div class="inf-cand-campo-lbl">Print dos Insights</div>'
       + '<div class="inf-cand-campo-val">não enviou</div>';
   }
   return '<div class="inf-cand-campo-lbl">Print dos Insights</div>'
     + '<div id="print-' + escHtml(c.id) + '">'
-    + '<button class="action-btn view" type="button" onclick="infCandVerPrint(\'' + escHtml(c.id) + '\')">Ver print</button>'
+    + '<button class="action-btn view" type="button" onclick="infCandVerPrint(\'' + escHtml(c.id) + '\')">'
+    + (n === 1 ? 'Ver print' : 'Ver os ' + n + ' prints') + '</button>'
     + '</div>';
 }
 
@@ -32650,7 +32691,12 @@ const INF_CAND_VIA_ROTULO = {
   sim_documentos_ok:'Pilota em via pública — documentação em ordem',
   sim_sem_documentos:'Pilota em via pública — SEM documentação'
 };
-const INF_CAND_ESTUDIO_ROTULO = { sim:'Sim', nao:'Não', talvez:'Talvez' };
+/* `nao` e `talvez` ficam no mapa so para candidatura antiga nao virar traco na
+   tela — a tabela estava vazia em 08/10, mas rotulo que some e divida barata. */
+const INF_CAND_ESTUDIO_ROTULO = {
+  sim:'Sim, consigo ir', nao_consigo:'Não consegue ir', nao_interesse:'Não tem interesse',
+  nao:'Não', talvez:'Talvez'
+};
 
 /* Numero pode ser 0 legitimamente (zero salvamento é informação, não ausência),
    entao a checagem e por null/undefined e nao por falsy. */
@@ -33372,7 +33418,7 @@ function infCandCard(c) {
 
   /* Link de Reel/publi so sai como <a> se for http(s) — ver infCandLinkSeguro. */
   const links = [
-    ['Reel 1', c.reel_1], ['Reel 2', c.reel_2], ['Reel 3', c.reel_3],
+    ['Reels', c.reel_1],
     ['Publi anterior', c.publi_link]
   ].map(([rot, raw]) => {
     const u = infCandLinkSeguro(raw);

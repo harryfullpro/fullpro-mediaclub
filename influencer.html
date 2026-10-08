@@ -303,17 +303,19 @@
      - `1fr` virou `auto`: com quatro colunas iguais, "+10" ocupava a mesma
        largura de "+34.705" e a fila ficava frouxa. Agora cada coluna vale o
        que o numero pede. */
+  /* TRES colunas desde 08/10. E sem filete entre elas: com quatro numeros a
+     linha vertical impedia a fileira de virar sopa de digito, mas com tres bem
+     espacados o vao sozinho ja separa — e sobra menos mobilia na tela. */
   .nums{
     margin:var(--s6) 0 0; display:grid;
-    grid-template-columns:repeat(4,auto); justify-content:center;
-    gap:0; text-align:center;
+    grid-template-columns:repeat(3,auto); justify-content:center;
+    gap:0 var(--s6); text-align:center;
   }
   /* Centrado a pedido do dono (10/09), e ele esta certo: o numero ja nascia
      centrado sob um H1 centrado, mas o ROTULO ficava a esquerda — a coluna
      saia torta em todas as quatro. Com o texto centrado o padding tem de
      virar simetrico, senao o divisor deixa de ficar no meio do vao. */
-  .num{padding:var(--s2) var(--s3)}
-  .num + .num{border-left:1px solid var(--line)}
+  .num{padding:var(--s2) 0}
   .num-v{
     display:block; font-size:clamp(32px,4.4vw,60px); font-weight:800;
     line-height:.95; letter-spacing:-.02em; color:var(--ink);
@@ -324,23 +326,16 @@
     line-height:1.5; letter-spacing:.14em; text-transform:uppercase;
     color:var(--ink-quiet);
   }
-  /* Em duas colunas o divisor tem que virar de eixo, e isso e defeito medido,
-     nao teoria: `.num + .num` pega os itens 2, 3 e 4, e numa grade de duas
-     colunas o item 3 ABRE LINHA — desenhava um filete solto a esquerda do
-     terceiro numero, no comeco da fileira.
-     Aqui a regra passa a ser posicional: filete a esquerda so em quem esta na
-     coluna da direita, e filete em cima em quem esta na segunda fileira. */
+  /* A grade de 2x2 saiu junto com o quarto numero: com tres itens ela deixava
+     o terceiro ORFAO numa fileira sozinha, encostado a esquerda. Tres colunas
+     continuam ate o telefone — so o vao e a tipografia encolhem. */
   @media (max-width:820px){
-    .nums{grid-template-columns:repeat(2,1fr); justify-content:stretch}
-    .num{padding:var(--s2)}
-    .num + .num{border-left:0}
-    .num:nth-child(2n){border-left:1px solid var(--line)}
-    .num:nth-child(n+3){border-top:1px solid var(--line); margin-top:var(--s1); padding-top:var(--s2)}
+    .nums{grid-template-columns:repeat(3,1fr); justify-content:stretch; gap:0 var(--s3)}
   }
   @media (max-width:640px){
-    .num{padding:var(--s2) 14px}
-    .num-v{font-size:26px}
-    .num-l{font-size:11px; margin-top:7px}
+    .nums{gap:0 var(--s2)}
+    .num-v{font-size:clamp(20px,6.4vw,26px)}
+    .num-l{font-size:10px; letter-spacing:.1em; margin-top:7px}
   }
 
   /* ===================== O PADRÃO (slider) =====================
@@ -623,8 +618,11 @@
   .fields{display:grid; gap:var(--s3)}
   .duo{display:grid; grid-template-columns:1fr 1fr; gap:var(--s3)}
   .trio{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s3)}
+  /* No telefone o formulario tem 21 campos empilhados: 24px entre cada vira
+     rolagem a toa. 16px ainda separa com folga e encurta a tela em ~170px. */
   @media (max-width:640px){
     .duo, .trio{grid-template-columns:1fr}
+    .fields, .duo, .trio{gap:var(--s2)}
   }
 
   /* FILHO DIRETO, de propósito. `.f label` (0,0,1,1) vencia `.opt` (0,0,1,0) e
@@ -633,6 +631,12 @@
      de elemento por isso: colisão de especificidade não avisa, só aparece torta. */
   .f > label, .f > .lbl{
     display:block; font-size:13px; font-weight:600; color:var(--ink); margin:0 0 8px;
+  }
+  /* DEPOIS da regra acima de proposito: as duas tem a mesma especificidade
+     (0,0,1,1), entao quem vence e a ultima da folha. Escrita antes, esta aqui
+     nao fazia nada — medido 8px onde o codigo dizia 6px. */
+  @media (max-width:640px){
+    .f > label, .f > .lbl{margin-bottom:6px}
   }
   .f .req{color:var(--red)}
   .f .hint{
@@ -650,7 +654,6 @@
     transition:border-color .15s, box-shadow .15s;
   }
   .txt{min-height:92px; resize:vertical}
-  .suf .inp{font-variant-numeric:tabular-nums}
   .sel{
     appearance:none; cursor:pointer; padding-right:38px;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%236b6b76' d='M6 8 0 0h12z'/%3E%3C/svg%3E");
@@ -672,12 +675,56 @@
   }
   .f.erro .f-erro{display:block}
 
-  .suf{position:relative}
-  .suf .inp{padding-right:52px}
-  .suf-txt{
-    position:absolute; right:14px; top:50%; transform:translateY(-50%);
-    font-size:12px; font-weight:500; letter-spacing:.04em; color:var(--ink-quiet);
-    pointer-events:none;
+  /* ---- faixa de 1 a 6+ ----
+     O range nativo e feio e, pior, nao diz nada antes de arrastar — por isso a
+     leitura grande em cima e o eixo numerado embaixo. O trilho pinta ate o
+     valor por `--pct`, setada no JS: o pseudo-elemento do trilho nao enxerga o
+     valor do input sozinho. */
+  .faixa{display:block}
+  .faixa-v{
+    display:block; margin-bottom:6px;
+    font-size:34px; font-weight:800; line-height:1; letter-spacing:-.02em;
+    color:var(--ink); font-variant-numeric:tabular-nums;
+  }
+  .faixa-v small{
+    margin-left:4px; font-size:13px; font-weight:600; letter-spacing:.04em;
+    color:var(--ink-quiet);
+  }
+  .faixa-r{
+    -webkit-appearance:none; appearance:none;
+    width:100%; height:26px; background:transparent; cursor:pointer;
+    display:block; margin:0;
+  }
+  .faixa-r:focus{outline:none}
+  .faixa-r:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px rgba(255,45,45,.22)}
+  .faixa-r:focus-visible::-moz-range-thumb{box-shadow:0 0 0 4px rgba(255,45,45,.22)}
+
+  .faixa-r::-webkit-slider-runnable-track{
+    height:5px; border-radius:999px;
+    background:linear-gradient(to right, var(--red) 0 var(--pct,50%), var(--line-hi) var(--pct,50%) 100%);
+  }
+  .faixa-r::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:22px; height:22px; margin-top:-8.5px;   /* (22-5)/2 centra na trilha */
+    border-radius:50%; background:#fff; border:2px solid var(--red);
+    box-shadow:0 2px 6px rgba(0,0,0,.18);
+    transition:box-shadow .15s;
+  }
+  .faixa-r::-moz-range-track{
+    height:5px; border-radius:999px;
+    background:linear-gradient(to right, var(--red) 0 var(--pct,50%), var(--line-hi) var(--pct,50%) 100%);
+  }
+  .faixa-r::-moz-range-thumb{
+    width:22px; height:22px; border-radius:50%;
+    background:#fff; border:2px solid var(--red);
+    box-shadow:0 2px 6px rgba(0,0,0,.18);
+  }
+  /* Eixo: primeiro e ultimo alinhados pelas pontas, nao pelo centro, senao o
+     "1" nasce fora do trilho. */
+  .faixa-eixo{
+    display:flex; justify-content:space-between; margin-top:2px; padding:0 2px;
+    font-size:11px; font-weight:600; color:var(--ink-quiet);
+    font-variant-numeric:tabular-nums;
   }
 
   /* ---- anexo do print ----
@@ -709,9 +756,53 @@
   .arq.cheio .arq-ico{background:rgba(31,210,122,.12); color:var(--green)}
   .f.erro .arq{border-color:var(--red)}
 
-  .arq-previa{
-    display:block; margin-top:10px; max-height:190px; width:auto;
-    border-radius:var(--r); border:1px solid var(--line);
+  /* A previa unica virou grade: ate 10 prints. Miniatura quadrada para a
+     fileira nao dancar com print de celular (9:16) ao lado de print de
+     computador (16:9). */
+  .arq-lista{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(84px,1fr));
+    gap:8px; margin-top:10px;
+  }
+  .arq-lista:empty{display:none}
+  .arq-item{
+    position:relative; aspect-ratio:1; border-radius:var(--r);
+    border:1px solid var(--line); overflow:hidden; background:var(--panel-hi);
+  }
+  .arq-item img{width:100%; height:100%; object-fit:cover; display:block}
+  /* Sem previa desenhavel (HEIC) mostra a extensao, nao um quadro vazio. */
+  .arq-item span{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; color:var(--ink-quiet); text-transform:uppercase;
+  }
+  .arq-x{
+    position:absolute; top:4px; right:4px; width:22px; height:22px;
+    display:flex; align-items:center; justify-content:center;
+    border:0; border-radius:50%; cursor:pointer;
+    background:rgba(0,0,0,.62); color:#fff; font-size:15px; line-height:1;
+  }
+  .arq-x:hover{background:var(--red)}
+
+  /* ---- outras redes: par nome + usuario ---- */
+  .rede-row{display:grid; grid-template-columns:1fr 1fr auto; gap:8px; margin-bottom:8px}
+  @media (max-width:640px){ .rede-row{grid-template-columns:1fr 1fr auto; gap:6px} }
+  .rede-x{
+    flex:0 0 auto; width:38px; border:1px solid var(--line); border-radius:var(--r);
+    background:var(--panel-hi); color:var(--ink-quiet); cursor:pointer; font-size:17px;
+  }
+  .rede-x:hover{border-color:var(--red); color:var(--red)}
+  .rede-add{
+    display:inline-flex; align-items:center; gap:10px;
+    padding:11px 14px; cursor:pointer;
+    background:var(--panel-hi); border:1px dashed var(--line-hi); border-radius:var(--r);
+    font-family:inherit; font-size:13px; font-weight:600; color:var(--ink);
+    transition:border-color .15s, background .15s;
+  }
+  .rede-add:hover{border-color:var(--red); background:rgba(255,45,45,.04)}
+  .rede-add[disabled]{opacity:.5; cursor:default}
+  .rede-mais{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:22px; height:22px; border-radius:50%;
+    background:rgba(255,45,45,.1); color:var(--red-hi); font-size:16px; line-height:1;
   }
 
   /* ---- escolha em cartão (rádio) ---- */
@@ -1028,6 +1119,16 @@
     justify-content:space-between;
   }
   .pe p{margin:0; font-size:12px; color:var(--ink-quiet); line-height:1.6}
+  /* A nota de LGPD saiu de dentro da terceira confirmacao (08/10) para o
+     rotulo ficar numa linha so. Ela nao podia sumir junto: prazo de guarda,
+     direito de acesso/exclusao e base legal sao o que torna o consentimento
+     valido, e so existiam ali.
+     Seletor com DOIS pontos de classe de proposito: `.pe p` e (0,0,1,1) e
+     venceria `.pe-lgpd` sozinho, que e (0,0,1,0). */
+  .pe .pe-lgpd{
+    flex:1 0 100%; order:1;
+    max-width:74ch; font-size:11px; line-height:1.55; opacity:.85;
+  }
   .pe a{color:var(--ink-dim); text-decoration:none}
   .pe a:hover{color:var(--red-hi)}
 
@@ -1068,7 +1169,10 @@
       position:static; top:auto; z-index:auto;
       padding:0; pointer-events:auto;
       background:var(--void);
-      border-bottom:1px solid var(--line);
+      /* SEM risco embaixo do logo. A borda existia para separar header de
+         hero quando o header ainda flutuava; estático e com o mesmo fundo do
+         hero ela virou um traco solto logo abaixo da marca. */
+      border-bottom:0;
       backdrop-filter:none; -webkit-backdrop-filter:none;
     }
     .top-in{
@@ -1137,14 +1241,13 @@
       <p class="hero-lead rise rise-3">Preencha o cadastro abaixo. Leva três minutos.</p>
 
       <!-- A prova de tamanho da marca, com contador. Todos os números são
-           medidos ou declarados pela empresa — nenhum é enfeite:
-           seguidores = Instagram 22.275 + YouTube 11.000 + Facebook 871 +
-           TikTok 559, lidos pelas APIs em 09/09/2026. -->
+           medidos ou declarados pela empresa — nenhum é enfeite.
+
+           O TOTAL DE SEGUIDORES SAIU (08/10, decisão do dono): para quem está
+           se candidatando a patrocínio, 34 mil somando quatro redes não diz
+           nada — é a ordem de grandeza do próprio candidato. Venda, nota e
+           tempo de mercado falam de solidez, que é o que ele quer saber. -->
       <div class="nums rise rise-4" id="nums">
-        <div class="num">
-          <span class="num-v" data-ate="34705" data-mais="1">+34.705</span>
-          <span class="num-l">seguidores somando<br/>todas as redes</span>
-        </div>
         <div class="num">
           <span class="num-v" data-ate="100000" data-mais="1">+100.000</span>
           <span class="num-l">vendas no<br/>Mercado Livre</span>
@@ -1195,7 +1298,7 @@
         <!-- ---------- Você ---------- -->
         <section class="block rev">
           <div class="block-head">
-            <h2>Você</h2>
+            <h2>Sobre você</h2>
             <span>Contato</span>
           </div>
           <div class="fields">
@@ -1230,16 +1333,20 @@
             </div>
 
             <div class="f" data-f="pode_estudio">
-              <p class="lbl">Você conseguiria gravar no nosso estúdio, em Joinville (SC)? <span class="req">*</span>
+              <p class="lbl">Você se disponibilizaria para gravar projetos específicos em nosso estúdio, em Joinville (SC)? <span class="req">*</span>
                 <span class="hint">Não poder ir não elimina — muda o formato.</span>
               </p>
               <div class="opts h">
+                <!-- Os dois "não" sao DIFERENTES de proposito (08/10): quem nao
+                     consegue ir e questao de logistica e pode virar parceiro
+                     remoto; quem nao tem interesse e outra conversa. Juntar os
+                     dois num `nao` so apagava a distincao no painel. -->
                 <label class="opt"><input type="radio" name="pode_estudio" value="sim" />
-                  <span class="opt-b"><span class="opt-t">Sim</span><span class="opt-s">Consigo ir</span></span></label>
-                <label class="opt"><input type="radio" name="pode_estudio" value="talvez" />
-                  <span class="opt-b"><span class="opt-t">Talvez</span><span class="opt-s">Depende da data</span></span></label>
-                <label class="opt"><input type="radio" name="pode_estudio" value="nao" />
-                  <span class="opt-b"><span class="opt-t">Não</span><span class="opt-s">Gravo por conta</span></span></label>
+                  <span class="opt-b"><span class="opt-t">Sim, consigo ir</span></span></label>
+                <label class="opt"><input type="radio" name="pode_estudio" value="nao_consigo" />
+                  <span class="opt-b"><span class="opt-t">Não, não consigo ir</span></span></label>
+                <label class="opt"><input type="radio" name="pode_estudio" value="nao_interesse" />
+                  <span class="opt-b"><span class="opt-t">Não, não tenho interesse</span></span></label>
               </div>
               <p class="f-erro">Escolha uma das três.</p>
             </div>
@@ -1273,10 +1380,16 @@
                 <input class="inp" id="facebook" name="facebook" autocomplete="off"
                        placeholder="@suapagina ou o nome dela" maxlength="80" />
               </div>
+              <!-- Campo livre virou par nome+usuario (08/10). Texto solto chegava
+                   como "youtube e kwai tbm" e nao dava para abrir nenhum perfil. -->
               <div class="f" data-f="outras_redes">
-                <label for="outras_redes">Outras redes <span class="hint">Opcional — YouTube, Kwai…</span></label>
-                <input class="inp" id="outras_redes" name="outras_redes"
-                       placeholder="YouTube @seucanal" maxlength="300" />
+                <p class="lbl">Outras redes <span class="hint">Opcional — YouTube, Kwai…</span></p>
+                <div id="redesLista"></div>
+                <button type="button" class="rede-add" id="redesAdd">
+                  Adicionar outras redes
+                  <span class="rede-mais" aria-hidden="true">+</span>
+                </button>
+                <input type="hidden" id="outras_redes" name="outras_redes" />
               </div>
             </div>
 
@@ -1284,11 +1397,9 @@
                  um a um. Menos digitação, e a imagem carrega contexto que campo
                  numérico não carrega. -->
             <div class="f" data-f="insights_print">
-              <p class="lbl">Print dos Insights das suas redes <span class="req">*</span>
-                <span class="hint">No Instagram: seu perfil → Painel profissional. Vale print de qualquer rede sua — se tiver mais de um, mande o que melhor representa seu alcance.</span>
-              </p>
+              <p class="lbl">Print dos Insights das suas redes <span class="req">*</span></p>
               <label class="arq" id="arqCaixa" for="insights_print">
-                <input type="file" id="insights_print" name="insights_print"
+                <input type="file" id="insights_print" name="insights_print" multiple
                        accept="image/png,image/jpeg,image/webp,image/heic,image/heif" />
                 <span class="arq-ico" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
@@ -1298,12 +1409,12 @@
                   </svg>
                 </span>
                 <span class="arq-txt">
-                  <b id="arqNome">Escolher a imagem</b>
-                  <small id="arqDica">PNG, JPG ou WEBP, até 8 MB</small>
+                  <b id="arqNome">Escolher as imagens</b>
+                  <small id="arqDica">PNG, JPG ou WEBP, até 8 MB cada — no máximo 10</small>
                 </span>
               </label>
-              <img class="arq-previa" id="arqPrevia" alt="" hidden />
-              <p class="f-erro">Anexe o print — é por ele que a análise começa.</p>
+              <div class="arq-lista" id="arqLista"></div>
+              <p class="f-erro">Anexe ao menos um print — é por ele que a análise começa.</p>
             </div>
 
             <div class="f" data-f="reel_1">
@@ -1316,16 +1427,6 @@
             </div>
 
             <div class="duo">
-              <div class="f" data-f="reel_2">
-                <label for="reel_2">Outro Reels <span class="hint">Opcional</span></label>
-                <input class="inp" id="reel_2" name="reel_2" inputmode="url"
-                       placeholder="https://instagram.com/reel/…" maxlength="300" />
-              </div>
-              <div class="f" data-f="reel_3">
-                <label for="reel_3">E mais um <span class="hint">Opcional</span></label>
-                <input class="inp" id="reel_3" name="reel_3" inputmode="url"
-                       placeholder="https://instagram.com/reel/…" maxlength="300" />
-              </div>
             </div>
           </div>
         </section>
@@ -1356,17 +1457,16 @@
             </div>
 
             <div class="f" data-f="pecas">
-              <label for="pecas">Que tipo de peça você mais mexe e mostra? <span class="req">*</span>
-                <span class="hint">Ex.: carenagem, escapamento, kit relação, freio, elétrica.</span>
+              <label for="pecas">Que tipo de conteúdo você costuma fazer com sua moto e/ou peças da sua moto? <span class="req">*</span>
+                <span class="hint">Ex.: review, tutorial de instalação, modificações, personalização e/ou outros.</span>
               </label>
               <input class="inp" id="pecas" name="pecas"
-                     placeholder="Carenagem, escapamento e manutenção que faço eu mesmo" maxlength="300" />
+                     placeholder="Review de peça, tutorial de instalação e modificações" maxlength="300" />
               <p class="f-erro">Escreva em poucas palavras.</p>
             </div>
 
             <div class="f" data-f="via_publica">
               <p class="lbl">Você aparece pilotando em via pública nos vídeos? <span class="req">*</span>
-                <span class="hint">Nosso logo entra no vídeo — por isso perguntamos.</span>
               </p>
               <div class="opts">
                 <label class="opt"><input type="radio" name="via_publica" value="nao_apareco" />
@@ -1386,19 +1486,24 @@
         <!-- ---------- A parceria ---------- -->
         <section class="block rev">
           <div class="block-head">
-            <h2>A parceria</h2>
-            <span>O que entra e o que sai</span>
+            <h2>Sobre o patrocínio</h2>
           </div>
           <div class="fields">
             <div class="duo">
+              <!-- Campo numerico virou faixa (08/10). Digitar numero num celular
+                   abre teclado so para responder "4", e aceitava 0 e 200 — nenhum
+                   dos dois e proposta de verdade. 6 significa "6 ou mais". -->
               <div class="f" data-f="posts_por_mes">
                 <label for="posts_por_mes">Quantos posts por mês você se compromete a entregar? <span class="req">*</span></label>
-                <div class="suf">
-                  <input class="inp" id="posts_por_mes" name="posts_por_mes"
-                         inputmode="numeric" placeholder="4" maxlength="3" />
-                  <span class="suf-txt">/mês</span>
+                <div class="faixa">
+                  <output class="faixa-v" id="postsSaida" for="posts_por_mes">4<small>/mês</small></output>
+                  <input class="faixa-r" type="range" id="posts_por_mes" name="posts_por_mes"
+                         min="1" max="6" step="1" value="4"
+                         aria-describedby="postsSaida" />
+                  <div class="faixa-eixo" aria-hidden="true">
+                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6+</span>
+                  </div>
                 </div>
-                <p class="f-erro">Informe um número.</p>
               </div>
               <div class="f" data-f="espera">
                 <label for="espera">O que você espera receber? <span class="req">*</span></label>
@@ -1425,10 +1530,10 @@
 
             <div class="f" data-f="exclusividade">
               <label for="exclusividade">Você tem contrato de exclusividade, ou divulga hoje alguma loja ou marca de peças — mesmo sem contrato? <span class="req">*</span>
-                <span class="hint">Se não tem, escreva "não tenho". De fato pesa igual à de papel.</span>
+                <span class="hint">Se não tem, escreva "não tenho".</span>
               </label>
               <textarea class="txt" id="exclusividade" name="exclusividade" maxlength="500"
-                        placeholder="Não tenho contrato. Já divulguei a loja X em três posts no ano passado, sem vínculo."></textarea>
+                        ></textarea>
               <p class="f-erro">Conte a situação, mesmo que seja "não tenho".</p>
             </div>
 
@@ -1441,7 +1546,7 @@
             <div class="f" data-f="motivo">
               <label for="motivo">Por que você quer ser patrocinado pela FullPro? <span class="hint">Opcional — é onde você se diferencia de quem só colou números</span></label>
               <textarea class="txt" id="motivo" name="motivo" maxlength="400"
-                        placeholder="O que você faria com a parceria que ainda não consegue fazer hoje."></textarea>
+                        ></textarea>
             </div>
           </div>
         </section>
@@ -1449,27 +1554,24 @@
         <!-- ---------- Aceites ---------- -->
         <section class="block rev">
           <div class="block-head">
-            <h2>Para poder analisar</h2>
-            <span>Três confirmações</span>
+            <h2>Termos e condições</h2>
           </div>
 
           <label class="ok" data-f="maior_18">
             <input type="checkbox" id="maior_18" name="maior_18" />
-            <span class="ok-t"><b>Tenho 18 anos ou mais.</b> Conferimos na assinatura do contrato.</span>
+            <span class="ok-t"><b>Tenho 18 anos ou mais. <span class="req">*</span></b></span>
           </label>
 
           <label class="ok" data-f="aceite_repost">
             <input type="checkbox" id="aceite_repost" name="aceite_repost" />
-            <span class="ok-t"><b>Autorizo a FullPro a repostar e a impulsionar como anúncio o conteúdo
-            da parceria.</b> Impulsionar é o uso real do material — melhor combinar agora.</span>
+            <span class="ok-t"><b>Autorizo a FullPro a repostar, publicar, impulsionar ou anunciar
+            o conteúdo da parceria. <span class="req">*</span></b></span>
           </label>
 
           <label class="ok" data-f="aceite_dados">
             <input type="checkbox" id="aceite_dados" name="aceite_dados" />
-            <span class="ok-t"><b>Concordo que a FullPro trate estes dados para analisar minha
-            candidatura.</b> Quem lê é o Marketing da FullPro. Guardamos 12 meses e descartamos.
-            Pode pedir acesso, correção ou exclusão pelo nosso WhatsApp. Base legal: art. 7º, V
-            da LGPD.</span>
+            <span class="ok-t"><b>Concordo que a FullPro retenha os dados desse formulário para
+            análise. <span class="req">*</span></b></span>
           </label>
         </section>
 
@@ -1552,6 +1654,9 @@
 <footer class="pe">
   <div class="wrap pe-in">
     <p>FullPro Media Club — estúdio de conteúdo automotivo da FullPro.</p>
+    <p class="pe-lgpd">Os dados deste formulário são lidos pelo Marketing da FullPro, guardados por
+    12 meses e descartados. Você pode pedir acesso, correção ou exclusão pelo nosso WhatsApp.
+    Base legal: art. 7º, V da LGPD.</p>
     <p><a href="https://fullpro.com.br" target="_blank" rel="noopener">fullpro.com.br</a></p>
   </div>
 </footer>
@@ -1660,12 +1765,22 @@
     e.target.value = v ? '@' + v : '';
   });
 
-  /* Campos só-número: bloquear na digitação evita erro que só apareceria no envio. */
-  ['posts_por_mes'].forEach(function (id) {
-    $('#' + id).addEventListener('input', function (e) {
-      e.target.value = e.target.value.replace(/\D/g, '');
-    });
-  });
+  /* ---------------- faixa de posts por mes ----------------
+     O trilho pinta ate o valor com uma variavel de CSS, porque `::-webkit-
+     slider-runnable-track` nao enxerga o valor do input sozinho. */
+  (function () {
+    var faixa = $('#posts_por_mes'), saida = $('#postsSaida');
+    function pintar() {
+      var n = Number(faixa.value);
+      var pct = (n - faixa.min) / (faixa.max - faixa.min) * 100;
+      faixa.style.setProperty('--pct', pct + '%');
+      /* 6 e o teto da faixa e quer dizer "6 ou mais" — o rotulo precisa dizer
+         isso, senao quem entrega 12 acha que a resposta dele nao cabe. */
+      saida.innerHTML = (n >= 6 ? '6+' : String(n)) + '<small>/mês</small>';
+    }
+    faixa.addEventListener('input', function () { pintar(); pintarFicha(); });
+    pintar();
+  })();
 
   /* O @ do TikTok chega das três formas, igual ao do Instagram. Normalizar aqui
      evita três jeitos de procurar a mesma pessoa no painel. */
@@ -1681,49 +1796,160 @@
   /* ---------------- o print dos Insights ----------------
      Guarda o arquivo numa variável, e não só no input: o envio precisa dele
      depois, e input de arquivo não sobrevive a nenhum reset de formulário. */
-  var ARQUIVO = null;
+  /* ---------------- prints dos insights: ate 10 ----------------
+     Acumula em vez de substituir. O <input multiple> devolve SO a ultima
+     escolha, entao sem acumular quem anexa 3, volta e anexa mais 2 perderia
+     os 3 primeiros sem aviso nenhum. */
+  var ARQUIVOS = [];
+  var TETO_ARQUIVOS = 10;
   var TIPOS_OK = ['image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif'];
   var TETO_BYTES = 8 * 1024 * 1024;
 
+  function arqServe(f) {
+    /* O iPhone manda HEIC com type vazio em algumas versoes — por isso o
+       segundo teste, pela extensao, em vez de recusar print de iPhone. */
+    return TIPOS_OK.indexOf(f.type) >= 0 || /\.(png|jpe?g|webp|heic|heif)$/i.test(f.name);
+  }
+
+  function arqPintar(recado) {
+    var caixa = $('#arqCaixa'), nome = $('#arqNome'), dica = $('#arqDica'), lista = $('#arqLista');
+    lista.innerHTML = '';
+    ARQUIVOS.forEach(function (f, i) {
+      var cel = document.createElement('div');
+      cel.className = 'arq-item';
+      /* Previa so para o que o navegador desenha: HEIC ele nao desenha, e
+         prévia quebrada assusta mais do que prévia nenhuma. */
+      if (/^image\/(png|jpeg|webp)$/.test(f.type)) {
+        var img = document.createElement('img');
+        img.src = URL.createObjectURL(f);
+        img.alt = '';
+        /* Revoga quando a imagem ja foi desenhada: sem isto cada repintura
+           deixa um blob preso na memoria do telefone. */
+        img.onload = function () { URL.revokeObjectURL(img.src); };
+        cel.appendChild(img);
+      } else {
+        var et = document.createElement('span');
+        et.textContent = (f.name.split('.').pop() || 'img').slice(0, 5);
+        cel.appendChild(et);
+      }
+      var x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'arq-x';
+      x.innerHTML = '&times;';
+      x.setAttribute('aria-label', 'Remover ' + f.name);
+      /* Remove pelo PROPRIO arquivo, nao pelo indice: o indice e o do momento em
+         que o botao foi desenhado, e qualquer caminho que apague sem repintar
+         entre um clique e outro acertaria a imagem errada. */
+      x.onclick = function () {
+        var onde = ARQUIVOS.indexOf(f);
+        if (onde >= 0) ARQUIVOS.splice(onde, 1);
+        arqPintar(); pintarFicha();
+      };
+      cel.appendChild(x);
+      lista.appendChild(cel);
+    });
+
+    caixa.classList.toggle('cheio', ARQUIVOS.length > 0);
+    /* O TITULO SEMPRE DIZ QUANTAS ENTRARAM, mesmo quando algo foi recusado:
+       trocar a contagem por uma mensagem de erro escondia o estado justo na
+       hora em que ele mais importa. O motivo (ou os motivos, somados) vai na
+       linha de baixo. */
+    nome.textContent = ARQUIVOS.length
+      ? ARQUIVOS.length + (ARQUIVOS.length === 1 ? ' imagem anexada' : ' imagens anexadas')
+      : 'Escolher as imagens';
+    dica.textContent = (recado && recado.length) ? recado.join(' ')
+      : (ARQUIVOS.length >= TETO_ARQUIVOS
+          ? 'Chegou ao limite de ' + TETO_ARQUIVOS + '. Remova uma para trocar.'
+          : 'PNG, JPG ou WEBP, até 8 MB cada — no máximo ' + TETO_ARQUIVOS);
+  }
+
   $('#insights_print').addEventListener('change', function (e) {
-    var f = e.target.files && e.target.files[0];
-    var caixa = $('#arqCaixa'), nome = $('#arqNome'), dica = $('#arqDica'), previa = $('#arqPrevia');
+    var escolhidos = [].slice.call(e.target.files || []);
     limpaErro(form.querySelector('[data-f="insights_print"]'));
-    ARQUIVO = null;
-    caixa.classList.remove('cheio');
-    previa.hidden = true;
-    if (previa.src) { URL.revokeObjectURL(previa.src); previa.removeAttribute('src'); }
+    e.target.value = '';                     // permite reescolher o mesmo arquivo
+    if (!escolhidos.length) { arqPintar(); return; }
 
-    if (!f) { nome.textContent = 'Escolher a imagem'; dica.textContent = 'PNG, JPG ou WEBP, até 8 MB'; return; }
+    var recusouTipo = 0, recusouTamanho = 0, sobrou = 0;
+    escolhidos.forEach(function (f) {
+      if (!arqServe(f)) { recusouTipo++; return; }
+      if (f.size > TETO_BYTES) { recusouTamanho++; return; }
+      if (ARQUIVOS.length >= TETO_ARQUIVOS) { sobrou++; return; }
+      /* Mesmo arquivo escolhido duas vezes nao vira duas linhas no bucket. */
+      var repetido = ARQUIVOS.some(function (a) {
+        return a.name === f.name && a.size === f.size && a.lastModified === f.lastModified;
+      });
+      if (!repetido) ARQUIVOS.push(f);
+    });
 
-    /* O iPhone manda HEIC com type vazio em algumas versões — por isso o
-       segundo teste, pela extensão, em vez de recusar print de iPhone. */
-    var tipoOk = TIPOS_OK.indexOf(f.type) >= 0 || /\.(png|jpe?g|webp|heic|heif)$/i.test(f.name);
-    if (!tipoOk) {
-      nome.textContent = 'Esse arquivo não serve';
-      dica.textContent = 'Precisa ser imagem: PNG, JPG ou WEBP.';
-      e.target.value = '';
-      return;
-    }
-    if (f.size > TETO_BYTES) {
-      nome.textContent = 'Imagem grande demais';
-      dica.textContent = (f.size / 1048576).toFixed(1).replace('.', ',') + ' MB — o limite é 8 MB.';
-      e.target.value = '';
-      return;
-    }
-
-    ARQUIVO = f;
-    caixa.classList.add('cheio');
-    nome.textContent = f.name;
-    dica.textContent = (f.size / 1024).toFixed(0) + ' KB · toque para trocar';
-    /* Prévia só para o que o navegador desenha: HEIC ele não desenha, e uma
-       prévia quebrada assusta mais do que prévia nenhuma. */
-    if (/^image\/(png|jpeg|webp)$/.test(f.type)) {
-      previa.src = URL.createObjectURL(f);
-      previa.hidden = false;
-    }
+    /* Os tres motivos SOMAM, nao competem: mandar 12 imagens com um PDF no meio
+       dispara dois ao mesmo tempo, e mostrar so o primeiro faria o candidato
+       consertar um problema e tropecar no outro. */
+    var recado = [];
+    if (recusouTipo)    recado.push(recusouTipo + (recusouTipo === 1 ? ' arquivo não era imagem' : ' arquivos não eram imagens') + ' e ficou de fora.');
+    if (recusouTamanho) recado.push(recusouTamanho + (recusouTamanho === 1 ? ' passou' : ' passaram') + ' de 8 MB.');
+    if (sobrou)         recado.push('O limite é ' + TETO_ARQUIVOS + ', então ' + sobrou + (sobrou === 1 ? ' ficou' : ' ficaram') + ' de fora.');
+    arqPintar(recado);
     pintarFicha();
   });
+
+  /* ---------------- outras redes: pares nome + usuario ----------------
+     O campo livre virou linha com dois campos. O valor que vai ao banco
+     continua texto (a coluna e o painel ja sao texto), montado so no envio. */
+  var TETO_REDES = 6;
+
+  function redesLinhas() { return [].slice.call(document.querySelectorAll('#redesLista .rede-row')); }
+
+  function redesSerializar() {
+    var partes = redesLinhas().map(function (row) {
+      var ins = row.querySelectorAll('input');
+      var rede = (ins[0].value || '').trim().replace(/\s+/g, ' ');
+      var user = (ins[1].value || '').trim().replace(/\s+/g, ' ');
+      if (!rede && !user) return '';
+      if (!rede) return user;
+      if (!user) return rede;
+      return rede + ': ' + user;
+    }).filter(Boolean);
+    /* A coluna aceita 300 caracteres: corta aqui para o insert nao ser
+       recusado pelo check depois de a pessoa ter preenchido tudo. */
+    $('#outras_redes').value = partes.join(' · ').slice(0, 300);
+  }
+
+  function redesAtualizarBotao() {
+    var b = $('#redesAdd');
+    var cheio = redesLinhas().length >= TETO_REDES;
+    b.disabled = cheio;
+    b.firstChild.nodeValue = redesLinhas().length ? 'Adicionar mais uma rede' : 'Adicionar outras redes';
+  }
+
+  function redesAdicionar() {
+    if (redesLinhas().length >= TETO_REDES) return;
+    var row = document.createElement('div');
+    row.className = 'rede-row';
+
+    var rede = document.createElement('input');
+    rede.className = 'inp'; rede.maxLength = 40;
+    rede.placeholder = 'Nome da rede'; rede.setAttribute('aria-label', 'Nome da rede');
+
+    var user = document.createElement('input');
+    user.className = 'inp'; user.maxLength = 60;
+    user.placeholder = 'Nome de usuário'; user.setAttribute('aria-label', 'Nome de usuário');
+
+    var x = document.createElement('button');
+    x.type = 'button'; x.className = 'rede-x'; x.innerHTML = '&times;';
+    x.setAttribute('aria-label', 'Remover esta rede');
+    x.onclick = function () { row.remove(); redesSerializar(); redesAtualizarBotao(); pintarFicha(); };
+
+    [rede, user].forEach(function (i) {
+      i.addEventListener('input', function () { redesSerializar(); pintarFicha(); });
+    });
+
+    row.appendChild(rede); row.appendChild(user); row.appendChild(x);
+    $('#redesLista').appendChild(row);
+    redesAtualizarBotao();
+    rede.focus();
+  }
+
+  $('#redesAdd').addEventListener('click', redesAdicionar);
 
   /* ---------------- estado visual das escolhas ---------------- */
   form.addEventListener('change', function (e) {
@@ -1769,7 +1995,11 @@
   function valorDe(chave) {
     /* O print não é campo de texto: a ficha mostra que ele existe, não o
        caminho do arquivo — caminho de bucket não diz nada a quem preenche. */
-    if (chave === 'insights_print') return ARQUIVO ? 'anexado' : '';
+    if (chave === 'insights_print') {
+      return ARQUIVOS.length
+        ? ARQUIVOS.length + (ARQUIVOS.length === 1 ? ' imagem' : ' imagens')
+        : '';
+    }
     var el = form.elements[chave];
     if (!el) return '';
     if (el instanceof RadioNodeList || (el.length && !el.tagName)) {
@@ -1780,7 +2010,11 @@
     }
     var raw = (el.value || '').trim();
     if (!raw) return '';
-    if (chave === 'posts_por_mes') return nUm(raw) && nUm(raw) + ' post' + (raw === '1' ? '' : 's') + '/mês';
+    if (chave === 'posts_por_mes') {
+      var n = parseInt(raw, 10);
+      if (!n) return '';
+      return (n >= 6 ? '6 ou mais posts' : n + ' post' + (n === 1 ? '' : 's')) + '/mês';
+    }
     if (chave === 'espera') return ROTULO_ESPERA[raw] || '';
     if (chave === 'pecas' || chave === 'exclusividade') return corta(raw, 42);
     if (chave === 'moto' || chave === 'cidade_uf') return corta(raw, 30);
@@ -1850,7 +2084,7 @@
       if (!form.querySelector('input[name="' + k + '"]:checked')) falhas.push(marca(k));
     });
     if ($('#espera').value === '') falhas.push(marca('espera'));
-    if (!ARQUIVO) falhas.push(marca('insights_print'));
+    if (!ARQUIVOS.length) falhas.push(marca('insights_print'));
     if ($('#espera').value === 'cache' && $('#cache_faixa').value.trim().length < 2) falhas.push(marca('cache_faixa'));
     ACEITES.forEach(function (k) {
       if (!$('#' + k).checked) {
@@ -1916,8 +2150,6 @@
       tiktok: v('tiktok'),
       facebook: v('facebook'),
       reel_1: v('reel_1'),
-      reel_2: v('reel_2'),
-      reel_3: v('reel_3'),
 
       moto: v('moto'),
       moto_propria: esc('moto_propria'),
@@ -1931,14 +2163,14 @@
       exclusividade: v('exclusividade'),
 
       publi_link: v('publi_link'),
-      outras_redes: v('outras_redes'),
+      outras_redes: (redesSerializar(), v('outras_redes')),
       motivo: v('motivo'),
 
       aceite_dados: true,
       aceite_repost: true,
       maior_18: true,
-      /* preenchido logo abaixo, depois que a imagem sobe */
-      insights_print: null
+      /* preenchido logo abaixo, depois que as imagens sobem */
+      insights_prints: null
       /* status e created_at ficam com o DEFAULT do banco de propósito: a
          política de insert exige status 'pending' e created_at dentro de uma
          janela de 5 minutos, então mandar do cliente só cria jeito de errar. */
@@ -1947,29 +2179,47 @@
     /* A IMAGEM SOBE PRIMEIRO, e a linha só nasce se ela subir.
        Na outra ordem existiria candidatura gravada apontando para um print que
        não existe — e ninguém descobriria até o Marketing abrir a ficha. */
-    var ext = (ARQUIVO.name.match(/\.(png|jpe?g|webp|heic|heif)$/i) || ['.jpg'])[0].toLowerCase();
     /* Nome vem de crypto, não do nome do arquivo do candidato: nome de arquivo
        de estranho é entrada de caminho, e o bucket não precisa dele. */
-    var aleatorio = (crypto && crypto.randomUUID) ? crypto.randomUUID()
-      : String(Date.now()) + Math.floor(Math.random() * 1e9);
-    var caminho = new Date().toISOString().slice(0, 7) + '/' + aleatorio + ext;
+    var pasta = new Date().toISOString().slice(0, 7) + '/';
+    function caminhoDe(f) {
+      var ext = (f.name.match(/\.(png|jpe?g|webp|heic|heif)$/i) || ['.jpg'])[0].toLowerCase();
+      var aleatorio = (crypto && crypto.randomUUID) ? crypto.randomUUID()
+        : String(Date.now()) + Math.floor(Math.random() * 1e9);
+      return pasta + aleatorio + ext;
+    }
 
-    sb.storage.from('candidaturas-insights').upload(caminho, ARQUIVO, {
-      contentType: ARQUIVO.type || 'image/jpeg',
-      upsert: false
-    }).then(function (envio) {
-      if (envio.error) {
-        console.error('print:', envio.error);
-        btn.disabled = false;
-        btn.textContent = rotulo;
-        mostrarAviso(
-          'Não conseguimos enviar o print.',
-          ' Tente de novo, ou mande uma imagem menor. Nada do que você preencheu foi perdido.'
-        );
-        return null;
-      }
-      payload.insights_print = caminho;
+    /* UM DE CADA VEZ, não Promise.all. São até 10 imagens de 8 MB saindo de um
+       celular em 4G: dez uploads simultâneos disputam a mesma banda e o
+       conjunto demora mais do que em fila, além de dar timeout com mais
+       facilidade. Em série também dá para dizer em qual parou. */
+    var caminhos = [];
+    var fila = ARQUIVOS.reduce(function (antes, f, i) {
+      return antes.then(function () {
+        btn.textContent = 'Enviando imagem ' + (i + 1) + ' de ' + ARQUIVOS.length + '…';
+        var c = caminhoDe(f);
+        return sb.storage.from('candidaturas-insights')
+          .upload(c, f, { contentType: f.type || 'image/jpeg', upsert: false })
+          .then(function (envio) {
+            if (envio.error) throw envio.error;
+            caminhos.push(c);
+          });
+      });
+    }, Promise.resolve());
+
+    fila.then(function () {
+      btn.textContent = 'Enviando…';
+      payload.insights_prints = caminhos;
       return sb.from('mc_influencer_candidaturas').insert(payload);
+    }, function (erro) {
+      console.error('print:', erro);
+      btn.disabled = false;
+      btn.textContent = rotulo;
+      mostrarAviso(
+        'Não conseguimos enviar ' + (caminhos.length ? 'todas as imagens.' : 'as imagens.'),
+        ' Tente de novo, ou mande imagens menores. Nada do que você preencheu foi perdido.'
+      );
+      return null;
     }).then(function (res) {
       if (!res) return;
       if (res.error) {
