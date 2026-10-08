@@ -257,16 +257,20 @@
      slider. Com o titulo no meio, a faixa de numeros logo abaixo tem de vir
      junto — numero alinhado a esquerda sob um titulo centrado deixa a coluna
      torta, e essa faixa e a primeira coisa que o criador le depois do H1. */
-  .hero{padding:var(--s8) 0 var(--s6); text-align:center}
+  /* Respiro reduzido um degrau no computador a pedido do dono (08/10): com
+     s8/s6 o hero empurrava os numeros para 409px e a secao seguinte so comecava
+     112px depois deles. Agora o computador usa o MESMO ritmo do telefone, que
+     ja estava certo — por isso o override de padding do mobile saiu daqui, em
+     vez de virar dois valores iguais em lugares diferentes. */
+  .hero{padding:var(--s6) 0 var(--s4); text-align:center}
   .hero .hero-lead{margin-left:auto; margin-right:auto}
-  @media (max-width:640px){ .hero{padding:var(--s6) 0 var(--s4)} }
 
   .eyebrow{
     font-size:12px; font-weight:700; letter-spacing:.18em; text-transform:uppercase;
-    color:var(--red-txt); margin:0 0 var(--s3);
+    color:var(--red-txt); margin:0 0 var(--s2);
   }
   .hero h1{
-    margin:0 0 var(--s3);
+    margin:0 0 var(--s2);
     font-size:clamp(40px, 6.4vw, 76px); font-weight:800; text-transform:uppercase;
     letter-spacing:1px; line-height:.94;
   }
@@ -307,7 +311,7 @@
      linha vertical impedia a fileira de virar sopa de digito, mas com tres bem
      espacados o vao sozinho ja separa — e sobra menos mobilia na tela. */
   .nums{
-    margin:var(--s6) 0 0; display:grid;
+    margin:var(--s4) 0 0; display:grid;
     grid-template-columns:repeat(3,auto); justify-content:center;
     gap:0 var(--s6); text-align:center;
   }
@@ -346,8 +350,7 @@
      o trabalho, e no computador as duas setas empurram um cartão por vez.
      As imagens são locais (baixadas do próprio post) — embed do Instagram
      seriam nove iframes mais o script deles, e a página abriria devagar. */
-  .padrao{padding:var(--s8) 0 0}
-  @media (max-width:640px){ .padrao{padding:var(--s6) 0 0} }
+  .padrao{padding:var(--s6) 0 0}
 
   /* margin-BOTTOM, nao o atalho: `.padrao-head` e `.wrap` dividem o mesmo
      elemento, e `margin:0 0 X` zerava o `margin:0 auto` do .wrap — o título
@@ -596,11 +599,10 @@
      O primeiro bloco não leva linha: divisor existe para separar dois, e
      no primeiro ele viraria moldura pela metade. */
   .block{
-    padding:var(--s6) 0 0; margin:0;
+    padding:var(--s4) 0 0; margin:0;
     border-top:1px solid var(--line);
   }
   .block:first-of-type{border-top:0; padding-top:0}
-  @media (max-width:640px){ .block{padding-top:var(--s4)} }
 
   .block-head{
     display:flex; align-items:baseline; gap:var(--s2);
