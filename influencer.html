@@ -605,12 +605,12 @@
      nao como separador. Separar dois blocos ja e trabalho do fio do
      `.block-head`; dois fios por emenda era um a mais. O vao sobe um degrau
      para o branco fazer sozinho o que a linha fazia mal. */
-  .block{padding:var(--s6) 0 0; margin:0; border-top:0}
+  .block{padding:var(--s4) 0 0; margin:0; border-top:0}
   .block:first-of-type{padding-top:0}
 
   .block-head{
     display:flex; align-items:baseline; gap:var(--s2);
-    padding-bottom:var(--s2); margin-bottom:var(--s3);
+    padding-bottom:var(--s2); margin-bottom:var(--s2);
     border-bottom:1px solid var(--line);
   }
   .block-head h2{
@@ -621,7 +621,7 @@
     margin-left:auto; white-space:nowrap;
   }
 
-  .fields{display:grid; gap:var(--s3)}
+  .fields{display:grid; gap:var(--s2)}
 
   /* ALINHAMENTO ENTRE AS COLUNAS DO PAR.
      Sem a caixa, um desalinho que a moldura escondia ficou gritante: a dica
@@ -647,13 +647,12 @@
      (medido). Vazia, ela sai do fluxo; com linha dentro, volta e empurra o
      botao para baixo, que e o certo. */
   #redesLista:empty{display:none}
-  .duo{display:grid; grid-template-columns:1fr 1fr; gap:var(--s3)}
-  .trio{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s3)}
+  .duo{display:grid; grid-template-columns:1fr 1fr; gap:var(--s2)}
+  .trio{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s2)}
   /* No telefone o formulario tem 21 campos empilhados: 24px entre cada vira
      rolagem a toa. 16px ainda separa com folga e encurta a tela em ~170px. */
   @media (max-width:640px){
     .duo, .trio{grid-template-columns:1fr}
-    .fields, .duo, .trio{gap:var(--s2)}
   }
 
   /* FILHO DIRETO, de propósito. `.f label` (0,0,1,1) vencia `.opt` (0,0,1,0) e
@@ -1452,9 +1451,7 @@
                 <p class="f-erro">Informe um número com DDD.</p>
               </div>
               <div class="f" data-f="email">
-                <label for="email">E-mail <span class="req">*</span>
-                  <span class="hint">A resposta da análise vai para este endereço.</span>
-                </label>
+                <label for="email">E-mail <span class="req">*</span></label>
                 <input class="inp" id="email" name="email" type="email" inputmode="email"
                        autocomplete="email" placeholder="voce@email.com" maxlength="200" />
                 <p class="f-erro">Confira o e-mail — é onde a resposta chega.</p>
