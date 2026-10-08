@@ -1171,7 +1171,9 @@
      vira caixa, e caixa e justamente o que o dono nao quer. */
   /* O rodape entrou na lista depois de medido: fora da folha, o texto dele
      ficava em 2,25:1 e o link em 3,52:1. Com folha, 4,57 e 7,14. */
-  main::before, .fim::before, .pe::before{
+  /* `.pe` SAIU: o rodapé agora tem fundo preto próprio e opaco, e o véu
+     claro embaixo dele não pinta nada — só custava uma camada. */
+  main::before, .fim::before{
     content:''; position:absolute; inset:0; z-index:-1;
     background:var(--void);
     opacity:.92;
@@ -1185,24 +1187,86 @@
   .brand img{filter:brightness(.2)}
 
   /* ===================== PÉ ===================== */
-  .pe{border-top:1px solid var(--line); padding:var(--s4) 0}
-  .pe-in{
-    display:flex; flex-wrap:wrap; gap:var(--s2) var(--s3); align-items:center;
-    justify-content:space-between;
+  /* ===================== RODAPÉ =====================
+     É o rodapé do fullpro.com.br, trazido com logo, colunas e barra vermelha
+     (pedido do dono, 08/10) — menos a newsletter, que ele mandou pular.
+
+     As cores saem MEDIDAS da paleta do Breakdance do site, não de olho:
+     fundo `--bde-palette-color-1` #000103, título e logo #FFF, link
+     #B3B3B3, hover #8A8A8A, fio #fff e a barra de baixo
+     `--bde-palette-color-2` #e3241e. Conferido o contraste de todos antes de
+     copiar: link 9,96:1, título 20,88:1, hover 6,05:1 e o copyright branco
+     sobre o vermelho em 4,63:1 — passa, mas por pouco, então o corpo dele
+     não pode encolher abaixo de 11px.
+
+     Os tokens ficam ESCOPADOS no `.pe`: a página é tema claro e um bloco
+     escuro no fim não pode vazar para o resto. */
+  .pe{
+    --pe-fundo:#000103; --pe-tinta:#fff; --pe-link:#b3b3b3;
+    --pe-link-hover:#8a8a8a; --pe-fio:rgba(255,255,255,.22); --pe-barra:#e3241e;
+    background:var(--pe-fundo); color:var(--pe-tinta);
+    border-top:0; padding:0; margin-top:var(--s8);
   }
-  .pe p{margin:0; font-size:12px; color:var(--ink-quiet); line-height:1.6}
+  .pe-in{padding:var(--s6) 0 var(--s6)}
+  .pe p{margin:0; font-size:12px; color:var(--pe-link); line-height:1.6}
+
+  /* 5 colunas como no site (lá: 35,6% para a marca e ~15-18% para cada lista).
+     Aqui em `fr` porque a nossa coluna de texto é 1120 e não 1240. */
+  .pe-cols{
+    display:grid; grid-template-columns:1.7fr 1fr 1.15fr 1fr 1.05fr;
+    gap:var(--s3); align-items:start;
+  }
+  .pe-marca img{width:280px; max-width:100%; height:auto; display:block}
+  .pe-tag{
+    width:280px; max-width:100%; margin-top:var(--s1) !important;
+    text-align:right; font-size:12px; font-weight:700; color:var(--pe-tinta) !important;
+  }
+  .pe-col h2{
+    margin:0 0 var(--s2); font-size:16px; font-weight:700;
+    color:var(--pe-tinta); text-transform:none; letter-spacing:0;
+  }
+  .pe-col ul{list-style:none; margin:0; padding:0; display:grid; gap:var(--s1)}
+  .pe-col li{font-size:12px; line-height:1.5}
+  .pe-contato p + p{margin-top:var(--s1) !important}
+  .pe-contato b{color:var(--pe-tinta); font-weight:600}
+
+  .pe-lgpd{
+    margin-top:var(--s6) !important; padding-top:var(--s3);
+    border-top:1px solid var(--pe-fio);
+    max-width:86ch; font-size:11px !important; line-height:1.55; opacity:.8;
+  }
+
+  /* Barra do copyright: faixa vermelha de ponta a ponta, como no site. */
+  .pe-barra{background:var(--pe-barra); padding:var(--s1) 0}
+  .pe-barra p{
+    margin:0; font-size:11px; font-weight:700; color:#fff; line-height:1.5;
+  }
+
+  @media (max-width:900px){
+    .pe-cols{grid-template-columns:repeat(2,1fr); gap:var(--s4) var(--s3)}
+    .pe-marca{grid-column:1 / -1}
+    .pe-tag{text-align:left}
+  }
+  @media (max-width:640px){
+    .pe-in{padding:var(--s4) 0}
+    .pe-marca img{width:220px}
+    .pe-tag{width:220px}
+    /* No dedo, 18px de linha com 8px de vão dá alvo de 18px — abaixo dos 24
+       que a WCAG 2.5.8 pede (medido: 17 links abaixo disso). O respiro sai do
+       vão da lista e entra DENTRO do link, então a coluna não cresce e o alvo
+       passa a 28px. No computador fica como está: lá o ponteiro acerta. */
+    .pe-col ul{gap:0}
+    .pe-col a, .pe-contato a{display:inline-block; padding:5px 0}
+  }
   /* A nota de LGPD saiu de dentro da terceira confirmacao (08/10) para o
      rotulo ficar numa linha so. Ela nao podia sumir junto: prazo de guarda,
      direito de acesso/exclusao e base legal sao o que torna o consentimento
      valido, e so existiam ali.
      Seletor com DOIS pontos de classe de proposito: `.pe p` e (0,0,1,1) e
      venceria `.pe-lgpd` sozinho, que e (0,0,1,0). */
-  .pe .pe-lgpd{
-    flex:1 0 100%; order:1;
-    max-width:74ch; font-size:11px; line-height:1.55; opacity:.85;
-  }
-  .pe a{color:var(--ink-dim); text-decoration:none}
-  .pe a:hover{color:var(--red-hi)}
+  .pe a{color:var(--pe-link); text-decoration:none; transition:color .15s}
+  .pe a:hover{color:var(--pe-link-hover); text-decoration:underline; text-underline-offset:3px}
+  .pe a:focus-visible{outline:2px solid #fff; outline-offset:2px; border-radius:2px}
 
   /* ===================== ENTRADA =====================
      Uma sequência só, no carregamento, e revelação por rolagem nos blocos.
@@ -1725,11 +1789,74 @@
 
 <footer class="pe">
   <div class="wrap pe-in">
-    <p>FullPro Media Club — estúdio de conteúdo automotivo da FullPro.</p>
+    <div class="pe-cols">
+
+      <div class="pe-marca">
+        <!-- SEM `loading="lazy"`, e pelo mesmo motivo medido nos cartoes do
+             slider: a tag fica com `naturalWidth 0` e nem `load` nem `error`
+             disparam, enquanto o `fetch` da mesma URL devolve 200. Sao 1,2 KB:
+             nao ha o que economizar adiando. -->
+        <img src="/assets/logo-rodape-fullpro.png" alt="FullPro"
+             width="560" height="82" decoding="async" fetchpriority="low" />
+        <p class="pe-tag">O poder por trás das melhores motos.</p>
+      </div>
+
+      <nav class="pe-col" aria-label="Categorias">
+        <h2>Categorias</h2>
+        <ul>
+          <li><a href="https://fullpro.com.br/loja/acessorios" target="_blank" rel="noopener">Acessórios</a></li>
+          <li><a href="https://fullpro.com.br/loja/bolha" target="_blank" rel="noopener">Bolha esportiva</a></li>
+          <li><a href="https://fullpro.com.br/loja/escape" target="_blank" rel="noopener">Escapamentos</a></li>
+          <li><a href="https://fullpro.com.br/loja/pastilha" target="_blank" rel="noopener">Pastilha de freio</a></li>
+          <li><a href="https://fullpro.com.br/loja/retificador" target="_blank" rel="noopener">Retificador</a></li>
+          <li><a href="https://fullpro.com.br/loja/retrovisor" target="_blank" rel="noopener">Retrovisor</a></li>
+        </ul>
+      </nav>
+      <nav class="pe-col" aria-label="Links úteis">
+        <h2>Links úteis</h2>
+        <ul>
+          <li><a href="https://fullpro.com.br/loja" target="_blank" rel="noopener">Loja</a></li>
+          <li><a href="https://fullpro.com.br/trocas-devolucoes-garantias" target="_blank" rel="noopener">Política de Trocas, Devoluções e Garantia</a></li>
+          <li><a href="https://fullpro.com.br/programa-gearhead" target="_blank" rel="noopener">Programa Gearhead</a></li>
+          <li><a href="https://fullpro.com.br/rastreio" target="_blank" rel="noopener">Rastrear pedidos</a></li>
+          <li><a href="https://fullpro.com.br/uso-e-privacidade" target="_blank" rel="noopener">Termos &amp; Privacidade</a></li>
+        </ul>
+      </nav>
+      <nav class="pe-col" aria-label="Sobre a FullPro">
+        <h2>Sobre a FullPro</h2>
+        <ul>
+          <li><a href="https://fullpro.com.br/sobre-a-fullpro" target="_blank" rel="noopener">Sobre a empresa</a></li>
+          <li><a href="https://fullpro.com.br/faq" target="_blank" rel="noopener">FAQ</a></li>
+          <li><a href="https://fullpro.com.br/contato" target="_blank" rel="noopener">Contato</a></li>
+          <li><a href="https://fullpro.com.br/trabalhe-conosco" target="_blank" rel="noopener">Trabalhe conosco</a></li>
+        </ul>
+      </nav>
+
+      <div class="pe-col pe-contato">
+        <h2>Contato</h2>
+        <p>Rua Florianópolis 2486<br/>Joinville SC<br/>89210795</p>
+        <p><b>Telefone:</b><br/><a href="tel:+554734666977">(47) 3466-6977</a></p>
+        <p><b>WhatsApp:</b><br/><a href="https://wa.me/554734666977" target="_blank" rel="noopener">(47) 3466-6977</a></p>
+        <p><a href="mailto:contato@fullpro.parts">contato@fullpro.parts</a></p>
+      </div>
+
+    </div>
+
+    <!-- Fica onde estava: prazo de guarda, direito de acesso/exclusão e base
+         legal são o que torna o consentimento válido, e só existem aqui. -->
     <p class="pe-lgpd">Os dados deste formulário são lidos pelo Marketing da FullPro, guardados por
     12 meses e descartados. Você pode pedir acesso, correção ou exclusão pelo nosso WhatsApp.
     Base legal: art. 7º, V da LGPD.</p>
-    <p><a href="https://fullpro.com.br" target="_blank" rel="noopener">fullpro.com.br</a></p>
+  </div>
+
+  <div class="pe-barra">
+    <div class="wrap">
+      <!-- O ano sai do relógio do visitante (ver `ligarAnoDoRodape`). O 2026
+           escrito aqui é o que aparece se o script não rodar — nunca deixar um
+           ano velho de molho no HTML, que foi como o site chegou em 2026
+           ainda dizendo 2025. -->
+      <p>© FullPro Inc. <span id="peAno">2026</span>. Todos os direitos reservados.</p>
+    </div>
   </div>
 </footer>
 
@@ -2491,6 +2618,23 @@
     ligarSetas();
     ligarCapsulaEscura();
   }
+
+  /* ---------------- ano do rodapé ----------------
+     Pedido do dono (08/10): o ano do copyright tem de ser o vigente, não um
+     número cravado. O fullpro.com.br está em 2026 ainda dizendo 2025, que é
+     exatamente o que acontece com ano escrito à mão.
+
+     Sai do relógio de QUEM VISITA. Relógio errado no aparelho mostra ano
+     errado, e tudo bem: a alternativa seria pedir a data a um servidor só
+     para desenhar quatro dígitos num rodapé. O HTML já nasce com o ano certo,
+     então mesmo sem script nenhum a linha fica correta até 31/12. */
+  function ligarAnoDoRodape() {
+    var alvo = $('#peAno');
+    if (!alvo) return;
+    var ano = String(new Date().getFullYear());
+    if (/^\d{4}$/.test(ano) && alvo.textContent !== ano) alvo.textContent = ano;
+  }
+  ligarAnoDoRodape();
 
   /* ---------------- capsula sobre fundo escuro ----------------
      O header gruda no topo (pedido do dono, 10/09), e o miolo da pagina e
