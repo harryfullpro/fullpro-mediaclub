@@ -6658,6 +6658,12 @@ body.fp-sem-sessao .fp-ia-fab { display: none; }
 
 /* Faixa de sandbox: a tela escreve numa CÓPIA do cronograma, e quem abre
    precisa saber disso antes de mexer, não depois. */
+/* `display:flex` VENCE o [hidden] do navegador: o atributo só vale pelo
+   `display:none` que a folha do agente aplica, e qualquer display declarado
+   numa classe tem mais especificidade. Sem esta linha a faixa de sandbox
+   aparece em produção mesmo com o atributo posto — foi o que aconteceu.
+   É a mesma armadilha de `.inf-cand-badge[hidden]`, algumas telas atrás. */
+.ag-sandbox[hidden] { display: none !important; }
 .ag-sandbox {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   padding: 10px 14px; margin-bottom: 16px; border-radius: 10px;
