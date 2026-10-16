@@ -1023,6 +1023,55 @@
     padding: 24px 12px; text-align: center; color: var(--text-muted); min-height: 60px;
   }
   .dv-empty p { font-size: 13px; }
+
+  /* ── programação do dia [FP-AGENDA-UNI 16/10/2026] ──────────────────────
+     Linhas com fio, não cartões: são itens de uma lista de horários, e caixa
+     em cima de caixa dentro de um painel que já é caixa empilha moldura. */
+  .dv-topo { display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  .dv-topo h3 { margin: 0; }
+  .dv-nota { padding: 9px 11px; margin-bottom: 10px; border-radius: 8px;
+    background: var(--bg-elev); font-size: 11.5px; line-height: 1.45; color: var(--text-dim); }
+
+  .dv-lista { display: flex; flex-direction: column; }
+  .dv-item { display: flex; align-items: center; gap: 10px; padding: 10px 0;
+    border-top: 1px solid var(--border); }
+  .dv-item:first-child { border-top: 0; }
+  .dv-h { flex: 0 0 44px; font-size: 12.5px; font-weight: 800;
+    font-variant-numeric: tabular-nums; color: var(--text); }
+  .dv-txt { flex: 1 1 auto; min-width: 0; }
+  .dv-txt b { display: block; font-size: 13px; font-weight: 700; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dv-txt > span { display: flex; align-items: center; gap: 3px; margin-top: 3px;
+    font-size: 11px; color: var(--text-muted); line-height: 1.3; }
+
+  /* O marcador de tipo diz o ALCANCE da linha: mexer em rotina muda toda
+     semana, mexer em atividade muda só este dia. Por isso ele é texto e não
+     só cor — cor sozinha não informa quem não distingue cor. */
+  .dv-tipo { flex: 0 0 auto; padding: 2px 7px; border-radius: 999px;
+    font-size: 9.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+  .dv-tipo.grav { background: rgba(255,45,45,.13); color: var(--primary-hi); }
+  .dv-tipo.rot  { background: var(--bg-elev); color: var(--text-muted); }
+  .dv-tipo.dia  { background: rgba(59,130,246,.15); color: #7aa5ff; }
+  [data-theme="light"] .dv-tipo.dia { color: #1558c0; }
+  /* O --primary-hi reprovava no claro, e o fundo que importa NÃO é o branco do
+     painel: é a chapa translúcida achatada, rgb(255,228,228). Medido ali, ele
+     dava 3,39 — longe dos 4,5 que 9,5px exige. Este é o #c80000 que o Catálogo
+     já usa para fundo claro (o vermelho da marca foi feito para fundo escuro):
+     5,06 sobre a chapa. No escuro o atual mede 5,05 e fica. */
+  [data-theme="light"] .dv-tipo.grav { color: #c80000; }
+
+  .dv-item .dv-ok { flex: 0 0 13px; width: 13px; text-align: center;
+    font-size: 12px; font-weight: 800; color: var(--success); }
+  [data-theme="light"] .dv-item .dv-ok { color: #1a955a; }
+
+  .dv-abrir { flex: 0 0 auto; background: none; border: 0; cursor: pointer;
+    font: inherit; font-size: 11px; font-weight: 700; color: var(--text-muted);
+    padding: 3px 5px; border-radius: 5px; }
+  .dv-abrir:hover { color: var(--primary); background: var(--bg-elev); }
+
+  .dv-pedido { padding-top: 8px; }
+  .dv-pe { display: flex; justify-content: flex-end; padding-top: 12px; }
   .dv-booking-full {
     background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px;
     padding: 14px; margin-bottom: 10px;
@@ -8174,22 +8223,7 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
         produção.</span>
       </div>
 
-      <div class="ag-modos">
-        <div class="ag-modos-tabs" role="tablist" aria-label="Modo da agenda">
-          <button class="ag-modo on" type="button" role="tab" aria-selected="true"
-                  data-agmodo="mes" onclick="fpAgModo('mes')">Mês</button>
-          <button class="ag-modo" type="button" role="tab" aria-selected="false"
-                  data-agmodo="semana" onclick="fpAgModo('semana')">Semana</button>
-        </div>
-        <div class="ag-sem-nav" id="agSemNav" style="display:none">
-          <button class="cal-seta" type="button" data-tip="Semana anterior" aria-label="Semana anterior" onclick="fpAgSemanaAndar(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg></button>
-          <b id="agSemRotulo">—</b>
-          <button class="cal-seta" type="button" data-tip="Próxima semana" aria-label="Próxima semana" onclick="fpAgSemanaAndar(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg></button>
-          <button class="ag-sem-hoje" type="button" onclick="fpAgSemanaAndar(0)">Hoje</button>
-        </div>
-      </div>
 
-      <div id="agMes">
 
       <div class="stats-grid">
         <div class="stat-card primary">
@@ -8239,8 +8273,15 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
 
           <!-- Date viewer -->
           <div class="cal-card date-viewer" id="dateViewer">
-            <h3>Detalhes do dia</h3>
-            <p class="sub">Selecione uma data na agenda ao lado.</p>
+            <div class="dv-topo">
+              <div>
+                <h3>Programação do dia</h3>
+                <p class="sub">Selecione uma data na agenda ao lado.</p>
+              </div>
+              <!-- A rotina se edita SEM sair da Agenda: o popup abre por cima. -->
+              <button class="action-btn" type="button" id="dvRotinaBtn"
+                      onclick="fpRotinaAbrir()">Editar rotina semanal</button>
+            </div>
             <div id="dateViewerContent">
               <div class="dv-empty">
                 <p>Clique em um dia na agenda para ver os detalhes.</p>
@@ -8299,15 +8340,6 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
           </thead>
           <tbody id="reqTableBody"></tbody>
         </table>
-      </div>
-      </div><!-- /agMes -->
-
-      <!-- A semana operacional: uma coluna por dia, com o que se GRAVA em cima
-           e o que se PUBLICA embaixo. O cronograma é editado aqui mesmo, na
-           propria forma em que ele existe — semanal. -->
-      <div id="agSemana" style="display:none">
-        <div class="ag-semana-rolo"><div class="fp-pl-semana" id="agSemanaGrade"></div></div>
-        <div class="fp-pl-cab" style="border:0;padding-top:12px" id="agSemanaNota"></div>
       </div>
     </div>
 
@@ -10085,6 +10117,26 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
         <button class="action-btn" type="button" onclick="fpPubFechar()">Cancelar</button>
         <button class="action-btn approve" type="button" id="pubSalvar" onclick="fpPubSalvar()">Agendar</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ROTINA SEMANAL em popup, aberto da própria Agenda.
+     O conteúdo é a GRADE de sete dias, não uma lista achatada: a rotina é
+     semanal, então ela se edita na forma em que existe. Editar no lugar do
+     horário, com a caixa "nos N dias", é o que transforma 7 edições em 1. -->
+<div class="modal" id="rotinaModal">
+  <div class="modal-content" style="max-width:1120px">
+    <div class="modal-head">
+      <h3>Rotina semanal</h3>
+      <button class="modal-close" onclick="fpRotinaFechar()" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="fp-user-form">
+      <div class="ag-semana-rolo"><div class="fp-pl-semana" id="agSemanaGrade"></div></div>
+      <div class="fp-pl-cab" style="border:0;padding-top:12px" id="agSemanaNota"></div>
+      <p class="fp-user-nota">Isto se repete toda semana. Não publica nada sozinho:
+      serve de régua para o operador agendar e para a tela mostrar o que era para
+      ter saído. Para algo de um dia só, use “+ Atividade” na programação do dia.</p>
     </div>
   </div>
 </div>
@@ -12190,6 +12242,27 @@ function selectDate(iso) {
   renderDateViewer(iso);
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   PROGRAMAÇÃO DO DIA  [FP-AGENDA-UNI 16/10/2026]
+
+   O painel ao lado do calendário respondia "quais pedidos caíram nesta data".
+   Agora responde "o que está programado para este dia", que é a pergunta do
+   operador. Três coisas entram, e elas são de naturezas diferentes:
+
+     gravação   mc_requests          tem DATA, é compromisso com alguém de fora
+     rotina     sb_planner_grade     tem DIA DA SEMANA, se repete toda semana
+     atividade  sb_agenda_atividades tem DATA, não se repete
+
+   O marcador ao lado de cada linha diz de qual tipo ela é, e isso não é enfeite:
+   mexer numa linha de rotina muda TODA semana, mexer numa atividade muda só
+   aquele dia. Sem o marcador o operador não teria como saber o alcance do que
+   está prestes a editar.
+
+   FIM DE SEMANA E DATA BLOQUEADA deixaram de esconder o dia. Os dois avisos
+   falam de GRAVAÇÃO — a empresa não grava sábado, e data bloqueada é bloqueada
+   para agendamento. A rotina publica nos sete dias. Antes, o retorno antecipado
+   apagava a programação inteira justamente no sábado e no domingo.
+   ══════════════════════════════════════════════════════════════════════════ */
 function renderDateViewer(iso) {
   const container = document.getElementById('dateViewerContent');
   const headerEl = document.querySelector('#dateViewer h3');
@@ -12197,85 +12270,218 @@ function renderDateViewer(iso) {
 
   const date = new Date(iso + 'T12:00:00');
   const dayNames = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
-  const dayOfWeek = date.getDay();
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  const dow = date.getDay();
 
-  headerEl.textContent = `${dayNames[dayOfWeek]}, ${prettyDate(iso)}`;
-  subEl.textContent = '';
+  headerEl.textContent = `${dayNames[dow]}, ${prettyDate(iso)}`;
 
-  if (isWeekend) {
-    container.innerHTML = `<div class="dv-weekend">
-      <div class="dv-block-icon"><svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--text-muted)" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>
-      <div class="dv-block-reason">Fim de semana</div>
-      <div class="dv-block-sub">A empresa não opera aos sábados e domingos.</div>
-    </div>`;
-    return;
+  const fds = dow === 0 || dow === 6;
+  const bloqueio = BLOCKED_DATA.find(b => b.date === iso);
+  const gravacoes = getRequests().filter(r => r.date === iso);
+  const aprovadas = gravacoes.filter(r => r.status === 'approved');
+  const rotina = (PLANNER_GRADE || []).filter(g => g.dia_semana === dow && g.ativo !== false);
+  const avulsas = (AG_ATIVIDADES || []).filter(a => a.data === iso);
+
+  const total = aprovadas.length + rotina.length + avulsas.length;
+  subEl.textContent = total
+    ? total + (total === 1 ? ' item programado' : ' itens programados')
+    : 'nada programado';
+
+  /* O aviso vira LINHA, não tela inteira: ele qualifica a gravação e não
+     cancela o que vai ao ar. */
+  let html = '';
+  if (bloqueio) {
+    html += '<div class="dv-nota">Data bloqueada para agendamento'
+      + (bloqueio.reason ? ' — ' + escHtml(bloqueio.reason) : '') + '.</div>';
+  } else if (fds) {
+    html += '<div class="dv-nota">Sem gravação: a empresa não opera no fim de semana. A publicação segue.</div>';
   }
 
-  const blockInfo = BLOCKED_DATA.find(b => b.date === iso);
-  if (blockInfo) {
-    container.innerHTML = `<div class="dv-block-info">
-      <div class="dv-block-icon"><svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
-      <div class="dv-block-reason">${blockInfo.reason || 'Data bloqueada'}</div>
-      <div class="dv-block-sub">Esta data está bloqueada para agendamentos.</div>
-    </div>`;
-    return;
-  }
+  const linhas = [];
 
-  const bookings = getRequests().filter(r => r.date === iso);
-  if (bookings.length === 0) {
-    container.innerHTML = `<div class="dv-empty">
-      <p>Nenhum agendamento para esta data.</p>
-    </div>`;
-    return;
-  }
+  aprovadas.forEach(function (r) {
+    linhas.push({ ord: '00:00', html:
+      '<div class="dv-item dv-item-grav">'
+      + '<span class="dv-h">—</span>'
+      + '<span class="dv-txt"><b>' + escHtml(r.nome || 'sem nome') + '</b>'
+      +   '<span>' + escHtml([r.moto, r.modalidade].filter(Boolean).join(' · ') || 'gravação') + '</span></span>'
+      + '<span class="dv-tipo grav">gravação</span>'
+      + '<button class="dv-abrir" type="button" data-tip="Ver o pedido inteiro"'
+      +   ' aria-label="Ver o pedido de ' + escHtml(r.nome || '') + '"'
+      +   ' onclick="dvAbrirPedido(\'' + escHtml(r.id) + '\')">ver</button>'
+      + '</div>'
+      + '<div class="dv-pedido" id="dv-ped-' + escHtml(r.id) + '" hidden></div>' });
+  });
 
-  /* Quem manda no dia é o agendamento aprovado: ele vem primeiro e inteiro.
-     O resto desce para um bloco que abre por clique.
+  rotina.forEach(function (g) {
+    const hora = String(g.hora || '').slice(0, 5);
+    const saiu = typeof fpPlannerSaiu === 'function' && fpPlannerSaiu(g.id, iso);
+    linhas.push({ ord: hora, html:
+      '<div class="dv-item' + (saiu ? ' feito' : '') + '">'
+      + '<span class="dv-h">' + escHtml(hora) + '</span>'
+      + '<span class="dv-txt"><b>' + escHtml(g.rotulo || g.tipo || 'horário') + '</b>'
+      +   '<span>' + fpPlannerRedesHtml(g.plataformas, 13) + '</span></span>'
+      + '<span class="dv-tipo rot" data-tip="Se repete toda ' + escHtml(dayNames[dow].toLowerCase()) + '">rotina</span>'
+      + (saiu ? '<span class="dv-ok" data-tip="Já saiu nesta data">✓</span>' : '<span class="dv-ok"></span>')
+      + '</div>' });
+  });
 
-     A separação muda conforme o dia já esteja resolvido ou não:
-     - com aprovado, o dia está fechado — pendente, stand by e rejeitada são
-       todos "não deram certo" e vão juntos para o bloco fechado;
-     - sem aprovado, pendente e stand by são a fila viva do dia e ficam à
-       vista; só as rejeitadas ficam guardadas.
-     Esconder um pendente num dia sem aprovado seria esconder trabalho. */
-  const ORDEM = { pending: 0, standby: 1, rejected: 2 };
-  const aprovados = bookings.filter(r => r.status === 'approved');
-  const demais = bookings
-    .filter(r => r.status !== 'approved')
-    .sort((a, b) => (ORDEM[a.status] ?? 9) - (ORDEM[b.status] ?? 9));
+  avulsas.forEach(function (a) {
+    const hora = a.hora ? String(a.hora).slice(0, 5) : '';
+    linhas.push({ ord: hora || '99:99', html:
+      '<div class="dv-item">'
+      + '<span class="dv-h">' + escHtml(hora || '—') + '</span>'
+      + '<span class="dv-txt"><b>' + escHtml(a.titulo) + '</b>'
+      +   (a.plataformas && a.plataformas.length
+            ? '<span>' + fpPlannerRedesHtml(a.plataformas, 13) + '</span>'
+            : (a.observacao ? '<span>' + escHtml(a.observacao) + '</span>' : ''))
+      + '</span>'
+      + '<span class="dv-tipo dia" data-tip="Só neste dia — não se repete">só hoje</span>'
+      + '<button class="dv-abrir" type="button" data-tip="Apagar esta atividade"'
+      +   ' aria-label="Apagar ' + escHtml(a.titulo) + '"'
+      +   ' onclick="fpAtivApagar(\'' + escHtml(a.id) + '\')">apagar</button>'
+      + '</div>' });
+  });
 
-  const aVista = aprovados.length
-    ? aprovados
-    : aprovados.concat(demais.filter(r => r.status !== 'rejected'));
-  // sai de `demais`, que já está ordenado: pendente antes de stand by, e
-  // rejeitada por último — dentro do bloco e no resumo do botão
-  const guardados = demais.filter(r => !aVista.includes(r));
+  /* Gravação primeiro (ord 00:00) porque acontece antes de publicar; atividade
+     sem hora cai no fim (99:99) em vez de fingir meia-noite. */
+  linhas.sort(function (a, b) { return String(a.ord).localeCompare(String(b.ord)); });
 
-  const contagem = {};
-  guardados.forEach(r => { contagem[r.status] = (contagem[r.status] || 0) + 1; });
-  // com um status só, o resumo repetiria o próprio rótulo do botão
-  const resumo = Object.keys(contagem).length < 2 ? '' : Object.keys(contagem).map(st => {
-    const n = contagem[st];
-    const rot = rotuloReqStatus(st).toLowerCase();
-    return n + ' ' + (n === 1 ? rot : rot.replace(/a$/, 'as').replace(/e$/, 'es'));
-  }).join(' · ');
+  html += linhas.length
+    ? '<div class="dv-lista">' + linhas.map(function (l) { return l.html; }).join('') + '</div>'
+    : '<div class="dv-empty"><p>Nada programado para esta data.</p></div>';
 
-  container.innerHTML = aVista.map(dvCartaoHtml).join('')
-    + (guardados.length ? `
-      <button type="button" class="dv-mais" id="dvMaisBtn" aria-expanded="false" aria-controls="dvGuardados" onclick="dvAlternarGuardados()">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-        <span id="dvMaisTexto">${aprovados.length ? 'Outros pedidos para este dia' : 'Pedidos rejeitados'} (${guardados.length})</span>
-        <span class="dv-mais-resumo">${escHtml(resumo)}</span>
-      </button>
-      <div id="dvGuardados" hidden>${guardados.map(dvCartaoHtml).join('')}</div>` : '');
+  html += '<div class="dv-pe">'
+    + '<button class="action-btn" type="button" onclick="fpAtivAbrir(\'' + escHtml(iso) + '\')">+ Atividade neste dia</button>'
+    + '</div>'
+    + '<div id="dvAtivForm"></div>';
 
-  // Produtos compatíveis só para o que está à vista: a busca no Bling é a
-  // parte mais lenta do painel e nada disso aparece enquanto o bloco fecha.
-  dvCarregarProdutos(aVista);
-  DV_GUARDADOS = guardados;
+  container.innerHTML = html;
+  DV_GUARDADOS = [];
   DV_GUARDADOS_CARREGADOS = false;
 }
+
+/* O dossiê do pedido continua existindo e abre por clique. Ele é o que o
+   operador precisa NO DIA da gravação (produto compatível, placa, contato), e
+   apagá-lo para cumprir "mostre só a programação" seria jogar fora trabalho
+   que presta — o padrão passou a ser a programação, não o dossiê. */
+function dvAbrirPedido(id) {
+  const caixa = document.getElementById('dv-ped-' + id);
+  if (!caixa) return;
+  const r = getRequests().find(function (x) { return String(x.id) === String(id); });
+  if (!r) return;
+  if (!caixa.hidden) { caixa.hidden = true; caixa.innerHTML = ''; return; }
+  caixa.innerHTML = dvCartaoHtml(r);
+  caixa.hidden = false;
+  dvCarregarProdutos([r]);
+}
+window.dvAbrirPedido = dvAbrirPedido;
+
+/* ---------------- atividade de um dia só ---------------- */
+let AG_ATIVIDADES = [];
+let _ativCarregadoEm = 0;
+
+async function fpAtivCarregar(forcar) {
+  if (!forcar && Date.now() - _ativCarregadoEm < 30000 && AG_ATIVIDADES.length) return AG_ATIVIDADES;
+  try {
+    const { data, error } = await sb.from(TB_ATIV).select('*').order('data').order('hora');
+    if (error) throw error;
+    AG_ATIVIDADES = data || [];
+    _ativCarregadoEm = Date.now();
+  } catch (e) {
+    console.warn('fpAtivCarregar:', e && e.message);
+  }
+  return AG_ATIVIDADES;
+}
+
+function fpAtivAbrir(iso) {
+  const caixa = document.getElementById('dvAtivForm');
+  if (!caixa) return;
+  caixa.innerHTML = '<div class="ag-ed" style="border-top:1px solid var(--border);margin-top:4px">'
+    + '<div class="ag-ed-l">'
+    +   '<input type="time" class="ag-ed-hora" aria-label="Hora (opcional)" style="flex:0 0 92px">'
+    +   '<input type="text" class="ag-ed-rot" maxlength="120" placeholder="O que vai acontecer" aria-label="Título da atividade">'
+    + '</div>'
+    + '<div class="ag-ed-redes">'
+    +   Object.keys(FP_REDES).map(function (k) {
+          return '<button type="button" class="ag-ed-rede" data-rede="' + k + '" aria-pressed="false"'
+            + ' onclick="fpAgEdRede(this)">' + escHtml(FP_REDES[k].nome) + '</button>';
+        }).join('')
+    + '</div>'
+    + '<p class="fp-user-nota" style="margin:0 0 7px;font-size:10.5px">Vale só para '
+    +   escHtml(prettyDate(iso)) + '. Para algo que se repete toda semana, use “Editar rotina semanal”.</p>'
+    + '<div class="ag-ed-pe">'
+    +   '<button type="button" class="ok" onclick="fpAtivSalvar(\'' + escHtml(iso) + '\', this)">Adicionar</button>'
+    +   '<button type="button" onclick="fpAtivCancelar()">Cancelar</button>'
+    + '</div></div>';
+  try { caixa.querySelector('.ag-ed-rot').focus(); } catch (e) {}
+}
+window.fpAtivAbrir = fpAtivAbrir;
+
+function fpAtivCancelar() {
+  const c = document.getElementById('dvAtivForm');
+  if (c) c.innerHTML = '';
+}
+window.fpAtivCancelar = fpAtivCancelar;
+
+async function fpAtivSalvar(iso, btn) {
+  const cx = btn.closest('.ag-ed');
+  const titulo = cx.querySelector('.ag-ed-rot').value.trim();
+  const hora = cx.querySelector('.ag-ed-hora').value || null;
+  const redes = [].slice.call(cx.querySelectorAll('.ag-ed-rede.on')).map(function (b) { return b.dataset.rede; });
+  /* O check do banco exige 2..120; barrar aqui evita o 400 depois de digitar. */
+  if (titulo.length < 2) { fpToast('Escreva o que vai acontecer.', 'warn'); return; }
+  btn.disabled = true; btn.textContent = 'Adicionando…';
+  try {
+    const { error } = await sb.from(TB_ATIV).insert({
+      data: iso, hora: hora, titulo: titulo, plataformas: redes
+    });
+    if (error) throw error;
+    await fpAtivCarregar(true);
+    renderDateViewer(iso);
+    fpToast('Atividade adicionada.', 'ok');
+  } catch (e) {
+    fpToast('Não deu para adicionar: ' + ((e && e.message) || e), 'erro');
+    btn.disabled = false; btn.textContent = 'Adicionar';
+  }
+}
+window.fpAtivSalvar = fpAtivSalvar;
+
+async function fpAtivApagar(id) {
+  const a = (AG_ATIVIDADES || []).find(function (x) { return x.id === id; });
+  if (!a) return;
+  const ok = await fpConfirm({
+    titulo: 'Apagar esta atividade?',
+    mensagem: '“' + a.titulo + '” sai da programação de ' + prettyDate(a.data) + '. A rotina semanal não muda.',
+    perigo: true
+  });
+  if (!ok) return;
+  try {
+    const { error } = await sb.from(TB_ATIV).delete().eq('id', id);
+    if (error) throw error;
+    await fpAtivCarregar(true);
+    renderDateViewer(a.data);
+    fpToast('Atividade apagada.', 'ok');
+  } catch (e) {
+    fpToast('Não deu para apagar: ' + ((e && e.message) || e), 'erro');
+  }
+}
+window.fpAtivApagar = fpAtivApagar;
+
+/* ---------------- o popup da rotina ---------------- */
+function fpRotinaAbrir() {
+  document.getElementById('rotinaModal').classList.add('show');
+  fpAgSemanaCarregar();
+}
+window.fpRotinaAbrir = fpRotinaAbrir;
+
+function fpRotinaFechar() {
+  document.getElementById('rotinaModal').classList.remove('show');
+  _agEditando = null;
+  /* Redesenha o dia: a rotina que acabou de mudar aparece na programação sem
+     o operador ter de clicar no calendário de novo. */
+  if (typeof selectedDate !== 'undefined' && selectedDate) renderDateViewer(selectedDate);
+}
+window.fpRotinaFechar = fpRotinaFechar;
 
 /* Um cartão de agendamento do painel da data. */
 function dvCartaoHtml(r) {
@@ -31181,6 +31387,7 @@ window.fpRepostMarcar = fpRepostMarcar;
    ReferenceError que só aparece se a ordem de chamada mudar um dia. */
 const FP_SANDBOX = true;
 const TB_GRADE   = FP_SANDBOX ? 'sb_planner_grade' : 'mc_planner_grade';
+const TB_ATIV    = FP_SANDBOX ? 'sb_agenda_atividades' : 'mc_agenda_atividades';
 
 const FP_REDES = {
   instagram: { nome: 'Instagram', logo: 'reels' },
@@ -31395,21 +31602,6 @@ function fpAgSemanaDias() {
   return dias;
 }
 
-function fpAgModo(qual) {
-  _agModo = (qual === 'semana') ? 'semana' : 'mes';
-  const semana = _agModo === 'semana';
-  document.getElementById('agMes').style.display    = semana ? 'none' : '';
-  document.getElementById('agSemana').style.display = semana ? '' : 'none';
-  document.getElementById('agSemNav').style.display = semana ? 'flex' : 'none';
-  document.querySelectorAll('[data-agmodo]').forEach(function (b) {
-    const on = b.dataset.agmodo === _agModo;
-    b.classList.toggle('on', on);
-    b.setAttribute('aria-selected', on ? 'true' : 'false');
-  });
-  if (semana) fpAgSemanaCarregar();
-}
-window.fpAgModo = fpAgModo;
-
 function fpAgSemanaAndar(n) {
   _agSemanaBase = n === 0 ? fpAgDomingoDe(new Date())
     : (function () { const d = new Date(_agSemanaBase || new Date()); d.setDate(d.getDate() + n * 7); return fpAgDomingoDe(d); })();
@@ -31492,7 +31684,7 @@ function fpAgSemanaPintar() {
     });
     if (gravs.length && slots.length) html += '<div class="ag-divisor"></div>';
 
-    if (!gravs.length && !slots.length) html += '<div class="fp-pl-vazio">—</div>';
+    if (!gravs.length && !slots.length && !podeEditar) html += '<div class="fp-pl-vazio">—</div>';
 
     slots.forEach(function (g) {
       if (_agEditando === g.id) { html += fpAgEditorHtml(g, i); return; }
@@ -31521,10 +31713,15 @@ function fpAgSemanaPintar() {
   const nota = document.getElementById('agSemanaNota');
   if (nota) {
     const n = (PLANNER_GRADE || []).filter(function (g) { return g.ativo !== false; }).length;
-    nota.innerHTML = '<div><b>Rotina da semana</b><span>' + n
-      + (n === 1 ? ' horário fixo' : ' horários fixos')
-      + ' · o ✓ diz que já saiu nesta data, e é indicador, não botão'
-      + (podeEditar ? ' · clique no lápis para editar' : '') + '</span></div>';
+    /* Com a rotina vazia, falar do ✓ e do lápis é prometer o que não está na
+       tela: não há marca nem lápis para clicar. O texto diz o próximo passo. */
+    nota.innerHTML = '<div><b>Rotina da semana</b><span>' + (n
+      ? n + (n === 1 ? ' horário fixo' : ' horários fixos')
+        + ' · o ✓ diz que já saiu nesta data, e é indicador, não botão'
+        + (podeEditar ? ' · clique no lápis para editar' : '')
+      : (podeEditar
+          ? 'ainda em branco — use “+ horário” no dia em que a publicação sai'
+          : 'ainda não cadastrada')) + '</span></div>';
   }
 }
 
@@ -35865,10 +36062,12 @@ async function initApp() {
           await loadRequests();
           renderCalendar();
           renderRequests();
-          /* A semana só desenha se o modo dela estiver aberto: ela custa uma
-             consulta ao cronograma, e quem abre a Agenda no modo Mês não
-             precisa pagar por isso. */
-          if (_agModo === 'semana') fpAgSemanaCarregar();
+          /* A programação do dia precisa das DUAS: a rotina da semana e as
+             atividades avulsas. Sem elas o painel ao lado do calendário
+             mostraria só a gravação e diria "nada programado" num dia que tem
+             quatro horários fixos. */
+          await Promise.all([fpAgSemanaCarregar(), fpAtivCarregar()]);
+          if (selectedDate) renderDateViewer(selectedDate);
           break;
         case 'checkin':
           await Promise.all([loadRequests(), loadCheckins(), loadCheckouts()]);
