@@ -11462,28 +11462,99 @@ function prettyDT(iso) {
     });
   }
 
-  function marcaConexao(){
-    const off = !navigator.onLine;
-    document.body.classList.toggle('fp-esta-offline', off);
-    if (off) {
-      fpToast('Você está sem conexão. Os dados na tela são os últimos carregados.', 'warn', { duracao: 6000 });
-    } else if (document.body.dataset.fpJaEsteveOffline === '1') {
-      if (typeof fpLimparCacheRede === 'function') fpLimparCacheRede();
-      fpToast('Conexão de volta.', 'ok', { duracao: 3000 });
+  /* ══════════════════════════════════════════════════════════════════════
+     A FAIXA PASSOU A EXIGIR PROVA  [16/10/2026]
+
+     Ela acendia só pelo `navigator.onLine`, que é PALPITE do Chrome sobre
+     existir rota — não sobre a rede funcionar. Ele lê false em troca de Wi-Fi,
+     VPN subindo, dock conectando e Mac acordando, e volta a true sozinho.
+
+     Pior que acender à toa: ela não tinha reconferência periódica. Apagava no
+     evento `online`, ao voltar para a aba e ao focar a janela — e nenhum dos
+     três acontece enquanto a pessoa navega DENTRO do painel. Um pisco de meio
+     segundo deixava o aviso aceso por horas. Foi o que o dono relatou em
+     16/10, e o que já tinha acontecido em 04/09 com todas as requisições
+     respondendo 200.
+
+     Agora o sinal é EVIDÊNCIA: a faixa acende quando uma requisição falha de
+     verdade e apaga na primeira que volta. O `navigator.onLine` virou pista —
+     quando ele diz "offline", isso agenda uma conferência, não acende nada.
+
+     HTTP 500 NÃO é falta de conexão: o servidor respondeu. Só conta como falha
+     o que o fetch REJEITA, que é quando o pedido não chegou a lugar nenhum. A
+     promessa da faixa é "o que você salvar agora pode não subir", e um 500 não
+     é isso — é outro problema, com outro aviso. */
+  let _falhasSeguidas = 0;
+  const _FALHAS_PARA_ACENDER = 2;   /* uma falha isolada é ruído; duas é padrão */
+
+  function fpRedeEvidencia(ok){
+    if (ok) {
+      _falhasSeguidas = 0;
+      if (document.body.classList.contains('fp-esta-offline')) {
+        document.body.classList.remove('fp-esta-offline');
+        if (document.body.dataset.fpJaEsteveOffline === '1'
+            && typeof fpLimparCacheRede === 'function') fpLimparCacheRede();
+        fpToast('Conexão de volta.', 'ok', { duracao: 3000 });
+      }
+      return;
     }
-    if (off) document.body.dataset.fpJaEsteveOffline = '1';
+    _falhasSeguidas++;
+    if (_falhasSeguidas < _FALHAS_PARA_ACENDER) return;
+    if (document.body.classList.contains('fp-esta-offline')) return;
+    document.body.classList.add('fp-esta-offline');
+    document.body.dataset.fpJaEsteveOffline = '1';
+    fpToast('Você está sem conexão. Os dados na tela são os últimos carregados.', 'warn', { duracao: 6000 });
+  }
+  window.fpRedeEvidencia = fpRedeEvidencia;
+
+  /* O envelope é PASSAGEM: não toca argumento, não toca resposta, não engole
+     erro. Só observa o desfecho — é o único jeito de ter evidência sem
+     reescrever cada chamada do painel. */
+  (function(){
+    const original = window.fetch;
+    if (!original || original.__fpEnvelopado) return;
+    const envelope = function(...args){
+      return original.apply(this, args).then(function(resp){
+        fpRedeEvidencia(true);
+        return resp;
+      }, function(erro){
+        /* Abortar não é falta de rede: é a própria tela cancelando. */
+        const abortou = erro && (erro.name === 'AbortError' || erro.name === 'TimeoutError');
+        if (!abortou) fpRedeEvidencia(false);
+        throw erro;
+      });
+    };
+    envelope.__fpEnvelopado = true;
+    window.fetch = envelope;
+  })();
+
+  /* O palpite do Chrome agora só AGENDA uma conferência: uma requisição de
+     verdade, barata, que decide. Sem isso, voltar a ter rede não apagaria a
+     faixa até a próxima chamada qualquer do painel. */
+  let _sondando = false;
+  async function fpSondarRede(){
+    if (_sondando) return;
+    _sondando = true;
+    try {
+      await fetch('/manifest.webmanifest?sonda=' + Date.now(), { cache: 'no-store' });
+    } catch (_e) {
+      /* o próprio envelope já contabilizou a falha */
+    } finally { _sondando = false; }
+  }
+
+  function marcaConexao(){
+    /* Transição do Chrome: pista, não veredito. Os dois lados sondam. */
+    fpSondarRede();
   }
   window.addEventListener('online', marcaConexao);
   window.addEventListener('offline', marcaConexao);
+  /* ABRIR O PAINEL NÃO ACENDE MAIS NADA. Era aqui que a mentira começava: o
+     `navigator.onLine` lido no instante da carga é justamente o mais sujeito a
+     estar errado (volta de redirect, rede trocando, máquina acordando), e a
+     faixa nascia acesa sem nenhuma requisição ter falhado. Agora a carga só
+     sonda se o Chrome disser que não há rota — e quem decide é a sonda. */
   document.addEventListener('DOMContentLoaded', function(){
-    if (!navigator.onLine) {
-      document.body.classList.add('fp-esta-offline');
-      /* MARCAR AQUI TAMBÉM. Só o evento 'offline' marcava, então quem ABRIA o
-         painel sem sinal nunca ficava com a marca — e quando a conexão voltava,
-         marcaConexao caía no `else if` e não limpava o cache de rede. Resultado:
-         a tela seguia servindo as respostas vazias de quando não havia sinal. */
-      document.body.dataset.fpJaEsteveOffline = '1';
-    }
+    if (!navigator.onLine) fpSondarRede();
   });
 
   /* A FAIXA NAO TINHA CAMINHO DE VOLTA, e em 04/09 o dono viu isso: faixa de
@@ -11496,21 +11567,25 @@ function prettyDT(iso) {
      recarregada. Uma trava de um lado so.
      Reconferir ao voltar para a aba e ao focar a janela conserta sem inventar
      heartbeat nem bater no servidor de proposito. */
+  /* Reconferir virou sondar: só sonda se a faixa estiver acesa, porque é o
+     único estado em que a resposta muda alguma coisa na tela. */
   function reconferirConexao(){
-    const off = !navigator.onLine;
-    const estava = document.body.classList.contains('fp-esta-offline');
-    document.body.classList.toggle('fp-esta-offline', off);
-    if (off) { document.body.dataset.fpJaEsteveOffline = '1'; return; }
-    /* Saiu do offline agora: o cache de rede pode guardar resposta vazia de
-       quando não havia sinal, e é ele que faz a tela mentir depois. Sem toast
-       aqui de propósito — quem avisa é marcaConexao, no evento do navegador. */
-    if (estava && document.body.dataset.fpJaEsteveOffline === '1'
-        && typeof fpLimparCacheRede === 'function') fpLimparCacheRede();
+    if (document.body.classList.contains('fp-esta-offline')) fpSondarRede();
   }
   document.addEventListener('visibilitychange', function(){
     if (!document.hidden) reconferirConexao();
   });
   window.addEventListener('focus', reconferirConexao);
+
+  /* O QUE FALTAVA: reconferência enquanto a pessoa fica DENTRO do painel.
+     Navegar entre telas não dispara visibilitychange nem focus, então um pisco
+     de meio segundo deixava o aviso aceso por horas — foi o relato de 16/10.
+     De 20 em 20 segundos, e SÓ com a faixa acesa: com ela apagada não há o que
+     corrigir, e bater no servidor à toa é o contrário do que a faixa existe
+     para evitar. */
+  setInterval(function(){
+    if (document.body.classList.contains('fp-esta-offline') && !document.hidden) fpSondarRede();
+  }, 20000);
   /* Requisicao que VOLTOU e a prova mais honesta de que ha rede — mais que o
      palpite do navigator.onLine. A recarga automatica chama isto no sucesso. */
   window.fpReconferirConexao = reconferirConexao;
