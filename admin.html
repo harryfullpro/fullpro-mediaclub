@@ -8216,7 +8216,7 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
       <!-- A tela escreve numa CÓPIA do cronograma (sb_planner_grade). Sem este
            aviso o dono mexeria achando que é produção — ou o contrário, que é
            pior: testaria com medo e não testaria de verdade. -->
-      <div class="ag-sandbox" id="agSandbox">
+      <div class="ag-sandbox" id="agSandbox" hidden>
         <b>Build de sandbox.</b>
         <span>A agenda e as gravações são as de verdade, só leitura. O cronograma
         que você edita aqui é uma <b>cópia</b> — não muda o que o operador vê em
@@ -20457,6 +20457,31 @@ async function loadNotifications() {
   renderNotifBadge();
 }
 
+/* O DESFECHO DO CHAMADO TEM DE APARECER, não ficar num número.
+   A notificação já é gravada e já entra na contagem do sino, mas a mensagem só
+   se lê no Perfil — e ninguém abre o Perfil para descobrir que foi atendido.
+   Então na abertura do painel ela vira torrada, com ação que leva ao lugar
+   onde dá para dispensar.
+
+   NÃO marca como lida aqui: quem piscou e perdeu a torrada perderia o aviso
+   para sempre. A linha fica em pé até ser dispensada no Perfil — por isso a
+   torrada volta no próximo login, o que é o certo para "seu chamado foi
+   resolvido" e não para um aviso qualquer. */
+function fpAvisarChamados() {
+  const meus = (NOTIFICATIONS || []).filter(function (n) { return n.type === 'chamado'; });
+  if (!meus.length) return;
+  const texto = meus.length === 1
+    ? meus[0].message
+    : meus.length + ' dos seus relatos foram respondidos.';
+  fpToast(texto, 'ok', {
+    duracao: 0,                      /* fica até ser fechada: é desfecho, não status */
+    /* fpIrPara e nao switchToView: o roteador de verdade vive dentro de um IIFE
+       e nao e global — este arquivo ja tem o ajudante por esse exato motivo. */
+    acao: { texto: 'Ver', onClick: function () { fpIrPara('profile'); } }
+  });
+}
+window.fpAvisarChamados = fpAvisarChamados;
+
 function renderNotifBadge() {
   const badge = document.getElementById('notifBadge');
   if (badge) {
@@ -26594,6 +26619,37 @@ async function fpBugStatus(id, status) {
   if (error) { fpToast('Erro ao atualizar: ' + error.message, 'erro'); return; }
   const b = BUGS.find(x => x.id === id);
   if (b) Object.assign(b, patch);
+
+  /* QUEM ABRIU O CHAMADO FICA SABENDO. Até aqui o relato era resolvido em
+     silêncio: o operador mandava, nunca mais ouvia falar, e na dúvida mandava
+     de novo. A notificação é gravada em mc_notifications e o painel já a lê na
+     abertura (loadNotifications, por user_id e read=false) — então ela espera
+     o operador na próxima vez que ele entrar, mesmo que isso seja amanhã.
+
+     NÃO notifica quando quem fecha é o próprio autor: avisar a si mesmo do que
+     você acabou de fazer é ruído. */
+  if ((status === 'resolvido' || status === 'descartado') && b && b.autor_id
+      && !(CURRENT_USER && b.autor_id === CURRENT_USER.id)) {
+    const titulo = (b.titulo || 'Seu relato').trim();
+    const veredito = status === 'resolvido' ? 'foi resolvido' : 'foi descartado';
+    try {
+      const { error: eNot } = await sb.from('mc_notifications').insert({
+        user_id: b.autor_id,
+        type: 'chamado',
+        message: '“' + titulo + '” ' + veredito + '.'
+          + (b.resolucao ? ' ' + String(b.resolucao).slice(0, 300) : ''),
+        read: false
+      });
+      if (eNot) throw eNot;
+    } catch (e) {
+      /* O chamado JÁ mudou de status — e isso é o que importa. Falhar o aviso
+         não pode desfazer nem travar a tela; vira recado para quem fechou, que
+         é quem pode reabrir e tentar de novo. */
+      console.warn('aviso do chamado:', e && e.message);
+      fpToast('Status salvo, mas não consegui avisar quem abriu.', 'warn');
+    }
+  }
+
   renderBugs();
 }
 window.fpBugStatus = fpBugStatus;
@@ -31385,7 +31441,7 @@ window.fpRepostMarcar = fpRepostMarcar;
    Declarado AQUI, antes de qualquer uso em ordem de fonte — `const` tem zona
    morta temporal, e deixar a declaração depois da primeira leitura é pedir um
    ReferenceError que só aparece se a ordem de chamada mudar um dia. */
-const FP_SANDBOX = true;
+const FP_SANDBOX = false;
 const TB_GRADE   = FP_SANDBOX ? 'sb_planner_grade' : 'mc_planner_grade';
 const TB_ATIV    = FP_SANDBOX ? 'sb_agenda_atividades' : 'mc_agenda_atividades';
 
@@ -31583,6 +31639,13 @@ function fpPlannerRedesHtml(redes, tam) {
    GRAVA, o cronograma diz o que se PUBLICA. São as duas metades do mesmo dia
    de trabalho, e estavam em telas diferentes.
    ══════════════════════════════════════════════════════════════════════════ */
+
+/* A faixa de sandbox é ligada pelo FLAG, não pela mão: assim não existe o
+   estado "está em produção e a faixa ficou", nem o inverso, que é pior. */
+document.addEventListener('DOMContentLoaded', function () {
+  const faixa = document.getElementById('agSandbox');
+  if (faixa) faixa.hidden = !FP_SANDBOX;
+});
 
 let _agModo = 'mes';
 let _agSemanaBase = null;     /* domingo da semana mostrada */
@@ -35764,6 +35827,7 @@ async function initApp() {
   await refreshIntegrationStatus();
 
   await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects(), loadPerfPosts(), loadPerfDatas(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses(), loadNotifications(), loadInfExtras(), loadBugs(), loadUpdates()]);
+  fpAvisarChamados();
   renderDashboard();
   renderRequests();
   renderCalendar();
