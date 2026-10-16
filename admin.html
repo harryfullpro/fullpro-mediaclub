@@ -8213,9 +8213,10 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
         </div>
       </div>
 
-      <!-- A tela escreve numa CÓPIA do cronograma (sb_planner_grade). Sem este
-           aviso o dono mexeria achando que é produção — ou o contrário, que é
-           pior: testaria com medo e não testaria de verdade. -->
+      <!-- Faixa SÓ do sandbox: nasce escondida e quem a mostra é o FP_SANDBOX.
+           Com ele ligado a tela escreve numa cópia do cronograma, e quem abre
+           precisa saber antes de mexer — senão testa com medo, que é o mesmo
+           que não testar. Em produção ela nunca aparece. -->
       <div class="ag-sandbox" id="agSandbox" hidden>
         <b>Build de sandbox.</b>
         <span>A agenda e as gravações são as de verdade, só leitura. O cronograma
@@ -12249,9 +12250,14 @@ function selectDate(iso) {
    Agora responde "o que está programado para este dia", que é a pergunta do
    operador. Três coisas entram, e elas são de naturezas diferentes:
 
-     gravação   mc_requests          tem DATA, é compromisso com alguém de fora
-     rotina     sb_planner_grade     tem DIA DA SEMANA, se repete toda semana
-     atividade  sb_agenda_atividades tem DATA, não se repete
+     gravação   mc_requests   tem DATA, é compromisso com alguém de fora
+     rotina     TB_GRADE      tem DIA DA SEMANA, se repete toda semana
+     atividade  TB_ATIV       tem DATA, não se repete
+
+   TB_GRADE e TB_ATIV são CONSTANTES, não nomes fixos: em produção valem
+   mc_planner_grade e mc_agenda_atividades; com FP_SANDBOX ligado apontam para
+   as cópias sb_. Citar o nome cru aqui envelhece no dia em que o flag muda —
+   foi o que aconteceu com este comentário.
 
    O marcador ao lado de cada linha diz de qual tipo ela é, e isso não é enfeite:
    mexer numa linha de rotina muda TODA semana, mexer numa atividade muda só
