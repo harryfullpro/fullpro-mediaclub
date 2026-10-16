@@ -1023,6 +1023,55 @@
     padding: 24px 12px; text-align: center; color: var(--text-muted); min-height: 60px;
   }
   .dv-empty p { font-size: 13px; }
+
+  /* ── programação do dia [FP-AGENDA-UNI 16/10/2026] ──────────────────────
+     Linhas com fio, não cartões: são itens de uma lista de horários, e caixa
+     em cima de caixa dentro de um painel que já é caixa empilha moldura. */
+  .dv-topo { display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  .dv-topo h3 { margin: 0; }
+  .dv-nota { padding: 9px 11px; margin-bottom: 10px; border-radius: 8px;
+    background: var(--bg-elev); font-size: 11.5px; line-height: 1.45; color: var(--text-dim); }
+
+  .dv-lista { display: flex; flex-direction: column; }
+  .dv-item { display: flex; align-items: center; gap: 10px; padding: 10px 0;
+    border-top: 1px solid var(--border); }
+  .dv-item:first-child { border-top: 0; }
+  .dv-h { flex: 0 0 44px; font-size: 12.5px; font-weight: 800;
+    font-variant-numeric: tabular-nums; color: var(--text); }
+  .dv-txt { flex: 1 1 auto; min-width: 0; }
+  .dv-txt b { display: block; font-size: 13px; font-weight: 700; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dv-txt > span { display: flex; align-items: center; gap: 3px; margin-top: 3px;
+    font-size: 11px; color: var(--text-muted); line-height: 1.3; }
+
+  /* O marcador de tipo diz o ALCANCE da linha: mexer em rotina muda toda
+     semana, mexer em atividade muda só este dia. Por isso ele é texto e não
+     só cor — cor sozinha não informa quem não distingue cor. */
+  .dv-tipo { flex: 0 0 auto; padding: 2px 7px; border-radius: 999px;
+    font-size: 9.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+  .dv-tipo.grav { background: rgba(255,45,45,.13); color: var(--primary-hi); }
+  .dv-tipo.rot  { background: var(--bg-elev); color: var(--text-muted); }
+  .dv-tipo.dia  { background: rgba(59,130,246,.15); color: #7aa5ff; }
+  [data-theme="light"] .dv-tipo.dia { color: #1558c0; }
+  /* O --primary-hi reprovava no claro, e o fundo que importa NÃO é o branco do
+     painel: é a chapa translúcida achatada, rgb(255,228,228). Medido ali, ele
+     dava 3,39 — longe dos 4,5 que 9,5px exige. Este é o #c80000 que o Catálogo
+     já usa para fundo claro (o vermelho da marca foi feito para fundo escuro):
+     5,06 sobre a chapa. No escuro o atual mede 5,05 e fica. */
+  [data-theme="light"] .dv-tipo.grav { color: #c80000; }
+
+  .dv-item .dv-ok { flex: 0 0 13px; width: 13px; text-align: center;
+    font-size: 12px; font-weight: 800; color: var(--success); }
+  [data-theme="light"] .dv-item .dv-ok { color: #1a955a; }
+
+  .dv-abrir { flex: 0 0 auto; background: none; border: 0; cursor: pointer;
+    font: inherit; font-size: 11px; font-weight: 700; color: var(--text-muted);
+    padding: 3px 5px; border-radius: 5px; }
+  .dv-abrir:hover { color: var(--primary); background: var(--bg-elev); }
+
+  .dv-pedido { padding-top: 8px; }
+  .dv-pe { display: flex; justify-content: flex-end; padding-top: 12px; }
   .dv-booking-full {
     background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px;
     padding: 14px; margin-bottom: 10px;
@@ -6516,6 +6565,115 @@ body.fp-sem-sessao .fp-ia-fab { display: none; }
 .fp-pl-slot-r { display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap; }
 .fp-pl-vazio { font-size: 12px; color: var(--border); }
 
+/* ── AGENDA UNIFICADA · build de sandbox [FP-AGENDA-UNI 16/10/2026] ────────
+   O planner vivia em "Meus posts" e a agenda em outra tela. São as duas
+   metades da mesma semana de produção: a agenda diz o que se GRAVA, o planner
+   diz o que se PUBLICA. Aqui elas viram uma coluna por dia.
+
+   Reaproveita .fp-pl-semana / .fp-pl-dia / .fp-pl-slot de propósito — aquelas
+   classes já carregam decisões de contraste medidas (o verde do "saiu", o
+   secundário escurecido na coluna de hoje). Uma segunda linguagem visual para
+   a mesma grade seria duas dívidas. */
+.ag-modos { display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  padding: 2px 0 14px; }
+.ag-modos-tabs { display: flex; gap: 4px; }
+.ag-modo {
+  background: none; border: 0; padding: 6px 12px; border-radius: 8px; cursor: pointer;
+  font: inherit; font-size: 12.5px; font-weight: 700; color: var(--text-muted);
+  transition: color .12s, background .12s;
+}
+.ag-modo:hover { color: var(--text); }
+.ag-modo.on { color: var(--text); background: var(--bg-elev); }
+.ag-sem-nav { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.ag-sem-nav b { font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ag-sem-hoje { background: none; border: 0; cursor: pointer; font: inherit;
+  font-size: 12px; font-weight: 700; color: var(--primary); padding: 4px 6px; }
+
+/* A gravação entra na MESMA coluna do horário de publicação, acima dele e com
+   divisor próprio: é o que acontece antes no dia. Marcador redondo em vez de
+   borda lateral colorida — barra à esquerda é proibida nos projetos FullPro. */
+.ag-grav { padding: 6px 0; border-top: 1px solid var(--border); }
+.ag-grav:first-of-type { border-top: 0; }
+.ag-grav-t { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; }
+.ag-grav-t i { flex: 0 0 7px; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--primary); display: block; }
+.ag-grav span { display: block; font-size: 10.5px; color: var(--text-muted); line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Separa o que se grava do que se publica sem escrever dois títulos em cada
+   uma das sete colunas — o espaço de coluna não comporta rótulo repetido. */
+.ag-divisor { height: 1px; background: var(--border-hi); margin: 9px 0 2px; }
+
+/* O lápis só aparece no hover da linha (e sempre no toque, que não tem hover):
+   sete colunas com um ícone fixo por linha viram ruído. */
+.fp-pl-slot { position: relative; }
+.ag-edit {
+  position: absolute; top: 4px; right: 0; width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: 0; border-radius: 5px; cursor: pointer;
+  color: var(--text-muted); opacity: 0; transition: opacity .12s, color .12s;
+}
+.fp-pl-slot:hover .ag-edit, .ag-edit:focus-visible { opacity: 1; }
+.ag-edit:hover { color: var(--primary); background: var(--bg-elev); }
+.ag-edit svg { width: 13px; height: 13px; fill: none; stroke: currentColor;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (hover: none) { .ag-edit { opacity: .55; } }
+
+/* ---- editor do horário, aberto no lugar do slot ---- */
+.ag-ed { padding: 8px 0; border-top: 1px solid var(--border); }
+.ag-ed-l { display: flex; gap: 5px; margin-bottom: 6px; }
+.ag-ed input[type="time"], .ag-ed input[type="text"] {
+  width: 100%; min-width: 0; padding: 5px 6px; font: inherit; font-size: 11.5px;
+  background: var(--bg-elev); color: var(--text);
+  border: 1px solid var(--border-hi); border-radius: 6px;
+}
+.ag-ed input:focus { outline: none; border-color: var(--primary); }
+.ag-ed-redes { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 7px; }
+.ag-ed-rede {
+  padding: 3px 7px; border-radius: 999px; cursor: pointer;
+  background: var(--bg-elev); border: 1px solid var(--border);
+  font-size: 10px; font-weight: 700; color: var(--text-muted);
+}
+.ag-ed-rede.on { border-color: var(--primary); color: var(--primary-hi);
+  background: rgba(255,45,45,.08); }
+.ag-ed-pe { display: flex; gap: 4px; flex-wrap: wrap; }
+.ag-ed-pe button { flex: 1 1 auto; padding: 5px 4px; border-radius: 6px; cursor: pointer;
+  font: inherit; font-size: 11px; font-weight: 700;
+  background: var(--bg-elev); border: 1px solid var(--border); color: var(--text); }
+.ag-ed-pe .ok { background: var(--primary); border-color: var(--primary); color: #fff; }
+.ag-ed-pe .del { color: var(--danger); }
+.ag-ed-pe button:hover { border-color: var(--text-muted); }
+/* A caixa que resolve a dor real: 28 dos 31 horários são os MESMOS quatro
+   repetidos nos sete dias. Sem ela, mover o Story de 13h para 14h é editar
+   sete linhas quase idênticas, uma a uma. */
+.ag-ed-todos { display: flex; align-items: flex-start; gap: 6px; margin: 0 0 7px;
+  font-size: 10.5px; line-height: 1.35; color: var(--text-muted); cursor: pointer; }
+.ag-ed-todos input { flex: 0 0 auto; margin: 1px 0 0; accent-color: var(--primary); }
+
+.ag-mais {
+  width: 100%; margin-top: 8px; padding: 5px; cursor: pointer;
+  background: none; border: 1px dashed var(--border-hi); border-radius: 6px;
+  font: inherit; font-size: 11px; font-weight: 700; color: var(--text-muted);
+}
+.ag-mais:hover { border-color: var(--primary); color: var(--primary); }
+
+/* Faixa de sandbox: a tela escreve numa CÓPIA do cronograma, e quem abre
+   precisa saber disso antes de mexer, não depois. */
+.ag-sandbox {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 14px; margin-bottom: 16px; border-radius: 10px;
+  background: rgba(255,170,51,.12); border: 1px solid rgba(255,170,51,.34);
+  font-size: 12px; line-height: 1.45; color: var(--text);
+}
+.ag-sandbox b { font-weight: 800; }
+
+@media (max-width: 900px) {
+  /* Sete colunas não cabem no telefone: a semana vira rolagem horizontal com
+     coluna de largura fixa, em vez de sete colunas de 40px ilegíveis. */
+  .ag-semana-rolo { overflow-x: auto; -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain; margin: 0 -16px; padding: 0 16px; }
+  .ag-semana-rolo .fp-pl-semana { grid-template-columns: repeat(7, 184px); }
+}
+
 .fp-pl-lin { display: flex; align-items: center; gap: 14px; padding: 11px 0;
   border-bottom: 1px solid var(--border); font-size: 12.5px; }
 .fp-pl-lin.atrasada .fp-pl-quando b { color: var(--danger); }
@@ -8055,6 +8213,18 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
         </div>
       </div>
 
+      <!-- A tela escreve numa CÓPIA do cronograma (sb_planner_grade). Sem este
+           aviso o dono mexeria achando que é produção — ou o contrário, que é
+           pior: testaria com medo e não testaria de verdade. -->
+      <div class="ag-sandbox" id="agSandbox" hidden>
+        <b>Build de sandbox.</b>
+        <span>A agenda e as gravações são as de verdade, só leitura. O cronograma
+        que você edita aqui é uma <b>cópia</b> — não muda o que o operador vê em
+        produção.</span>
+      </div>
+
+
+
       <div class="stats-grid">
         <div class="stat-card primary">
           <div class="label">Pendentes</div>
@@ -8103,8 +8273,15 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
 
           <!-- Date viewer -->
           <div class="cal-card date-viewer" id="dateViewer">
-            <h3>Detalhes do dia</h3>
-            <p class="sub">Selecione uma data na agenda ao lado.</p>
+            <div class="dv-topo">
+              <div>
+                <h3>Programação do dia</h3>
+                <p class="sub">Selecione uma data na agenda ao lado.</p>
+              </div>
+              <!-- A rotina se edita SEM sair da Agenda: o popup abre por cima. -->
+              <button class="action-btn" type="button" id="dvRotinaBtn"
+                      onclick="fpRotinaAbrir()">Editar rotina semanal</button>
+            </div>
             <div id="dateViewerContent">
               <div class="dv-empty">
                 <p>Clique em um dia na agenda para ver os detalhes.</p>
@@ -9940,6 +10117,26 @@ if (window.FP_SESSAO.ler()) document.documentElement.classList.add('fp-entrando'
         <button class="action-btn" type="button" onclick="fpPubFechar()">Cancelar</button>
         <button class="action-btn approve" type="button" id="pubSalvar" onclick="fpPubSalvar()">Agendar</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ROTINA SEMANAL em popup, aberto da própria Agenda.
+     O conteúdo é a GRADE de sete dias, não uma lista achatada: a rotina é
+     semanal, então ela se edita na forma em que existe. Editar no lugar do
+     horário, com a caixa "nos N dias", é o que transforma 7 edições em 1. -->
+<div class="modal" id="rotinaModal">
+  <div class="modal-content" style="max-width:1120px">
+    <div class="modal-head">
+      <h3>Rotina semanal</h3>
+      <button class="modal-close" onclick="fpRotinaFechar()" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="fp-user-form">
+      <div class="ag-semana-rolo"><div class="fp-pl-semana" id="agSemanaGrade"></div></div>
+      <div class="fp-pl-cab" style="border:0;padding-top:12px" id="agSemanaNota"></div>
+      <p class="fp-user-nota">Isto se repete toda semana. Não publica nada sozinho:
+      serve de régua para o operador agendar e para a tela mostrar o que era para
+      ter saído. Para algo de um dia só, use “+ Atividade” na programação do dia.</p>
     </div>
   </div>
 </div>
@@ -12045,6 +12242,27 @@ function selectDate(iso) {
   renderDateViewer(iso);
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   PROGRAMAÇÃO DO DIA  [FP-AGENDA-UNI 16/10/2026]
+
+   O painel ao lado do calendário respondia "quais pedidos caíram nesta data".
+   Agora responde "o que está programado para este dia", que é a pergunta do
+   operador. Três coisas entram, e elas são de naturezas diferentes:
+
+     gravação   mc_requests          tem DATA, é compromisso com alguém de fora
+     rotina     sb_planner_grade     tem DIA DA SEMANA, se repete toda semana
+     atividade  sb_agenda_atividades tem DATA, não se repete
+
+   O marcador ao lado de cada linha diz de qual tipo ela é, e isso não é enfeite:
+   mexer numa linha de rotina muda TODA semana, mexer numa atividade muda só
+   aquele dia. Sem o marcador o operador não teria como saber o alcance do que
+   está prestes a editar.
+
+   FIM DE SEMANA E DATA BLOQUEADA deixaram de esconder o dia. Os dois avisos
+   falam de GRAVAÇÃO — a empresa não grava sábado, e data bloqueada é bloqueada
+   para agendamento. A rotina publica nos sete dias. Antes, o retorno antecipado
+   apagava a programação inteira justamente no sábado e no domingo.
+   ══════════════════════════════════════════════════════════════════════════ */
 function renderDateViewer(iso) {
   const container = document.getElementById('dateViewerContent');
   const headerEl = document.querySelector('#dateViewer h3');
@@ -12052,85 +12270,218 @@ function renderDateViewer(iso) {
 
   const date = new Date(iso + 'T12:00:00');
   const dayNames = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
-  const dayOfWeek = date.getDay();
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  const dow = date.getDay();
 
-  headerEl.textContent = `${dayNames[dayOfWeek]}, ${prettyDate(iso)}`;
-  subEl.textContent = '';
+  headerEl.textContent = `${dayNames[dow]}, ${prettyDate(iso)}`;
 
-  if (isWeekend) {
-    container.innerHTML = `<div class="dv-weekend">
-      <div class="dv-block-icon"><svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--text-muted)" fill="none" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>
-      <div class="dv-block-reason">Fim de semana</div>
-      <div class="dv-block-sub">A empresa não opera aos sábados e domingos.</div>
-    </div>`;
-    return;
+  const fds = dow === 0 || dow === 6;
+  const bloqueio = BLOCKED_DATA.find(b => b.date === iso);
+  const gravacoes = getRequests().filter(r => r.date === iso);
+  const aprovadas = gravacoes.filter(r => r.status === 'approved');
+  const rotina = (PLANNER_GRADE || []).filter(g => g.dia_semana === dow && g.ativo !== false);
+  const avulsas = (AG_ATIVIDADES || []).filter(a => a.data === iso);
+
+  const total = aprovadas.length + rotina.length + avulsas.length;
+  subEl.textContent = total
+    ? total + (total === 1 ? ' item programado' : ' itens programados')
+    : 'nada programado';
+
+  /* O aviso vira LINHA, não tela inteira: ele qualifica a gravação e não
+     cancela o que vai ao ar. */
+  let html = '';
+  if (bloqueio) {
+    html += '<div class="dv-nota">Data bloqueada para agendamento'
+      + (bloqueio.reason ? ' — ' + escHtml(bloqueio.reason) : '') + '.</div>';
+  } else if (fds) {
+    html += '<div class="dv-nota">Sem gravação: a empresa não opera no fim de semana. A publicação segue.</div>';
   }
 
-  const blockInfo = BLOCKED_DATA.find(b => b.date === iso);
-  if (blockInfo) {
-    container.innerHTML = `<div class="dv-block-info">
-      <div class="dv-block-icon"><svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--warning)" fill="none" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
-      <div class="dv-block-reason">${blockInfo.reason || 'Data bloqueada'}</div>
-      <div class="dv-block-sub">Esta data está bloqueada para agendamentos.</div>
-    </div>`;
-    return;
-  }
+  const linhas = [];
 
-  const bookings = getRequests().filter(r => r.date === iso);
-  if (bookings.length === 0) {
-    container.innerHTML = `<div class="dv-empty">
-      <p>Nenhum agendamento para esta data.</p>
-    </div>`;
-    return;
-  }
+  aprovadas.forEach(function (r) {
+    linhas.push({ ord: '00:00', html:
+      '<div class="dv-item dv-item-grav">'
+      + '<span class="dv-h">—</span>'
+      + '<span class="dv-txt"><b>' + escHtml(r.nome || 'sem nome') + '</b>'
+      +   '<span>' + escHtml([r.moto, r.modalidade].filter(Boolean).join(' · ') || 'gravação') + '</span></span>'
+      + '<span class="dv-tipo grav">gravação</span>'
+      + '<button class="dv-abrir" type="button" data-tip="Ver o pedido inteiro"'
+      +   ' aria-label="Ver o pedido de ' + escHtml(r.nome || '') + '"'
+      +   ' onclick="dvAbrirPedido(\'' + escHtml(r.id) + '\')">ver</button>'
+      + '</div>'
+      + '<div class="dv-pedido" id="dv-ped-' + escHtml(r.id) + '" hidden></div>' });
+  });
 
-  /* Quem manda no dia é o agendamento aprovado: ele vem primeiro e inteiro.
-     O resto desce para um bloco que abre por clique.
+  rotina.forEach(function (g) {
+    const hora = String(g.hora || '').slice(0, 5);
+    const saiu = typeof fpPlannerSaiu === 'function' && fpPlannerSaiu(g.id, iso);
+    linhas.push({ ord: hora, html:
+      '<div class="dv-item' + (saiu ? ' feito' : '') + '">'
+      + '<span class="dv-h">' + escHtml(hora) + '</span>'
+      + '<span class="dv-txt"><b>' + escHtml(g.rotulo || g.tipo || 'horário') + '</b>'
+      +   '<span>' + fpPlannerRedesHtml(g.plataformas, 13) + '</span></span>'
+      + '<span class="dv-tipo rot" data-tip="Se repete toda ' + escHtml(dayNames[dow].toLowerCase()) + '">rotina</span>'
+      + (saiu ? '<span class="dv-ok" data-tip="Já saiu nesta data">✓</span>' : '<span class="dv-ok"></span>')
+      + '</div>' });
+  });
 
-     A separação muda conforme o dia já esteja resolvido ou não:
-     - com aprovado, o dia está fechado — pendente, stand by e rejeitada são
-       todos "não deram certo" e vão juntos para o bloco fechado;
-     - sem aprovado, pendente e stand by são a fila viva do dia e ficam à
-       vista; só as rejeitadas ficam guardadas.
-     Esconder um pendente num dia sem aprovado seria esconder trabalho. */
-  const ORDEM = { pending: 0, standby: 1, rejected: 2 };
-  const aprovados = bookings.filter(r => r.status === 'approved');
-  const demais = bookings
-    .filter(r => r.status !== 'approved')
-    .sort((a, b) => (ORDEM[a.status] ?? 9) - (ORDEM[b.status] ?? 9));
+  avulsas.forEach(function (a) {
+    const hora = a.hora ? String(a.hora).slice(0, 5) : '';
+    linhas.push({ ord: hora || '99:99', html:
+      '<div class="dv-item">'
+      + '<span class="dv-h">' + escHtml(hora || '—') + '</span>'
+      + '<span class="dv-txt"><b>' + escHtml(a.titulo) + '</b>'
+      +   (a.plataformas && a.plataformas.length
+            ? '<span>' + fpPlannerRedesHtml(a.plataformas, 13) + '</span>'
+            : (a.observacao ? '<span>' + escHtml(a.observacao) + '</span>' : ''))
+      + '</span>'
+      + '<span class="dv-tipo dia" data-tip="Só neste dia — não se repete">só hoje</span>'
+      + '<button class="dv-abrir" type="button" data-tip="Apagar esta atividade"'
+      +   ' aria-label="Apagar ' + escHtml(a.titulo) + '"'
+      +   ' onclick="fpAtivApagar(\'' + escHtml(a.id) + '\')">apagar</button>'
+      + '</div>' });
+  });
 
-  const aVista = aprovados.length
-    ? aprovados
-    : aprovados.concat(demais.filter(r => r.status !== 'rejected'));
-  // sai de `demais`, que já está ordenado: pendente antes de stand by, e
-  // rejeitada por último — dentro do bloco e no resumo do botão
-  const guardados = demais.filter(r => !aVista.includes(r));
+  /* Gravação primeiro (ord 00:00) porque acontece antes de publicar; atividade
+     sem hora cai no fim (99:99) em vez de fingir meia-noite. */
+  linhas.sort(function (a, b) { return String(a.ord).localeCompare(String(b.ord)); });
 
-  const contagem = {};
-  guardados.forEach(r => { contagem[r.status] = (contagem[r.status] || 0) + 1; });
-  // com um status só, o resumo repetiria o próprio rótulo do botão
-  const resumo = Object.keys(contagem).length < 2 ? '' : Object.keys(contagem).map(st => {
-    const n = contagem[st];
-    const rot = rotuloReqStatus(st).toLowerCase();
-    return n + ' ' + (n === 1 ? rot : rot.replace(/a$/, 'as').replace(/e$/, 'es'));
-  }).join(' · ');
+  html += linhas.length
+    ? '<div class="dv-lista">' + linhas.map(function (l) { return l.html; }).join('') + '</div>'
+    : '<div class="dv-empty"><p>Nada programado para esta data.</p></div>';
 
-  container.innerHTML = aVista.map(dvCartaoHtml).join('')
-    + (guardados.length ? `
-      <button type="button" class="dv-mais" id="dvMaisBtn" aria-expanded="false" aria-controls="dvGuardados" onclick="dvAlternarGuardados()">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-        <span id="dvMaisTexto">${aprovados.length ? 'Outros pedidos para este dia' : 'Pedidos rejeitados'} (${guardados.length})</span>
-        <span class="dv-mais-resumo">${escHtml(resumo)}</span>
-      </button>
-      <div id="dvGuardados" hidden>${guardados.map(dvCartaoHtml).join('')}</div>` : '');
+  html += '<div class="dv-pe">'
+    + '<button class="action-btn" type="button" onclick="fpAtivAbrir(\'' + escHtml(iso) + '\')">+ Atividade neste dia</button>'
+    + '</div>'
+    + '<div id="dvAtivForm"></div>';
 
-  // Produtos compatíveis só para o que está à vista: a busca no Bling é a
-  // parte mais lenta do painel e nada disso aparece enquanto o bloco fecha.
-  dvCarregarProdutos(aVista);
-  DV_GUARDADOS = guardados;
+  container.innerHTML = html;
+  DV_GUARDADOS = [];
   DV_GUARDADOS_CARREGADOS = false;
 }
+
+/* O dossiê do pedido continua existindo e abre por clique. Ele é o que o
+   operador precisa NO DIA da gravação (produto compatível, placa, contato), e
+   apagá-lo para cumprir "mostre só a programação" seria jogar fora trabalho
+   que presta — o padrão passou a ser a programação, não o dossiê. */
+function dvAbrirPedido(id) {
+  const caixa = document.getElementById('dv-ped-' + id);
+  if (!caixa) return;
+  const r = getRequests().find(function (x) { return String(x.id) === String(id); });
+  if (!r) return;
+  if (!caixa.hidden) { caixa.hidden = true; caixa.innerHTML = ''; return; }
+  caixa.innerHTML = dvCartaoHtml(r);
+  caixa.hidden = false;
+  dvCarregarProdutos([r]);
+}
+window.dvAbrirPedido = dvAbrirPedido;
+
+/* ---------------- atividade de um dia só ---------------- */
+let AG_ATIVIDADES = [];
+let _ativCarregadoEm = 0;
+
+async function fpAtivCarregar(forcar) {
+  if (!forcar && Date.now() - _ativCarregadoEm < 30000 && AG_ATIVIDADES.length) return AG_ATIVIDADES;
+  try {
+    const { data, error } = await sb.from(TB_ATIV).select('*').order('data').order('hora');
+    if (error) throw error;
+    AG_ATIVIDADES = data || [];
+    _ativCarregadoEm = Date.now();
+  } catch (e) {
+    console.warn('fpAtivCarregar:', e && e.message);
+  }
+  return AG_ATIVIDADES;
+}
+
+function fpAtivAbrir(iso) {
+  const caixa = document.getElementById('dvAtivForm');
+  if (!caixa) return;
+  caixa.innerHTML = '<div class="ag-ed" style="border-top:1px solid var(--border);margin-top:4px">'
+    + '<div class="ag-ed-l">'
+    +   '<input type="time" class="ag-ed-hora" aria-label="Hora (opcional)" style="flex:0 0 92px">'
+    +   '<input type="text" class="ag-ed-rot" maxlength="120" placeholder="O que vai acontecer" aria-label="Título da atividade">'
+    + '</div>'
+    + '<div class="ag-ed-redes">'
+    +   Object.keys(FP_REDES).map(function (k) {
+          return '<button type="button" class="ag-ed-rede" data-rede="' + k + '" aria-pressed="false"'
+            + ' onclick="fpAgEdRede(this)">' + escHtml(FP_REDES[k].nome) + '</button>';
+        }).join('')
+    + '</div>'
+    + '<p class="fp-user-nota" style="margin:0 0 7px;font-size:10.5px">Vale só para '
+    +   escHtml(prettyDate(iso)) + '. Para algo que se repete toda semana, use “Editar rotina semanal”.</p>'
+    + '<div class="ag-ed-pe">'
+    +   '<button type="button" class="ok" onclick="fpAtivSalvar(\'' + escHtml(iso) + '\', this)">Adicionar</button>'
+    +   '<button type="button" onclick="fpAtivCancelar()">Cancelar</button>'
+    + '</div></div>';
+  try { caixa.querySelector('.ag-ed-rot').focus(); } catch (e) {}
+}
+window.fpAtivAbrir = fpAtivAbrir;
+
+function fpAtivCancelar() {
+  const c = document.getElementById('dvAtivForm');
+  if (c) c.innerHTML = '';
+}
+window.fpAtivCancelar = fpAtivCancelar;
+
+async function fpAtivSalvar(iso, btn) {
+  const cx = btn.closest('.ag-ed');
+  const titulo = cx.querySelector('.ag-ed-rot').value.trim();
+  const hora = cx.querySelector('.ag-ed-hora').value || null;
+  const redes = [].slice.call(cx.querySelectorAll('.ag-ed-rede.on')).map(function (b) { return b.dataset.rede; });
+  /* O check do banco exige 2..120; barrar aqui evita o 400 depois de digitar. */
+  if (titulo.length < 2) { fpToast('Escreva o que vai acontecer.', 'warn'); return; }
+  btn.disabled = true; btn.textContent = 'Adicionando…';
+  try {
+    const { error } = await sb.from(TB_ATIV).insert({
+      data: iso, hora: hora, titulo: titulo, plataformas: redes
+    });
+    if (error) throw error;
+    await fpAtivCarregar(true);
+    renderDateViewer(iso);
+    fpToast('Atividade adicionada.', 'ok');
+  } catch (e) {
+    fpToast('Não deu para adicionar: ' + ((e && e.message) || e), 'erro');
+    btn.disabled = false; btn.textContent = 'Adicionar';
+  }
+}
+window.fpAtivSalvar = fpAtivSalvar;
+
+async function fpAtivApagar(id) {
+  const a = (AG_ATIVIDADES || []).find(function (x) { return x.id === id; });
+  if (!a) return;
+  const ok = await fpConfirm({
+    titulo: 'Apagar esta atividade?',
+    mensagem: '“' + a.titulo + '” sai da programação de ' + prettyDate(a.data) + '. A rotina semanal não muda.',
+    perigo: true
+  });
+  if (!ok) return;
+  try {
+    const { error } = await sb.from(TB_ATIV).delete().eq('id', id);
+    if (error) throw error;
+    await fpAtivCarregar(true);
+    renderDateViewer(a.data);
+    fpToast('Atividade apagada.', 'ok');
+  } catch (e) {
+    fpToast('Não deu para apagar: ' + ((e && e.message) || e), 'erro');
+  }
+}
+window.fpAtivApagar = fpAtivApagar;
+
+/* ---------------- o popup da rotina ---------------- */
+function fpRotinaAbrir() {
+  document.getElementById('rotinaModal').classList.add('show');
+  fpAgSemanaCarregar();
+}
+window.fpRotinaAbrir = fpRotinaAbrir;
+
+function fpRotinaFechar() {
+  document.getElementById('rotinaModal').classList.remove('show');
+  _agEditando = null;
+  /* Redesenha o dia: a rotina que acabou de mudar aparece na programação sem
+     o operador ter de clicar no calendário de novo. */
+  if (typeof selectedDate !== 'undefined' && selectedDate) renderDateViewer(selectedDate);
+}
+window.fpRotinaFechar = fpRotinaFechar;
 
 /* Um cartão de agendamento do painel da data. */
 function dvCartaoHtml(r) {
@@ -20106,6 +20457,31 @@ async function loadNotifications() {
   renderNotifBadge();
 }
 
+/* O DESFECHO DO CHAMADO TEM DE APARECER, não ficar num número.
+   A notificação já é gravada e já entra na contagem do sino, mas a mensagem só
+   se lê no Perfil — e ninguém abre o Perfil para descobrir que foi atendido.
+   Então na abertura do painel ela vira torrada, com ação que leva ao lugar
+   onde dá para dispensar.
+
+   NÃO marca como lida aqui: quem piscou e perdeu a torrada perderia o aviso
+   para sempre. A linha fica em pé até ser dispensada no Perfil — por isso a
+   torrada volta no próximo login, o que é o certo para "seu chamado foi
+   resolvido" e não para um aviso qualquer. */
+function fpAvisarChamados() {
+  const meus = (NOTIFICATIONS || []).filter(function (n) { return n.type === 'chamado'; });
+  if (!meus.length) return;
+  const texto = meus.length === 1
+    ? meus[0].message
+    : meus.length + ' dos seus relatos foram respondidos.';
+  fpToast(texto, 'ok', {
+    duracao: 0,                      /* fica até ser fechada: é desfecho, não status */
+    /* fpIrPara e nao switchToView: o roteador de verdade vive dentro de um IIFE
+       e nao e global — este arquivo ja tem o ajudante por esse exato motivo. */
+    acao: { texto: 'Ver', onClick: function () { fpIrPara('profile'); } }
+  });
+}
+window.fpAvisarChamados = fpAvisarChamados;
+
 function renderNotifBadge() {
   const badge = document.getElementById('notifBadge');
   if (badge) {
@@ -26243,6 +26619,37 @@ async function fpBugStatus(id, status) {
   if (error) { fpToast('Erro ao atualizar: ' + error.message, 'erro'); return; }
   const b = BUGS.find(x => x.id === id);
   if (b) Object.assign(b, patch);
+
+  /* QUEM ABRIU O CHAMADO FICA SABENDO. Até aqui o relato era resolvido em
+     silêncio: o operador mandava, nunca mais ouvia falar, e na dúvida mandava
+     de novo. A notificação é gravada em mc_notifications e o painel já a lê na
+     abertura (loadNotifications, por user_id e read=false) — então ela espera
+     o operador na próxima vez que ele entrar, mesmo que isso seja amanhã.
+
+     NÃO notifica quando quem fecha é o próprio autor: avisar a si mesmo do que
+     você acabou de fazer é ruído. */
+  if ((status === 'resolvido' || status === 'descartado') && b && b.autor_id
+      && !(CURRENT_USER && b.autor_id === CURRENT_USER.id)) {
+    const titulo = (b.titulo || 'Seu relato').trim();
+    const veredito = status === 'resolvido' ? 'foi resolvido' : 'foi descartado';
+    try {
+      const { error: eNot } = await sb.from('mc_notifications').insert({
+        user_id: b.autor_id,
+        type: 'chamado',
+        message: '“' + titulo + '” ' + veredito + '.'
+          + (b.resolucao ? ' ' + String(b.resolucao).slice(0, 300) : ''),
+        read: false
+      });
+      if (eNot) throw eNot;
+    } catch (e) {
+      /* O chamado JÁ mudou de status — e isso é o que importa. Falhar o aviso
+         não pode desfazer nem travar a tela; vira recado para quem fechou, que
+         é quem pode reabrir e tentar de novo. */
+      console.warn('aviso do chamado:', e && e.message);
+      fpToast('Status salvo, mas não consegui avisar quem abriu.', 'warn');
+    }
+  }
+
   renderBugs();
 }
 window.fpBugStatus = fpBugStatus;
@@ -31028,6 +31435,16 @@ window.fpRepostMarcar = fpRepostMarcar;
    verdade é "publicado em duas de quatro".
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* A ÚNICA linha que separa o sandbox da produção. Mandar para produção é
+   trocar FP_SANDBOX para false: a faixa de aviso some sozinha e a tela volta a
+   escrever em mc_planner_grade.
+   Declarado AQUI, antes de qualquer uso em ordem de fonte — `const` tem zona
+   morta temporal, e deixar a declaração depois da primeira leitura é pedir um
+   ReferenceError que só aparece se a ordem de chamada mudar um dia. */
+const FP_SANDBOX = false;
+const TB_GRADE   = FP_SANDBOX ? 'sb_planner_grade' : 'mc_planner_grade';
+const TB_ATIV    = FP_SANDBOX ? 'sb_agenda_atividades' : 'mc_agenda_atividades';
+
 const FP_REDES = {
   instagram: { nome: 'Instagram', logo: 'reels' },
   facebook:  { nome: 'Facebook',  logo: 'facebook' },
@@ -31162,7 +31579,7 @@ async function fpPlannerCarregar(forcar) {
     /* A fila traz os destinos junto (relacionamento), senão seriam N+1
        consultas para desenhar N linhas. */
     const [g, f, pc] = await Promise.all([
-      sb.from('mc_planner_grade').select('*').order('dia_semana').order('hora'),
+      sb.from(TB_GRADE).select('*').order('dia_semana').order('hora'),
       sb.from('mc_publicacoes')
         .select('*, destinos:mc_publicacoes_destino(*)')
         .order('agendado_para', { ascending: true })
@@ -31203,6 +31620,318 @@ function fpPlannerRedesHtml(redes, tam) {
   }).join('');
 }
 
+
+/* ══════════════════════════════════════════════════════════════════════════
+   AGENDA UNIFICADA · build de sandbox   [FP-AGENDA-UNI 16/10/2026]
+
+   O PROBLEMA MEDIDO, não suposto. O cronograma tem 31 linhas e 28 delas são os
+   MESMOS quatro horários repetidos nos sete dias (Reel 10h -> IG+FB, o mesmo
+   vídeo 11h -> TikTok+YouTube, Story 13h, repost 19h). As exceções são três:
+   vídeo longo seg/qui 18h, carrossel no sábado, colab no domingo.
+   Para mover o Story de 13h para 14h, hoje o operador abre um modal com as 31
+   linhas numa lista achatada e edita sete quase idênticas, uma a uma.
+
+   POR ISSO a rotina passa a ser editada NA GRADE SEMANAL, que é a forma em que
+   ela existe, com uma caixa "nos sete dias" — a repetição vira um gesto, não
+   sete.
+
+   E A AGENDA E O PLANNER VIRAM UMA COLUNA SÓ por dia: a agenda diz o que se
+   GRAVA, o cronograma diz o que se PUBLICA. São as duas metades do mesmo dia
+   de trabalho, e estavam em telas diferentes.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* A faixa de sandbox é ligada pelo FLAG, não pela mão: assim não existe o
+   estado "está em produção e a faixa ficou", nem o inverso, que é pior. */
+document.addEventListener('DOMContentLoaded', function () {
+  const faixa = document.getElementById('agSandbox');
+  if (faixa) faixa.hidden = !FP_SANDBOX;
+});
+
+let _agModo = 'mes';
+let _agSemanaBase = null;     /* domingo da semana mostrada */
+let _agEditando = null;       /* id do slot aberto, ou 'novo:<dia>' */
+
+function fpAgDomingoDe(d) {
+  const x = new Date(d); x.setHours(0, 0, 0, 0);
+  x.setDate(x.getDate() - x.getDay());
+  return x;
+}
+function fpAgSemanaDias() {
+  if (!_agSemanaBase) _agSemanaBase = fpAgDomingoDe(new Date());
+  const dias = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(_agSemanaBase); d.setDate(_agSemanaBase.getDate() + i); dias.push(d);
+  }
+  return dias;
+}
+
+function fpAgSemanaAndar(n) {
+  _agSemanaBase = n === 0 ? fpAgDomingoDe(new Date())
+    : (function () { const d = new Date(_agSemanaBase || new Date()); d.setDate(d.getDate() + n * 7); return fpAgDomingoDe(d); })();
+  _agEditando = null;
+  fpAgSemanaPintar();
+}
+window.fpAgSemanaAndar = fpAgSemanaAndar;
+
+/* A grade vem da CÓPIA no sandbox; as gravações vêm de REQUESTS, que a própria
+   Agenda já carregou. Nada de segunda consulta para o mesmo dado. */
+async function fpAgSemanaCarregar() {
+  const alvo = document.getElementById('agSemanaGrade');
+  if (alvo && !alvo.innerHTML.trim()) {
+    alvo.innerHTML = '<div class="fp-planner-carregando" style="grid-column:1/-1">Carregando a semana…</div>';
+  }
+  try {
+    const { data, error } = await sb.from(TB_GRADE).select('*').order('dia_semana').order('hora');
+    if (error) throw error;
+    PLANNER_GRADE = data || [];
+  } catch (e) {
+    console.warn('fpAgSemanaCarregar:', e && e.message);
+    if (alvo) alvo.innerHTML = '<div class="fp-planner-carregando" style="grid-column:1/-1">Não deu para ler o cronograma: '
+      + escHtml((e && e.message) || 'sem resposta') + '</div>';
+    return;
+  }
+  fpAgSemanaPintar();
+}
+
+/* Gravações do dia. A coluna é `date`, não `production_date` — essa é de
+   mc_projects, outra tabela. E só `approved` entra: medido em 16/10, dos 159
+   pedidos 121 são `rejected`, 10 `standby` e 3 `pending`; nenhum desses é
+   compromisso, e mostrá-los na mesma coluna do que vai ao ar faria a semana
+   parecer cinco vezes mais cheia do que é. */
+function fpAgGravacoesDe(dataISO) {
+  return (REQUESTS || []).filter(function (r) {
+    return r.date === dataISO && String(r.status || '') === 'approved';
+  });
+}
+
+/* Reusa o renderizador de logo que o planner ja tem: `.fp-pl-rede` e selo
+   redondo com SVG, nao caixa de texto. Inventar um segundo selo deixaria a
+   mesma rede com duas aparencias no mesmo painel. */
+function fpAgRedesHtml(plataformas) {
+  return '<span class="fp-pl-slot-r">' + fpPlannerRedesHtml(plataformas, 14) + '</span>';
+}
+
+const AG_LAPIS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
+
+function fpAgSemanaPintar() {
+  const alvo = document.getElementById('agSemanaGrade');
+  if (!alvo) return;
+  const dias = fpAgSemanaDias();
+  const hojeISO = fpDataLocal(new Date());
+  const podeEditar = typeof isUserAdmin === 'function' ? isUserAdmin() : false;
+
+  const rot = document.getElementById('agSemRotulo');
+  if (rot) {
+    const a = dias[0], b = dias[6];
+    const mes = function (d) { return d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''); };
+    rot.textContent = a.getDate() + ' ' + mes(a) + ' – ' + b.getDate() + ' ' + mes(b);
+  }
+
+  alvo.innerHTML = dias.map(function (d, i) {
+    const dataISO = fpDataLocal(d);
+    const ehHoje = dataISO === hojeISO;
+    const gravs = fpAgGravacoesDe(dataISO);
+    const slots = (PLANNER_GRADE || []).filter(function (g) {
+      return g.dia_semana === i && g.ativo !== false;
+    }).sort(function (x, y) { return String(x.hora).localeCompare(String(y.hora)); });
+
+    let html = '<div class="fp-pl-dia' + (ehHoje ? ' hoje' : '') + '">'
+      + '<div class="fp-pl-dia-n">' + FP_DIAS_CURTO[i]
+      + '<span class="fp-pl-dia-d">' + d.getDate() + '</span></div>';
+
+    gravs.forEach(function (r) {
+      html += '<div class="ag-grav">'
+        + '<div class="ag-grav-t"><i aria-hidden="true"></i>Gravação</div>'
+        + '<span>' + escHtml(r.nome || 'sem nome') + (r.moto ? ' · ' + escHtml(r.moto) : '') + '</span>'
+        + '</div>';
+    });
+    if (gravs.length && slots.length) html += '<div class="ag-divisor"></div>';
+
+    if (!gravs.length && !slots.length && !podeEditar) html += '<div class="fp-pl-vazio">—</div>';
+
+    slots.forEach(function (g) {
+      if (_agEditando === g.id) { html += fpAgEditorHtml(g, i); return; }
+      const hora = String(g.hora || '').slice(0, 5);
+      const saiu = fpPlannerSaiu(g.id, dataISO);
+      html += '<div class="fp-pl-slot' + (saiu ? ' feito' : '') + '">'
+        + '<div class="fp-pl-slot-h"><b>' + escHtml(hora) + '</b>'
+        + (saiu ? '<span class="fp-pl-ok" data-tip="Já saiu nesta data">✓</span>' : '<span class="fp-pl-ok"></span>')
+        + '</div>'
+        + '<span>' + escHtml(g.rotulo || g.tipo || '') + '</span>'
+        + fpAgRedesHtml(g.plataformas)
+        + (podeEditar ? '<button class="ag-edit" type="button" data-tip="Editar este horário"'
+            + ' aria-label="Editar horário das ' + escHtml(hora) + '"'
+            + ' onclick="fpAgEditar(\'' + escHtml(g.id) + '\')">' + AG_LAPIS + '</button>' : '')
+        + '</div>';
+    });
+
+    if (_agEditando === 'novo:' + i) html += fpAgEditorHtml(null, i);
+    else if (podeEditar) {
+      html += '<button class="ag-mais" type="button" onclick="fpAgEditar(\'novo:' + i + '\')">+ horário</button>';
+    }
+
+    return html + '</div>';
+  }).join('');
+
+  const nota = document.getElementById('agSemanaNota');
+  if (nota) {
+    const n = (PLANNER_GRADE || []).filter(function (g) { return g.ativo !== false; }).length;
+    /* Com a rotina vazia, falar do ✓ e do lápis é prometer o que não está na
+       tela: não há marca nem lápis para clicar. O texto diz o próximo passo. */
+    nota.innerHTML = '<div><b>Rotina da semana</b><span>' + (n
+      ? n + (n === 1 ? ' horário fixo' : ' horários fixos')
+        + ' · o ✓ diz que já saiu nesta data, e é indicador, não botão'
+        + (podeEditar ? ' · clique no lápis para editar' : '')
+      : (podeEditar
+          ? 'ainda em branco — use “+ horário” no dia em que a publicação sai'
+          : 'ainda não cadastrada')) + '</span></div>';
+  }
+}
+
+/* ---- editor, aberto NO LUGAR do slot ----
+   Sem modal de propósito: o horário só faz sentido ao lado dos vizinhos dele.
+   Tirar a pessoa da grade para editar é o que fazia a edição parecer cara. */
+function fpAgEditorHtml(g, dia) {
+  const novo = !g;
+  const hora = novo ? '10:00' : String(g.hora || '').slice(0, 5);
+  const rotulo = novo ? '' : (g.rotulo || '');
+  const redes = novo ? ['instagram'] : (g.plataformas || []);
+  const irmaos = novo ? 0 : fpAgIrmaos(g).length;
+
+  return '<div class="ag-ed" data-dia="' + dia + '" data-id="' + escHtml(novo ? '' : g.id) + '">'
+    + '<div class="ag-ed-l">'
+    +   '<input type="time" class="ag-ed-hora" value="' + escHtml(hora) + '" aria-label="Horário" style="flex:0 0 86px">'
+    + '</div>'
+    + '<div class="ag-ed-l">'
+    +   '<input type="text" class="ag-ed-rot" value="' + escHtml(rotulo) + '" maxlength="60"'
+    +     ' placeholder="Nome do horário" aria-label="Nome do horário">'
+    + '</div>'
+    + '<div class="ag-ed-redes">'
+    +   Object.keys(FP_REDES).map(function (k) {
+          const on = redes.indexOf(k) >= 0;
+          return '<button type="button" class="ag-ed-rede' + (on ? ' on' : '') + '" data-rede="' + k + '"'
+            + ' aria-pressed="' + on + '" data-tip="' + escHtml(FP_REDES[k].nome) + '"'
+            + ' onclick="fpAgEdRede(this)">' + escHtml(FP_REDES[k].nome) + '</button>';
+        }).join('')
+    + '</div>'
+    /* A caixa só aparece quando há irmão de verdade — oferecer "nos 7 dias"
+       para um horário que só existe num dia promete o que não vai acontecer. */
+    + (irmaos > 1
+        ? '<label class="ag-ed-todos"><input type="checkbox" class="ag-ed-prop">'
+          + '<span>Aplicar nos ' + irmaos + ' dias que têm este mesmo horário</span></label>'
+        : '')
+    + '<div class="ag-ed-pe">'
+    +   '<button type="button" class="ok" onclick="fpAgEdSalvar(this)">Salvar</button>'
+    +   '<button type="button" onclick="fpAgEdCancelar()">Cancelar</button>'
+    +   (novo ? '' : '<button type="button" class="del" onclick="fpAgEdApagar(this)">Apagar</button>')
+    + '</div>'
+    + '</div>';
+}
+
+/* Irmão = mesmo rótulo E mesma hora, em qualquer dia. É o que faz "Story 13:00"
+   ser um grupo de sete em vez de sete linhas sem relação. */
+function fpAgIrmaos(g) {
+  const h = String(g.hora || '').slice(0, 5);
+  const r = (g.rotulo || '').trim().toLowerCase();
+  return (PLANNER_GRADE || []).filter(function (x) {
+    return x.ativo !== false && String(x.hora || '').slice(0, 5) === h
+      && (x.rotulo || '').trim().toLowerCase() === r;
+  });
+}
+
+function fpAgEditar(id) {
+  if (typeof isUserAdmin === 'function' && !isUserAdmin()) {
+    fpToast('Só administrador edita o cronograma.', 'info'); return;
+  }
+  _agEditando = id;
+  fpAgSemanaPintar();
+  setTimeout(function () { try { document.querySelector('.ag-ed .ag-ed-hora').focus(); } catch (e) {} }, 30);
+}
+window.fpAgEditar = fpAgEditar;
+
+function fpAgEdCancelar() { _agEditando = null; fpAgSemanaPintar(); }
+window.fpAgEdCancelar = fpAgEdCancelar;
+
+function fpAgEdRede(btn) {
+  const on = !btn.classList.contains('on');
+  btn.classList.toggle('on', on);
+  btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+}
+window.fpAgEdRede = fpAgEdRede;
+
+function fpAgEdLer(btn) {
+  const cx = btn.closest('.ag-ed');
+  return {
+    id: cx.dataset.id || null,
+    dia: Number(cx.dataset.dia),
+    hora: cx.querySelector('.ag-ed-hora').value || '10:00',
+    rotulo: cx.querySelector('.ag-ed-rot').value.trim(),
+    redes: [].slice.call(cx.querySelectorAll('.ag-ed-rede.on')).map(function (b) { return b.dataset.rede; }),
+    propagar: !!(cx.querySelector('.ag-ed-prop') && cx.querySelector('.ag-ed-prop').checked),
+    botao: btn
+  };
+}
+
+async function fpAgEdSalvar(btn) {
+  const v = fpAgEdLer(btn);
+  if (!v.redes.length) { fpToast('Escolha ao menos uma rede.', 'warn'); return; }
+  v.botao.disabled = true; v.botao.textContent = 'Salvando…';
+
+  const campos = { hora: v.hora, rotulo: v.rotulo || null, plataformas: v.redes };
+  try {
+    if (!v.id) {
+      const atual = (PLANNER_GRADE || []).find(function (g) { return g.dia_semana === v.dia; });
+      const { error } = await sb.from(TB_GRADE).insert(Object.assign({
+        dia_semana: v.dia, tipo: (atual && atual.tipo) || null, ativo: true
+      }, campos));
+      if (error) throw error;
+    } else {
+      const g = (PLANNER_GRADE || []).find(function (x) { return x.id === v.id; });
+      /* ATUALIZA POR id, nunca apaga-e-reinsere. mc_publicacoes.slot_id aponta
+         para esta linha com ON DELETE SET NULL: recriar a linha desligaria o
+         vínculo de toda publicação que cumpriu aquele horário. O modal antigo
+         fazia exatamente isso a cada salvamento. */
+      const alvos = (v.propagar && g) ? fpAgIrmaos(g).map(function (x) { return x.id; }) : [v.id];
+      const { error } = await sb.from(TB_GRADE).update(campos).in('id', alvos);
+      if (error) throw error;
+      if (alvos.length > 1) fpToast(alvos.length + ' horários atualizados.', 'ok');
+    }
+    _agEditando = null;
+    await fpAgSemanaCarregar();
+    if (!document.querySelector('.ag-ed')) fpToast('Cronograma salvo.', 'ok');
+  } catch (e) {
+    fpToast('Não deu para salvar: ' + ((e && e.message) || e), 'erro');
+    v.botao.disabled = false; v.botao.textContent = 'Salvar';
+  }
+}
+window.fpAgEdSalvar = fpAgEdSalvar;
+
+async function fpAgEdApagar(btn) {
+  const v = fpAgEdLer(btn);
+  if (!v.id) return;
+  const g = (PLANNER_GRADE || []).find(function (x) { return x.id === v.id; });
+  const alvos = (v.propagar && g) ? fpAgIrmaos(g).map(function (x) { return x.id; }) : [v.id];
+  const quantos = alvos.length;
+  const ok = await fpConfirm({
+    titulo: quantos > 1 ? 'Apagar este horário nos ' + quantos + ' dias?' : 'Apagar este horário?',
+    mensagem: quantos > 1 ? 'Ele sai da rotina em todos os dias em que se repete.'
+                          : 'Ele sai da rotina da semana. O que já foi publicado não muda.',
+    perigo: true
+  });
+  if (!ok) return;
+  v.botao.disabled = true;
+  try {
+    const { error } = await sb.from(TB_GRADE).delete().in('id', alvos);
+    if (error) throw error;
+    _agEditando = null;
+    await fpAgSemanaCarregar();
+    fpToast(quantos > 1 ? quantos + ' horários apagados.' : 'Horário apagado.', 'ok');
+  } catch (e) {
+    fpToast('Não deu para apagar: ' + ((e && e.message) || e), 'erro');
+    v.botao.disabled = false;
+  }
+}
+window.fpAgEdApagar = fpAgEdApagar;
 /* ── o cronograma da semana ──────────────────────────────────────────────
    Sete colunas, uma por dia, na ordem da semana. Sem caixa: cada dia é uma
    coluna com fio embaixo do nome, igual ao resto do painel. O dia de HOJE
@@ -32041,18 +32770,34 @@ async function fpPlannerGradeSalvar() {
   const btn = document.getElementById('gradeSalvar');
   btn.disabled = true; btn.textContent = 'Salvando...';
   try {
-    /* Apaga e regrava: a grade é pequena (uma dúzia de linhas) e o operador
-       tira e põe horário o tempo todo. Um diff aqui seria mais código para o
-       mesmo resultado, com mais chance de deixar linha órfã. */
-    const { error: eDel } = await sb.from('mc_planner_grade').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    if (eDel) throw eDel;
-    if (_gradeRascunho.length) {
-      const { error } = await sb.from('mc_planner_grade').insert(_gradeRascunho.map(function (g) {
-        return {
-          dia_semana: g.dia_semana, hora: g.hora, rotulo: g.rotulo || null,
-          tipo: g.tipo || null, plataformas: g.plataformas || [], ativo: true,
-        };
-      }));
+    /* DIFF POR id, e não mais apaga-tudo-e-reinsere.
+       O jeito antigo custava caro de um jeito silencioso: mc_publicacoes.slot_id
+       referencia esta tabela com ON DELETE SET NULL (conferido em 16/10), então
+       CADA salvamento do cronograma desligava o vínculo de toda publicação que
+       já tinha cumprido um horário. Só não doeu ainda porque há 2 publicações —
+       e porque editar era tão incômodo que quase não se editava. Tornar a edição
+       fácil, que é o ponto deste trabalho, faria o defeito disparar toda semana.
+       Linha com id -> update. Sem id -> insert. Sumiu do rascunho -> delete. */
+    const campos = function (g) {
+      return {
+        dia_semana: g.dia_semana, hora: g.hora, rotulo: g.rotulo || null,
+        tipo: g.tipo || null, plataformas: g.plataformas || [], ativo: true,
+      };
+    };
+    const vivos = _gradeRascunho.filter(function (g) { return g.id; }).map(function (g) { return g.id; });
+    const sumiram = (PLANNER_GRADE || []).map(function (g) { return g.id; })
+      .filter(function (id) { return vivos.indexOf(id) < 0; });
+    if (sumiram.length) {
+      const { error: eDel } = await sb.from(TB_GRADE).delete().in('id', sumiram);
+      if (eDel) throw eDel;
+    }
+    for (const g of _gradeRascunho.filter(function (x) { return x.id; })) {
+      const { error } = await sb.from(TB_GRADE).update(campos(g)).eq('id', g.id);
+      if (error) throw error;
+    }
+    const novos = _gradeRascunho.filter(function (g) { return !g.id; });
+    if (novos.length) {
+      const { error } = await sb.from(TB_GRADE).insert(novos.map(campos));
       if (error) throw error;
     }
     fpPlannerGradeFechar();
@@ -35082,6 +35827,7 @@ async function initApp() {
   await refreshIntegrationStatus();
 
   await Promise.all([loadRequests(), loadBlocked(), loadCheckins(), loadCheckouts(), loadUsers(), loadProjects(), loadPerfPosts(), loadPerfDatas(), loadPerfGoals(), loadPerfInfluencers(), loadPerfBonuses(), loadNotifications(), loadInfExtras(), loadBugs(), loadUpdates()]);
+  fpAvisarChamados();
   renderDashboard();
   renderRequests();
   renderCalendar();
@@ -35380,6 +36126,12 @@ async function initApp() {
           await loadRequests();
           renderCalendar();
           renderRequests();
+          /* A programação do dia precisa das DUAS: a rotina da semana e as
+             atividades avulsas. Sem elas o painel ao lado do calendário
+             mostraria só a gravação e diria "nada programado" num dia que tem
+             quatro horários fixos. */
+          await Promise.all([fpAgSemanaCarregar(), fpAtivCarregar()]);
+          if (selectedDate) renderDateViewer(selectedDate);
           break;
         case 'checkin':
           await Promise.all([loadRequests(), loadCheckins(), loadCheckouts()]);
